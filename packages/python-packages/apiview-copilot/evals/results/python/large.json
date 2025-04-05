@@ -1,0 +1,354 @@
+[
+    {
+        "testcase": "few_violations",
+        "expected": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-separate-sync-async"
+                    ],
+                    "line_no": 325,
+                    "bad_code": "async def analyze_document_async(self, model_id: str, body: Union[AnalyzeDocumentRequest, JSON, IO[bytes]], **kwargs: Any) -> AnalyzeResult",
+                    "suggestion": "Remove this asynchronous method from the synchronous client. Instead, offer an equivalent async method only in the async client located under the azure.ai.documentintelligence.aio namespace.",
+                    "comment": "Synchronous client classes must not mix in async methods. The 'analyze_document_async' method in the sync client violates the guideline for providing separate sync and async clients."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-async-keywords"
+                    ],
+                    "line_no": 937,
+                    "bad_code": "@asyncio.coroutine",
+                    "suggestion": "Replace '@asyncio.coroutine' with the async/await syntax. Define the method using 'async def' and use 'await' where needed.",
+                    "comment": "Using '@asyncio.coroutine' is deprecated. Async methods should use the modern async/await syntax to comply with Python 3.5+ guidelines."
+                }
+            ]
+        },
+        "actual": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-async-keywords"
+                    ],
+                    "line_no": 937,
+                    "bad_code": "@asyncio.coroutine",
+                    "suggestion": "Replace '@asyncio.coroutine' with the async/await syntax. For example, refactor the method as:\n\nasync def get_classifier_old(self, classifier_id: str, **kwargs: Any) -> DocumentClassifierDetails:\n    ...\n",
+                    "comment": "Asynchronous methods in the SDK must use the async/await keywords rather than the deprecated @asyncio.coroutine decorator."
+                }
+            ]
+        },
+        "total_violations": 2,
+        "violations_found": 1,
+        "true_positives": 1,
+        "false_positives": 0,
+        "false_negatives": 1,
+        "percent_coverage": 50.0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 3,
+        "groundedness": 5,
+        "groundedness_reason": "The RESPONSE accurately reflects the guidelines provided in the CONTEXT, addressing the specific rule about using async/await keywords and providing a suggestion for correction without introducing unsupported information or omitting critical details.",
+        "overall_score": 48
+    },
+    {
+        "testcase": "many_violations",
+        "expected": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-namespaces-prefix"
+                    ],
+                    "line_no": 3,
+                    "bad_code": "namespace microsoft.azure.ai.documentintelligence",
+                    "suggestion": "namespace azure.ai.documentintelligence",
+                    "comment": "The library is using 'microsoft' as the root namespace rather than 'azure'. According to the guidelines, libraries must be implemented as a sub\u2010package of the azure root namespace."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-long-args"
+                    ],
+                    "line_no": 629,
+                    "bad_code": "def process_document(self, model_id, doc_type, source, version, locale, format, pages, fields, timeout) -> AnalyzeResult",
+                    "suggestion": "Refactor the method signature to reduce the count of required positional parameters. For example, consider making parameters like 'version, locale, format, pages, fields, timeout' keyword\u2010only by using '*' after the required parameters: \n\n def process_document(self, model_id, doc_type, source, *, version, locale, format, pages, fields, timeout) -> AnalyzeResult",
+                    "comment": "This method requires nine positional parameters which exceeds the guideline recommendation to limit positional parameters to five. Use keyword-only parameters for optional or less ordered parameters."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-optional-args"
+                    ],
+                    "line_no": 642,
+                    "bad_code": "def analyze_batch(self, model_id, body, features=None, locale=None, output=None) -> LROPoller[AnalyzeBatchResult]",
+                    "suggestion": "Modify the function signature to enforce keyword-only for optional parameters. For example:\n\n def analyze_batch(self, model_id, body, *, features=None, locale=None, output=None) -> LROPoller[AnalyzeBatchResult]",
+                    "comment": "Optional parameters should be defined as keyword-only to improve clarity and prevent accidental misplacement, per SDK guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-errors-use-standard-exceptions"
+                    ],
+                    "line_no": 3160,
+                    "bad_code": "class DocumentIntelligenceCustomError(Exception):",
+                    "suggestion": "Consider using an existing exception type from azure-core (for example, subclass AzureError) or a built-in exception if appropriate, rather than creating a new custom exception.",
+                    "comment": "Custom exceptions should be avoided if a standard or azure-core exception type can convey the error, per SDK guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-namespaces-async"
+                    ],
+                    "line_no": 661,
+                    "bad_code": "namespace azure.ai.documentintelligence.async",
+                    "suggestion": "namespace azure.ai.documentintelligence.aio",
+                    "comment": "The asynchronous client namespace must use an '.aio' suffix, not '.async', to adhere to the async client naming guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-hier-vend"
+                    ],
+                    "line_no": 332,
+                    "bad_code": "def client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "suggestion": "def get_document_intelligence_client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "comment": "Hierarchical client retrieval methods should follow the 'get_<child>_client' naming convention."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-name-uppercase"
+                    ],
+                    "line_no": 1948,
+                    "bad_code": "neural = \"neural\"",
+                    "suggestion": "NEURAL = \"neural\" (and similarly, use TEMPLATE = \"template\" for the other member)",
+                    "comment": "Enum member names must be in UPPERCASE. The current definition of DocumentBuildMode uses lower-case member names."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-auth-credential-azure-core"
+                    ],
+                    "line_no": 995,
+                    "bad_code": "api_key: str",
+                    "suggestion": "Replace 'api_key: str' with 'credential: Union[AzureKeyCredential, AsyncTokenCredential]' (and update the parameter name) to align with the sync client and azure-core credential guidelines.",
+                    "comment": "The async client's constructor uses a simple string ('api_key') rather than a proper azure-core credential type, causing an inconsistency with the sync client."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1427,
+                    "bad_code": "ivar failedCount: int",
+                    "suggestion": "ivar failed_count: int",
+                    "comment": "Variable names should use snake_case. 'failedCount' should be renamed to 'failed_count'."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1428,
+                    "bad_code": "ivar skippedCount: int",
+                    "suggestion": "ivar skipped_count: int",
+                    "comment": "Variable names should use snake_case. 'skippedCount' should be renamed to 'skipped_count'."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1429,
+                    "bad_code": "ivar succeededCount: int",
+                    "suggestion": "ivar succeeded_count: int",
+                    "comment": "Variable names should use snake_case. 'succeededCount' should be renamed to 'succeeded_count'."
+                }
+            ]
+        },
+        "actual": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-namespaces-prefix"
+                    ],
+                    "line_no": 3,
+                    "bad_code": "namespace microsoft.azure.ai.documentintelligence",
+                    "suggestion": "Change the namespace so that it begins with 'azure', for example: 'namespace azure.ai.documentintelligence'.",
+                    "comment": "The library should be implemented as a sub-package of the azure namespace rather than microsoft."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-long-args"
+                    ],
+                    "line_no": 629,
+                    "bad_code": "def process_document(self, model_id, doc_type, source, version, locale, format, pages, fields, timeout) -> AnalyzeResult",
+                    "suggestion": "Refactor the method to use keyword-only arguments for optional/less-ordered parameters and reduce the number of required positional parameters.",
+                    "comment": "Methods should not require more than five positional parameters. This method exceeds that limit."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-name-uppercase"
+                    ],
+                    "line_no": 1948,
+                    "bad_code": "neural = \"neural\"",
+                    "suggestion": "Rename the enum member to UPPERCASE, e.g. 'NEURAL = \"neural\"'.",
+                    "comment": "Enum member names should be in UPPERCASE."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1427,
+                    "bad_code": "ivar failedCount: int",
+                    "suggestion": "Use snake_case for variable names, e.g. 'ivar failed_count: int'.",
+                    "comment": "Property names should follow snake_case naming conventions."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 2339,
+                    "bad_code": "ivar innererror: Optional[DocumentIntelligenceInnerError]",
+                    "suggestion": "Rename the variable to use snake_case, e.g. 'ivar inner_error: Optional[DocumentIntelligenceInnerError]'.",
+                    "comment": "Property names should follow snake_case naming conventions."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-hier-vend"
+                    ],
+                    "line_no": 332,
+                    "bad_code": "def client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "suggestion": "Rename the method to begin with 'get_', for example: 'def get_document_intelligence_client(self, name, **kwargs) -> DocumentIntelligenceClient'.",
+                    "comment": "Helper methods for retrieving child clients should be prefixed with 'get_'."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-namespaces-async"
+                    ],
+                    "line_no": 661,
+                    "bad_code": "namespace azure.ai.documentintelligence.async",
+                    "suggestion": "Rename the async namespace to use the .aio suffix, e.g. 'namespace azure.ai.documentintelligence.aio'.",
+                    "comment": "Async client namespaces should be defined using the .aio suffix rather than '.async'."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-auth-credential-azure-core"
+                    ],
+                    "line_no": 995,
+                    "bad_code": "api_key: str,",
+                    "suggestion": "Replace the raw API key string with a proper credential type, for example: 'credential: Union[AzureKeyCredential, AsyncTokenCredential]'.",
+                    "comment": "Clients should use the credential classes from azure-core rather than accepting a plain API key string."
+                }
+            ]
+        },
+        "total_violations": 11,
+        "violations_found": 8,
+        "true_positives": 7,
+        "false_positives": 1,
+        "false_negatives": 4,
+        "percent_coverage": 63.6363636364,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 4,
+        "groundedness": 5,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately identifying and addressing violations of the guidelines without introducing unsupported information or omitting critical details.",
+        "overall_score": 53
+    },
+    {
+        "testcase": "no_violations",
+        "expected": {
+            "status": "Success",
+            "violations": []
+        },
+        "actual": {
+            "status": "Success",
+            "violations": []
+        },
+        "total_violations": 0,
+        "violations_found": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "percent_coverage": 0.0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 5,
+        "groundedness": 1,
+        "groundedness_reason": "The RESPONSE is ungrounded because there is no CONTEXT provided to ground it to. It does not introduce unrelated information, but it cannot be considered grounded without a CONTEXT.",
+        "overall_score": 100
+    },
+    {
+        "testcase": "multiple_same_violations",
+        "expected": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 1448,
+                    "bad_code": "class azure.ai.documentintelligence.models.AnalyzeOutputOption(Enum):",
+                    "suggestion": "class azure.ai.documentintelligence.models.AnalyzeOutputOption(str, Enum):",
+                    "comment": "Enums in the SDK should be extensible by inheriting from str as well as Enum. This allows for flexible comparisons and future extensions."
+                },
+                {
+                    "rule_ids": [
+                        "python-models-enum-string"
+                    ],
+                    "line_no": 1902,
+                    "bad_code": "class azure.ai.documentintelligence.models.DocumentBarcodeKind(Enum):",
+                    "suggestion": "class azure.ai.documentintelligence.models.DocumentBarcodeKind(str, Enum):",
+                    "comment": "Enum members should be based on str to ensure extensibility and compliance with SDK guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python-models-enum-string"
+                    ],
+                    "line_no": 1922,
+                    "bad_code": "class azure.ai.documentintelligence.models.DocumentBuildMode(Enum):",
+                    "suggestion": "class azure.ai.documentintelligence.models.DocumentBuildMode(str, Enum):",
+                    "comment": "For consistency and extensibility, enums should inherit from str alongside Enum."
+                },
+                {
+                    "rule_ids": [
+                        "python-models-enum-string"
+                    ],
+                    "line_no": 1864,
+                    "bad_code": "class azure.ai.documentintelligence.models.DocumentAnalysisFeature(Enum):",
+                    "suggestion": "class azure.ai.documentintelligence.models.DocumentAnalysisFeature(str, Enum):",
+                    "comment": "Enums should extend str to adhere to the guideline of using extensible enumerations in the SDK."
+                },
+                {
+                    "rule_ids": [
+                        "python-models-enum-string"
+                    ],
+                    "line_no": 1811,
+                    "bad_code": "class azure.ai.documentintelligence.models.ContentSourceKind(Enum):",
+                    "suggestion": "class azure.ai.documentintelligence.models.ContentSourceKind(str, Enum):",
+                    "comment": "Enums should extend str to adhere to the guideline of using extensible enumerations in the SDK."
+                }
+            ]
+        },
+        "actual": {
+            "status": "Success",
+            "violations": []
+        },
+        "total_violations": 5,
+        "violations_found": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 5,
+        "percent_coverage": 0.0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 1,
+        "groundedness": 1,
+        "groundedness_reason": "The RESPONSE is entirely unrelated to the CONTEXT, as it does not address the directive about extensible enumerations in any way.",
+        "overall_score": 0
+    },
+    {
+        "average_score": 50.25,
+        "total_evals": 4
+    }
+]

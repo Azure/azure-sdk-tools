@@ -3,7 +3,6 @@ import json
 import pathlib
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deconstruct a test case for editing.")
     parser.add_argument(
@@ -31,24 +30,24 @@ if __name__ == "__main__":
     test_case = args.test_case
 
     test_cases = {}
-    with open(test_file, 'r') as f:
+    with open(test_file, "r") as f:
         for line in f:
             if line.strip():
                 parsed = json.loads(line)
-                if 'testcase' in parsed:
-                    test_cases[parsed['testcase']] = parsed
+                if "testcase" in parsed:
+                    test_cases[parsed["testcase"]] = parsed
 
     if test_case not in test_cases:
         raise ValueError(f"Test case '{test_case}' not found in the file.")
 
-    apiview = test_cases[test_case].get('query', '')
-    expected = test_cases[test_case].get('response', '')
+    apiview = test_cases[test_case].get("query", "")
+    expected = test_cases[test_case].get("response", "")
     deconstructed_apiview = pathlib.Path(__file__).parent / "tests" / language / f"{test_case}.txt"
     deconstructed_expected = pathlib.Path(__file__).parent / "tests" / language / f"{test_case}.json"
-    with open(deconstructed_apiview, 'w') as f:
+    with open(deconstructed_apiview, "w") as f:
         f.write(apiview)
 
-    with open(deconstructed_expected, 'w') as f:
+    with open(deconstructed_expected, "w") as f:
         f.write(expected)
 
     print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")

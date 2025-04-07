@@ -50,6 +50,7 @@ if __name__ == "__main__":
     with open(args.expected_path, "r") as f:
         expected_contents = json.loads(f.read())
 
+    # TODO this needs to get guidelines context from the cosmos db
     # add context to the testcase based on the rule_ids in expected_contents and corresponding text from guidelines.json
     guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / args.language / "guidelines.json"
     with open(str(guidelines_path), "r") as f:
@@ -63,7 +64,13 @@ if __name__ == "__main__":
                     if rule["text"] not in context:
                         context += f"\n{rule['text']}"
 
-    test_case = {"testcase": args.test_case, "query": apiview_contents.replace("\t", ""), "language": args.language, "context": context, "response": json.dumps(expected_contents)}
+    test_case = {
+        "testcase": args.test_case,
+        "query": apiview_contents.replace("\t", ""),
+        "language": args.language,
+        "context": context,
+        "response": json.dumps(expected_contents),
+    }
 
     if os.path.exists(args.test_file):
         if args.overwrite:

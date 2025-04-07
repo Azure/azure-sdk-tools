@@ -18,9 +18,12 @@ _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
+DEFAULT_MODEL = "o3-mini"
+
+
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"], log_prompts: bool = False,):
+    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"] = DEFAULT_MODEL, log_prompts: bool = False,):
         self.language = language
         self.model = model
         self.output_parser = GuidelinesResult

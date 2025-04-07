@@ -33,8 +33,8 @@
                     ],
                     "line_no": 937,
                     "bad_code": "@asyncio.coroutine",
-                    "suggestion": "Replace '@asyncio.coroutine' with the async/await syntax. For example, refactor the method as:\n\nasync def get_classifier_old(self, classifier_id: str, **kwargs: Any) -> DocumentClassifierDetails:\n    ...\n",
-                    "comment": "Asynchronous methods in the SDK must use the async/await keywords rather than the deprecated @asyncio.coroutine decorator."
+                    "suggestion": "Replace the '@asyncio.coroutine' decorator with an async function using the async/await syntax. For example, change the definition of get_classifier_old to 'async def get_classifier_old(self, classifier_id: str, **kwargs: Any) -> DocumentClassifierDetails:' and remove the decorator.",
+                    "comment": "As per SDK guidelines, asynchronous methods must use the async/await syntax, not the deprecated '@asyncio.coroutine' decorator."
                 }
             ]
         },
@@ -48,10 +48,10 @@
         "wrong_rule_details": [],
         "line_matches_wrong_rule": 0,
         "wrong_line_details": [],
-        "similarity": 3,
+        "similarity": 2,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE accurately reflects the guidelines provided in the CONTEXT, addressing the specific rule about using async/await keywords and providing a suggestion for correction without introducing unsupported information or omitting critical details.",
-        "overall_score": 48
+        "groundedness_reason": "The RESPONSE is fully grounded and complete, accurately reflecting the guidelines provided in the CONTEXT without introducing unsupported details or omitting critical points.",
+        "overall_score": 58
     },
     {
         "testcase": "many_violations",
@@ -168,53 +168,8 @@
                     ],
                     "line_no": 3,
                     "bad_code": "namespace microsoft.azure.ai.documentintelligence",
-                    "suggestion": "Change the namespace so that it begins with 'azure', for example: 'namespace azure.ai.documentintelligence'.",
-                    "comment": "The library should be implemented as a sub-package of the azure namespace rather than microsoft."
-                },
-                {
-                    "rule_ids": [
-                        "python_implementation.html#python-codestyle-long-args"
-                    ],
-                    "line_no": 629,
-                    "bad_code": "def process_document(self, model_id, doc_type, source, version, locale, format, pages, fields, timeout) -> AnalyzeResult",
-                    "suggestion": "Refactor the method to use keyword-only arguments for optional/less-ordered parameters and reduce the number of required positional parameters.",
-                    "comment": "Methods should not require more than five positional parameters. This method exceeds that limit."
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-models-enum-name-uppercase"
-                    ],
-                    "line_no": 1948,
-                    "bad_code": "neural = \"neural\"",
-                    "suggestion": "Rename the enum member to UPPERCASE, e.g. 'NEURAL = \"neural\"'.",
-                    "comment": "Enum member names should be in UPPERCASE."
-                },
-                {
-                    "rule_ids": [
-                        "python_implementation.html#python-codestyle-vars-naming"
-                    ],
-                    "line_no": 1427,
-                    "bad_code": "ivar failedCount: int",
-                    "suggestion": "Use snake_case for variable names, e.g. 'ivar failed_count: int'.",
-                    "comment": "Property names should follow snake_case naming conventions."
-                },
-                {
-                    "rule_ids": [
-                        "python_implementation.html#python-codestyle-vars-naming"
-                    ],
-                    "line_no": 2339,
-                    "bad_code": "ivar innererror: Optional[DocumentIntelligenceInnerError]",
-                    "suggestion": "Rename the variable to use snake_case, e.g. 'ivar inner_error: Optional[DocumentIntelligenceInnerError]'.",
-                    "comment": "Property names should follow snake_case naming conventions."
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-client-hier-vend"
-                    ],
-                    "line_no": 332,
-                    "bad_code": "def client(self, name, **kwargs) -> DocumentIntelligenceClient",
-                    "suggestion": "Rename the method to begin with 'get_', for example: 'def get_document_intelligence_client(self, name, **kwargs) -> DocumentIntelligenceClient'.",
-                    "comment": "Helper methods for retrieving child clients should be prefixed with 'get_'."
+                    "suggestion": "namespace azure.ai.documentintelligence",
+                    "comment": "The root namespace must be a sub-package of the 'azure' namespace. Using 'microsoft' as the root violates the guideline."
                 },
                 {
                     "rule_ids": [
@@ -222,34 +177,43 @@
                     ],
                     "line_no": 661,
                     "bad_code": "namespace azure.ai.documentintelligence.async",
-                    "suggestion": "Rename the async namespace to use the .aio suffix, e.g. 'namespace azure.ai.documentintelligence.aio'.",
-                    "comment": "Async client namespaces should be defined using the .aio suffix rather than '.async'."
+                    "suggestion": "namespace azure.ai.documentintelligence.aio",
+                    "comment": "Async client libraries should be placed in an 'aio' namespace rather than 'async' to conform with Azure SDK guidelines."
                 },
                 {
                     "rule_ids": [
-                        "python_design.html#python-auth-credential-azure-core"
+                        "python_implementation.html#python-codestyle-long-args"
                     ],
-                    "line_no": 995,
-                    "bad_code": "api_key: str,",
-                    "suggestion": "Replace the raw API key string with a proper credential type, for example: 'credential: Union[AzureKeyCredential, AsyncTokenCredential]'.",
-                    "comment": "Clients should use the credential classes from azure-core rather than accepting a plain API key string."
+                    "line_no": 629,
+                    "bad_code": "def process_document(self, model_id, doc_type, source, version, locale, format, pages, fields, timeout) -> AnalyzeResult",
+                    "suggestion": "def process_document(self, model_id, doc_type, source, *, version, locale, format, pages, fields, timeout) -> AnalyzeResult:\n    ...",
+                    "comment": "This method has too many positional parameters. To adhere to the guidelines, consider converting optional parameters to keyword-only arguments by inserting '*' in the parameter list."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-hier-vend"
+                    ],
+                    "line_no": 332,
+                    "bad_code": "def client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "suggestion": "def get_document_intelligence_client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "comment": "For hierarchical clients, the method providing a child client should be prefixed with 'get_'. Renaming 'client' to 'get_document_intelligence_client' would comply with the guideline."
                 }
             ]
         },
         "total_violations": 11,
-        "violations_found": 8,
-        "true_positives": 7,
-        "false_positives": 1,
-        "false_negatives": 4,
-        "percent_coverage": 63.6363636364,
+        "violations_found": 4,
+        "true_positives": 4,
+        "false_positives": 0,
+        "false_negatives": 7,
+        "percent_coverage": 36.3636363636,
         "rule_matches_wrong_line": 0,
         "wrong_rule_details": [],
         "line_matches_wrong_rule": 0,
         "wrong_line_details": [],
-        "similarity": 4,
+        "similarity": 3,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately identifying and addressing violations of the guidelines without introducing unsupported information or omitting critical details.",
-        "overall_score": 53
+        "groundedness_reason": "The RESPONSE accurately identifies and addresses violations based on the guidelines provided in the CONTEXT, without introducing unsupported information or omitting critical details. It is fully grounded and complete.",
+        "overall_score": 50
     },
     {
         "testcase": "no_violations",
@@ -273,8 +237,8 @@
         "wrong_line_details": [],
         "similarity": 5,
         "groundedness": 1,
-        "groundedness_reason": "The RESPONSE is ungrounded because there is no CONTEXT provided to ground it to. It does not introduce unrelated information, but it cannot be considered grounded without a CONTEXT.",
-        "overall_score": 100
+        "groundedness_reason": "The RESPONSE is completely ungrounded because there is no CONTEXT provided to evaluate its relevance or accuracy.",
+        "overall_score": 100.0
     },
     {
         "testcase": "multiple_same_violations",
@@ -344,11 +308,11 @@
         "wrong_line_details": [],
         "similarity": 1,
         "groundedness": 1,
-        "groundedness_reason": "The RESPONSE is entirely unrelated to the CONTEXT, as it does not address the directive about extensible enumerations in any way.",
+        "groundedness_reason": "The RESPONSE is completely ungrounded as it does not relate to the CONTEXT at all, introducing information that is not connected to the directive about using extensible enumerations.",
         "overall_score": 0
     },
     {
-        "average_score": 50.25,
+        "average_score": 52.0,
         "total_evals": 4
     }
 ]

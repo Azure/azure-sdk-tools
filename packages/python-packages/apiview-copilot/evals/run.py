@@ -15,8 +15,10 @@ NUM_RUNS: int = 3
 
 
 class CustomAPIViewEvaluator:
+    """Evaluator for comparing expected and actual APIView violations."""
 
     def __init__(self):
+        """Needs to be defined for some reason"""
         pass
 
     def _get_violation_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
@@ -63,62 +65,60 @@ class CustomAPIViewEvaluator:
             "true_positives": len(exact_matches),
             "false_positives": len(actual["violations"]) - (len(exact_matches) + len(rule_matches_wrong_line)),
             "false_negatives": len(expected["violations"]) - (len(exact_matches) + len(rule_matches_wrong_line)),
-            "percent_coverage": (len(exact_matches) / len(expected["violations"]) * 100) if expected["violations"] else 0,
+            "percent_coverage": (
+                (len(exact_matches) / len(expected["violations"]) * 100) if expected["violations"] else 0
+            ),
             "wrong_line_details": list(rule_matches_wrong_line),
-            "wrong_rule_details": list(line_matches_wrong_rule)
+            "wrong_rule_details": list(line_matches_wrong_rule),
         }
         return review_eval
 
 
 def review_apiview(query: str, language: str):
-    from src._gpt_reviewer_openai import GptReviewer  # pylint: disable=import-error,no-name-in-module
-    rg = GptReviewer()
-    review = rg.get_response(query, language)
+    from src._apiview_reviewer import ApiViewReview  # pylint: disable=import-error,no-name-in-module
+
+    ai_review = ApiViewReview(language=language)
+    review = ai_review.get_response(query)
     return {"response": review.model_dump_json()}
 
 
 def calculate_overall_score(row: dict[str, Any]) -> float:
-    """Calculate weighted score based on various metrics.
-    """
+    """Calculate weighted score based on various metrics."""
+
     weights = {
-        'exact_match_weight': 0.6,     # Perfect match - right rule, right line
-        'fuzzy_match_weight': 0.2,     # Fuzzy match - right rule, wrong line
-        'false_positive_penalty': 0.3, # Penalty for incorrect violations
-        'groundedness_weight': 0.15,   # Weight for staying grounded in guidelines
-        'similarity_weight': 0.05      # Smaller weight for similarity in expected vs actual responses
+        "exact_match_weight": 0.7,      # Exact match (rule id and line number)
+        "groundedness_weight": 0.2,     # Staying grounded in guidelines
+        "similarity_weight": 0.1,       # Similarity between expected and actual
+        "false_positive_penalty": 0.3,  # Penalty for false positives
+        "fuzzy_match_bonus": 0.2,       # Bonus for fuzzy match (right rule, wrong line)
     }
 
-    exact_match_score = (row["outputs.custom_eval.true_positives"] /
-                        row["outputs.custom_eval.total_violations"]
-                        if row["outputs.custom_eval.total_violations"] > 0 else 1.0)
+    if row["outputs.custom_eval.total_violations"] == 0:
+        # tests with no violations are all or nothing
+        return 100.0 if row["outputs.custom_eval.violations_found"] == 0 else 0.0
 
-    # Only consider fuzzy matches if there are remaining unmatched violations
+    exact_match_score = row["outputs.custom_eval.true_positives"] / row["outputs.custom_eval.total_violations"]
+
     remaining_violations = row["outputs.custom_eval.total_violations"] - row["outputs.custom_eval.true_positives"]
-    rule_match_score = (row["outputs.custom_eval.rule_matches_wrong_line"] /
-                       remaining_violations
-                       if remaining_violations > 0 else 0.0)
+    fuzzy_match_score = (
+        row["outputs.custom_eval.rule_matches_wrong_line"] / remaining_violations if remaining_violations > 0 else 0.0
+    )
 
-    # Perfect match case - give full credit for exact + rule match weights
-    if exact_match_score == 1.0:
-        rule_match_score = 1.0
+    false_positive_rate = (
+        row["outputs.custom_eval.false_positives"] / row["outputs.custom_eval.violations_found"]
+        if row["outputs.custom_eval.violations_found"] > 0
+        else 0.0
+    )
 
-    false_positive_rate = (row["outputs.custom_eval.false_positives"] /
-                          row["outputs.custom_eval.violations_found"]
-                          if row["outputs.custom_eval.violations_found"] > 0 else 0.0)
-
-    if row["outputs.custom_eval.total_violations"] == 0 and row["outputs.custom_eval.true_positives"] == 0:
-        # test with no violations / no violations found should get credit for groundedness
-        groundedness_normalized = 1.0
-    else:
-        groundedness_normalized = (row["outputs.groundedness.groundedness"] - 1) / 4
+    groundedness_normalized = (row["outputs.groundedness.groundedness"] - 1) / 4
     similarity_normalized = (row["outputs.similarity.similarity"] - 1) / 4
 
     score = (
-        weights['exact_match_weight'] * exact_match_score +
-        weights['fuzzy_match_weight'] * rule_match_score -
-        weights['false_positive_penalty'] * false_positive_rate +
-        weights['groundedness_weight'] * groundedness_normalized +
-        weights['similarity_weight'] * similarity_normalized
+        weights["exact_match_weight"] * exact_match_score
+        + weights["groundedness_weight"] * groundedness_normalized
+        + weights["similarity_weight"] * similarity_normalized
+        + weights["fuzzy_match_bonus"] * fuzzy_match_score
+        - weights["false_positive_penalty"] * false_positive_rate
     )
 
     normalized_score = max(0, min(100, score * 100))
@@ -127,54 +127,74 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
 
 def format_terminal_diff(new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
     """Format difference with ANSI colors for terminal output."""
+
     diff = new - old
     if diff > 0:
         if reverse:
-            return f" (\033[31m+{diff:{format_str}}\033[0m)" # Red
+            return f" (\033[31m+{diff:{format_str}}\033[0m)"  # Red
         return f" (\033[32m+{diff:{format_str}}\033[0m)"  # Green
     elif diff < 0:
         if reverse:
             return f" (\033[32m{diff:{format_str}}\033[0m)"  # Green
-        return f" (\033[31m{diff:{format_str}}\033[0m)"   # Red
+        return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
     return f" ({diff:{format_str}})"
 
 
-def create_table(baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str) -> None:
-    headers = ["Test Case", "Score", "Violations found", "Exact matches (TP)", "Fuzzy matches", "False positives (FP)", "Groundedness", "Similarity"]
+def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
+    """Display results in a table format."""
+    for name, test_results in all_results.items():
+        baseline_results = {}
+        baseline_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
+
+        if baseline_path.exists():
+            with open(baseline_path, "r") as f:
+                baseline_data = json.load(f)
+                for result in baseline_data[:-1]:  # Skip summary
+                    baseline_results[result["testcase"]] = result
+                baseline_results["average_score"] = baseline_data[-1]["average_score"]
+
+        output_table(baseline_results, test_results, name)
+
+
+def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str) -> None:
+    headers = [
+        "Test Case",
+        "Score",
+        "Violations found",
+        "Exact matches (TP)",
+        "Fuzzy matches",
+        "False positives (FP)",
+        "Groundedness",
+        "Similarity",
+    ]
     terminal_rows = []
 
     for result in eval_results[:-1]:  # Skip summary object
-        testcase = result['testcase']
-        score = result['overall_score']
-        exact = result['true_positives']
-        rule = result['rule_matches_wrong_line']
-        fp = result['false_positives']
-        ground = result['groundedness']
-        sim = result['similarity']
+        testcase = result["testcase"]
+        score = result["overall_score"]
+        exact = result["true_positives"]
+        rule = result["rule_matches_wrong_line"]
+        fp = result["false_positives"]
+        ground = result["groundedness"]
+        sim = result["similarity"]
         violations_found = f"{result['violations_found']} / {result['total_violations']}"
 
         terminal_row = [testcase]
         if testcase in baseline_results:
             base = baseline_results[testcase]
-            terminal_row.extend([
-                f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
-                violations_found,
-                f"{exact}{format_terminal_diff(exact, base['true_positives'], 'd')}",
-                f"{rule}{format_terminal_diff(rule, base['rule_matches_wrong_line'], 'd')}",
-                f"{fp}{format_terminal_diff(fp, base['false_positives'], 'd', reverse=True)}",
-                f"{ground:.1f}{format_terminal_diff(ground, base['groundedness'])}",
-                f"{sim:.1f}{format_terminal_diff(sim, base['similarity'])}"
-            ])
+            terminal_row.extend(
+                [
+                    f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
+                    violations_found,
+                    f"{exact}{format_terminal_diff(exact, base['true_positives'], 'd')}",
+                    f"{rule}{format_terminal_diff(rule, base['rule_matches_wrong_line'], 'd')}",
+                    f"{fp}{format_terminal_diff(fp, base['false_positives'], 'd', reverse=True)}",
+                    f"{ground:.1f}{format_terminal_diff(ground, base['groundedness'])}",
+                    f"{sim:.1f}{format_terminal_diff(sim, base['similarity'])}",
+                ]
+            )
         else:
-            values = [
-                f"{score:.1f}",
-                violations_found,
-                f"{exact}",
-                str(rule),
-                str(fp),
-                f"{ground:.1f}",
-                f"{sim:.1f}"
-            ]
+            values = [f"{score:.1f}", violations_found, f"{exact}", str(rule), str(fp), f"{ground:.1f}", f"{sim:.1f}"]
             terminal_row.extend(values)
 
         terminal_rows.append(terminal_row)
@@ -183,29 +203,104 @@ def create_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
     print(f"\n\n✨ {file_name} results:\n")
     print(tabulate(terminal_rows, headers, tablefmt="simple"))
     if baseline_results:
-        print(f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n")
+        print(
+            f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n"
+        )
+
+def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
+    """Calculate and output the coverage of tests based on the rule IDs."""
+
+    if args.test_file == "all":
+        # only update coverage if all tests are run
+        output_path = pathlib.Path(__file__).parent / "results" / args.language / "coverage.json"
+        # TODO get guidelines from db
+        guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / args.language / "guidelines.json"
+        with open(str(guidelines_path), "r") as f:
+            guidelines = json.load(f)
+        guideline_rule_ids = [rule["id"] for rule in guidelines]
+        difference = set(guideline_rule_ids).difference(rule_ids)
+        with open(str(output_path), "w+") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "tested": list(rule_ids),
+                        "not_tested": list(difference),
+                        "coverage": len(rule_ids) / len(guideline_rule_ids) * 100,
+                    },
+                    indent=4,
+                )
+            )
+
+        print(f"\nTest coverage for {args.language}: {len(rule_ids) / len(guideline_rule_ids) * 100:.2f}%")
+
+
+def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
+    """Establish the current results as the new baseline."""
+
+    establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+    if establish_baseline.lower() == "y":
+        for name, result in all_results.items():
+            output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
+            with open(str(output_path), "w") as f:
+                json.dump(result, indent=4, fp=f)
+
+
+def record_run_result(result: dict[str, Any], rule_ids: Set[str]) -> list[dict[str, Any]]:
+    run_result = []
+    total_score = 0
+
+    for row in result["rows"]:
+        score = calculate_overall_score(row)
+        total_score += score
+        rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["violations"]]
+        rule_ids.update(*rules)
+
+        run_result.append(
+            {
+                "testcase": row["inputs.testcase"],
+                "expected": json.loads(row["inputs.response"]),
+                "actual": json.loads(row["outputs.response"]),
+                "total_violations": row["outputs.custom_eval.total_violations"],
+                "violations_found": row["outputs.custom_eval.violations_found"],
+                "true_positives": row["outputs.custom_eval.true_positives"],
+                "false_positives": row["outputs.custom_eval.false_positives"],
+                "false_negatives": row["outputs.custom_eval.false_negatives"],
+                "percent_coverage": row["outputs.custom_eval.percent_coverage"],
+                "rule_matches_wrong_line": row["outputs.custom_eval.rule_matches_wrong_line"],
+                "wrong_rule_details": row["outputs.custom_eval.wrong_rule_details"],
+                "line_matches_wrong_rule": row["outputs.custom_eval.line_matches_wrong_rule"],
+                "wrong_line_details": row["outputs.custom_eval.wrong_line_details"],
+                "similarity": row["outputs.similarity.similarity"],
+                "groundedness": row["outputs.groundedness.groundedness"],
+                "groundedness_reason": row["outputs.groundedness.groundedness_reason"],
+                "overall_score": score,
+            }
+        )
+
+    average_score = total_score / len(result["rows"])
+    run_result.append({"average_score": average_score, "total_evals": len(result["rows"])})
+    return run_result
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run evals.")
+    parser = argparse.ArgumentParser(description="Run evals for APIview copilot.")
     parser.add_argument(
         "--language",
         type=str,
         default="python",
-        help="The language to run evals for.",
+        help="The language to run evals for. Defaults to python.",
     )
     parser.add_argument(
         "--n",
         type=int,
         default=NUM_RUNS,
-        help="The number of runs to perform, with the median of results kept.",
+        help="The number of runs to perform, with the median of results kept. Defaults to 3.",
     )
-
     parser.add_argument(
         "--test-file",
         type=str,
         default="all",
-        help="Only run a particular jsonl test file.",
+        help="Only run a particular jsonl test file, takes the name of the file. Defaults to all.",
     )
     args = parser.parse_args()
 
@@ -231,12 +326,11 @@ if __name__ == "__main__":
         if args.test_file != "all" and file.name != args.test_file:
             continue
 
-        path = file
-        eval_results = []
+        run_results = []
         for run in range(args.n):
             print(f"Running evals {run + 1}/{args.n} for {file.name}...")
             result = evaluate(
-                data=str(path),
+                data=str(file),
                 evaluators={
                     "custom_eval": custom_eval,
                     "similarity": similarity_eval,
@@ -277,86 +371,14 @@ if __name__ == "__main__":
                 # }
             )
 
-            results_list = []
-            total_score = 0
-
-            for row in result["rows"]:
-                score = calculate_overall_score(row)
-                total_score += score
-                rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["violations"]]
-                rule_ids.update(*rules)
-
-                results_list.append({
-                    "testcase": row["inputs.testcase"],
-                    "expected": json.loads(row["inputs.response"]),
-                    "actual": json.loads(row["outputs.response"]),
-                    "total_violations": row["outputs.custom_eval.total_violations"],
-                    "violations_found": row["outputs.custom_eval.violations_found"],
-                    "true_positives": row["outputs.custom_eval.true_positives"],
-                    "false_positives": row["outputs.custom_eval.false_positives"],
-                    "false_negatives": row["outputs.custom_eval.false_negatives"],
-                    "percent_coverage": row["outputs.custom_eval.percent_coverage"],
-                    "rule_matches_wrong_line": row["outputs.custom_eval.rule_matches_wrong_line"],
-                    "wrong_rule_details": row["outputs.custom_eval.wrong_rule_details"],
-                    "line_matches_wrong_rule": row["outputs.custom_eval.line_matches_wrong_rule"],
-                    "wrong_line_details": row["outputs.custom_eval.wrong_line_details"],
-                    "similarity": row["outputs.similarity.similarity"],
-                    "groundedness": row["outputs.groundedness.groundedness"],
-                    "groundedness_reason": row["outputs.groundedness.groundedness_reason"],
-                    "overall_score": score,
-                })
-
-            average_score = total_score / len(result["rows"])
-            results_list.append({
-                "average_score": average_score,
-                "total_evals": len(result["rows"])
-            })
-            print(f"Average score for {file.name} run {run + 1}/{args.n}: {average_score:.2f}")
-            eval_results.append(results_list)
+            run_result = record_run_result(result, rule_ids)
+            print(f"Average score for {file.name} run {run + 1}/{args.n}: {run_result[-1]['average_score']:.2f}")
+            run_results.append(run_result)
 
         # take the median run based on the average score
-        eval_result = sorted(eval_results, key=lambda x: x[-1]["average_score"])[len(eval_results) // 2]
+        median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
+        all_results[file.name] = median_result
 
-        all_results[file.name] = eval_result
-
-    for name, test_results in all_results.items():
-        baseline_results = {}
-        baseline_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-        
-        if baseline_path.exists():
-            with open(baseline_path, 'r') as f:
-                baseline_data = json.load(f)
-                for result in baseline_data[:-1]:  # Skip summary
-                    baseline_results[result['testcase']] = result
-                baseline_results["average_score"] = baseline_data[-1]["average_score"]
-
-        create_table(baseline_results, test_results, name)
-
-    establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-    if establish_baseline.lower() == "y":
-        for name, result in all_results.items():
-            output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-            with open(str(output_path), "w") as f:
-                json.dump(result, indent=4, fp=f)
-
-    if args.test_file == "all":
-        # only update coverage if all tests are run
-        output_path = pathlib.Path(__file__).parent / "results" / args.language / "coverage.json"
-        guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / args.language / "guidelines.json"
-        with open(str(guidelines_path), "r") as f:
-            guidelines = json.load(f)
-        guideline_rule_ids = [rule["id"] for rule in guidelines]
-        difference = set(guideline_rule_ids).difference(rule_ids)
-        with open(str(output_path), "w+") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "tested": list(rule_ids),
-                        "not_tested": list(difference),
-                        "coverage": len(rule_ids) / len(guideline_rule_ids) * 100,
-                    },
-                    indent=4
-                )
-            )
-
-        print(f"\nTest coverage for {args.language}: {len(rule_ids) / len(guideline_rule_ids) * 100:.2f}%")
+    show_results(args, all_results)
+    establish_baseline(args, all_results)
+    calculate_coverage(args, rule_ids)

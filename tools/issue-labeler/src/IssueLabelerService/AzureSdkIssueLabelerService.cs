@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
 using Hubbup.MikLabelModel;
-using IssueLabeler.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +13,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using AzureRagService;
-using Azure.Identity;
 using System.Linq;
 
 namespace IssueLabelerService
@@ -23,28 +21,30 @@ namespace IssueLabelerService
     {
         private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
-        private readonly IConfiguration _config;
         private readonly TriageRag _ragService;
         private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
-        private static readonly ConcurrentDictionary<string, byte> CompleteTraigeRepositories = new(StringComparer.OrdinalIgnoreCase); 
+        private ConfigurationService _configurationService;
         private IModelHolderFactoryLite ModelHolderFactory { get; }
         private ILabelerLite Labeler { get; }
         private string CommonModelRepositoryName { get; }
 
-        public AzureSdkIssueLabelerService(ILabelerLite labeler, IModelHolderFactoryLite modelHolderFactory, IConfiguration config, ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService)
+        public AzureSdkIssueLabelerService(ILabelerLite labeler, IModelHolderFactoryLite modelHolderFactory, ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, ConfigurationService configService)
         {
-            _config = config;
             _logger = logger;
             _ragService = ragService;
             ModelHolderFactory = modelHolderFactory;
             Labeler = labeler;
 
-            CommonModelRepositoryName = config["CommonModelRepositoryName"];
+            // Gets us the default config
+            var config = configService.GetConfiguration();
+
+            CommonModelRepositoryName = config["default:CommonModelRepositoryName"];
 
             // Initialize the set of repositories that use the common model.
-            ConvertRepoStringList(config["ReposUsingCommonModel"], CommonModelRepositories);
-            ConvertRepoStringList(config["CompleteTraigeRepositories"], CompleteTraigeRepositories);
+            ConvertRepoStringList(config["default:ReposUsingCommonModel"], CommonModelRepositories);
+
+            _configurationService = configService;
         }
 
         [Function("AzureSdkIssueLabelerService")]
@@ -61,22 +61,21 @@ namespace IssueLabelerService
                 return new BadRequestResult();
             }
 
+            var config = _configurationService.GetRepositoryConfiguration($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
+
             IssueOutput result;
             try
             {
-                // If in flagged triage repo run complete issue triage (includes comments) otherwise run the regular triage that we currently do.
-                if (CompleteTraigeRepositories.ContainsKey(issue.RepositoryName))
+                // If we enable answers.
+                if (bool.Parse(config["enableAnswers"]))
                 {
                     try
                     {
-                        result = await CompleteIssueTriageAsync(issue);
+                        result = await CompleteIssueTriageAsync(issue, config);
 
                         // Temporary run both to get labels
-                        if(issue.RepositoryName == "azure-sdk-for-net")
-                        {
-                            var labels = await OnlyLabelIssueAsync(issue);
-                            result.Labels = labels.Labels;
-                        }
+                        var labels = await OnlyLabelIssueAsync(issue, config);
+                        result.Labels = labels.Labels;
                     }
                     catch (Exception ex)
                     {
@@ -84,12 +83,12 @@ namespace IssueLabelerService
                         
                         // Attempt to just label the issue
                         _logger.LogInformation($"Attempting to run labeler on issue #{issue.IssueNumber}.");
-                        result = await OnlyLabelIssueAsync(issue);
+                        result = await OnlyLabelIssueAsync(issue, config);
                     }
                 }
                 else
                 {
-                    result = await OnlyLabelIssueAsync(issue);
+                    result = await OnlyLabelIssueAsync(issue, config);
                 }
             }
             catch (Exception ex)
@@ -116,34 +115,26 @@ namespace IssueLabelerService
             return JsonConvert.DeserializeObject<IssuePayload>(requestBody);
         }
 
-        private async Task<IssueOutput> CompleteIssueTriageAsync(IssuePayload issue)
+        private async Task<IssueOutput> CompleteIssueTriageAsync(IssuePayload issue, IConfigurationRoot config)
         {
             // Configuration for Azure services
-            var modelName = _config["OpenAIModelName"];
-
-            // TODO make switching between different Indexes easier
-            // For now we manually go python or dotnet
-            var issueIndexName = _config["IssueIndexNameDotNet"];
-            var documentIndexName = _config["DocumentIndexNameDotNet"];
-            if (issue.RepositoryName == "azure-sdk-for-python")
-            {
-                issueIndexName = _config["IssueIndexNamePython"];
-                documentIndexName = _config["DocumentIndexNamePython"];
-            }
+            var modelName = config["OpenAIModelName"];
+            var issueIndexName = config["IssueIndexName"];
+            var documentIndexName = config["DocumentIndexName"];
 
             // Issue specific configurations
-            var issueSemanticName = _config["IssueSemanticName"];
+            var issueSemanticName = config["IssueSemanticName"];
             const string issueFieldName = "text_vector";
 
             // Document specific configurations
-            var documentSemanticName = _config["DocumentSemanticName"];
+            var documentSemanticName = config["DocumentSemanticName"];
             const string documentFieldName = "text_vector";
 
             // Query + Filtering configurations
             string query = $"{issue.Title} {issue.Body}";
-            int top = int.Parse(_config["SourceCount"]);
-            double scoreThreshold = double.Parse(_config["ScoreThreshold"]);
-            double solutionThreshold = double.Parse(_config["SolutionThreshold"]);
+            int top = int.Parse(config["SourceCount"]);
+            double scoreThreshold = double.Parse(config["ScoreThreshold"]);
+            double solutionThreshold = double.Parse(config["SolutionThreshold"]);
 
             var relevantIssues = await _ragService.AzureSearchQueryAsync<Issue>(issueIndexName, issueSemanticName, issueFieldName, query, top);
             var relevantDocuments = await _ragService.AzureSearchQueryAsync<Document>(documentIndexName, documentSemanticName, documentFieldName, query, top);
@@ -187,7 +178,7 @@ namespace IssueLabelerService
             var printableIssues = issues.Select(r => JsonConvert.SerializeObject(r)).ToList();
             var printableDocs = docs.Select(r => JsonConvert.SerializeObject(r)).ToList();
 
-            string instructions = _config["Instructions"];
+            string instructions = config["Instructions"];
             string message;
             if (solution)
             {
@@ -243,7 +234,7 @@ namespace IssueLabelerService
             };
         }
 
-        private async Task<IssueOutput> OnlyLabelIssueAsync(IssuePayload issue)
+        private async Task<IssueOutput> OnlyLabelIssueAsync(IssuePayload issue, IConfigurationRoot config)
         {
             var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
 
@@ -254,7 +245,7 @@ namespace IssueLabelerService
 
                 try
                 {
-                    var allBlobConfigNames = _config[$"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames"].Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    var allBlobConfigNames = config[$"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames"].Split(';', StringSplitOptions.RemoveEmptyEntries);
 
                     // The model factory is thread-safe and will manage its own concurrency.
                     await ModelHolderFactory.CreateModelHolders(issue.RepositoryOwnerName, predictionRepositoryName, allBlobConfigNames).ConfigureAwait(false);

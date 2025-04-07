@@ -50,7 +50,7 @@ namespace IssueLabelerService
         public IConfigurationRoot GetDefaultConfiguration()
         {
             // Return the default configuration section
-            return _config.GetSection("defaults");
+            return (IConfigurationRoot)_config.GetSection("defaults");
         }
     }
 }

@@ -40,12 +40,6 @@ namespace IssueLabelerService
 
             var mergedConfig = configurationBuilder.Build();
 
-            // Print the merged configuration for testing
-            foreach (var kvp in mergedConfig.AsEnumerable())
-            {
-                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
-            }
-
             return mergedConfig;
         }
 

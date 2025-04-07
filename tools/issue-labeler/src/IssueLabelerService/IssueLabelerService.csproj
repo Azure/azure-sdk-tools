@@ -17,6 +17,7 @@
     <PackageReference Include="Azure.Search.Documents" Version="$(AzureSearchDocumentsVersion)" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtensionsConfigurationVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="8.1.1" />
   </ItemGroup>
 
   <ItemGroup>

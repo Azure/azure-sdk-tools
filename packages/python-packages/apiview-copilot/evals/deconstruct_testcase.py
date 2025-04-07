@@ -5,7 +5,7 @@ import pathlib
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create a test case for the given function.")
+    parser = argparse.ArgumentParser(description="Deconstruct a test case for editing.")
     parser.add_argument(
         "--language",
         type=str,
@@ -16,7 +16,7 @@ if __name__ == "__main__":
         "--test-file",
         type=str,
         required=True,
-        help="The name of the jsonl test file to deconstruct.",
+        help="The full path to the jsonl test file.",
     )
     parser.add_argument(
         "--test-case",
@@ -50,3 +50,5 @@ if __name__ == "__main__":
 
     with open(deconstructed_expected, 'w') as f:
         f.write(expected)
+
+    print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")

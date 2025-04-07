@@ -14,7 +14,7 @@ helps["review"] = """
     short-summary: Commands related to APIView GPT reviews.
 """
 
-def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "gpt-o3-mini"], chunk_input: bool = False, log_prompts: bool = False):
+def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "o3-mini"], chunk_input: bool = False, log_prompts: bool = False):
     """
     Generate a review for an APIView
     """
@@ -44,7 +44,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument("log_prompts", action="store_true", help="Log each prompt in ascending order in the `scratch/propmts` folder.")
-            ac.argument("model", type=str, help="The model to use for the review", options_list=("--model", "-m"), choices=["gpt-4o-mini", "gpt-o3-mini"])
+            ac.argument("model", type=str, help="The model to use for the review", options_list=("--model", "-m"), choices=["gpt-4o-mini", "o3-mini"])
             ac.argument("chunk_input", action="store_true", help="Chunk the input into smaller sections.")
         super(CliCommandsLoader, self).load_arguments(command)
 

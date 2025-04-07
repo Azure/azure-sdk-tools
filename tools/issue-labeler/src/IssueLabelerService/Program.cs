@@ -7,21 +7,31 @@ using Microsoft.Extensions.Hosting;
 using AzureRagService;
 using Hubbup.MikLabelModel;
 using Azure.Identity;
-using Azure.Search.Documents;
 using System;
 using Azure.AI.OpenAI;
 using OpenAI.Chat;
 using Azure.Search.Documents.Indexes;
+using Microsoft.Extensions.Configuration;
+using IssueLabelerService;
+
+var credential = new DefaultAzureCredential();
+
+var builder = new ConfigurationBuilder();
+builder.AddAzureAppConfiguration(options =>
+{
+    options.Connect(new Uri("https://gh-triage-app-config.azconfig.io"), credential);
+});
+
+var config = builder.Build();
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices((context, services) => {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        var config = context.Configuration;
-        services.AddSingleton(config);
 
-        var credential = new DefaultAzureCredential();
+        var configService = new ConfigurationService(config);
+        services.AddSingleton<ConfigurationService>(configService);
 
         services.AddSingleton<ChatClient>(sp =>
         {

@@ -44,13 +44,13 @@ namespace IssueLabelerService
         }
 
         /// <summary>
-        /// Gets the entire app configuration.
+        /// Gets the default app configuration.
         /// </summary>
-        /// <returns>The entire app configuration.</returns>
-        public IConfigurationRoot GetConfiguration()
+        /// <returns>The default app configuration.</returns>
+        public IConfigurationRoot GetDefaultConfiguration()
         {
-            // Return the entire configuration if no specific repository is needed
-            return _config;
+            // Return the default configuration section
+            return _config.GetSection("defaults");
         }
     }
 }

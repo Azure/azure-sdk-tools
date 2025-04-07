@@ -22,7 +22,7 @@ builder.AddAzureAppConfiguration(options =>
     options.Connect(new Uri("https://gh-triage-app-config.azconfig.io"), credential);
 });
 
-var config = builder.Build();
+var configRoot = builder.Build();
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -30,8 +30,10 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
-        var configService = new ConfigurationService(config);
+        var configService = new ConfigurationService(configRoot);
         services.AddSingleton<ConfigurationService>(configService);
+        
+        var config = configService.GetDefaultConfiguration();
 
         services.AddSingleton<ChatClient>(sp =>
         {

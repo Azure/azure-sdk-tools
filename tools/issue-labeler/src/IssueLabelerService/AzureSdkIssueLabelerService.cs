@@ -37,12 +37,12 @@ namespace IssueLabelerService
             Labeler = labeler;
 
             // Gets us the default config
-            var config = configService.GetConfiguration();
+            var config = configService.GetDefaultConfiguration();
 
-            CommonModelRepositoryName = config["default:CommonModelRepositoryName"];
+            CommonModelRepositoryName = config["CommonModelRepositoryName"];
 
             // Initialize the set of repositories that use the common model.
-            ConvertRepoStringList(config["default:ReposUsingCommonModel"], CommonModelRepositories);
+            ConvertRepoStringList(config["ReposUsingCommonModel"], CommonModelRepositories);
 
             _configurationService = configService;
         }

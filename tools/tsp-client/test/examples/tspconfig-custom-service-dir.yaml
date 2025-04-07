@@ -1,10 +1,6 @@
 parameters:
   "service-dir":
     default: "sdk/contosowidgetmanager"
-  "dependencies":
-    "additionalDirectories":
-      - "specification/contosowidgetmanager/Contoso.WidgetManager.Shared/"
-    default: ""
 emit:
   - "@azure-tools/typespec-autorest"
 linter:
@@ -37,3 +33,6 @@ options:
     package-dir: "azure-contoso-widgetmanager"
     namespace: com.azure.contoso.widgetmanager
     flavor: azure
+  "@azure-tools/typespec-client-generator-cli":
+    "additionalDirectories":
+      - "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared/"

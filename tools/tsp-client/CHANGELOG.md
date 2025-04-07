@@ -8,8 +8,7 @@
 options:
   "@azure-tools/typespec-client-generator-cli":
     "additionalDirectories":
-      - "specification/ai/HealthInsights/HealthInsights.Common/"
-      - "specification/ai/HealthInsights/HealthInsights.OpenAPI/"
+      - "specification/contosowidgetmanager/Contoso.WidgetManager.Shared/"
 ```
 
 ## 2025-04-03 0.17.0

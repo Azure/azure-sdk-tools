@@ -24,7 +24,7 @@ import {
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
-import path, { basename, dirname, resolve } from "node:path";
+import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
@@ -148,7 +148,7 @@ export async function initCommand(argv: any) {
     const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
     if (emitterPackageOverride) {
       // store relative path to repo root
-      tspLocationData.emitterPackageJsonPath = path.relative(repoRoot, emitterPackageOverride);
+      tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
     }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     outputDir = newPackageDir;
@@ -578,7 +578,7 @@ function getEmitterPackageJsonPath(repoRoot: string, tspLocation: TspLocation): 
 }
 
 function getEmitterLockPath(emitterPackageJsonPath: string): string {
-  const emitterPackageJsonFileName = path.basename(emitterPackageJsonPath, path.extname(emitterPackageJsonPath));
+  const emitterPackageJsonFileName = basename(emitterPackageJsonPath, extname(emitterPackageJsonPath));
   return joinPaths(dirname(emitterPackageJsonPath), `${emitterPackageJsonFileName}-lock.json`);
 }
 

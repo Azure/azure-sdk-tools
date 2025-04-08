@@ -241,6 +241,10 @@ const parser = yargs(hideBin(process.argv))
         .option("overrides", {
           type: "string",
           description: "Path to an override config file for pinning specific dependencies",
+        })
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
         });
     },
     async (argv: any) => {
@@ -251,7 +255,13 @@ const parser = yargs(hideBin(process.argv))
   .command(
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
-    {},
+    (yargs: any) => {
+      return yargs
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
+        });
+    },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
       await generateLockFileCommand(argv);

@@ -1,13 +1,15 @@
+from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient
 from azure.search.documents.models import VectorizableTextQuery, QueryType, QueryCaptionType
 from azure.identity import DefaultAzureCredential
 
+from collections import deque
 import dotenv
 import json
 import os
 import prompty
 import prompty.azure
-import sys
+from time import time
 from typing import Literal, List
 
 from ._sectioned_document import SectionedDocument, Section
@@ -22,7 +24,10 @@ _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
-DEFAULT_MODEL = "o3-mini"
+COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
+COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
+COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
+CREDENTIAL = DefaultAzureCredential()
 
 
 class ApiViewReview:
@@ -87,6 +92,8 @@ class ApiViewReview:
                         continue
         final_results.validate(guidelines=guidelines)
         final_results.sort()
+        end_time = time()
+        print(f"Review generated in {end_time - start_time:.2f} seconds.")
         return final_results
 
     def unescape(self, text: str) -> str:
@@ -114,7 +121,16 @@ class ApiViewReview:
                 language_guidelines.extend(items)
         return general_guidelines + language_guidelines
     
-    def _search_guidelines(self, chunk: Section) -> List[object]:
+    def _get_filter_expression(self) -> str:
+        """
+        Returns the filter expression for the given language.
+        """
+        if self.language == "all":
+            return "lang eq '' or lang eq null"
+        else:
+            return f"lang eq '{self.language}' or lang eq '' or lang eq null"
+
+    def _search_guidelines(self, query: str) -> List[object]:
         credential = DefaultAzureCredential()
         search_name = os.getenv("AZURE_SEARCH_NAME")
         search_endpoint = f"https://{search_name}.search.windows.net"
@@ -163,19 +179,21 @@ class ApiViewReview:
         
         # search the examples index directly with the code snippet
         example_results = self._search_examples(chunk)
-        example_scores = [x["@search.score"] for x in example_results]
         
         # use a prompt to convert the code snippet to text
         # then do a hybrid search of the guidelines index against this description
         prompt = os.path.join(_PROMPTS_FOLDER, "code_to_text.prompty")
         response = prompty.execute(prompt, inputs={"question": str(chunk)})
         guideline_results = self._search_guidelines(response)
-        guideline_scores = [x["@search.score"] for x in guideline_results]
 
-        # TODO: Now we need to resolve all of the stuff
-        test = "gest"
-        return []
+        context = self._retrieve_and_resolve_context(guideline_results, example_results)
+        return context
 
+    def _retrieve_and_resolve_context(self, guideline_results: List[object], example_results: List[object]) -> List[object]:
+        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
+        database = client.get_database_client(COSMOS_DB_NAME)
+        guidelines_container = database.get_container_client("guidelines")
+        examples_container = database.get_container_client("examples")
 
         # intial ids from the search queries
         starting_example_ids = list(set([x["id"] for x in example_results]))
@@ -227,12 +245,12 @@ class ApiViewReview:
                 final_guidelines[gid] = guideline
 
                 # queue up related guidelines
-                for rel in guideline.get("related_guidelines", []):
+                for rel in guideline.get("related_guidelines") or []:
                     if rel not in seen_guideline_ids:
                         queue.append(rel)
 
                 # now do the same for examples
-                for ex in guideline.get("related_examples", []):
+                for ex in guideline.get("related_examples") or []:
                     try:
                         if ex not in seen_example_ids:
                             seen_example_ids.add(ex)
@@ -277,3 +295,4 @@ class ApiViewReview:
             "guidelines": final_guidelines,
             "examples": final_examples,
         }
+    

@@ -2,7 +2,7 @@ import os
 import json
 import pathlib
 import argparse
-from typing import Set, Tuple, Any
+from typing import Set, Tuple, Any, Literal
 import copy
 
 import dotenv
@@ -74,10 +74,10 @@ class CustomAPIViewEvaluator:
         return review_eval
 
 
-def review_apiview(query: str, language: str):
+def review_apiview(query: str, language: str, model: Literal["gpt-4o-mini", "o3-mini"]="o3-mini") -> dict[str, Any]:
     from src._apiview_reviewer import ApiViewReview  # pylint: disable=import-error,no-name-in-module
 
-    ai_review = ApiViewReview(language=language)
+    ai_review = ApiViewReview(language=language, model=model)
     review = ai_review.get_response(query)
     return {"response": review.model_dump_json()}
 

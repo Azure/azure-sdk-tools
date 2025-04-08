@@ -481,7 +481,7 @@ export async function generateConfigFilesCommand(argv: any) {
     emitterPackageJson["overrides"] = overrideJson;
   }
   
-  const emitterPath = resolveEmitterPathFromArgs(argv) ?? defaultRelativeEmitterPackageJsonPath;
+  const emitterPath = resolveEmitterPathFromArgs(argv) ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath);
   
   await writeFile(
     emitterPath,

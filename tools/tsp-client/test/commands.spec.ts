@@ -55,7 +55,7 @@ describe.sequential("Verify commands", () => {
 
   it("Generate lock file with altername package path", async () => {
     try {
-      await generateLockFileCommand({emitterPackageJsonPath: joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json")});
+      await generateLockFileCommand({"emitter-package-json-path": joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json")});
 
       assert.isTrue((await stat(joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json"))).isFile());
     } catch (error) {
@@ -308,6 +308,27 @@ describe.sequential("Verify commands", () => {
     try {
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+      };
+      repoRoot = await getRepoRoot(cwd());
+      await generateConfigFilesCommand(args);
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
+      const emitterJson = JSON.parse(
+        await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
+      );
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.isUndefined(emitterJson["overrides"]);
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  }, 360000);
+
+  it("Generate config files with alternate json path", async () => {
+    try {
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "emitter-package-json-path": joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json")
       };
       repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);

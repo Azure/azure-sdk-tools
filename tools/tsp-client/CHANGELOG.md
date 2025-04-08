@@ -1,5 +1,16 @@
 # Release
 
+## 2025-04-07 - 0.18.0
+
+- Specify tsp-client specific configurations under a `@azure-tools/typespec-client-generator-cli` entry in tspconfig.yaml options. This affects the `additionalDirectories` configuration. Example entry in tspconfig.yaml:
+
+```yaml
+options:
+  "@azure-tools/typespec-client-generator-cli":
+    "additionalDirectories":
+      - "specification/contosowidgetmanager/Contoso.WidgetManager.Shared/"
+```
+
 ## 2025-04-03 0.17.0
 
 - Updated peerDependency support for `@typespec/compiler` to `^1.0.0-0`.

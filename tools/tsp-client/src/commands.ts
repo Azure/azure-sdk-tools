@@ -91,7 +91,10 @@ export async function initCommand(argv: any) {
       directory: resolvedConfigUrl.path,
       commit: resolvedConfigUrl.commit,
       repo: resolvedConfigUrl.repo,
-      additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+      additionalDirectories:
+        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+          "additionalDirectories"
+        ] ?? [],
     };
     if (argv["emitter-package-json-path"]) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
@@ -137,7 +140,10 @@ export async function initCommand(argv: any) {
       directory: directory,
       commit: commit ?? "",
       repo: repo ?? "",
-      additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+      additionalDirectories:
+        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+          "additionalDirectories"
+        ] ?? [],
     };
     if (argv["emitter-package-json-path"]) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];

@@ -37,6 +37,7 @@ jobs:
   - script: |
       python -m pip install virtualenv aiohttp chardet trio
       python -m pip install apiview-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
+      python -m pip freeze
     displayName: 'Install apiview-stub-generator'
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml

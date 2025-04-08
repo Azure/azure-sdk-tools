@@ -57,7 +57,7 @@ To add a new test case, the following workflow is recommended:
 4. Once happy with the expected output, you can write the new test case by running the following command:
 
 ```bash
-python construct_testcase.py --language python --apiview-path apiview_txt --expected-path expected.json --file-path test.jsonl --name test_name
+python cli.py eval create --language python --apiview-path apiview_txt --expected-path expected.json --file-path test.jsonl --name test_name
 ```
 
 ## Editing Test Cases
@@ -65,7 +65,7 @@ python construct_testcase.py --language python --apiview-path apiview_txt --expe
 To break down a test case into separate files for easier editing:
 
 ```bash
-python deconstruct_testcase.py --language python --test-file tests/python/test.jsonl --test-case test_name
+python cli.py eval deconstruct --language python --test-file tests/python/test.jsonl --test-case test_name
 ```
 
 This will create:

@@ -213,10 +213,11 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
     if args.test_file == "all":
         # only update coverage if all tests are run
         output_path = pathlib.Path(__file__).parent / "results" / args.language / "coverage.json"
-        # TODO get guidelines from db
-        guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / args.language / "guidelines.json"
-        with open(str(guidelines_path), "r") as f:
-            guidelines = json.load(f)
+        guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / args.language
+        guidelines = []
+        for file in guidelines_path.glob("*.json"):
+            with open(file, "r") as f:
+                guidelines.extend(json.loads(f.read()))
         guideline_rule_ids = [rule["id"] for rule in guidelines]
         difference = set(guideline_rule_ids).difference(rule_ids)
         with open(str(output_path), "w+") as f:

@@ -39,7 +39,7 @@ export async function initCommand(argv: any) {
 
   const repoRoot = await getRepoRoot(outputDir);
 
-  const emitterPackageOverride = resolveEmitterPathFromArgs(argv["emitter-package-json-path"]);
+  const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
 
   const emitter = await getEmitterFromRepoConfig(emitterPackageOverride ?? defaultRelativeEmitterPackageJsonPath);
   if (!emitter) {
@@ -246,12 +246,7 @@ export async function syncCommand(argv: any) {
   }
 
   try {
-    let emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
-    if (tspLocation.emitterPackageJsonPath) {
-
-      // If the emitter package json path is provided, we need to check for the lock file in the same directory with the same name prefix.
-      emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
-    }
+    let emitterLockPath = getEmitterLockPath(getEmitterPackageJsonPath(repoRoot, tspLocation));
     
     // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });

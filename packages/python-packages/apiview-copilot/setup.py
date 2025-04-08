@@ -32,7 +32,6 @@ setup(
         "charset-normalizer",
     ],
     python_requires=">=3.8.0",
-    entry_points={"console_scripts": ["apiview-copilot=create_review",]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",

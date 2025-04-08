@@ -29,8 +29,13 @@ describe.sequential("Verify commands", () => {
 
   afterAll(async () => {
     await rm(joinPaths(repoRoot, "eng", "emitter-package.json"));
+    
     // This is generated in the first test using the command
-    await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
+    const emitterPackageLock = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    if (await doesFileExist(emitterPackageLock)){
+      await rm(emitterPackageLock);
+    }
+
     await rm(
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
@@ -43,6 +48,21 @@ describe.sequential("Verify commands", () => {
       await generateLockFileCommand({});
 
       assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file. Error: ${error}`);
+    }
+  });
+
+  it("Generate lock file with altername package path", async () => {
+    try {
+      // delete the existing lock file if it exists
+      const lockFilePath = joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package-lock.json");
+      if (await doesFileExist(lockFilePath)) {
+        await rm(lockFilePath);
+      }
+      await generateLockFileCommand({"emitter-package-json-path":  joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json")});
+
+      assert.isTrue((await stat(lockFilePath)).isFile());
     } catch (error) {
       assert.fail(`Failed to generate lock file. Error: ${error}`);
     }
@@ -137,7 +157,30 @@ describe.sequential("Verify commands", () => {
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         repo: "Azure/azure-rest-api-specs",
         additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
-        emitterPackageJsonPath: joinPaths(cwd(), "test/utils/emitter-package.json"),
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
+      };
+      await writeTspLocationYaml(
+        tspLocationContent,
+        joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
+      );
+      const args = {
+        "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
+        "save-inputs": true,
+      };
+      await updateCommand(args);
+    } catch (error) {
+      assert.fail(`Failed to generate. Error: ${error}`);
+    }
+  });
+
+  it("Update example sdk with custom emitter-package.json path with alternate name", async () => {
+    try {
+      const tspLocationContent: TspLocation = {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       };
       await writeTspLocationYaml(
         tspLocationContent,
@@ -281,6 +324,34 @@ describe.sequential("Verify commands", () => {
       assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  }, 360000);
+
+  it("Generate config files with alternate json path", async () => {
+    try {
+
+      // delete the existing package JSON file if it exists
+      const packageJsonPath = joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json");
+      if (await doesFileExist(packageJsonPath)) {
+        await rm(packageJsonPath);
+      }
+
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "emitter-package-json-path": packageJsonPath
+      };
+      repoRoot = await getRepoRoot(cwd());
+      await generateConfigFilesCommand(args);
+      assert.isTrue(await doesFileExist(packageJsonPath));
+      const emitterJson = JSON.parse(
+        await readFile(packageJsonPath, "utf8"),
+      );
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.isUndefined(emitterJson["overrides"]);
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }

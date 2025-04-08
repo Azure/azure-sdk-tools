@@ -24,7 +24,7 @@ import {
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
-import { dirname, resolve } from "node:path";
+import path, { dirname, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
@@ -37,8 +37,9 @@ export async function initCommand(argv: any) {
 
   const repoRoot = await getRepoRoot(outputDir);
 
-  const emitterPackageJsonPath =
-    argv["emitter-package-json-path"] ?? joinPaths(repoRoot, "eng", "emitter-package.json");
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(
+    repoRoot,
+    argv["emitter-package-json-path"]);
 
   const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
@@ -169,8 +170,9 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
-  const emitterPackageJsonPath =
-    tspLocation.emitterPackageJsonPath ?? joinPaths(repoRoot, "eng", "emitter-package.json");
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(
+    repoRoot,
+    tspLocation.emitterPackageJsonPath);
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`);
@@ -238,15 +240,13 @@ export async function syncCommand(argv: any) {
   try {
     let emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
     if (tspLocation.emitterPackageJsonPath) {
-      // If the emitter package json path is provided, we need to check for the lock file in the same directory
-      const emitterPackageJsonDir = dirname(tspLocation.emitterPackageJsonPath);
-      const lockFileExists = await stat(
-        joinPaths(emitterPackageJsonDir, "emitter-package-lock.json"),
-      );
-      if (lockFileExists.isFile()) {
-        emitterLockPath = joinPaths(emitterPackageJsonDir, "emitter-package-lock.json");
-      }
+
+      // If the emitter package json path is provided, we need to check for the lock file in the same directory with the same name prefix.
+      const emitterPackageJsonFileName = path.basename(tspLocation.emitterPackageJsonPath, path.extname(tspLocation.emitterPackageJsonPath));
+      emitterLockPath = joinPaths(dirname(emitterPackageJsonPath), `${emitterPackageJsonFileName}-lock.json`);
     }
+    
+    // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
   } catch (err) {
     Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
@@ -276,8 +276,7 @@ export async function generateCommand(argv: any) {
   }
   const srcDir = joinPaths(tempRoot, projectName);
   const emitter = await getEmitterFromRepoConfig(
-    tspLocation.emitterPackageJsonPath ??
-      joinPaths(await getRepoRoot(outputDir), "eng", "emitter-package.json"),
+      getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation.emitterPackageJsonPath),
   );
   if (!emitter) {
     throw new Error("emitter is undefined");
@@ -560,4 +559,9 @@ export async function sortSwaggerCommand(argv: any): Promise<void> {
   const sorted = sortOpenAPIDocument(document);
   await writeFile(swaggerFile, JSON.stringify(sorted, null, 2));
   Logger.info(`${swaggerFile} has been sorted.`);
+}
+
+function getEmitterPackageJsonPath(repoRoot: string, relativeEmitterPath?: string): string {
+  const relativePath = relativeEmitterPath ?? joinPaths("eng", "emitter-package.json");
+  return joinPaths(repoRoot, relativePath);
 }

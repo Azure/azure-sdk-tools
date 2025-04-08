@@ -1,5 +1,11 @@
 # Release
 
+## 2025-04-08 - 0.19.0
+
+- Use repo root for emitter-package path specified in `tsp-location.yaml`.
+- Fix issue in generate command where the package-lock naming did not respect the user config.
+- Update `generate-config-files` and `generate-lock-file` to support `emitter-package-json-path`.
+
 ## 2025-04-07 - 0.18.0
 
 - Specify tsp-client specific configurations under a `@azure-tools/typespec-client-generator-cli` entry in tspconfig.yaml options. This affects the `additionalDirectories` configuration. Example entry in tspconfig.yaml:

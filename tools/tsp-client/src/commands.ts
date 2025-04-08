@@ -24,7 +24,7 @@ import {
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
-import path, { dirname, resolve } from "node:path";
+import path, { basename, dirname, join, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
@@ -242,8 +242,7 @@ export async function syncCommand(argv: any) {
     if (tspLocation.emitterPackageJsonPath) {
 
       // If the emitter package json path is provided, we need to check for the lock file in the same directory with the same name prefix.
-      const emitterPackageJsonFileName = path.basename(tspLocation.emitterPackageJsonPath, path.extname(tspLocation.emitterPackageJsonPath));
-      emitterLockPath = joinPaths(dirname(emitterPackageJsonPath), `${emitterPackageJsonFileName}-lock.json`);
+      emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
     }
     
     // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
@@ -478,18 +477,24 @@ export async function generateConfigFilesCommand(argv: any) {
   if (Object.keys(overrideJson).length > 0) {
     emitterPackageJson["overrides"] = overrideJson;
   }
+  const relativeEmitterPath = argv["emitter-package-json-path"] ?? joinPaths("eng", "emitter-package.json");
+  const absoluteEmitterPath = joinPaths(repoRoot, relativeEmitterPath);
   await writeFile(
-    joinPaths(repoRoot, "eng", "emitter-package.json"),
+    absoluteEmitterPath,
     JSON.stringify(emitterPackageJson, null, 2),
   );
-  Logger.info(`emitter-package.json file generated in '${joinPaths(repoRoot, "eng")}' directory`);
+  Logger.info(`${basename(absoluteEmitterPath)} file generated in '${dirname(absoluteEmitterPath)}' directory`);
 
-  await generateLockFileCommand(argv);
+  await generateLockFileCommandCore(outputDir, absoluteEmitterPath);
 }
 
 export async function generateLockFileCommand(argv: any) {
-  const outputDir = argv["output-dir"];
-  const repoRoot = await getRepoRoot(outputDir);
+  await generateLockFileCommandCore(
+    argv["output-dir"],
+    argv["emitter-package-json-path"] ?? joinPaths(await getRepoRoot(argv["output-dir"]), "eng", "emitter-package.json"));
+}
+
+export async function generateLockFileCommandCore(outputDir: string, emitterPackageJsonPath: string) {
 
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
@@ -497,17 +502,18 @@ export async function generateLockFileCommand(argv: any) {
     args.push("--force");
   }
   const tempRoot = await createTempDirectory(outputDir);
-  await cp(joinPaths(repoRoot, "eng", "emitter-package.json"), joinPaths(tempRoot, "package.json"));
+  await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));
   await npmCommand(tempRoot, args);
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
+  const emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
   if (lockFile.isFile()) {
     await cp(
       joinPaths(tempRoot, "package-lock.json"),
-      joinPaths(repoRoot, "eng", "emitter-package-lock.json"),
+      emitterLockPath,
     );
   }
   await removeDirectory(tempRoot);
-  Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
+  Logger.info(`Lock file generated in ${emitterLockPath}`);
 }
 
 export async function installDependencies(argv: any) {
@@ -564,4 +570,9 @@ export async function sortSwaggerCommand(argv: any): Promise<void> {
 function getEmitterPackageJsonPath(repoRoot: string, relativeEmitterPath?: string): string {
   const relativePath = relativeEmitterPath ?? joinPaths("eng", "emitter-package.json");
   return joinPaths(repoRoot, relativePath);
+}
+
+function getEmitterLockPath(emitterPackageJsonPath: string): string {
+  const emitterPackageJsonFileName = path.basename(emitterPackageJsonPath, path.extname(emitterPackageJsonPath));
+  return joinPaths(dirname(emitterPackageJsonPath), `${emitterPackageJsonFileName}-lock.json`);
 }

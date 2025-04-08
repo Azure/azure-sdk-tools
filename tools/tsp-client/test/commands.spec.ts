@@ -53,6 +53,16 @@ describe.sequential("Verify commands", () => {
     }
   });
 
+  it("Generate lock file with altername package path", async () => {
+    try {
+      await generateLockFileCommand({emitterPackageJsonPath: joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json")});
+
+      assert.isTrue((await stat(joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file. Error: ${error}`);
+    }
+  });
+
   it("Sync example sdk", async () => {
     try {
       const args = {

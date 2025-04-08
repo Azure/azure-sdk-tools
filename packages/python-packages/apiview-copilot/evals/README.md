@@ -67,7 +67,7 @@ To add a new test case, the following workflow is recommended:
 1. Use the "Copy review text" button in the APIview UI to copy the text code.
 2. Apply the desired guideline violations that you want to test to the code.
 3. Run the CLI to generate an expected output: `python cli.py review generate --language <language> --path <path-apiview-text> --model <model-name>`
-4. Once happy with the expected output, you can write the new eval by running the following command:
+4. Once happy with the expected output, you can write the new test case by running the following command:
 
 ```bash
 python cli.py eval create --language python --apiview-path path/to/apiview.txt --expected-path path/to/expected.json --test-file path/to/test.jsonl --name testcase_name

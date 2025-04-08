@@ -131,17 +131,17 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("log_prompts", action="store_true", help="Log each prompt in ascending order in the `scratch/propmts` folder.")
             ac.argument("model", type=str, help="The model to use for the review", options_list=("--model", "-m"), choices=["gpt-4o-mini", "o3-mini"])
             ac.argument("chunk_input", action="store_true", help="Chunk the input into smaller sections.")
-        with ArgumentsContext(self, "eval") as ac:
+        with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The name of the test case")
-            ac.argument("apiview_path", type=str, help="The path to the txt file containing the APIview text")
-            ac.argument("expected_path", type=str, help="The expected JSON output from the AI reviewer.")
-            ac.argument("test_file", type=str, help="The file path of the JSONL test case. Can be an existing test case file, or will create a new one.")
+            ac.argument("apiview_path", type=str, help="The full path to the txt file containing the APIview text")
+            ac.argument("expected_path", type=str, help="The full path to the expected JSON output from the AI reviewer.")
+            ac.argument("test_file", type=str, help="The full path to the JSONL test file. Can be an existing test file, or will create a new one.")
             ac.argument("overwrite", action="store_true", help="Overwrite the test case if it already exists.")
         with ArgumentsContext(self, "eval deconstruct") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
-            ac.argument("test_file", type=str, help="The full path to the jsonl test file.")
+            ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
         super(CliCommandsLoader, self).load_arguments(command)
 
 

@@ -4,7 +4,6 @@ from azure.search.documents.models import VectorizableTextQuery, QueryType, Quer
 from azure.identity import DefaultAzureCredential
 
 from collections import deque
-import dotenv
 import json
 import os
 import prompty

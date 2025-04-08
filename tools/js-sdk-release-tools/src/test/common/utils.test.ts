@@ -18,10 +18,12 @@ describe("resolveOptions", () => {
             },
             "@azure-tools/typespec-ts": {
                 "output-folder": "sdk/informatica/src/generated",
+                "package-dir": "op/value",
                 "service-dir": "sdk/informatica",
             },
             "usingParam":{
-                "output-file": "sdk/informaticadatamanagement"
+                "output-file": "sdk/informaticadatamanagement",
+                "output-dir": "params/default/value"
             }
         });
         strictEqual(

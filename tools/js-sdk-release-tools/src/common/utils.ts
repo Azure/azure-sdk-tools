@@ -8,6 +8,7 @@ import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
+import * as compiler from '@typespec/compiler';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -280,15 +281,12 @@ export async function existsAsync(path: string): Promise<boolean> {
 }
 
 export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
-    const compiler = await import("@typespec/compiler");
-    if (compiler === undefined) return undefined;
-      const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
+    const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
-          cwd:process.cwd(),
-          entrypoint: typeSpecDirectory, // not really used here
-          configPath: typeSpecDirectory,
-        },
-      );
-      return options
+            cwd:process.cwd(),
+            entrypoint: typeSpecDirectory, // not really used here
+            configPath: typeSpecDirectory,
+        });
+    return options
 }

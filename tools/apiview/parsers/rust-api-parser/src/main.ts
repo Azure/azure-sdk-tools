@@ -1,11 +1,12 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
-import { Crate, FORMAT_VERSION, ItemKind } from "../rustdoc-types/output/rustdoc-types";
+import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
 import { reexportLines } from "./process-items/processUse";
-import { itemKindOrder, sortExternalItems } from "./process-items/utils/sorting";
+import { sortExternalItems } from "./process-items/utils/sorting";
 
 let apiJson: Crate;
+export let PACKAGE_NAME: string;
 export function getAPIJson(): Crate {
   return apiJson;
 }
@@ -141,6 +142,7 @@ function buildCodeFile(): CodeFile {
     Language: "Rust",
     ReviewLines: [],
   };
+  PACKAGE_NAME = codeFile.PackageName;
 
   processRootItem(codeFile);
   processInternalReexports(codeFile);

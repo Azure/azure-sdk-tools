@@ -4,7 +4,7 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import { processItem } from "./processItem";
 import { externalReexports } from "./utils/externalReexports";
-import { getAPIJson } from "../main";
+import { getAPIJson, PACKAGE_NAME } from "../main";
 
 export const reexportLines: {
   internal: ReviewLine[];
@@ -37,10 +37,22 @@ export function processUse(item: Item): ReviewLine[] | undefined {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
-    Value: useValue,
+    Value: item.inner.use.name,
+  });
+
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Punctuation,
+    Value: "=",
+  });
+
+  reviewLine.Tokens.push({
+    Kind: TokenKind.TypeName,
+    Value: useValue.startsWith("crate::")
+      ? useValue.replace("crate::", `${PACKAGE_NAME}::`) // replace "crate" with root mod name
+      : useValue,
     RenderClasses: ["dependencies"],
     NavigateToId: item.inner.use.id.toString(),
-    NavigationDisplayName: useValue,
+    NavigationDisplayName: item.inner.use.name,
   });
 
   reviewLines.push(reviewLine);

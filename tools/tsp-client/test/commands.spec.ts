@@ -332,9 +332,9 @@ describe.sequential("Verify commands", () => {
       };
       repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
-      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json")));
       const emitterJson = JSON.parse(
-        await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
+        await readFile(joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package.json"), "utf8"),
       );
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
       assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");

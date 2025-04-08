@@ -22,7 +22,7 @@ import {
   makeSparseSpecDir,
   getPathToDependency,
 } from "./utils.js";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
 import { dirname, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
@@ -439,18 +439,101 @@ export async function convertCommand(argv: any): Promise<void> {
   }
 }
 
+function buildRawGithubUrl(matchResult: any, originalUrl: string): string {
+  let resolvedUrl = originalUrl;
+  if (matchResult.groups["root"]! === "raw.githubusercontent") {
+    // Exit early if the URL is already a raw.githubusercontent URL
+    return resolvedUrl;
+  }
+  if (matchResult.groups["root"]! === "github") {
+    resolvedUrl = resolvedUrl.replace("github.com", "raw.githubusercontent.com");
+  }
+  if (matchResult.groups["ref"] && matchResult.groups["commit"]) {
+    // if (matchResult.groups["commit"] === "main") {
+    //   resolvedUrl = resolvedUrl.replace(matchResult.groups["ref"], "refs/heads/main");
+    // } else {
+    resolvedUrl = resolvedUrl.replace(matchResult.groups["ref"], matchResult.groups["commit"]);
+    // }
+  }
+  return resolvedUrl;
+}
+
 export async function generateConfigFilesCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repoRoot = await getRepoRoot(outputDir);
-  const packageJsonPath = normalizePath(resolve(argv["package-json"]));
   const overridePath = argv["overrides"] ?? undefined;
+  const saveUrl = argv["save-url"];
+  const tspclientYamlPath = joinPaths(repoRoot, "eng", "tspclient.yaml");
+  let packageJsonPath;
 
-  if (packageJsonPath === undefined || !(await doesFileExist(packageJsonPath))) {
-    throw new Error(`package.json not found in: ${packageJsonPath ?? "[Not Specified]"}`);
+  if (argv["package-json"] === undefined) {
+    try {
+      await stat(tspclientYamlPath);
+      const tspclientYaml = parseYaml(await readFile(tspclientYamlPath, "utf8"));
+      if (tspclientYaml["emitterUrl"] === undefined) {
+        Logger.error(
+          "Must specify the path to the package.json file using the --package-json flag.",
+        );
+        process.exit(1);
+      }
+      packageJsonPath = tspclientYaml["emitterUrl"];
+      Logger.debug(`Will use the emitterUrl configured in tspclient.yaml: ${packageJsonPath}`);
+    } catch (err) {
+      Logger.error("Must specify the path to the package.json file using the --package-json flag.");
+      process.exit(1);
+    }
+  } else {
+    packageJsonPath = argv["package-json"];
+  }
+  Logger.info(`Using the following package.json to generate config files: ${packageJsonPath}`);
+  let packageJson: Record<string, any>;
+
+  const checkUrl = packageJsonPath.match(
+    "^https://(?<root>github|raw.githubusercontent).com/(?<repo>[^/]+/[^/]+)/(?<ref>(blob/|refs/heads/|)(?<commit>[a-f0-9]+|[^/]+))/.*",
+  );
+  if (checkUrl) {
+    if (saveUrl) {
+      try {
+        const tspclientYaml = await stat(tspclientYamlPath);
+        if (tspclientYaml.isFile()) {
+          Logger.info("tspclient.yaml already exists. Overwriting emitterUrl...");
+          const tspclientYamlContent = parseYaml(await readFile(tspclientYamlPath, "utf8"));
+          tspclientYamlContent["emitterUrl"] = argv["package-json"];
+          await writeFile(tspclientYamlPath, stringifyYaml(tspclientYamlContent));
+        }
+      } catch (err: any) {
+        if (err.code === "ENOENT") {
+          Logger.info(
+            `tspclient.yaml not found. Creating new tspclient.yaml. Path: ${tspclientYamlPath}`,
+          );
+          await writeFile(tspclientYamlPath, `emitterUrl: ${argv["package-json"]}\n`);
+        } else {
+          Logger.error(`Failed to save url to tspclient.yaml. Error: ${err}`);
+        }
+      }
+    }
+
+    const resolvedPackageJsonUrl = buildRawGithubUrl(checkUrl, packageJsonPath);
+    const response = await fetch(resolvedPackageJsonUrl);
+    if (!response.ok) {
+      Logger.error(`Unable to download package.json content. Error: ${response.text()}`);
+      process.exit(1);
+    }
+    packageJson = await response.json();
+  } else {
+    if (saveUrl) {
+      Logger.warn(
+        "Cannot save a file path to tspclient.yaml. Please provide a URL to the package.json file.",
+      );
+    }
+    if (!(await doesFileExist(packageJsonPath))) {
+      Logger.error(`package.json not found in: ${packageJsonPath}`);
+      process.exit(1);
+    }
+    const content = await readFile(packageJsonPath);
+    packageJson = JSON.parse(content.toString());
   }
   Logger.info("Generating emitter-package.json file...");
-  const content = await readFile(packageJsonPath);
-  const packageJson: Record<string, any> = JSON.parse(content.toString());
   const emitterPackageJson: Record<string, any> = {
     main: "dist/src/index.js",
     dependencies: {},

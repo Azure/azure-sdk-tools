@@ -41,7 +41,7 @@ export async function initCommand(argv: any) {
 
   const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
 
-  const emitter = await getEmitterFromRepoConfig(emitterPackageOverride ?? defaultRelativeEmitterPackageJsonPath);
+  const emitter = await getEmitterFromRepoConfig(emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath));
   if (!emitter) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
@@ -495,7 +495,7 @@ export async function generateConfigFilesCommand(argv: any) {
 export async function generateLockFileCommand(argv: any) {
   await generateLockFileCommandCore(
     argv["output-dir"],
-    resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(argv["output-dir"]), "eng", "emitter-package.json"));
+    resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath));
 }
 
 export async function generateLockFileCommandCore(outputDir: string, emitterPackageJsonPath: string) {

@@ -34,25 +34,32 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   let useValue = item.inner.use.source || "null";
   if (item.inner.use.is_glob) {
     useValue += "::*";
+    reviewLine.Tokens.push({
+      Kind: TokenKind.TypeName,
+      Value: useValue,
+      RenderClasses: ["dependencies"],
+      NavigateToId: item.inner.use.id.toString(),
+      NavigationDisplayName: useValue,
+    });
+  } else {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.TypeName,
+      Value: item.inner.use.name,
+    });
+
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "=",
+    });
+
+    reviewLine.Tokens.push({
+      Kind: TokenKind.TypeName,
+      Value: replaceCratePath(useValue),
+      RenderClasses: ["dependencies"],
+      NavigateToId: item.inner.use.id.toString(),
+      NavigationDisplayName: item.inner.use.name,
+    });
   }
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
-    Value: item.inner.use.name,
-  });
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: "=",
-  });
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
-    Value: replaceCratePath(useValue),
-    RenderClasses: ["dependencies"],
-    NavigateToId: item.inner.use.id.toString(),
-    NavigationDisplayName: item.inner.use.name,
-  });
 
   reviewLines.push(reviewLine);
 

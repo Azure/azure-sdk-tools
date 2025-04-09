@@ -9,48 +9,70 @@ namespace IssueLabelerService
 {
     public class ConfigurationService
     {
-        private IConfigurationRoot  _config;
+        public IConfiguration _config;
 
-        public ConfigurationService(IConfigurationRoot config)
-        {
+        public ConfigurationService(IConfiguration config) =>
             _config = config;
-        }
 
-        /// <summary>
-        /// Gets the configuration for a specific repository, falling back to the default configuration if the repository section does not exist.
-        /// </summary>
-        /// <param name="repository">The name of the repository.</param>
-        /// <returns>The merged configuration for the specified repository.</returns>
-        public IConfigurationRoot GetRepositoryConfiguration(string repository)
+        public RepositoryConfiguration GetForRepository(string repository) =>
+            new(_config, repository);
+
+        public RepositoryConfiguration GetDefault() =>
+            new(_config);
+    }
+
+    public class RepositoryConfiguration
+    {
+        IConfiguration _config;
+        string _repository;
+
+        internal RepositoryConfiguration(IConfiguration config, string repository) =>
+            (_config, _repository) = (config, repository);
+
+        // Will always fall back on default
+        internal RepositoryConfiguration(IConfiguration config) =>
+            (_config, _repository) = (config, null);
+
+        public string BlobAccountUri => GetItem("BlobAccountUri");
+        public string BlobContainerName => GetItem("BlobContainerName");
+        public string CommonModelRepositoryName => GetItem("CommonModelRepositoryName");
+        public string ConfidenceThreshold => GetItem("ConfidenceThreshold");
+        public string DocumentIndexName => GetItem("DocumentIndexName");
+        public string DocumentSemanticName => GetItem("DocumentSemanticName");
+        public string EnableAnswers => GetItem("enableAnswers");
+        public string EnableLabels => GetItem("enableLabels");
+        public string Instructions => GetItem("Instructions");
+        public string IssueIndexName => GetItem("IssueIndexName");
+        public string IssueSemanticName => GetItem("IssueSemanticName");
+        public string LabelPredictor => GetItem("labelPredictor");
+        public string OpenAIEndpoint => GetItem("OpenAIEndpoint");
+        public string OpenAIModelName => GetItem("OpenAIModelName");
+        public string RepoNames => GetItem("RepoNames");
+        public string RepoOwner => GetItem("RepoOwner");
+        public string ReposUsingCommonModel => GetItem("ReposUsingCommonModel");
+        public string ScoreThreshold => GetItem("ScoreThreshold");
+        public string SearchEndpoint => GetItem("SearchEndpoint");
+        public string SolutionThreshold => GetItem("SolutionThreshold");
+        public string SourceCount => GetItem("SourceCount");
+        public string IssueModelAzureSdkForJavaBlobConfigNames => GetItem("IssueModel.azure_sdk_for_java.BlobConfigNames");
+        public string IssueModelAzureSdkForJavaCategoryLabels => GetItem("IssueModel.azure_sdk_for_java.CategoryLabels");
+        public string IssueModelAzureSdkForJavaServiceLabels => GetItem("IssueModel.azure_sdk_for_java.ServiceLabels");
+        public string IssueModelAzureSdkForNetBlobConfigNames => GetItem("IssueModel.azure_sdk_for_net.BlobConfigNames");
+        public string IssueModelAzureSdkForNetCategoryLabels => GetItem("IssueModel.azure_sdk_for_net.CategoryLabels");
+        public string IssueModelAzureSdkForNetServiceLabels => GetItem("IssueModel.azure_sdk_for_net.ServiceLabels");
+        public string IssueModelAzureSdkBlobConfigNames => GetItem("IssueModel.azure_sdk.BlobConfigNames");
+        public string IssueModelAzureSdkCategoryLabels => GetItem("IssueModel.azure_sdk.CategoryLabels");
+        public string IssueModelAzureSdkServiceLabels => GetItem("IssueModel.azure_sdk.ServiceLabels");
+
+        public string GetItem(string name)
         {
-            var defaultSection = _config.GetSection("defaults");
-            var repoSection = _config.GetSection(repository);
-
-            var configurationBuilder = new ConfigurationBuilder();
-
-            // Add the default section first
-            configurationBuilder.AddConfiguration(defaultSection);
-
-            // Check if the repository section exists and is not empty
-            if (repoSection.Exists() && repoSection.GetChildren().Any())
+            if (string.IsNullOrEmpty(_repository))
             {
-                // Add the repository section, which will override the default section where keys overlap
-                configurationBuilder.AddConfiguration(repoSection);
+                return _config[$"defaults:{name}"];
             }
 
-            var mergedConfig = configurationBuilder.Build();
-
-            return mergedConfig;
-        }
-
-        /// <summary>
-        /// Gets the default app configuration.
-        /// </summary>
-        /// <returns>The default app configuration.</returns>
-        public IConfigurationRoot GetDefaultConfiguration()
-        {
-            // Return the default configuration section
-            return (IConfigurationRoot)_config.GetSection("defaults");
+            return _config[$"{_repository}:{name}"] ??
+                   _config[$"defaults:{name}"];
         }
     }
 }

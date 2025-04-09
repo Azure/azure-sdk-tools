@@ -14,39 +14,51 @@ using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
 using IssueLabelerService;
 
-var credential = new DefaultAzureCredential();
-
-var builder = new ConfigurationBuilder();
-builder.AddAzureAppConfiguration(options =>
-{
-    options.Connect(new Uri("https://gh-triage-app-config.azconfig.io"), credential);
-});
-
-var configRoot = builder.Build();
-
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices((context, services) => {
+        var functionConfig = context.Configuration;
+        var configEndpoint = new Uri(functionConfig["ConfigurationEndpoint"]);
+        var credential = new DefaultAzureCredential();
+
+        var builder = new ConfigurationBuilder();
+        builder.AddAzureAppConfiguration(options =>
+        {
+            options.Connect(configEndpoint, credential);
+        });
+
+        var configRoot = builder.Build();
+
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
+        
         var configService = new ConfigurationService(configRoot);
         services.AddSingleton<ConfigurationService>(configService);
         
-        var config = configService.GetDefaultConfiguration();
+        var config = configService.GetDefault();
+
+        // Need to combine the default config with the function app config
+        // that way the function app doesn't yell at us.
+        IConfiguration combinedConfig = new ConfigurationBuilder()
+            .AddConfiguration(functionConfig)
+            .AddConfiguration(configRoot.GetSection("defaults"))
+            .Build();
+
+        services.AddSingleton(combinedConfig);
 
         services.AddSingleton<ChatClient>(sp =>
         {
-            var openAIEndpoint = new Uri(config["OpenAIEndpoint"]);
+            var openAIEndpoint = new Uri(config.OpenAIEndpoint);
             
             var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
-            var modelName = config["OpenAIModelName"];
+            var modelName = config.OpenAIModelName;
             return openAIClient.GetChatClient(modelName);
         });
 
         services.AddSingleton<SearchIndexClient>(sp =>
         {
-            var searchEndpoint = new Uri(config["SearchEndpoint"]);
+            var searchEndpoint = new Uri(config.SearchEndpoint);
             return new SearchIndexClient(searchEndpoint, credential);
         });
 

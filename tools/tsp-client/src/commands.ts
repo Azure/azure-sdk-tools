@@ -312,6 +312,7 @@ export async function generateCommand(argv: any) {
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,
+    trace: argv["trace"],
   });
 
   if (argv["debug"]) {

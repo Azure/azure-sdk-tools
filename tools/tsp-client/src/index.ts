@@ -121,6 +121,10 @@ const parser = yargs(hideBin(process.argv))
         .option("emitter-package-json-path", {
           type: "string",
           description: "Alternate path for emitter-package.json file",
+        })
+        .option("trace", {
+          type: "boolean",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -158,6 +162,10 @@ const parser = yargs(hideBin(process.argv))
         .option("skip-install", {
           type: "boolean",
           description: "Skip installing dependencies",
+        })
+        .option("trace", {
+          type: "boolean",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -197,6 +205,10 @@ const parser = yargs(hideBin(process.argv))
         .option("skip-install", {
           type: "boolean",
           description: "Skip installing dependencies",
+        })
+        .option("trace", {
+          type: "boolean",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {

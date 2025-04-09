@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-09 - 0.19.1
+
+- Support a `--trace` flag on the `init`, `update`, and `generate` commands to enable tracing when compiling.
+
 ## 2025-04-08 - 0.19.0
 
 - Use repo root for emitter-package path specified in `tsp-location.yaml`.

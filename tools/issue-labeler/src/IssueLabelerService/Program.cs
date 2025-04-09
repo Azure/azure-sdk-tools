@@ -13,13 +13,17 @@ using OpenAI.Chat;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
 using IssueLabelerService;
+using Azure.Core;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices((context, services) => {
         var functionConfig = context.Configuration;
         var configEndpoint = new Uri(functionConfig["ConfigurationEndpoint"]);
-        var credential = new DefaultAzureCredential();
+        var isRunningInAzure = functionConfig["IsRunningInAzure"] == "true";
+
+        // Use appropriate credential based on environment
+        TokenCredential credential = isRunningInAzure ? new ManagedIdentityCredential() : new DefaultAzureCredential();
 
         var builder = new ConfigurationBuilder();
         builder.AddAzureAppConfiguration(options =>

@@ -127,7 +127,7 @@ jobs:
       Get-ChildItem "${env:ProgramFiles}" | ForEach-Object {
         "$(Host), $(OSVmImage), ProgramFiles, $($_.Name), , all"
       } > programfiles-inventory.csv
-    displayName: Program Files
+    displayName: (Windows) Program Files
     workingDirectory: $(Build.ArtifactStagingDirectory)
     condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
@@ -135,7 +135,7 @@ jobs:
       Get-ChildItem "${env:ProgramFiles(x86)}" | ForEach-Object {
         "$(Host), $(OSVmImage), ProgramFilesX86, $($_.Name), , all"
       } >> programfiles-inventory.csv
-    displayName: Program Files (x86)
+    displayName: (Windows) Program Files (x86)
     workingDirectory: $(Build.ArtifactStagingDirectory)
     condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
@@ -145,7 +145,6 @@ jobs:
       } >> env-inventory.csv
     displayName: Environment Variables
     workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
   - pwsh: |
       $root = $env:VCPKG_INSTALLATION_ROOT
@@ -155,7 +154,7 @@ jobs:
       Get-ChildItem "$root\packages" -ErrorAction Ignore | ForEach-Object {
         "$(Host), $(OSVmImage), Environment, $($_.Name), $($_.Value), all"
       } >> vcpkg-inventory.csv
-    displayName: Vcpkg Packages
+    displayName: (Windows) Vcpkg Packages
     workingDirectory: $(Build.ArtifactStagingDirectory)
     condition: and(succeeded(), eq(variables.Host, 'Windows'))
 

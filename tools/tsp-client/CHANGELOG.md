@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-09 - 0.19.1
+
+- Avoid looking up the repo root when an `emitter-package-json-path` is specified in `generate-config-files` command.
+
 ## 2025-04-08 - 0.19.0
 
 - Use repo root for emitter-package path specified in `tsp-location.yaml`.

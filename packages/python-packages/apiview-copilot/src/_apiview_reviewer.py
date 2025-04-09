@@ -23,9 +23,15 @@ _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
+# Cosmos DB
 COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
 COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
 COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
+
+# Azure AI Search
+AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
+SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
+
 CREDENTIAL = DefaultAzureCredential()
 
 
@@ -48,6 +54,17 @@ class ApiViewReview:
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
+
+    def _ensure_env_vars(self, vars: List[str]):
+        """
+        Ensures that the given environment variables are set.
+        """
+        missing = []
+        for var in vars:
+            if os.getenv(var) is None:
+                missing.append(var)
+        if missing:
+            raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
     def get_response(self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False) -> GuidelinesResult:
         print(f"Generating review...")
@@ -130,10 +147,8 @@ class ApiViewReview:
             return f"lang eq '{self.language}' or lang eq '' or lang eq null"
 
     def _search_guidelines(self, query: str) -> List[object]:
-        credential = DefaultAzureCredential()
-        search_name = os.getenv("AZURE_SEARCH_NAME")
-        search_endpoint = f"https://{search_name}.search.windows.net"
-        client = SearchClient(endpoint=search_endpoint, index_name="guidelines-index", credential=credential)
+        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="guidelines-index", credential=CREDENTIAL)
         result = list(client.search(
             search_text=query,
             top=10,
@@ -150,10 +165,8 @@ class ApiViewReview:
         return result
 
     def _search_examples(self, chunk: Section) -> List[object]:
-        credential = DefaultAzureCredential()
-        search_name = os.getenv("AZURE_SEARCH_NAME")
-        search_endpoint = f"https://{search_name}.search.windows.net"
-        client = SearchClient(endpoint=search_endpoint, index_name="examples-index", credential=credential)
+        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="examples-index", credential=CREDENTIAL)
         query = str(chunk)
         return list(client.search(
             search_text=query,
@@ -173,8 +186,7 @@ class ApiViewReview:
         """
         Retrieves the guidelines for the given language from Azure AI Search service.
         """
-        if os.getenv("AZURE_SEARCH_NAME") is None:
-            raise ValueError("AZURE_SEARCH_NAME environment variable not set")
+        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
         
         # search the examples index directly with the code snippet
         example_results = self._search_examples(chunk)
@@ -189,6 +201,7 @@ class ApiViewReview:
         return context
 
     def _retrieve_and_resolve_context(self, guideline_results: List[object], example_results: List[object]) -> List[object]:
+        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
         client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
         database = client.get_database_client(COSMOS_DB_NAME)
         guidelines_container = database.get_container_client("guidelines")

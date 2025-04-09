@@ -78,7 +78,7 @@ def review_apiview(query: str, language: str):
     from src._apiview_reviewer import ApiViewReview  # pylint: disable=import-error,no-name-in-module
 
     ai_review = ApiViewReview(language=language, model="o3-mini")
-    review = ai_review.get_response(query)
+    review = ai_review.get_response(query, chunk_input=False, use_rag=False)
     return {"response": review.model_dump_json()}
 
 

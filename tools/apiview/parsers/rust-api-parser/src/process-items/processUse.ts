@@ -4,7 +4,8 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import { processItem } from "./processItem";
 import { externalReexports } from "./utils/externalReexports";
-import { getAPIJson, PACKAGE_NAME } from "../main";
+import { getAPIJson } from "../main";
+import { replaceCratePath } from "./utils/cratePathUtils";
 
 export const reexportLines: {
   internal: ReviewLine[];
@@ -47,9 +48,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
-    Value: useValue.startsWith("crate::")
-      ? useValue.replace("crate::", `${PACKAGE_NAME}::`) // replace "crate" with root mod name
-      : useValue,
+    Value: replaceCratePath(useValue),
     RenderClasses: ["dependencies"],
     NavigateToId: item.inner.use.id.toString(),
     NavigationDisplayName: item.inner.use.name,
@@ -73,7 +72,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
       reexportLines.internal.push(...processItem(apiJson.index[item.inner.use.id]));
     } else {
       // Extract the base path by removing the item name from the source
-      const useSource = item.inner.use.source || "";
+      const useSource = replaceCratePath(item.inner.use.source);
       const useName = apiJson.index[item.inner.use.id].name || "";
       // Get the base path by removing the name from the end of the source
       const basePath = useSource.endsWith(useName)

@@ -437,7 +437,6 @@ export async function convertCommand(argv: any): Promise<void> {
 
 export async function generateConfigFilesCommand(argv: any) {
   const outputDir = argv["output-dir"];
-  const repoRoot = await getRepoRoot(outputDir);
   const packageJsonPath = normalizePath(resolve(argv["package-json"]));
   const overridePath = argv["overrides"] ?? undefined;
 
@@ -482,7 +481,7 @@ export async function generateConfigFilesCommand(argv: any) {
     emitterPackageJson["overrides"] = overrideJson;
   }
   
-  const emitterPath = resolveEmitterPathFromArgs(argv) ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath);
+  const emitterPath = resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
   
   await writeFile(
     emitterPath,

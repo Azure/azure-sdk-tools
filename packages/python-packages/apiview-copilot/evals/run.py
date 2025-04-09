@@ -74,10 +74,10 @@ class CustomAPIViewEvaluator:
         return review_eval
 
 
-def review_apiview(query: str, language: str, model: Literal["gpt-4o-mini", "o3-mini"]="o3-mini") -> dict[str, Any]:
+def review_apiview(query: str, language: str):
     from src._apiview_reviewer import ApiViewReview  # pylint: disable=import-error,no-name-in-module
 
-    ai_review = ApiViewReview(language=language, model=model)
+    ai_review = ApiViewReview(language=language, model="o3-mini")
     review = ai_review.get_response(query)
     return {"response": review.model_dump_json()}
 

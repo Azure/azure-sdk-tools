@@ -85,7 +85,7 @@ export async function compileTsp({
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-  trace?: boolean;
+  trace?: string[];
 }): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
@@ -113,10 +113,8 @@ export async function compileTsp({
     outputDir,
     emit: [emitterPackage],
     options: overrideOptions,
+    trace: trace,
   };
-  if (trace) {
-    overrides["trace"] = [emitterPackage];
-  }
   Logger.info(`Compiling tsp using ${emitterPackage}...`);
   const [options, diagnostics] = await resolveCompilerOptions(NodeHost, {
     cwd: process.cwd(),

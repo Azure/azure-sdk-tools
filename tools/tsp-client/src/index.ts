@@ -123,7 +123,7 @@ const parser = yargs(hideBin(process.argv))
           description: "Alternate path for emitter-package.json file",
         })
         .option("trace", {
-          type: "boolean",
+          type: "array",
           description: "Enable tracing during compile",
         });
     },
@@ -164,7 +164,7 @@ const parser = yargs(hideBin(process.argv))
           description: "Skip installing dependencies",
         })
         .option("trace", {
-          type: "boolean",
+          type: "array",
           description: "Enable tracing during compile",
         });
     },
@@ -207,7 +207,7 @@ const parser = yargs(hideBin(process.argv))
           description: "Skip installing dependencies",
         })
         .option("trace", {
-          type: "boolean",
+          type: "array",
           description: "Enable tracing during compile",
         });
     },
@@ -268,11 +268,10 @@ const parser = yargs(hideBin(process.argv))
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
     (yargs: any) => {
-      return yargs
-        .option("emitter-package-json-path", {
-          type: "string",
-          description: "Alternate path for emitter-package.json file",
-        });
+      return yargs.option("emitter-package-json-path", {
+        type: "string",
+        description: "Alternate path for emitter-package.json file",
+      });
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);

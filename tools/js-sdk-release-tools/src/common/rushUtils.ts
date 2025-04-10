@@ -1,15 +1,16 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { ModularClientPackageOptions, PackageResult } from './types';
+import { ModularClientPackageOptions, PackageResult } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
-import { ensureDir, readFile, writeFile } from 'fs-extra';
-import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { runCommand, runCommandOptions } from './utils';
+import pkg from 'fs-extra';
+const { ensureDir, readFile, writeFile } = pkg;
+import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
+import { runCommand, runCommandOptions } from './utils.js';
 
 import { glob } from 'glob';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
-import { migratePackage } from './migration';
+import { migratePackage } from './migration.js';
 
 interface ProjectItem {
     packageName: string;

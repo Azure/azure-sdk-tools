@@ -1,13 +1,14 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType } from './types';
-import { logger } from '../utils/logger';
+import { SDKType } from './types.js';
+import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
+import * as compiler from '@typespec/compiler';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -173,12 +174,21 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await loadTspConfig(typeSpecDirectory);
-    const serviceDir = tspConfig.parameters?.['service-dir']?.default;
+    const tspConfig = await resolveOptions(typeSpecDirectory);
+    let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
+    let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
+    const emitterOptions = tspConfig.options?.[emitterName];
+    const serviceDirFromEmitter = emitterOptions?.['service-dir'];
+    if(serviceDirFromEmitter) {
+        serviceDir = serviceDirFromEmitter;
+    }
+    const packageDirFromEmitter = emitterOptions?.['package-dir'];
+    if(packageDirFromEmitter) {
+        packageDir = packageDirFromEmitter; 
+    }
     if (!serviceDir) {
         throw new Error(`Miss service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
-    const packageDir = tspConfig.options?.[emitterName]?.['package-dir'];
     if (!packageDir) {
         throw new Error(`Miss package-dir in ${emitterName} options of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
@@ -268,4 +278,15 @@ export async function existsAsync(path: string): Promise<boolean> {
         logger.warn(`Fail to find ${path} for error: ${error}`);
         return false;
     }
+}
+
+export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+    const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
+        compiler.NodeHost,
+        {
+            cwd:process.cwd(),
+            entrypoint: typeSpecDirectory, // not really used here
+            configPath: typeSpecDirectory,
+        });
+    return options
 }

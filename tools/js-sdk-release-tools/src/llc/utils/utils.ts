@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
-import {logger} from "../../utils/logger";
-import {getLatestStableVersion} from "../../utils/version";
-import { tryGetNpmView } from "../../common/npmUtils";
-const readline = require('readline');
+import {logger} from "../../utils/logger.js";
+import {getLatestStableVersion} from "../../utils/version.js";
+import { tryGetNpmView } from "../../common/npmUtils.js";
+import readline from 'readline';
 
 export function validPackageName(packageName) {
     const match = /@azure-rest\/[a-zA-Z-]+/.exec(packageName);

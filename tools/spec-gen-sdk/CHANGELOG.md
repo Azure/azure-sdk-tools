@@ -1,8 +1,13 @@
 # Release
 
+## 2025-04-10 - 0.4.0
+
+- Added run-mode input parameter
+- Deprecated is-triggered-by-pipeline parameter
+
 ## 2025-04-03 - 0.3.5
 
-- Exclude '-pr' in the language value when spec repo is private repo
+- Excluded '-pr' in the language value when spec repo is private repo
 
 ## 2025-04-02 - 0.3.4
 

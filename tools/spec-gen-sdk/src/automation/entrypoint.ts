@@ -32,11 +32,11 @@ interface SdkAutoOptions {
   readmePath?: string;  
   pullNumber?: string;
   apiVersion?: string;
+  runMode: string;
   sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;
-  isTriggeredByPipeline: string;
   headRepoHttpsUrl?: string;
   headBranch?: string;
   runEnv: 'local' | 'azureDevOps' | 'test';
@@ -133,7 +133,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     await workflowMain(workflowContext);
   } catch (e) {
     if (workflowContext) {
-      const message = `FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
+      const message = `Refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
       sdkContext.logger.error(message);
       workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
       setFailureType(workflowContext, FailureType.PipelineFrameworkFailed);

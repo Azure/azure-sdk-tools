@@ -14,7 +14,6 @@ This tool will generate the SDK code using the local specification repository an
 
 export type SpecGenSdkCliConfig = {
   workingFolder: string;
-  isTriggeredByPipeline: string;
   localSpecRepoPath: string;
   localSdkRepoPath: string;
   tspConfigPath?: string;
@@ -22,6 +21,7 @@ export type SpecGenSdkCliConfig = {
   sdkRepoName: string;
   apiVersion?: string;
   prNumber?: string;
+  runMode: string;
   sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
@@ -33,7 +33,6 @@ export type SpecGenSdkCliConfig = {
 const initCliConfig = (argv) : SpecGenSdkCliConfig => {
   return {
     workingFolder: argv.workingFolder,
-    isTriggeredByPipeline: argv.isTriggeredByPipeline,
     localSpecRepoPath: argv.localSpecRepoPath,
     localSdkRepoPath: argv.localSdkRepoPath,
     tspConfigPath: argv.tspConfigRelativePath,
@@ -41,6 +40,7 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     sdkRepoName: argv.sdkRepoName,
     apiVersion: argv.apiVersion,
     prNumber: argv.prNumber,
+    runMode: argv.runMode,
     sdkReleaseType: argv.sdkReleaseType,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
@@ -70,12 +70,12 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName.replace('-pr', ''),
       apiVersion: config.apiVersion,
+      runMode: config.runMode,
       sdkReleaseType: config.sdkReleaseType,
       workingFolder: config.workingFolder,
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
-      isTriggeredByPipeline: config.isTriggeredByPipeline,
-      runEnv: config.isTriggeredByPipeline.toLowerCase() === "true" ? 'azureDevOps' : 'local',
+      runEnv: config.runMode !== "local" ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto',
       version: config.version
     });
@@ -124,12 +124,6 @@ yargs(hideBin(process.argv))
           type: "string",
           description: "The working folder to run this tool",
           default: path.join(homedir(), '.sdkauto')
-        },
-        'is-triggered-by-pipeline': {
-          alias: "t",
-          type: 'string',
-          description: 'Flag to indicate if triggered by pipeline',
-          default: "false",
         },
         'tsp-config-relative-path': {
           alias: "tcrp",
@@ -185,6 +179,13 @@ yargs(hideBin(process.argv))
           description: "The release type of SDK, either 'beta' or 'stable'",
           default: "beta",
           choices: ['beta', 'stable']
+        },
+        'run-mode': {
+          alias: "rm",
+          type: "string",
+          description: "The run mode of the tool, allowed values are 'local','spec-pull-request','release','batch'",
+          default: "local",
+          choices: ['local', 'spec-pull-request', 'release', 'batch'],
         }
     })},
     async (argv) => {

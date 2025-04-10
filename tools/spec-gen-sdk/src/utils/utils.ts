@@ -183,7 +183,7 @@ export function extractPathFromSpecConfig(tspConfigPath: string | undefined, rea
       prefix = segments.join('-').toLowerCase().replace(/\./g, '-');
     }
   }
-  return prefix;
+  return prefix ? prefix : `no-readme-tspconfig-${Math.floor(Math.random() * 1000)}`;
 }
 
 /**

@@ -29,16 +29,17 @@ AZURE_COSMOS_DB_NAME="..."  # The name of the CosmosDB database. Required only f
 4. Generate a review using `python cli.py review generate --language <lang> --path <path_to_test_file> --model <model> --use-rag [--chunk-input]`.
 5. Examine the output under `scratch/output/<lang>/<test_file>.json`.
 
-## Create Reviews Detailed Help
+## Create Reviews Help Text
 
-### Arguments
-    `--language -l` **[Required]** : The language of the APIView file.
-    `--model -m`    **[Required]** : The model to use for the review.  Allowed values: gpt-4o-mini,
+```text
+    --language -l [Required] : The language of the APIView file.
+    --model -m    [Required] : The model to use for the review.  Allowed values: gpt-4o-mini,
                                o3-mini.
-    `--path`        **[Required]** : The path to the APIView file.
-    `--chunk-input`            : Chunk the input into smaller sections (currently, by class).
-    `--log-prompts`            : Log each prompt in ascending order in the `scratch/propmts` folder.
-    `--use-rag`                : Use RAG pattern to generate the review.
+    --path        [Required] : The path to the APIView file.
+    --chunk-input            : Chunk the input into smaller sections (currently, by class).
+    --log-prompts            : Log each prompt in ascending order in the `scratch/propmts` folder.
+    --use-rag                : Use RAG pattern to generate the review.
+```
 
 ## Running Evaluations
 

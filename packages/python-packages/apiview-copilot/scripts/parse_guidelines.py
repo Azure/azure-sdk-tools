@@ -34,6 +34,7 @@ if __name__ == "__main__":
         "ios",
         "java",
         "python",
+        "rust",
         "typescript",
     ]
     files_to_parse = [

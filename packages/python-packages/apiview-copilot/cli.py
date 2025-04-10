@@ -1,3 +1,4 @@
+import asyncio
 from collections import OrderedDict
 import json
 import os
@@ -32,20 +33,19 @@ helps[
 """
 
 
-def generate_review(
+def local_review(
     language: str,
     path: str,
     model: Literal["gpt-4o-mini", "o3-mini"],
     chunk_input: bool = False,
-    log_prompts: bool = False,
     use_rag: bool = False,
 ):
     """
-    Generate a review for an APIView
+    Generates a review using the locally installed code.
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(language=language, model=model, log_prompts=log_prompts)
+    rg = ApiViewReview(language=language, model=model)
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
@@ -162,20 +162,49 @@ def deploy_flask_app(
     subscription_id: Optional[str] = None,
 ):
     """Command to deploy the Flask app."""
-    from scripts.deploy_solution import deploy_to_azure
+    from scripts.deploy_app import deploy_app_to_azure
 
-    deploy_to_azure(app_name, resource_group, subscription_id)
+    deploy_app_to_azure(app_name, resource_group, subscription_id)
+
+
+def generate_review_from_app(language: str, path: str):
+    """Generates a review using the deployed Flask app."""
+    from scripts.remove_review import generate_remote_review
+
+    response = asyncio.run(generate_remote_review(path, language))
+    # attempt to JSON decode the string
+    try:
+        response = json.loads(response)
+        pprint(response, indent=2)
+    except json.JSONDecodeError:
+        print(response)
+
+
+SUPPORTED_LANGUAGES = [
+    "android",
+    "clang",
+    "cpp",
+    "dotnet",
+    "golang",
+    "ios",
+    "java",
+    "python",
+    "rust",
+    "typescript",
+]
 
 
 class CliCommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
         with CommandGroup(self, "review", "__main__#{}") as g:
-            g.command("generate", "generate_review")
+            g.command("local", "local_review")
+            g.command("remote", "generate_review_from_app")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
+            g.command("query", "send_query_to_app")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
@@ -185,14 +214,10 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The language of the APIView file",
                 options_list=("--language", "-l"),
+                choices=SUPPORTED_LANGUAGES,
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
-            ac.argument(
-                "log_prompts",
-                action="store_true",
-                help="Log each prompt in ascending order in the `scratch/propmts` folder.",
-            )
             ac.argument(
                 "model",
                 type=str,

@@ -32,7 +32,7 @@ def _zip_current_repo(output_filename: str):
     print(f"Repository zipped to {output_filename}")
 
 
-def deploy_to_azure(
+def deploy_app_to_azure(
     app_name: Optional[str] = None,
     resource_group: Optional[str] = None,
     subscription_id: Optional[str] = None,
@@ -89,4 +89,4 @@ def deploy_to_azure(
 
 
 if __name__ == "__main__":
-    deploy_to_azure()
+    deploy_app_to_azure()

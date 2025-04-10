@@ -1,6 +1,7 @@
+using System.Threading.Tasks;
 using IssueLabeler.Shared;
 
-namespace LabelerFactory
+namespace IssueLabelerService
 {
     public interface ILabeler
     {

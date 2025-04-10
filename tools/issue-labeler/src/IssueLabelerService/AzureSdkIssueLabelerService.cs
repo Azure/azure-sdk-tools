@@ -2,26 +2,21 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
-using Hubbup.MikLabelModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using AzureRagService;
-using ConfigurationService;
 using System.Linq;
 using IssueLabeler.Shared;
-using LabelerFactory;
 
 namespace IssueLabelerService
 {
     public class AzureSdkIssueLabelerService
     {
-        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = [], Answer = null, AnswerType = null });
+        private static readonly ActionResult EmptyResult = new JsonResult(new TriageOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly TriageRag _ragService;
         private readonly Configuration _configurationService;
@@ -78,64 +73,6 @@ namespace IssueLabelerService
                 return EmptyResult;
             }
         }
-        //{         
-        //    IssuePayload issue;
-        //    try
-        //    {
-        //        issue = await DeserializeIssuePayloadAsync(request);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Unable to deserialize payload:{ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-        //        return new BadRequestResult();
-        //    }
-
-        //    var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
-
-        //    IssueOutput result;
-        //    try
-        //    {
-        //        // If we enable answers.
-        //        if (bool.Parse(config.EnableAnswers))
-        //        {
-        //            try
-        //            {
-        //                result = await CompleteIssueTriageAsync(issue, config);
-
-        //                // Temporary run both to get labels
-        //                var labels = await OnlyLabelIssueAsync(issue, config);
-        //                result.Labels = labels.Labels;
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                _logger.LogError($"Complete Triage failed for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-
-        //                // Attempt to just label the issue
-        //                _logger.LogInformation($"Attempting to run labeler on issue #{issue.IssueNumber}.");
-        //                result = await OnlyLabelIssueAsync(issue, config);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            result = await OnlyLabelIssueAsync(issue, config);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error querying predictions for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-        //        return EmptyResult;
-        //    }
-
-        //    try
-        //    {
-        //        return new JsonResult(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Unable to deserialize output: {ex.Message}\n\t{ex}");
-        //        return EmptyResult;
-        //    }
-        //}
 
         private async Task<IssuePayload> DeserializeIssuePayloadAsync(HttpRequest request)
         {
@@ -144,7 +81,7 @@ namespace IssueLabelerService
             return JsonConvert.DeserializeObject<IssuePayload>(requestBody);
         }
 
-        private async Task<IssueOutput> CompleteIssueTriageAsync(IssuePayload issue, RepositoryConfiguration config)
+        private async Task<TriageOutput> CompleteIssueTriageAsync(IssuePayload issue, RepositoryConfiguration config)
         {
             // Configuration for Azure services
             var modelName = config.OpenAIModelName;
@@ -193,7 +130,7 @@ namespace IssueLabelerService
                 .ToList();
 
             // Filtered out all sources for either one then not enough information to answer the issue. 
-            if (docs.Count == 0 || issues.Count == 0)
+            if (docs.Count() == 0 || issues.Count() == 0)
             {
                 throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
             }
@@ -255,7 +192,7 @@ namespace IssueLabelerService
             }
 
             string formatted_response = intro + resultObj.Response + outro;
-            return new IssueOutput
+            return new TriageOutput
             {
                 Labels = [ resultObj.Service, resultObj.Category ],
                 Answer = formatted_response,

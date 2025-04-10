@@ -1,11 +1,12 @@
 using System.Collections.Concurrent;
-using ConfigurationService;
 using Hubbup.MikLabelModel;
 using Microsoft.Extensions.Logging;
 using IssueLabeler.Shared;
+using System.Threading.Tasks;
+using System;
 
 
-namespace LabelerFactory
+namespace IssueLabelerService
 {
     public class LegacyLabeler : ILabeler
     {
@@ -42,7 +43,7 @@ namespace LabelerFactory
 
                 try
                 {
-                    var allBlobConfigNames = _config.GetItem($"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames").Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    var allBlobConfigNames = ExtractBlobConfigNames(predictionRepositoryName);
 
                     // The model factory is thread-safe and will manage its own concurrency.
                     await _modelHolderFactory.CreateModelHolders(issue.RepositoryOwnerName, predictionRepositoryName, allBlobConfigNames).ConfigureAwait(false);
@@ -106,6 +107,20 @@ namespace LabelerFactory
                     dict.TryAdd(repo, 1);
                 }
             }
+        }
+
+        private string[] ExtractBlobConfigNames(string repoName)
+        {
+            // Use a switch expression to match the repository name to the corresponding BlobConfigNames property
+            var blobConfigNames = repoName switch
+            {
+                "azure-sdk-for-java" => _config.IssueModelAzureSdkForJavaBlobConfigNames,
+                "azure-sdk-for-net" => _config.IssueModelAzureSdkForNetBlobConfigNames,
+                _ => _config.IssueModelAzureSdkBlobConfigNames,
+            };
+
+            // Split the BlobConfigNames into an array and return
+            return blobConfigNames.Split(';', StringSplitOptions.RemoveEmptyEntries);
         }
     }
 }

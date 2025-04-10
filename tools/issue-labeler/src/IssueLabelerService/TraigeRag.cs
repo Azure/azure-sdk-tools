@@ -5,12 +5,14 @@ using Azure.Search.Documents;
 using Microsoft.Extensions.Logging;
 using Azure.Search.Documents.Models;
 using OpenAI.Chat;
-using Azure.Identity;
 using System.Text.Json;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
-namespace AzureRagService
+namespace IssueLabelerService
 {
     public class TriageRag
     {

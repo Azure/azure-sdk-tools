@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace IssueLabeler.Shared
 {
-    public class IssueOutput
+    public class TriageOutput
     {
         public string[] Labels { get; set; }
         public string Answer { get; set; }

@@ -1,14 +1,12 @@
 using System.Collections.Concurrent;
-using ConfigurationService;
 using Hubbup.MikLabelModel;
-using IssueLabeler.Shared.Models;
 using Microsoft.Extensions.Logging;
 
-namespace LabelerFactory
+namespace IssueLabelerService
 {
     public class Labelers
     {
-        private static ConcurrentDictionary<string, ILabeler> _labelers = new();
+        private ConcurrentDictionary<string, ILabeler> _labelers = new();
         private IModelHolderFactoryLite _modelHolderFactory;
         private ILogger<Labelers> _logger;
         private ILabelerLite _labeler;

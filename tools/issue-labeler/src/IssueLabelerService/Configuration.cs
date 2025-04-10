@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace ConfigurationService
+namespace IssueLabelerService
 {
     public class Configuration
     {

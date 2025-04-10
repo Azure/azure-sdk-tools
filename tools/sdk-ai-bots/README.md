@@ -2,7 +2,7 @@
 This folder contains a collection of tools that utilize AI techniques.
 
 #### azure-sdk-qa-bot
-azure-sdk-qa-bot is a Teams bot which can answer the questions related to the Azure SDK domain. It is powered by Azure OpenAI and written in C#.
+azure-sdk-qa-bot is a Teams bot which can answer the questions related to the Azure SDK domain. It is powered by Azure OpenAI and written in TypeScript.
 
 **Capability of this bot**
 

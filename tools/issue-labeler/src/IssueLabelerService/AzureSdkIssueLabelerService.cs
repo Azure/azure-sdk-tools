@@ -9,11 +9,13 @@ using Hubbup.MikLabelModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using AzureRagService;
+using ConfigurationService;
 using System.Linq;
+using IssueLabeler.Shared;
+using LabelerFactory;
 
 namespace IssueLabelerService
 {
@@ -22,34 +24,20 @@ namespace IssueLabelerService
         private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly TriageRag _ragService;
-        private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
-        private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
-        private ConfigurationService _configurationService;
-        private IModelHolderFactoryLite ModelHolderFactory { get; }
-        private ILabelerLite Labeler { get; }
-        private string CommonModelRepositoryName { get; }
+        private readonly Configuration _configurationService;
+        private Labelers _labelers;
 
-        public AzureSdkIssueLabelerService(ILabelerLite labeler, IModelHolderFactoryLite modelHolderFactory, ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, ConfigurationService configService)
+        public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, Labelers labelers)
         {
             _logger = logger;
             _ragService = ragService;
-            ModelHolderFactory = modelHolderFactory;
-            Labeler = labeler;
-
-            // Gets us the default config
-            var config = configService.GetDefault();
-
-            CommonModelRepositoryName = config.CommonModelRepositoryName;
-
-            // Initialize the set of repositories that use the common model.
-            ConvertRepoStringList(config.ReposUsingCommonModel, CommonModelRepositories);
-
+            _labelers = labelers;
             _configurationService = configService;
         }
 
         [Function("AzureSdkIssueLabelerService")]
         public async Task<ActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest request)
-        {         
+        {
             IssuePayload issue;
             try
             {
@@ -57,56 +45,97 @@ namespace IssueLabelerService
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to deserialize payload:{ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                _logger.LogError($"Unable to deserialize payload: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
                 return new BadRequestResult();
             }
 
             var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
 
-            IssueOutput result;
             try
             {
-                // If we enable answers.
-                if (bool.Parse(config.EnableAnswers))
-                {
-                    try
-                    {
-                        result = await CompleteIssueTriageAsync(issue, config);
+                // Get the labeler based on the configuration
+                var labeler = _labelers.GetLabeler(config);
 
-                        // Temporary run both to get labels
-                        var labels = await OnlyLabelIssueAsync(issue, config);
-                        result.Labels = labels.Labels;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Complete Triage failed for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                        
-                        // Attempt to just label the issue
-                        _logger.LogInformation($"Attempting to run labeler on issue #{issue.IssueNumber}.");
-                        result = await OnlyLabelIssueAsync(issue, config);
-                    }
-                }
-                else
-                {
-                    result = await OnlyLabelIssueAsync(issue, config);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error querying predictions for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                return EmptyResult;
-            }
+                // Predict labels for the issue
+                string[] labels = await labeler.PredictLabels(issue);
 
-            try
-            {
+                // If no labels are returned, do not generate an answer
+                if (labels == null || labels.Length == 0)
+                {
+                    _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
+                    return EmptyResult;
+                }
+
+                // Proceed to generate content if labels are available
+                var result = await CompleteIssueTriageAsync(issue, config);
+                result.Labels = labels;
+
                 return new JsonResult(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to deserialize output: {ex.Message}\n\t{ex}");
+                _logger.LogError($"Error processing issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
                 return EmptyResult;
             }
         }
+        //{         
+        //    IssuePayload issue;
+        //    try
+        //    {
+        //        issue = await DeserializeIssuePayloadAsync(request);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Unable to deserialize payload:{ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+        //        return new BadRequestResult();
+        //    }
+
+        //    var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
+
+        //    IssueOutput result;
+        //    try
+        //    {
+        //        // If we enable answers.
+        //        if (bool.Parse(config.EnableAnswers))
+        //        {
+        //            try
+        //            {
+        //                result = await CompleteIssueTriageAsync(issue, config);
+
+        //                // Temporary run both to get labels
+        //                var labels = await OnlyLabelIssueAsync(issue, config);
+        //                result.Labels = labels.Labels;
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                _logger.LogError($"Complete Triage failed for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+
+        //                // Attempt to just label the issue
+        //                _logger.LogInformation($"Attempting to run labeler on issue #{issue.IssueNumber}.");
+        //                result = await OnlyLabelIssueAsync(issue, config);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            result = await OnlyLabelIssueAsync(issue, config);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error querying predictions for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+        //        return EmptyResult;
+        //    }
+
+        //    try
+        //    {
+        //        return new JsonResult(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Unable to deserialize output: {ex.Message}\n\t{ex}");
+        //        return EmptyResult;
+        //    }
+        //}
 
         private async Task<IssuePayload> DeserializeIssuePayloadAsync(HttpRequest request)
         {
@@ -232,114 +261,6 @@ namespace IssueLabelerService
                 Answer = formatted_response,
                 AnswerType = solution ? "solution" : "suggestion",
             };
-        }
-
-        private async Task<IssueOutput> OnlyLabelIssueAsync(IssuePayload issue, RepositoryConfiguration config)
-        {
-            var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
-
-            // If the model needed for this request hasn't been initialized, do so now.
-            if (!InitializedRepositories.ContainsKey(predictionRepositoryName))
-            {
-                _logger.LogInformation($"Models for {predictionRepositoryName} have not yet been initialized; loading prediction models.");
-
-                try
-                {
-                    var allBlobConfigNames = config.GetItem($"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames").Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-                    // The model factory is thread-safe and will manage its own concurrency.
-                    await ModelHolderFactory.CreateModelHolders(issue.RepositoryOwnerName, predictionRepositoryName, allBlobConfigNames).ConfigureAwait(false);
-                    InitializedRepositories.TryAdd(predictionRepositoryName, 1);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error initializing the label prediction models for {predictionRepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                    throw;
-                }
-                finally
-                {
-                    _logger.LogInformation($"Model initialization is complete for {predictionRepositoryName}.");
-                }
-            }
-
-            // Predict labels.
-            _logger.LogInformation($"Predicting labels for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.");
-
-            try
-            {
-                // In order for labels to be valid for Azure SDK use, there must
-                // be at least two of them, which corresponds to a Service (pink)
-                // and Category (yellow).  If that is not met, then no predictions
-                // should be returned.
-                var predictions = await Labeler.QueryLabelPrediction(
-                    issue.IssueNumber,
-                    issue.Title,
-                    issue.Body,
-                    issue.IssueUserLogin,
-                    predictionRepositoryName,
-                    issue.RepositoryOwnerName);
-
-                if (predictions.Count < 2)
-                {
-                    _logger.LogInformation($"No labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.");
-                    throw new Exception($"No labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.");
-                }
-
-                _logger.LogInformation($"Labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.  Using: [{predictions[0]}, {predictions[1]}].");
-                return new IssueOutput
-                {
-                    Labels = [ predictions[0], predictions[1] ],
-                    Answer = null,
-                    AnswerType = null
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error querying predictions for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                throw;
-            }
-        }
-
-        private string TranslateRepoName(string repoName) =>
-            CommonModelRepositories.ContainsKey(repoName)
-            ? CommonModelRepositoryName
-            : repoName;
-
-        private void ConvertRepoStringList(string repos, ConcurrentDictionary<string, byte> dict)
-        {
-            if (!string.IsNullOrEmpty(repos))
-            {
-                foreach (var repo in repos.Split(';', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    dict.TryAdd(repo, 1);
-                }
-            }
-        }
-
-        private class IssuePayload
-        {
-            public int IssueNumber { get; set; }
-            public string Title { get; set; }
-            public string Body { get; set; }
-            public string IssueUserLogin { get; set; }
-            public string RepositoryName { get; set; }
-            public string RepositoryOwnerName { get; set; }
-        }
-
-        // Structure of output fed to the github event processor
-        private class IssueOutput
-        {
-            public string[] Labels { get; set; }
-            public string Answer { get; set; }
-            public string AnswerType { get; set; }
-        }
-
-        // Structure of OpenAI Response  
-        private class AIOutput
-        {
-            public string Category { get; set; }
-            public string Service { get; set; }
-            public string Response { get; set; }
         }
     }
 }

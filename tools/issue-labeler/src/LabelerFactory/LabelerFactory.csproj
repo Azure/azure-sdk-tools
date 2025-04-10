@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hubbup.MikLabelModel\Hubbup.MikLabelModel.csproj" />
+    <ProjectReference Include="..\IssueLabeler.Shared\IssueLabeler.Shared.csproj" />
+    <ProjectReference Include="..\ConfigurationService\ConfigurationService.csproj" />
+  </ItemGroup>
+
+</Project>

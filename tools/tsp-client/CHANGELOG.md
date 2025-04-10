@@ -1,7 +1,8 @@
 # Release
 
-## 2025-04-09 - 0.19.1
+## 2025-04-10 - 0.20.0
 
+- Support a `--trace` flag on the `init`, `update`, and `generate` commands to enable tracing when compiling.
 - Avoid looking up the repo root when an `emitter-package-json-path` is specified in `generate-config-files` command.
 
 ## 2025-04-08 - 0.19.0

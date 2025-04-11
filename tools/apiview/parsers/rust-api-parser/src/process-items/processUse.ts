@@ -5,6 +5,7 @@ import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import { processItem } from "./processItem";
 import { externalReexports } from "./utils/externalReexports";
 import { getAPIJson } from "../main";
+import { replaceCratePath } from "./utils/cratePathUtils";
 
 export const reexportLines: {
   internal: ReviewLine[];
@@ -33,15 +34,32 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   let useValue = item.inner.use.source || "null";
   if (item.inner.use.is_glob) {
     useValue += "::*";
-  }
+    reviewLine.Tokens.push({
+      Kind: TokenKind.TypeName,
+      Value: useValue,
+      RenderClasses: ["dependencies"],
+      NavigateToId: item.inner.use.id.toString(),
+      NavigationDisplayName: useValue,
+    });
+  } else {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.TypeName,
+      Value: item.inner.use.name,
+    });
 
-  reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
-    Value: useValue,
-    RenderClasses: ["dependencies"],
-    NavigateToId: item.inner.use.id.toString(),
-    NavigationDisplayName: useValue,
-  });
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "=",
+    });
+
+    reviewLine.Tokens.push({
+      Kind: TokenKind.TypeName,
+      Value: replaceCratePath(useValue),
+      RenderClasses: ["dependencies"],
+      NavigateToId: item.inner.use.id.toString(),
+      NavigationDisplayName: item.inner.use.name,
+    });
+  }
 
   reviewLines.push(reviewLine);
 
@@ -61,7 +79,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
       reexportLines.internal.push(...processItem(apiJson.index[item.inner.use.id]));
     } else {
       // Extract the base path by removing the item name from the source
-      const useSource = item.inner.use.source || "";
+      const useSource = replaceCratePath(item.inner.use.source);
       const useName = apiJson.index[item.inner.use.id].name || "";
       // Get the base path by removing the name from the end of the source
       const basePath = useSource.endsWith(useName)

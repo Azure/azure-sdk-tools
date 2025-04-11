@@ -10,10 +10,18 @@ import {
   WorkflowContext
 } from './workflow';
 import { getLanguageByRepoName } from './entrypoint';
+import { CommentCaptureTransport } from './logging';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
   context.logger.info(`Package log to a new logFile`);
+  
+  const pkgCaptureTransport = new CommentCaptureTransport({
+    extraLevelFilter: ['error', 'warn'],
+    level: 'debug',
+    output: pkg.messages
+  });
+  context.logger.add(pkgCaptureTransport);
 
   await workflowPkgCallBuildScript(context, pkg);
   await workflowPkgCallChangelogScript(context, pkg);
@@ -23,6 +31,7 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
   await workflowPkgCallInstallInstructionScript(context, pkg);
 
   setSdkAutoStatus(pkg, 'succeeded');
+  context.logger.remove(pkgCaptureTransport);
   context.logger.log('endsection', `Handle package ${pkg.name}`);
 };
 
@@ -56,12 +65,18 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
     }
   } else {
     context.logger.log('section', 'Call ChangelogScript');
+    const changeLogCaptureTransport = new CommentCaptureTransport({
+      extraLevelFilter: ['cmdout', 'cmderr'],
+      output: pkg.changelogs
+    });
+    context.logger.add(changeLogCaptureTransport);
     const result = await runSdkAutoCustomScript(context, runOptions, {
       cwd: context.config.localSdkRepoPath,
       fallbackName: 'Changelog',
       argList: [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths],
       statusContext: pkg
     });
+    context.logger.remove(changeLogCaptureTransport);
 
     setSdkAutoStatus(pkg, result);
     if (result !== 'failed') {

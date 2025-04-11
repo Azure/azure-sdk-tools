@@ -361,6 +361,9 @@ const handleBarHelpers = {
   renderParseSuppressionLinesErrors: (parseSuppressionLinesErrors: string[]) => {
     return `<pre><strong>Parse Suppression File Errors</strong><BR>${parseSuppressionLinesErrors.map(trimNewLine).join('<BR>')}</pre>`;
   },
+  getPullRequestLink: (specRepoHttpsUrl: string, prNumber: string) => {
+    return `${specRepoHttpsUrl}/pull/${prNumber}`;
+  },
   shouldRender: (messages: boolean | string[] | undefined,
     isBetaMgmtSdk: boolean | undefined,
     hasBreakingChange?: boolean) => {

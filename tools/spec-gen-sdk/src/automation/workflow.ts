@@ -60,12 +60,11 @@ export const setFailureType = (context: WorkflowContext, failureType: FailureTyp
 
 export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowContext> => {
   const messages = [];
-  const captureTransport = new CommentCaptureTransport({
+  const messageCaptureTransport = new CommentCaptureTransport({
     extraLevelFilter: ['command', 'error', 'warn'],
     level: 'debug',
     output: messages
   });
-  context.logger.add(captureTransport);
 
   const tmpFolder = path.join(context.config.workingFolder, `${context.sdkRepoConfig.mainRepository.name}_tmp`);
   fs.mkdirSync(tmpFolder, { recursive: true });
@@ -78,7 +77,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
     specConfigPath: context.config.tspConfigPath ?? context.config.readmePath,
     status: 'inProgress',
     messages,
-    messageCaptureTransport: captureTransport,
+    messageCaptureTransport,
     tmpFolder,
     scriptEnvs: {
       USER: process.env.USER,
@@ -167,11 +166,11 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
 };
 
 const workflowGenerateSdk = async (context: WorkflowContext) => {
+  context.logger.add(context.messageCaptureTransport);
   let readmeMdList: string[] = [];
   let typespecProjectList: string[] = [];
   let suppressionFile;
   const filterSuppressionFileMap: Map<string, string|undefined> = new Map();
-  context.logger.add(context.messageCaptureTransport);
 
   if (context.specConfigPath) {
     if (context.specConfigPath.endsWith('tspconfig.yaml')) {
@@ -276,6 +275,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
 const fileInitInput = 'initInput.json';
 const fileInitOutput = 'initOutput.json';
 const workflowCallInitScript = async (context: WorkflowContext) => {
+  context.logger.add(context.messageCaptureTransport);
   const initScriptConfig = context.swaggerToSdkConfig.initOptions?.initScript;
   if (initScriptConfig === undefined) {
     context.logger.error('ConfigError: initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
@@ -301,6 +301,7 @@ const workflowCallInitScript = async (context: WorkflowContext) => {
       context.scriptEnvs = { ...context.scriptEnvs, ...initOutput.envs };
     }
   }
+  context.logger.remove(context.messageCaptureTransport);
 };
 
 const fileGenerateInput = 'generateInput.json';

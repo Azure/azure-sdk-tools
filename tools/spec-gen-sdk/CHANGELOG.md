@@ -1,5 +1,10 @@
 # Release
 
+## 2025-04-10 - 0.4.1
+
+- Add captureTransport for each script log
+- Add pull request link for the html which generate by filter logs,
+
 ## 2025-04-10 - 0.4.0
 
 - Added run-mode input parameter

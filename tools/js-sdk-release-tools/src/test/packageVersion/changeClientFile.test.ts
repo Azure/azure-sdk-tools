@@ -11,7 +11,7 @@ describe('Update package version in /src', () => {
         const expectedVersion = "1.0.0";
         updateUserAgent(root, expectedVersion);
         const data: string = fs.readFileSync(path.join(root, 'src', "api", "testContext.ts"), 'utf8');
-        expect(data.includes(` const userAgentInfo = \`azsdk-js-arm-test/${expectedVersion}\``)).toBe(true)
+        expect(data.includes(`const userAgentInfo = \`azsdk-js-arm-test/${expectedVersion}\``)).toBe(true)
     });
 
     test('update package version for userAgentInfo with rlc type', async () => {
@@ -19,7 +19,7 @@ describe('Update package version in /src', () => {
         const expectedVersion = "1.0.0";
         updateUserAgent(root, expectedVersion);
         const data: string = fs.readFileSync(path.join(root, 'src', "testClient.ts"), 'utf8');
-        expect(data.includes(` const userAgentInfo = \`azsdk-js-arm-test/${expectedVersion}\``)).toBe(true)
+        expect(data.includes(`const userAgentInfo = \`azsdk-js-arm-test/${expectedVersion}\``)).toBe(true)
     });
 
     test('update package version for packageDetails with hlc type', async () => {
@@ -27,6 +27,6 @@ describe('Update package version in /src', () => {
         const expectedVersion = "1.0.0";
         updateUserAgent(root, expectedVersion);
         const data: string = fs.readFileSync(path.join(root, 'src', "testClient.ts"), 'utf8');
-        expect(data.includes(` const packageDetails = \`azsdk-js-arm-test/${expectedVersion}\``)).toBe(true)
+        expect(data.includes(`const packageDetails = \`azsdk-js-arm-test/${expectedVersion}\``)).toBe(true)
     });
 });

@@ -25,19 +25,15 @@
 /eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio @weshaggard
 
 ###########
-# GitHub Tools
-###########
-/tools/github/                         @jsquire @ronniegeraghty
-/tools/issue-labeler/                  @jsquire @jeo02
-
-###########
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @JimSuplizio
 /tools/github-event-processor/          @JimSuplizio @benbp @jsquire @ronniegeraghty
+/tools/github/                          @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @JimSuplizio @weshaggard
+/tools/issue-labeler/                   @jsquire @jeo02
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
 /tools/mock-service-host/               @raych1 @tadelesh
 /tools/perf-automation/                 @mikeharder @benbp

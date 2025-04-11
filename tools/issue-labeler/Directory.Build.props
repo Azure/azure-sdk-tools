@@ -26,11 +26,11 @@
     <MicrosoftExtensionsLoggingConsoleVersion>9.0.1</MicrosoftExtensionsLoggingConsoleVersion>
     <MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
   </PropertyGroup>
-  
-     <!-- Apply the standard props first, so that any local props can override -->
-    <Import Project="../../Directory.Build.props" />
-  
+
     <!-- Apply the local props after, which allows them to override.-->
     <Import Project="Directory.Build.local.props" Condition="Exists('Directory.Build.local.props')" />
 
+     <!-- Apply the standard props first, so that any local props can override -->
+    <Import Project="../../Directory.Build.props" />
+    
 </Project>

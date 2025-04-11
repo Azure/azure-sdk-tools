@@ -6,7 +6,7 @@ using Octokit;
 using Azure.Identity;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents.Indexes;
-using AzureRagService;
+using IssueLabelerService;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 

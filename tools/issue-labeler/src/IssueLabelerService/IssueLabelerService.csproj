@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AzureRagService\AzureRagService.csproj" />
     <ProjectReference Include="..\Hubbup.MikLabelModel\Hubbup.MikLabelModel.csproj" />
     <ProjectReference Include="..\IssueLabeler.Shared\IssueLabeler.Shared.csproj" />
   </ItemGroup>

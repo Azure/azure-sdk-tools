@@ -68,7 +68,8 @@ var host = new HostBuilder()
         services.AddSingleton<TriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
-        services.AddSingleton<Labelers>();
+        services.AddSingleton<LabelerFactory>();
+        services.AddSingleton<QnaFactory>();
     })
     .Build();
 

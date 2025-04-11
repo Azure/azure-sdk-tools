@@ -1,5 +1,4 @@
 using APIViewWeb.DTOs;
-using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;

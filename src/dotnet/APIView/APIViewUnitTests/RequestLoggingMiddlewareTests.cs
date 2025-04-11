@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Linq;
 using System.Collections.Generic;
-using System.Security.Policy;
+using System;
 
 namespace APIViewUnitTests
 {
@@ -25,10 +25,20 @@ namespace APIViewUnitTests
         public async Task RequestLoggingMiddleware_Logs_Request_And_Masks_Sensitive_Data()
         {
             var mockLogger = new Mock<ILogger<RequestLoggingMiddleware>>();
+            var capturedScopes = new List<IDictionary<string, object>>();
+            mockLogger
+                .Setup(logger => logger.BeginScope(It.IsAny<IDictionary<string, object>>()))
+                .Callback((IDictionary<string, object> scope) =>
+                {
+                    capturedScopes.Add(scope);
+                })
+                .Returns(Mock.Of<IDisposable>());
+
             var builder = WebApplication.CreateBuilder();
 
             builder.Services.AddLogging();
             builder.Services.AddSingleton(mockLogger.Object);
+            builder.Services.AddApplicationInsightsTelemetry();
             builder.WebHost.UseTestServer();
 
             var app = builder.Build();
@@ -57,10 +67,17 @@ namespace APIViewUnitTests
                 })
                 .ToList();
 
+            Assert.NotEmpty(capturedScopes);
+            var correlationIdScope = capturedScopes.FirstOrDefault(scope => scope.ContainsKey("CorrelationId"));
+            Assert.NotNull(correlationIdScope);
+            Assert.True(correlationIdScope.ContainsKey("CorrelationId"));
+            Assert.False(string.IsNullOrEmpty(correlationIdScope["CorrelationId"]?.ToString()));
+
             Assert.Contains("Incoming Request: POST /test ?query1=One&query2=Two", logMessages);
             Assert.Contains("query1 = One", logMessages);
             Assert.Contains("query2 = Two", logMessages);
             Assert.Contains("Request Body: {\"username\":\"\\u0022testuser\\u0022\",\"password\":\"****\",\"token\":\"****\"}", logMessages);
+            Assert.Contains("Response Status Code: 200", logMessages);
         }
     }
 }

@@ -119,12 +119,12 @@ namespace IssueLabelerService
 
             if (solution)
             {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacements);
+                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacements, _logger);
                 outro = _config.SolutionResponseConclusion;
             }
             else
             {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacements);
+                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacements, _logger);
                 outro = _config.SuggestionResponseConclusion;
             }
 

@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using IssueLabeler.Shared;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace IssueLabelerService
 {
@@ -92,7 +93,7 @@ namespace IssueLabelerService
             return JsonConvert.DeserializeObject<IssuePayload>(requestBody);
         }
 
-        public static string FormatTemplate(string template, Dictionary<string, string> replacements)
+        public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)
         {
             if (string.IsNullOrEmpty(template))
                 return string.Empty;
@@ -109,7 +110,7 @@ namespace IssueLabelerService
             if (placeholderRegex.IsMatch(result))
             {
                 // Log a warning 
-                _logger.LogWarning($"Unreplaced placeholders found in prompt: {result}");
+                logger.LogWarning($"Unreplaced placeholders found in prompt: {result}");
             }
 
             // Replace escaped newlines with actual newlines

@@ -84,7 +84,7 @@ namespace APIViewWeb.Helpers
     public class CreateAPIRevisionAPIResponse
     {
         public string APIRevisionUrl { get; set; }
-        public IEnumerable<string> CompletedActions { get; set; } = new List<string>();
+        public IEnumerable<string> ActionsOnAPIRevison { get; set; } = new List<string>();
     }
 
     public class LeanJsonResult : JsonResult

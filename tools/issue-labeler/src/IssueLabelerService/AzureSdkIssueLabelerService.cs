@@ -104,6 +104,14 @@ namespace IssueLabelerService
                 result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
             }
 
+            // Use regex to find unreplaced placeholders
+            var placeholderRegex = new Regex(@"\{[^{}]+\}");
+            if (placeholderRegex.IsMatch(result))
+            {
+                // Log a warning 
+                _logger.LogWarning($"Unreplaced placeholders found in prompt: {result}");
+            }
+
             // Replace escaped newlines with actual newlines
             return result.Replace("\\n", "\n");
         }

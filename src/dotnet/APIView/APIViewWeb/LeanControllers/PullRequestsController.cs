@@ -106,5 +106,29 @@ namespace APIViewWeb.LeanControllers
             }
             return new LeanJsonResult(pullRequestReviewDtos, statusCode);
         }
+
+        /// <summary>
+        /// Check if ther are changes in API surface between new and existing API revisions
+        /// Create new API revision bases presence of API changes
+        /// </summary>
+        /// <param name="buildId"></param>
+        /// <param name="artifactName"></param>
+        /// <param name="filePath"></param>
+        /// <param name="commitSha"></param>
+        /// <param name="repoName"></param>
+        /// <param name="packageName"></param>
+        /// <param name="pullRequestNumber"></param>
+        /// <param name="codeFile"></param>
+        /// <param name="baselineCodeFile"></param>
+        /// <param name="language"></param>
+        /// <param name="project"></param>
+        /// <returns></returns>
+        [HttpGet("CreateAPIRevisionIfAPIHasChanges", Name = "DetectAPIChanges")]
+        public async Task<ActionResult<IEnumerable<PullRequestModel>>> CreateAPIRevisionIfAPIHasChanges(
+            string buildId, string artifactName, string filePath, string commitSha,
+            string repoName, string packageName, int pullRequestNumber = 0, string codeFile = null,
+            string baselineCodeFile = null, string language = null, string project = "internal")
+        {
+        }
     }
 }

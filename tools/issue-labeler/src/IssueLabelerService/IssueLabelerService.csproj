@@ -1,28 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
-    <UserSecretsId>401bcdfb-b94b-448f-80ac-36ea8a447a97</UserSecretsId>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Azure.Identity" Version="1.13.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="1.3.2" />
-    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="1.4.0" />
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.2.0-beta.1" />
-    <PackageReference Include="Azure.Search.Documents" Version="11.6.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="$(MicrosoftAzureFunctionsWorkerVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="$(MicrosoftAzureFunctionsWorkerSdkVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="$(MicrosoftAzureFunctionsWorkerExtensionsHttpAspNetCoreVersion)" />
+    <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="$(MicrosoftApplicationInsightsWorkerServiceVersion)" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="$(MicrosoftAzureFunctionsWorkerApplicationInsightsVersion)" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="$(AzureAIOpenAIVersion)" />
+    <PackageReference Include="Azure.Search.Documents" Version="$(AzureSearchDocumentsVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtensionsConfigurationVersion)" />
+    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="$(MicrosoftExtensionsConfigurationAzureAppConfigurationVersion)" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AzureRAGService\AzureRAGService.csproj" />
+    <ProjectReference Include="..\AzureRagService\AzureRagService.csproj" />
     <ProjectReference Include="..\Hubbup.MikLabelModel\Hubbup.MikLabelModel.csproj" />
     <ProjectReference Include="..\IssueLabeler.Shared\IssueLabeler.Shared.csproj" />
   </ItemGroup>

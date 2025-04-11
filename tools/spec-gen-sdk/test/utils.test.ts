@@ -275,6 +275,6 @@ describe('extract and format the prefix from spec config path', () => {
       const tspConfigPath = undefined;
       const readmePath = undefined;
       const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
-      expect(result).toEqual('');
+      expect(result).toMatch(/no-readme-tspconfig-\d+/);
     });
   });

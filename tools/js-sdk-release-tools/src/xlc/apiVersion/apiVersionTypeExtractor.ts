@@ -1,10 +1,10 @@
-import { getSDKType } from "../../common/utils";
-import { ApiVersionType, SDKType } from "../../common/types";
-import { IApiVersionTypeExtractor } from "../../common/interfaces";
-import * as mlcApi from '../../mlc/apiVersion/apiVersionTypeExtractor'
-import * as hlcApi from '../../hlc/apiVersion/apiVersionTypeExtractor'
-import * as rlcApi from '../../llc/apiVersion/apiVersionTypeExtractor'
-import { logger } from "../../utils/logger";
+import { getSDKType } from "../../common/utils.js";
+import { ApiVersionType, SDKType } from "../../common/types.js";
+import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
+import * as mlcApi from '../../mlc/apiVersion/apiVersionTypeExtractor.js'
+import * as hlcApi from '../../hlc/apiVersion/apiVersionTypeExtractor.js'
+import * as rlcApi from '../../llc/apiVersion/apiVersionTypeExtractor.js'
+import { logger } from "../../utils/logger.js";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: string): Promise<ApiVersionType> => {
     const sdkType = getSDKType(packageRoot);

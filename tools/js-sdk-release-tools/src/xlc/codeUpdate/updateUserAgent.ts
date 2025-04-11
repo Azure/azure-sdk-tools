@@ -1,6 +1,6 @@
-import { ApiVersionType, SDKType } from "../../common/types";
-import { getSDKType } from "../../common/utils";
-import { logger } from "../../utils/logger";
+import { ApiVersionType, SDKType } from "../../common/types.js";
+import { getSDKType } from "../../common/utils.js";
+import { logger } from "../../utils/logger.js";
 
 import * as fs from "fs";
 import * as path from "path";

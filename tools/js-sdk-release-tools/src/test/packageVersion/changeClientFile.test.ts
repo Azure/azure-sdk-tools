@@ -3,7 +3,7 @@ import * as path from "path";
 
 import { describe, expect, test } from 'vitest';
 import { join } from 'path';
-import { updateUserAgent } from '../../xlc/codeUpdate/updateUserAgent';
+import { updateUserAgent } from '../../xlc/codeUpdate/updateUserAgent.js';
 
 describe('Update package version in /src', () => {
     test('update package version for userAgentInfo with modular type', async () => {

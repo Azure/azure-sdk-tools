@@ -32,11 +32,11 @@ interface SdkAutoOptions {
   readmePath?: string;  
   pullNumber?: string;
   apiVersion?: string;
+  runMode: string;
   sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;
-  isTriggeredByPipeline: string;
   headRepoHttpsUrl?: string;
   headBranch?: string;
   runEnv: 'local' | 'azureDevOps' | 'test';
@@ -133,7 +133,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     await workflowMain(workflowContext);
   } catch (e) {
     if (workflowContext) {
-      const message = `FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
+      const message = `Refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
       sdkContext.logger.error(message);
       workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
       setFailureType(workflowContext, FailureType.PipelineFrameworkFailed);
@@ -201,7 +201,14 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
     }
     return repoKey;
   };
-  let sdkRepoConfig = specRepoConfig.sdkRepositoryMappings[sdkName];
+  let sdkRepositoryMappings = specRepoConfig.sdkRepositoryMappings;
+  if (specRepo.name.endsWith("-pr")) {
+    sdkRepositoryMappings = specRepoConfig.overrides[`${specRepo.owner}/${specRepo.name}`]?.sdkRepositoryMappings ?? specRepoConfig.overrides[`Azure/${specRepo.name}`]?.sdkRepositoryMappings;
+  }
+  if (!sdkRepositoryMappings) {
+    throw new Error(`ConfigError: SDK repository mappings cannot be found in SpecConfig for ${specRepo.owner}/${specRepo.name}. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
+  }
+  let sdkRepoConfig = sdkRepositoryMappings[sdkName];
   if (sdkRepoConfig === undefined) {
     throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
   }

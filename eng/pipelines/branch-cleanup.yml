@@ -62,6 +62,7 @@ jobs:
     pool:
       name: azsdk-pool-mms-ubuntu-2204-general
       vmImage: ubuntu-22.04
+    timeoutInMinutes: 120
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml
@@ -130,7 +131,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -146,7 +147,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs-pr"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 

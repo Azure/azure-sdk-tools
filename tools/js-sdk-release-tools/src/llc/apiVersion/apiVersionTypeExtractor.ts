@@ -1,13 +1,14 @@
-import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils";
+import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils.js";
 
-import { ApiVersionType } from "../../common/types";
-import { IApiVersionTypeExtractor } from "../../common/interfaces";
+import { ApiVersionType } from "../../common/types.js";
+import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
 import { join } from "path";
-import { exists, readFile } from "fs-extra";
-import { tryGetNpmView } from "../../common/npmUtils";
-import { getNpmPackageName } from "../../common/utils";
-import { getVersion, isBetaVersion } from "../../utils/version";
-import { logger } from "../../utils/logger";
+import pkg from 'fs-extra';
+const { exists, readFile } = pkg;
+import { tryGetNpmView } from "../../common/npmUtils.js";
+import { getNpmPackageName } from "../../common/utils.js";
+import { getVersion, isBetaVersion } from "../../utils/version.js";
+import { logger } from "../../utils/logger.js";
 import { parse } from "yaml"
 import { iterate, MarkDownEx, parseMarkdown } from "@azure-tools/openapi-tools-common";
 

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { logger } from './logger';
+import { logger } from './logger.js';
 
 export async function backupNodeModules(folder: string) {
     const nodeModulesPath = path.join(folder, "node_modules");

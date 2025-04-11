@@ -30,8 +30,8 @@
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @JimSuplizio
-/tools/github-event-processor/          @JimSuplizio @benbp @jsquire @ronniegeraghty
 /tools/github/                          @jsquire @ronniegeraghty
+/tools/github-event-processor/          @JimSuplizio @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @JimSuplizio @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl

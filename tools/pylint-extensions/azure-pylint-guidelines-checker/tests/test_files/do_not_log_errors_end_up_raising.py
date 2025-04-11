@@ -1,5 +1,6 @@
 import logging
 
+_LOGGER = logging.getLogger(__name__)
 
 # test_error_level_not_logged
 def function1():
@@ -67,8 +68,8 @@ def function7():
         elif Exception != BaseException:
             logging.error(f"System shutting down due to error: {e}.")
             return False
-        logging.error(f"Unexpected error occurred: {e}")  # @
-        raise SystemError("Uh oh!") from e
+        _LOGGER.error(f"Unexpected error occurred: {e}")  # @
+        raise e
 
 
 # test_branch_exceptions_logged

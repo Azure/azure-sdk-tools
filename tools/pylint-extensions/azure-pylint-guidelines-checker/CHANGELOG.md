@@ -1,7 +1,10 @@
 # Release History
 
-## 0.5.3 (2025-03-19)
+## 0.6.0 (Unreleased)
 - Updating documentation
+- Renaming `do-not-log-exception` to `do-not-log-exception-if-not-debug`
+- Update `do-not-log-raised-errors`
+- Dropping 3.8 support
 
 ## 0.5.2 (2025-02-19)
 

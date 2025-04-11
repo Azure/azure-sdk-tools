@@ -3,7 +3,11 @@
   <li>
     <div>
 {{renderStatus status}}{{#if failureType}}{{failureType}}{{else}}{{renderStatusName status}}{{/if}}
- in generating from {{config.specCommitSha}}. spec-gen-sdk {{config.version}} </div>
+ in generating from {{config.specCommitSha}}. spec-gen-sdk {{config.version}} 
+    {{#if config.pullNumber}}
+      <p>Related Pull Request: <a target="_blank" href="{{getPullRequestLink config.specRepoHttpsUrl config.pullNumber}}">{{config.pullNumber}}</a></p>
+    {{/if}}
+    </div>
     {{#if messages}}
       {{renderMessagesUnifiedPipeline messages status}}
     {{/if}}

@@ -130,7 +130,7 @@ namespace IssueLabelerService
 
             if (string.IsNullOrEmpty(resultObj.Response))
             {
-                throw new Exception($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber} had an emtpy response.");
+                throw new Exception($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber} had an empty response.");
             }
 
             string formatted_response = intro + resultObj.Response + outro;

@@ -46,6 +46,5 @@ export function updateUserAgent(packageFolderPath: string, packageVersion: strin
             break;
         default:
             logger.warn(`Unsupported SDK type ${sdkType} to update user agent`);
-            return ApiVersionType.None;
     }
 }

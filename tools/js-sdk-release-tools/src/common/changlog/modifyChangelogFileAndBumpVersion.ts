@@ -1,4 +1,5 @@
 import {Changelog} from "../../changelog/changelogGenerator.js";
+import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 
 import fs from 'fs';
 import * as path from 'path';
@@ -23,7 +24,7 @@ The package of ${packageJsonData.name} is using our next generation design princ
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
-    changeClientFile(packageFolderPath, newVersion);
+    updateUserAgent(packageFolderPath, newVersion);
 }
 
 export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, nextPackageVersion: string) {
@@ -44,26 +45,13 @@ To learn more, please refer to our documentation [Quick Start](https://aka.ms/az
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, nextPackageVersion);
-    changeClientFile(packageFolderPath, nextPackageVersion)
+    updateUserAgent(packageFolderPath, nextPackageVersion)
 }
 
 function changePackageJSON(packageFolderPath: string, packageVersion: string) {
     const data: string = fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8');
     const result = data.replace(/"version": "[0-9.a-z-]+"/g, '"version": "' + packageVersion + '"');
     fs.writeFileSync(path.join(packageFolderPath, 'package.json'), result, 'utf8');
-}
-
-function changeClientFile(packageFolderPath: string, packageVersion: string) {
-    const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
-    const packageName = packageJsonData.name.replace("@azure/", "");
-    const files: string[] = fs.readdirSync(path.join(packageFolderPath, 'src'));
-    files.forEach(file => {
-        if (file.endsWith('.ts')) {
-            const data: string = fs.readFileSync(path.join(packageFolderPath, 'src', file), 'utf8');
-            const result = data.replace(/const packageDetails = `azsdk-js-[0-9a-z-]+\/[0-9.a-z-]+`;/g, 'const packageDetails = `azsdk-js-' + packageName + '/' + packageVersion + '`;');
-            fs.writeFileSync(path.join(packageFolderPath, 'src', file), result, 'utf8');
-        }
-    })
 }
 
 export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
@@ -82,10 +70,10 @@ ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), modifiedChangelogContent, {encoding: 'utf-8'});
 
     changePackageJSON(packageFolderPath, packageVersion);
-    changeClientFile(packageFolderPath, packageVersion);
+    updateUserAgent(packageFolderPath, packageVersion);
 }
 
 export function makeChangesForPatchReleasingTrack2(packageFolderPath: string, packageVersion: string) {
     changePackageJSON(packageFolderPath, packageVersion);
-    changeClientFile(packageFolderPath, packageVersion);
+    updateUserAgent(packageFolderPath, packageVersion);
 }

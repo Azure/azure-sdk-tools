@@ -1,6 +1,10 @@
 from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient
-from azure.search.documents.models import VectorizableTextQuery, QueryType, QueryCaptionType
+from azure.search.documents.models import (
+    VectorizableTextQuery,
+    QueryType,
+    QueryCaptionType,
+)
 from azure.identity import DefaultAzureCredential
 
 from collections import deque
@@ -17,6 +21,7 @@ from ._models import GuidelinesResult
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
     # running on dev machine, loadenv
     import dotenv
+
     dotenv.load_dotenv()
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -37,18 +42,27 @@ CREDENTIAL = DefaultAzureCredential()
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"], log_prompts: bool = False,):
+    def __init__(
+        self,
+        *,
+        language: str,
+        model: Literal["gpt-4o-mini", "o3-mini"],
+        log_prompts: bool = False,
+    ):
         self.language = language
         self.model = model
         self.output_parser = GuidelinesResult
         self.log_prompts = log_prompts
         if self.log_prompts is None:
-            self.log_prompts = os.getenv("APIVIEW_LOG_PROMPTS", "false").lower() == "true"
+            self.log_prompts = (
+                os.getenv("APIVIEW_LOG_PROMPTS", "false").lower() == "true"
+            )
         if log_prompts:
             # remove the folder if it exists
             base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
             if os.path.exists(base_path):
                 import shutil
+
                 shutil.rmtree(base_path)
             os.makedirs(base_path)
 
@@ -66,18 +80,24 @@ class ApiViewReview:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def get_response(self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False) -> GuidelinesResult:
+    def get_response(
+        self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False
+    ) -> GuidelinesResult:
         print(f"Generating review...")
         start_time = time()
         apiview = self.unescape(apiview)
         if not use_rag:
-            guidelines = self._retrieve_static_guidelines(self.language, include_general_guidelines=True)
+            guidelines = self._retrieve_static_guidelines(
+                self.language, include_general_guidelines=True
+            )
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
         final_results = GuidelinesResult(status="Success", violations=[])
         max_retries = 5
         for i, chunk in enumerate(chunked_apiview):
             for j in range(max_retries):
-                print(f"Processing chunk {i + 1}/{len(chunked_apiview)}... ({j + 1}/{max_retries})")
+                print(
+                    f"Processing chunk {i + 1}/{len(chunked_apiview)}... ({j + 1}/{max_retries})"
+                )
                 if i == 0 and len(chunked_apiview.sections) > 1:
                     # the first chunk is the header, so skip it
                     continue
@@ -89,11 +109,16 @@ class ApiViewReview:
                 # select the appropriate prompty file and run it
                 prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
                 prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
-                response = prompty.execute(prompt_path, inputs={
-                    "language": self.language,
-                    "context": json.dumps(context) if use_rag else json.dumps(guidelines),
-                    "apiview": chunk.numbered(),
-                })
+                response = prompty.execute(
+                    prompt_path,
+                    inputs={
+                        "language": self.language,
+                        "context": (
+                            json.dumps(context) if use_rag else json.dumps(guidelines)
+                        ),
+                        "apiview": chunk.numbered(),
+                    },
+                )
                 try:
                     json_object = json.loads(response)
                     chunk_result = GuidelinesResult(**json_object)
@@ -101,10 +126,14 @@ class ApiViewReview:
                     break
                 except json.JSONDecodeError:
                     if j == max_retries - 1:
-                        print(f"WARNING: Failed to decode JSON for chunk {i}: {response}")
+                        print(
+                            f"WARNING: Failed to decode JSON for chunk {i}: {response}"
+                        )
                         break
                     else:
-                        print(f"WARNING: Failed to decode JSON for chunk {i}: {response}. Retrying...")
+                        print(
+                            f"WARNING: Failed to decode JSON for chunk {i}: {response}. Retrying..."
+                        )
                         continue
         final_results.validate(guidelines=guidelines)
         final_results.sort()
@@ -115,7 +144,9 @@ class ApiViewReview:
     def unescape(self, text: str) -> str:
         return str(bytes(text, "utf-8").decode("unicode_escape"))
 
-    def _retrieve_static_guidelines(self, language, include_general_guidelines: bool = False) -> List[object]:
+    def _retrieve_static_guidelines(
+        self, language, include_general_guidelines: bool = False
+    ) -> List[object]:
         """
         Retrieves the guidelines for the given language, optional with general guidelines.
         This method retrieves guidelines statically from the file system. It does not
@@ -136,7 +167,7 @@ class ApiViewReview:
                 items = json.loads(f.read())
                 language_guidelines.extend(items)
         return general_guidelines + language_guidelines
-    
+
     def _get_filter_expression(self) -> str:
         """
         Returns the filter expression for the given language.
@@ -148,49 +179,55 @@ class ApiViewReview:
 
     def _search_guidelines(self, query: str) -> List[object]:
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="guidelines-index", credential=CREDENTIAL)
-        result = list(client.search(
-            search_text=query,
-            top=10,
-            filter=self._get_filter_expression(),
-            semantic_configuration_name="archagent-semantic-search-guidelines",
-            query_type=QueryType.SEMANTIC,
-            query_caption=QueryCaptionType.EXTRACTIVE,
-            vector_queries=[
-                VectorizableTextQuery(
-                    text=query,
-                    fields="text_vector"                    
-                )
-            ]))
+        client = SearchClient(
+            endpoint=SEARCH_ENDPOINT,
+            index_name="guidelines-index",
+            credential=CREDENTIAL,
+        )
+        result = list(
+            client.search(
+                search_text=query,
+                top=10,
+                filter=self._get_filter_expression(),
+                semantic_configuration_name="archagent-semantic-search-guidelines",
+                query_type=QueryType.SEMANTIC,
+                query_caption=QueryCaptionType.EXTRACTIVE,
+                vector_queries=[
+                    VectorizableTextQuery(text=query, fields="text_vector")
+                ],
+            )
+        )
         return result
 
     def _search_examples(self, chunk: Section) -> List[object]:
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="examples-index", credential=CREDENTIAL)
+        client = SearchClient(
+            endpoint=SEARCH_ENDPOINT, index_name="examples-index", credential=CREDENTIAL
+        )
         query = str(chunk)
-        return list(client.search(
-            search_text=query,
-            top=10,
-            filter=self._get_filter_expression(),
-            semantic_configuration_name="archagent-semantic-search-examples",
-            query_type=QueryType.SEMANTIC,
-            query_caption=QueryCaptionType.EXTRACTIVE,
-            vector_queries=[
-                VectorizableTextQuery(
-                    text=query,
-                    fields="text_vector"
-                )
-            ]))
+        return list(
+            client.search(
+                search_text=query,
+                top=10,
+                filter=self._get_filter_expression(),
+                semantic_configuration_name="archagent-semantic-search-examples",
+                query_type=QueryType.SEMANTIC,
+                query_caption=QueryCaptionType.EXTRACTIVE,
+                vector_queries=[
+                    VectorizableTextQuery(text=query, fields="text_vector")
+                ],
+            )
+        )
 
     def _retrieve_guidelines_from_search(self, chunk: Section) -> List[object]:
         """
         Retrieves the guidelines for the given language from Azure AI Search service.
         """
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        
+
         # search the examples index directly with the code snippet
         example_results = self._search_examples(chunk)
-        
+
         # use a prompt to convert the code snippet to text
         # then do a hybrid search of the guidelines index against this description
         prompt = os.path.join(_PROMPTS_FOLDER, "code_to_text.prompty")
@@ -200,7 +237,9 @@ class ApiViewReview:
         context = self._retrieve_and_resolve_context(guideline_results, example_results)
         return context
 
-    def _retrieve_and_resolve_context(self, guideline_results: List[object], example_results: List[object]) -> List[object]:
+    def _retrieve_and_resolve_context(
+        self, guideline_results: List[object], example_results: List[object]
+    ) -> List[object]:
         self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
         client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
         database = client.get_database_client(COSMOS_DB_NAME)
@@ -231,19 +270,33 @@ class ApiViewReview:
             """
             results = []
             for i in range(0, len(id_list), batch_size):
-                batch = id_list[i:i + batch_size]
+                batch = id_list[i : i + batch_size]
                 placeholders = ",".join([f"@id{i}" for i in range(len(batch))])
-                query  = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
-                parameters = [{"name": f"@id{i}", "value": value} for i, value in enumerate(batch)]
-                results.extend(list(container.query_items(
-                    query=query,
-                    parameters=parameters,
-                    enable_cross_partition_query=True
-                )))
+                query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
+                parameters = [
+                    {"name": f"@id{i}", "value": value} for i, value in enumerate(batch)
+                ]
+                results.extend(
+                    list(
+                        container.query_items(
+                            query=query,
+                            parameters=parameters,
+                            enable_cross_partition_query=True,
+                        )
+                    )
+                )
             return results
 
         while queue:
-            batch_ids = list(set([queue.popleft() for _ in range(min(batch_size, len(queue))) if _ not in seen_guideline_ids]))
+            batch_ids = list(
+                set(
+                    [
+                        queue.popleft()
+                        for _ in range(min(batch_size, len(queue)))
+                        if _ not in seen_guideline_ids
+                    ]
+                )
+            )
             if not batch_ids:
                 continue
 
@@ -269,11 +322,15 @@ class ApiViewReview:
                             final_examples[ex] = None
                     except TypeError:
                         # FIXME: This shouldn't happen once the data integrity is cleaned up
-                        print(f"WARNING: Examples for guideline {gid} is not a string! Skipping.")
+                        print(
+                            f"WARNING: Examples for guideline {gid} is not a string! Skipping."
+                        )
                         continue
 
             # now resolve all examples
-            example_ids_to_lookup = [eid for eid, val in final_examples.items() if val is None]
+            example_ids_to_lookup = [
+                eid for eid, val in final_examples.items() if val is None
+            ]
             examples = batch_query(examples_container, example_ids_to_lookup)
 
             for ex in examples:
@@ -290,14 +347,30 @@ class ApiViewReview:
         final_examples = [v for v in final_examples.values() if v is not None]
 
         # remove irrelevant guideline fields
-        remove_guideline_fields = ["category", "_rid", "_self", "_etag", "_attachments", "_ts", "related_guidelines", "related_examples"]
+        remove_guideline_fields = [
+            "category",
+            "_rid",
+            "_self",
+            "_etag",
+            "_attachments",
+            "_ts",
+            "related_guidelines",
+            "related_examples",
+        ]
         for guideline in final_guidelines:
             for field in remove_guideline_fields:
                 if field in guideline:
                     del guideline[field]
 
         # remove irrelevant example fields
-        remove_example_fields = ["_rid", "_self", "_etag", "_attachments", "_ts", "guideline_ids"]
+        remove_example_fields = [
+            "_rid",
+            "_self",
+            "_etag",
+            "_attachments",
+            "_ts",
+            "guideline_ids",
+        ]
         for example in final_examples:
             for field in remove_example_fields:
                 if field in example:
@@ -307,4 +380,3 @@ class ApiViewReview:
             "guidelines": final_guidelines,
             "examples": final_examples,
         }
-    

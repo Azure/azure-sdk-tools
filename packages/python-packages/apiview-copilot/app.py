@@ -16,11 +16,12 @@ supported_languages = [
     "typescript",
 ]
 
-@app.route('/<language>', methods=['POST'])
+
+@app.route("/<language>", methods=["POST"])
 def api_reviewer(language: str):
     if language not in supported_languages:
         return jsonify({"error": "Unsupported language"}), 400
     data = request.get_json()
-    content = data['content']
+    content = data["content"]
     result = ApiViewReview(language=language, model="o3-mini").get_response(content)
     return jsonify(result.model_dump_json())

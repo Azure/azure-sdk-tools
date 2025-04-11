@@ -69,7 +69,7 @@ var host = new HostBuilder()
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
         services.AddSingleton<LabelerFactory>();
-        services.AddSingleton<QnaFactory>();
+        services.AddSingleton<AnswerFactory>();
     })
     .Build();
 

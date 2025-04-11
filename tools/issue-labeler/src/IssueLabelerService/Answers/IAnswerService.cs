@@ -7,7 +7,7 @@ using IssueLabeler.Shared;
 
 namespace IssueLabelerService
 {
-    public interface IQnaService
+    public interface IAnswerService
     {
         public Task<QnaOutput> AnswerQuery(IssuePayload issue);
     }

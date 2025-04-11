@@ -8,12 +8,12 @@ using System.Collections.Generic;
 
 namespace IssueLabelerService
 {
-    public class RagQna : IQnaService
+    public class OpenAiAnswerService : IAnswerService
     {
         private RepositoryConfiguration _config;
         private TriageRag _ragService;
-        private ILogger<QnaFactory> _logger;
-        public RagQna(ILogger<QnaFactory> logger, RepositoryConfiguration config, TriageRag ragService)
+        private ILogger<AnswerFactory> _logger;
+        public OpenAiAnswerService(ILogger<AnswerFactory> logger, RepositoryConfiguration config, TriageRag ragService)
         {
             _config = config;
             _ragService = ragService;
@@ -68,7 +68,7 @@ namespace IssueLabelerService
                 .ToList();
 
             // Filtered out all sources for either one then not enough information to answer the issue. 
-            if (docs.Count() == 0 || issues.Count() == 0)
+            if (docs.Count == 0 || issues.Count == 0)
             {
                 throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
             }
@@ -93,25 +93,10 @@ namespace IssueLabelerService
                 message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nThe user needs suggestions for their GitHub Issue:\n{query}";
             }
 
-            // Structured output for the model
-            var structure = BinaryData.FromBytes("""
-            {
-              "type": "object",
-              "properties": {
-                "Category": { "type": "string" },
-                "Service": { "type": "string" },
-                "Response": { "type": "string" }
-              },
-              "required": [ "Category", "Service", "Response" ],
-              "additionalProperties": false
-            }
-            """u8.ToArray());
+            var response = await _ragService.SendMessageQnaAsync(instructions, message);
 
-            var response = await _ragService.SendMessageQnaAsync(instructions, message, structure);
-
-            var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
             string intro, outro;
-            Dictionary<string, string> replacements = new Dictionary<string, string>
+            var replacements = new Dictionary<string, string>
             {
                 { "IssueUserLogin", issue.IssueUserLogin },
                 { "RepositoryName", issue.RepositoryName }
@@ -128,12 +113,12 @@ namespace IssueLabelerService
                 outro = _config.SuggestionResponseConclusion;
             }
 
-            if (string.IsNullOrEmpty(resultObj.Response))
+            if (string.IsNullOrEmpty(response))
             {
                 throw new Exception($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber} had an emtpy response.");
             }
 
-            string formatted_response = intro + resultObj.Response + outro;
+            string formatted_response = intro + response + outro;
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formatted_response}");
 

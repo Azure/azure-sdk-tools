@@ -23,9 +23,9 @@ namespace IssueLabelerService
         private readonly TriageRag _ragService;
         private readonly Configuration _configurationService;
         private LabelerFactory _labelers;
-        private QnaFactory _qnaServices;
+        private AnswerFactory _qnaServices;
 
-        public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, LabelerFactory labelers, QnaFactory qnaServices)
+        public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, LabelerFactory labelers, AnswerFactory qnaServices)
         {
             _logger = logger;
             _ragService = ragService;

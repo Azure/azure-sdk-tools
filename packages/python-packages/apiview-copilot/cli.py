@@ -231,7 +231,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deconstruct", "deconstruct_test_case")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
-            g.command("query", "send_query_to_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("examples", "search_examples")
             g.command("guidelines", "search_guidelines")

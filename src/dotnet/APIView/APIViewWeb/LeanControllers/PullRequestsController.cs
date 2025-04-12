@@ -137,15 +137,8 @@ namespace APIViewWeb.LeanControllers
             int pullRequestNumber = 0, string codeFile = null, string baselineCodeFile = null, bool commentOnPR = true,
             string language = null, string project = "internal")
         {
-            var correlationId = HttpContext.Items["CorrelationId"]?.ToString();
-            _logger.LogInformation("Processing request with Correlation ID: {CorrelationId}", correlationId);
-            _telemetryClient.TrackEvent("CreateAPIRevisionIfAPIHasChanges", new Dictionary<string, string>
-            {
-                { "CorrelationId", correlationId }
-            });
-
             var responseContent = new CreateAPIRevisionAPIResponse();
-            if (!ValidateInputParams(correlationId))
+            if (!ValidateInputParams())
             {
                 return new LeanJsonResult(responseContent, StatusCodes.Status400BadRequest);
             }
@@ -158,7 +151,7 @@ namespace APIViewWeb.LeanControllers
                     artifactName: artifactName, originalFileName: filePath, commitSha: commitSha, repoName: repoName,
                     packageName: packageName, prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     responseContent: responseContent, codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    commentOnPR: commentOnPR, language: language, project: project, correlationId: correlationId);
+                    commentOnPR: commentOnPR, language: language, project: project);
 
                 responseContent.APIRevisionUrl = apiRevisionUrl;
 
@@ -170,7 +163,7 @@ namespace APIViewWeb.LeanControllers
             }
         }
 
-        private bool ValidateInputParams(string correlationId)
+        private bool ValidateInputParams()
         {
             foreach (var queryParam in this.Request.Query)
             {
@@ -179,7 +172,7 @@ namespace APIViewWeb.LeanControllers
                 {
                     if (!VALID_EXTENSIONS.Any(e => value.EndsWith(e))) 
                     {
-                        _logger.LogWarning($"QueryParam 'filePath' has an invalid extension. Correlation ID: {correlationId}");
+                        _logger.LogWarning($"QueryParam 'filePath' has an invalid extension.");
                         return false;
                     }
                        
@@ -189,7 +182,7 @@ namespace APIViewWeb.LeanControllers
                 {
                     if (!value.Contains("/"))
                     {
-                        _logger.LogWarning($"QueryParam 'repoName' should not contain '/'. Correlation ID: {correlationId}");
+                        _logger.LogWarning($"QueryParam 'repoName' should contain '/'.");
                         return false;
                     }
                 }

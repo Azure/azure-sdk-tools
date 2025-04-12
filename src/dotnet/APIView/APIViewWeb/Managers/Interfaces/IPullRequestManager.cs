@@ -16,6 +16,6 @@ namespace APIViewWeb.Managers
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
             string codeFileName = null, string baselineCodeFileName = null, bool commentOnPR = true,
-            string language = null, string project = "internal", string correlationId = null);
+            string language = null, string project = "internal");
     }
 }

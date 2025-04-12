@@ -337,6 +337,7 @@ namespace APIViewWeb
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI();
 

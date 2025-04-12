@@ -16,6 +16,7 @@ import { readTspLocation, removeDirectory } from "../src/fs.js";
 import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
+import { dirname } from "node:path";
 
 describe.sequential("Verify commands", () => {
   let repoRoot;
@@ -364,6 +365,35 @@ describe.sequential("Verify commands", () => {
           joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package-lock.json"),
         ),
       );
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  }, 360000);
+
+  it("Update config files with untracked dependencies", async () => {
+    try {
+      const emitterPackageJsonPath = joinPaths(
+        repoRoot,
+        "tools/tsp-client/test/utils/emitter-package-extra-dep.json",
+      );
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "emitter-package-json-path": emitterPackageJsonPath,
+      };
+      repoRoot = await getRepoRoot(cwd());
+      await generateConfigFilesCommand(args);
+      const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.1");
+      assert.isUndefined(emitterJson["overrides"]);
+      assert.isTrue(
+        await doesFileExist(
+          joinPaths(repoRoot, "tools/tsp-client/test/utils/alternate-emitter-package-lock.json"),
+        ),
+      );
+      // Clean up the generated files
+      await rm(joinPaths(dirname(emitterPackageJsonPath), "emitter-package-extra-dep-lock.json"));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }

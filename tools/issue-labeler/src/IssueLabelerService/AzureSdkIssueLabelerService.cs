@@ -23,15 +23,15 @@ namespace IssueLabelerService
         private readonly TriageRag _ragService;
         private readonly Configuration _configurationService;
         private LabelerFactory _labelers;
-        private AnswerFactory _qnaServices;
+        private AnswerFactory _answerServices;
 
-        public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, LabelerFactory labelers, AnswerFactory qnaServices)
+        public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, LabelerFactory labelers, AnswerFactory answerServices)
         {
             _logger = logger;
             _ragService = ragService;
             _labelers = labelers;
             _configurationService = configService;
-            _qnaServices = qnaServices;
+            _answerServices = answerServices;
         }
 
         [Function("AzureSdkIssueLabelerService")]
@@ -66,7 +66,7 @@ namespace IssueLabelerService
                 }
 
                 // Get the Qna model based on configuration
-                var qnaService = _qnaServices.GetQna(config);
+                var qnaService = _answerServices.GetAnswerService(config);
 
                 var answer = await qnaService.AnswerQuery(issue);
 

@@ -15,9 +15,9 @@ namespace IssueLabelerService
             _ragService = ragService;
         }
 
-        public IAnswerService GetQna(RepositoryConfiguration config) =>
+        public IAnswerService GetAnswerService(RepositoryConfiguration config) =>
             _qnaServices.GetOrAdd(
-                config.QnaService,
+                config.AnswerService,
                 key => new OpenAiAnswerService(_logger, config, _ragService)
             );
     }

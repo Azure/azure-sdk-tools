@@ -43,7 +43,7 @@ namespace IssueLabelerService
         public string IssueModelAzureSdkBlobConfigNames => GetItem("IssueModel.azure_sdk.BlobConfigNames");
         public string IssueModelAzureSdkCategoryLabels => GetItem("IssueModel.azure_sdk.CategoryLabels");
         public string IssueModelAzureSdkServiceLabels => GetItem("IssueModel.azure_sdk.ServiceLabels");
-        public string QnaService => GetItem("QnaService");
+        public string AnswerService => GetItem("AnswerService");
         public string IssueIndexFieldName => GetItem("IssueIndexFieldName");
         public string DocumentIndexFieldName => GetItem("DocumentIndexFieldName");
         public string SuggestionResponseIntroduction => GetItem("SuggestionResponseIntroduction");

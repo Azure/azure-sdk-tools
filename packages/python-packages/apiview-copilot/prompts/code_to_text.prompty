@@ -32,5 +32,7 @@ You are an AI assistant whose sole job is to convert a given code snippet into a
 
 - Do not imply or infer the function of any of the code.
 
+- Output should be in the form of a paragraph.
+
 user:
 {{question}}

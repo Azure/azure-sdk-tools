@@ -18,7 +18,6 @@ namespace APIViewWeb.LeanControllers
 {
     public class PullRequestsController  : BaseApiController
     {
-        private readonly TelemetryClient _telemetryClient;
         private readonly ILogger<PullRequestsController> _logger;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
@@ -27,11 +26,10 @@ namespace APIViewWeb.LeanControllers
         string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };
 
         public PullRequestsController(
-            ILogger<PullRequestsController> logger, TelemetryClient telemetryClient,
-            IPullRequestManager pullRequestManager, IConfiguration configuration, IEnumerable<LanguageService> languageServices)
+            ILogger<PullRequestsController> logger, IPullRequestManager pullRequestManager,
+            IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
             _logger = logger;
-            _telemetryClient = telemetryClient;
             _pullRequestManager = pullRequestManager;
             _configuration = configuration;
             _languageServices = languageServices;
@@ -116,7 +114,7 @@ namespace APIViewWeb.LeanControllers
 
         /// <summary>
         /// Check if there are changes in API surface between new and existing API revisions
-        /// Create new API revision bases presence of API changes
+        /// Create new API revision based on presence of API changes
         /// </summary>
         /// <param name="buildId"></param>
         /// <param name="artifactName"></param>
@@ -127,15 +125,15 @@ namespace APIViewWeb.LeanControllers
         /// <param name="pullRequestNumber"></param>
         /// <param name="codeFile"></param>
         /// <param name="baselineCodeFile"></param>
-        /// <param name="commentOnPR"></param>
         /// <param name="language"></param>
         /// <param name="project"></param>
         /// <returns></returns>
+        [AllowAnonymous]
         [HttpGet("CreateAPIRevisionIfAPIHasChanges", Name = "CreateAPIRevisionIfAPIHasChanges")]
         public async Task<ActionResult<IEnumerable<CreateAPIRevisionAPIResponse>>> CreateAPIRevisionIfAPIHasChanges(
             string buildId, string artifactName, string filePath, string commitSha,string repoName, string packageName,
-            int pullRequestNumber = 0, string codeFile = null, string baselineCodeFile = null, bool commentOnPR = true,
-            string language = null, string project = "internal")
+            int pullRequestNumber = 0, string codeFile = null, string baselineCodeFile = null, string language = null,
+            string project = "internal")
         {
             var responseContent = new CreateAPIRevisionAPIResponse();
             if (!ValidateInputParams())
@@ -151,7 +149,7 @@ namespace APIViewWeb.LeanControllers
                     artifactName: artifactName, originalFileName: filePath, commitSha: commitSha, repoName: repoName,
                     packageName: packageName, prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     responseContent: responseContent, codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    commentOnPR: commentOnPR, language: language, project: project);
+                    language: language, project: project);
 
                 responseContent.APIRevisionUrl = apiRevisionUrl;
 

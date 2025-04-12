@@ -14,8 +14,6 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
@@ -134,8 +132,8 @@ namespace APIViewWeb.Managers
         public async Task<string> CreateAPIRevisionIfAPIHasChanges(
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
-            string codeFileName = null, string baselineCodeFileName = null, bool commentOnPR = true,
-            string language = null, string project = "internal")
+            string codeFileName = null, string baselineCodeFileName = null, string language = null,
+            string project = "internal")
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             originalFileName = originalFileName ?? codeFileName;
@@ -204,11 +202,6 @@ namespace APIViewWeb.Managers
                     await UpsertPullRequestAsync(pullRequestModel);
                     pullRequests = (await GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
                 }
-                //Generate combined single comment to update on PR or add a comment stating no API changes.            
-                if (commentOnPR)
-                {
-                    await CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
-                }
             }
             finally
             {
@@ -218,26 +211,6 @@ namespace APIViewWeb.Managers
 
             // Return review URL created for current package if exists
             return string.IsNullOrEmpty(pullRequestModel.APIRevisionId) ? "" : ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName);
-        }
-
-        private async Task<IssueComment> GetExistingCommentForPackage(string repoOwner, string repoName, int pr)
-        {
-            IReadOnlyList<IssueComment> comments = null;
-            try
-            {
-                comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-            if (comments != null)
-            {
-                // Check for comment created for current package.
-                // GitHub issue comment unfortunately doesn't have any key to verify. So we need to check actual body to find the comment.
-                return comments.Where(c => c.Body.Contains(PR_APIVIEW_BOT_COMMENT_IDENTIFIER)).LastOrDefault();
-            }
-            return null;
         }
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
@@ -306,6 +279,7 @@ namespace APIViewWeb.Managers
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: memoryStream, codeFile: codeFile,
                     originalFileName: originalFileName, responseContent: responseContent)) 
                 {
+                    responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision: '{prModel.APIRevisionId}'");
                     return;
                 }   
             }
@@ -318,7 +292,7 @@ namespace APIViewWeb.Managers
                     label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
 
                 responseContent.ActionsTaken.Add("Pull Request has changes in the API surface when compared to the last updated existing APIRevision.");
-                responseContent.ActionsTaken.Add($"Created New APIRevision with id '{newAPIRevision.Id}'.");
+                responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
 
                 prModel.APIRevisionId = newAPIRevision.Id;
             } 
@@ -374,7 +348,6 @@ namespace APIViewWeb.Managers
                 codeModel.FileName = originalFileName;
                 apiRevision.Files[0] = codeModel;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
-                responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision for the Pull Request.");
                 return true;
             }
             return false;
@@ -389,9 +362,10 @@ namespace APIViewWeb.Managers
             bool createNewModifiedRevision = true;
             if (revisionAlreadyExistsForPR(prModel, true))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: baselineMemoryStream,
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.BaselineAPIRevisionId, memoryStream: baselineMemoryStream,
                     codeFile: baselineCodeFile, originalFileName: originalFileName, responseContent: responseContent))
                 {
+                    responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing BaseLine APIRevision: '{prModel.BaselineAPIRevisionId}'");
                     createNewBaselineRevision = false;
                 }   
             }
@@ -400,6 +374,7 @@ namespace APIViewWeb.Managers
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: memoryStream, codeFile: codeFile,
                     originalFileName: originalFileName, responseContent: responseContent))
                 {
+                    responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision: '{prModel.APIRevisionId}'");
                     createNewModifiedRevision = false;
                 }
             }
@@ -423,7 +398,7 @@ namespace APIViewWeb.Managers
                     label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
                     originalName: originalFileName);
                 prModel.APIRevisionId = newAPIRevision.Id;
-                responseContent.ActionsTaken.Add($"Created New APIRevision with id '{newAPIRevision.Id}'.");
+                responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
             }
 
             //Calculate the diff if it's for swagger as an async task.

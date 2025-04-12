@@ -27,6 +27,7 @@ import { config as dotenvConfig } from "dotenv";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
+import _ from "lodash";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
@@ -41,7 +42,9 @@ export async function initCommand(argv: any) {
 
   const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
 
-  const emitter = await getEmitterFromRepoConfig(emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath));
+  const emitter = await getEmitterFromRepoConfig(
+    emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
+  );
   if (!emitter) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
@@ -178,9 +181,7 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
-  const emitterPackageJsonPath = getEmitterPackageJsonPath(
-    repoRoot,
-    tspLocation);
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`);
@@ -247,7 +248,7 @@ export async function syncCommand(argv: any) {
 
   try {
     let emitterLockPath = getEmitterLockPath(getEmitterPackageJsonPath(repoRoot, tspLocation));
-    
+
     // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
   } catch (err) {
@@ -278,7 +279,7 @@ export async function generateCommand(argv: any) {
   }
   const srcDir = joinPaths(tempRoot, projectName);
   const emitter = await getEmitterFromRepoConfig(
-      getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation),
+    getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation),
   );
   if (!emitter) {
     throw new Error("emitter is undefined");
@@ -480,13 +481,55 @@ export async function generateConfigFilesCommand(argv: any) {
   if (Object.keys(overrideJson).length > 0) {
     emitterPackageJson["overrides"] = overrideJson;
   }
-  
-  const emitterPath = resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
-  
-  await writeFile(
-    emitterPath,
-    JSON.stringify(emitterPackageJson, null, 2),
-  );
+
+  const emitterPath =
+    resolveEmitterPathFromArgs(argv) ??
+    joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
+
+  try {
+    const existingEmitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
+    // If there's an existing emitter-package.json, we need to merge any untracked devDependencies
+    if (existingEmitterPackageJson) {
+      const currentDevDependencies = existingEmitterPackageJson["devDependencies"] ?? {};
+      const updatedDevDependencies = emitterPackageJson["devDependencies"] ?? {};
+      const untrackedDependencies = _.difference(
+        Object.keys(currentDevDependencies),
+        Object.keys(updatedDevDependencies),
+      );
+
+      // If there are untracked dependencies, we will check the package-lock.json of the
+      // target emitter for a compatible version, otherwise we will leave the version from
+      // the emitter-package.json unchanged
+      if (untrackedDependencies) {
+        // Add untracked dependencies to the updated emitter-package.json devDependencies
+        // with the version from the existing emitter-package.json
+        for (const key of untrackedDependencies) {
+          emitterPackageJson["devDependencies"][key] =
+            existingEmitterPackageJson["devDependencies"][key];
+        }
+        // Check if the target emitter has a lock file and attempt to pull untracked
+        // dependency versions from there
+        const packageLockPath = joinPaths(dirname(packageJsonPath), "package-lock.json");
+        if ((await stat(packageLockPath)).isFile()) {
+          const existingPackageLockJson = JSON.parse(await readFile(packageLockPath, "utf8"));
+          if (existingPackageLockJson && existingPackageLockJson["packages"]) {
+            for (const key of untrackedDependencies) {
+              const packageJsonKey = `node_modules/${key}`;
+              if (existingPackageLockJson["packages"][packageJsonKey] !== undefined) {
+                // If the package is found in the lock file, use the version from there
+                // Otherwise, keep the version from the existing emitter-package.json
+                emitterPackageJson["devDependencies"][key] =
+                  existingPackageLockJson["packages"][packageJsonKey]["version"];
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    Logger.debug(`Couldn't read file. Rewriting ${basename(emitterPath)} file. Error: ${err}`);
+  }
+  await writeFile(emitterPath, JSON.stringify(emitterPackageJson, null, 2));
   Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
 
   await generateLockFileCommandCore(outputDir, emitterPath);
@@ -495,11 +538,15 @@ export async function generateConfigFilesCommand(argv: any) {
 export async function generateLockFileCommand(argv: any) {
   await generateLockFileCommandCore(
     argv["output-dir"],
-    resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath));
+    resolveEmitterPathFromArgs(argv) ??
+      joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath),
+  );
 }
 
-export async function generateLockFileCommandCore(outputDir: string, emitterPackageJsonPath: string) {
-
+export async function generateLockFileCommandCore(
+  outputDir: string,
+  emitterPackageJsonPath: string,
+) {
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
@@ -511,10 +558,7 @@ export async function generateLockFileCommandCore(outputDir: string, emitterPack
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
   const emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
   if (lockFile.isFile()) {
-    await cp(
-      joinPaths(tempRoot, "package-lock.json"),
-      emitterLockPath,
-    );
+    await cp(joinPaths(tempRoot, "package-lock.json"), emitterLockPath);
   }
   await removeDirectory(tempRoot);
   Logger.info(`Lock file generated in ${emitterLockPath}`);
@@ -571,14 +615,16 @@ export async function sortSwaggerCommand(argv: any): Promise<void> {
   Logger.info(`${swaggerFile} has been sorted.`);
 }
 
-
 function getEmitterPackageJsonPath(repoRoot: string, tspLocation: TspLocation): string {
   const relativePath = tspLocation.emitterPackageJsonPath ?? defaultRelativeEmitterPackageJsonPath;
   return joinPaths(repoRoot, relativePath);
 }
 
 function getEmitterLockPath(emitterPackageJsonPath: string): string {
-  const emitterPackageJsonFileName = basename(emitterPackageJsonPath, extname(emitterPackageJsonPath));
+  const emitterPackageJsonFileName = basename(
+    emitterPackageJsonPath,
+    extname(emitterPackageJsonPath),
+  );
   return joinPaths(dirname(emitterPackageJsonPath), `${emitterPackageJsonFileName}-lock.json`);
 }
 

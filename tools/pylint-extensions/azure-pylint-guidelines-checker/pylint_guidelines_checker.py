@@ -993,7 +993,7 @@ class AsyncClientCorrectNaming(BaseChecker):
         try:
             # avoid false positive when async name is used with a base class.
             if (
-                "client" in node.name.lower()
+                node.name.endswith("Client")
                 and "async" in node.name.lower()
                 and "base" not in node.name.lower()
             ):
@@ -2732,12 +2732,12 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
     msgs = {"C4762": (
             "Do not log errors that get raised in an exception block.",
             "do-not-log-raised-errors",
-            "Do not log errors at error or warning level when error is raised in an exception block",
+            "Do not log errors when that error is then raised in an exception block",
             ),
             }
 
     def visit_try(self, node):
-        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
+        """Check that raised errors aren't logged in exception blocks.
            Go through exception block and branches and ensure error hasn't been logged if exception is raised.
         """
         try:
@@ -3155,6 +3155,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                         )
             except:
                 pass
+
 
 class DoNotDedentDocstring(BaseChecker):
 

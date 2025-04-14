@@ -19,8 +19,6 @@ namespace APIViewUnitTests
 {
     public class RequestLoggingMiddlewareTests
     {
-        private readonly WebApplicationFactory<Program> _factory;
-
         [Fact]
         public async Task RequestLoggingMiddleware_Logs_Request_And_Masks_Sensitive_Data()
         {

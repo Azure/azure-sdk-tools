@@ -37,6 +37,7 @@ using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -65,7 +66,10 @@ namespace APIViewWeb
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetry(options =>
+            {
+                options.EnableAdaptiveSampling = false;
+            });
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
 
             services.Configure<CookiePolicyOptions>(options =>

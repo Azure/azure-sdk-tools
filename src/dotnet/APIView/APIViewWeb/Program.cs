@@ -17,13 +17,6 @@ namespace APIViewWeb
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .ConfigureLogging(logging => {
-                    logging.ClearProviders();
-                    logging.AddConsole();
-                    logging.AddDebug();
-                    logging.AddApplicationInsights();
-                    logging.SetMinimumLevel(LogLevel.Information);
-                })
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
                     config.AddEnvironmentVariables(prefix: "APIVIEW_");                  
@@ -42,6 +35,13 @@ namespace APIViewWeb
                         });
                     });
                     config.AddUserSecrets(typeof(Program).Assembly);
+                })
+                .ConfigureLogging(logging => {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    logging.AddApplicationInsights();
+                    logging.SetMinimumLevel(LogLevel.Information);
                 })
                 .ConfigureKestrel(options =>
                 {

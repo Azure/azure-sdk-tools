@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace IssueLabeler.Shared
 {
-    public class QnaOutput
+    public class AnswerOutput
     {
         public string Answer { get; set; }
         public string AnswerType { get; set; }

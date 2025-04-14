@@ -19,7 +19,7 @@ namespace IssueLabelerService
             _ragService = ragService;
             _logger = logger;
         }
-        public async Task<QnaOutput> AnswerQuery(IssuePayload issue)
+        public async Task<AnswerOutput> AnswerQuery(IssuePayload issue)
         {
             // Configuration for Azure services
             var modelName = _config.OpenAIModelName;
@@ -122,7 +122,7 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formatted_response}");
 
-            return new QnaOutput {
+            return new AnswerOutput {
                 Answer =  formatted_response, 
                 AnswerType = solution ? "solution" : "suggestion" 
             };

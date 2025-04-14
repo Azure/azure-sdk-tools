@@ -9,6 +9,6 @@ namespace IssueLabelerService
 {
     public interface IAnswerService
     {
-        public Task<QnaOutput> AnswerQuery(IssuePayload issue);
+        public Task<AnswerOutput> AnswerQuery(IssuePayload issue);
     }
 }

@@ -2730,9 +2730,9 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
     name = "do-not-log-raised-errors"
     priority = -1
     msgs = {"C4762": (
-            "Do not log errors that get raised in an exception block.",
+            "Do not log an exception that you re-raise 'as-is'",
             "do-not-log-raised-errors",
-            "Do not log errors when that error is then raised in an exception block",
+            "Do not log an exception that you re-raise 'as-is'",
             ),
             }
 

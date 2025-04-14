@@ -119,10 +119,10 @@ export async function tryTestPackage(packageDirectory: string, rushxScript: stri
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300);
+        await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300, true);
         logger.info(`tested package successfully.`);
     } catch (err) {
-        logger.error(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
+        logger.warn(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 

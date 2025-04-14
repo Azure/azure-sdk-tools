@@ -74,6 +74,10 @@ function getDistClassicClientParametersPath(packageRoot: string): string {
 
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['pipe', 'pipe', 'pipe'] };
 
+function logError(errorAsWarning:boolean){
+    return errorAsWarning ? logger.warn : logger.error;
+}
+
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
 }
@@ -271,10 +275,6 @@ export async function runCommand(
 
     await promise;
     return {stdout, stderr, code};
-}
-
-function logError(errorAsWarning:boolean){
-    return errorAsWarning ? logger.warn : logger.error;
 }
 
 export async function existsAsync(path: string): Promise<boolean> {

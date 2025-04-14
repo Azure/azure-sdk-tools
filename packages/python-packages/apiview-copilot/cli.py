@@ -245,6 +245,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
+            ac.argument(
+                "select",
+                type=str,
+                nargs="*",
+                help="Select specific properties to retain in the output.",
+                options_list=["--select"],
+            )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(

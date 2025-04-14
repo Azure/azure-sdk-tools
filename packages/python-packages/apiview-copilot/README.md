@@ -50,6 +50,13 @@ Commands available for working with the Flask app:
 
 To run evaluations, see: [evals/README.md](./evals/README.md)
 
+## Search Commands
+
+Commands available for querying the search indexes:
+
+- `cli.bat search guidelines`: Search the guidelines for a query.
+- `cli.bat search examples`: Search the examples index for a query.
+
 ## Documentation
 
 https://apiviewuat.azurewebsites.net/swagger/index.html

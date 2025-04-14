@@ -174,6 +174,7 @@ class SearchManager:
             query_type=QueryType.SEMANTIC,
             query_caption=QueryCaptionType.EXTRACTIVE,
             query_answer=QueryAnswerType.EXTRACTIVE,
+            query_answer_count=3,
             vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
         )
         return SearchResult(result)

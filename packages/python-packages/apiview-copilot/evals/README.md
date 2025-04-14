@@ -30,6 +30,12 @@ python run.py --language python
 python run.py --language python --test-file specific_tests.jsonl
 ```
 
+or 
+
+```bash
+python run.py --language python --test-file tests/python/specific.jsonl
+```
+
 3. Change the number of evaluation runs (default is 3):
 ```bash
 python run.py --language python --n 5

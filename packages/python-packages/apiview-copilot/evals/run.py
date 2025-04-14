@@ -367,7 +367,7 @@ if __name__ == "__main__":
         "--test-file",
         type=str,
         default="all",
-        help="Only run a particular jsonl test file, takes the name of the file. Defaults to all.",
+        help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()
 
@@ -387,6 +387,7 @@ if __name__ == "__main__":
     rule_ids = set()
 
     tests_directory = pathlib.Path(__file__).parent / "tests" / args.language
+    args.test_file = pathlib.Path(args.test_file).name
 
     all_results = {}
     for file in tests_directory.glob("*.jsonl"):

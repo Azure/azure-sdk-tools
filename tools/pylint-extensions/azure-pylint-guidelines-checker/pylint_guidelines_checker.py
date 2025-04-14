@@ -3232,6 +3232,32 @@ class DoNotDedentDocstring(BaseChecker):
     # this line makes it work for async functions
     visit_asyncfunctiondef = visit_functiondef
 
+class DoNotUseLoggingException(BaseChecker):
+    """Rule to check that exceptions aren't logged using exception method"""
+
+    name = "do-not-use-logging-exception"
+    priority = -1
+    msgs = {
+        "C4769": (
+            "Do not use Exception level logging. Use logging.error instead.",
+            "do-not-use-logging-exception",
+            "Do not use Exception level logging. Use logging.error instead.",
+        ),
+    }
+
+    def visit_call(self, node):
+        """Check that we aren't using logging.exception or logger.exception."""
+        try:
+            func_as_string = node.func.as_string()
+            # Check for direct usage of logging.exception
+            if func_as_string == "logging.exception":
+                self.add_message(
+                    msgid="do-not-use-logging-exception",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3282,3 +3308,4 @@ def register(linter):
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
+    linter.register_checker(DoNotUseLoggingException(linter))

@@ -3937,3 +3937,36 @@ class TestDedent(pylint.testutils.CheckerTestCase):
             )
         ):
             self.checker.visit_classdef(function_node)
+
+class TestLoggingException(pylint.testutils.CheckerTestCase):
+    """Test that we are checking logging exceptions"""
+
+    CHECKER_CLASS = checker.DoNotUseLoggingException
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_use_logging_exception.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_bad_logging_exception(self, setup):
+        function_node = setup.body[1].value
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-exception",
+                line=3,
+                node=function_node,
+                col_offset=0,
+                end_line=3,
+                end_col_offset=26,
+            )
+        ):
+            self.checker.visit_call(function_node)
+
+    def test_ignores_correct_logging(self, setup):
+        function_node = setup.body[2].value
+        with self.assertNoMessages():
+            self.checker.visit_call(function_node)

@@ -6,8 +6,10 @@ from ._sectioned_document import Section
 
 
 class Violation(BaseModel):
-    rule_ids: List[str] = Field(description="unique rule ID or IDs that were violated.")
-    line_no: Optional[int] = Field(description="the line number of the violation.")
+    rule_ids: List[str] = Field(
+        description="Unique guideline ID or IDs that were violated."
+    )
+    line_no: Optional[str] = Field(description="Line number(s) of the violation.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
@@ -87,49 +89,49 @@ class ReviewResult(BaseModel):
         if len(self.violations) > 0:
             self.status = "Error"
 
-    def validate(self, *, guidelines: List[dict]):
+    def validate(self, *, guideline_ids: List[str]):
         """
         Runs validations on the ReviewResult collection.
         For now this is just ensure rule IDs are valid.
         """
-        self._process_rule_ids(guidelines)
+        # TODO: Disable for now. See: https://github.com/Azure/azure-sdk-tools/issues/10303
+        # self._process_rule_ids(guideline_ids)
 
-    def _process_rule_ids(self, guidelines):
+    def _process_rule_ids(self, guideline_ids: List[str]):
         """
         Ensure that each rule ID matches with an actual guideline ID.
         This ensures that the links that appear in APIView should never be broken (404).
         """
+        return
+        # FIXME: Fix up this logic...
         # create an index for easy lookup
-        index = {x["id"]: x for x in guidelines}
-        for violation in self.violations:
-            to_remove = []
-            to_add = []
-            for rule_id in violation.rule_ids:
-                try:
-                    index[rule_id]
-                    continue
-                except KeyError:
-                    # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
-                    matched = False
-                    for guideline in guidelines:
-                        if guideline["id"].endswith(rule_id):
-                            to_remove.append(rule_id)
-                            to_add.append(guideline["id"])
-                            index[rule_id] = guideline["id"]
-                            matched = True
-                            break
-                    if matched:
-                        continue
-                    # no match or partial match found, so remove the rule_id
-                    to_remove.append(rule_id)
-                    print(
-                        f"WARNING: Rule ID {rule_id} not found. Possible hallucination."
-                    )
-            # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
-            for rule_id in to_remove:
-                violation.rule_ids.remove(rule_id)
-            for rule_id in to_add:
-                violation.rule_ids.append(rule_id)
+        # index = set(guideline_ids)
+        # for violation in self.violations:
+        #     to_remove = []
+        #     to_add = []
+        #     for rule_id in violation.rule_ids:
+        #         if rule_id in index:
+        #             # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
+        #             matched = False
+        #             for gid in guideline_ids:
+        #                 if gid.endswith(rule_id):
+        #                     to_remove.append(rule_id)
+        #                     to_add.append(gid)
+        #                     index[rule_id] = gid
+        #                     matched = True
+        #                     break
+        #             if matched:
+        #                 continue
+        #             # no match or partial match found, so remove the rule_id
+        #             to_remove.append(rule_id)
+        #             print(
+        #                 f"WARNING: Rule ID {rule_id} not found. Possible hallucination."
+        #             )
+        #     # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
+        #     for rule_id in to_remove:
+        #         violation.rule_ids.remove(rule_id)
+        #     for rule_id in to_add:
+        #         violation.rule_ids.append(rule_id)
 
     def _process_violations(
         self, violations: List[Violation], section: Section

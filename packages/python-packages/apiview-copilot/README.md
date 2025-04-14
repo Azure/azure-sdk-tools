@@ -56,6 +56,7 @@ Commands available for querying the search indexes:
 
 - `cli.bat search guidelines`: Search the guidelines for a query.
 - `cli.bat search examples`: Search the examples index for a query.
+- `cli.bat search kb`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
 
 ## Documentation
 

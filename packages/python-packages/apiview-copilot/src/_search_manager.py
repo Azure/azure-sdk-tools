@@ -14,7 +14,7 @@ from src._models import Guideline, Example
 from collections import deque
 import json
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -104,11 +104,19 @@ class Context:
     from the CosmosDB database.
     """
 
-    def __init__(self, guidelines: List[Guideline], examples: List[Example]):
-        example_dict = {x["id"]: x for x in examples}
+    items: List["ContextItem"]
+
+    def __init__(
+        self,
+        *,
+        guidelines: List[Guideline] = None,
+        examples: List[Example] = None,
+    ):
+        example_dict = {x.id: x for x in examples}
         self.items = []
         for guideline in guidelines:
-            item = ContextItem(guideline)
+            item = ContextItem(guideline, example_dict)
+            self.items.append(item)
 
     def __iter__(self):
         """
@@ -124,9 +132,16 @@ class Context:
         return len(self.items)
 
     def __repr__(self):
-        return (
-            f"Context(guidelines={len(self.guidelines)}, examples={len(self.examples)})"
-        )
+        return f"Context(items={len(self.items)}"
+
+    def to_markdown(self) -> str:
+        """
+        Converts the context to a markdown string.
+        """
+        markdown = ""
+        for item in self.items:
+            markdown += f"\n{item.to_markdown()}"
+        return markdown
 
 
 class ContextItem:
@@ -134,8 +149,48 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, result: Guideline):
-        raise NotImplementedError("This is not yet implemented!")
+    def __init__(self, result: Guideline, examples: Dict[str, Example]):
+        self.id = result.id
+        self.content = result.content
+        self.lang = result.lang
+        self.title = result.title
+        self.examples = []
+        for ex_id in result.related_examples or []:
+            example = examples.get(ex_id)
+            if example is not None:
+                self.examples.append(example)
+            else:
+                print(
+                    f"WARNING: Example {ex_id} not found for guideline {result.id}. Skipping."
+                )
+
+    def to_markdown(self) -> str:
+        """
+        Converts the context item to a markdown string.
+        """
+        markdown = f"## {self.title}\n\n{self.content}\n\n"
+        if self.examples:
+            # collect good and bad examples separately
+            good_examples = []
+            bad_examples = []
+            for example in self.examples:
+                if example.example_type == "good":
+                    good_examples.append(example)
+                else:
+                    bad_examples.append(example)
+
+            if good_examples:
+                markdown += "### GOOD Examples\n\n"
+                for example in good_examples:
+                    markdown += f"```python\n{example.content}\n```\n\n"
+                    markdown += f"{example.explanation}\n\n"
+
+            if bad_examples:
+                markdown += "### BAD Examples\n\n"
+                for example in bad_examples:
+                    markdown += f"```python\n{example.content}\n```\n\n"
+                    markdown += f"{example.explanation}\n\n"
+        return markdown
 
 
 class SearchManager:
@@ -223,9 +278,9 @@ class SearchManager:
         )
         return SearchResult(result)
 
-    def retrieve_and_resolve_context(
-        self, guideline_results: List[object], example_results: List[object]
-    ) -> List[object]:
+    def build_context(
+        self, guideline_results: List[SearchResult], example_results: List[SearchResult]
+    ) -> Context:
         self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
         client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
         database = client.get_database_client(COSMOS_DB_NAME)
@@ -329,42 +384,12 @@ class SearchManager:
                         queue.append(gid)
 
         # flatten the results to just the values
-        final_guidelines = [v for v in final_guidelines.values() if v is not None]
-        final_examples = [v for v in final_examples.values() if v is not None]
-
-        # remove irrelevant guideline fields
-        remove_guideline_fields = [
-            "category",
-            "_rid",
-            "_self",
-            "_etag",
-            "_attachments",
-            "_ts",
-            "related_guidelines",
-            "related_examples",
-            "language",
+        final_guidelines = [
+            Guideline(**v) for v in final_guidelines.values() if v is not None
         ]
-        for guideline in final_guidelines:
-            for field in remove_guideline_fields:
-                if field in guideline:
-                    del guideline[field]
-
-        # remove irrelevant example fields
-        remove_example_fields = [
-            "_rid",
-            "_self",
-            "_etag",
-            "_attachments",
-            "_ts",
-            "guideline_ids",
-            "language",
+        final_examples = [
+            Example(**v) for v in final_examples.values() if v is not None
         ]
-        for example in final_examples:
-            for field in remove_example_fields:
-                if field in example:
-                    del example[field]
 
-        return {
-            "guidelines": final_guidelines,
-            "examples": final_examples,
-        }
+        context = Context(guidelines=final_guidelines, examples=final_examples)
+        return context

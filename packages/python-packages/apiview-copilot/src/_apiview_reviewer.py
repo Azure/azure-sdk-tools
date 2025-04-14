@@ -1,10 +1,3 @@
-from azure.cosmos import CosmosClient
-from azure.search.documents import SearchClient
-from azure.search.documents.models import (
-    VectorizableTextQuery,
-    QueryType,
-    QueryCaptionType,
-)
 from azure.identity import DefaultAzureCredential
 
 from collections import deque
@@ -63,6 +56,7 @@ class ApiViewReview:
             guidelines = self.search.retrieve_static_guidelines(
                 self.language, include_general_guidelines=True
             )
+            guideline_ids = [g["id"] for g in guidelines]
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
         final_results = ReviewResult(status="Success", violations=[])
         max_retries = 5
@@ -78,7 +72,7 @@ class ApiViewReview:
                 if use_rag:
                     # use the Azure OpenAI service to get guidelines
                     context = self._retrieve_and_resolve_guidelines(str(chunk))
-                    guidelines = context["guidelines"]
+                    guideline_ids = [g.id for g in context]
                 # select the appropriate prompty file and run it
                 prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
                 prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
@@ -87,7 +81,7 @@ class ApiViewReview:
                     inputs={
                         "language": self.language,
                         "context": (
-                            json.dumps(context) if use_rag else json.dumps(guidelines)
+                            context.to_markdown() if use_rag else json.dumps(guidelines)
                         ),
                         "apiview": chunk.numbered(),
                     },
@@ -108,7 +102,7 @@ class ApiViewReview:
                             f"WARNING: Failed to decode JSON for chunk {i}: {response}. Retrying..."
                         )
                         continue
-        final_results.validate(guidelines=guidelines)
+        final_results.validate(guideline_ids=guideline_ids)
         final_results.sort()
         end_time = time()
         print(f"Review generated in {end_time - start_time:.2f} seconds.")
@@ -123,17 +117,15 @@ class ApiViewReview:
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
 
         # search the examples index directly with the code snippet
-        example_results = self.search_examples(query)
+        example_results = self.search.search_examples(query)
 
         # use a prompt to convert the code snippet to text
         # then do a hybrid search of the guidelines index against this description
         prompt = os.path.join(_PROMPTS_FOLDER, "code_to_text.prompty")
         response = prompty.execute(prompt, inputs={"question": query})
-        guideline_results = self.search_guidelines(response)
+        guideline_results = self.search.search_guidelines(response)
 
-        context = self.search.retrieve_and_resolve_context(
-            guideline_results, example_results
-        )
+        context = self.search.build_context(guideline_results, example_results)
         return context
 
     def unescape(self, text: str) -> str:

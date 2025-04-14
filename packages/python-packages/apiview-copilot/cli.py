@@ -231,7 +231,7 @@ def search_knowledge_base(
         examples = search.search_examples(query=query)
     if "guidelines" in index:
         guidelines = search.search_guidelines(query=query)
-    context = search.retrieve_and_resolve_context(guidelines, examples)
+    context = search.build_context(guidelines, examples)
     print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
 
 

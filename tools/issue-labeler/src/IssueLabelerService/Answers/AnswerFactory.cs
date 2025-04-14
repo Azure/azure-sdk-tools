@@ -18,7 +18,17 @@ namespace IssueLabelerService
         public IAnswerService GetAnswerService(RepositoryConfiguration config) =>
             _qnaServices.GetOrAdd(
                 config.AnswerService,
-                key => new OpenAiAnswerService(_logger, config, _ragService)
+                key =>
+                {
+                    switch (key)
+                    {
+                        case "OpenAi":
+                            return new OpenAiAnswerService(_logger, config, _ragService);
+                        default:
+                            _logger.LogWarning($"Unknown answer service type: {key} Running OpenAi.");
+                            return new OpenAiAnswerService(_logger, config, _ragService);
+                    }
+                }
             );
     }
 }

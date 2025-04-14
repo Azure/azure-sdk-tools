@@ -1,28 +1,26 @@
-using System;
 using System.Threading.Tasks;
-using IssueLabeler.Shared;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
+using IssueLabeler.Shared;
+using System;
 using System.Linq;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace IssueLabelerService
 {
-    public class OpenAiAnswerService : IAnswerService
+    public class OpenAiLabeler : ILabeler
     {
+        private ILogger<LabelerFactory> _logger;
         private RepositoryConfiguration _config;
         private TriageRag _ragService;
-        private ILogger<AnswerFactory> _logger;
-        public OpenAiAnswerService(ILogger<AnswerFactory> logger, RepositoryConfiguration config, TriageRag ragService)
-        {
-            _config = config;
-            _ragService = ragService;
-            _logger = logger;
-        }
-        public async Task<AnswerOutput> AnswerQuery(IssuePayload issue)
+
+        public OpenAiLabeler(ILogger<LabelerFactory> logger, RepositoryConfiguration config, TriageRag ragService) =>
+            (_logger, _config, _ragService) = (logger, config, ragService);
+
+        public async Task<string[]> PredictLabels(IssuePayload issue)
         {
             // Configuration for Azure services
-            var modelName = _config.AnswerModelName;
+            var modelName = _config.LabelModelName;
             var issueIndexName = _config.IssueIndexName;
             var documentIndexName = _config.DocumentIndexName;
 
@@ -40,13 +38,14 @@ namespace IssueLabelerService
             double scoreThreshold = double.Parse(_config.ScoreThreshold);
             double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
+            // Search for issues and documents
             var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold);
             var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold);
 
             // Filtered out all sources for either one then not enough information to answer the issue. 
             if (docs.Count == 0 || issues.Count == 0)
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}.");
             }
 
             double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
@@ -58,7 +57,8 @@ namespace IssueLabelerService
             var printableIssues = string.Join("\n", issues.Select(r => JsonConvert.SerializeObject(r)));
             var printableDocs = string.Join("\n", docs.Select(r => JsonConvert.SerializeObject(r)));
 
-            var replacements_UserPrompt = new Dictionary<string, string>
+            // Will replace variables inside of the user prompt configuration.
+            var replacements = new Dictionary<string, string>
             {
                 { "Query", query },
                 { "PrintableDocs", printableDocs },
@@ -69,47 +69,44 @@ namespace IssueLabelerService
             if (solution)
             {
                 instructions = _config.SolutionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacements_UserPrompt, _logger);
+                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacements, _logger);
             }
             else
             {
                 instructions = _config.SuggestionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionUserPrompt, replacements_UserPrompt, _logger);
+                userPrompt = AzureSdkIssueLabelerService.FormatTemplate( _config.SuggestionUserPrompt, replacements, _logger);
             }
 
-            var response = await _ragService.SendMessageQnaAsync(instructions, userPrompt);
-
-            string intro, outro;
-            var replacements_intro = new Dictionary<string, string>
+            var structure = BinaryData.FromString("""
             {
-                { "IssueUserLogin", issue.IssueUserLogin },
-                { "RepositoryName", issue.RepositoryName }
-            };
-
-            if (solution)
-            {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacements_intro, _logger);
-                outro = _config.SolutionResponseConclusion;
+              "type": "object",
+              "properties": {
+                "Category": { "type": "string" },
+                "Service": { "type": "string" }
+              },
+              "required": [ "Category", "Service"],
+              "additionalProperties": false
             }
-            else
-            {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacements_intro, _logger);
-                outro = _config.SuggestionResponseConclusion;
-            }
+            """);
 
-            if (string.IsNullOrEmpty(response))
+            var result = await _ragService.SendMessageQnaAsync(instructions, userPrompt, structure);
+            var output = JsonConvert.DeserializeObject<LabelOutput>(result);
+
+            if (string.IsNullOrEmpty(result))
             {
-                throw new Exception($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber} had an empty response.");
+                throw new Exception($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} had an empty response.");
             }
 
-            string formatted_response = intro + response + outro;
 
-            _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formatted_response}");
+            _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Service: {output.Service} Category: {output.Category}");
 
-            return new AnswerOutput {
-                Answer =  formatted_response, 
-                AnswerType = solution ? "solution" : "suggestion" 
-            };
+            return [output.Service, output.Category];
+        }
+
+        private class LabelOutput
+        {
+            public string Category { get; set; }
+            public string Service { get; set; }
         }
     }
 }

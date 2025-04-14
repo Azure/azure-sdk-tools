@@ -21,12 +21,10 @@ namespace IssueLabelerService
         public string DocumentIndexName => GetItem("DocumentIndexName");
         public string DocumentSemanticName => GetItem("DocumentSemanticName");
         public string EnableAnswers => GetItem("EnableAnswers");
-        public string Instructions => GetItem("Instructions");
         public string IssueIndexName => GetItem("IssueIndexName");
         public string IssueSemanticName => GetItem("IssueSemanticName");
         public string LabelPredictor => GetItem("labelPredictor");
         public string OpenAIEndpoint => GetItem("OpenAIEndpoint");
-        public string OpenAIModelName => GetItem("OpenAIModelName");
         public string RepoNames => GetItem("RepoNames");
         public string RepoOwner => GetItem("RepoOwner");
         public string ReposUsingCommonModel => GetItem("ReposUsingCommonModel");
@@ -50,6 +48,12 @@ namespace IssueLabelerService
         public string SuggestionResponseConclusion => GetItem("SuggestionResponseConclusion");
         public string SolutionResponseIntroduction => GetItem("SolutionResponseIntroduction");
         public string SolutionResponseConclusion => GetItem("SolutionResponseConclusion");
+        public string AnswerModelName => GetItem("AnswerModelName");
+        public string LabelModelName => GetItem("LabelModelName");
+        public string SolutionInstructions => GetItem("SolutionInstructions");
+        public string SuggestionInstructions => GetItem("SuggestionInstructions");
+        public string SolutionUserPrompt => GetItem("SolutionUserPrompt");
+        public string SuggestionUserPrompt => GetItem("SuggestionUserPrompt");
 
         public string GetItem(string name)
         {

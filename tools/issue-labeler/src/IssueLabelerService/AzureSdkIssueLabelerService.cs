@@ -102,15 +102,11 @@ namespace IssueLabelerService
 
             foreach (var replacement in replacements)
             {
+                if(!result.Contains($"{{{replacement.Key}}}"))
+                {
+                    logger.LogWarning($"Replacement value for {replacement.Key} does not exist in {template}.");
+                }
                 result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
-            }
-
-            // Use regex to find unreplaced placeholders
-            var placeholderRegex = new Regex(@"\{[^{}]+\}");
-            if (placeholderRegex.IsMatch(result))
-            {
-                // Log a warning 
-                logger.LogWarning($"Unreplaced placeholders found in prompt: {result}");
             }
 
             // Replace escaped newlines with actual newlines

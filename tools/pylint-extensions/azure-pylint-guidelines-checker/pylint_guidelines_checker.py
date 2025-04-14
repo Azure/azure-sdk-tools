@@ -3238,10 +3238,10 @@ class DoNotUseLoggingException(BaseChecker):
     name = "do-not-use-logging-exception"
     priority = -1
     msgs = {
-        "C4769": (
-            "Do not use Exception level logging. Use logging.error instead.",
+        "C4773": (
+            "Do not use Exception level logging. Use another logging level instead.",
             "do-not-use-logging-exception",
-            "Do not use Exception level logging. Use logging.error instead.",
+            "Do not use Exception level logging. Use another logging level instead.",
         ),
     }
 

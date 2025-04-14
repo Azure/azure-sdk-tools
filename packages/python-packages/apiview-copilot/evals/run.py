@@ -2,8 +2,11 @@ import os
 import json
 import pathlib
 import argparse
-from typing import Set, Tuple, Any, Literal
+from typing import Set, Tuple, Any
 import copy
+
+# set before azure.ai.evaluation import to make PF output less noisy
+os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
 import dotenv
 from tabulate import tabulate
@@ -89,9 +92,9 @@ class CustomAPIViewEvaluator:
 
 
 def review_apiview(query: str, language: str):
-    from src._apiview_reviewer import (
+    from src._apiview_reviewer import (  # pylint: disable=import-error,no-name-in-module
         ApiViewReview,
-    )  # pylint: disable=import-error,no-name-in-module
+    )
 
     ai_review = ApiViewReview(language=language, model="o3-mini")
     review = ai_review.get_response(query, chunk_input=False, use_rag=False)
@@ -364,7 +367,7 @@ if __name__ == "__main__":
         "--test-file",
         type=str,
         default="all",
-        help="Only run a particular jsonl test file, takes the name of the file. Defaults to all.",
+        help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()
 
@@ -384,6 +387,7 @@ if __name__ == "__main__":
     rule_ids = set()
 
     tests_directory = pathlib.Path(__file__).parent / "tests" / args.language
+    args.test_file = pathlib.Path(args.test_file).name
 
     all_results = {}
     for file in tests_directory.glob("*.jsonl"):
@@ -446,6 +450,9 @@ if __name__ == "__main__":
             len(run_results) // 2
         ]
         all_results[file.name] = median_result
+
+    if not all_results:
+        raise ValueError(f"No tests found for arguments: {args}")
 
     show_results(args, all_results)
     establish_baseline(args, all_results)

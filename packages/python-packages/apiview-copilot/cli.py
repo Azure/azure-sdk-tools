@@ -6,10 +6,12 @@ from pprint import pprint
 import sys
 import pathlib
 
+from src._search_manager import SearchManager
+
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 helps[
     "review"
@@ -207,6 +209,32 @@ def search_guidelines(
     print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
 
 
+def search_knowledge_base(
+    language: str,
+    text: Optional[str] = None,
+    path: Optional[str] = None,
+    index: List[str] = ["examples", "guidelines"],
+):
+    """
+    Queries the Search indexes and returns the resulting Cosmos DB
+    objects, resolving all links between objects. This result represents
+    what the AI reviewer would receive as context in RAG mode.
+    """
+    if (path and text) or (not path and not text):
+        raise ValueError("Provide one of `--path` or `--text`.")
+    search = SearchManager(language=language)
+    query = text
+    if path:
+        with open(path, "r") as f:
+            query = f.read()
+    if "examples" in index:
+        examples = search.search_examples(query=query)
+    if "guidelines" in index:
+        guidelines = search.search_guidelines(query=query)
+    context = search.retrieve_and_resolve_context(guidelines, examples)
+    print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -234,6 +262,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("examples", "search_examples")
             g.command("guidelines", "search_guidelines")
+            g.command("kb", "search_knowledge_base")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
@@ -329,6 +358,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 "text",
                 type=str,
                 help="The text query to search.",
+            )
+            ac.argument(
+                "index",
+                type=str,
+                nargs="+",
+                help="The indexes to search. Can be one or more of: examples, guidelines.",
+                options_list=["--index"],
+            )
+            ac.argument(
+                "overwrite",
+                action="store_true",
+                help="Overwrite the test case if it already exists.",
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

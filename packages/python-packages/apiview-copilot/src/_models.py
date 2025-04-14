@@ -1,4 +1,4 @@
-from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional, Union
 
@@ -17,15 +17,71 @@ class Violation(BaseModel):
     comment: str = Field(description="a comment about the violation.")
 
 
-class GuidelinesResult(BaseModel):
+class Guideline(BaseModel):
+    """
+    Represents a guideline in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the guideline.")
+    title: str = Field(description="Short descriptive title of the guideline.")
+    content: str = Field(description="Full text of the guideline.")
+    lang: Optional[str] = Field(
+        None,
+        description="If this guideline is specific to a language (e.g., 'python'). If omitted, the guideline is language-agnostic.",
+    )
+
+    # reverse links
+    related_guidelines: Optional[List[str]] = Field(
+        description="List of guideline IDs that are related to this guideline."
+    )
+    related_examples: Optional[List[str]] = Field(
+        description="List of example IDs that are related to this guideline."
+    )
+
+
+class ExampleType(str, Enum):
+    GOOD = "good"
+    BAD = "bad"
+
+
+class Example(BaseModel):
+    """
+    Represents an example stored in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the example.")
+    guideline_ids: List[str] = Field(
+        description="List of guideline IDs to which this example applies."
+    )
+    content: str = Field(description="Code snippet demonstrating the example.")
+    explanation: str = Field(description="Explanation of why this is good/bad.")
+    example_type: ExampleType = Field(
+        description="Whether this example is 'good' or 'bad'."
+    )
+
+    # Classification fields
+    lang: Optional[str] = Field(
+        None, description="If this example is specific to a language (e.g., 'python')."
+    )
+    service: Optional[str] = Field(
+        None,
+        description="If this example is specific to a service (e.g., 'azure-functions').",
+    )
+    is_exception: bool = Field(
+        False,
+        description="Indicates if this example provides an exception to the guidelines rather than an amplification.",
+    )
+
+
+class ReviewResult(BaseModel):
     status: str = Field(
         description="Succeeded if the request has no violations. Error if there are violations."
     )
     violations: List[Violation] = Field(description="list of violations if any")
 
-    def merge(self, other: "GuidelinesResult", *, section: Section):
+    def merge(self, other: "ReviewResult", *, section: Section):
         """
-        Merge two GuidelinesResult objects.
+        Merge two ReviewResult objects.
         """
         self.violations.extend(self._process_violations(other.violations, section))
         if len(self.violations) > 0:
@@ -33,7 +89,7 @@ class GuidelinesResult(BaseModel):
 
     def validate(self, *, guidelines: List[dict]):
         """
-        Runs validations on the GuidelinesResult collection.
+        Runs validations on the ReviewResult collection.
         For now this is just ensure rule IDs are valid.
         """
         self._process_rule_ids(guidelines)
@@ -145,22 +201,3 @@ class GuidelinesResult(BaseModel):
         Sort the violations by line number.
         """
         self.violations.sort(key=lambda x: x.line_no)
-
-
-class VectorDocument(BaseModel):
-    id: Optional[str] = Field(description="unique ID of the document")
-    language: str = Field(description="programming language of the document")
-    bad_code: str = Field(description="the bad coding pattern", alias="badCode")
-    good_code: Optional[str] = Field(
-        description="the suggested fix for the bad code", alias="goodCode"
-    )
-    comment: Optional[str] = Field(description="a comment about the violation")
-    guideline_ids: Optional[List[str]] = Field(
-        description="list of guideline IDs that apply to this document",
-        alias="guidelineIds",
-    )
-
-
-class VectorSearchResult(BaseModel):
-    confidence: float = Field(description="confidence score of the match")
-    document: VectorDocument = Field(description="the matching document")

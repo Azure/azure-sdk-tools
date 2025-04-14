@@ -6,15 +6,14 @@ from azure.search.documents.models import (
     QueryAnswerType,
     QueryAnswerResult,
     QueryCaptionType,
-    QueryCaptionResult,
 )
 from azure.identity import DefaultAzureCredential
+
+from src._models import Guideline, Example
 
 from collections import deque
 import json
 import os
-import prompty
-import prompty.azure
 from typing import List, Dict
 
 
@@ -91,6 +90,52 @@ class SearchResult:
             self.results.append(SearchItem(result))
         for answer in search_results.get_answers():
             self.answers.append(SearchAnswer(answer))
+
+    def __len__(self):
+        return len(self.results)
+
+    def __iter__(self):
+        return iter(self.results)
+
+
+class Context:
+    """
+    Represents the resolved context of a search with objects
+    from the CosmosDB database.
+    """
+
+    def __init__(self, guidelines: List[Guideline], examples: List[Example]):
+        example_dict = {x["id"]: x for x in examples}
+        self.items = []
+        for guideline in guidelines:
+            item = ContextItem(guideline)
+
+    def __iter__(self):
+        """
+        Returns an iterator over the context items.
+        """
+        for item in self.items:
+            yield item
+
+    def __len__(self):
+        """
+        Returns the number of items in the context.
+        """
+        return len(self.items)
+
+    def __repr__(self):
+        return (
+            f"Context(guidelines={len(self.guidelines)}, examples={len(self.examples)})"
+        )
+
+
+class ContextItem:
+    """
+    Represents a single item in the context.
+    """
+
+    def __init__(self, result: Guideline):
+        raise NotImplementedError("This is not yet implemented!")
 
 
 class SearchManager:
@@ -174,32 +219,11 @@ class SearchManager:
             query_type=QueryType.SEMANTIC,
             query_caption=QueryCaptionType.EXTRACTIVE,
             query_answer=QueryAnswerType.EXTRACTIVE,
-            query_answer_count=3,
             vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
         )
         return SearchResult(result)
 
-    def retrieve_and_resolve_guidelines(self, query: str) -> List[object]:
-        """
-        Given a code query, searches the examples index for relevant examples
-        and the guidelines index for relevant guidelines based on a structual
-        description of the code. Then, it resolves the two sets of results.
-        """
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-
-        # search the examples index directly with the code snippet
-        example_results = self.search_examples(query)
-
-        # use a prompt to convert the code snippet to text
-        # then do a hybrid search of the guidelines index against this description
-        prompt = os.path.join(_PROMPTS_FOLDER, "code_to_text.prompty")
-        response = prompty.execute(prompt, inputs={"question": query})
-        guideline_results = self.search_guidelines(response)
-
-        context = self._retrieve_and_resolve_context(guideline_results, example_results)
-        return context
-
-    def _retrieve_and_resolve_context(
+    def retrieve_and_resolve_context(
         self, guideline_results: List[object], example_results: List[object]
     ) -> List[object]:
         self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
@@ -209,8 +233,8 @@ class SearchManager:
         examples_container = database.get_container_client("examples")
 
         # initial ids from the search queries
-        starting_example_ids = list(set([x["id"] for x in example_results]))
-        starting_guideline_ids = list(set([x["id"] for x in guideline_results]))
+        starting_example_ids = list(set([x.id for x in example_results]))
+        starting_guideline_ids = list(set([x.id for x in guideline_results]))
 
         # track processed IDs to avoid loops
         seen_guideline_ids = set()
@@ -318,6 +342,7 @@ class SearchManager:
             "_ts",
             "related_guidelines",
             "related_examples",
+            "language",
         ]
         for guideline in final_guidelines:
             for field in remove_guideline_fields:
@@ -332,6 +357,7 @@ class SearchManager:
             "_attachments",
             "_ts",
             "guideline_ids",
+            "language",
         ]
         for example in final_examples:
             for field in remove_example_fields:

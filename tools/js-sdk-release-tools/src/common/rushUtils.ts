@@ -105,10 +105,10 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300);
+        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
         logger.info(`built samples successfully.`);
     } catch (err) {
-        logger.error(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
+        logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 

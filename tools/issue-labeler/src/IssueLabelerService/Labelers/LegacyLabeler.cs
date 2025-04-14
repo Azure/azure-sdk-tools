@@ -10,7 +10,7 @@ namespace IssueLabelerService
 {
     public class LegacyLabeler : ILabeler
     {
-        private readonly ILogger<Labelers> _logger;
+        private readonly ILogger<LabelerFactory> _logger;
         private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
         private readonly RepositoryConfiguration _config;
@@ -18,7 +18,7 @@ namespace IssueLabelerService
         private ILabelerLite Labeler { get; }
         private string CommonModelRepositoryName { get; }
 
-        public LegacyLabeler(ILogger<Labelers> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler, RepositoryConfiguration config)
+        public LegacyLabeler(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler, RepositoryConfiguration config)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;

@@ -4,14 +4,14 @@ using Microsoft.Extensions.Logging;
 
 namespace IssueLabelerService
 {
-    public class Labelers
+    public class LabelerFactory
     {
         private ConcurrentDictionary<string, ILabeler> _labelers = new();
         private IModelHolderFactoryLite _modelHolderFactory;
-        private ILogger<Labelers> _logger;
+        private ILogger<LabelerFactory> _logger;
         private ILabelerLite _labeler;
 
-        public Labelers(ILogger<Labelers> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler)
+        public LabelerFactory(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;

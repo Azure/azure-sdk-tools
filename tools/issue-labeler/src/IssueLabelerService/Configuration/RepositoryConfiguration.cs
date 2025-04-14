@@ -20,8 +20,7 @@ namespace IssueLabelerService
         public string ConfidenceThreshold => GetItem("ConfidenceThreshold");
         public string DocumentIndexName => GetItem("DocumentIndexName");
         public string DocumentSemanticName => GetItem("DocumentSemanticName");
-        public string EnableAnswers => GetItem("enableAnswers");
-        public string EnableLabels => GetItem("enableLabels");
+        public string EnableAnswers => GetItem("EnableAnswers");
         public string Instructions => GetItem("Instructions");
         public string IssueIndexName => GetItem("IssueIndexName");
         public string IssueSemanticName => GetItem("IssueSemanticName");
@@ -44,6 +43,13 @@ namespace IssueLabelerService
         public string IssueModelAzureSdkBlobConfigNames => GetItem("IssueModel.azure_sdk.BlobConfigNames");
         public string IssueModelAzureSdkCategoryLabels => GetItem("IssueModel.azure_sdk.CategoryLabels");
         public string IssueModelAzureSdkServiceLabels => GetItem("IssueModel.azure_sdk.ServiceLabels");
+        public string AnswerService => GetItem("AnswerService");
+        public string IssueIndexFieldName => GetItem("IssueIndexFieldName");
+        public string DocumentIndexFieldName => GetItem("DocumentIndexFieldName");
+        public string SuggestionResponseIntroduction => GetItem("SuggestionResponseIntroduction");
+        public string SuggestionResponseConclusion => GetItem("SuggestionResponseConclusion");
+        public string SolutionResponseIntroduction => GetItem("SolutionResponseIntroduction");
+        public string SolutionResponseConclusion => GetItem("SolutionResponseConclusion");
 
         public string GetItem(string name)
         {

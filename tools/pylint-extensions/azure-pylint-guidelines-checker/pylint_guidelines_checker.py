@@ -2844,7 +2844,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
         "C4760": (
             "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
             "no-typing-import-in-type-check",
-            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modulesfrom typing outside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
         ),
     }
 

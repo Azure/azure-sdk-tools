@@ -26,12 +26,16 @@ namespace IssueLabelerService
                 config.LabelPredictor,
                 key =>
                 {
-                    return key switch
+                    switch (key)
                     {
-                        "OpenAi" => new OpenAiLabeler(_logger, config, _ragService),
-                        "Legacy" => new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config),
-                        _ => throw new ArgumentException($"Unknown label predictor: {key}")
-                    };
+                        case "OpenAi":
+                            return new OpenAiLabeler(_logger, config, _ragService);
+                        case "Legacy":
+                            return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
+                        default:
+                            _logger.LogWarning($"Unknown labeler type: {key} Running Legacy.");
+                            return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
+                    }
                 }
             );
     }

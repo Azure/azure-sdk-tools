@@ -77,7 +77,7 @@ namespace IssueLabelerService
                 userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionUserPrompt, replacements_UserPrompt, _logger);
             }
 
-            var response = await _ragService.SendMessageQnaAsync(instructions, userPrompt);
+            var response = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName);
 
             string intro, outro;
             var replacements_intro = new Dictionary<string, string>

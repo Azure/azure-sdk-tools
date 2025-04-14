@@ -11,18 +11,19 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using Azure.AI.OpenAI;
 
 namespace IssueLabelerService
 {
     public class TriageRag
     {
-        private static ChatClient s_chatClient;
+        private static AzureOpenAIClient s_openAiClient;
         private static SearchIndexClient s_searchIndexClient;
         private ILogger<TriageRag> _logger;
 
-        public TriageRag(ILogger<TriageRag> logger, ChatClient chatClient, SearchIndexClient searchIndexClient)
+        public TriageRag(ILogger<TriageRag> logger, AzureOpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
-            s_chatClient = chatClient;
+            s_openAiClient = openAiClient;
             _logger = logger;
             s_searchIndexClient = searchIndexClient;
         }
@@ -78,9 +79,9 @@ namespace IssueLabelerService
             return results;
         }
 
-        public async Task<string> SendMessageQnaAsync(string instructions, string message, BinaryData structure = null)
+        public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, BinaryData structure = null)
         {
-
+            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
 
             ChatCompletionOptions options = new ChatCompletionOptions()
@@ -94,7 +95,7 @@ namespace IssueLabelerService
                     jsonSchema: structure
                 );
 
-            ChatCompletion answers = await s_chatClient.CompleteChatAsync(
+            ChatCompletion answers = await chatClient.CompleteChatAsync(
                 [
                     new DeveloperChatMessage(instructions),
                     new UserChatMessage(message)

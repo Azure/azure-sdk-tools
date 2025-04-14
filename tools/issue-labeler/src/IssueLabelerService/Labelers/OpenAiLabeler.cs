@@ -89,7 +89,7 @@ namespace IssueLabelerService
             }
             """);
 
-            var result = await _ragService.SendMessageQnaAsync(instructions, userPrompt, structure);
+            var result = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName, structure);
             var output = JsonConvert.DeserializeObject<LabelOutput>(result);
 
             if (string.IsNullOrEmpty(result))

@@ -99,15 +99,16 @@ class ReviewResult(BaseModel):
             raw_line_no = str(violation.get("line_no", "0")).replace(" ", "").strip()
             for item in raw_line_no.split(","):
                 item = item.strip()
+                violation_copy = violation.copy()  # Create a copy of the violation dictionary
                 if "-" in item:
                     # Handle range format (e.g., "10-20")
                     first_num = item.split("-")[0].strip()
-                    violation["line_no"] = int(first_num)
-                    result_violations.append(Violation(**violation))
+                    violation_copy["line_no"] = int(first_num)
+                    result_violations.append(Violation(**violation_copy))
                 else:
                     # Handle single number format (e.g., "10")
-                    violation["line_no"] = int(item)
-                    result_violations.append(Violation(**violation))
+                    violation_copy["line_no"] = int(item)
+                    result_violations.append(Violation(**violation_copy))
         self.violations.extend(result_violations)
 
     def merge(self, other: "ReviewResult", *, section: Section):

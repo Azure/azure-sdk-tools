@@ -50,13 +50,12 @@ var host = new HostBuilder()
 
         services.AddSingleton(combinedConfig);
 
-        services.AddSingleton<ChatClient>(sp =>
+        services.AddSingleton<AzureOpenAIClient>(sp =>
         {
             var openAIEndpoint = new Uri(config.OpenAIEndpoint);
             
             var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
-            var modelName = config.OpenAIModelName;
-            return openAIClient.GetChatClient(modelName);
+            return openAIClient;
         });
 
         services.AddSingleton<SearchIndexClient>(sp =>

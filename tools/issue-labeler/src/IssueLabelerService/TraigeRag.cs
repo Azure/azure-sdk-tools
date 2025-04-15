@@ -11,34 +11,23 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using Azure.AI.OpenAI;
 
 namespace IssueLabelerService
 {
     public class TriageRag
     {
-        private static ChatClient s_chatClient;
+        private static AzureOpenAIClient s_openAiClient;
         private static SearchIndexClient s_searchIndexClient;
         private ILogger<TriageRag> _logger;
 
-        public TriageRag(ILogger<TriageRag> logger, ChatClient chatClient, SearchIndexClient searchIndexClient)
+        public TriageRag(ILogger<TriageRag> logger, AzureOpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
-            s_chatClient = chatClient;
+            s_openAiClient = openAiClient;
             _logger = logger;
             s_searchIndexClient = searchIndexClient;
         }
 
-        /// <summary>
-        /// Executes an Azure Search query.
-        /// </summary>
-        /// <typeparam name="T">The type of the search result.</typeparam>
-        /// <param name="searchEndpoint">The search endpoint URI.</param>
-        /// <param name="indexName">The name of the search index.</param>
-        /// <param name="semanticConfigName">The name of the semantic configuration.</param>
-        /// <param name="field">The field to search.</param>
-        /// <param name="credential">The Azure credential.</param>
-        /// <param name="query">The search query.</param>
-        /// <param name="count">The number of results to return.</param>
-        /// <returns>An enumerable of "search results" with their associated scores.</returns>
         public async Task<List<(T, double)>> AzureSearchQueryAsync<T>(
             string indexName,
             string semanticConfigName,
@@ -90,22 +79,22 @@ namespace IssueLabelerService
             return results;
         }
 
-        /// <summary>
-        /// Sends a message to the OpenAI model for Question and Answer.
-        /// </summary>
-        /// <param name="instructions">The developer instructions for the OpenAI model.</param>
-        /// <param name="message">The message or user query to send.</param>
-        /// <param name="structure">The JSON schema structure for the response.</param>
-        /// <returns>The response from the OpenAI model.</returns>
-        public async Task<string> SendMessageQnaAsync(string instructions, string message, BinaryData structure = null)
+        public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, BinaryData structure = null)
         {
-
+            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
 
-            ChatCompletionOptions options = new ChatCompletionOptions()
+            ChatCompletionOptions options = new ChatCompletionOptions();
+
+            if (modelName.Contains("gpt"))
             {
-                ReasoningEffortLevel = ChatReasoningEffortLevel.Medium,
-            };
+                options.Temperature = 0;
+            }
+
+            if(modelName.Contains("o3-mini"))
+            {
+                options.ReasoningEffortLevel = ChatReasoningEffortLevel.Medium;
+            }
 
             if(structure != null)
                 options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
@@ -113,7 +102,7 @@ namespace IssueLabelerService
                     jsonSchema: structure
                 );
 
-            ChatCompletion answers = await s_chatClient.CompleteChatAsync(
+            ChatCompletion answers = await chatClient.CompleteChatAsync(
                 [
                     new DeveloperChatMessage(instructions),
                     new UserChatMessage(message)
@@ -125,9 +114,98 @@ namespace IssueLabelerService
 
             return answers.Content[0].Text;
         }
-    }
 
-    
+        public async Task<List<Document>> SearchDocumentsAsync(
+            string indexName,
+            string semanticConfigName,
+            string field,
+            string query,
+            int count,
+            double scoreThreshold)
+        {
+            var searchResults = await AzureSearchQueryAsync<Document>(
+                indexName,
+                semanticConfigName,
+                field,
+                query,
+                count);
+
+            List<Document> filteredDocuments = new List<Document>();
+            foreach (var (document, score) in searchResults)
+            {
+                if (score >= scoreThreshold)
+                {
+                    document.Score = score;
+                    filteredDocuments.Add(document);
+                }
+            }
+
+            _logger.LogInformation($"Found {filteredDocuments.Count} documents with score >= {scoreThreshold}");
+            return filteredDocuments;
+        }
+
+        public async Task<List<Issue>> SearchIssuesAsync(
+            string indexName,
+            string semanticConfigName,
+            string field,
+            string query,
+            int count,
+            double scoreThreshold)
+        {
+            var searchResults = await AzureSearchQueryAsync<Issue>(
+                indexName,
+                semanticConfigName,
+                field,
+                query,
+                count);
+
+            List<Issue> filteredIssues = new List<Issue>();
+            foreach (var (issue, score) in searchResults)
+            {
+                if (score >= scoreThreshold)
+                {
+                    issue.Score = score;
+                    filteredIssues.Add(issue);
+                }
+            }
+
+            _logger.LogInformation($"Found {filteredIssues.Count} issues with score >= {scoreThreshold}");
+            return filteredIssues;
+        }
+
+        public double GetHighestScore(IEnumerable<Issue> issues, IEnumerable<Document> docs, string repositoryName, int issueNumber)
+        {
+            double highestScore = double.MinValue;
+
+            // Check scores in docs
+            foreach (var doc in docs)
+            {
+                if (doc.Score == null)
+                {
+                    throw new Exception($"A document in the search results for {repositoryName} using the Open AI Labeler for issue #{issueNumber} has a null score.");
+                }
+                if (doc.Score > highestScore)
+                {
+                    highestScore = doc.Score.Value;
+                }
+            }
+
+            // Check scores in issues
+            foreach (var issue in issues)
+            {
+                if (issue.Score == null)
+                {
+                    throw new Exception($"An issue in the search results for {repositoryName} using the Open AI Labeler for issue #{issueNumber} has a null score.");
+                }
+                if (issue.Score > highestScore)
+                {
+                    highestScore = issue.Score.Value;
+                }
+            }
+
+            return highestScore;
+        }
+    }
 
     public class Issue
     {
@@ -140,6 +218,7 @@ namespace IssueLabelerService
         public string Repository { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public string Url { get; set; }
+        public double? Score { get; set; }
 
         public override string ToString()
         {
@@ -151,6 +230,7 @@ namespace IssueLabelerService
     {
         public string chunk { get; set; }
         public string Url { get; set; }
+        public double? Score { get; set; }
 
         public override string ToString()
         {

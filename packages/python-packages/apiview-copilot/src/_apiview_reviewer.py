@@ -71,18 +71,32 @@ class ApiViewReview:
                 continue
             chunks_to_process.append((i, chunk))
 
+        # Define status characters with colors
+        PENDING = "░"
+        PROCESSING = "▒"
+        SUCCESS = "\033[32m█\033[0m"  # Green square
+        FAILURE = "\033[31m█\033[0m"  # Red square
+
+        # Print initial progress bar
+        print("Processing chunks: ", end="", flush=True)
+        chunk_status = [PENDING] * len(chunks_to_process)
+
         # select the appropriate prompty file
         prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
         prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
 
-        # Define a function to process a single chunk
+        # Define a function to process a single chunk and update progress
         def process_chunk(chunk_info):
             i, chunk = chunk_info
+            chunk_idx = chunks_to_process.index((i, chunk))
             max_retries = 5
 
             for j in range(max_retries):
+                chunk_status[chunk_idx] = PROCESSING
                 print(
-                    f"Processing chunk {i + 1}/{len(chunked_apiview)}... (Attempt {j + 1}/{max_retries})"
+                    "\r" + "Processing chunks: " + "".join(chunk_status),
+                    end="",
+                    flush=True,
                 )
 
                 try:
@@ -104,27 +118,45 @@ class ApiViewReview:
                         },
                     )
                     json_response = json.loads(response)
+                    chunk_status[chunk_idx] = SUCCESS  # Green for success
+                    print(
+                        "\r" + "Processing chunks: " + "".join(chunk_status),
+                        end="",
+                        flush=True,
+                    )
                     return chunk, json_response
                 except json.JSONDecodeError:
                     if j == max_retries - 1:
+                        chunk_status[chunk_idx] = FAILURE  # Red for failure
                         print(
-                            f"WARNING: Failed to decode JSON for chunk {i + 1}: {response}"
+                            "\r" + "Processing chunks: " + "".join(chunk_status),
+                            end="",
+                            flush=True,
                         )
                         return chunk, None
                     else:
-                        print(
-                            f"WARNING: Failed to decode JSON for chunk {i + 1}: {response}. Retrying..."
-                        )
                         continue
                 except Exception as e:
-                    print(f"ERROR processing chunk {i + 1}: {str(e)}")
                     if j == max_retries - 1:
+                        chunk_status[chunk_idx] = FAILURE  # Red for failure
+                        print(
+                            "\r" + "Processing chunks: " + "".join(chunk_status),
+                            end="",
+                            flush=True,
+                        )
                         return chunk, None
+
+            chunk_status[chunk_idx] = FAILURE  # Red for failure
+            print(
+                "\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True
+            )
             return chunk, None
 
         # Process chunks in parallel using ThreadPoolExecutor
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = list(executor.map(process_chunk, chunks_to_process))
+
+        print()  # Add newline after progress bar is complete
 
         bad_chunks = [chunk for chunk, chunk_result in results if chunk_result is None]
 

@@ -293,7 +293,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The model to use for the review",
                 options_list=("--model", "-m"),
-                choices=["gpt-4o-mini", "o3-mini"],
+                choices=["gpt-4o-mini", "gpt-4.1-nano", "o3-mini"],
             )
             ac.argument(
                 "chunk_input",

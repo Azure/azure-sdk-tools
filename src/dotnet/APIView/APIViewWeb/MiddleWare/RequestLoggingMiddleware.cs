@@ -6,12 +6,10 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
-using System.Linq;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using System.Diagnostics;
 using System.Collections;
-using Microsoft.AspNetCore.Routing;
 
 namespace APIViewWeb.MiddleWare
 {
@@ -30,7 +28,7 @@ namespace APIViewWeb.MiddleWare
 
         public async Task Invoke(HttpContext context)
         {
-            context.Response.Headers["x-trace-id"] = Activity.Current?.TraceId.ToString();
+            context.Response.Headers["x-operation-id"] = Activity.Current?.TraceId.ToString();
             var requestTitle = $"{context.Request.Method} {context.Request.Path}";
             var requestInfo = new Dictionary<string, object>();
 
@@ -41,17 +39,24 @@ namespace APIViewWeb.MiddleWare
                 Timestamp = DateTimeOffset.UtcNow
             };
 
+            var requestQueryParams = new Dictionary<string, string>();
             foreach (var query in context.Request.Query)
             {
-                requestInfo.Add(query.Key, query.Value);
-                requestTelemetry.Properties.Add(query.Key, query.Value.ToString());
+                requestQueryParams.Add(query.Key, query.Value);
+                
             }
+            var requestQueryParamsString = JsonSerializer.Serialize(requestQueryParams);
+            requestInfo.Add("Query Parameters", requestQueryParamsString);
+            requestTelemetry.Properties.Add("Query Parameters", requestQueryParamsString);
 
+            var requestRouteParams = new Dictionary<string, object>();
             foreach (var route in context.Request.RouteValues)
             {
-                requestInfo.Add(route.Key, route.Value);
-                requestTelemetry.Properties.Add(route.Key, route.Value.ToString());
+                requestRouteParams.Add(route.Key, route.Value);
             }
+            var requestRouteParamsString = JsonSerializer.Serialize(requestRouteParams);
+            requestInfo.Add("Route Parameters", requestRouteParamsString);
+            requestTelemetry.Properties.Add("Route Parameters", requestRouteParamsString);
 
             if (context.Request.ContentLength > 0 && !IsMultipartFormData(context))
             {
@@ -63,7 +68,7 @@ namespace APIViewWeb.MiddleWare
                 if (!String.IsNullOrEmpty(sanitizedBody))
                 {
                     requestInfo.Add("Request Body", sanitizedBody);
-                    requestTelemetry.Properties.Add("Request Body", sanitizedBody.ToString());
+                    requestTelemetry.Properties.Add("Request Body", sanitizedBody);
                 }
             }
 

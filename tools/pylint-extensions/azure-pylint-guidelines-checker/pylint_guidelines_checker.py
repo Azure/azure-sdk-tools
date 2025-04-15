@@ -2766,71 +2766,69 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                 # Check any 'elif' or 'else' branches
                 self.check_for_raise(i.orelse, exception_name)
 
+
     def check_for_logging(self, node, exception_name):
         """ Helper function - Called from 'check_for_raise' function
             Checks if the same exception that's being raised is also being logged
         """
 
         try:
-                
-            # Now check all logger calls to see if they're logging the exact same exception variable
+            # Find all function calls in the code
             for j in node:
-                if isinstance(j, astroid.Expr):
-                    for l in j.value.func.expr.infer():
-                        try:
-                            if "logger" in l.as_string():
-                                # Check all arguments to the logger
-                                # The exception could be logged in various ways:
-                                # 1. logger.debug(exception)
-                                # 2. logger.debug(f"something {exception}")
-                                # 3. logger.debug("Failed: %r", exception)
-                                
-                                
-                                # Check for f-strings that might contain the exception
-                                for log_arg in j.value.args:
-                                    if isinstance(log_arg, astroid.Name) and log_arg.name == exception_name:
+                if isinstance(j, astroid.Expr) and isinstance(j.value.func, astroid.Attribute):
+                    # check that the attribute is a logging level
+                    if j.value.func.attrname in ["debug", "info", "warning", "error", "exception", "critical"]:
+                    
+                        # Check all arguments to the logger
+                        # The exception could be logged in various ways:
+                        # 1. logger.debug(exception)
+                        # 2. logger.debug(f"something {exception}")
+                        # 3. logger.debug("Failed: %r", exception)
+                        
+                        
+                        # Check for f-strings that might contain the exception
+                        for log_arg in j.value.args:
+                            if isinstance(log_arg, astroid.Name) and log_arg.name == exception_name:
+                                self.add_message(
+                                    msgid="do-not-log-raised-errors",
+                                    node=j, 
+                                    confidence=None,
+                                )
+                                return
+                            if isinstance(log_arg, astroid.Call):
+                                for arg in log_arg.args:
+                                    if isinstance(arg, astroid.Name) and arg.name == exception_name:
                                         self.add_message(
                                             msgid="do-not-log-raised-errors",
-                                            node=j, 
+                                            node=j,
                                             confidence=None,
                                         )
                                         return
-                                    if isinstance(log_arg, astroid.Call):
-                                        for arg in log_arg.args:
-                                            if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                            if isinstance(log_arg, astroid.JoinedStr):
+                                for value in log_arg.values:
+                                    if isinstance(value, astroid.FormattedValue):
+                                        try:
+                                            if isinstance(value.value, astroid.Name) and value.value.name == exception_name:
                                                 self.add_message(
                                                     msgid="do-not-log-raised-errors",
                                                     node=j,
                                                     confidence=None,
                                                 )
                                                 return
-                                    if isinstance(log_arg, astroid.JoinedStr):
-                                        for value in log_arg.values:
-                                            if isinstance(value, astroid.FormattedValue):
-                                                try:
-                                                    if isinstance(value.value, astroid.Name) and value.value.name == exception_name:
-                                                        self.add_message(
-                                                            msgid="do-not-log-raised-errors",
-                                                            node=j,
-                                                            confidence=None,
-                                                        )
-                                                        return
-                                                except AttributeError:
-                                                    pass
-                                
-                                # Check for string formatting with exception as argument
-                                if len(j.value.args) > 1:
-                                    for idx in range(1, len(j.value.args)):
-                                        if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == exception_name:
-                                            self.add_message(
-                                                msgid="do-not-log-raised-errors",
-                                                node=j,
-                                                confidence=None,
-                                            )
-                                            return
-                        except:
-                            pass
-        except (AttributeError, IndexError):
+                                        except AttributeError:
+                                            pass
+                        
+                        # Check for string formatting with exception as argument
+                        if len(j.value.args) > 1:
+                            for idx in range(1, len(j.value.args)):
+                                if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == exception_name:
+                                    self.add_message(
+                                        msgid="do-not-log-raised-errors",
+                                        node=j,
+                                        confidence=None,
+                                    )
+                                    return
+        except:
             pass
 
 
@@ -3238,19 +3236,17 @@ class DoNotUseLoggingException(BaseChecker):
     name = "do-not-use-logging-exception"
     priority = -1
     msgs = {
-        "C4773": (
-            "Do not use Exception level logging. Use another logging level instead.",
+        "C4769": (
+            "Do not use Exception level logging. Use logging.error instead.",
             "do-not-use-logging-exception",
-            "Do not use Exception level logging. Use another logging level instead.",
+            "Do not use Exception level logging. Use logging.error instead.",
         ),
     }
 
     def visit_call(self, node):
         """Check that we aren't using logging.exception or logger.exception."""
         try:
-            func_as_string = node.func.as_string()
-            # Check for direct usage of logging.exception
-            if func_as_string == "logging.exception":
+            if node.func.attrname == "exception":
                 self.add_message(
                     msgid="do-not-use-logging-exception",
                     node=node,

@@ -7,7 +7,7 @@ def function1():
     try:  # @
         add = 1 + 2
     except Exception as e:
-        logging.error(str(e))  # @
+        _LOGGER.error(str(e))  # @
         raise
 
 

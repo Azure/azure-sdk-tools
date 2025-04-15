@@ -158,7 +158,12 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
         f.write(apiview)
 
     with open(deconstructed_expected, "w") as f:
-        f.write(expected)
+        # sort violations by line number
+        expected = json.loads(expected)
+        expected["violations"] = sorted(
+            expected["violations"], key=lambda x: x["line_no"]
+        )
+        f.write(json.dumps(expected, indent=4))
 
     print(
         f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}."

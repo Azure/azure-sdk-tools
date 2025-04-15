@@ -33,7 +33,8 @@ function replaceAll(original: string, from: string, to: string) {
 
 function printErrorDetails(
     output: { stdout: string; stderr: string; code: number | null } | undefined,
-    printDetails: boolean = false
+    printDetails: boolean = false,
+    errorAsWarning: boolean = false
 ) {
     if (!output) return;
     const getErrorSummary = (content: string) =>
@@ -47,21 +48,21 @@ function printErrorDetails(
             })
             .map((line) => `  ${line}\n`);
     let summary = [...getErrorSummary(output.stderr), ...getErrorSummary(output.stdout)];
-    logger.error(`Exit code: ${output.code}`);
+    logError(errorAsWarning)(`Exit code: ${output.code}`);
     if (summary.length > 0) {
-    logger.error(`Summary:`);
-        summary.forEach((line) => logger.error(removeLastNewline(line)));
+        logError(errorAsWarning)(`Summary:`);
+        summary.forEach((line) => logError(errorAsWarning)(removeLastNewline(line)));
     }
     if (printDetails) {
         const stderr = removeLastNewline(output.stderr);
         const stdout = removeLastNewline(output.stdout);
-        logger.error(`Details:`);
+        logError(errorAsWarning)(`Details:`);
         if (stderr) {
-            logger.error(`  stderr:`);
+            logError(errorAsWarning)(`  stderr:`);
             stderr.split('\n').forEach((line) => logger.warn(`    ${line}`));
         }
         if (stdout) {
-            logger.error(`  stdout:`);
+            logError(errorAsWarning)(`  stdout:`);
             stdout.split('\n').forEach((line) => logger.warn(`    ${line}`));
         }
     }
@@ -72,6 +73,10 @@ function getDistClassicClientParametersPath(packageRoot: string): string {
 }
 
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['pipe', 'pipe', 'pipe'] };
+
+function logError(errorAsWarning:boolean){
+    return errorAsWarning ? logger.warn : logger.error;
+}
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -202,7 +207,8 @@ export async function runCommand(
     args: readonly string[],
     options: SpawnOptions = runCommandOptions,
     realtimeOutput: boolean = true,
-    timeoutSeconds: number | undefined = undefined
+    timeoutSeconds: number | undefined = undefined,
+    errorAsWarning: boolean = false
 ): Promise<{ stdout: string; stderr: string; code: number | null }> {
     let stdout = '';
     let stderr = '';
@@ -245,7 +251,7 @@ export async function runCommand(
     child.on('exit', (exitCode, signal) => {
         if (timer) clearTimeout(timer);
         if (timedOut || !signal) { return; }
-        logger.error(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${exitCode}.`);
+        logError(errorAsWarning)(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${exitCode}.`);
     });
 
     child.on('close', (exitCode) => {
@@ -255,14 +261,15 @@ export async function runCommand(
             return;
         }
         code = exitCode;
-        logger.error(`Command closed with code '${exitCode}'.`);
-        printErrorDetails({ stdout, stderr, code: exitCode }, !realtimeOutput);
+        logError(errorAsWarning)(`Command closed with code '${exitCode}'.`);
+        printErrorDetails({ stdout, stderr, code: exitCode }, !realtimeOutput, errorAsWarning);
         reject(Error(`Command closed with code '${exitCode}'.`));
+
     });
     
     child.on('error', (err) => {
-        logger.error((err as Error)?.stack ?? err);
-        printErrorDetails({ stdout, stderr, code: null }, !realtimeOutput);
+        logError(errorAsWarning)((err as Error)?.stack ?? err);
+        printErrorDetails({ stdout, stderr, code: null }, !realtimeOutput, errorAsWarning);
         reject(err);
     });
 

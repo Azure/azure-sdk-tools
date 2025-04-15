@@ -5,12 +5,14 @@ using Azure.Search.Documents;
 using Microsoft.Extensions.Logging;
 using Azure.Search.Documents.Models;
 using OpenAI.Chat;
-using Azure.Identity;
 using System.Text.Json;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
-namespace AzureRagService
+namespace IssueLabelerService
 {
     public class TriageRag
     {
@@ -95,7 +97,7 @@ namespace AzureRagService
         /// <param name="message">The message or user query to send.</param>
         /// <param name="structure">The JSON schema structure for the response.</param>
         /// <returns>The response from the OpenAI model.</returns>
-        public async Task<string> SendMessageQnaAsync(string instructions, string message, BinaryData structure)
+        public async Task<string> SendMessageQnaAsync(string instructions, string message, BinaryData structure = null)
         {
 
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
@@ -103,11 +105,13 @@ namespace AzureRagService
             ChatCompletionOptions options = new ChatCompletionOptions()
             {
                 ReasoningEffortLevel = ChatReasoningEffortLevel.Medium,
-                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+            };
+
+            if(structure != null)
+                options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
                     jsonSchemaFormatName: "IssueOutput",
                     jsonSchema: structure
-                )
-            };
+                );
 
             ChatCompletion answers = await s_chatClient.CompleteChatAsync(
                 [

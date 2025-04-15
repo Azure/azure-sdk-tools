@@ -1,17 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
 namespace IssueLabelerService
 {
-    public class ConfigurationService
+    public class Configuration
     {
         public IConfiguration _config;
 
-        public ConfigurationService(IConfiguration config) =>
+        public Configuration(IConfiguration config) =>
             _config = config;
 
         public RepositoryConfiguration GetForRepository(string repository) =>

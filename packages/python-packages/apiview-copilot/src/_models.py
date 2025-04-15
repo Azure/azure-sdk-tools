@@ -9,7 +9,7 @@ class Violation(BaseModel):
     rule_ids: List[str] = Field(
         description="Unique guideline ID or IDs that were violated."
     )
-    line_no: Optional[str] = Field(description="Line number(s) of the violation.")
+    line_no: int = Field(description="Line number of the violation.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
@@ -80,6 +80,17 @@ class ReviewResult(BaseModel):
         description="Succeeded if the request has no violations. Error if there are violations."
     )
     violations: List[Violation] = Field(description="list of violations if any")
+
+    def __init__(self, **data):
+        """
+        Initialize the ReviewResult object.
+        """
+        # pop line_no from the data if it exists
+        # we will handle this manually
+        line_no = data.pop("line_no", None)
+        super().__init__(**data)
+        if line_no:
+            test = "best"
 
     def merge(self, other: "ReviewResult", *, section: Section):
         """

@@ -37,6 +37,7 @@ using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {

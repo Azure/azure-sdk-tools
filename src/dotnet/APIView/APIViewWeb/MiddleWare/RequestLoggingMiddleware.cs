@@ -6,9 +6,10 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
-using System.Linq;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using System.Diagnostics;
+using System.Collections;
 
 namespace APIViewWeb.MiddleWare
 {
@@ -27,46 +28,56 @@ namespace APIViewWeb.MiddleWare
 
         public async Task Invoke(HttpContext context)
         {
+            context.Response.Headers["x-operation-id"] = Activity.Current?.TraceId.ToString();
+            var requestTitle = $"{context.Request.Method} {context.Request.Path}";
+            var requestInfo = new Dictionary<string, object>();
+
             var requestTelemetry = new RequestTelemetry
             {
-                Name = $"{context.Request.Method} {context.Request.Path}",
+                Name = requestTitle,
                 Url = context.Request.GetUri(),
                 Timestamp = DateTimeOffset.UtcNow
             };
 
-            var correlationId = context.Request.Headers["x-correlation-id"].FirstOrDefault() ?? Guid.NewGuid().ToString();
-            context.Response.Headers["x-correlation-id"] = correlationId;
-            context.Items["CorrelationId"] = correlationId;
+            var requestQueryParams = new Dictionary<string, string>();
+            foreach (var query in context.Request.Query)
+            {
+                requestQueryParams.Add(query.Key, query.Value);
+                
+            }
+            var requestQueryParamsString = JsonSerializer.Serialize(requestQueryParams);
+            requestInfo.Add("Query Parameters", requestQueryParamsString);
+            requestTelemetry.Properties.Add("Query Parameters", requestQueryParamsString);
 
-            requestTelemetry.Properties["CorrelationId"] = correlationId;
+            var requestRouteParams = new Dictionary<string, object>();
+            foreach (var route in context.Request.RouteValues)
+            {
+                requestRouteParams.Add(route.Key, route.Value);
+            }
+            var requestRouteParamsString = JsonSerializer.Serialize(requestRouteParams);
+            requestInfo.Add("Route Parameters", requestRouteParamsString);
+            requestTelemetry.Properties.Add("Route Parameters", requestRouteParamsString);
+
+            if (context.Request.ContentLength > 0 && !IsMultipartFormData(context))
+            {
+                context.Request.EnableBuffering();
+                var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
+                context.Request.Body.Position = 0;
+
+                var sanitizedBody = MaskSensitiveData(body);
+                if (!String.IsNullOrEmpty(sanitizedBody))
+                {
+                    requestInfo.Add("Request Body", sanitizedBody);
+                    requestTelemetry.Properties.Add("Request Body", sanitizedBody);
+                }
+            }
+
+
             var operation = _telemetryClient.StartOperation(requestTelemetry);
 
-            using (_logger.BeginScope(new Dictionary<string, object> { { "CorrelationId", correlationId } }))
+            using (_logger.BeginScope(requestInfo))
             {
-                _logger.LogInformation($"Incoming Request: {context.Request.Method} {context.Request.Path} {context.Request.QueryString}");
-
-                foreach (var query in context.Request.Query)
-                {
-                    _logger.LogInformation($"{query.Key} = {query.Value}");
-                }
-
-                foreach (var route in context.Request.RouteValues)
-                {
-                    _logger.LogInformation($"{route.Key} = {route.Value}");
-                }
-
-                if (context.Request.ContentLength > 0 && !IsMultipartFormData(context))
-                {
-                    context.Request.EnableBuffering();
-                    var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
-                    context.Request.Body.Position = 0;
-
-                    var sanitizedBody = MaskSensitiveData(body);
-                    if (!String.IsNullOrEmpty(sanitizedBody))
-                    {
-                        _logger.LogInformation($"Request Body: {sanitizedBody}");
-                    }
-                }
+                _logger.LogInformation($"Incoming Request: {requestTitle}");
                 try
                 {
                     await _next(context);

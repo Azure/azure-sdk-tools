@@ -214,6 +214,7 @@ def search_knowledge_base(
     text: Optional[str] = None,
     path: Optional[str] = None,
     index: List[str] = ["examples", "guidelines"],
+    markdown: bool = False,
 ):
     """
     Queries the Search indexes and returns the resulting Cosmos DB
@@ -232,7 +233,11 @@ def search_knowledge_base(
     if "guidelines" in index:
         guidelines = search.search_guidelines(query=query)
     context = search.build_context(guidelines, examples)
-    print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+    if markdown:
+        md = context.to_markdown()
+        print(md)
+    else:
+        print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
 
 
 SUPPORTED_LANGUAGES = [
@@ -273,13 +278,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The language of the APIView file",
                 options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
-            )
-            ac.argument(
-                "select",
-                type=str,
-                nargs="*",
-                help="Select specific properties to retain in the output.",
-                options_list=["--select"],
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
@@ -367,10 +365,10 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--index"],
             )
             ac.argument(
-                "overwrite",
-                action="store_true",
-                help="Overwrite the test case if it already exists.",
+                "markdown",
+                help="Render output as markdown instead of JSON.",
             )
+
         super(CliCommandsLoader, self).load_arguments(command)
 
 

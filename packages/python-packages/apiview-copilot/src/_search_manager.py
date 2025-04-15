@@ -12,6 +12,7 @@ from azure.identity import DefaultAzureCredential
 from src._models import Guideline, Example
 
 from collections import deque
+import copy
 import json
 import os
 from typing import List, Dict, Optional
@@ -36,7 +37,6 @@ CREDENTIAL = DefaultAzureCredential()
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
-_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
 
 class SearchItem:
@@ -150,25 +150,34 @@ class ContextItem:
     """
 
     def __init__(self, result: Guideline, examples: Dict[str, Example]):
-        self.id = result.id
+        self.id = self._process_id(result.id)
         self.content = result.content
         self.lang = result.lang
         self.title = result.title
         self.examples = []
         for ex_id in result.related_examples or []:
-            example = examples.get(ex_id)
+            # copy the example to a new object
+            example = copy.deepcopy(examples.get(ex_id))
             if example is not None:
+                del example.id
+                del example.guideline_ids
                 self.examples.append(example)
             else:
                 print(
                     f"WARNING: Example {ex_id} not found for guideline {result.id}. Skipping."
                 )
 
+    def _process_id(self, id: str) -> str:
+        """
+        Processes the ID to convert the Search-compatible values with web-compatible ones.
+        """
+        return id.replace("=html=", ".html#")
+
     def to_markdown(self) -> str:
         """
         Converts the context item to a markdown string.
         """
-        markdown = f"## {self.title}\n\n{self.content}\n\n"
+        markdown = f"## {self.title} [id]({self.id})\n\n{self.content}\n\n"
         if self.examples:
             # collect good and bad examples separately
             good_examples = []

@@ -32,8 +32,15 @@ async function automationGenerateInPipeline(
         skipGeneration,
         runningEnvironment,
         typespecProject,
-        autorestConfig
+        autorestConfig,
+        apiVersion,
+        sdkReleaseType,
     } = await parseInputJson(inputJson);
+
+    console.log(`sdkType: ${sdkType}`);
+    console.log(`apiVersion: ${apiVersion}`);
+    console.log(`sdkReleaseType: ${sdkReleaseType}`);
+    //process.exit(1);
 
     try {
         if (!local) {
@@ -86,7 +93,9 @@ async function automationGenerateInPipeline(
                     repoUrl,
                     local,
                     // support MPG for now
-                    versionPolicyName: 'management'
+                    versionPolicyName: 'management',
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 };
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];

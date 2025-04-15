@@ -53,6 +53,8 @@ export interface ModularClientPackageOptions {
     repoUrl: string;
     versionPolicyName: VersionPolicyName;
     local: boolean;
+    apiVersion?: string;
+    sdkReleaseType?: string;
 }
 
 export interface NpmPackageInfo {

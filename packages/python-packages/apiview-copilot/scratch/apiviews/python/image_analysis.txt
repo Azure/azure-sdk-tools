@@ -31,7 +31,6 @@ class azure.ai.vision.imageanalysis.ImageAnalysisClient(ImageAnalysisClient): im
         self, 
         image_url: str, 
         visual_features: List[VisualFeatures], 
-        *, 
         gender_neutral_caption: Optional[bool] = ..., 
         language: Optional[str] = ..., 
         model_version: Optional[str] = ..., 
@@ -51,14 +50,11 @@ class azure.ai.vision.imageanalysis.ImageAnalysisClient(ImageAnalysisClient): im
 
 namespace azure.ai.vision.imageanalysis.aio
 
-class azure.ai.vision.imageanalysis.aio.ImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager 
+class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager 
     def __init__(
         self, 
         endpoint: str, 
         credential: Union[AzureKeyCredential, AsyncTokenCredential], 
-        *, 
-        api_version: str = ..., 
-        **kwargs: Any
     ) -> None
 
     @distributed_trace_async
@@ -89,6 +85,7 @@ class azure.ai.vision.imageanalysis.aio.ImageAnalysisClient(ImageAnalysisClient)
 
     async def close(self) -> None
 
+    @staticmethod
     def send_request(
         self, 
         request: HttpRequest, 
@@ -185,6 +182,55 @@ class azure.ai.vision.imageanalysis.models.DenseCaptionsResult(MutableMapping[st
         *args: Any, 
         **kwargs: Any
     ) -> None
+
+
+class azure.ai.vision.imageanalysis.models.DetectedObject(MutableMapping[str, Any]):
+ivar bounding_box: ImageBoundingBox
+ivar tags: List[DetectedTag]
+
+@overload
+def __init__(
+    self, 
+    *, 
+    bounding_box: ImageBoundingBox, 
+    tags: List[DetectedTag]
+)
+
+@overload
+def __init__(self, mapping: Mapping[str, Any])
+
+def __init__(
+    self, 
+    *args: Any, 
+    **kwargs: Any
+) -> None
+
+
+class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):
+ivar bounding_box: ImageBoundingBox
+ivar confidence: float
+
+
+class azure.ai.vision.imageanalysis.models.DetectedTag(MutableMapping[str, Any]):
+ivar confidence: float
+ivar name: str
+
+@overload
+def __init__(
+    self, 
+    *, 
+    confidence: float, 
+    name: str
+)
+
+@overload
+def __init__(self, mapping: Mapping[str, Any])
+
+def __init__(
+    self, 
+    *args: Any, 
+    **kwargs: Any
+) -> None
 
 
 class azure.ai.vision.imageanalysis.models.DetectedTextBlock(MutableMapping[str, Any]):
@@ -362,6 +408,10 @@ class azure.ai.vision.imageanalysis.models.ImagePoint(MutableMapping[str, Any]):
 class azure.ai.vision.imageanalysis.models.ObjectsResult(MutableMapping[str, Any]):
     ivar list: List[DetectedObject]
 
+    def get_result(self) -> ObjectsResult
+
+    def set_result(self, obj) -> None
+
     @overload
     def __init__(
         self, 
@@ -380,13 +430,13 @@ class azure.ai.vision.imageanalysis.models.ObjectsResult(MutableMapping[str, Any
 
 
 class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):
-    ivar list: List[DetectedPerson]
+    ivar list: List[detectedPerson]
 
     @overload
     def __init__(
         self, 
         *, 
-        list: List[DetectedPerson]
+        list: List[detectedPerson]
     )
 
     @overload
@@ -458,10 +508,10 @@ class azure.ai.vision.imageanalysis.models.TagsResult(MutableMapping[str, Any]):
     ) -> None
 
 class azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):
-    CAPTION = "caption"
-    DENSE_CAPTIONS = "denseCaptions"
-    OBJECTS = "objects"
-    PEOPLE = "people"
-    READ = "read"
-    SMART_CROPS = "smartCrops"
-    TAGS = "tags"
+    CAPTION = 'caption'
+    DENSE_CAPTIONS = 'denseCaptions'
+    OBJECTS = 'objects'
+    PEOPLE = 'people'
+    READ = 'read'
+    SMART_CROPS = 'smartCrops'
+    tags = 'tags'

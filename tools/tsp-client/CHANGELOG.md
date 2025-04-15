@@ -2,7 +2,7 @@
 
 ## 2025-04-16 - 0.21.0
 
-- Forward untracked dependencies in emitter-package.json when using the `generate-config-files` command.
+- Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.
 
 ## 2025-04-10 - 0.20.0
 

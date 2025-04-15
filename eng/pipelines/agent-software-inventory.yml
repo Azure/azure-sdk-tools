@@ -139,12 +139,12 @@ jobs:
     workingDirectory: $(Build.ArtifactStagingDirectory)
     condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
-  - pwsh: |
-      Get-ChildItem env: | ForEach-Object {
-        "$(Host), $(OSVmImage), Environment, $($_.Name), $($_.Value), all"
-      } >> env-inventory.csv
-    displayName: Environment Variables
-    workingDirectory: $(Build.ArtifactStagingDirectory)
+  # - pwsh: |
+  #     Get-ChildItem env: | ForEach-Object {
+  #       "$(Host), $(OSVmImage), Environment, $($_.Name), $($_.Value), all"
+  #     } >> env-inventory.csv
+  #   displayName: Environment Variables
+  #   workingDirectory: $(Build.ArtifactStagingDirectory)
 
   - pwsh: |
       $root = $env:VCPKG_INSTALLATION_ROOT

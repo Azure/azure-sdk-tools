@@ -493,11 +493,10 @@ export async function generateConfigFilesCommand(argv: any) {
       const packageLockPath = joinPaths(dirname(packageJsonPath), "package-lock.json");
       let existingPackageLockJson;
       try {
-        // Check if package-lock.json exists
-        await stat(packageLockPath);
+        // Attempt to read package-lock.json
         existingPackageLockJson = JSON.parse(await readFile(packageLockPath, "utf8"));
       } catch (err) {
-        Logger.debug(`package-lock.json not found in: ${packageLockPath}`);
+        Logger.debug(`Unable to read package-lock.json: ${packageLockPath}`);
       }
       // If there are untracked dependencies, we will check the package-lock.json of the
       // target emitter for a compatible version, otherwise we will leave the version from

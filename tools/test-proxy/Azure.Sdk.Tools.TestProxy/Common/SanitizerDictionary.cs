@@ -853,9 +853,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="session"></param>
         /// <param name="sanitizer"></param>
         /// <param name="shouldLock"></param>
+        /// <param name="after"></param>
         /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
-        public async Task<string> Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer, bool shouldLock = true)
+        public async Task<string> Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer, bool shouldLock = true, bool after = true)
         {
             var strCurrent = IdFactory.GetNextId().ToString();
 
@@ -870,7 +871,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 if (_register(sanitizer, strCurrent))
                 {
-                    session.AppliedSanitizers.Add(strCurrent);
+                    if (after)
+                    {
+                        session.AppliedSanitizers.Add(strCurrent);
+                    }
+                    else
+                    {
+                        session.AppliedSanitizers.Insert(0, strCurrent);
+                    }
                     session.ForRemoval.Add(strCurrent);
 
                     return strCurrent;

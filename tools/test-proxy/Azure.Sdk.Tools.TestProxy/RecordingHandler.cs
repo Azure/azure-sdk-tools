@@ -1070,7 +1070,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 var session = GetActiveSession(recordingId);
 
                 session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
-                return await SanitizerRegistry.Register(session, sanitizer);
+                return await SanitizerRegistry.Register(session, sanitizer, shouldLock: true, after: false);
             }
 
             return await SanitizerRegistry.Register(sanitizer);

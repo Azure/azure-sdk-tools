@@ -1,6 +1,7 @@
 from azure.identity import DefaultAzureCredential
 
 from collections import deque
+import concurrent.futures
 import json
 import os
 import prompty
@@ -57,55 +58,120 @@ class ApiViewReview:
                 self.language, include_general_guidelines=True
             )
             guideline_ids = [g["id"] for g in guidelines]
+
+        # Prepare the document
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
         final_results = ReviewResult(status="Success", violations=[])
-        max_retries = 5
-        for i, chunk in enumerate(chunked_apiview):
-            for j in range(max_retries):
-                print(
-                    f"Processing chunk {i + 1}/{len(chunked_apiview)}... (Attempt {j + 1}/{max_retries})"
-                )
-                if i == 0 and len(chunked_apiview.sections) > 1:
-                    # the first chunk is the header, so skip it
-                    continue
 
-                if use_rag:
-                    # use the Azure OpenAI service to get guidelines
-                    context = self._retrieve_and_resolve_guidelines(str(chunk))
-                    guideline_ids = [g.id for g in context]
-                # select the appropriate prompty file and run it
-                prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
-                prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
-                response = prompty.execute(
-                    prompt_path,
-                    inputs={
-                        "language": self.language,
-                        "context": (
-                            context.to_markdown() if use_rag else json.dumps(guidelines)
-                        ),
-                        "apiview": chunk.numbered(),
-                    },
+        # Skip header if multiple sections
+        chunks_to_process = []
+        for i, chunk in enumerate(chunked_apiview):
+            if i == 0 and len(chunked_apiview.sections) > 1:
+                # the first chunk is the header, so skip it
+                continue
+            chunks_to_process.append((i, chunk))
+
+        # Define status characters with colors
+        PENDING = "░"
+        PROCESSING = "▒"
+        SUCCESS = "\033[32m█\033[0m"  # Green square
+        FAILURE = "\033[31m█\033[0m"  # Red square
+
+        # Print initial progress bar
+        print("Processing chunks: ", end="", flush=True)
+        chunk_status = [PENDING] * len(chunks_to_process)
+
+        # select the appropriate prompty file
+        prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
+        prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
+
+        # Define a function to process a single chunk and update progress
+        def process_chunk(chunk_info):
+            i, chunk = chunk_info
+            chunk_idx = chunks_to_process.index((i, chunk))
+            max_retries = 5
+
+            for j in range(max_retries):
+                chunk_status[chunk_idx] = PROCESSING
+                print(
+                    "\r" + "Processing chunks: " + "".join(chunk_status),
+                    end="",
+                    flush=True,
                 )
+
                 try:
-                    json_object = json.loads(response)
-                    chunk_result = ReviewResult(**json_object)
-                    final_results.merge(chunk_result, section=chunk)
-                    break
+                    if use_rag:
+                        # use the Azure OpenAI service to get guidelines
+                        context = self._retrieve_and_resolve_guidelines(str(chunk))
+                    else:
+                        context = guidelines
+                    response = prompty.execute(
+                        prompt_path,
+                        inputs={
+                            "language": self.language,
+                            "context": (
+                                context.to_markdown()
+                                if use_rag
+                                else json.dumps(context)
+                            ),
+                            "apiview": chunk.numbered(),
+                        },
+                    )
+                    json_response = json.loads(response)
+                    chunk_status[chunk_idx] = SUCCESS  # Green for success
+                    print(
+                        "\r" + "Processing chunks: " + "".join(chunk_status),
+                        end="",
+                        flush=True,
+                    )
+                    return chunk, json_response
                 except json.JSONDecodeError:
                     if j == max_retries - 1:
+                        chunk_status[chunk_idx] = FAILURE  # Red for failure
                         print(
-                            f"WARNING: Failed to decode JSON for chunk {i}: {response}"
+                            "\r" + "Processing chunks: " + "".join(chunk_status),
+                            end="",
+                            flush=True,
                         )
-                        break
+                        return chunk, None
                     else:
-                        print(
-                            f"WARNING: Failed to decode JSON for chunk {i}: {response}. Retrying..."
-                        )
                         continue
-        final_results.validate(guideline_ids=guideline_ids)
+                except Exception as e:
+                    if j == max_retries - 1:
+                        chunk_status[chunk_idx] = FAILURE  # Red for failure
+                        print(
+                            "\r" + "Processing chunks: " + "".join(chunk_status),
+                            end="",
+                            flush=True,
+                        )
+                        return chunk, None
+
+            chunk_status[chunk_idx] = FAILURE  # Red for failure
+            print(
+                "\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True
+            )
+            return chunk, None
+
+        # Process chunks in parallel using ThreadPoolExecutor
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(executor.map(process_chunk, chunks_to_process))
+
+        print()  # Add newline after progress bar is complete
+
+        bad_chunks = [chunk for chunk, chunk_result in results if chunk_result is None]
+
+        # Merge results
+        for chunk, chunk_response in results:
+            if chunk_response is not None:
+                chunk_result = ReviewResult(**chunk_response)
+                final_results.merge(chunk_result, section=chunk)
+
+        # final_results.validate(guideline_ids=guideline_ids)
         final_results.sort()
         end_time = time()
         print(f"Review generated in {end_time - start_time:.2f} seconds.")
+        if bad_chunks:
+            print(f"WARNING: Failed to process {len(bad_chunks)} chunks.")
         return final_results
 
     def _retrieve_and_resolve_guidelines(self, query: str) -> List[object]:

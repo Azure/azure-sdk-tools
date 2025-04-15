@@ -6,6 +6,7 @@ from azure.search.documents.models import (
     QueryAnswerType,
     QueryAnswerResult,
     QueryCaptionType,
+    SemanticErrorMode,
 )
 from azure.identity import DefaultAzureCredential
 
@@ -15,7 +16,7 @@ from collections import deque
 import copy
 import json
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -258,6 +259,7 @@ class SearchManager:
             search_text=query,
             filter=self.filter_expression,
             semantic_configuration_name="archagent-semantic-search-guidelines",
+            semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,
             query_caption=QueryCaptionType.EXTRACTIVE,
             query_answer=QueryAnswerType.EXTRACTIVE,
@@ -277,12 +279,13 @@ class SearchManager:
         )
         result = client.search(
             search_text=query,
-            top=10,
             filter=self.filter_expression,
             semantic_configuration_name="archagent-semantic-search-examples",
+            semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,
             query_caption=QueryCaptionType.EXTRACTIVE,
             query_answer=QueryAnswerType.EXTRACTIVE,
+            top=10,
             vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
         )
         return SearchResult(result)

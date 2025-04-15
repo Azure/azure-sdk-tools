@@ -10,6 +10,8 @@ using System.Linq;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using System.Diagnostics;
+using System.Collections;
+using Microsoft.AspNetCore.Routing;
 
 namespace APIViewWeb.MiddleWare
 {
@@ -28,47 +30,49 @@ namespace APIViewWeb.MiddleWare
 
         public async Task Invoke(HttpContext context)
         {
-            var traceId = Activity.Current?.TraceId.ToString();
+            context.Response.Headers["x-trace-id"] = Activity.Current?.TraceId.ToString();
+            var requestTitle = $"{context.Request.Method} {context.Request.Path}";
+            var requestInfo = new Dictionary<string, object>();
+
             var requestTelemetry = new RequestTelemetry
             {
-                Name = $"{context.Request.Method} {context.Request.Path}",
+                Name = requestTitle,
                 Url = context.Request.GetUri(),
                 Timestamp = DateTimeOffset.UtcNow
             };
 
-            var correlationId = context.Request.Headers["x-correlation-id"].FirstOrDefault() ?? Guid.NewGuid().ToString();
-            context.Response.Headers["x-correlation-id"] = correlationId;
-            context.Items["CorrelationId"] = correlationId;
+            foreach (var query in context.Request.Query)
+            {
+                requestInfo.Add(query.Key, query.Value);
+                requestTelemetry.Properties.Add(query.Key, query.Value.ToString());
+            }
 
-            requestTelemetry.Properties["CorrelationId"] = correlationId;
+            foreach (var route in context.Request.RouteValues)
+            {
+                requestInfo.Add(route.Key, route.Value);
+                requestTelemetry.Properties.Add(route.Key, route.Value.ToString());
+            }
+
+            if (context.Request.ContentLength > 0 && !IsMultipartFormData(context))
+            {
+                context.Request.EnableBuffering();
+                var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
+                context.Request.Body.Position = 0;
+
+                var sanitizedBody = MaskSensitiveData(body);
+                if (!String.IsNullOrEmpty(sanitizedBody))
+                {
+                    requestInfo.Add("Request Body", sanitizedBody);
+                    requestTelemetry.Properties.Add("Request Body", sanitizedBody.ToString());
+                }
+            }
+
+
             var operation = _telemetryClient.StartOperation(requestTelemetry);
 
-            using (_logger.BeginScope(new Dictionary<string, object> { { "CorrelationId", correlationId } }))
+            using (_logger.BeginScope(requestInfo))
             {
-                _logger.LogInformation($"Incoming Request: {context.Request.Method} {context.Request.Path} {context.Request.QueryString}");
-
-                foreach (var query in context.Request.Query)
-                {
-                    _logger.LogInformation($"{query.Key} = {query.Value}");
-                }
-
-                foreach (var route in context.Request.RouteValues)
-                {
-                    _logger.LogInformation($"{route.Key} = {route.Value}");
-                }
-
-                if (context.Request.ContentLength > 0 && !IsMultipartFormData(context))
-                {
-                    context.Request.EnableBuffering();
-                    var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
-                    context.Request.Body.Position = 0;
-
-                    var sanitizedBody = MaskSensitiveData(body);
-                    if (!String.IsNullOrEmpty(sanitizedBody))
-                    {
-                        _logger.LogInformation($"Request Body: {sanitizedBody}");
-                    }
-                }
+                _logger.LogInformation($"Incoming Request: {requestTitle}");
                 try
                 {
                     await _next(context);

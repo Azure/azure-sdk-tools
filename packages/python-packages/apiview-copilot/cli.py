@@ -61,12 +61,14 @@ def local_review(
         apiview = f.read()
     review = rg.get_response(apiview, chunk_input=chunk_input, use_rag=use_rag)
     output_path = os.path.join("scratch", "output", language)
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    with open(os.path.join(output_path, f"{filename}.json"), "w") as f:
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, f"{filename}.json")
+
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(review.model_dump_json(indent=4))
-    print(f"Review saved to {os.path.join(output_path, f'{filename}.json')}")
-    print(f"Found {len(review.violations or [])} violations")
+
+    print(f"Review written to {output_file}")
+    print(f"Found {len(review.violations)} violations.")
 
 
 def create_test_case(

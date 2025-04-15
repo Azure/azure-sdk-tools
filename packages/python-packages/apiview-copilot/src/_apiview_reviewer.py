@@ -138,6 +138,8 @@ class ApiViewReview:
         final_results.sort()
         end_time = time()
         print(f"Review generated in {end_time - start_time:.2f} seconds.")
+        if bad_chunks:
+            print(f"WARNING: Failed to process {len(bad_chunks)} chunks.")
         return final_results
 
     def _retrieve_and_resolve_guidelines(self, query: str) -> List[object]:

@@ -1,0 +1,41 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": "209",
+            "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class from 'detectedPerson' to 'DetectedPerson'.",
+            "comment": "Type names must use PascalCase. The name 'detectedPerson' does not follow this convention and should be 'DetectedPerson'."
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": "433",
+            "bad_code": "    ivar list: List[detectedPerson]",
+            "suggestion": "Change the annotation to 'List[DetectedPerson]'.",
+            "comment": "The type 'detectedPerson' is referenced in a type annotation using incorrect casing. It should use PascalCase (i.e., 'DetectedPerson') to be consistent with SDK naming conventions. See line 209 for the class definition."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-same-name-sync-async"
+            ],
+            "line_no": "53",
+            "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
+            "suggestion": "Rename the async client class to 'ImageAnalysisClient' within the azure.ai.vision.imageanalysis.aio namespace.",
+            "comment": "The async client is incorrectly named 'AsyncImageAnalysisClient'. According to guidelines, the async client should use the same client name as its synchronous counterpart ('ImageAnalysisClient') and reside in the .aio namespace."
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-tooling-pylint"
+            ],
+            "line_no": "90",
+            "bad_code": "        self,",
+            "suggestion": "Remove the 'self' parameter from the static method signature. For example, define the method as: 'def send_request(request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]'.",
+            "comment": "The method 'send_request' in the async client is decorated as a static method but still accepts a 'self' parameter. Static methods should not include a reference to the instance."
+        }
+    ]
+}

@@ -4,6 +4,7 @@ import pathlib
 import argparse
 from typing import Set, Tuple, Any
 import copy
+import sys
 
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
@@ -93,6 +94,9 @@ class CustomAPIViewEvaluator:
 
 
 def review_apiview(query: str, language: str):
+
+    # Add project root to sys.path
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from src._apiview_reviewer import (  # pylint: disable=import-error,no-name-in-module
         ApiViewReview,
     )

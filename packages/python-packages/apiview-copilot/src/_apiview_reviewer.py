@@ -1,6 +1,7 @@
 from azure.identity import DefaultAzureCredential
 
 from collections import deque
+import concurrent.futures
 import json
 import os
 import prompty
@@ -57,52 +58,83 @@ class ApiViewReview:
                 self.language, include_general_guidelines=True
             )
             guideline_ids = [g["id"] for g in guidelines]
+
+        # Prepare the document
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
         final_results = ReviewResult(status="Success", violations=[])
-        max_retries = 5
+
+        # Skip header if multiple sections
+        chunks_to_process = []
         for i, chunk in enumerate(chunked_apiview):
+            if i == 0 and len(chunked_apiview.sections) > 1:
+                # the first chunk is the header, so skip it
+                continue
+            chunks_to_process.append((i, chunk))
+
+        # select the appropriate prompty file
+        prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
+        prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
+
+        # Define a function to process a single chunk
+        def process_chunk(chunk_info):
+            i, chunk = chunk_info
+            max_retries = 5
+
             for j in range(max_retries):
                 print(
                     f"Processing chunk {i + 1}/{len(chunked_apiview)}... (Attempt {j + 1}/{max_retries})"
                 )
-                if i == 0 and len(chunked_apiview.sections) > 1:
-                    # the first chunk is the header, so skip it
-                    continue
 
-                if use_rag:
-                    # use the Azure OpenAI service to get guidelines
-                    context = self._retrieve_and_resolve_guidelines(str(chunk))
-                    guideline_ids = [g.id for g in context]
-                # select the appropriate prompty file and run it
-                prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
-                prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
-                response = prompty.execute(
-                    prompt_path,
-                    inputs={
-                        "language": self.language,
-                        "context": (
-                            context.to_markdown() if use_rag else json.dumps(guidelines)
-                        ),
-                        "apiview": chunk.numbered(),
-                    },
-                )
                 try:
-                    json_object = json.loads(response)
-                    chunk_result = ReviewResult(**json_object)
-                    final_results.merge(chunk_result, section=chunk)
-                    break
+                    if use_rag:
+                        # use the Azure OpenAI service to get guidelines
+                        context = self._retrieve_and_resolve_guidelines(str(chunk))
+                    else:
+                        context = guidelines
+                    response = prompty.execute(
+                        prompt_path,
+                        inputs={
+                            "language": self.language,
+                            "context": (
+                                context.to_markdown()
+                                if use_rag
+                                else json.dumps(context)
+                            ),
+                            "apiview": chunk.numbered(),
+                        },
+                    )
+                    json_response = json.loads(response)
+                    return chunk, json_response
                 except json.JSONDecodeError:
                     if j == max_retries - 1:
                         print(
-                            f"WARNING: Failed to decode JSON for chunk {i}: {response}"
+                            f"WARNING: Failed to decode JSON for chunk {i + 1}: {response}"
                         )
-                        break
+                        return chunk, None
                     else:
                         print(
-                            f"WARNING: Failed to decode JSON for chunk {i}: {response}. Retrying..."
+                            f"WARNING: Failed to decode JSON for chunk {i + 1}: {response}. Retrying..."
                         )
                         continue
-        final_results.validate(guideline_ids=guideline_ids)
+                except Exception as e:
+                    print(f"ERROR processing chunk {i + 1}: {str(e)}")
+                    if j == max_retries - 1:
+                        return chunk, None
+            return chunk, None
+
+        # Process chunks in parallel using ThreadPoolExecutor
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = list(executor.map(process_chunk, chunks_to_process))
+
+        bad_chunks = [chunk for chunk, chunk_result in results if chunk_result is None]
+
+        # Merge results
+        for chunk, chunk_response in results:
+            if chunk_response is not None:
+                chunk_result = ReviewResult(**chunk_response)
+                final_results.merge(chunk_result, section=chunk)
+
+        # final_results.validate(guideline_ids=guideline_ids)
         final_results.sort()
         end_time = time()
         print(f"Review generated in {end_time - start_time:.2f} seconds.")

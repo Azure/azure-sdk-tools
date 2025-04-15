@@ -14,6 +14,7 @@ from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvalu
 
 dotenv.load_dotenv()
 
+MODEL = "o3-mini"
 NUM_RUNS: int = 3
 
 
@@ -96,7 +97,7 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    ai_review = ApiViewReview(language=language, model="o3-mini")
+    ai_review = ApiViewReview(language=language, model=MODEL)
     review = ai_review.get_response(query, chunk_input=False, use_rag=False)
     return {"response": review.model_dump_json()}
 

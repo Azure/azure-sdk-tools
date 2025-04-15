@@ -38,12 +38,10 @@
   ],
   "devDependencies": {
     "@types/chai": "^4.3.5",
-    "@types/lodash": "^4.17.16",
     "@types/node": "^20.4.8",
     "@types/prompt-sync": "^4.2.1",
     "@typespec/compiler": "^1.0.0-0",
     "chai": "^4.3.7",
-    "lodash": "^4.17.21",
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",

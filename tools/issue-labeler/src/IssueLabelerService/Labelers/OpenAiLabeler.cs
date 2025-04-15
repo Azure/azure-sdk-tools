@@ -36,7 +36,6 @@ namespace IssueLabelerService
             string query = $"{issue.Title} {issue.Body}";
             int top = int.Parse(_config.SourceCount);
             double scoreThreshold = double.Parse(_config.ScoreThreshold);
-            double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
             // Search for issues and documents
             var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold);
@@ -49,7 +48,6 @@ namespace IssueLabelerService
             }
 
             double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
-            bool solution = highestScore >= solutionThreshold;
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
@@ -65,17 +63,9 @@ namespace IssueLabelerService
                 { "PrintableIssues", printableIssues }
             };
 
-            string instructions, userPrompt;
-            if (solution)
-            {
-                instructions = _config.SolutionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacements, _logger);
-            }
-            else
-            {
-                instructions = _config.SuggestionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate( _config.SuggestionUserPrompt, replacements, _logger);
-            }
+            string instructions = _config.LabelInstructions;
+            string userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelUserPrompt, replacements, _logger);
+            
 
             var structure = BinaryData.FromString("""
             {

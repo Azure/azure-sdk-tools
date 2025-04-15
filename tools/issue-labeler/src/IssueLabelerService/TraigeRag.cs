@@ -84,10 +84,17 @@ namespace IssueLabelerService
             ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
 
-            ChatCompletionOptions options = new ChatCompletionOptions()
+            ChatCompletionOptions options = new ChatCompletionOptions();
+
+            if (modelName.Contains("gpt"))
             {
-                ReasoningEffortLevel = ChatReasoningEffortLevel.Medium,
-            };
+                options.Temperature = 0;
+            }
+
+            if(modelName.Contains("o3-mini"))
+            {
+                options.ReasoningEffortLevel = ChatReasoningEffortLevel.Medium;
+            }
 
             if(structure != null)
                 options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(

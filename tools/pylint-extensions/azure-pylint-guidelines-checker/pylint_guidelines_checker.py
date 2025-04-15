@@ -2861,10 +2861,12 @@ class DoNotImportAsyncio(BaseChecker):
         ),
     }
 
+    IGNORE_PACKAGES = 'azure.core'
+
     def visit_importfrom(self, node):
         """Check that we aren't importing from asyncio directly."""
         try:
-            if node.modname == "asyncio":
+            if node.modname == "asyncio" and not node.root().name.startswith(self.IGNORE_PACKAGES):
                 self.add_message(
                     msgid=f"do-not-import-asyncio",
                     node=node,
@@ -2877,7 +2879,7 @@ class DoNotImportAsyncio(BaseChecker):
         """Check that we aren't importing asyncio."""
         try:
             for name, _ in node.names:
-                if name == "asyncio":
+                if name == "asyncio" and not node.root().name.startswith(self.IGNORE_PACKAGES):
                     self.add_message(
                         msgid=f"do-not-import-asyncio",
                         node=node,

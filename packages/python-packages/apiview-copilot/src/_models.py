@@ -1,4 +1,4 @@
-from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional, Union
 
@@ -6,8 +6,10 @@ from ._sectioned_document import Section
 
 
 class Violation(BaseModel):
-    rule_ids: List[str] = Field(description="unique rule ID or IDs that were violated.")
-    line_no: Optional[int] = Field(description="the line number of the violation.")
+    rule_ids: List[str] = Field(
+        description="Unique guideline ID or IDs that were violated."
+    )
+    line_no: Optional[str] = Field(description="Line number(s) of the violation.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
@@ -17,63 +19,119 @@ class Violation(BaseModel):
     comment: str = Field(description="a comment about the violation.")
 
 
-class GuidelinesResult(BaseModel):
+class Guideline(BaseModel):
+    """
+    Represents a guideline in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the guideline.")
+    title: str = Field(description="Short descriptive title of the guideline.")
+    content: str = Field(description="Full text of the guideline.")
+    lang: Optional[str] = Field(
+        None,
+        description="If this guideline is specific to a language (e.g., 'python'). If omitted, the guideline is language-agnostic.",
+    )
+
+    # reverse links
+    related_guidelines: Optional[List[str]] = Field(
+        description="List of guideline IDs that are related to this guideline."
+    )
+    related_examples: Optional[List[str]] = Field(
+        description="List of example IDs that are related to this guideline."
+    )
+
+
+class ExampleType(str, Enum):
+    GOOD = "good"
+    BAD = "bad"
+
+
+class Example(BaseModel):
+    """
+    Represents an example stored in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the example.")
+    guideline_ids: List[str] = Field(
+        description="List of guideline IDs to which this example applies."
+    )
+    content: str = Field(description="Code snippet demonstrating the example.")
+    explanation: str = Field(description="Explanation of why this is good/bad.")
+    example_type: ExampleType = Field(
+        description="Whether this example is 'good' or 'bad'."
+    )
+
+    # Classification fields
+    lang: Optional[str] = Field(
+        None, description="If this example is specific to a language (e.g., 'python')."
+    )
+    service: Optional[str] = Field(
+        None,
+        description="If this example is specific to a service (e.g., 'azure-functions').",
+    )
+    is_exception: bool = Field(
+        False,
+        description="Indicates if this example provides an exception to the guidelines rather than an amplification.",
+    )
+
+
+class ReviewResult(BaseModel):
     status: str = Field(
         description="Succeeded if the request has no violations. Error if there are violations."
     )
     violations: List[Violation] = Field(description="list of violations if any")
 
-    def merge(self, other: "GuidelinesResult", *, section: Section):
+    def merge(self, other: "ReviewResult", *, section: Section):
         """
-        Merge two GuidelinesResult objects.
+        Merge two ReviewResult objects.
         """
         self.violations.extend(self._process_violations(other.violations, section))
         if len(self.violations) > 0:
             self.status = "Error"
 
-    def validate(self, *, guidelines: List[dict]):
+    def validate(self, *, guideline_ids: List[str]):
         """
-        Runs validations on the GuidelinesResult collection.
+        Runs validations on the ReviewResult collection.
         For now this is just ensure rule IDs are valid.
         """
-        self._process_rule_ids(guidelines)
+        # TODO: Disable for now. See: https://github.com/Azure/azure-sdk-tools/issues/10303
+        # self._process_rule_ids(guideline_ids)
 
-    def _process_rule_ids(self, guidelines):
+    def _process_rule_ids(self, guideline_ids: List[str]):
         """
         Ensure that each rule ID matches with an actual guideline ID.
         This ensures that the links that appear in APIView should never be broken (404).
         """
+        return
+        # FIXME: Fix up this logic...
         # create an index for easy lookup
-        index = {x["id"]: x for x in guidelines}
-        for violation in self.violations:
-            to_remove = []
-            to_add = []
-            for rule_id in violation.rule_ids:
-                try:
-                    index[rule_id]
-                    continue
-                except KeyError:
-                    # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
-                    matched = False
-                    for guideline in guidelines:
-                        if guideline["id"].endswith(rule_id):
-                            to_remove.append(rule_id)
-                            to_add.append(guideline["id"])
-                            index[rule_id] = guideline["id"]
-                            matched = True
-                            break
-                    if matched:
-                        continue
-                    # no match or partial match found, so remove the rule_id
-                    to_remove.append(rule_id)
-                    print(
-                        f"WARNING: Rule ID {rule_id} not found. Possible hallucination."
-                    )
-            # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
-            for rule_id in to_remove:
-                violation.rule_ids.remove(rule_id)
-            for rule_id in to_add:
-                violation.rule_ids.append(rule_id)
+        # index = set(guideline_ids)
+        # for violation in self.violations:
+        #     to_remove = []
+        #     to_add = []
+        #     for rule_id in violation.rule_ids:
+        #         if rule_id in index:
+        #             # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
+        #             matched = False
+        #             for gid in guideline_ids:
+        #                 if gid.endswith(rule_id):
+        #                     to_remove.append(rule_id)
+        #                     to_add.append(gid)
+        #                     index[rule_id] = gid
+        #                     matched = True
+        #                     break
+        #             if matched:
+        #                 continue
+        #             # no match or partial match found, so remove the rule_id
+        #             to_remove.append(rule_id)
+        #             print(
+        #                 f"WARNING: Rule ID {rule_id} not found. Possible hallucination."
+        #             )
+        #     # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
+        #     for rule_id in to_remove:
+        #         violation.rule_ids.remove(rule_id)
+        #     for rule_id in to_add:
+        #         violation.rule_ids.append(rule_id)
 
     def _process_violations(
         self, violations: List[Violation], section: Section
@@ -145,22 +203,3 @@ class GuidelinesResult(BaseModel):
         Sort the violations by line number.
         """
         self.violations.sort(key=lambda x: x.line_no)
-
-
-class VectorDocument(BaseModel):
-    id: Optional[str] = Field(description="unique ID of the document")
-    language: str = Field(description="programming language of the document")
-    bad_code: str = Field(description="the bad coding pattern", alias="badCode")
-    good_code: Optional[str] = Field(
-        description="the suggested fix for the bad code", alias="goodCode"
-    )
-    comment: Optional[str] = Field(description="a comment about the violation")
-    guideline_ids: Optional[List[str]] = Field(
-        description="list of guideline IDs that apply to this document",
-        alias="guidelineIds",
-    )
-
-
-class VectorSearchResult(BaseModel):
-    confidence: float = Field(description="confidence score of the match")
-    document: VectorDocument = Field(description="the matching document")

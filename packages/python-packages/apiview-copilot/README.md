@@ -50,6 +50,20 @@ Commands available for working with the Flask app:
 
 To run evaluations, see: [evals/README.md](./evals/README.md)
 
+## Search Commands
+
+Commands available for querying the search indexes:
+
+- `cli.bat search guidelines`: Search the guidelines for a query.
+- `cli.bat search examples`: Search the examples index for a query.
+- `cli.bat search kb`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
+
+If you would like to search the knowledge base and see the output the way the LLM will see it, you can do the following:
+
+`cli.bat search kb --text "query" -l <lang> --markdown > context.md`
+
+This will dump the results to context.md which you can then view in VSCode with the preview editor.
+
 ## Documentation
 
 https://apiviewuat.azurewebsites.net/swagger/index.html

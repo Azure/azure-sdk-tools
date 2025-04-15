@@ -6,30 +6,39 @@ from pprint import pprint
 import sys
 import pathlib
 
+from src._search_manager import SearchManager
+
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 helps[
     "review"
 ] = """
     type: group
-    short-summary: Commands related to APIView reviews.
+    short-summary: Commands for creating APIView reviews.
 """
 
 helps[
     "eval"
 ] = """
     type: group
-    short-summary: Commands related to APIView copilot evals.
+    short-summary: Commands for APIView Copilot evaluations.
 """
 
 helps[
     "app"
 ] = """
     type: group
-    short-summary: Commands related to the Flask app deployment.
+    short-summary: Commands for the Flask app deployment.
+"""
+
+helps[
+    "search"
+] = """
+    type: group
+    short-summary: Commands for searching the knowledge base.
 """
 
 
@@ -180,6 +189,57 @@ def generate_review_from_app(language: str, path: str):
         print(response)
 
 
+def search_examples(path: str, language: str):
+    """Search the examples-index for a query."""
+    from scripts.search_examples import search_examples
+
+    results = search_examples(path, language)
+    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
+
+
+def search_guidelines(
+    language: str, text: Optional[str] = None, path: Optional[str] = None
+):
+    """Search the guidelines-index for a query."""
+    from scripts.search_guidelines import search_guidelines
+
+    if (path and text) or (not path and not text):
+        raise ValueError("Provide one of `--path` or `--text`.")
+    results = search_guidelines(path or text, language)
+    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
+
+
+def search_knowledge_base(
+    language: str,
+    text: Optional[str] = None,
+    path: Optional[str] = None,
+    index: List[str] = ["examples", "guidelines"],
+    markdown: bool = False,
+):
+    """
+    Queries the Search indexes and returns the resulting Cosmos DB
+    objects, resolving all links between objects. This result represents
+    what the AI reviewer would receive as context in RAG mode.
+    """
+    if (path and text) or (not path and not text):
+        raise ValueError("Provide one of `--path` or `--text`.")
+    search = SearchManager(language=language)
+    query = text
+    if path:
+        with open(path, "r") as f:
+            query = f.read()
+    if "examples" in index:
+        examples = search.search_examples(query=query)
+    if "guidelines" in index:
+        guidelines = search.search_guidelines(query=query)
+    context = search.build_context(guidelines, examples)
+    if markdown:
+        md = context.to_markdown()
+        print(md)
+    else:
+        print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -204,7 +264,10 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deconstruct", "deconstruct_test_case")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
-            g.command("query", "send_query_to_app")
+        with CommandGroup(self, "search", "__main__#{}") as g:
+            g.command("examples", "search_examples")
+            g.command("guidelines", "search_guidelines")
+            g.command("kb", "search_knowledge_base")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
@@ -282,6 +345,30 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--subscription-id"],
                 help="The Azure subscription ID. Env var: AZURE_SUBSCRIPTION_ID",
             )
+        with ArgumentsContext(self, "search") as ac:
+            ac.argument(
+                "path",
+                type=str,
+                help="The path to the file containing query text or code.",
+                options_list=["--path"],
+            )
+            ac.argument(
+                "text",
+                type=str,
+                help="The text query to search.",
+            )
+            ac.argument(
+                "index",
+                type=str,
+                nargs="+",
+                help="The indexes to search. Can be one or more of: examples, guidelines.",
+                options_list=["--index"],
+            )
+            ac.argument(
+                "markdown",
+                help="Render output as markdown instead of JSON.",
+            )
+
         super(CliCommandsLoader, self).load_arguments(command)
 
 
@@ -289,6 +376,18 @@ def run_cli():
     cli = CLI(cli_name="apiviewcopilot", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])
     sys.exit(exit_code)
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        # If the object has a `to_dict` method, use it
+        if hasattr(obj, "to_dict"):
+            return obj.to_dict()
+        # If the object has a `__dict__` attribute, use it
+        elif hasattr(obj, "__dict__"):
+            return obj.__dict__
+        # Otherwise, use the default serialization
+        return super().default(obj)
 
 
 if __name__ == "__main__":

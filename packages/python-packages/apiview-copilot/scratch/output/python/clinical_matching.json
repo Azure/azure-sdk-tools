@@ -1,0 +1,43 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-namespace-sync"
+            ],
+            "line_no": "125",
+            "bad_code": "namespace azure.healthinsights.clinicalmatching.aio",
+            "suggestion": "Ensure that the async namespace is correctly suffixed and structured according to the guidelines.",
+            "comment": "The namespace for the async client should reflect that it is distinct from the synchronous namespace."
+        },
+        {
+            "rule_ids": [
+                "general_design.html#general-network-support-sync-and-async",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": "127",
+            "bad_code": "class azure.healthinsights.clinicalmatching.aio.ClinicalMatchingClient(ClinicalMatchingClientOperationsMixin): implements AsyncContextManager",
+            "suggestion": "Separate into two classes: one for sync (ClinicalMatching) and one for async (ClinicalMatchingClient) operations.",
+            "comment": "The class combines sync and async operations, violating the guideline to provide separate client classes for synchronous and asynchronous operations."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async"
+            ],
+            "line_no": "4",
+            "bad_code": "namespace azure.healthinsights.clinicalmatching",
+            "suggestion": "Use a consistent namespace for both sync and async clients, with .aio suffix for async.",
+            "comment": "Namespace should clearly differentiate between sync and async clients."
+        },
+        {
+            "rule_ids": [
+                "general_design.html#general-network-support-sync-and-async",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": "6",
+            "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
+            "suggestion": "Separate into two classes: one for sync (ClinicalMatching) and one for async (ClinicalMatchingClient) operations.",
+            "comment": "The class combines sync and async operations, violating the guideline to provide separate client classes for synchronous and asynchronous operations."
+        }
+    ]
+}

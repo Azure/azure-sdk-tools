@@ -99,7 +99,7 @@ You must output a JSON objects which follows the following schema:
   "status": "string", # "Succeeded if the request has no violations. Error if there are violations."
   "violations": [
     {
-      "rule_ids": ["string"], # the unique rule ID or IDs that were violated
+      "rule_ids": ["string"], # the FULL unique rule ID or IDs that were violated
       "line_no": "string", # the line number of the violation, if known
       "bad_code": "string", # the original code that was bad, cited verbatim. It should be a single line of code.
       "comment": "string", # comment about the violation.

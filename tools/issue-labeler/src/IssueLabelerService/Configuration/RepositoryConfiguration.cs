@@ -23,7 +23,7 @@ namespace IssueLabelerService
         public string EnableAnswers => GetItem("EnableAnswers");
         public string IssueIndexName => GetItem("IssueIndexName");
         public string IssueSemanticName => GetItem("IssueSemanticName");
-        public string LabelPredictor => GetItem("labelPredictor");
+        public string LabelPredictor => GetItem("LabelPredictor");
         public string OpenAIEndpoint => GetItem("OpenAIEndpoint");
         public string RepoNames => GetItem("RepoNames");
         public string RepoOwner => GetItem("RepoOwner");

@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -828,6 +829,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(targetUntouchedEntry.RequestUri, targetEntry.RequestUri);
         }
+
+        [Theory]
+        [InlineData("true", 0)]
+        [InlineData("yes", 153)]
+        [InlineData("no", 153)]
+        [InlineData("false", 153)]
+        [InlineData("gibberish", 153)]
+        public void CheckDefaultSanitizerSettings(string environmentSettingValue, int sanitizerCount)
+        {
+            Environment.SetEnvironmentVariable("TEST_PROXY_DISABLE_DEFAULT_SANITIZERS", environmentSettingValue);
+
+            SanitizerDictionary testDict = new SanitizerDictionary();
+
+            Assert.Equal(sanitizerCount, testDict.DefaultSanitizerList.Count);
+        }
+
 
 
         // Re-enable w/ Azure/azure-sdk-tools#2900

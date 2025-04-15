@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-16 - 0.21.0
+
+- Forward untracked dependencies in emitter-package.json when using the `generate-config-files` command.
+
 ## 2025-04-10 - 0.20.0
 
 - Support a `--trace` flag on the `init`, `update`, and `generate` commands to enable tracing when compiling.

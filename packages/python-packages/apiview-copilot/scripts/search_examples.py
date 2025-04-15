@@ -1,7 +1,12 @@
 import sys
 import os
 import json
+
+# Add project root to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src._search_manager import SearchManager
+from cli import CustomJSONEncoder
 
 
 def search_examples(path: str, language: str):
@@ -34,4 +39,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     results = search_examples(path, language)
-    print(json.dumps(results, indent=2))
+    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))

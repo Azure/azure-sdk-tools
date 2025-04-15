@@ -79,13 +79,23 @@ namespace IssueLabelerService
             }
 
             // Return the predicted labels
-            return [output.Service, output.Type];
+            return [NormalizeService(output.Service), output.Type];
         }
 
         private bool IsConfidenceScoreAboveThreshold(string confidenceScore, string threshold) =>
                 !string.IsNullOrEmpty(confidenceScore) && double.Parse(confidenceScore) >= double.Parse(threshold) * 100;
+
         private bool IsValueUnknown(string value) => !string.IsNullOrEmpty(value) && value == "UNKNOWN";
 
+        private string NormalizeService(string type)
+        {
+            return type switch
+            {
+                "Azure Container Service(ACS)" => "ACS",
+                "Managed Kubernetes Service(AKS)" => "AKS",
+                _ => type
+            };
+        }
 
         public class LabelingOutput
         {

@@ -27,7 +27,6 @@ import { config as dotenvConfig } from "dotenv";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
-import _ from "lodash";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 

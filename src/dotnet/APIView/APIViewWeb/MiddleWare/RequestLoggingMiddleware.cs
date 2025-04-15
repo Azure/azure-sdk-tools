@@ -9,6 +9,7 @@ using Microsoft.ApplicationInsights;
 using System.Linq;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using System.Diagnostics;
 
 namespace APIViewWeb.MiddleWare
 {
@@ -27,6 +28,7 @@ namespace APIViewWeb.MiddleWare
 
         public async Task Invoke(HttpContext context)
         {
+            var traceId = Activity.Current?.TraceId.ToString();
             var requestTelemetry = new RequestTelemetry
             {
                 Name = $"{context.Request.Method} {context.Request.Path}",

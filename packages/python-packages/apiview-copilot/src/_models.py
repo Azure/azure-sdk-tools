@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 
 from ._sectioned_document import Section
 
@@ -9,7 +9,7 @@ class Violation(BaseModel):
     rule_ids: List[str] = Field(
         description="Unique guideline ID or IDs that were violated."
     )
-    line_no: Optional[str] = Field(description="Line number(s) of the violation.")
+    line_no: int = Field(description="Line number of the violation.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
@@ -81,11 +81,41 @@ class ReviewResult(BaseModel):
     )
     violations: List[Violation] = Field(description="list of violations if any")
 
+    def __init__(self, **data):
+        actual_violations = data.pop("violations", [])
+        data["violations"] = []
+        super().__init__(**data)
+        self._process_violations(actual_violations)
+
+    def _process_violations(self, violations: List[Dict]):
+        """
+        Process violation dictionaries, handling various line_no formats:
+        - single number (e.g., "10"): Use as is, cast to int
+        - range (e.g., "10-20"): Take the first number
+        - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the violation for each line
+        """
+        result_violations = []
+        for violation in violations:
+            raw_line_no = str(violation.get("line_no", "0")).replace(" ", "").strip()
+            for item in raw_line_no.split(","):
+                item = item.strip()
+                violation_copy = violation.copy()  # Create a copy of the violation dictionary
+                if "-" in item:
+                    # Handle range format (e.g., "10-20")
+                    first_num = item.split("-")[0].strip()
+                    violation_copy["line_no"] = int(first_num)
+                    result_violations.append(Violation(**violation_copy))
+                else:
+                    # Handle single number format (e.g., "10")
+                    violation_copy["line_no"] = int(item)
+                    result_violations.append(Violation(**violation_copy))
+        self.violations.extend(result_violations)
+
     def merge(self, other: "ReviewResult", *, section: Section):
         """
         Merge two ReviewResult objects.
         """
-        self.violations.extend(self._process_violations(other.violations, section))
+        self.violations.extend(self._merge_violations(other.violations, section))
         if len(self.violations) > 0:
             self.status = "Error"
 
@@ -133,7 +163,7 @@ class ReviewResult(BaseModel):
         #     for rule_id in to_add:
         #         violation.rule_ids.append(rule_id)
 
-    def _process_violations(
+    def _merge_violations(
         self, violations: List[Violation], section: Section
     ) -> List[Violation]:
         """
@@ -146,12 +176,9 @@ class ReviewResult(BaseModel):
 
         combined_violations = {}
         for violation in violations:
-            # TODO: Temporarily disabling this
+            # TODO: Re-visit this logic if line numbers from the GPT are wrong.
             # line_no = self._find_line_number(section, violation.bad_code)
             # violation.line_no = line_no
-            # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6590
-            # if not line_no:
-            #     continue
             line_no = violation.line_no
             existing = combined_violations.get(line_no, None)
             if existing:

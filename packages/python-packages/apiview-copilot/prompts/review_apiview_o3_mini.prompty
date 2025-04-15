@@ -85,8 +85,6 @@ followed.
 
 - APIView does not contain runnable code or implementations. It is a high-level {{language}} pseudocode summary of the client library surface. 
 
-- If related violations occur on multiple lines, report them as distinct violations and reference the other lines in the comment.
-
 # CONTEXT
 These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}
@@ -99,7 +97,7 @@ You must output a JSON objects which follows the following schema:
   "violations": [
     {
       "rule_ids": ["string"], # the FULL unique rule ID or IDs that were violated
-      "line_no": "string", # the line number of the violation, if known
+      "line_no": "string", # the line number(s) of the violation, if known
       "bad_code": "string", # the original code that was bad, cited verbatim. It should be a single line of code.
       "comment": "string", # comment about the violation.
       "confidence": "float", # a float between 0 and 1 indicating how confident you are that the code is bad. 0 means you are not at all confident, 1 means you are very confident.

@@ -40,27 +40,9 @@
         },
         {
             "rule_ids": [
-                "python_design.html#python-lro-poller-begin-naming"
-            ],
-            "line_no": 181,
-            "bad_code": "async def create_trials(",
-            "suggestion": "async def begin_create_trials(",
-            "comment": "Long running operations should use a 'begin_' prefix. Rename the async 'create_trials' method to 'begin_create_trials'."
-        },
-        {
-            "rule_ids": [
                 "python_design.html#python-paged-prefix"
             ],
             "line_no": 102,
-            "bad_code": "def trials(",
-            "suggestion": "def list_trials(",
-            "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-paged-prefix"
-            ],
-            "line_no": 217,
             "bad_code": "def trials(",
             "suggestion": "def list_trials(",
             "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
@@ -73,6 +55,24 @@
             "bad_code": "def erase_trials(",
             "suggestion": "def delete_trials(",
             "comment": "Deletion operations should use a preferred verb like 'delete_' instead of 'erase_'."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-lro-poller-begin-naming"
+            ],
+            "line_no": 181,
+            "bad_code": "async def create_trials(",
+            "suggestion": "async def begin_create_trials(",
+            "comment": "Long running operations should use a 'begin_' prefix. Rename the async 'create_trials' method to 'begin_create_trials'."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 217,
+            "bad_code": "def trials(",
+            "suggestion": "def list_trials(",
+            "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
         },
         {
             "rule_ids": [

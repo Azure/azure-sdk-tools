@@ -491,37 +491,32 @@ export async function generateConfigFilesCommand(argv: any) {
     // If there's an existing emitter-package.json, we need to merge any untracked devDependencies
     if (existingEmitterPackageJson) {
       const currentDevDependencies = existingEmitterPackageJson["devDependencies"] ?? {};
-      const updatedDevDependencies = emitterPackageJson["devDependencies"] ?? {};
-      const untrackedDependencies = _.difference(
-        Object.keys(currentDevDependencies),
-        Object.keys(updatedDevDependencies),
-      );
-
+      const packageLockPath = joinPaths(dirname(packageJsonPath), "package-lock.json");
+      let existingPackageLockJson;
+      try {
+        // Check if package-lock.json exists
+        await stat(packageLockPath);
+        existingPackageLockJson = JSON.parse(await readFile(packageLockPath, "utf8"));
+      } catch (err) {
+        Logger.debug(`package-lock.json not found in: ${packageLockPath}`);
+      }
       // If there are untracked dependencies, we will check the package-lock.json of the
       // target emitter for a compatible version, otherwise we will leave the version from
       // the emitter-package.json unchanged
-      if (untrackedDependencies) {
-        // Add untracked dependencies to the updated emitter-package.json devDependencies
-        // with the version from the existing emitter-package.json
-        for (const key of untrackedDependencies) {
-          emitterPackageJson["devDependencies"][key] =
-            existingEmitterPackageJson["devDependencies"][key];
-        }
-        // Check if the target emitter has a lock file and attempt to pull untracked
-        // dependency versions from there
-        const packageLockPath = joinPaths(dirname(packageJsonPath), "package-lock.json");
-        if ((await stat(packageLockPath)).isFile()) {
-          const existingPackageLockJson = JSON.parse(await readFile(packageLockPath, "utf8"));
+      for (const key of Object.keys(currentDevDependencies)) {
+        if (
+          emitterPackageJson["devDependencies"] &&
+          emitterPackageJson["devDependencies"][key] === undefined
+        ) {
           if (existingPackageLockJson && existingPackageLockJson["packages"]) {
-            for (const key of untrackedDependencies) {
-              const packageJsonKey = `node_modules/${key}`;
-              if (existingPackageLockJson["packages"][packageJsonKey] !== undefined) {
-                // If the package is found in the lock file, use the version from there
-                // Otherwise, keep the version from the existing emitter-package.json
-                emitterPackageJson["devDependencies"][key] =
-                  existingPackageLockJson["packages"][packageJsonKey]["version"];
-              }
-            }
+            // Check if the package is in the package-lock.json
+            emitterPackageJson["devDependencies"][key] =
+              existingPackageLockJson["packages"][`node_modules/${key}`]["version"];
+          } else {
+            // If the package is not in the package-lock.json, we will leave the version
+            // from emitter-package.json unchanged
+            emitterPackageJson["devDependencies"][key] =
+              existingEmitterPackageJson["devDependencies"][key];
           }
         }
       }

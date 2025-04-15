@@ -22,10 +22,10 @@ namespace IssueLabelerService
                 {
                     switch (key)
                     {
-                        case "OpenAi":
+                        case "OpenAI":
                             return new OpenAiAnswerService(_logger, config, _ragService);
                         default:
-                            _logger.LogWarning($"Unknown answer service type: {key} Running OpenAi.");
+                            _logger.LogWarning($"Unknown answer service type: {key} Running OpenAI.");
                             return new OpenAiAnswerService(_logger, config, _ragService);
                     }
                 }

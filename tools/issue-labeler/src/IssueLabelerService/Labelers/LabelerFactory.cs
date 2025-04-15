@@ -28,7 +28,7 @@ namespace IssueLabelerService
                 {
                     switch (key)
                     {
-                        case "OpenAi":
+                        case "OpenAI":
                             return new OpenAiLabeler(_logger, config, _ragService);
                         case "Legacy":
                             return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);

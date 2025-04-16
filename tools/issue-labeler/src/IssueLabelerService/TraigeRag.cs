@@ -133,7 +133,8 @@ namespace IssueLabelerService
                 semanticConfigName,
                 field,
                 query,
-                count);
+                count,
+                filter);
 
             List<Document> filteredDocuments = new List<Document>();
             foreach (var (document, score) in searchResults)

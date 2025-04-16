@@ -1,4 +1,5 @@
 import { Type } from "../../../rustdoc-types/output/rustdoc-types";
+import { getAPIJson } from "../../main";
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
 import { reexportLines } from "../processUse";
 import { externalReexports } from "./externalReexports";
@@ -26,8 +27,8 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
     if (
       !reexportLines.external.items.some((line) => line.LineId === type.resolved_path.id.toString())
     ) {
-      const lines = externalReexports(type.resolved_path.id);
-      reexportLines.external.items.push(...lines.items);
+      const lines = externalReexports(type.resolved_path.id, getAPIJson());
+      reexportLines.external.items.push(...lines);
     }
     // If there are no generic arguments, just return the base token
     if (!type.resolved_path.args) {

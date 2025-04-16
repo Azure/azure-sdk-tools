@@ -43,39 +43,6 @@ function addSectionHeader(codeFile: CodeFile, headerText: string): void {
 }
 
 /**
- * Processes external module reexports and adds them to the code file
- * @param codeFile The code file to add review lines to
- */
-function processExternalModuleReexports(codeFile: CodeFile): void {
-  if (reexportLines.external.items.length > 0) {
-    addSectionHeader(codeFile, "External module re-exports");
-
-    // Separate modules with and without RelatedToLine
-    const modulesWithRelatedToLine: { [LinedId: string]: ReviewLine } = {};
-    const modulesWithoutRelatedToLine = [];
-
-    for (const module of reexportLines.external.modules) {
-      if (!module.RelatedToLine) {
-        modulesWithoutRelatedToLine.push(module);
-      } else {
-        modulesWithRelatedToLine[module.RelatedToLine] = module;
-      }
-    }
-
-    // Sort only the modules without RelatedToLine
-    sortExternalItems(modulesWithoutRelatedToLine);
-
-    // Add to the code file
-    for (const module of modulesWithoutRelatedToLine) {
-      codeFile.ReviewLines.push(module);
-      if (module.LineId in modulesWithRelatedToLine) {
-        codeFile.ReviewLines.push(modulesWithRelatedToLine[module.LineId]);
-      }
-    }
-  }
-}
-
-/**
  * Checks if an item is already included in any of the external modules
  * @param reexportItem The item to check
  * @returns Whether the item is already included
@@ -134,10 +101,7 @@ function buildCodeFile(): CodeFile {
   PACKAGE_NAME = codeFile.PackageName;
 
   processRootItem(codeFile);
-  processExternalModuleReexports(codeFile);
   processExternalItemReexports(codeFile);
-  addSectionHeader(codeFile, "End");
-
   return codeFile;
 }
 

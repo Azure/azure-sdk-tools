@@ -2,7 +2,6 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
-import { processItem } from "./processItem";
 import { externalReexports } from "./utils/externalReexports";
 import { getAPIJson } from "../main";
 import { replaceCratePath } from "./utils/cratePathUtils";
@@ -64,9 +63,9 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   reviewLines.push(reviewLine);
   if (useItemId in apiJson.paths) {
     // for the re-exports in the external crates
-    const lines = externalReexports(useItemId);
+    const lines = externalReexports(useItemId, apiJson);
     if (!reexportLines.external.items.some((line) => line.LineId === useItemId.toString())) {
-      reexportLines.external.items.push(...lines.items);
+      reexportLines.external.items.push(...lines);
     }
   }
 

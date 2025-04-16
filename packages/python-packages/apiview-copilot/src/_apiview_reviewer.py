@@ -5,7 +5,7 @@ import concurrent.futures
 import json
 import os
 import prompty
-import prompty.azure
+import prompty.azure_beta
 from time import time
 from typing import Literal, List
 

@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 else
                 {
-                    ms.Write(Encoding.ASCII.GetBytes(segment));
+                    ms.Write(Encoding.UTF8.GetBytes(segment));
                 }
             }
             return ms.ToArray();
@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 requestOrResponse.Body = null;
             }
-            else if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
+            else if (ContentTypeUtilities.IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
                 if (property.ValueKind == JsonValueKind.Array)
                 {
@@ -250,7 +250,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 jsonWriter.WriteStringValue("\r\n");
 
                 // body
-                if (IsTextContentType(section.Headers, out var enc))
+                if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
                 {
                     var txt = enc.GetString(ReadAllBytes(section.Body));
 
@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 jsonWriter.WriteStartArray(name);
                 jsonWriter.WriteEndArray();
             }
-            else if (IsTextContentType(headers, out Encoding encoding))
+            else if (ContentTypeUtilities.IsTextContentType(headers, out Encoding encoding))
             {
                 // Try parse response as JSON and write it directly if possible
                 try
@@ -386,25 +386,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteEndArray();
                 }
             }
-        }
-
-        public static bool TryGetContentType(IDictionary<string, string[]> requestHeaders, out string contentType)
-        {
-            contentType = null;
-            if (requestHeaders.TryGetValue("Content-Type", out var contentTypes) &&
-                contentTypes.Length == 1)
-            {
-                contentType = contentTypes[0];
-                return true;
-            }
-            return false;
-        }
-
-        public static bool IsTextContentType(IDictionary<string, string[]> requestHeaders, out Encoding encoding)
-        {
-            encoding = null;
-            return TryGetContentType(requestHeaders, out string contentType) &&
-                   ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
         }
 
         /// <summary>

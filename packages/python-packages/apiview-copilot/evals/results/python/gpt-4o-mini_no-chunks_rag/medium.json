@@ -1,0 +1,454 @@
+[
+    {
+        "testcase": "few_violations",
+        "expected": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-same-name-sync-async",
+                        "python_design.html#python-namespaces-async"
+                    ],
+                    "line_no": 78,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatchingAsyncClient(ClinicalMatchingClientOperationsMixin): implements AsyncContextManager",
+                    "suggestion": "Move the async client into an '.aio' sub-namespace (e.g. azure.healthinsights.clinicalmatching.aio) and rename the class to 'ClinicalMatchingClient' so that both sync and async clients share the same client name.",
+                    "comment": "Async clients should use the same client name as the synchronous version and reside in an '.aio' namespace. Using 'ClinicalMatchingAsyncClient' in the same namespace violates the naming and namespace guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-pep484"
+                    ],
+                    "line_no": 91,
+                    "bad_code": "async def begin_match_trials(",
+                    "suggestion": "Add full PEP484 type annotations to all parameters and the return type, for example: \n\n@overload\nasync def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = \"application/json\", repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]:\n    ...",
+                    "comment": "Public async methods must include proper type hints. The async overloads for begin_match_trials are missing type annotations, which violates PEP484 guidelines."
+                }
+            ]
+        },
+        "actual": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "general_design=html=general-namespaces-approved-list"
+                    ],
+                    "line_no": 4,
+                    "bad_code": "namespace azure.healthinsights.clinicalmatching",
+                    "suggestion": "Consider using an approved namespace such as 'azure.data' or 'azure.management' that fits the functionality.",
+                    "comment": "The namespace 'azure.healthinsights' is not part of the approved namespace list."
+                }
+            ]
+        },
+        "total_violations": 2,
+        "violations_found": 1,
+        "true_positives": 0,
+        "false_positives": 1,
+        "false_negatives": 2,
+        "percent_coverage": 0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 1,
+        "groundedness": 4,
+        "groundedness_reason": "The RESPONSE is grounded in the CONTEXT as it correctly identifies a namespace issue and provides a suggestion based on the guidelines. However, it omits some critical details from the CONTEXT.",
+        "overall_score": 0
+    },
+    {
+        "testcase": "many_violations",
+        "expected": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-naming",
+                        "python_design.html#python-client-same-name-sync-async"
+                    ],
+                    "line_no": 6,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.ClinicalMatchingClient(ClinicalMatchingClientOperationsMixin): implements ContextManager",
+                    "comment": "Service client types must have a 'Client' suffix and the sync and async client classes should share the same name."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-auth-credential-azure-core"
+                    ],
+                    "line_no": 11,
+                    "bad_code": "api_key: str",
+                    "suggestion": "Use a credential object from azure.core.credentials (e.g., AzureKeyCredential) instead of a raw string for the api key.",
+                    "comment": "Authentication parameters should leverage azure-core credential classes rather than using a simple string."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-lro-poller-begin-naming"
+                    ],
+                    "line_no": 66,
+                    "bad_code": "def create_trials(",
+                    "suggestion": "def begin_create_trials(",
+                    "comment": "Long running operations should use a 'begin_' prefix. Rename 'create_trials' to 'begin_create_trials'."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-options-naming"
+                    ],
+                    "line_no": 70,
+                    "bad_code": "options: Optional[CreateTrialsOptions] = None,",
+                    "suggestion": "Remove the 'options' bag parameter and instead expose each optional parameter directly as keyword-only arguments.",
+                    "comment": "The use of an 'options bag' (CreateTrialsOptions) is disallowed. Optional parameters should be provided as individual keyword-only arguments."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-lro-poller-begin-naming"
+                    ],
+                    "line_no": 181,
+                    "bad_code": "async def create_trials(",
+                    "suggestion": "async def begin_create_trials(",
+                    "comment": "Long running operations should use a 'begin_' prefix. Rename the async 'create_trials' method to 'begin_create_trials'."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-paged-prefix"
+                    ],
+                    "line_no": 102,
+                    "bad_code": "def trials(",
+                    "suggestion": "def list_trials(",
+                    "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-paged-prefix"
+                    ],
+                    "line_no": 217,
+                    "bad_code": "def trials(",
+                    "suggestion": "def list_trials(",
+                    "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-service-verbs"
+                    ],
+                    "line_no": 108,
+                    "bad_code": "def erase_trials(",
+                    "suggestion": "def delete_trials(",
+                    "comment": "Deletion operations should use a preferred verb like 'delete_' instead of 'erase_'."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 998,
+                    "bad_code": "ivar eligibilityCriteriaEvidence: Optional[str]",
+                    "suggestion": "ivar eligibility_criteria_evidence: Optional[str]",
+                    "comment": "Variable names should use snake_case instead of camelCase."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1000,
+                    "bad_code": "ivar patientDataEvidence: Optional[ClinicalNoteEvidence]",
+                    "suggestion": "ivar patient_data_evidence: Optional[ClinicalNoteEvidence]",
+                    "comment": "Variable names should use snake_case instead of camelCase."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1001,
+                    "bad_code": "ivar patientInfoEvidence: Optional[ClinicalCodedElement]",
+                    "suggestion": "ivar patient_info_evidence: Optional[ClinicalCodedElement]",
+                    "comment": "Variable names should use snake_case instead of camelCase."
+                }
+            ]
+        },
+        "actual": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "general_design=html=general-namespaces-approved-list",
+                        "python_design=html=python-client-namespace-sync"
+                    ],
+                    "line_no": 4,
+                    "bad_code": "namespace azure.healthinsights.clinicalmatching",
+                    "suggestion": "Use the same namespace for the synchronous and asynchronous clients with the appropriate .aio suffix.",
+                    "comment": "The namespace 'azure.healthinsights.clinicalmatching' is not listed in the approved namespace list. The sync namespace does not match the expected namespace for the async client."
+                },
+                {
+                    "rule_ids": [
+                        "python_design=html=python-client-hier-creation"
+                    ],
+                    "line_no": 6,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
+                    "suggestion": "Ensure that the constructor allows for direct creation of clients for each level in the hierarchy.",
+                    "comment": "The constructor does not enable direct client creation for each level in the hierarchy."
+                },
+                {
+                    "rule_ids": [
+                        "python_design=html=python-client-separate-sync-async"
+                    ],
+                    "line_no": 127,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.aio.ClinicalMatchingClient(ClinicalMatchingClientOperationsMixin): implements AsyncContextManager",
+                    "suggestion": "Rename the async client class to 'ClinicalMatchingClient' to ensure consistency.",
+                    "comment": "The class name 'ClinicalMatchingClient' for the async client should be consistent with the sync client class name 'ClinicalMatching'."
+                }
+            ]
+        },
+        "total_violations": 11,
+        "violations_found": 3,
+        "true_positives": 0,
+        "false_positives": 3,
+        "false_negatives": 11,
+        "percent_coverage": 0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [
+            [
+                6,
+                [
+                    "python_design.html#python-client-naming",
+                    "python_design.html#python-client-same-name-sync-async"
+                ],
+                [
+                    "python_design=html=python-client-hier-creation"
+                ]
+            ]
+        ],
+        "line_matches_wrong_rule": 1,
+        "wrong_line_details": [],
+        "similarity": 2,
+        "groundedness": 4,
+        "groundedness_reason": "The RESPONSE is mostly grounded in the CONTEXT, accurately identifying violations related to namespace usage and naming consistency between sync and async clients. However, it includes a suggestion about client creation hierarchy that is not explicitly mentioned in the CONTEXT.",
+        "overall_score": 0
+    },
+    {
+        "testcase": "no_violations",
+        "expected": {
+            "status": "Success",
+            "violations": []
+        },
+        "actual": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "general_design=html=general-client-in-namespace",
+                        "general_design=html=general-namespaces-approved-list",
+                        "python_design=html=python-client-namespace-sync",
+                        "python_design=html=python-client-same-name-sync-async"
+                    ],
+                    "line_no": 4,
+                    "bad_code": "namespace azure.healthinsights.clinicalmatching",
+                    "suggestion": "Ensure both clients are named 'ClinicalMatchingClient' in their respective namespaces.",
+                    "comment": "The namespace 'azure.healthinsights.clinicalmatching' is a sub-namespace and should not be used for service client types that consumers are likely to interact with directly. The namespace 'azure.healthinsights' does not appear in the approved namespace list for services. The namespace for the sync client should match the async client namespace with an '.aio' suffix for the async client. The sync and async client should have the same name but in different namespaces."
+                }
+            ]
+        },
+        "total_violations": 0,
+        "violations_found": 1,
+        "true_positives": 0,
+        "false_positives": 1,
+        "false_negatives": 0,
+        "percent_coverage": 0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 1,
+        "groundedness": 1,
+        "groundedness_reason": "The CONTEXT is missing, making it impossible to assess the groundedness of the RESPONSE.",
+        "overall_score": 0.0
+    },
+    {
+        "testcase": "multiple_same_violations",
+        "expected": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 194,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.AgeUnit(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.AgeUnit(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 270,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalDocumentType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalDocumentType(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 307,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialAcceptedSex(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialAcceptedSex(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 393,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPhase(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPhase(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 402,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPurpose(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPurpose(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 415,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialRecruitmentStatus(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialRecruitmentStatus(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 488,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialSource(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialSource(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 493,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialStudyType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialStudyType(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 568,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.DocumentContentSourceType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.DocumentContentSourceType(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 573,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.DocumentType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.DocumentType(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 720,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.JobStatus(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.JobStatus(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 899,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherInferenceType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.TrialMatcherInferenceType(str, Enum):",
+                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                }
+            ]
+        },
+        "actual": {
+            "status": "Error",
+            "violations": [
+                {
+                    "rule_ids": [
+                        "general_design=html=general-service-apiversion-7"
+                    ],
+                    "line_no": 13,
+                    "bad_code": "api_version: str = ...",
+                    "suggestion": "Ensure that the api_version is passed to all relevant service calls and is clearly defined as part of the client initialization.",
+                    "comment": "The api_version parameter should be clearly defined and managed across requests, including in any URIs returned by the service."
+                },
+                {
+                    "rule_ids": [
+                        "general_design=html=general-response-enumeration"
+                    ],
+                    "line_no": 19,
+                    "bad_code": "def begin_match_trials(",
+                    "suggestion": "Implement an iterator or generator that handles pagination internally, allowing users to use a for loop to iterate over results.",
+                    "comment": "The method 'begin_match_trials' does not provide an idiomatic way to enumerate the results of the operation, potentially forcing the caller to handle pagination manually."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation=html=python-codestyle-type-naming"
+                    ],
+                    "line_no": 638,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.GeoJsonGeometryType(str, Enum):",
+                    "suggestion": "Rename the class to 'GeoJsonGeometryType' to follow Pascal case conventions.",
+                    "comment": "Class names should use Pascal case, but this class follows a different convention."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation=html=python-codestyle-type-naming"
+                    ],
+                    "line_no": 642,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.GeoJsonPropertiesSubType(str, Enum):",
+                    "suggestion": "Rename the class to 'GeoJsonPropertiesSubType' to follow Pascal case conventions.",
+                    "comment": "Class names should use Pascal case, but this class follows a different convention."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation=html=python-codestyle-type-naming"
+                    ],
+                    "line_no": 646,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.GeoJsonType(str, Enum):",
+                    "suggestion": "Rename the class to 'GeoJsonType' to follow Pascal case conventions.",
+                    "comment": "Class names should use Pascal case, but this class follows a different convention."
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation=html=python-codestyle-type-naming"
+                    ],
+                    "line_no": 782,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.PatientInfoSex(str, Enum):",
+                    "suggestion": "Rename the class to 'PatientInfoSex' to follow Pascal case conventions.",
+                    "comment": "Class names should use Pascal case, but this class follows a different convention."
+                }
+            ]
+        },
+        "total_violations": 12,
+        "violations_found": 6,
+        "true_positives": 0,
+        "false_positives": 6,
+        "false_negatives": 12,
+        "percent_coverage": 0,
+        "rule_matches_wrong_line": 0,
+        "wrong_rule_details": [],
+        "line_matches_wrong_rule": 0,
+        "wrong_line_details": [],
+        "similarity": 2,
+        "groundedness": 5,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately conveying all essential information without introducing unsupported details or omitting critical points.",
+        "overall_score": 0
+    },
+    {
+        "average_score": 0.0,
+        "total_evals": 4
+    }
+]

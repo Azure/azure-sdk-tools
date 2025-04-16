@@ -14,6 +14,28 @@ from pytest import fail, mark
 from apistub import ApiView, TokenKind, StubGenerator
 from apistub.nodes import PylintParser
 
+# Read in all init files from init_files folder and add the paths to INIT_PARAMS in the form of (file_name, file_path)
+INIT_FILES_PATH = os.path.join(os.path.dirname(__file__), "init_files")
+def _get_init_files(init_path=INIT_FILES_PATH):
+    """
+    Read in all init files from init_files and return them in the form of (file_name, file_path)
+    """
+    init_files = [os.path.join(init_path, f) for f in os.listdir(init_path)]
+    init_params = []
+    init_ids = []
+    for init_file in init_files:
+        file_name = os.path.basename(init_file)
+        file_path = os.path.abspath(init_file)
+        if ".extend_" in file_name:
+            extends = True
+        else:
+            extends = False
+        init_params.append((file_path, extends))
+        init_ids.append(file_name)
+    return init_params, init_ids
+
+INIT_PARAMS, INIT_IDS = _get_init_files()
+
 def _build_dist(src_dir, build_type, extension):
     check_call([sys.executable, "-m", "build", src_dir, f"--{build_type}"])
     dist_dir = os.path.join(src_dir, "dist")
@@ -39,6 +61,14 @@ def _add_pyproject_package_to_temp(src_dir):
     assert os.path.exists(pyproject_path)
     os.remove(setup_py_path)
     assert not os.path.exists(setup_py_path)
+
+    # Move the new mapping file to the old mapping file name
+    mapping_file_path = os.path.join(dest_dir, "apiview-properties.json")
+    old_mapping_file_path = os.path.join(dest_dir, "apiview_mapping_python.json")
+    shutil.move(mapping_file_path, old_mapping_file_path)
+    assert os.path.exists(old_mapping_file_path)
+    assert not os.path.exists(mapping_file_path)
+
     return dest_dir
 
 PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
@@ -54,6 +84,9 @@ PYPROJECT_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist"]
 
 ALL_PATHS = [PKG_PATH, WHL_PATH, SDIST_PATH, PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
 ALL_PATH_IDS = ["setup-source", "setup-whl", "setup-sdist", "pyproject-source", "pyproject-whl", "pyproject-sdist"]
+
+MAPPING_PATHS = [(PKG_PATH, "apiview-properties.json"), (PYPROJECT_PKG_PATH, "apiview_mapping_python.json")]
+MAPPING_IDS = [mapping_file for _, mapping_file in MAPPING_PATHS]
 
 class TestApiView:
     def _count_newlines(self, apiview: ApiView):
@@ -179,12 +212,14 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
 
-    def test_mapping_file(self):
-        mapping_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest", "apiview_mapping_python.json")
-        )
+    @mark.parametrize("pkg_path, mapping_file", MAPPING_PATHS, ids=MAPPING_IDS)
+    def test_mapping_file(self, pkg_path, mapping_file):
+        # Check that mapping file exists
+        mapping_file_path = os.path.join(pkg_path, mapping_file)
+        assert os.path.exists(mapping_file_path)
+
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, mapping_path=mapping_path)
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
         cross_language_lines = []
@@ -208,3 +243,10 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # Check that TokenKind is EXTERNAL_URL
         assert apiview.review_lines[2]["Tokens"][1]["Kind"] == 8
+    
+    @mark.parametrize("file_path, extends", INIT_PARAMS, ids=INIT_IDS)
+    def test_set_namespace(self, file_path, extends):
+        stub_gen = StubGenerator(pkg_path=PKG_PATH)
+        stub_gen._set_root_namespace(file_path, "namespace")
+        # If the file is an extend_ file, the namespace should not be set
+        assert (stub_gen.namespace == "") if extends else (stub_gen.namespace == "namespace")

@@ -20,7 +20,8 @@ This process is set up in such a way to make it easier for changes to be tested 
 4. If you make additional changes to your **Tools PR** repeat steps 1 - 3 until you have completed the necessary testing of your changes. This includes full releases of the template package, if necessary.
 5. Once you reviewed all the test runs and did any of additional ad-hoc tests from the created branches in language repositories, you must manually approve in your pipeline execution instance the next stage - creation of PRs.
 6. Once approved, the pipeline proceeds to the next stage, named `CreateSyncPRs` in the [eng-workflows-sync.yml file][yml]. This stage creates one pull request for each language repository, merging changes from the branch created in step 3 into the default (usually `main`) branch. We call these PRs here **Sync PRs**. A link to each of the **Sync PRs** will show up in the **Tools PR** for you to click and review.
-7. Review and approve each of your **Sync PRs**. For some repos (C and C++) you might need to frequently use the `Update Branch` button to get the checks green.
+7. Review and approve each of your **Sync PRs** and resolve any open review conversations. For some repos (C and C++) you might need to frequently use the `Update Branch` button to get the checks green.
+    - You can mass approve and mark AI-generated PR reviews as resolved with [this script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/scripts/Approve-Eng-Common-Sync-PRs.ps1): `<repo root>/eng/scripts/Approve-Eng-Common-Sync-PRs.ps1 -engCommonSyncPRNumber <tools sync PR>`
 8. Sign Off on the [`VerifyAndMerge` stage][yml]. This will merge any remaining open **Sync PR** and also append `auto-merge` to the **Tools PR**.
    - If a **Sync PR** has any failing checks, it will need to be manually merged, even if `/check-enforcer override` has been run ([azure-sdk-tools#1147](https://github.com/Azure/azure-sdk-tools/issues/1147)).
 

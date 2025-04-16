@@ -1,13 +1,14 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType } from './types';
-import { logger } from '../utils/logger';
+import { SDKType } from './types.js';
+import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
+import * as compiler from '@typespec/compiler';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -32,7 +33,8 @@ function replaceAll(original: string, from: string, to: string) {
 
 function printErrorDetails(
     output: { stdout: string; stderr: string; code: number | null } | undefined,
-    printDetails: boolean = false
+    printDetails: boolean = false,
+    errorAsWarning: boolean = false
 ) {
     if (!output) return;
     const getErrorSummary = (content: string) =>
@@ -46,21 +48,21 @@ function printErrorDetails(
             })
             .map((line) => `  ${line}\n`);
     let summary = [...getErrorSummary(output.stderr), ...getErrorSummary(output.stdout)];
-    logger.error(`Exit code: ${output.code}`);
+    logError(errorAsWarning)(`Exit code: ${output.code}`);
     if (summary.length > 0) {
-    logger.error(`Summary:`);
-        summary.forEach((line) => logger.error(removeLastNewline(line)));
+        logError(errorAsWarning)(`Summary:`);
+        summary.forEach((line) => logError(errorAsWarning)(removeLastNewline(line)));
     }
     if (printDetails) {
         const stderr = removeLastNewline(output.stderr);
         const stdout = removeLastNewline(output.stdout);
-        logger.error(`Details:`);
+        logError(errorAsWarning)(`Details:`);
         if (stderr) {
-            logger.error(`  stderr:`);
+            logError(errorAsWarning)(`  stderr:`);
             stderr.split('\n').forEach((line) => logger.warn(`    ${line}`));
         }
         if (stdout) {
-            logger.error(`  stdout:`);
+            logError(errorAsWarning)(`  stdout:`);
             stdout.split('\n').forEach((line) => logger.warn(`    ${line}`));
         }
     }
@@ -71,6 +73,10 @@ function getDistClassicClientParametersPath(packageRoot: string): string {
 }
 
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['pipe', 'pipe', 'pipe'] };
+
+function logError(errorAsWarning:boolean){
+    return errorAsWarning ? logger.warn : logger.error;
+}
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -173,12 +179,21 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await loadTspConfig(typeSpecDirectory);
-    const serviceDir = tspConfig.parameters?.['service-dir']?.default;
+    const tspConfig = await resolveOptions(typeSpecDirectory);
+    let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
+    let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
+    const emitterOptions = tspConfig.options?.[emitterName];
+    const serviceDirFromEmitter = emitterOptions?.['service-dir'];
+    if(serviceDirFromEmitter) {
+        serviceDir = serviceDirFromEmitter;
+    }
+    const packageDirFromEmitter = emitterOptions?.['package-dir'];
+    if(packageDirFromEmitter) {
+        packageDir = packageDirFromEmitter; 
+    }
     if (!serviceDir) {
         throw new Error(`Miss service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
-    const packageDir = tspConfig.options?.[emitterName]?.['package-dir'];
     if (!packageDir) {
         throw new Error(`Miss package-dir in ${emitterName} options of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
@@ -192,7 +207,8 @@ export async function runCommand(
     args: readonly string[],
     options: SpawnOptions = runCommandOptions,
     realtimeOutput: boolean = true,
-    timeoutSeconds: number | undefined = undefined
+    timeoutSeconds: number | undefined = undefined,
+    errorAsWarning: boolean = false
 ): Promise<{ stdout: string; stderr: string; code: number | null }> {
     let stdout = '';
     let stderr = '';
@@ -235,7 +251,7 @@ export async function runCommand(
     child.on('exit', (exitCode, signal) => {
         if (timer) clearTimeout(timer);
         if (timedOut || !signal) { return; }
-        logger.error(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${exitCode}.`);
+        logError(errorAsWarning)(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${exitCode}.`);
     });
 
     child.on('close', (exitCode) => {
@@ -245,14 +261,15 @@ export async function runCommand(
             return;
         }
         code = exitCode;
-        logger.error(`Command closed with code '${exitCode}'.`);
-        printErrorDetails({ stdout, stderr, code: exitCode }, !realtimeOutput);
+        logError(errorAsWarning)(`Command closed with code '${exitCode}'.`);
+        printErrorDetails({ stdout, stderr, code: exitCode }, !realtimeOutput, errorAsWarning);
         reject(Error(`Command closed with code '${exitCode}'.`));
+
     });
     
     child.on('error', (err) => {
-        logger.error((err as Error)?.stack ?? err);
-        printErrorDetails({ stdout, stderr, code: null }, !realtimeOutput);
+        logError(errorAsWarning)((err as Error)?.stack ?? err);
+        printErrorDetails({ stdout, stderr, code: null }, !realtimeOutput, errorAsWarning);
         reject(err);
     });
 
@@ -268,4 +285,15 @@ export async function existsAsync(path: string): Promise<boolean> {
         logger.warn(`Fail to find ${path} for error: ${error}`);
         return false;
     }
+}
+
+export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+    const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
+        compiler.NodeHost,
+        {
+            cwd:process.cwd(),
+            entrypoint: typeSpecDirectory, // not really used here
+            configPath: typeSpecDirectory,
+        });
+    return options
 }

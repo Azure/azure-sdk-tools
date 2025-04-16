@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4760
+Pylint custom checkers for SDK guidelines: C4717 - C4767
 """
 
 import logging
@@ -1755,7 +1755,8 @@ class CheckDocstringParameters(BaseChecker):
         """Checks if function returns anything.
         If return found, checks that the docstring contains a return doc and rtype.
 
-        :param node: ast.FunctionDef
+        :param node: function node
+        :type node: ast.FunctionDef
         :return: None
         """
 
@@ -1846,25 +1847,25 @@ class CheckForPolicyUse(BaseChecker):
     name = "check-for-policies"
     priority = -1
     msgs = {
-        "C4739": (
+        "C4769": (
             "You should include a UserAgentPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-user-agent-policy",
             "You should include a UserAgentPolicy in the HTTP Pipeline.",
         ),
-        "C4740": (
+        "C4770": (
             "You should include a LoggingPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-logging-policy",
             "You should include a LoggingPolicy in the HTTP Pipeline.",
         ),
-        "C4741": (
+        "C4771": (
             "You should include a RetryPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-retry-policy",
             "You should include a RetryPolicy in the HTTP Pipeline.",
         ),
-        "C4742": (
+        "C4772": (
             "You should include a DistributedTracingPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-distributed-tracing-policy",
@@ -2852,19 +2853,20 @@ class DoNotImportAsyncio(BaseChecker):
 
     name = "do-not-import-asyncio"
     priority = -1
-    # TODO Find message number
     msgs = {
         "C4763": (
-            "Do not import the asyncio package directly in your library",
+            "If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead of importing asyncio. For other imports of asyncio, ignore this warning.",
             "do-not-import-asyncio",
-            "Do not import the asyncio package in your directly.",
+            "If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead of importing asyncio. For other imports of asyncio, ignore this warning.",
         ),
     }
+
+    IGNORE_PACKAGES = 'azure.core'
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from asyncio directly."""
         try:
-            if node.modname == "asyncio":
+            if node.modname == "asyncio" and not node.root().name.startswith(self.IGNORE_PACKAGES):
                 self.add_message(
                     msgid=f"do-not-import-asyncio",
                     node=node,
@@ -2877,7 +2879,7 @@ class DoNotImportAsyncio(BaseChecker):
         """Check that we aren't importing asyncio."""
         try:
             for name, _ in node.names:
-                if name == "asyncio":
+                if name == "asyncio" and not node.root().name.startswith(self.IGNORE_PACKAGES):
                     self.add_message(
                         msgid=f"do-not-import-asyncio",
                         node=node,
@@ -3216,9 +3218,8 @@ def register(linter):
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
-
     # Rules are disabled until false positive rate improved
-    # linter.register_checker(CheckForPolicyUse(linter))
+    #linter.register_checker(CheckForPolicyUse(linter))
     linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
 
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))

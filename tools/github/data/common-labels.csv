@@ -20,6 +20,7 @@ Alerts Management,,e99695
 Analysis Services,,e99695
 App Configuration,Azure.ApplicationModel.Configuration,e99695
 App Services,,e99695
+Arize AI,,e99695
 Attestation,,e99695
 Authentication,,e99695
 Authorization,,e99695
@@ -145,6 +146,7 @@ Kusto,,e99695
 LLC,,e99695
 LOUIS,,e99695
 Lab Services,,e99695
+LambdaTest HyperExecute,,e99695
 Logic App,,e99695
 MQ,"This issue is part of a ""milestone of quality"" initiative.",7365c9
 Machine Learning,,e99695
@@ -186,10 +188,12 @@ Network - Virtual Network,,e99695
 Network - Virtual Network NAT,,e99695
 Network - Virtual WAN,,e99695
 Notification Hub,,e99695
+Online Experimentation,,e99695
 OpenAI,,e99695
 Operations Management,,e99695
 Operator Nexus - Network Cloud,,e99695
 Peering,,e99695
+Pinecone,,e99695
 Policy,,e99695
 Policy Insights,,e99695
 PostgreSQL,,e99695
@@ -240,6 +244,7 @@ VideoAnalyzer,Azure Video Analyzer,e99695
 Visual Studio,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695
+Weights & Biases,,e99695
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49

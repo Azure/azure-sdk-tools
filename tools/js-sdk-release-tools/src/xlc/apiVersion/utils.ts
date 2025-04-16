@@ -1,13 +1,13 @@
-import { getTsSourceFile } from '../../common/utils';
-import { ApiVersionType } from '../../common/types';
+import { getTsSourceFile } from '../../common/utils.js';
+import { ApiVersionType } from '../../common/types.js';
 import path, { basename } from 'node:path';
 import shell from 'shelljs';
 import { FunctionDeclaration, SourceFile, SyntaxKind } from 'ts-morph';
-import { logger } from '../../utils/logger';
+import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
 
-var unixify = require('unixify');
+import unixify from 'unixify';
 
 function tryFindVersionInFunctionBody(func: FunctionDeclaration): string | undefined {
     const apiVersionStatements = func.getStatements().filter((s) => s.getText().includes('options.apiVersion'));
@@ -75,10 +75,11 @@ const findApiVersionsInOperations = (sourceFile: SourceFile | undefined): Array<
             const defaultValue = m.getChildrenOfKind(SyntaxKind.StringLiteral)[0];
             return defaultValue && defaultValue.getText() === '"api-version"';
         })[0];
-        const apiVersion = property.getChildrenOfKind(SyntaxKind.LiteralType)[0].getText();
+        const literals = property.getChildrenOfKind(SyntaxKind.LiteralType);
+        const apiVersion = literals.length > 0 ? literals[0].getText() : undefined;
         return apiVersion;
     });
-    return apiVersions;
+    return apiVersions?.filter((v) => v !== undefined);
 };
 
 // workaround for createClient function changes it's way to setup api-version

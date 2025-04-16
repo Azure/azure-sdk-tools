@@ -55,9 +55,6 @@ resource logsResourceGroup 'Microsoft.Resources/resourceGroups@2022-09-01' = {
 module pipelineLogs 'logsResourceGroup.bicep' = {
   name: deploymentName
   scope: logsResourceGroup
-  dependsOn: [
-    pipelineWitness
-  ]
   params: {
     location: location
     logsStorageAccountName: logsStorageAccountName

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Observable, Subject, take, takeUntil } from 'rxjs';
@@ -21,6 +21,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { SamplesRevision } from 'src/app/_models/samples';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-review-page',
@@ -58,6 +59,7 @@ export class ReviewPageComponent implements OnInit {
   hasHiddenAPIs : boolean = false;
   hasHiddenAPIThatIsDiff : boolean = false;
   loadFailed : boolean = false;
+  loadFailedMessage : string = "API-Revision Content Load Failed...";
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -127,13 +129,21 @@ export class ReviewPageComponent implements OnInit {
       {
           icon: 'bi bi-clock-history',
           tooltip: 'Revisions',
-          command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
+          command: () => {
+            if (this.getLoadingStatus() === 'completed') {
+              this.revisionSidePanel = !this.revisionSidePanel;
+            }
+          }
       },
       {
         icon: 'bi bi-chat-left-dots',
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
-        command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
+        command: () => { 
+          if (this.getLoadingStatus() === 'completed') {
+            this.conversationSidePanel = !this.conversationSidePanel;
+          }
+          }
       },
       {
         icon: 'bi bi-puzzle',
@@ -200,16 +210,27 @@ export class ReviewPageComponent implements OnInit {
   loadReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) {
     this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId)
       .pipe(takeUntil(this.destroy$)).subscribe({
-        next: (response: ArrayBuffer) => {
-          const apiTreeBuilderData : ApiTreeBuilderData = {
-            diffStyle: this.diffStyle!,
-            showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
-            showComments: this.userProfile?.preferences.showComments ?? true,
-            showSystemComments: this.userProfile?.preferences.showSystemComments ?? true,
-            showHiddenApis: this.userProfile?.preferences.showHiddenApis ?? false
-          };
-          // Passing ArrayBufer to worker is way faster than passing object
-          this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
+        next: (response: HttpResponse<ArrayBuffer>) => {
+          if (this.updateLoadingStateBasedOnReviewDeletionStatus()) {
+            return;
+          }
+          if (response.status == 204) {
+            this.loadFailed = true;
+            this.loadFailedMessage = "API-Revision Content Not Found. The";
+            this.loadFailedMessage += (diffApiRevisionId) ? " active and/or diff API-Revision(s)" : " active API-Revision";
+            this.loadFailedMessage += " may have been deleted.";
+            return;
+          } else {
+            const apiTreeBuilderData : ApiTreeBuilderData = {
+              diffStyle: this.diffStyle!,
+              showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
+              showComments: this.userProfile?.preferences.showComments ?? true,
+              showSystemComments: this.userProfile?.preferences.showSystemComments ?? true,
+              showHiddenApis: this.userProfile?.preferences.showHiddenApis ?? false
+            };
+            // Passing ArrayBufer to worker is way faster than passing object
+            this.workerService.postToApiTreeBuilder(response.body, apiTreeBuilderData);
+          }
         },
         error: (error: any) => {
           this.loadFailed = true;
@@ -222,6 +243,7 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.updateLoadingStateBasedOnReviewDeletionStatus();
         }
       });
   }
@@ -241,8 +263,14 @@ export class ReviewPageComponent implements OnInit {
     this.destroyLoadAPIRevision$?.complete();
     this.destroyLoadAPIRevision$ = new Subject<void>();
 
+    // Ensures that the pertinent apirevisons are loaded regardless of page size limits
+    const pageRevisions : string[] = [this.activeApiRevisionId!];
+    if (this.diffApiRevisionId) {
+      pageRevisions.push(this.diffApiRevisionId);
+    }
+
     this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
-      undefined, "createdOn", undefined, undefined, undefined, true)
+      undefined, "createdOn", undefined, undefined, undefined, true, pageRevisions)
       .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
         next: (response: any) => {
           this.apiRevisions = response.result;
@@ -537,6 +565,17 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
+  getLoadingStatus() : 'loading' | 'completed' | 'failed' {
+    if (this.codePanelComponent?.isLoading) 
+    {
+      return 'loading';
+    }
+    else
+    {
+      return (this.loadFailed) ? 'failed' : 'completed';
+    }
+  }
+
   checkForFatalDiagnostics() {
     for (const rowData of this.codePanelRowData) {
       if (rowData.diagnostics && rowData.diagnostics.level === 'fatal') {
@@ -544,6 +583,15 @@ export class ReviewPageComponent implements OnInit {
         break;
       }
     }
+  }
+
+  updateLoadingStateBasedOnReviewDeletionStatus() : boolean {
+    if (this.review?.isDeleted) {
+      this.loadFailed = true;
+      this.loadFailedMessage = "Review has been deleted.";
+      return true;
+    }
+    return false;
   }
   
   ngOnDestroy() {

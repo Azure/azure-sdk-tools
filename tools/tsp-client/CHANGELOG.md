@@ -1,5 +1,40 @@
 # Release
 
+## 2025-04-10 - 0.20.0
+
+- Support a `--trace` flag on the `init`, `update`, and `generate` commands to enable tracing when compiling.
+- Avoid looking up the repo root when an `emitter-package-json-path` is specified in `generate-config-files` command.
+
+## 2025-04-08 - 0.19.0
+
+- Use repo root for emitter-package path specified in `tsp-location.yaml`.
+- Fix issue in generate command where the package-lock naming did not respect the user config.
+- Update `generate-config-files` and `generate-lock-file` to support `emitter-package-json-path`.
+
+## 2025-04-07 - 0.18.0
+
+- Specify tsp-client specific configurations under a `@azure-tools/typespec-client-generator-cli` entry in tspconfig.yaml options. This affects the `additionalDirectories` configuration. Example entry in tspconfig.yaml:
+
+```yaml
+options:
+  "@azure-tools/typespec-client-generator-cli":
+    "additionalDirectories":
+      - "specification/contosowidgetmanager/Contoso.WidgetManager.Shared/"
+```
+
+## 2025-04-03 0.17.0
+
+- Updated peerDependency support for `@typespec/compiler` to `^1.0.0-0`.
+- Support specifying an alternate path to the emitter-package.json file:
+  - For the `sync` and `update` commands: support `emitterPackageJsonPath` property in tsp-location.yaml
+  - For `init`: support a `--emitter-package-json-path` flag to pass in the alternate path for emitter-package.json.
+- Fixed bug in `generate-config-files` command to output `main` instead of `name` for the entry point of the emitter-package.json file.
+
+## 2025-03-25 0.16.0
+
+- Added `install-dependencies` command to install dependencies pinned by `emitter-package.json` and `emitter-package-lock.json` at the root of the repository.
+- Support a `--skip-install` flag on the `init`, `update`, and `generate` commands to skip installing dependencies during generation.
+
 ## 2025-02-13 - 0.15.4
 
 - Enable `debug` logs for the `convert` command

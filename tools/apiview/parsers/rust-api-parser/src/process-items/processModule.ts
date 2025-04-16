@@ -1,7 +1,7 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Id, Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem } from "./utils/typeGuards";
 import { getAPIJson } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
@@ -17,9 +17,8 @@ export function processModule(
   item: Item,
   parentModule?: { prefix: string; id: number },
 ): ReviewLine[] {
-  if (!isModuleItem(item)) return;
-  const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  if (!isModuleItem(item)) return [];
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {

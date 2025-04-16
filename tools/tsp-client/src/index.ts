@@ -8,6 +8,7 @@ import {
   generateConfigFilesCommand,
   generateLockFileCommand,
   initCommand,
+  installDependencies,
   sortSwaggerCommand,
   syncCommand,
   updateCommand,
@@ -112,6 +113,18 @@ const parser = yargs(hideBin(process.argv))
         .option("repo", {
           type: "string",
           description: "Repository where the project is defined",
+        })
+        .option("skip-install", {
+          type: "boolean",
+          description: "Skip installing dependencies",
+        })
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
+        })
+        .option("trace", {
+          type: "array",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -145,6 +158,14 @@ const parser = yargs(hideBin(process.argv))
         .options("save-inputs", {
           type: "boolean",
           description: "Don't clean up the temp directory after generation",
+        })
+        .option("skip-install", {
+          type: "boolean",
+          description: "Skip installing dependencies",
+        })
+        .option("trace", {
+          type: "array",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -180,6 +201,14 @@ const parser = yargs(hideBin(process.argv))
         .option("save-inputs", {
           type: "boolean",
           description: "Don't clean up the temp directory after generation",
+        })
+        .option("skip-install", {
+          type: "boolean",
+          description: "Skip installing dependencies",
+        })
+        .option("trace", {
+          type: "array",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -224,6 +253,10 @@ const parser = yargs(hideBin(process.argv))
         .option("overrides", {
           type: "string",
           description: "Path to an override config file for pinning specific dependencies",
+        })
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
         });
     },
     async (argv: any) => {
@@ -234,7 +267,12 @@ const parser = yargs(hideBin(process.argv))
   .command(
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
-    {},
+    (yargs: any) => {
+      return yargs.option("emitter-package-json-path", {
+        type: "string",
+        description: "Alternate path for emitter-package.json file",
+      });
+    },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
       await generateLockFileCommand(argv);
@@ -264,6 +302,27 @@ const parser = yargs(hideBin(process.argv))
       argv["output-dir"] = resolveOutputDir(argv);
       const rawArgs = process.argv.slice(3);
       await compareCommand(argv, rawArgs);
+    },
+  )
+  .command(
+    "install-dependencies [path]",
+    "Install dependencies for the TypeSpec project. Default to the root of the repository.",
+    (yargs: any) => {
+      return yargs
+        .option("output-dir", {
+          alias: "o",
+          type: "string",
+          description: "This option is disabled for this command",
+          hidden: true, // Hide the option from help output
+          default: undefined, // Remove the default value
+        })
+        .positional("path", {
+          type: "string",
+          description: "Install path of the node_modules/ directory",
+        });
+    },
+    async (argv: any) => {
+      await installDependencies(argv);
     },
   )
   .demandCommand(1, "Please provide a command.")

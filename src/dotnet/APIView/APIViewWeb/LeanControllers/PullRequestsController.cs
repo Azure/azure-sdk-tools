@@ -1,5 +1,4 @@
 using APIViewWeb.DTOs;
-using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
@@ -78,10 +77,11 @@ namespace APIViewWeb.LeanControllers
 
             var host = _configuration["APIVIew-Host-Url"];
             var spaHost = _configuration["APIVIew-SPA-Host-Url"];
-            var reviewSpaUrlTemplate = "{0}review/{1}?activeApiRevisionId={1}";
-            var reviewUrlTemplate = "{0}Assemblies/Review/{0}?revisionId={0}";
+            var reviewSpaUrlTemplate = "{0}/review/{1}?activeApiRevisionId={2}";
+            var reviewUrlTemplate = "{0}/Assemblies/Review/{1}?revisionId={2}";
 
             List<PullRequestReviewDto> pullRequestReviewDtos = new List<PullRequestReviewDto>();
+            var statusCode = StatusCodes.Status204NoContent;
 
             if (prsForCommit.Any())
             {
@@ -101,9 +101,9 @@ namespace APIViewWeb.LeanControllers
                     prDto.Language = pr.Language;
                     pullRequestReviewDtos.Add(prDto);
                 }
-                return new LeanJsonResult(pullRequestReviewDtos, StatusCodes.Status200OK);
+                statusCode = StatusCodes.Status200OK;
             }
-            return StatusCode(StatusCodes.Status404NotFound);
+            return new LeanJsonResult(pullRequestReviewDtos, statusCode);
         }
     }
 }

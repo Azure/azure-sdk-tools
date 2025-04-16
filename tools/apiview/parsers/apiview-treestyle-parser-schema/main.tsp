@@ -18,6 +18,7 @@ model CodeFile {
   Language: "C"|"C++"|"C#"|"Go"|"Java"|"JavaScript"|"Kotlin"|"Python"|"Swagger"|"Swift"|"TypeSpec";
   /** Language variant is applicable only for java variants*/
   LanguageVariant?: "None" | "Spring" | "Android" = "None";
+  /** Id to identify Reviews for different languages generated from the same TypeSpec specification. */
   CrossLanguagePackageId?: string;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
@@ -37,6 +38,7 @@ model ReviewLine {
    *  for e.g Azure.Core.HttpHeader.Common, azure.template.template_main
    */
   LineId?: string;
+  /** Id to identify related lines across languages based on typespec specification  */
   CrossLanguageId?: string;
   /** list of tokens that constructs a line in API review */
   Tokens: Array<ReviewToken>;

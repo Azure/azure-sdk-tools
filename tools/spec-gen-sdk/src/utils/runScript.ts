@@ -101,7 +101,7 @@ export const runSdkAutoCustomScript = async (
   } catch (e) {
     cmdRet.code = -1;
     const scriptName = scriptPath.split("/").pop();
-    message = `RuntimeError: exception is thrown while running customized language ${scriptName} script. Stack: ${e.stack}. Please refer to the detail log in pipeline run or local console for more information.`;
+    message = `RuntimeError: exception is thrown while running customized language ${scriptName} script. Stack: ${e.stack}. Please refer to the detail log in pipeline run or local console for more information`;
     context.logger.error(message);
     if (context.config.runEnv === 'azureDevOps') {
       vsoLogErrorsArray.push(message);

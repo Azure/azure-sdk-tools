@@ -1,9 +1,9 @@
-import { describe, expect, test } from 'vitest';
-import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor';
-import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor';
+import { describe, expect, test, vi } from 'vitest';
+import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor.js';
+import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor.js';
 import { join } from 'path';
-import { ApiVersionType } from '../../common/types';
-import { tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils';
+import { ApiVersionType } from '../../common/types.js';
+import { tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils.js';
 
 describe('Modular client api-version Extractor', () => {
     test('new createClient function', async () => {
@@ -66,6 +66,39 @@ describe('Rest client file fallbacks', () => {
             const root = join(__dirname, 'testCases/rlc-client/');
             const version = await getApiVersionTypeInRLC(root);
             expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("get source folder from readme", async () => {
+            const root = join(__dirname, 'testCases/rlc-source-from-readme/');
+            const version = await getApiVersionTypeInRLC(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("get source folder from src", async () => {
+            const root = join(__dirname, 'testCases/rlc-source-from-src/');
+            const version = await getApiVersionTypeInRLC(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("get api version in parameters.ts that has `api-version: string`", async () => {
+            const root = join(__dirname, 'testCases/rlc-source-from-src-streaming/');
+            const version = await getApiVersionTypeInRLC(root);
+            expect(version).toBe(ApiVersionType.Stable);
+        });
+        test("Model only spec", async () => {
+            vi.mock('../../common/npmUtils', async () => {
+                let count = 0;
+                return {
+                    tryGetNpmView: async () => {
+                        count++;
+                        if (count === 1) return { 'dist-tags': { latest: "1.0.0-beta.1" }}
+                        return { 'dist-tags': { latest: "1.0.0" }}
+                    },
+                }
+            });
+            const root = join(__dirname, 'testCases/rlc-model-only/');
+            const version1 = await getApiVersionTypeInRLC(root);
+            expect(version1).toBe(ApiVersionType.Preview);
+            const version2 = await getApiVersionTypeInRLC(root);
+            expect(version2).toBe(ApiVersionType.Stable);
+            vi.restoreAllMocks();
         });
     });
 });

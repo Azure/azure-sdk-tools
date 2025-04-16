@@ -1,5 +1,9 @@
 # Release History
 
+## 0.5.3 (2025-04-15)
+- Updating documentation
+- Bug fix for `do-not-import-asyncio` checker, was incorrectly flagging `azure.core` imports.
+
 ## 0.5.2 (2025-02-19)
 
 - Bug fix for `do-not-log-exceptions` checker, was incorrectly flagging debug logs.

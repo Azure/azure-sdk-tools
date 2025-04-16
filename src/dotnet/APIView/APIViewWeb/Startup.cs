@@ -37,6 +37,7 @@ using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -104,7 +105,6 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
-            services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
@@ -115,7 +115,6 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
-            services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -339,6 +338,7 @@ namespace APIViewWeb
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI();
 

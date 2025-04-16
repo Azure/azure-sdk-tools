@@ -57,6 +57,7 @@ describe('ReviewPageOptionsComponent', () => {
   describe('First Release Approval Button', () => {
     it('should disable first release approval button when review is approved', () => {
       component.reviewIsApproved = true;
+      component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
@@ -68,6 +69,7 @@ describe('ReviewPageOptionsComponent', () => {
       component.userProfile = new UserProfile();
       component.userProfile.userName = "test-user-1";
       component.preferredApprovers = ["test-user-2"]
+      component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
@@ -79,6 +81,7 @@ describe('ReviewPageOptionsComponent', () => {
       component.userProfile = new UserProfile();
       component.userProfile.userName = "test-user";
       component.preferredApprovers = ["test-user"]
+      component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).toBeTruthy();
@@ -101,5 +104,15 @@ describe('ReviewPageOptionsComponent', () => {
       expect(component.showLineNumbersSwitch).toEqual(true);
       expect(component.disableCodeLinesLazyLoading).toEqual(false);
     })
+  });
+
+  describe('Toggle APIRevision Approval', () => {
+    it('should close APIRevision Approval Modal', () => {
+      component.showAPIRevisionApprovalModal = true;
+      component.loadingStatus = "completed";
+      fixture.detectChanges();
+      component.toggleAPIRevisionApproval();
+      expect(component.showAPIRevisionApprovalModal).not.toBeTruthy();
+    });
   });
 });

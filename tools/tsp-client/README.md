@@ -2,17 +2,17 @@
 
 `tsp-client` is a simple command line tool to facilitate generating client libraries from TypeSpec.
 
+## Prerequisites
+
+- [Node.js 18.19 LTS](https://nodejs.org/en/download/) or later is required
+
 ## Installation
 
 ```bash
 npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
-## Prerequisites
-
-Users working with a repository that already accepts this tool can continue to the [Usage](#usage) section.
-
-Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
+> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
 
 ## Usage
 
@@ -212,6 +212,16 @@ Example:
 
 ```bash
 tsp-client generate-lock-file
+```
+
+### install-dependencies
+
+Install the dependencies pinned in emitter-package.json and emitter-package-lock.json (if it exists) at the root of the repository by default. The command supports a positional path parameter if the dependencies need to be installed in an alternate directory.
+
+> IMPORTANT: The node_modules/ directory needs to be installed in a path where basic npm commands will be able to use it. Typically within the same directory path as the target TypeSpec project to compile.
+
+```bash
+tsp-client install-dependencies [optional install path]
 ```
 
 ## Important concepts

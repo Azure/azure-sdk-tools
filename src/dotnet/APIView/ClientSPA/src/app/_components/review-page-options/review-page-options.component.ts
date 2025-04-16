@@ -13,6 +13,7 @@ import { PullRequestsService } from 'src/app/_services/pull-requests/pull-reques
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 import { FormControl } from '@angular/forms';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-review-page-options',
@@ -20,6 +21,7 @@ import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
   styleUrls: ['./review-page-options.component.scss']
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
+  @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
   @Input() contentHasDiff: boolean | undefined = false;
@@ -55,6 +57,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   private destroy$ = new Subject<void>();
   
   webAppUrl : string = this.configService.webAppUrl
+  assetsPath : string = environment.assetsPath;
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
@@ -141,7 +144,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setPullRequestsInfo();
     }
 
-    if (changes['diffAPIRevision'] && changes['diffAPIRevision'].currentValue != undefined) {
+    if (changes['diffAPIRevision']) {
       this.setAPIRevisionApprovalStates();
     }
 
@@ -291,8 +294,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setAPIRevisionApprovalStates() {
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
-    const isActiveAPIRevisionAhead = (!this.diffAPIRevision) ? true : ((new Date(this.activeAPIRevision?.createdOn!)) > (new Date(this.diffAPIRevision?.createdOn!)));
-    this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0) && isActiveAPIRevisionAhead;
+    this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
 
     if (this.canToggleApproveAPIRevision) {
       this.apiRevisionApprovalBtnClass = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "btn btn-outline-secondary" : "btn btn-success";
@@ -397,6 +399,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
+    this.showAPIRevisionApprovalModal = false;
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

@@ -78,11 +78,6 @@ export const loggerDevOpsTransport = () => {
       winston.format.printf((info: WinstonInfo) => {
         const { level } = info;
         const msg = formatLog(info);
-
-        // Log issue if it's an error'
-        if (level === "error" && msg.includes("Error")) {
-          return `##vso[task.logissue type=error]${msg}`;
-        }
         switch (level) {
           case 'error':
           case 'debug':
@@ -139,8 +134,8 @@ export const loggerWaitToFinish = async (logger: winston.Logger) => {
   for (const transport of logger.transports) {
     if (transport instanceof winston.transports.File) {
       if (transport.end) {
-          transport.end();
           await setTimeout(2000);
+          transport.end();
         }
     }
   }

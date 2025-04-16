@@ -1,15 +1,16 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { ModularClientPackageOptions, PackageResult } from './types';
+import { ModularClientPackageOptions, PackageResult } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
-import { ensureDir, readFile, writeFile } from 'fs-extra';
-import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { runCommand, runCommandOptions } from './utils';
+import pkg from 'fs-extra';
+const { ensureDir, readFile, writeFile } = pkg;
+import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
+import { runCommand, runCommandOptions } from './utils.js';
 
 import { glob } from 'glob';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
-import { migratePackage } from './migration';
+import { migratePackage } from './migration.js';
 
 interface ProjectItem {
     packageName: string;
@@ -104,10 +105,10 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300);
+        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
         logger.info(`built samples successfully.`);
     } catch (err) {
-        logger.error(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
+        logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 
@@ -118,10 +119,10 @@ export async function tryTestPackage(packageDirectory: string, rushxScript: stri
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300);
+        await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300, true);
         logger.info(`tested package successfully.`);
     } catch (err) {
-        logger.error(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
+        logger.warn(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 

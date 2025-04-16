@@ -91,25 +91,6 @@ followed.
 These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}
 
-# FORMAT
-You must output a JSON objects which follows the following schema:
-```json
-{
-  "status": "string", # "Succeeded if the request has no violations. Error if there are violations."
-  "violations": [
-    {
-      "rule_ids": ["string"], # the FULL unique rule ID or IDs that were violated
-      "line_no": "string", # the line number(s) of the violation, if known
-      "bad_code": "string", # the original code that was bad, cited verbatim. It should be a single line of code.
-      "comment": "string", # comment about the violation.
-      "confidence": "float", # a float between 0 and 1 indicating how confident you are that the code is bad. 0 means you are not at all confident, 1 means you are very confident.
-      "suggestion": "string", # the suggested {{language}} code which fixes the bad code. If code is not feasible, a description is fine.
-    }
-  ]
-}
-```
-- DO NOT include the code markdown tags in the output.
-- If you cannot output this schema for any reason, reply with "I cannot handle your request."
 
 user:
 Evaluate the following APIView and provide a JSON array of violations.

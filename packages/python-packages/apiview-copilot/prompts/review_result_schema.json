@@ -2,7 +2,9 @@
     "type": "json_schema",
     "json_schema": {
         "name": "review_result",
+        "strict": true,
         "schema": {
+            "additionalProperties": false,
             "type": "object",
             "properties": {
                 "status": {
@@ -13,6 +15,7 @@
                     "type": "array",
                     "items": {
                         "type": "object",
+                        "additionalProperties": false,
                         "properties": {
                             "rule_ids": {
                                 "type": "array",

@@ -99,6 +99,9 @@ class ReviewResult(BaseModel):
         default_line_no = 0
         for violation in violations:
             raw_line_no = str(violation.get("line_no", "0")).replace(" ", "").strip()
+            # if violation doesn't have suggestion, set it to empty string
+            if "suggestion" not in violation:
+                violation["suggestion"] = ""
             for item in raw_line_no.split(","):
                 item = item.strip()
                 violation_copy = (

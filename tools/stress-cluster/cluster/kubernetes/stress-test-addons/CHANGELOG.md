@@ -1,5 +1,11 @@
 # Release History
 
+## 0.3.5 (2025-01-23)
+
+### Breaking Changes
+
+Changed storage cluster config values (cluster subscription/tenant migration)
+
 ## 0.3.4 (2024-11-01)
 
 ### Breaking Changes

@@ -83,6 +83,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers.Remove("x-recording-file");
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Body = null;
 
             if (!string.IsNullOrEmpty(additionalEntryModeHeader))
             {
@@ -127,6 +129,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers.Remove("x-recording-file");
 
             httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Body = null;
 
 
             var resultingException = await Assert.ThrowsAsync<HttpException>(

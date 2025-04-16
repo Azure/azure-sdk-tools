@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.Helpers
 {
     public class LanguageServiceHelpers
     {
-        public static string[] SupportedLanguages = new string[] { "C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Swagger", "Swift", "TypeSpec", "Xml" };
+        public static string[] SupportedLanguages = new string[] { "C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swagger", "Swift", "TypeSpec", "Xml" };
 
         public static IEnumerable<string> MapLanguageAliases(IEnumerable<string> languages)
         {
@@ -63,36 +62,15 @@ namespace APIViewWeb.Helpers
                 result = "Python";
             if (repoName.EndsWith("-ios"))
                 result = "Swift";
+            if(repoName.EndsWith("-rust"))
+                result = "Rust";
 
             return result;
         }
 
         public static LanguageService GetLanguageService(string language, IEnumerable<LanguageService> languageServices)
         {
-            return languageServices.FirstOrDefault(service => service.Name == language);
-        }
-
-        public static bool UseLineBreakForParameterSeparator(string language)
-        { 
-            switch(language)
-            {
-                case "Python":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public static bool UseTreeStyleParser(string language)
-        {
-            switch (language)
-            {
-                case "C#":
-                case "JavaScript":
-                    return true;
-                default:
-                    return false;
-            }
+            return languageServices.FirstOrDefault(service => service.Name.Equals(language, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

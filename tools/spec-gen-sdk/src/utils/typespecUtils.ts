@@ -54,7 +54,7 @@ export function getTypeSpecOutputFolder(typespecProject: string, context: Workfl
 }
 
 export function getTypeSpecProjectInfo(typespecProject: string, context: WorkflowContext) {
-  const typespecProjectYamlFile = join(context.specFolder, typespecProject, "tspconfig.yaml");
+  const typespecProjectYamlFile = join(context.config.localSpecRepoPath, typespecProject, "tspconfig.yaml");
   let typespecProjectYaml: string = '';
   try {
     typespecProjectYaml = readFileSync(typespecProjectYamlFile).toString();

@@ -62,7 +62,7 @@ namespace ApiView
         }  
         public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
-        public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false, bool doTreeStyleParserDeserialization = false)
+        public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
         {
             var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
 

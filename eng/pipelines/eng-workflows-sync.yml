@@ -22,8 +22,7 @@ parameters:
     - azure-sdk-for-js
     - azure-sdk-for-net
     - azure-sdk-for-python
-# Add this back when Rust enables Check Enforcer and Actions and has .github/workflows directory
-#    - azure-sdk-for-rust
+    - azure-sdk-for-rust
 
 trigger: none
 

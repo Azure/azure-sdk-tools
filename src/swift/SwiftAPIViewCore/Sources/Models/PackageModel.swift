@@ -101,13 +101,16 @@ class PackageModel: Tokenizable, Linkable {
         }
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        a.text("package")
-        a.whitespace()
-        a.text(name, definitionId: definitionId)
-        a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
-        a.newline()
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
+        var options = ReviewTokenOptions()
+        options.hasSuffixSpace = true
+        a.text("package", options: options)
+        a.lineMarker(definitionId)
+        a.text(name)
+        options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
+        a.punctuation("{", options: options)
         a.indent {
+            a.blankLines(set: 0)
             for member in members {
                 member.tokenize(apiview: a, parent: self)
                 a.blankLines(set: 1)
@@ -115,19 +118,13 @@ class PackageModel: Tokenizable, Linkable {
             // render any orphaned extensions
             if !extensions.isEmpty {
                 a.comment("Non-package extensions")
-                a.newline()
-                let endIdx = extensions.count - 1
-                for (idx, ext) in extensions.enumerated() {
-                    ext.tokenize(apiview: a, parent: nil)
-                    if idx != endIdx {
-                        a.blankLines(set: 1)
-                    }
-                }
+                extensions.tokenize(apiview: a, parent: nil)
             }
         }
-        a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
-        a.newline()
-        resolveTypeReferences(apiview: a)
+        a.blankLines(set: 0)
+        options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
+        a.punctuation("}", options: options)
+        a.blankLines(set: 0)
     }
 
     /// Move extensions into the model representations for declared package types
@@ -144,13 +141,13 @@ class PackageModel: Tokenizable, Linkable {
         self.extensions = otherExtensions
         // process orphaned extensions
         for ext in extensions {
-            ext.processMembers(withParent: nil)
+            ext.processMembers()
         }
         extensions = extensions.resolveDuplicates()
         // process all extensions associated with members
         for member in members {
             for ext in member.extensions {
-                ext.processMembers(withParent: ext.parent)
+                ext.processMembers()
             }
             member.extensions = member.extensions.resolveDuplicates()
         }
@@ -172,15 +169,6 @@ class PackageModel: Tokenizable, Linkable {
         members = members.sorted(by: { $0.definitionId! < $1.definitionId! })
     }
 
-    /// attempt to resolve type references that are declared after they are used
-    func resolveTypeReferences(apiview a: APIViewModel) {
-        for (idx, token) in a.tokens.enumerated() {
-            guard token.navigateToId == APIViewModel.unresolved else { continue }
-            a.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
-            assert (a.tokens[idx].navigateToId != APIViewModel.unresolved)
-        }
-    }
-
     func appendIfVisible(_ decl: DeclarationModel) {
         if decl.shouldShow() {
             members.append(decl)
@@ -195,14 +183,5 @@ class PackageModel: Tokenizable, Linkable {
             SharedLogger.warn("Unexpectedly found \(result.count) matches for type \(name).")
         }
         return result.first
-    }
-
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
-        let packageToken = NavigationToken(name: name, navigationId: name, typeKind: .assembly, members: members)
-        a.add(token: packageToken)
-        if !extensions.isEmpty {
-            let extensionsToken = NavigationToken(name: "Other Extensions", navigationId: "", typeKind: .assembly, extensions: extensions)
-            a.add(token: extensionsToken)
-        }
     }
 }

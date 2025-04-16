@@ -1,4 +1,4 @@
-Package parsed using Swift APIView (version 0.2.2)
+Package parsed using Swift APIView (version 0.3.0)
 
 
 package ExtensionTestFile.swifttxt {
@@ -20,6 +20,7 @@ package ExtensionTestFile.swifttxt {
     }
 
     \\ Non-package extensions
+
     public extension Double {
         var km: Double
         var m: Double

@@ -26,14 +26,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         // 6. RuleState ruleStateServiceAttention - Whether or not the ServiceAttention rule is on or off
         //
         // CODEOWNERS changes necessary to test
-        // The CODEOWNERS file needs entries that match the AIReturnLabels, in theory the AI Label Service will return one
+        // The CODEOWNERS file needs entries that match the AIReturnLabels, in theory the AI Issue Triage Service will return one
         // ServiceLabel and one other label. If the rule is going to process the Service Label returned needs to match one
         // entry in the CODEOWNERS file. The AzureSdkOwners for that CODEOWNERS entry will need to have
         // OwnerCanBeAssignedToIssueInRepoReturn set. Some entries will need AzureSdkOwners with and without assignment permission
         // and other entries will be without AzureSdkOwners entirely.
         //
-        // Labels being added (this entire thing only matters if there are no assinees, no labels and the AI Label Service returns
+        // Labels being added (this entire thing only matters if there are no assinees, no labels and the AI Issue Triage Service returns
         // labels)
+        // Suggestions and comments being added, if provided by the AI Issue Triage Service.
         // If there are no valid AzureSdkOwners (meaning there are none or none of the AzureSdkOwners can be assigned to an issue)
         // AND there are ServiceOwners for the ServiceLabel
         // AND the ServiceAttention rule is enabled
@@ -45,7 +46,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         // add CustomerReported and Question labels
         //
         // The ServiceAttention just adds a comment @ mentioning everyone on the ServiceOwners list from CODEOWNERS that
-        // matches the ServiceLabel entry returned from the AI Label Service.
+        // matches the ServiceLabel entry returned from the AI Issue Triage Service.
         // 
 
         /// <summary>
@@ -55,7 +56,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the InitialIssueTriage rule is on/off</param>
         /// <param name="serviceAttentionRuleState">Whether or not the ServiceAttention rule is on/off</param>
-        /// <param name="AIServiceReturnsLabels">The label(s) for the AI Label service to "return"or null if none</param>
+        /// <param name="AIServiceReturnsLabels">The label(s) for the AI Issue Triage Service to "return"or null if none</param>
+        /// <param name="AIServiceAnswer">The answer provided by the AI Issue Triage Service or null if none</param>
+        /// <param name="AIServiceAnswerType">The answer type provided by the AI Issue Triage Service or null if none</param>
         /// <param name="ownersWithAssignPermission">The owners, from the appropriate CODEOWNERS entry, with assign permission or null if none</param>
         /// <param name="hasCodeownersEntry">Whether or not to expect a codeowners entry for the labels returned.</param>
         /// <param name="isMemberOfOrg">Whether or not the owner that created the issue is a member of Azure</param>
@@ -68,72 +71,84 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.Off,
                   RuleState.Off,
-                  null, // labels returned from the AI Label service
+                  null, // labels returned from the AI Issue Triage Service,
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   false,
                   false, 
                   false)]
-        // Scenario: No labels returned from AI Label service
+        // Scenario: No labels returned from AI Issue Triage Service
         //           isMemberOfOrg and hasWriteOrAdmin both set to false.
         // Expected: NeedsTriage, CustomerReported and Question labels added to the Issue
         [TestCase(RulesConstants.InitialIssueTriage,
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  null, // labels returned from the AI Label service
+                  null, // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   false,
                   false,
                   false)]
-        // Scenario: No labels returned from AI Label service
+        // Scenario: No labels returned from AI Issue Triage Service
         //           isMemberOfOrg is true and hasWriteOrAdmin is false
         // Expected: Only NeedsTriage label added to the Issue
         [TestCase(RulesConstants.InitialIssueTriage,
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  null, // labels returned from the AI Label service
+                  null, // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   false,
                   true,
                   false)]
-        // Scenario: No labels returned from AI Label service
+        // Scenario: No labels returned from AI Issue Triage Service
         //           isMemberOfOrg is false and hasWriteOrAdmin is true
         // Expected: Only NeedsTriage label added to the Issue
         [TestCase(RulesConstants.InitialIssueTriage,
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  null, // labels returned from the AI Label service
+                  null, // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   false,
                   false,
                   true)]
         /* From here on out, the creator will have isMemberOfOrg and hasWriteOrAdmin set to true. Those scenarios were already tested */
-        // Scenario: The AI label doesn't have a matching CODEOWNERS entry
+        // Scenario: The AI Issue Triage Service doesn't have a matching CODEOWNERS entry
         // Expected: The label is added to the issue along with NeedsTeamTriage
         [TestCase(RulesConstants.InitialIssueTriage,
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel666", // labels returned from the AI Label service
+                  "FakeLabel666", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   false, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with no AzureSdkOwners.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with no AzureSdkOwners.
         //           ServiceAttention rule is Off.
         // Expected: The label is added to the issue along with NeedsTeamTriage
         [TestCase(RulesConstants.InitialIssueTriage,
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.Off,
-                  "FakeLabel1", // labels returned from the AI Label service
+                  "FakeLabel1", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        // Scenario: TThe AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
         //           ServiceAttention rule is Off.
         //           The AzureSdkOwner does not have issue assignment permissions.
         // Expected: The label is added to the issue along with NeedsTeamTriage
@@ -141,12 +156,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.Off,
-                  "FakeLabel2", // labels returned from the AI Label service
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
         //           ServiceAttention rule is On.
         //           The AzureSdkOwner does not have issue assignment permissions.
         // Expected: The label is added to the issue.
@@ -156,27 +173,107 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel2", // labels returned from the AI Label service
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
         //           ServiceAttention rule is On (doesn't matter when there's an AzureSdkOwner valid for assignment).
         //           The AzureSdkOwner has issue assignment permissions.
         // Expected: The label is added to the issue.
         //           The AzureSdkOwner, FakeUser1, is assigned to the issue
         //           NeedsTeamAttention is added to the issue since there is a valid owner
+        //           A comment is added thanking the creator, tagging and routing to the team
         [TestCase(RulesConstants.InitialIssueTriage,
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel2", // labels returned from the AI Label service
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   "FakeUser1", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with a multiple AzureSdkOwners.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        //           ServiceAttention rule is On (doesn't matter when there's an AzureSdkOwner valid for assignment).
+        //           The AzureSdkOwner has issue assignment permissions. Suggestion is provided by the service.
+        // Expected: The label is added to the issue.
+        //           The AzureSdkOwner, FakeUser1, is assigned to the issue
+        //           NeedsTeamAttention is added to the issue since there is a valid owner
+        //           A comment is added thanking the creator, tagging and routing to the team
+        //           A second comment is made adding the suggestion provided.
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "suggestion", // answer type returned from the AI Issue Triage Service
+                  "FakeUser1", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        //           ServiceAttention rule is On (doesn't matter when there's an AzureSdkOwner valid for assignment).
+        //           The AzureSdkOwner has issue assignment permissions. Suggestion is provided by the service.
+        // Expected: The label is added to the issue.
+        //           The AzureSdkOwner, FakeUser1, is assigned to the issue
+        //           NeedsTeamAttention is added to the issue since there is a valid owner
+        //           A comment is added thanking the creator, tagging and routing to the team
+        //           A second comment is made adding the solution provided.
+        //           issue-addressed label added to the issue.
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "solution", // answer type returned from the AI Issue Triage Service
+                  "FakeUser1", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        //           ServiceAttention rule is On (doesn't matter when there's an AzureSdkOwner valid for assignment).
+        //           The AzureSdkOwner has issue assignment permissions. Answer type is empty.
+        // Expected: The label is added to the issue.
+        //           The AzureSdkOwner, FakeUser1, is assigned to the issue
+        //           NeedsTeamAttention is added to the issue since there is a valid owner
+        //           A comment is added thanking the creator, tagging and routing to the team
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "", // answer type returned from the AI Issue Triage Service
+                  "FakeUser1", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a single AzureSdkOwner.
+        //           ServiceAttention rule is On (doesn't matter when there's an AzureSdkOwner valid for assignment).
+        //           The AzureSdkOwner has issue assignment permissions. Answer is empty.
+        // Expected: The label is added to the issue.
+        //           The AzureSdkOwner, FakeUser1, is assigned to the issue
+        //           NeedsTeamAttention is added to the issue since there is a valid owner
+        //           A comment is added thanking the creator, tagging and routing to the team
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel2", // labels returned from the AI Issue Triage Service
+                  "", // answer returned from the AI Issue Triage Service
+                  "solution", // answer type returned from the AI Issue Triage Service
+                  "FakeUser1", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a multiple AzureSdkOwners.
         //           ServiceAttention rule is Off.
         //           None of the AzureSdkOwners have issue assignment permissions.
         // Expected: The label is added to the issue
@@ -185,12 +282,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.Off,
-                  "FakeLabel3", // labels returned from the AI Label service
+                  "FakeLabel3", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with a multiple AzureSdkOwners.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a multiple AzureSdkOwners.
         //           ServiceAttention rule is On.
         //           None of the AzureSdkOwners have issue assignment permissions.
         // Expected: The label is added to the issue
@@ -200,12 +299,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel3", // labels returned from the AI Label service
+                  "FakeLabel3", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with a multiple AzureSdkOwners.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with a multiple AzureSdkOwners.
         //           ServiceAttention rule is On.
         //           Only one of the AzureSdkOwners have issue assignment permissions.
         // Expected: The label is added to the issue
@@ -217,12 +318,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel3", // labels returned from the AI Label service
+                  "FakeLabel3", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   "FakeUser5", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with multiple AzureSdkOwners which
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with multiple AzureSdkOwners which
         //           are pulled from source path/owners.
         //           Both AzureSdkOwners have assignment permissions.
         // Expected: The label is added to the issue.
@@ -234,12 +337,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel4", // labels returned from the AI Label service
+                  "FakeLabel4", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   "FakeUser5,FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry with multiple AzureSdkOwners which
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with multiple AzureSdkOwners which
         //           are pulled from source path/owners.
         //           None of AzureSdkOwners have assignment permissions.
         // Expected: The label is added to the issue
@@ -249,12 +354,51 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "FakeLabel4", // labels returned from the AI Label service
+                  "FakeLabel4", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry that matches both labels returned.
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with multiple AzureSdkOwners which
+        //           are pulled from source path/owners. Suggestion is added.
+        //           None of AzureSdkOwners have assignment permissions.
+        // Expected: The label is added to the issue
+        //           ServiceAttention is added to the issue and the ServiceAttention rule processed.
+        //           ServiceAttention rule adds a comment to the issue.
+        //           Suggestion comment is added.
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel4", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "suggestion", // answer type returned from the AI Issue Triage Service
+                  null, // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry with multiple AzureSdkOwners which
+        //           are pulled from source path/owners. Suggestion is added.
+        //           None of AzureSdkOwners have assignment permissions.
+        // Expected: The label is added to the issue
+        //           ServiceAttention is added to the issue and the ServiceAttention rule processed.
+        //           ServiceAttention rule adds a comment to the issue.
+        //           Solution comment is added
+        //           Issue-addressed label added.
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel4", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "solution", // answer type returned from the AI Issue Triage Service
+                  null, // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry that matches both labels returned.
         //           One of of AzureSdkOwners will have assignment permissions.
         // Expected: The labels are added to the issue
         //           One of the AzureSdkOWners with permission is assigned to the issue
@@ -265,12 +409,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "Client, FakeLabel4", // labels returned from the AI Label service
+                  "Client, FakeLabel4", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
-        // Scenario: The AI label has a matching CODEOWNERS entry that matches only the Category label
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry that matches only the Category label
         //           One of of AzureSdkOwners will have assignment permissions.
         // Expected: The labels are added to the issue
         //           One of the AzureSdkOWners with permission is assigned to the issue
@@ -281,8 +427,85 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
                   RuleState.On,
                   RuleState.On,
-                  "Client, FakeLabel6", // labels returned from the AI Label service, there is no FakeLabel6 only Client will match
+                  "Client, FakeLabel6", // labels returned from the AI Issue Triage Service, there is no FakeLabel6 only Client will match
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
                   "FakeUser1", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry that matches both labels returned.
+        //           One of of AzureSdkOwners will have assignment permissions.
+        // Expected: The labels are added to the issue
+        //           One of the AzureSdkOWners with permission is assigned to the issue
+        //           A comment is added @ mentioning all of the AzureSdkOwners
+        //           A second comment is added thanking the creator, tagging and routing to the team
+        //           NeedsTeamTriage is added to the issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "Client, FakeLabel4", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
+                  "FakeUser6", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service has a matching CODEOWNERS entry that matches both labels returned.
+        //           One of of AzureSdkOwners will have assignment permissions.
+        // Expected: The labels are added to the issue
+        //           One of the AzureSdkOWners with permission is assigned to the issue
+        //           A comment is added @ mentioning all of the AzureSdkOwners
+        //           A second comment is added thanking the creator, tagging and routing to the team
+        //           NeedsTeamTriage is added to the issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "Client, FakeLabel4", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
+                  "FakeUser6", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry that matches both labels returned.
+        //           One of of AzureSdkOwners will have assignment permissions. Suggestion is also provided by the service.
+        // Expected: The labels are added to the issue
+        //           One of the AzureSdkOWners with permission is assigned to the issue
+        //           A comment is added @ mentioning all of the AzureSdkOwners
+        //           A second comment is added thanking the creator, tagging and routing to the team
+        //           A third comment is added with a suggestion
+        //           NeedsTeamTriage is added to the issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "Client, FakeLabel4", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "suggestion", // answer type returned from the AI Issue Triage Service
+                  "FakeUser6", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI Issue Triage Service returned label has a matching CODEOWNERS entry that matches both labels returned.
+        //           One of of AzureSdkOwners will have assignment permissions. Solution is also provided by the service.
+        // Expected: The labels are added to the issue
+        //           One of the AzureSdkOWners with permission is assigned to the issue
+        //           A comment is added @ mentioning all of the AzureSdkOwners
+        //           A second comment is added thanking the creator, tagging and routing to the team
+        //           A third comment is added with a solution
+        //           NeedsTeamTriage is added to the issue
+        //           issue-addressed is added to the issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "Client, FakeLabel4", // labels returned from the AI Issue Triage Service
+                  "FakeAnswer", // answer returned from the AI Issue Triage Service
+                  "solution", // answer type returned from the AI Issue Triage Service
+                  "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
@@ -290,7 +513,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                                                  string payloadFile,
                                                  RuleState ruleState, 
                                                  RuleState serviceAttentionRuleState,
-                                                 string AIServiceReturnsLabels,
+                                                 string AIServiceLabels,
+                                                 string AIServiceAnswer,
+                                                 string AIServiceAnswerType,
                                                  string ownersWithAssignPermission,
                                                  bool hasCodeownersEntry,
                                                  bool isMemberOfOrg, 
@@ -309,14 +534,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
 
-            // If there are labels to be returned from the AI Label service, parse them and ensure the mock's
+            // If there are labels to be returned from the AI Issue Triage Service, parse them and ensure the mock's
             // AILabelServiceReturn is set. Each label gets added to the issue which means each label = 1 update.
             List<string> expectedLabels = new List<string>();
-            if (AIServiceReturnsLabels != null)
+            if (AIServiceLabels != null)
             {
-                expectedLabels.AddRange(AIServiceReturnsLabels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList());
-                mockGitHubEventClient.AILabelServiceReturn.AddRange(expectedLabels);
+                expectedLabels.AddRange(AIServiceLabels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList());
+                mockGitHubEventClient.AIServiceLabels.AddRange(expectedLabels);
             }
+
+            if (AIServiceAnswer != null)
+            {
+                mockGitHubEventClient.AIServiceAnswer = AIServiceAnswer;
+            }
+            if (AIServiceAnswerType != null)
+            {
+                mockGitHubEventClient.AIServiceAnswerType = AIServiceAnswerType;
+            }
+
             // Set the owners with assign permission. If there are none, and there are ServiceOwners, then the
             // ServiceAttention label will get added and the rule executed if it's turned on for the repository.
             if (ownersWithAssignPermission != null)
@@ -336,7 +571,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             }
             else
             {
-                // The creator org/permission check is done regardless of whether or not the AI Label service returnes labels.
+                // The creator org/permission check is done regardless of whether or not the AI Issue Triage Service returnes labels.
                 // If the user is not part of the Azure org AND they don't have write or admin collaborator permissions
                 // then customer-reported and question labels should be added to the issue.
                 if (!isMemberOfOrg && !hasWriteOrAdmin)
@@ -350,13 +585,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.Question), $"Labels to add contains {TriageLabelConstants.Question} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
                 }
 
-                // If there are no labels being returned from the AI Label service, the only processing is whether or not the creator
+                // If there are no labels being returned from the AI Issue Triage Service, the only processing is whether or not the creator
                 // is a member of the Azure org or has Write or Admin permissions
                 if (expectedLabels.Count == 0)
                 {
                     Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTriage), $"Labels to add should contain {TriageLabelConstants.NeedsTriage} when the AI Label service has no suggested labels.");
                 }
-                // else the AI Label Service returned labels to add
+                // else the AI Issue Triage Service returned labels to add
                 else
                 {
                     // Verify the labels returned by the AI service have been added to the issue
@@ -375,7 +610,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     {
                         Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamTriage), $"With no CODEOWNERS entry {TriageLabelConstants.NeedsTeamTriage} should have been added to the issue.");
                     }
-                    // There is a CODEOWNERS entry for the ServiceLabel returned from the AI Label service
+                    // There is a CODEOWNERS entry for the ServiceLabel returned from the AI Issue Triage Service
                     else
                     {
                         // First, check whether or not there are AzureSdkOwners with assign permissions. If so,
@@ -394,13 +629,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
 
                             // If there is more than one AzureSdkOwner, a comment will also be created to @ mention all of the owners
                             // and a second comment will be created thanking the issue creator for their feedback.
+                            // However given a suggestion/solution it will create a comment with its contents instead
+                            // of the thanks noted above
                             CodeownersEntry codeownersEntry = CodeOwnerUtils.GetCodeownersEntryForLabelList(expectedLabels);
                             // With a single AzureSdkOwner there should only be one comment thanking the creator for feedback and tagging and routing the issue
+                            // Or suggestion/solution
                             if (codeownersEntry.AzureSdkOwners.Count == 1)
                             {
                                 Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"With only one AzureSdkOwner there should only be one comment thanking the creator, tagging and routing but {mockGitHubEventClient.GetComments().Count} comments were created.");
                             }
-                            // With more than one AzureSdkOWner there should be two comments. The first is an @ metion and the second is the same one thanking the creator
+                            // With more than one AzureSdkOWner there should be two comments. The first is an @ mention and the second is the same one thanking the creator
+                            // or it ignores thanking and gives the suggestion/solution
                             else if (codeownersEntry.AzureSdkOwners.Count > 1)
                             {
                                 Assert.AreEqual(2, mockGitHubEventClient.GetComments().Count, $"With multiple AzureSdkOwners there should only be two comments. One @ mentioning everyone on the list and the other thanking the creator, tagging and routing but {mockGitHubEventClient.GetComments().Count} comments were created.");
@@ -409,6 +648,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                             else
                             {
                                 Assert.Fail($"OwnersWithAssignPermission was > 0 but the label(s), {string.Join(",", expectedLabels)}, has no AzureSdkOwners in it's CODEOWNERS entry. Please verify the test was written correctly.");
+                            }
+                           
+
+                            // When solution is provided by the AI Issue Triage Service it should add the label issue-addressed.
+                            // and has valid answer
+                            if(AIServiceAnswerType == "solution" && !string.IsNullOrEmpty(AIServiceAnswer))
+                            {
+                                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.IssueAddressed), $"Labels to add should contain {TriageLabelConstants.IssueAddressed} when Solution is provided.");
                             }
                         }
                         // No AzureSdkOwners with assign permission means that there's no valid assignees and if there are ServiceOwners (which their has to be
@@ -424,7 +671,16 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                             else
                             {
                                 Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"With no valid AzureSdkOwners but valid ServiceOwners and ServiceAttention rule being enabled, {TriageLabelConstants.NeedsTeamAttention} should have been added to the issue.");
-                                Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"With no AzureSdkOwners and the ServiceAttention rule being enabled, there should only be one comment created by the ServiceAttention rule but {mockGitHubEventClient.GetComments().Count} comments were created.");
+
+                                // If only labels are predicted
+                                if(AIServiceAnswerType == null && AIServiceLabels != null)
+                                {
+                                    Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"With no AzureSdkOwners and the ServiceAttention rule being enabled, there should only be one comment created by the ServiceAttention rule but {mockGitHubEventClient.GetComments().Count} comments were created.");
+                                }
+                                else
+                                {
+                                    Assert.AreEqual(2, mockGitHubEventClient.GetComments().Count, $"With no AzureSdkOwners, the ServiceAttention rule being enabled, and Suggestion/Solution provided by the AI Issue Triage Service, there should be two comment created by the ServiceAttention rule but {mockGitHubEventClient.GetComments().Count} comments were created.");
+                                }
                             }
                         }
                     }

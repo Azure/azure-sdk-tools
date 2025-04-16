@@ -1,9 +1,9 @@
 package com.azure.tools.apiview.processor.model.maven;
 
-public class Gav implements MavenGAV {
-    private String groupId;
-    private String artifactId;
-    private String version;
+public class Gav {
+    private final String groupId;
+    private final String artifactId;
+    private final String version;
 
     public Gav(final String groupId, final String artifactId, final String version) {
         this.groupId = groupId;

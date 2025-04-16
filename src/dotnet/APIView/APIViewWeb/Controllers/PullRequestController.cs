@@ -2,11 +2,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights.DataContracts;
 using APIViewWeb.Helpers;
 using System.Collections.Generic;
@@ -118,7 +116,7 @@ namespace APIViewWeb.Controllers
                 packageName: packageName, originalFileName: originalFileName,
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-                project: project);
+                project: project, language: language);
 
             if (codeFile.PackageName != null && (packageName ==  null || packageName != codeFile.PackageName))
             {
@@ -145,7 +143,7 @@ namespace APIViewWeb.Controllers
                 if (baselineStream.Length > 0)
                 {
                     baselineStream.Position = 0;
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream);
                 }
                 if (codeFile != null)
                 {

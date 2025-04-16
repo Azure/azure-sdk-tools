@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.SymbolDisplay;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using ApiView;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -47,7 +48,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29.1";
+        public const string CurrentVersion = "29.2";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -540,6 +541,8 @@ namespace CSharpAPIParser.TreeToken
                 case "EditorBrowsableAttribute":
                 case "NullableAttribute":
                 case "NullableContextAttribute":
+                case "RequiresUnreferencedCodeAttribute":
+                case "RequiresDynamicCodeAttribute":
                     return true;
                 default:
                     return false;

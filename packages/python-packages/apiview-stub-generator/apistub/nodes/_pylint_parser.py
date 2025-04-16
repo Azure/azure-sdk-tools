@@ -9,10 +9,12 @@ from pylint.lint import Run
 
 _HELP_LINK_REGEX = re.compile(r"(.+) See details: *([^\s]+)")
 
+
 class PylintError:
 
     def __init__(self, pkg_name, msg):
         from apistub import DiagnosticLevel
+
         self.code = msg.C
         self.category = msg.category
         self.module = msg.module
@@ -43,7 +45,7 @@ class PylintError:
             return
 
     def generate_tokens(self, apiview, target_id):
-        apiview.add_diagnostic(obj=self, target_id=target_id)
+        apiview.add_diagnostic(err=self, target_id=target_id)
 
 
 class PylintParser:
@@ -55,6 +57,7 @@ class PylintParser:
     @classmethod
     def parse(cls, path):
         from apistub import ApiView
+
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), ".pylintrc")
         logging.debug(f"APIView root path: {ApiView.get_root_path()}")
@@ -62,8 +65,14 @@ class PylintParser:
         messages = Run(params, exit=False).linter.reporter.messages
         plugin_failed = any([x.symbol == "bad-plugin-value" for x in messages])
         if plugin_failed:
-            logging.error(f"Unable to load pylint_guidelines_checker. Check that it is installed.")
-        cls.items = [PylintError(pkg_name, x) for x in messages if x.msg_id[1:3] == PylintParser.AZURE_CHECKER_CODE]
+            logging.error(
+                f"Unable to load pylint_guidelines_checker. Check that it is installed."
+            )
+        cls.items = [
+            PylintError(pkg_name, x)
+            for x in messages
+            if x.msg_id[1:3] == PylintParser.AZURE_CHECKER_CODE
+        ]
 
     @classmethod
     def match_items(cls, obj) -> None:

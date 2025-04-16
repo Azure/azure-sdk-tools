@@ -36,6 +36,8 @@ using Microsoft.Azure.Cosmos;
 using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -103,7 +105,6 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
-            services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
@@ -114,7 +115,6 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
-            services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -123,6 +123,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, JavaLanguageService>();
             services.AddSingleton<LanguageService, PythonLanguageService>();
             services.AddSingleton<LanguageService, JavaScriptLanguageService>();
+            services.AddSingleton<LanguageService, RustLanguageService>();
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
@@ -244,9 +245,13 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoAPIRevisionModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
-            services.AddSingleton<CosmosClient>(x =>
+            services.AddSingleton(x =>
             {
                 return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
+            });
+            services.AddSingleton(x =>
+            {
+                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), new DefaultAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();
@@ -333,6 +338,7 @@ namespace APIViewWeb
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI();
 

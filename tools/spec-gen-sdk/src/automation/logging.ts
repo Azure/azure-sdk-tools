@@ -83,14 +83,11 @@ export const loggerDevOpsTransport = () => {
           case 'debug':
           case 'command':
             return `##[${level}] ${msg}`;
-
           case 'warn':
             return `##[warning] ${msg}`;
           case 'section':
-            return `##[group] ${info.message}`;
           case 'endsection':
-            return `##[endgroup] ${info.message}`;
-
+            return `##[section] ${info.message}`;
           default:
             return msg;
         }
@@ -137,9 +134,18 @@ export const loggerWaitToFinish = async (logger: winston.Logger) => {
   for (const transport of logger.transports) {
     if (transport instanceof winston.transports.File) {
       if (transport.end) {
-          transport.end();
           await setTimeout(2000);
+          transport.end();
         }
     }
   }
 };
+
+export function vsoAddAttachment(name: string, path: string): void {
+  console.log(`##vso[task.addattachment type=Distributedtask.Core.Summary;name=${name};]${path}`);
+}
+
+export function vsoLogIssue(message: string, type = "error"): void {
+  console.log(`##vso[task.logissue type=${type}]${message}`);
+}
+

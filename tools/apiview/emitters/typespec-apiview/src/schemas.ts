@@ -1,7 +1,7 @@
 // These schemas are all adapted from the TypeSpec definition here: 
 // https://github.com/Azure/azure-sdk-tools/blob/main/tools/apiview/parsers/apiview-treestyle-parser-schema/main.tsp
 
-import { AliasStatementNode, EnumStatementNode, InterfaceStatementNode, IntersectionExpressionNode, ModelExpressionNode, ModelStatementNode, ObjectLiteralNode, OperationStatementNode, ProjectionModelExpressionNode, ScalarStatementNode, SyntaxKind, UnionExpressionNode, UnionStatementNode } from "@typespec/compiler";
+import { AliasStatementNode, EnumStatementNode, InterfaceStatementNode, IntersectionExpressionNode, ModelExpressionNode, ModelStatementNode, ObjectLiteralNode, OperationStatementNode, ScalarStatementNode, SyntaxKind, UnionExpressionNode, UnionStatementNode } from "@typespec/compiler/ast";
 import { NamespaceModel } from "./namespace-model.js";
 import { NamespaceStack } from "./util.js";
 
@@ -134,7 +134,6 @@ export class NavigationItem {
       | EnumStatementNode
       | ModelExpressionNode
       | IntersectionExpressionNode
-      | ProjectionModelExpressionNode
       | ScalarStatementNode
       | UnionStatementNode
       | UnionExpressionNode
@@ -226,8 +225,6 @@ export class NavigationItem {
         throw new Error(`Navigation unsupported for "ModelExpression".`);
       case SyntaxKind.IntersectionExpression:
         throw new Error(`Navigation unsupported for "IntersectionExpression".`);
-      case SyntaxKind.ProjectionModelExpression:
-        throw new Error(`Navigation unsupported for "ProjectionModelExpression".`);
       case SyntaxKind.ScalarStatement:
         obj = objNode as ScalarStatementNode;
         stack.push(obj.id.sv);

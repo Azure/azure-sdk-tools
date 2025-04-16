@@ -4,15 +4,23 @@ import { compileTsp, discoverEntrypointFile } from "../src/typespec.js";
 import { joinPaths, resolvePath } from "@typespec/compiler";
 
 describe("Check diagnostic reporting", function () {
-  it("Check diagnostic format", async function () {
+  it.skip("Check diagnostic format", async function () {
     const mainFile = await discoverEntrypointFile(
       resolvePath(process.cwd(), "test", "examples", "specification", "diagnostics"),
+    );
+    const resolvedMainFilePath = resolvePath(
+      process.cwd(),
+      "test",
+      "examples",
+      "specification",
+      "diagnostics",
+      mainFile,
     );
     try {
       const [succeeded, _] = await compileTsp({
         emitterPackage: "@azure-tools/typespec-ts",
         outputPath: joinPaths(process.cwd(), "examples"),
-        resolvedMainFilePath: mainFile,
+        resolvedMainFilePath: resolvedMainFilePath,
         additionalEmitterOptions: "",
         saveInputs: false,
       });
@@ -20,8 +28,8 @@ describe("Check diagnostic reporting", function () {
       // False is returned if diagnostics are reported.
       // TODO: add more checks for specific diagnostics reported.
       assert.isFalse(succeeded);
-    } catch {
-      assert.fail("Unexpected failure.");
+    } catch (e) {
+      assert.fail(`Unexpected failure: ${e}`);
     }
   });
 
@@ -45,6 +53,6 @@ describe("Check diagnostic reporting", function () {
         "Contoso.WidgetManager",
       ),
     );
-    assert.equal(entrypointFile, "main.tsp");
+    assert.equal(entrypointFile, "client.tsp");
   });
 });

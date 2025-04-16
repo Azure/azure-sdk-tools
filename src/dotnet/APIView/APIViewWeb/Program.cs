@@ -1,8 +1,10 @@
+using System;
 using Azure.Identity;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -17,18 +19,28 @@ namespace APIViewWeb
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    config.AddEnvironmentVariables(prefix: "APIVIEW_");                  
                     IConfiguration settings = config.Build();
-                    string connectionString = settings.GetValue<string>("APPCONFIG");
+                    string appConfigUrl = settings.GetValue<string>("APPCONFIG_URL");
+                    if(string.IsNullOrEmpty(appConfigUrl))
+                    {
+                        throw new InvalidOperationException("App Configuration URL is not set in APIView environment variable. This should be set using environment name APPCONFIG_URL and value 'https://<your-app-config-name>.azconfig.io'");
+                    }
                     // Load configuration from Azure App Configuration
                     config.AddAzureAppConfiguration(options =>
                     {
-                        options.Connect(connectionString).ConfigureKeyVault(kv => 
+                        options.Connect(new Uri(appConfigUrl), new DefaultAzureCredential()).ConfigureKeyVault(kv => 
                         { 
                             kv.SetCredential(new DefaultAzureCredential());
                         });
                     });
                     config.AddUserSecrets(typeof(Program).Assembly);
+                })
+                .ConfigureLogging(logging => {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    logging.AddApplicationInsights();
+                    logging.SetMinimumLevel(LogLevel.Information);
                 })
                 .ConfigureKestrel(options =>
                 {

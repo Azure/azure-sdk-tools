@@ -1,6 +1,5 @@
 import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
-import { removeAnsiEscapeCodes, removeDuplicatesFromRelatedFiles, diffStringArrays } from '../src/utils/utils';
-import { WorkflowContext } from '../src/automation/workflow';
+import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
 import * as typespecUtils from '../src/utils/typespecUtils';
 import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
 import path from 'path';
@@ -142,6 +141,11 @@ describe('Remove AnsiEscape Codes', () => {
 
     expect(removeAnsiEscapeCodes(ansiArr)).toEqual(expect.arrayContaining(resArr));
   })
+  
+  it('test ansi code error in net generate script', () => {
+    const ansiError = '\x1b[31;1mWrite-Error: \x1b[31;1m[ERROR] The service service is not onboarded yet. We will not support onboard a new service from swagger. Please contact the DotNet language support channel at https://aka.ms/azsdk/donet-teams-channel and include this spec pull request.\x1b[0m';
+    expect(removeAnsiEscapeCodes(ansiError)).toEqual('Write-Error: [ERROR] The service service is not onboarded yet. We will not support onboard a new service from swagger. Please contact the DotNet language support channel at https://aka.ms/azsdk/donet-teams-channel and include this spec pull request.');
+  })
 })
 
 describe('getTypeSpecProjectServiceName', () => {
@@ -168,53 +172,6 @@ describe('getTypeSpecProjectResourceProvider', () => {
     const typespecProject = 'specification/cognitiveservices/ContentSafety/a/b/c';
     const res = typespecUtils.getTypeSpecProjectResourceProvider(typespecProject);
     expect(res).toEqual('ContentSafety/a/b/c');
-  })
-})
-
-describe('remove relatedTypeSpecProjectFolder & relatedReadmeMdFiles duplicates', () => {
-  const context = {
-    specFolder: 'path/to/specs',
-    logger: {
-      info: jest.fn() as unknown,
-    }
-  } as WorkflowContext;
-
-  it('test dup only resource-manage', () => {
-    const relatedTypeSpecProjectFolder = [
-      "specification/azurefleet/AzureFleet.Management",
-    ];
-    const relatedReadmeMdFiles = [
-      "specification/appcomplianceautomation/resource-manager/readme.md",
-      "specification/azurefleet/resource-manager/readme.md",
-    ]
-    const res = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    expect(res).toEqual([
-      'specification/appcomplianceautomation/resource-manager/readme.md'
-    ])
-  })
-
-  it('test dup only data-plane', () => {
-    const relatedTypeSpecProjectFolder = [
-      "specification/cognitiveservices/ContentSafety",
-    ];
-    const relatedReadmeMdFiles = [
-      "specification/cognitiveservices/data-plane/ContentSafety/readme.md",
-    ];
-    jest.spyOn(typespecUtils, 'getTypeSpecOutputFolder').mockReturnValue('data-plane/ContentSafety');
-    const res = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    expect(res).toEqual([]);
-  })
-
-  it('test dup only data-plane', () => {
-    const relatedTypeSpecProjectFolder = [
-      "specification/cognitiveservices/ContentSafety",
-    ];
-    const relatedReadmeMdFiles = [
-      "specification/cognitiveservices/data-plane/ContentSafety/readme.md",
-    ];
-    jest.spyOn(typespecUtils, 'getTypeSpecOutputFolder').mockReturnValue('data-plane/ContentSafety1');
-    const res = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    expect(res).toEqual(["specification/cognitiveservices/data-plane/ContentSafety/readme.md"]);
   })
 })
 
@@ -291,3 +248,33 @@ describe('find SDK Swagger Config from readme.md', () => {
   })
 
 })
+
+describe('extract and format the prefix from spec config path', () => {
+    it('should extract and format the prefix from tspConfigPath', () => {
+      const tspConfigPath = 'specification/myService.management/tspconfig.yaml';
+      const readmePath = undefined;
+      const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
+      expect(result).toEqual('myservice-management');
+    });
+
+    it('should extract and format the prefix from readmePath', () => {
+      const tspConfigPath = undefined;
+      const readmePath = 'specification/myService/resource-manager/readme.md';
+      const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
+      expect(result).toEqual('myservice-resource-manager');
+    });
+
+    it('should extract and format the prefix from readmePath', () => {
+      const tspConfigPath = undefined;
+      const readmePath = 'specification/myService/subservice/data-plane/readme.md';
+      const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
+      expect(result).toEqual('myservice-subservice-data-plane');
+    });
+
+    it('should return an empty string if paths are not provided', () => {
+      const tspConfigPath = undefined;
+      const readmePath = undefined;
+      const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
+      expect(result).toMatch(/no-readme-tspconfig-\d+/);
+    });
+  });

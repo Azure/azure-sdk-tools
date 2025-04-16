@@ -95,8 +95,7 @@ describe("apiview: tests", () => {
   describe("models", () => {
     it("composition", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         model Animal {
           species: string;
@@ -144,7 +143,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -158,8 +157,7 @@ describe("apiview: tests", () => {
 
     it("templated", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         model Thing<T> {
           property: T;
@@ -229,7 +227,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -245,8 +243,7 @@ describe("apiview: tests", () => {
 
     it("with default values", async () => {
       const input = `
-        #suppress "deprecated"
-        @TypeSpec.service( { title: "Test", version: "1" } )
+        @TypeSpec.service( #{ title: "Test" } )
         namespace Azure.Test {
           model Foo {
             name: string = "foo";
@@ -260,13 +257,16 @@ describe("apiview: tests", () => {
           model Foo {
             name: string = "foo";
             array: string[] = #["a", "b"];
-            obj: Record<unknown> = #{val: 1, name: "foo"};
+            obj: Record<unknown> = #{
+              val: 1,
+              name: "foo"
+            };
           }
         }
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -280,8 +280,7 @@ describe("apiview: tests", () => {
   describe("scalars", () => {
     it("extends string", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         scalar Password extends string;
       }
@@ -293,7 +292,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -303,8 +302,7 @@ describe("apiview: tests", () => {
 
     it("new scalar type", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         scalar ternary;
       }
@@ -316,7 +314,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -326,8 +324,7 @@ describe("apiview: tests", () => {
 
     it("templated", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         @doc(T)
         scalar Unreal<T extends valueof string>;
@@ -341,7 +338,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -354,8 +351,7 @@ describe("apiview: tests", () => {
   describe("aliases", () => {
     it("simple alias", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         model Animal {
           species: string;
@@ -375,7 +371,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -386,8 +382,7 @@ describe("apiview: tests", () => {
 
     it("templated alias", async () => {
       const input = `
-        #suppress "deprecated"
-        @TypeSpec.service( { title: "Test", version: "1" } )
+        @TypeSpec.service( #{ title: "Test" } )
         namespace Azure.Test {
           model Animal {
             species: string;
@@ -407,7 +402,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -420,8 +415,7 @@ describe("apiview: tests", () => {
   describe("augment decorators", () => {
     it("simple augment", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         model Animal {
           species: string;
@@ -441,7 +435,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -454,8 +448,7 @@ describe("apiview: tests", () => {
   describe("enums", () => {
     it("literal labels", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {  
         enum SomeEnum {
           Plain,
@@ -471,7 +464,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -482,8 +475,7 @@ describe("apiview: tests", () => {
 
     it("string-backed values", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         enum SomeStringEnum {
           A: "A",
@@ -499,7 +491,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -510,8 +502,7 @@ describe("apiview: tests", () => {
 
     it("int-backed values", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         enum SomeIntEnum {
           A: 1,
@@ -527,7 +518,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -538,8 +529,7 @@ describe("apiview: tests", () => {
 
     it("spread labels", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
   
         enum SomeEnum {A}
@@ -558,7 +548,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -572,8 +562,7 @@ describe("apiview: tests", () => {
   describe("unions", () => {
     it("discriminated union", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         union MyUnion {
           cat: Cat,
@@ -618,7 +607,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -632,8 +621,7 @@ describe("apiview: tests", () => {
 
     it("unnamed union", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         union Animals { Cat, Dog, Snake };
   
@@ -674,7 +662,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -690,8 +678,7 @@ describe("apiview: tests", () => {
   describe("operations", () => {
     it("templated with simple types", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {  
         op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
   
@@ -714,7 +701,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -726,8 +713,7 @@ describe("apiview: tests", () => {
 
     it("templated with deeply nested models", async () => {
       const input = `
-      #suppress "deprecated"
-      @service({name: "Service", version: "1"})
+      @service(#{title: "Service"})
       namespace Azure.Test {
         op Foo is Temp< {
           parameters: {
@@ -771,7 +757,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -783,8 +769,7 @@ describe("apiview: tests", () => {
 
     it("templated with model types", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         model FooParams {
           a: string;
@@ -876,7 +861,7 @@ describe("apiview: tests", () => {
       // Related line mismatches found!: {"Azure.Test.NamedGetFoo":{"relatedToCount":1,"isContextEndCount":-1}}
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -890,8 +875,7 @@ describe("apiview: tests", () => {
 
     it("templated with mixed types", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         model FooParams {
           a: string;
@@ -963,7 +947,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -977,8 +961,7 @@ describe("apiview: tests", () => {
 
     it("templated with empty models", async () => {
       const input = `
-        #suppress "deprecated"
-        @TypeSpec.service( { title: "Test", version: "1" } )
+        @TypeSpec.service( #{ title: "Test" } )
         namespace Azure.Test {
     
           op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
@@ -1011,7 +994,7 @@ describe("apiview: tests", () => {
         }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1024,8 +1007,7 @@ describe("apiview: tests", () => {
 
     it("with anonymous models", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         op SomeOp(
           param1: {
@@ -1051,7 +1033,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1064,8 +1046,7 @@ describe("apiview: tests", () => {
   describe("interfaces", () => {
     it("simple interface", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         interface Foo {
           @get 
@@ -1096,7 +1077,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1111,8 +1092,7 @@ describe("apiview: tests", () => {
   describe("string literals", () => {
     it("long strings", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {  
         @doc("""
         A long string,
@@ -1134,7 +1114,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1145,8 +1125,7 @@ describe("apiview: tests", () => {
 
     it("short strings", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         @doc("Short string")
         model Foo {};  
@@ -1160,7 +1139,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1173,8 +1152,7 @@ describe("apiview: tests", () => {
   describe("string templates", () => {
     it("templates", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {  
         alias myconst = "foobar";
         model Person {
@@ -1212,7 +1190,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1225,8 +1203,7 @@ describe("apiview: tests", () => {
   describe("suppressions", () => {
     it("suppression on model", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {  
         #suppress "foo" "bar"
         @doc("Foo Model")
@@ -1246,7 +1223,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1257,8 +1234,7 @@ describe("apiview: tests", () => {
 
     it("suppression on namespace", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {  
         #suppress "foo" "bar"
         @doc("SubNamespace")
@@ -1283,7 +1259,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1294,8 +1270,7 @@ describe("apiview: tests", () => {
 
     it("suppression on operation", async () => {
       const input = `
-        #suppress "deprecated"
-        @TypeSpec.service( { title: "Test", version: "1" } )
+        @TypeSpec.service( #{ title: "Test" } )
         namespace Azure.Test {
             #suppress "foo" "bar"
             op someOp(): void;
@@ -1309,7 +1284,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
@@ -1322,8 +1297,7 @@ describe("apiview: tests", () => {
   describe("constants", () => {
     it("renders constants", async () => {
       const input = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
+      @TypeSpec.service( #{ title: "Test" } )
       namespace Azure.Test {
         const a = 123;
         const b = #{name: "abc"};
@@ -1333,18 +1307,60 @@ describe("apiview: tests", () => {
       const expect = `
         namespace Azure.Test {
           const a = 123;
-          const b = #{name: "abc"};
+          const b = #{
+            name: "abc"
+          };
           const c = a;
         }
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 6);
       validateLineIds(apiview);
       const counts = getRelatedLineMetadata(apiview);
       compareCounts(counts, new Map([
         ["Azure.Test", { relatedToCount: 3, isContextEndCount: 1 }],
       ]));
     });
+  });
+
+  it("renders examples with call expression constants", async () => {
+    const input = `
+    @TypeSpec.service( #{ title: "Test" } )
+    namespace Azure.Test {
+      const SomeExample: SomeData = #{
+        timestamp: utcDateTime.fromISO("2020-12-09T13:50:19.9995668-08:00"),
+        name: "test"
+      };
+      
+      @example(SomeExample)
+      model SomeData {
+        timestamp: utcDateTime;
+        name: string;
+      }     
+    }
+    `;
+    const expect = `
+      namespace Azure.Test {
+        @example(SomeExample)
+        model SomeData {
+          timestamp: utcDateTime;
+          name: string;
+        }
+
+        const SomeExample = #{
+          timestamp: utcDateTime.fromISO("2020-12-09T13:50:19.9995668-08:00"),
+          name: "test"
+        };
+      }
+      `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 6);
+    validateLineIds(apiview);
+    const counts = getRelatedLineMetadata(apiview);
+    compareCounts(counts, new Map([
+      ["Azure.Test", { relatedToCount: 1, isContextEndCount: 1 }],
+    ]));
   });
 });

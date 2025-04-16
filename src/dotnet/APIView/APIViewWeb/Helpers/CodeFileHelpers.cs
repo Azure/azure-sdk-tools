@@ -373,7 +373,8 @@ namespace APIViewWeb.Helpers
                     NodeIdHashed = nodeIdHashed,
                     NodeId = nodeId,
                     Diagnostics = diagnostic,
-                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
+                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() },
+                    RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Count()
                 };
                 codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
             }
@@ -387,8 +388,8 @@ namespace APIViewWeb.Helpers
 
         private static bool AreReviewLinesSame(List<ReviewLine> reviewLinesA, List<ReviewLine> reviewLinesB)
         {
-            var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation).ToList();
-            var filteredLinesB = reviewLinesB.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation).ToList();
+            var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
+            var filteredLinesB = reviewLinesB.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
 
             if (filteredLinesA.Count() != filteredLinesB.Count())
                 return false;
@@ -396,10 +397,34 @@ namespace APIViewWeb.Helpers
             //Verify if child lines matches
             for (int i = 0; i < filteredLinesA.Count(); i++)
             {
-                if (!filteredLinesA[i].Equals(filteredLinesB[i]) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
+                if (!filteredLinesA[i].ToString().Equals(filteredLinesB[i].ToString()) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
                     return false;
             }
             return true;
+        }
+
+        private static void UpdateMissingRelatedLineId(List<ReviewLine> lines)
+        {
+            // This method process all lines at same level to identify line Id of previous line before end of context line.
+            // This is required to set related line ID for end of context lines that are not set by parser.
+            // <Context begin line. for e.g.g class <className> { >
+            //          <SChild review lines>
+            // <End of context line. for e.g. "}">
+            
+            string contextLineId = "";
+            foreach (var line in lines)
+            {
+                if (line.IsContextEndLine == true)
+                {
+                    line.RelatedToLine = string.IsNullOrEmpty(line.RelatedToLine)? contextLineId : line.RelatedToLine;
+                    continue;
+                }
+                //If current line as line Id then set it as line ID of current context
+                if (!string.IsNullOrEmpty(line.LineId))
+                {
+                    contextLineId = line.LineId;
+                }
+            }
         }
 
         public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
@@ -413,12 +438,15 @@ namespace APIViewWeb.Helpers
                 line.IsActiveRevisionLine = false;
             }
 
+            UpdateMissingRelatedLineId(activeLines);
+            UpdateMissingRelatedLineId(diffLines);
+
             var intersectLines = diffLines.Intersect(activeLines);
-            var interleavedLines = diffLines.InterleavedUnion(activeLines);
+            var interleavedLines = activeLines.InterleavedUnion(diffLines);
 
             foreach (var line in interleavedLines)
             {
-                if (line.IsDocumentation || line.Processed)
+                if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()))
                     continue;
 
 
@@ -426,8 +454,11 @@ namespace APIViewWeb.Helpers
                 // If a node is diff then no need to check it's children as they will be marked as diff as well.
                 if (!intersectLines.Contains(line))
                 {
-                    //Recursively mark line as added or removed
-                    MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                    //Recursively mark line as added or removed if line is not skipped from diff
+                    if (!line.IsSkippedFromDiff())
+                    {
+                        MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                    }
 
                     //Check if diff revision has a line at same level with same Line Id. This is to handle where a API was removed and added back in different order.
                     // This will also ensure added and modified lines are visible next to each other in the review.
@@ -436,9 +467,12 @@ namespace APIViewWeb.Helpers
                     if (relatedLine != null)
                     {
                         relatedLine.Processed = true;
-                        MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
-                        //Identify the tokens within modified lines and highlight them in the UI
-                        FindModifiedTokens(line, relatedLine);
+                        if (!relatedLine.IsSkippedFromDiff())
+                        {
+                            MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                            //Identify the tokens within modified lines and highlight them in the UI
+                            FindModifiedTokens(line, relatedLine);
+                        }                        
                     }
 
                     if (relatedLine != null)

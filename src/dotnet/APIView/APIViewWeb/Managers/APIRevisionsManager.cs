@@ -12,6 +12,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
+        private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
@@ -48,7 +50,8 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
-            TelemetryClient telemetryClient)
+            TelemetryClient telemetryClient,
+            IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -61,24 +64,23 @@ namespace APIViewWeb.Managers
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
+            var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
+            if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
+            {
+                _upgradeDisabledLangs.UnionWith(backgroundTaskDisabledLangs.Split(','));
+            }
         }
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query.
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="pageParams"></param> Contains pagination info
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
         public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams)
         {
-            var revisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
-            List<APIRevisionListItemModel> upgradedList = [];
-            foreach (var item in revisions)
-            {
-                upgradedList.Add(await UpgradeAPIRevisionIfRequired(item));
-            }
-            return new PagedList<APIRevisionListItemModel>((IEnumerable<APIRevisionListItemModel>)upgradedList, revisions.NoOfItemsRead, revisions.TotalCount, pageParams.PageSize);
+            return await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
         }
 
         /// <summary>
@@ -91,12 +93,6 @@ namespace APIViewWeb.Managers
         public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId, string packageVersion = "", APIRevisionType apiRevisionType = APIRevisionType.All)
         {
             var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
-            List<APIRevisionListItemModel> upgradedList = [];
-            foreach (var item in apiRevisions)
-            {
-                upgradedList.Add(await UpgradeAPIRevisionIfRequired(item));
-            }
-            apiRevisions = upgradedList;
 
             if (apiRevisionType != APIRevisionType.All)
                 apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
@@ -683,7 +679,7 @@ namespace APIViewWeb.Managers
                 var apiRevisionId = reviewDetails[2];
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
 
-                var codeFile = await CodeFile.DeserializeAsync(entry.Open(), LanguageServiceHelpers.UseTreeStyleParser(review.Language));
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
 
                 // Update code file with one downloaded from pipeline
                 if (review != null)
@@ -695,7 +691,10 @@ namespace APIViewWeb.Managers
                         var file = apiRevision.Files.FirstOrDefault();
                         file.VersionString = codeFile.VersionString;
                         file.PackageName = codeFile.PackageName;
+                        file.PackageVersion = codeFile.PackageVersion;
+                        file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
                         await _reviewsRepository.UpsertReviewAsync(review);
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
                         if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
                         {
@@ -1006,11 +1005,32 @@ namespace APIViewWeb.Managers
                 return revisionModel;
             }
             var codeFileDetails = revisionModel.Files[0];
+            if (_upgradeDisabledLangs.Contains(codeFileDetails.Language))
+            {
+                return revisionModel;
+            }
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
             if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
             {
                 await UpdateAPIRevisionAsync(revisionModel, languageService, false);
                 revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+            }
+            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString) &&  codeFileDetails.ParserStyle == ParserStyle.Flat)
+            {
+                // Convert to tree model only if current token file is in flat token model
+                var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
+                if (codeFile != null && codeFile.ReviewLines.Count == 0)
+                {
+                    codeFile.ConvertToTreeTokenModel();                    
+                    if (codeFile.ReviewLines.Count > 0)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
+                        codeFileDetails.VersionString = languageService.VersionString;
+                        codeFileDetails.ParserStyle = ParserStyle.Tree;
+                        codeFileDetails.IsConvertedTokenModel = true;
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
+                    }                    
+                }
             }
             return revisionModel;
         }

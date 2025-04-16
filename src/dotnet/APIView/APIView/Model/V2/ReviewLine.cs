@@ -125,14 +125,14 @@ namespace APIView.Model.V2
         {
             if(obj is ReviewLine other)
             {
-                return ToString() == other.ToString();
+                return ToString() == other.ToString() && LineId == other.LineId && RelatedToLine == other.RelatedToLine;
             }
             return false;
         }
 
         public override int GetHashCode()
         {
-            return ToString().GetHashCode();
+            return $"{ToString()}-{LineId}-{RelatedToLine}".GetHashCode();
         }
 
         public string GetTokenNodeIdHash(string parentNodeIdHash, int lineIndex)
@@ -153,5 +153,11 @@ namespace APIView.Model.V2
             int hash = inputString.GetHashCode();
             return "nId" + hash.ToString();
         }
+
+        public bool IsSkippedFromDiff()
+        {
+            return Tokens.All(t => t.SkipDiff == true);
+        }
+
     }
 }

@@ -1,7 +1,11 @@
 import "@typespec/json-schema";
+import "@azure-tools/typespec-client-generator-core";
 
+using Azure.ClientGenerator.Core;
 using TypeSpec.JsonSchema;
 
+@usage(Usage.input | Usage.output)
+@service({title: "Schemas"})
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
@@ -14,6 +18,7 @@ model CodeFile {
   Language: "C"|"C++"|"C#"|"Go"|"Java"|"JavaScript"|"Kotlin"|"Python"|"Swagger"|"Swift"|"TypeSpec";
   /** Language variant is applicable only for java variants*/
   LanguageVariant?: "None" | "Spring" | "Android" = "None";
+  /** Id to identify Reviews for different languages generated from the same TypeSpec specification. */
   CrossLanguagePackageId?: string;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
@@ -33,6 +38,7 @@ model ReviewLine {
    *  for e.g Azure.Core.HttpHeader.Common, azure.template.template_main
    */
   LineId?: string;
+  /** Id to identify related lines across languages based on typespec specification  */
   CrossLanguageId?: string;
   /** list of tokens that constructs a line in API review */
   Tokens: Array<ReviewToken>;
@@ -41,10 +47,11 @@ model ReviewLine {
   Children?: Array<ReviewLine>;
   /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
   IsHidden?: boolean;
-  /** Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context. */
+  /** Set current line as context end line. For e.g. line with token } or empty line after the class or function/method to mark end of context. */
   IsContextEndLine?: boolean;
   /** Set ID of related line to ensure current line is not visible when a related line is hidden.
-   * One e.g. is a code line for class attribute should set class line's Line ID as related line ID.
+   * One e.g. is a code line for class attribute that should set class line's Line ID as related line ID.
+   * OR a method line decorator that should set method's line ID as related line ID.
   */
   RelatedToLine?: string;
 }
@@ -60,7 +67,7 @@ model ReviewToken {
    * For e.g. a param type which is class name in the same package
    */
   NavigateToId?: string;
-  /** set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions 
+  /** Set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions 
    *  are usually excluded when comparing two revisions to avoid reporting them as API changes*/
   SkipDiff?: boolean = false;
   /** This is set if API is marked as deprecated */
@@ -71,7 +78,9 @@ model ReviewToken {
   HasPrefixSpace?: boolean = false;
   /** Set isDocumentation to true if current token is part of documentation */
   IsDocumentation?: boolean = false;
-  /** Language specific style css class names */
+  /** Language specific style css class names. To render navigation icons, one of the following must be specified:
+   * "namespace", "class", "method", "enum". If NavigationDisplayName is specified, then this field should be set.
+  */
   RenderClasses?: Array<string>;
 }
 
@@ -105,7 +114,9 @@ enum TokenKind {
   Literal: 6,
   /** Comment: Comment text within the code that's really a documentation. 
    *  Few languages wants to show comments within API review that's not tagged as documentation **/
-  Comment: 7
+  Comment: 7,
+  /** External Url */
+  ExternalUrl: 8
 }
 
 enum CodeDiagnosticLevel {

@@ -9,7 +9,7 @@
     line-height: 1.5;
     display: block;
 
-    .viewport {
+    #viewport {
         overflow: auto;
         height: calc(100vh - 132px);
         will-change: scroll-position, contents;
@@ -136,6 +136,7 @@
     }
     
     .code-line-content {
+        max-height: 21px;
         grid-column: 2;
         position: relative; 
         white-space: pre;
@@ -219,13 +220,29 @@
         text-decoration: line-through;
     }
 
+    .codeline-search-match-highlight {
+        background-color: var(--primary-color);
+        color: var(--primary-btn-color);
+        padding: 0px;
+        margin: 0px;
+
+        &.active {
+            background-color: red;
+        }
+    }
+
+
 
     .java {
         .javadoc {
             color: var(--java-doc-color);
             font-style: italic !important;
         }
-        
+
+        .enum {
+            color: var(--class-color);
+        }
+    
         .comment {
             color: var(--java-comment-color);
             font-style: italic !important;

@@ -6,7 +6,8 @@ param clusterName string
 param location string = resourceGroup().location
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
-param defaultAgentPoolSku string = 'Standard_D8a_v4'
+param defaultAgentPoolSku string
+param systemAgentPoolSku string
 param maintenanceWindowDay string = 'Monday'
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
@@ -23,7 +24,7 @@ var systemAgentPool = {
   minCount: 1
   maxCount: 4
   mode: 'System'
-  vmSize: 'Standard_D4ds_v4'
+  vmSize: systemAgentPoolSku
   type: 'VirtualMachineScaleSets'
   osType: 'Linux'
   enableAutoScaling: true
@@ -55,7 +56,7 @@ var agentPools = [
     defaultAgentPool
 ]
 
-resource newCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' = if (!updateNodes) {
+resource newCluster 'Microsoft.ContainerService/managedClusters@2024-10-01' = if (!updateNodes) {
   name: clusterName
   location: location
   tags: tags
@@ -119,7 +120,7 @@ resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenan
 }
 
 
-resource existingCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' existing = if (updateNodes) {
+resource existingCluster 'Microsoft.ContainerService/managedClusters@2024-10-01' existing = if (updateNodes) {
   name: clusterName
 }
 

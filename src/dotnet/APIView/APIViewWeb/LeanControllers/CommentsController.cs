@@ -105,8 +105,12 @@ namespace APIViewWeb.LeanControllers
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
         public async Task<ActionResult> CreateCommentAsync(
-            string reviewId, string elementId, string commentText,
-            CommentType commentType, string apiRevisionId = null, string sampleRevisionId = null,
+            [FromForm] string reviewId,
+            [FromForm] string elementId,
+            [FromForm] string commentText,
+            [FromForm] CommentType commentType,
+            [FromForm] string apiRevisionId = null,
+            [FromForm] string sampleRevisionId = null,
             bool resolutionLocked = false)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
@@ -144,7 +148,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="commentText"></param>
         /// <returns></returns>
         [HttpPatch("{reviewId}/{commentId}/updateCommentText", Name = "UpdateCommentText")]
-        public async Task<ActionResult> UpdateCommentTextAsync(string reviewId, string commentId, string commentText)
+        public async Task<ActionResult> UpdateCommentTextAsync(string reviewId, string commentId, [FromForm] string commentText)
         {
             await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, new string[0]);
             return Ok();

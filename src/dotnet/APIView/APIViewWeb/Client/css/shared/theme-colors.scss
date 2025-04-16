@@ -30,6 +30,7 @@
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary, 80%)};
     --shadow-color: rgba(#{$black}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary, 0.5)};
     --box-shadow: 0 .5rem 1rem #{rgba($black, .15)};
     --box-shadow-sm: 0 .125rem .25rem #{rgba($black, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($black, .175)};
@@ -59,6 +60,7 @@
     --java-anotation-name-color: #9E880D;
     --java-string-literal-color: #067D17;
     --java-number-color: #1750EB;
+    --rust-icon: url(/icons/rust-original.svg) center center no-repeat;
     --alert-success-color: #0a3622;
     --alert-success-bg: #d1e7dd;
     --alert-success-border-color: #a3cfbb;
@@ -120,6 +122,7 @@
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$white}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
     --box-shadow: 0 .5rem 1rem #{rgba($white, .15)};
     --box-shadow-sm: 0 .125rem .25rem #{rgba($white, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($white, .175)};
@@ -149,6 +152,7 @@
     --java-anotation-name-color: #BBB529;
     --java-string-literal-color: #6A8759;
     --java-number-color: #6897BB;
+    --rust-icon: url(/icons/rust-light-original.svg) center center no-repeat;
     --alert-success-color: #75b798;
     --alert-success-bg: #051b11;
     --alert-success-border-color: #0f5132;
@@ -242,6 +246,7 @@
     --java-anotation-name-color: #BBB529;
     --java-string-literal-color: #6A8759;
     --java-number-color: #6897BB;
+    --rust-icon: url(/icons/rust-light-original.svg) center center no-repeat;
     --alert-success-color: #75b798;
     --alert-success-bg: #051b11;
     --alert-success-border-color: #0f5132;

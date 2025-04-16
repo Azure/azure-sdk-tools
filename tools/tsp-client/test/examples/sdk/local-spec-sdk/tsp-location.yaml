@@ -1,5 +1,5 @@
 directory: tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager
-commit: db63bea839f5648462c94e685d5cc96f8e8b38ba
+commit: 45924e49834c4e01c0713e6b7ca21f94be17e396
 repo: Azure/azure-sdk-tools
 additionalDirectories:
   - tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared/

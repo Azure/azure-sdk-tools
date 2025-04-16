@@ -117,13 +117,24 @@ kind create cluster
 ```
 
 # Deploying Stress Test Addons
+
 Steps for deploying the stress test addons helm chart:
+
+**Pipeline**
+
+1. Increment the version number in stress test addons' [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1) along with any changes.
+1. Run the [addons publish pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7476&_a=summary) after merge to main.
+1. Merge the PR auto-created by the pipeline which updates `index.yaml` and `examples/**/Chart.yaml` with the new version.
+1. Update all the stress test Chart.yaml file version references across the language repos if there is a minor version bump.
+
+**Locally** (requires corp net access)
+
 1. Increment the version number in stress test addons' [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1).
 1. Run [deploy.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/deploy.ps1).
 1. Update all the helm chart versions for stress-test-addons dependency references in `azure-sdk-tools/tools/stress-cluster/chaos/examples/**/Chart.yaml`.
 1. Run azure-sdk-tools\eng\common\scripts\stress-testing\deploy-stress-tests.ps1 script in the [examples](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples) directory, this will update all the nested helm charts (the -SkipLogin parameter can be used to speed up the script or if interactive login isn't supported by the shell).
    1. Run `kubectl get pods -n examples -w` to monitor the status of each pod and look for Running/Completed and make sure there are no errors.
-1. Update all the stress tests' Chart.yaml files across the other repos in the same manner.
+1. Update all the stress tests' Chart.yaml files across the other repos in the same manner if there is a minor version bump.
 
 # Development
 
@@ -150,7 +161,6 @@ First, update the `dependencies section of the example's `Chart.yaml` file to po
 dependencies:
 - name: stress-test-addons
   version: <latest version on disk in stress-test-addons Chart.yaml>
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
   repository: file:///<path to azure-sdk-tools repo>/tools/stress-cluster/cluster/kubernetes/stress-test-addons
 ```
 

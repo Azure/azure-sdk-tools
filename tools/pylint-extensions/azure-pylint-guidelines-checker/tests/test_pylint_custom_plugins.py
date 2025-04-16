@@ -3626,14 +3626,6 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=8,
                 end_line=11,
                 end_col_offset=28,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
-                line=12,
-                node=debug_node,
-                col_offset=8,
-                end_line=12,
-                end_col_offset=29,
             )
         ):
             self.checker.visit_try(try_node)
@@ -3669,14 +3661,6 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=8,
                 end_line=22,
                 end_col_offset=29,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
-                line=23,
-                node=debug_node,
-                col_offset=8,
-                end_line=23,
-                end_col_offset=30,
             )
         ):
             self.checker.visit_try(try_node)
@@ -3901,3 +3885,55 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_annassign(annotated_assignment)
             self.checker.visit_annassign(annotated_self_assignment)
 
+
+class TestDedent(pylint.testutils.CheckerTestCase):
+    """Test that we are checking the dedent is not set in the docstring"""
+
+    CHECKER_CLASS = checker.DoNotDedentDocstring
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "dedent_failure.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_ignores_correct_dedent_in_function(self, setup):
+        function_node = setup.body[0]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node)
+
+    def test_bad_dedent_in_function(self, setup):
+        function_node = setup.body[1]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-dedent",
+                line=17,
+                node=function_node,
+                col_offset=0,
+                end_line=17,
+                end_col_offset=17,
+            )
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_ignores_correct_dedent_in_class(self, setup):
+        function_node = setup.body[2]
+        with self.assertNoMessages():
+            self.checker.visit_classdef(function_node)
+
+    def test_bad_dedent_in_class(self, setup):
+        function_node = setup.body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-dedent",
+                line=49,
+                node=function_node,
+                col_offset=0,
+                end_line=49,
+                end_col_offset=17,
+            )
+        ):
+            self.checker.visit_classdef(function_node)

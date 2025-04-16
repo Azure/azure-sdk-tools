@@ -28,7 +28,7 @@ public class TestExpectedOutputs {
         // preferable to download the source jars from known-good places.
         return Stream.of(
                 ""
-//            "https://repo1.maven.org/maven2/com/azure/azure-core/1.48.0/azure-core-1.48.0-sources.jar",
+//            "https://repo1.maven.org/maven2/com/azure/azure-core/1.48.0/azure-core-1.48.0-sources.jar"
 //                "https://repo1.maven.org/maven2/com/azure/azure-communication-chat/1.5.0/azure-communication-chat-1.5.0-sources.jar",
 //                "https://repo1.maven.org/maven2/com/azure/azure-security-keyvault-keys/4.8.2/azure-security-keyvault-keys-4.8.2-sources.jar",
 //                "https://repo1.maven.org/maven2/com/azure/azure-data-appconfiguration/1.6.0/azure-data-appconfiguration-1.6.0-sources.jar",
@@ -74,8 +74,8 @@ public class TestExpectedOutputs {
 
         final Path expectedOutputFile = Paths.get(root + "expected-outputs/" + filename + ".json");
 
-        // Run the processor, receiving the name of the file that was generated
-        final Path actualOutputFile = Main.run(inputFile.toFile(), tempDir).toPath();
+        // Run the processor, receiving the name of the JSON file that was generated (we ignore the gzipped value in index 1)
+        final Path actualOutputFile = Main.run(inputFile.toFile(), tempDir)[0].toPath();
 
         if (expectedOutputFile.toFile().exists()) {
             try {

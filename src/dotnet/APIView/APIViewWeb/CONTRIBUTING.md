@@ -118,7 +118,7 @@ Following configuration is required to connect local debug instance to Azure res
     "ApiKey": "",
     "PYTHONEXECUTABLEPATH": "<Full path to python executable>",
     "BackgroundTaskDisabled": true,
-    "APPCONFIG": "<connection string to app configuration>"
+    "APPCONFIG_URL": "https://<your-app-config-name>.azconfig.io"
   }
 
 Note: User requires following role based access to storage account and cosmos DB for local debugging and make sure that user is logged in to Azure from Visual studio to access Azure resources.
@@ -126,12 +126,13 @@ Note: User requires following role based access to storage account and cosmos DB
 - `Storage Blob Contributor` to access storage account
 - `Cosmos DB Built-in Data Contributor` to access Cosmos DB
 
-### Role based access requierd for deployed instances
+### Role based access required for deployed instances
 
 APIView Azure web app instance requires role based access to storage and cosmos DB instances to access using managed identity. Following are the required RBAC roles.
 
 - `Storage Blob Contributor` to access storage account
 - `Cosmos DB Built-in Data Contributor` to access Cosmos DB
+- `App Configuration Data Reader` to access App configuration.
 
 ### Compile TypeScript code
 

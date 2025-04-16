@@ -35,4 +35,3 @@ export function where<T>(values: T[], condition: (value: T) => boolean): T[] {
 export function toArray<T>(value: T | T[], conversion: (valueToConvert: T) => T[] = (valueToConvert: T) => [valueToConvert]): T[] {
   return value instanceof Array ? value : conversion(value);
 }
-  

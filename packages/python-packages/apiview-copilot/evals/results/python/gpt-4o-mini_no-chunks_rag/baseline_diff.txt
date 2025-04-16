@@ -1,0 +1,23 @@
+✨ small.jsonl results:
+
+Test Case                 Score         Violations found    Exact matches (TP)    Fuzzy matches    False positives (FP)    Groundedness    Similarity
+------------------------  ------------  ------------------  --------------------  ---------------  ----------------------  --------------  ------------
+few_violations            0.0 (-75.0)   19 / 2              0 (-2)                0 (0)            19 (+18)                3.0 (0.0)       2.0 (-1.0)
+many_violations           10.0 (-76.0)  3 / 10              1 (-7)                0 (0)            2 (+2)                  5.0 (0.0)       2.0 (-3.0)
+no_violations             0.0 (0.0)     18 / 0              0 (0)                 0 (0)            18 (+17)                5.0 (+4.0)      1.0 (0.0)
+multiple_same_violations  0.0 (-100.0)  4 / 4               0 (-4)                0 (0)            4 (+4)                  5.0 (0.0)       1.0 (-4.0)
+
+small.jsonl average score: 2.5  (-62.8)
+
+
+✨ medium.jsonl results:
+
+Test Case                 Score         Violations found    Exact matches (TP)    Fuzzy matches    False positives (FP)    Groundedness    Similarity
+------------------------  ------------  ------------------  --------------------  ---------------  ----------------------  --------------  ------------
+few_violations            0.0 (-100.0)  1 / 2               0 (-2)                0 (0)            1 (+1)                  4.0 (-1.0)      1.0 (-4.0)
+many_violations           0.0 (-53.0)   3 / 11              0 (-4)                0 (0)            3 (+3)                  4.0 (-1.0)      2.0 (-2.0)
+no_violations             0.0 (-100.0)  1 / 0               0 (0)                 0 (0)            1 (+1)                  1.0 (0.0)       1.0 (-4.0)
+multiple_same_violations  0.0 (0.0)     6 / 12              0 (0)                 0 (0)            6 (+5)                  5.0 (+2.0)      2.0 (+1.0)
+
+medium.jsonl average score: 0.0  (-63.2)
+

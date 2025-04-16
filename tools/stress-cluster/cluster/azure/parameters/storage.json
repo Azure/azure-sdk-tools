@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "subscriptionId": {
-      "value": "ba45b233-e2ef-4169-8808-49eb0d8eba0d"
+      "value": "4d042dc6-fe17-4698-a23f-ec6a8d1e98f4"
     },
     "groupSuffix": {
       "value": "storage"
@@ -15,16 +15,19 @@
       "value": "southcentralus"
     },
     "defaultAgentPoolMinNodes": {
-      "value": 5
+      "value": 1
     },
     "defaultAgentPoolMaxNodes": {
-      "value": 200
+      "value": 10
+    },
+    "skipAcrRoleAssignment": {
+      "value": true
     },
     "tags": {
       "value": {
         "environment": "storage",
-        "owners": "bebroder",
-        "purpose": "stress and load testing for storage SDKs - maintained by Azure SDK (devdiv)",
+        "owners": "bebroder,ripark",
+        "purpose": "stress and load testing for storage SDKs",
         "DoNotDelete": ""
       }
     }

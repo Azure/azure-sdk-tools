@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -830,9 +831,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
+        [InlineData("true", 0)]
+        [InlineData("yes", 153)]
+        [InlineData("no", 153)]
+        [InlineData("false", 153)]
+        [InlineData("gibberish", 153)]
+        public void CheckDefaultSanitizerSettings(string environmentSettingValue, int sanitizerCount)
+        {
+            Environment.SetEnvironmentVariable("TEST_PROXY_DISABLE_DEFAULT_SANITIZERS", environmentSettingValue);
+
+            SanitizerDictionary testDict = new SanitizerDictionary();
+
+            Assert.Equal(sanitizerCount, testDict.DefaultSanitizerList.Count);
+        }
+
+        [Theory]
         [InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
         [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
-        public void GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
+        public async Task GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
         {
             var session = TestHelpers.LoadRecordSession(targetFile);
 
@@ -840,7 +856,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var matcher = new RecordMatcher();
 
             var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
-            session.Session.Sanitize(sanitizer);
+            await session.Session.Sanitize(sanitizer);
 
             var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
 

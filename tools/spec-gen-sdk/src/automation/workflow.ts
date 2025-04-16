@@ -3,19 +3,11 @@ import * as _ from 'lodash';
 import * as fs from 'fs';
 import { default as Transport } from 'winston-transport';
 import { findSDKToGenerateFromTypeSpecProject } from '../utils/typespecUtils';
-import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
-import {
-  gitGetDiffFileList
-} from '../utils/gitUtils';
-import { specConfigPath } from '../types/SpecConfig';
 import { repoKeyToString } from '../utils/repo';
 import { runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
 import {
   deleteTmpJsonFile,
   readTmpJsonFile,
-  searchRelatedTypeSpecProjectBySharedLibrary,
-  searchRelatedParentFolders,
-  searchSharedLibrary,
   writeTmpJsonFile
 } from '../utils/fsUtils';
 import { GenerateInput } from '../types/GenerateInput';
@@ -26,11 +18,10 @@ import { SDKAutomationState } from './sdkAutomationState';
 import { CommentCaptureTransport } from './logging';
 import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { getInitOutput } from '../types/InitOutput';
-import { MessageRecord } from '../types/Message';
 import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
-import { parseYamlContent, removeDuplicatesFromRelatedFiles } from '../utils/utils';
+import { parseYamlContent } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
-import { SdkAutoContext } from './entrypoint';
+import { VsoLogs, SdkAutoContext } from './entrypoint';
 
 export const remoteIntegration = 'integration';
 export const remoteMain = 'main';
@@ -41,31 +32,15 @@ export const branchMain = 'main';
 export const branchSecondary = 'secondary';
 export const branchBase = 'base';
 
-type ChangedSpecs = {
-  [K in "readmeMd" | "typespecProject"]?: string;
-} & {
-  suppressionFile: string | undefined;
-  specs: string[];
-};
-
-export const simpleGitOptions: SimpleGitOptions = {
-  baseDir: process.cwd(),
-  binary: 'git',
-  maxConcurrentProcesses: 4
-} as SimpleGitOptions;
-
 export enum FailureType {
   CodegenFailed = 'Code Generator Failed',
   PipelineFrameworkFailed = 'Pipeline Framework Failed'
 }
 
 export type WorkflowContext = SdkAutoContext & {
-  specRepo: SimpleGit;
-  specFolder: string;
-  sdkRepo: SimpleGit;
-  sdkFolder: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
+  specConfigPath?: string;
   pendingPackages: PackageData[];
   handledPackages: PackageData[];
   status: SDKAutomationState;
@@ -74,7 +49,7 @@ export type WorkflowContext = SdkAutoContext & {
   messageCaptureTransport: Transport;
   scriptEnvs: { [key: string]: string | undefined };
   tmpFolder: string;
-  extraResultRecords: MessageRecord[];
+  vsoLogs: VsoLogs;
 };
 
 export const setFailureType = (context: WorkflowContext, failureType: FailureType) => {
@@ -92,19 +67,15 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
   });
   context.logger.add(captureTransport);
 
-  const specContext = workflowInitSpecRepo(context);
-  const sdkContext = workflowInitSdkRepo(context);
-
   const tmpFolder = path.join(context.config.workingFolder, `${context.sdkRepoConfig.mainRepository.name}_tmp`);
   fs.mkdirSync(tmpFolder, { recursive: true });
 
   return {
     ...context,
-    ...specContext,
-    ...sdkContext,
     pendingPackages: [],
     handledPackages: [],
-    extraResultRecords: [],
+    vsoLogs: new Map(),
+    specConfigPath: context.config.tspConfigPath ?? context.config.readmePath,
     status: 'inProgress',
     messages,
     messageCaptureTransport: captureTransport,
@@ -121,76 +92,25 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 };
 
 export const workflowMain = async (context: WorkflowContext) => {
-  if (context.config.pullNumber) {
-    await workflowValidateSdkConfigForSpecPr(context);
-    await workflowCallInitScript(context);
-    await workflowGenerateSdkForSpecPr(context);
-  } else {
-    await workflowValidateSdkConfig(context);
-    await workflowCallInitScript(context);
-    await workflowGenerateSdk(context);
+  await workflowValidateSdkConfig(context);
+  if (context.status === 'notEnabled') {
+    return;
   }
+  await workflowCallInitScript(context);
+  await workflowGenerateSdk(context);
   setSdkAutoStatus(context, 'succeeded');
 };
 
-export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext) => {
-  const specContext = workflowInitSpecRepo(context);
-  const changedSpecs = await workflowDetectChangedSpec({ ...context, ...specContext });
-
+export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   context.logger.log('section', 'Validate SDK configuration');
-  const sdkToGenerate = new Set<string>();
-
-  const commit = await specContext.specRepo.revparse(branchMain);
-  for (const ch of changedSpecs) {
-    if (ch.typespecProject) {
-      const entry = await specContext.specRepo.revparse(`${commit}:${ch.typespecProject}`);
-      const blob = await specContext.specRepo.catFile(['-p', entry]);
-      const content = blob.toString();
-      const config = findSDKToGenerateFromTypeSpecProject(content, context.specRepoConfig);
-      // todo map the sdkName by the sdk language
-      if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
-        context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${ch.typespecProject}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
-        continue;
-      }
-      sdkToGenerate.add(context.config.sdkName);
-    } else if (ch.readmeMd) {
-      const entry = await specContext.specRepo.revparse(`${commit}:${ch.readmeMd}`);
-      const blob = await specContext.specRepo.catFile(['-p', entry]);
-      const content = blob.toString();
-      const config = findSwaggerToSDKConfiguration(content);
-      if (!config || config.repositories.length === 0) {
-        context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${ch.readmeMd}. This readme file will be skipped from SDK generation. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
-        continue;
-      }
-      else if (!config.repositories.some(r => r.repo === context.config.sdkName)) {
-        context.logger.warn(`Warning: ${context.config.sdkName} cannot be found in the 'swagger-to-sdk' section in the ${ch.readmeMd}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
-        continue;
-      }
-      sdkToGenerate.add(context.config.sdkName);
-    }
+  let tspConfigPath = "";
+  let readmeMdPath = "";
+  let enabledSdkForTspConfig = false;
+  let enabledSdkForReadme = false;
+  let twoConfigProvided = false;
+  if(context.config.tspConfigPath && context.config.readmePath) {
+    twoConfigProvided = true;
   }
-
-  if (sdkToGenerate.size === 0) {
-    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
-  }
-  context.logger.info(`SDK to generate:`);
-  const enabledJobs: { [sdkName: string]: { sdkName: string } } = {};
-  for (const sdkName of [...sdkToGenerate]) {
-    if (context.specRepoConfig.sdkRepositoryMappings[sdkName] === undefined) {
-      context.logger.warn(`\tWarning: ${sdkName} not found in ${specConfigPath}. This SDK will be skipped from SDK generation. Please add the right config to the ${specConfigPath} according to this guidance https://aka.ms/azsdk/spec-repo-config`);
-      continue;
-    }
-    context.logger.info(`\t${sdkName}`);
-    enabledJobs[sdkName] = { sdkName };
-  }
-  context.logger.log('endsection', 'Validate SDK config for spec PR scenario');
-};
-
-export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
-  context.logger.log('section', 'Validate SDK configuration');
-  let sdkToGenerate = "";
-
-  let tspConfigPath, readmeMdPath;
   if(context.config.tspConfigPath) {
     tspConfigPath = path.join(context.config.localSpecRepoPath, context.config.tspConfigPath);
   }
@@ -199,174 +119,77 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
   }
   
   if (!tspConfigPath && !readmeMdPath) {
-    throw new Error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them.`);
+    throw new Error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them`);
   }
   
   if (tspConfigPath) {
     const tspConfigContent = fs.readFileSync(tspConfigPath).toString();
     const config = findSDKToGenerateFromTypeSpecProject(tspConfigContent, context.specRepoConfig);
     if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
-      context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
-    }
-    else {
-      sdkToGenerate = context.config.sdkName;
+      if (!twoConfigProvided) {
+        context.status = 'notEnabled';
+        let sampleTspConfigUrl = "https://aka.ms/azsdk/tspconfig-sample-dpg";
+        if (tspConfigPath.includes(".Management")) {
+          sampleTspConfigUrl = "https://aka.ms/azsdk/tspconfig-sample-mpg"
+        }
+        context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Refer to ${sampleTspConfigUrl} to add the right emitter config in the 'tspconfig.yaml' file`);
+        return;
+      }
+    } else {
+      enabledSdkForTspConfig = true;
     }
   }
-  else if (readmeMdPath) {
+  if (readmeMdPath) {
     const readmeContent = fs.readFileSync(readmeMdPath).toString();
     const config = findSwaggerToSDKConfiguration(readmeContent);
-    if (!config || config.repositories.length === 0) {
-      context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath}. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
-    }
-    else if (!config.repositories.some(r => r.repo === context.config.sdkName)) {
-      context.logger.warn(`Warning: ${context.config.sdkName} cannot be found in the 'swagger-to-sdk' section in the ${readmeMdPath}. Please add the right config to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
-    }
-    else {
-      sdkToGenerate = context.config.sdkName;
+    if (!config || config.repositories.length === 0 || !config.repositories.some(r => r.repo === context.config.sdkName)) {
+      if (!twoConfigProvided) {
+        context.status = 'notEnabled';
+        context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in 'swagger-to-sdk' section. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+        return;
+      }
+    } else {
+      enabledSdkForReadme = true;
     }
   }
-  if (sdkToGenerate) {
-    context.logger.info(`SDK to generate:${context.config.sdkName}`);
-  }
-  else {
-    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the related tspconfig.yaml or readme.md`);
+  // only needs to check the two config provided case when both config enable the sdk generation or both config disable the sdk generation
+  // the last case is the normal case, only one config enabled the sdk generation
+  if (enabledSdkForTspConfig && enabledSdkForReadme) {
+    throw new Error(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. Refer to https://aka.ms/azsdk/spec-gen-sdk-config to disable sdk configuration from one of them`);
+  } else if (!enabledSdkForTspConfig && !enabledSdkForReadme) {
+    context.status = 'notEnabled';
+    context.logger.warn(`No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.`);
+  } else {
+    context.logger.info(`SDK to generate:${context.config.sdkName}, configPath: ${enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath}`);
+    context.specConfigPath = enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath;
   }
   context.logger.log('endsection', 'Validate SDK configuration');
 };
-
-const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext, changedSpecs: ChangedSpecs[]) => {
-  context.logger.add(context.messageCaptureTransport);
-  context.logger.log('info', `Handle the following readme.md or typespec project:`);
-  const changedFilesSet = new Set<string>();
-  const readmeMdList: string[] = [];
-  const typespecProjectList: string[] = [];
-  const suppressionFileMap: Map<string, string|undefined> = new Map();
-
-  for (const changedSpec of changedSpecs) {
-    if (changedSpec.typespecProject) {
-      let content: string | undefined = undefined;
-      try {
-        content = fs.readFileSync(path.join(context.specFolder, changedSpec.typespecProject!)).toString();
-      } catch (error) {
-        const typespecPath = `${path.join(context.specFolder, changedSpec.typespecProject!)}`;
-        context.logger.error(`IOError: Fails to read typespec file with path of '${typespecPath}'. Skipping the typespec case and continue the run. Please ensure the typespec exists with the correct path. Error: ${error.message}`);
-      }
-      const config = findSDKToGenerateFromTypeSpecProject(content, context.specRepoConfig)?.filter(
-        (r) => r === context.config.sdkName
-      )[0];
-      if (config === undefined || config.length === 0) {
-        context.logger.warn(
-          `\tWarning: cannot find emitter config for ${context.config.sdkName} in tspconfig.yaml for typespec project ${changedSpec.typespecProject}. This SDK will be skipped from the generation for this project. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.`
-        );
-        continue;
-      }
-      context.logger.info(`\t${changedSpec.typespecProject}`);
-      typespecProjectList.push(changedSpec.typespecProject!.replace('/tspconfig.yaml', ''));
-      suppressionFileMap.set(changedSpec.typespecProject!.replace('/tspconfig.yaml', ''), changedSpec.suppressionFile);
-    } else if (changedSpec.readmeMd) {
-      let content: string | undefined = undefined;
-      try {
-        content = fs.readFileSync(path.join(context.specFolder, changedSpec.readmeMd!)).toString();
-      } catch (error) {
-        context.logger.error(`IOError: Fails to read readme file with path of '${path.join(context.specFolder, changedSpec.readmeMd!)}'. Skipping the swagger case and continue the run. Please ensure the readme exists with the correct path. Error: ${error.message}`);
-      }
-      const confSection = findSwaggerToSDKConfiguration(content);
-      const config = confSection?.repositories.filter((r) => r.repo === context.config.sdkName)[0];
-      if (config === undefined) {
-        context.logger.warn(`\tWarning: ${context.config.sdkName} cannot be found in ${changedSpec.readmeMd}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-go-sdk.md#swagger-to-sdk.`);
-        continue;
-      }
-      context.logger.info(`\t${changedSpec.readmeMd}`);
-      readmeMdList.push(changedSpec.readmeMd!);
-      suppressionFileMap.set(changedSpec.readmeMd!, changedSpec.suppressionFile);
-    }
-    // Avoid the null error when both readme.md and tsp-config.yaml don't exist
-    if (changedSpec.specs) {
-      for (const filePath of changedSpec.specs) {
-        changedFilesSet.add(filePath);
-      }
-    }
-  }
-
-  if (typespecProjectList.length === 0 && readmeMdList.length === 0) {
-    context.logger.remove(context.messageCaptureTransport);
-    return;
-  }
-
-  const changedFiles = [...changedFilesSet];
-  const { status, generateInput, generateOutput } = await workflowCallGenerateScript(
-    context,
-    changedFiles,
-    readmeMdList,
-    typespecProjectList
-  );
-  
-  if (!generateOutput && status === 'failed') {
-    context.logger.warn('Warning: Package processing is skipped as the SDK generation fails. Please look into the above generation errors or report this issue through https://aka.ms/azsdk/support/specreview-channel.');
-    context.logger.remove(context.messageCaptureTransport);
-    return;
-  }
-
-  // Get suppression files from formatting generateInput
-  // filter suppressionFileMap with generateInput readmeMdList and typespecProjectList
-  const filterGenerateFiles = [...generateInput.relatedTypeSpecProjectFolder || [], ...generateInput.relatedReadmeMdFiles || []]
-  const filterSuppressionFileMap: Map<string, string|undefined> = new Map(
-    Array.from(suppressionFileMap).filter(([key]) => filterGenerateFiles.includes(key))
-  );
-
-  const sdkSuppressionsYml = await workflowInitGetSdkSuppressionsYml(context, filterSuppressionFileMap);
-  context.pendingPackages =
-    (generateOutput?.packages ?? []).map((result) => getPackageData(context, result, sdkSuppressionsYml));
-
-  workflowDetectChangedPackages(context);
-
-  context.logger.remove(context.messageCaptureTransport);
-  for (const pkg of context.pendingPackages) {
-    await workflowPkgMain(context, pkg);
-  }
-
-  context.handledPackages.push(...context.pendingPackages);
-  context.pendingPackages = [];
-};
-
-const workflowGenerateSdkForSpecPr = async (context: WorkflowContext) => {
-  const changedSpecs = await workflowDetectChangedSpec(context);
-  context.logger.remove(context.messageCaptureTransport);
-  const callMode =
-    context.swaggerToSdkConfig.advancedOptions.generationCallMode ??
-    'one-for-all-configs';
-  if (callMode === 'one-for-all-configs') {
-    await workflowHandleReadmeMdOrTypeSpecProject(context, changedSpecs);
-  } else {
-    for (const changedSpec of changedSpecs) {
-      await workflowHandleReadmeMdOrTypeSpecProject(context, [changedSpec]);
-    }
-  }
-}
 
 const workflowGenerateSdk = async (context: WorkflowContext) => {
   let readmeMdList: string[] = [];
   let typespecProjectList: string[] = [];
   let suppressionFile;
   const filterSuppressionFileMap: Map<string, string|undefined> = new Map();
-  if (context.config.tspConfigPath) {
-    context.logger.log('info', `Handle the following typespec project: ${context.config.tspConfigPath}`);
-	typespecProjectList.push(context.config.tspConfigPath.replace('/tspconfig.yaml', ''));
-    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.tspConfigPath.replace('tspconfig.yaml', sdkSuppressionsFileName));
-    if (fs.existsSync(suppressionFile)) {
-      filterSuppressionFileMap.set(context.config.tspConfigPath, suppressionFile);
-    }
-  } else if (context.config.readmePath) {
-    context.logger.log('info', `Handle the following readme.md: ${context.config.readmePath}`);
-	readmeMdList.push(context.config.readmePath);
-    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.readmePath.replace('readme.md', sdkSuppressionsFileName));
-    if (fs.existsSync(suppressionFile)) {
-      filterSuppressionFileMap.set(context.config.readmePath, suppressionFile);
+  context.logger.add(context.messageCaptureTransport);
+
+  if (context.specConfigPath) {
+    if (context.specConfigPath.endsWith('tspconfig.yaml')) {
+      typespecProjectList.push(context.specConfigPath.replace('/tspconfig.yaml', ''));
+      suppressionFile = path.join(context.config.localSpecRepoPath, context.specConfigPath.replace('tspconfig.yaml', sdkSuppressionsFileName));
+    } else {
+      readmeMdList.push(context.specConfigPath);
+      suppressionFile = path.join(context.config.localSpecRepoPath, context.specConfigPath.replace('readme.md', sdkSuppressionsFileName));
     }
   }
   else {
     context.logger.error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them.`);
     return;
+  }
+
+  context.logger.log('info', `Handle the following typespec project: ${context.specConfigPath}`);
+  if (fs.existsSync(suppressionFile)) {
+    filterSuppressionFileMap.set(context.specConfigPath, suppressionFile);
   }
 
   const { status, generateOutput } = await workflowCallGenerateScript(
@@ -417,7 +240,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
     // Use file parsing to obtain yaml content and check if the suppression file has any grammar errors
     const sdkSuppressionFilesParseErrorTotal: string[] = [];
     let suppressionFileData: string = '';
-    const filePath = path.join(context.specFolder, sdkSuppressionFilePath);
+    const filePath = path.join(context.config.localSpecRepoPath, sdkSuppressionFilePath);
     try {
       suppressionFileData = fs.readFileSync(filePath).toString();
     } catch (error) {
@@ -450,22 +273,6 @@ export const workflowInitGetSdkSuppressionsYml = async (
   return suppressionFileMap;
 };
 
-const workflowInitSpecRepo = (
-  context: SdkAutoContext,
-) => {
-  const specFolder = context.config.localSpecRepoPath;
-  const specRepo = simpleGit({ ...simpleGitOptions, baseDir: specFolder });
-  return { specFolder, specRepo };
-}
-
-const workflowInitSdkRepo = (
-  context: SdkAutoContext,
-) => {
-  const sdkFolder = context.config.localSdkRepoPath;
-  const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: sdkFolder });
-  return { sdkFolder, sdkRepo };
-};
-
 const fileInitInput = 'initInput.json';
 const fileInitOutput = 'initOutput.json';
 const workflowCallInitScript = async (context: WorkflowContext) => {
@@ -473,7 +280,7 @@ const workflowCallInitScript = async (context: WorkflowContext) => {
   if (initScriptConfig === undefined) {
     context.logger.error('ConfigError: initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
     setFailureType(context, FailureType.PipelineFrameworkFailed);
-    throw new Error('The initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
+    throw new Error('The initScript is not configured in the swagger-to-sdk config. Please refer to the schema');
   }
 
   writeTmpJsonFile(context, fileInitInput, {});
@@ -481,7 +288,7 @@ const workflowCallInitScript = async (context: WorkflowContext) => {
 
   context.logger.log('section', `Call initScript`);
   await runSdkAutoCustomScript(context, initScriptConfig, {
-    cwd: context.sdkFolder,
+    cwd: context.config.localSdkRepoPath,
     statusContext: context,
     argTmpFileList: [fileInitInput, fileInitOutput]
   });
@@ -496,112 +303,6 @@ const workflowCallInitScript = async (context: WorkflowContext) => {
   }
 };
 
-const readmeMdRegex = /^readme.md$/;
-const typespecProjectRegex = /^tspconfig.yaml$/;
-const suppressionFileRegex = new RegExp(sdkSuppressionsFileName);
-const typespecProjectSharedLibraryRegex = /[^/]+\.Shared/;
-const workflowDetectChangedSpec = async (
-  context: Pick<WorkflowContext, 'specRepo' | 'logger' | 'specFolder' | keyof SdkAutoContext>
-) => {
-  const repo = context.specRepo;
-  const headCommit = await repo.revparse("HEAD");
-  const baseCommit = await repo.revparse("HEAD^");
-  const diff = await repo.diff(['--name-status', headCommit, baseCommit]);
-
-  const diffFileList = await gitGetDiffFileList(diff, context, 'in spec PR');
-  const fileList = diffFileList.filter((p) => p.indexOf('/scenarios/') === -1);
-
-  const treeId = await repo.revparse(`${headCommit}^{tree}`);
-
-  context.logger.info(`Related readme.md and typespec project list:`);
-  const changedSpecs: ChangedSpecs[] = [];
-  const readmeMDResult = await searchRelatedParentFolders(fileList, {
-    searchFileRegex: readmeMdRegex,
-    repo: context.specRepo,
-    specFolder: context.specFolder,
-    treeId
-  });
-  const suppressionsResult = await searchRelatedParentFolders(fileList, {
-    searchFileRegex: suppressionFileRegex,
-    repo: context.specRepo,
-    specFolder: context.specFolder,
-    treeId
-  });
-  const typespecProjectResult = await searchRelatedParentFolders(fileList, {
-    searchFileRegex: typespecProjectRegex,
-    repo: context.specRepo,
-    specFolder: context.specFolder,
-    treeId
-  });
-  const typespecProjectSharedLibraries = await searchSharedLibrary(fileList, {
-    searchFileRegex: typespecProjectSharedLibraryRegex,
-    repo: context.specRepo,
-    specFolder: context.specFolder,
-    treeId
-  });
-  const typespecProjectResultSearchedBySharedLibrary = await searchRelatedTypeSpecProjectBySharedLibrary(
-    typespecProjectSharedLibraries,
-    {
-      searchFileRegex: typespecProjectRegex,
-      repo: context.specRepo,
-      specFolder: context.specFolder,
-      treeId
-    }
-  );
-  for (const folderPath of Object.keys(typespecProjectResultSearchedBySharedLibrary)) {
-    if (typespecProjectResult[folderPath]) {
-      typespecProjectResult[folderPath] = typespecProjectResult[folderPath].concat(
-        typespecProjectResultSearchedBySharedLibrary[folderPath]
-      );
-    } else {
-      typespecProjectResult[folderPath] = typespecProjectResultSearchedBySharedLibrary[folderPath];
-    }
-  }
-  const result = {};
-  for (const folderPath of Object.keys(readmeMDResult)) {
-    result[folderPath] = readmeMDResult[folderPath];
-  }
-  for (const folderPath of Object.keys(suppressionsResult)) {
-    // Each readme.md should have corresponding suppression file in folder level
-    // When swagger changed, it cannot get parent suppression file if this swagger folder has readme.md
-    if (Object.keys(readmeMDResult).includes(folderPath)) { 
-      result[folderPath] = suppressionsResult[folderPath]; 
-    }
-  }
-  for (const folderPath of Object.keys(typespecProjectResult)) {
-    result[folderPath] = typespecProjectResult[folderPath];
-  }
-  for (const folderPath of Object.keys(result)) {
-    const readmeMdPath = path.join(folderPath, 'readme.md');
-    const cs: ChangedSpecs = {
-      readmeMd: readmeMdPath,
-      suppressionFile: undefined,
-      specs: readmeMDResult[folderPath]
-    };
-
-    if (typespecProjectResult[folderPath]) {
-      delete cs.readmeMd;
-      cs.specs = typespecProjectResult[folderPath];
-      cs.typespecProject = path.join(folderPath, 'tspconfig.yaml');
-      context.logger.info(`\t tspconfig.yaml file: ${cs.typespecProject}`);
-    } else {
-      context.logger.info(`\t readme.md file: ${readmeMdPath}`);
-    }
-
-    if (suppressionsResult[folderPath]) {
-      // where suppression file exist path. It is a fixed file path, the same as the readme.md path.
-      cs.suppressionFile = path.join(folderPath, sdkSuppressionsFileName);
-      context.logger.info(`\t The ${cs.readmeMd ? 'readme' : 'tsp'} file corresponding ${sdkSuppressionsFileName} exists ${cs.suppressionFile}`);
-    } else {
-      context.logger.info(`\t The ${cs.readmeMd ? 'readme' : 'tsp'} file corresponding ${sdkSuppressionsFileName} does not exist ${cs.suppressionFile}`);
-    }
-
-    changedSpecs.push(cs);
-  }
-
-  return changedSpecs;
-};
-
 const fileGenerateInput = 'generateInput.json';
 const fileGenerateOutput = 'generateOutput.json';
 const workflowCallGenerateScript = async (
@@ -613,14 +314,16 @@ const workflowCallGenerateScript = async (
   const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
   const generateInput: GenerateInput = {
-    specFolder: path.relative(context.sdkFolder, context.specFolder),
+    specFolder: path.relative(context.config.localSdkRepoPath, context.config.localSpecRepoPath),
     headSha: context.config.specCommitSha,
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
     changedFiles,
     apiVersion: context.config.apiVersion,
+    runMode: context.config.runMode,
+    sdkReleaseType: context.config.sdkReleaseType,
     installInstructionInput: {
       isPublic: !context.isPrivateSpecRepo,
-      downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
+      downloadUrlPrefix: "",
       downloadCommandTemplate: "downloadCommand",
     }
   };
@@ -628,30 +331,24 @@ const workflowCallGenerateScript = async (
   if (context.swaggerToSdkConfig.generateOptions.generateScript === undefined) {
     context.logger.error('ConfigError: generateScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
     setFailureType(context, FailureType.PipelineFrameworkFailed);
-    throw new Error('The generateScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
+    throw new Error('The generateScript is not configured in the swagger-to-sdk config. Please refer to the schema');
   }
 
   context.logger.log('section', 'Call generateScript');
 
 
+  // One of relatedTypeSpecProjectFolder and relatedReadmeMdFiles must be non-empty
   if (relatedTypeSpecProjectFolder?.length > 0) {
     generateInput.relatedTypeSpecProjectFolder = relatedTypeSpecProjectFolder;
-  }
-
-  // Duplicate relatedTypeSpecProjectFolder and relatedReadmeMdFiles paths files to avoid generate twice
-  // If path is both in relatedTypeSpecProjectFolder and relatedReadmeMdFiles, it will be keep relatedTypeSpecProjectFolder and removed from relatedReadmeMdFiles
-  if (relatedReadmeMdFiles?.length > 0) {
-    const filteredReadmeMdFiles = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    if (filteredReadmeMdFiles && filteredReadmeMdFiles?.length > 0) {
-      generateInput.relatedReadmeMdFiles = filteredReadmeMdFiles;
-    }
+  } else {
+    generateInput.relatedReadmeMdFiles = relatedReadmeMdFiles;
   }
 
   writeTmpJsonFile(context, fileGenerateInput, generateInput);
   deleteTmpJsonFile(context, fileGenerateOutput);
 
   await runSdkAutoCustomScript(context, context.swaggerToSdkConfig.generateOptions.generateScript, {
-    cwd: context.sdkFolder,
+    cwd: context.config.localSdkRepoPath,
     argTmpFileList: [fileGenerateInput, fileGenerateOutput],
     statusContext
   });
@@ -663,7 +360,7 @@ const workflowCallGenerateScript = async (
   if (generateOutputJson !== undefined) {
     generateOutput = getGenerateOutput(generateOutputJson);
   } else {
-    return { ...statusContext, generateInput, generateOutput };
+    throw new Error("Failed to read generateOutput.json. Refer to the detail logs to check if this is a configuration issue");
   }
 
   /**

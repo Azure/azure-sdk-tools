@@ -14,6 +14,7 @@ export interface TspLocation {
   repo: string;
   additionalDirectories?: string[];
   entrypointFile?: string;
+  emitterPackageJsonPath?: string;
 }
 
 export function resolveTspConfigUrl(configUrl: string): {
@@ -77,12 +78,14 @@ export async function compileTsp({
   resolvedMainFilePath,
   additionalEmitterOptions,
   saveInputs,
+  trace,
 }: {
   emitterPackage: string;
   outputPath: string;
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
+  trace?: string[];
 }): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
@@ -110,6 +113,7 @@ export async function compileTsp({
     outputDir,
     emit: [emitterPackage],
     options: overrideOptions,
+    trace: trace,
   };
   Logger.info(`Compiling tsp using ${emitterPackage}...`);
   const [options, diagnostics] = await resolveCompilerOptions(NodeHost, {

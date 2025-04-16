@@ -9,6 +9,7 @@ export type ExecutionReport = {
   executionResult: SDKAutomationState;
   fullLogPath: string;
   filteredLogPath?: string;
+  vsoLogPath?: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
 };

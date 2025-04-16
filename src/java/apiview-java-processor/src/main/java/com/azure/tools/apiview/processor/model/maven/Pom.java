@@ -13,38 +13,105 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class Pom implements MavenGAV {
-    private Gav gav;
-    private Gav parent;
+/**
+ * This represents an entire Maven POM file, consisting of the GAV, parent GAV, dependencies, and other metadata.
+ */
+public class Pom {
+    private static final String ARTIFACT_ID = "artifactId";
+    private static final String PACKAGE_VERSION = "version";
 
-    private String name;
-    private String description;
+    // Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar
+    private static final Pattern SOURCES_JAR_PATTERN = Pattern.compile("(.+)-(\\d+\\.\\d+.\\d+(-.+)?)-sources\\.jar");
 
-    private List<Dependency> dependencies;
+    private final Gav gav;
+    private final Gav parent;
 
-    private Float jacocoMinLineCoverage;
-    private Float jacocoMinBranchCoverage;
+    private final String name;
+    private final String description;
 
-    private String checkstyleExcludes;
+    private final List<Dependency> dependencies;
 
-    private boolean fileExists;
+    private final Float jacocoMinLineCoverage;
+    private final Float jacocoMinBranchCoverage;
+
+    private final String checkstyleExcludes;
+
+    private final boolean fileExists;
 
     // These are the dependencies specifies in the maven-enforcer that are allowed
-    private List<String> allowedDependencies;
+    private final List<String> allowedDependencies;
 
-    public Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
-        this.gav = new Gav(groupId, artifactId, version);
-        this.fileExists = fileExists;
+    public static Pom fromSourcesJarFile(File sourcesJarFile) {
+        Pom pom = null;
+        final String filename = sourcesJarFile.getName();
+        Map<String, String> filenameParts = parseFilename(filename);
+
+        // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
+        try (final JarFile jarFile = new JarFile(sourcesJarFile)) {
+            final Enumeration<JarEntry> enumOfJar = jarFile.entries();
+            while (enumOfJar.hasMoreElements()) {
+                final JarEntry entry = enumOfJar.nextElement();
+                final String fullPath = entry.getName();
+
+                // use the pom.xml of this artifact only
+                // shaded jars can contain a pom.xml file each for every shaded dependencies
+                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(filenameParts.get(ARTIFACT_ID) + "/pom.xml")) {
+                    pom = new Pom(jarFile.getInputStream(entry));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // if we can't get the maven details out of the Jar file, we will just use the filename itself...
+        if (pom == null) {
+            // we failed to read it from the maven pom file, we will just take the file name without any extension
+            pom = new Pom("", filenameParts.get(ARTIFACT_ID), filenameParts.get(PACKAGE_VERSION), false);
+        }
+
+        return pom;
     }
 
-    public Pom(InputStream pomFileStream) throws IOException {
+    static Map<String, String> parseFilename(String filename) {
+        Matcher matcher = SOURCES_JAR_PATTERN.matcher(filename);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Filename does not match the expected package naming pattern " + filename
+                    + ". Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar");
+        }
+        Map<String, String> filenameParts = new HashMap<>();
+        String artifactId = matcher.group(1);
+        String packageVersion = matcher.group(2);
+        filenameParts.put(ARTIFACT_ID, artifactId);
+        filenameParts.put(PACKAGE_VERSION, packageVersion);
+        return filenameParts;
+    }
+
+    private Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
+        this.gav = new Gav(groupId, artifactId, version);
+        this.fileExists = fileExists;
         this.dependencies = new ArrayList<>();
         this.allowedDependencies = new ArrayList<>();
+        this.parent = null;
+        this.name = null;
+        this.description = null;
+        this.jacocoMinLineCoverage = null;
+        this.jacocoMinBranchCoverage = null;
+        this.checkstyleExcludes = null;
+    }
+
+    private Pom(InputStream pomFileStream) throws IOException {
+        this.dependencies = new ArrayList<>();
+        this.allowedDependencies = new ArrayList<>();
+        this.fileExists = true;
 
         try {
             // use xpath to get the artifact ID

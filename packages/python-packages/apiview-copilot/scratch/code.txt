@@ -1,0 +1,7 @@
+class BanoodleClient:
+
+    ivar name
+
+    def new_banoodle(self, name: str, **options: any) -> BanoodleClient
+
+    def erase_banoodle(self, name: str, **options: any)

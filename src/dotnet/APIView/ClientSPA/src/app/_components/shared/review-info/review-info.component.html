@@ -1,7 +1,7 @@
 <div class="row my-2">
     <p-menubar>
         <ng-template pTemplate="start">
-            <img src="{{assetsPath}}/images/{{ review?.language! | languageNames }}-original.svg" width="25" height="25">
+            <img *ngIf="review?.language" src="{{assetsPath}}/images/{{ review?.language! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
             <span class="fw-semibold ms-2 me-3">{{ review?.packageName}}</span>
             <i class="fas fa-check-circle text-success me-3" *ngIf="review?.isApproved"></i>
             <app-revision-options *ngIf="(apiRevisions && apiRevisions.length > 0) || (samplesRevisions && samplesRevisions.length > 0)" [apiRevisions]="apiRevisions" 

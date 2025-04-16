@@ -3,15 +3,22 @@
 
 package com.azure.tools.apiview.processor.diagnostics.rules.azure;
 
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.models.Constants;
+import com.azure.tools.apiview.processor.analysers.util.ASTUtils;
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
+import com.azure.tools.apiview.processor.model.ReviewLine;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.ast.CompilationUnit;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
+
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
 /**
  * Diagnostic rule that validates the Maven package name and description match the convention specified in the
@@ -85,26 +92,25 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
             // TODO
         } else {
             // Maven name
-            String nameId = getId("name", pom.getName());
-            String mavenName = pom.getName();
+            final String mavenName = pom.getName();
             if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
-                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, nameId,
+                final Optional<ReviewLine> optionalLine = ASTUtils.findReviewLine(listing, line -> line.hasProperty(Constants.PROPERTY_MAVEN_NAME));
+                final String lineId = optionalLine.map(ReviewLine::getLineId).orElse(null);
+                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, lineId,
                     "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
                     mavenNameGuidelineLink));
             }
 
+
             // Maven description
-            String descriptionId = getId("description", pom.getDescription());
-            String mavenDescription = pom.getDescription();
+            final String mavenDescription = pom.getDescription();
             if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
-                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, descriptionId,
-                    "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() + "'.",
-                    mavenDescriptionGuidelineLink));
+                final Optional<ReviewLine> optionalLine = ASTUtils.findReviewLine(listing, line -> line.hasProperty(Constants.PROPERTY_MAVEN_DESCRIPTION));
+                final String lineId = optionalLine.map(ReviewLine::getLineId).orElse(null);
+                listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, lineId,
+                        "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() + "'.",
+                        mavenDescriptionGuidelineLink));
             }
         }
-    }
-
-    private static String getId(String key, Object value) {
-        return MiscUtils.tokeniseKeyValue(key, value).getDefinitionId();
     }
 }

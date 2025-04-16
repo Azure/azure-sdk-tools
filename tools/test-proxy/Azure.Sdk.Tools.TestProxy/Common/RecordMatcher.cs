@@ -244,14 +244,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             StringBuilder builder = new StringBuilder();
             builder.AppendLine($"Unable to find a record for the request {request.RequestMethod} {request.RequestUri}");
 
-            if (entries != null)
-            {
-                foreach (var entry in entries)
-                {
-                    builder.AppendLine($"Remaining entry: {entry.RequestUri}");
-                }
-            }
-
             if (bestScoreEntry == null)
             {
                 builder.AppendLine("No records to match.");
@@ -279,6 +271,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             request.Request.TryGetContentType(out var contentType);
             CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, contentType, descriptionBuilder: builder);
 
+            if (entries != null && entries.Count >= 1)
+            {
+                builder.AppendLine("Remaining Entries:");
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    var entry = entries[i];
+                    builder.AppendLine($"{i}: {entry.RequestUri}");
+                }
+            }
             return builder.ToString();
         }
 

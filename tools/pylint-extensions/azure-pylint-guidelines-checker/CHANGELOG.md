@@ -1,5 +1,17 @@
 # Release History
 
+## 0.5.3 (2025-04-15)
+- Updating documentation
+- Bug fix for `do-not-import-asyncio` checker, was incorrectly flagging `azure.core` imports.
+
+## 0.5.2 (2025-02-19)
+
+- Bug fix for `do-not-log-exceptions` checker, was incorrectly flagging debug logs.
+
+## 0.5.1 (2025-01-23)
+
+- Bug Fix for connection_verify rule
+
 ## 0.5.0 (2025-01-06)
 
 - Added `httpx` as an import flagged by C4749(networking-import-outside-azure-core-transport)

@@ -24,9 +24,11 @@ import {
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
-import { resolve } from "node:path";
+import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
+
+const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
 export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
@@ -37,9 +39,9 @@ export async function initCommand(argv: any) {
 
   const repoRoot = await getRepoRoot(outputDir);
 
-  const emitter = await getEmitterFromRepoConfig(
-    joinPaths(repoRoot, "eng", "emitter-package.json"),
-  );
+  const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
+
+  const emitter = await getEmitterFromRepoConfig(emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath));
   if (!emitter) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
@@ -89,8 +91,14 @@ export async function initCommand(argv: any) {
       directory: resolvedConfigUrl.path,
       commit: resolvedConfigUrl.commit,
       repo: resolvedConfigUrl.repo,
-      additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+      additionalDirectories:
+        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+          "additionalDirectories"
+        ] ?? [],
     };
+    if (argv["emitter-package-json-path"]) {
+      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
@@ -132,8 +140,16 @@ export async function initCommand(argv: any) {
       directory: directory,
       commit: commit ?? "",
       repo: repo ?? "",
-      additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+      additionalDirectories:
+        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+          "additionalDirectories"
+        ] ?? [],
     };
+    const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
+    if (emitterPackageOverride) {
+      // store relative path to repo root
+      tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
+    }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     outputDir = newPackageDir;
   }
@@ -162,6 +178,9 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
+  const emitterPackageJsonPath = getEmitterPackageJsonPath(
+    repoRoot,
+    tspLocation);
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`);
@@ -227,15 +246,16 @@ export async function syncCommand(argv: any) {
   }
 
   try {
-    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    let emitterLockPath = getEmitterLockPath(getEmitterPackageJsonPath(repoRoot, tspLocation));
+    
+    // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
   } catch (err) {
     Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
     Logger.debug("Will attempt look for emitter-package.json...");
   }
   try {
-    const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-    await cp(emitterPath, joinPaths(tempRoot, "package.json"), { recursive: true });
+    await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"), { recursive: true });
   } catch (err) {
     throw new Error(
       `Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`,
@@ -247,6 +267,7 @@ export async function generateCommand(argv: any) {
   let outputDir = argv["output-dir"];
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
+  const skipInstall = argv["skip-install"];
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
@@ -257,37 +278,41 @@ export async function generateCommand(argv: any) {
   }
   const srcDir = joinPaths(tempRoot, projectName);
   const emitter = await getEmitterFromRepoConfig(
-    joinPaths(await getRepoRoot(outputDir), "eng", "emitter-package.json"),
+      getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation),
   );
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
-  Logger.info("Installing dependencies from npm...");
-  const args: string[] = [];
-  try {
-    // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
-    await stat(joinPaths(tempRoot, "package-lock.json"));
-    args.push("ci");
-  } catch (err) {
-    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
-    args.push("install");
+  if (skipInstall) {
+    Logger.info("Skipping installation of dependencies");
+  } else {
+    Logger.info("Installing dependencies from npm...");
+    const args: string[] = [];
+    try {
+      // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+      await stat(joinPaths(tempRoot, "package-lock.json"));
+      args.push("ci");
+    } catch (err) {
+      // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+      args.push("install");
+    }
+    // NOTE: This environment variable should be used for developer testing only. A force
+    // install may ignore any conflicting dependencies and result in unexpected behavior.
+    dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+    if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
+      args.push("--force");
+    }
+    await npmCommand(srcDir, args);
   }
-  // NOTE: This environment variable should be used for developer testing only. A force
-  // install may ignore any conflicting dependencies and result in unexpected behavior.
-  dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
-  if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
-    args.push("--force");
-  }
-  await npmCommand(srcDir, args);
-
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,
+    trace: argv["trace"],
   });
 
   if (argv["debug"]) {
@@ -354,6 +379,7 @@ export async function convertCommand(argv: any): Promise<void> {
   const swaggerReadme = argv["swagger-readme"];
   const arm = argv["arm"];
   const fullyCompatible = argv["fully-compatible"];
+  const debug = argv["debug"];
   let rootUrl = resolvePath(outputDir);
 
   Logger.info("Converting swagger to typespec...");
@@ -393,6 +419,10 @@ export async function convertCommand(argv: any): Promise<void> {
   if (fullyCompatible) {
     args.push("--isFullCompatible");
   }
+
+  if (debug) {
+    args.push("--debug");
+  }
   await nodeCommand(outputDir, args);
 
   if (arm) {
@@ -405,9 +435,70 @@ export async function convertCommand(argv: any): Promise<void> {
   }
 }
 
-export async function generateLockFileCommand(argv: any) {
+export async function generateConfigFilesCommand(argv: any) {
   const outputDir = argv["output-dir"];
-  const repoRoot = await getRepoRoot(outputDir);
+  const packageJsonPath = normalizePath(resolve(argv["package-json"]));
+  const overridePath = argv["overrides"] ?? undefined;
+
+  if (packageJsonPath === undefined || !(await doesFileExist(packageJsonPath))) {
+    throw new Error(`package.json not found in: ${packageJsonPath ?? "[Not Specified]"}`);
+  }
+  Logger.info("Generating emitter-package.json file...");
+  const content = await readFile(packageJsonPath);
+  const packageJson: Record<string, any> = JSON.parse(content.toString());
+  const emitterPackageJson: Record<string, any> = {
+    main: "dist/src/index.js",
+    dependencies: {},
+  };
+
+  let overrideJson: Record<string, any> = {};
+  if (overridePath) {
+    overrideJson = JSON.parse((await readFile(overridePath)).toString()) ?? {};
+  }
+
+  // Add emitter as dependency
+  emitterPackageJson["dependencies"][packageJson["name"]] =
+    overrideJson[packageJson["name"]] ?? packageJson["version"];
+
+  delete overrideJson[packageJson["name"]];
+  const devDependencies: Record<string, any> = {};
+  const peerDependencies = packageJson["peerDependencies"] ?? {};
+  const possiblyPinnedPackages: Array<string> =
+    packageJson["azure-sdk/emitter-package-json-pinning"] ?? Object.keys(peerDependencies);
+
+  for (const pinnedPackage of possiblyPinnedPackages) {
+    const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
+    if (pinnedVersion && !overrideJson[pinnedPackage]) {
+      Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);
+      devDependencies[pinnedPackage] = pinnedVersion;
+    }
+  }
+
+  if (Object.keys(devDependencies).length > 0) {
+    emitterPackageJson["devDependencies"] = devDependencies;
+  }
+  if (Object.keys(overrideJson).length > 0) {
+    emitterPackageJson["overrides"] = overrideJson;
+  }
+  
+  const emitterPath = resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(outputDir), defaultRelativeEmitterPackageJsonPath);
+  
+  await writeFile(
+    emitterPath,
+    JSON.stringify(emitterPackageJson, null, 2),
+  );
+  Logger.info(`${basename(emitterPath)} file generated in '${dirname(emitterPath)}' directory`);
+
+  await generateLockFileCommandCore(outputDir, emitterPath);
+}
+
+export async function generateLockFileCommand(argv: any) {
+  await generateLockFileCommandCore(
+    argv["output-dir"],
+    resolveEmitterPathFromArgs(argv) ?? joinPaths(await getRepoRoot(argv["output-dir"]), defaultRelativeEmitterPackageJsonPath));
+}
+
+export async function generateLockFileCommandCore(outputDir: string, emitterPackageJsonPath: string) {
 
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
@@ -415,17 +506,54 @@ export async function generateLockFileCommand(argv: any) {
     args.push("--force");
   }
   const tempRoot = await createTempDirectory(outputDir);
-  await cp(joinPaths(repoRoot, "eng", "emitter-package.json"), joinPaths(tempRoot, "package.json"));
+  await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"));
   await npmCommand(tempRoot, args);
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
+  const emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
   if (lockFile.isFile()) {
     await cp(
       joinPaths(tempRoot, "package-lock.json"),
-      joinPaths(repoRoot, "eng", "emitter-package-lock.json"),
+      emitterLockPath,
     );
   }
   await removeDirectory(tempRoot);
-  Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
+  Logger.info(`Lock file generated in ${emitterLockPath}`);
+}
+
+export async function installDependencies(argv: any) {
+  const outputPath = argv["path"];
+  const repoRoot = await getRepoRoot(process.cwd());
+  let installPath = repoRoot;
+  if (outputPath !== undefined) {
+    Logger.warn(
+      "The install path of the node_modules/ directory must be in the path of the target project, otherwise other commands using npm will fail.",
+    );
+    installPath = resolvePath(outputPath);
+  }
+
+  const args: string[] = [];
+  await cp(
+    joinPaths(repoRoot, "eng", "emitter-package.json"),
+    joinPaths(installPath, "package.json"),
+  );
+  try {
+    // Check if emitter-package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
+    await cp(emitterLockPath, joinPaths(installPath, "package-lock.json"));
+    args.push("ci");
+  } catch (err) {
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+    args.push("install");
+  }
+  // NOTE: This environment variable should be used for developer testing only. A force
+  // install may ignore any conflicting dependencies and result in unexpected behavior.
+  dotenvConfig({ path: resolve(repoRoot, ".env") });
+  if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  Logger.info("Installing dependencies from npm...");
+  await npmCommand(installPath, args);
 }
 
 export async function sortSwaggerCommand(argv: any): Promise<void> {
@@ -441,4 +569,24 @@ export async function sortSwaggerCommand(argv: any): Promise<void> {
   const sorted = sortOpenAPIDocument(document);
   await writeFile(swaggerFile, JSON.stringify(sorted, null, 2));
   Logger.info(`${swaggerFile} has been sorted.`);
+}
+
+
+function getEmitterPackageJsonPath(repoRoot: string, tspLocation: TspLocation): string {
+  const relativePath = tspLocation.emitterPackageJsonPath ?? defaultRelativeEmitterPackageJsonPath;
+  return joinPaths(repoRoot, relativePath);
+}
+
+function getEmitterLockPath(emitterPackageJsonPath: string): string {
+  const emitterPackageJsonFileName = basename(emitterPackageJsonPath, extname(emitterPackageJsonPath));
+  return joinPaths(dirname(emitterPackageJsonPath), `${emitterPackageJsonFileName}-lock.json`);
+}
+
+function resolveEmitterPathFromArgs(argv: any): string | undefined {
+  const emitterPath = argv["emitter-package-json-path"];
+  if (emitterPath) {
+    return resolve(emitterPath);
+  }
+
+  return undefined;
 }

@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
@@ -18,7 +17,6 @@ namespace APIViewWeb
         }
 
         public abstract string ProcessName { get; }
-        public abstract string VersionString { get; }
         public abstract string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath);
 
         public override bool CanUpdate(string versionString)
@@ -73,7 +71,7 @@ namespace APIViewWeb
                 {
                     using (var codeFileStream = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                     {
-                        CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
+                        CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream);
                         codeFile.VersionString = VersionString;
                         codeFile.Language = Name;
                         return codeFile;

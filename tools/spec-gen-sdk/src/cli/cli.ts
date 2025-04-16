@@ -14,14 +14,15 @@ This tool will generate the SDK code using the local specification repository an
 
 export type SpecGenSdkCliConfig = {
   workingFolder: string;
-  isTriggeredByPipeline: boolean;
   localSpecRepoPath: string;
   localSdkRepoPath: string;
   tspConfigPath?: string;
   readmePath?: string;
   sdkRepoName: string;
   apiVersion?: string;
-  prNumber?: number;
+  prNumber?: string;
+  runMode: string;
+  sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   headRepoHttpsUrl?: string;
@@ -32,7 +33,6 @@ export type SpecGenSdkCliConfig = {
 const initCliConfig = (argv) : SpecGenSdkCliConfig => {
   return {
     workingFolder: argv.workingFolder,
-    isTriggeredByPipeline: argv.isTriggeredByPipeline,
     localSpecRepoPath: argv.localSpecRepoPath,
     localSdkRepoPath: argv.localSdkRepoPath,
     tspConfigPath: argv.tspConfigRelativePath,
@@ -40,6 +40,8 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     sdkRepoName: argv.sdkRepoName,
     apiVersion: argv.apiVersion,
     prNumber: argv.prNumber,
+    runMode: argv.runMode,
+    sdkReleaseType: argv.sdkReleaseType,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
     headRepoHttpsUrl: argv.headRepoHttpsUrl,
@@ -66,13 +68,14 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       specCommitSha: config.specCommitSha,
       specRepoHttpsUrl: config.specRepoHttpsUrl,
       pullNumber: config.prNumber,
-      sdkName: config.sdkRepoName,
+      sdkName: config.sdkRepoName.replace('-pr', ''),
       apiVersion: config.apiVersion,
+      runMode: config.runMode,
+      sdkReleaseType: config.sdkReleaseType,
       workingFolder: config.workingFolder,
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
-      isTriggeredByPipeline: config.isTriggeredByPipeline,
-      runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
+      runEnv: config.runMode !== "local" ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto',
       version: config.version
     });
@@ -83,13 +86,12 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
   }
 
   const elapsed = process.hrtime(start);
-  console.log(`Execution time: ${elapsed[0]}s`);
-
-  console.log(`Exit with status ${status}`);
-  if (status !== undefined && !['warning', 'succeeded'].includes(status)) {
-    process.exit(-1);
-  } else {
+  console.log(`spec-gen-sdk execution time: ${elapsed[0]}s`);
+  console.log(`spec-gen-sdk exit with status ${status}`);
+  if (status !== undefined && ['warning', 'succeeded', 'notEnabled'].includes(status)) {
     process.exit(0);
+  } else {
+    process.exit(-1);
   }
 };
 
@@ -122,12 +124,6 @@ yargs(hideBin(process.argv))
           type: "string",
           description: "The working folder to run this tool",
           default: path.join(homedir(), '.sdkauto')
-        },
-        'is-triggered-by-pipeline': {
-          alias: "t",
-          type: 'boolean',
-          description: 'Flag to indicate if triggered by pipeline',
-          default: false,
         },
         'tsp-config-relative-path': {
           alias: "tcrp",
@@ -176,6 +172,20 @@ yargs(hideBin(process.argv))
           alias: "apiv",
           type: "string",
           description: "The version of the API spec to be used to generate the SDK",
+        },
+        'sdk-release-type': {
+          alias: "srt",
+          type: "string",
+          description: "The release type of SDK, either 'beta' or 'stable'",
+          default: "beta",
+          choices: ['beta', 'stable']
+        },
+        'run-mode': {
+          alias: "rm",
+          type: "string",
+          description: "The run mode of the tool, allowed values are 'local','spec-pull-request','release','batch'",
+          default: "local",
+          choices: ['local', 'spec-pull-request', 'release', 'batch'],
         }
     })},
     async (argv) => {

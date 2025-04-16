@@ -4,7 +4,7 @@ import {logger} from "./utils/logger.js";
 import {getLastCommitId} from "./utils/git.js";
 import {generateMgmt} from "./hlc/generateMgmt.js";
 
-const shell = require('shelljs');
+import shell from 'shelljs';
 
 async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, additionalArgs?: string) {
     const regexResult = /^(.*[\/\\]azure-rest-api-specs[-pr]*)[\/\\](specification.*)/.exec(absoluteReadmeMd);

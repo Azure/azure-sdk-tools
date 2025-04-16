@@ -15,7 +15,7 @@ import * as fs from "fs";
 import * as path from "path";
 import {buildGeneratedCodes, generateCodes} from "./llc/generateRLCInTerminal/generateRLCInTerminal.js";
 
-const shell = require('shelljs');
+import shell from 'shelljs';
 
 async function autoGenerate(options: any) {
     const sdkRepo = String(shell.pwd());

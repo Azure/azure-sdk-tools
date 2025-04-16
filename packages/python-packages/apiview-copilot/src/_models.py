@@ -93,21 +93,33 @@ class ReviewResult(BaseModel):
         - single number (e.g., "10"): Use as is, cast to int
         - range (e.g., "10-20"): Take the first number
         - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the violation for each line
+        - invalid (e.g., "abc"): Use a fallback value of 0
         """
         result_violations = []
+        default_line_no = 0
         for violation in violations:
             raw_line_no = str(violation.get("line_no", "0")).replace(" ", "").strip()
             for item in raw_line_no.split(","):
                 item = item.strip()
-                violation_copy = violation.copy()  # Create a copy of the violation dictionary
+                violation_copy = (
+                    violation.copy()
+                )  # Create a copy of the violation dictionary
                 if "-" in item:
                     # Handle range format (e.g., "10-20")
                     first_num = item.split("-")[0].strip()
-                    violation_copy["line_no"] = int(first_num)
+                    try:
+                        violation_copy["line_no"] = int(first_num)
+                    except ValueError:
+                        # Use fallback value if conversion fails
+                        violation_copy["line_no"] = default_line_no
                     result_violations.append(Violation(**violation_copy))
                 else:
-                    # Handle single number format (e.g., "10")
-                    violation_copy["line_no"] = int(item)
+                    try:
+                        # Handle single number format (e.g., "10")
+                        violation_copy["line_no"] = int(item)
+                    except ValueError:
+                        # Use fallback value if conversion fails
+                        violation_copy["line_no"] = default_line_no
                     result_violations.append(Violation(**violation_copy))
         self.violations.extend(result_violations)
 

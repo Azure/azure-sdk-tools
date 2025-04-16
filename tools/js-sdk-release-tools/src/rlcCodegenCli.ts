@@ -75,6 +75,6 @@ const optionDefinitions = [
     {name: 'interactive', type: Boolean}
 
 ];
-const commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
 autoGenerate(options);

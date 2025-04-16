@@ -32,6 +32,6 @@ const optionDefinitions = [
     { name: 'readme', type: String },
     { name: 'additional-args', type: String },
 ];
-const commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
 automationGenerateInTerminal(options.readme, options.tag, options.use, options['additional-args']);

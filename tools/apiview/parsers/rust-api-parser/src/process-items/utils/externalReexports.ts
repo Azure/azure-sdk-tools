@@ -105,9 +105,7 @@ function createModuleHeaderLine(
         Value: parentModule.prefix,
         NavigateToId: parentModule.id.toString(),
         HasSuffixSpace: false,
-        RenderClasses: [
-          "namespace"
-        ],
+        RenderClasses: ["namespace"],
       },
       {
         Kind: TokenKind.Punctuation,
@@ -118,10 +116,9 @@ function createModuleHeaderLine(
         Kind: TokenKind.TypeName,
         Value: itemSummary.path[itemSummary.path.length - 1],
         NavigateToId: itemId.toString(),
-        NavigationDisplayName: parentModule.prefix + "::" + itemSummary.path[itemSummary.path.length - 1],
-        "RenderClasses": [
-          "namespace"
-        ],
+        NavigationDisplayName:
+          parentModule.prefix + "::" + itemSummary.path[itemSummary.path.length - 1],
+        RenderClasses: ["namespace"],
       },
       {
         Kind: TokenKind.Punctuation,

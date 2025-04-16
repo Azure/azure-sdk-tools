@@ -185,7 +185,7 @@ function processModuleChildren(
         moduleReviewLine.Children.push(...childReviewLines.filter((line) => line != null));
         nonModuleChildrenExist = true;
       }
-    }// else-case handled at processUse
+    } // else-case handled at processUse
   }
 
   // Process module children (siblings)
@@ -206,10 +206,15 @@ function processModuleChildren(
       }
     } else if (moduleChildId in apiJson.paths) {
       // Handle external modules re-exported into this scope
-      const externalModules = processModuleReexport(moduleChildId, apiJson.paths[moduleChildId],apiJson, {
-        id: item.id,
-        prefix: modulePrefix,
-      });
+      const externalModules = processModuleReexport(
+        moduleChildId,
+        apiJson.paths[moduleChildId],
+        apiJson,
+        {
+          id: item.id,
+          prefix: modulePrefix,
+        },
+      );
       siblingModuleLines.push(...externalModules);
     }
   }

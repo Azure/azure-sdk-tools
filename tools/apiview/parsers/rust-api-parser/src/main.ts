@@ -94,7 +94,7 @@ function buildCodeFile(): CodeFile {
   const codeFile: CodeFile = {
     PackageName: apiJson.index[apiJson.root].name || "unknown",
     PackageVersion: apiJson["crate_version"] || "unknown",
-    ParserVersion: "1.0.0",
+    ParserVersion: "1.1.0",
     Language: "Rust",
     ReviewLines: [],
   };

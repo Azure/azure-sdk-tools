@@ -2879,7 +2879,7 @@ class DoNotImportAsyncio(BaseChecker):
         """Check that we aren't importing asyncio."""
         try:
             for name, _ in node.names:
-                if name == "asyncio" and not node.root().name.startswith(self.IGNORE_PACKAGES):
+                if name == "asyncio" and not any(node.root().name.startswith(pkg) for pkg in self.IGNORE_PACKAGES):
                     self.add_message(
                         msgid=f"do-not-import-asyncio",
                         node=node,

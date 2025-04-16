@@ -2,10 +2,12 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -94,13 +96,71 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
 
+        private static readonly byte[] CrLf = new byte[] { (byte)'\r', (byte)'\n' };
+
+        private byte[] SanitizeMultipartBody(string boundary, byte[] raw)
+        {
+            var reader = new MultipartReader(boundary, new MemoryStream(raw));
+            using var outStream = new MemoryStream();
+
+            byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
+            byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{boundary}--\r\n");
+
+            MultipartSection section;
+            while ((section = reader.ReadNextSectionAsync()
+                                     .GetAwaiter()
+                                     .GetResult()) != null)
+            {
+                // 1) opening boundary
+                outStream.Write(boundaryStart);
+
+                // 2) headers
+                foreach (var h in section.Headers)
+                {
+                    var headerLine = $"{h.Key}: {h.Value}\r\n";
+                    outStream.Write(Encoding.ASCII.GetBytes(headerLine));
+                }
+
+                // 3) blank line between headers and body
+                outStream.Write(CrLf);
+
+                // 4) body (sanitised)
+                using var tmp = new MemoryStream();
+                section.Body.CopyTo(tmp);
+                var original = tmp.ToArray();
+                byte[] newBody;
+
+                if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
+                {
+                    var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(original));
+                    newBody = enc.GetBytes(sanitised);
+                }
+                else
+                {
+                    newBody = SanitizeBody(section.ContentType, original);
+                }
+
+                outStream.Write(newBody);
+                outStream.Write(CrLf); // body terminator
+            }
+
+            // 5) closing boundary
+            outStream.Write(boundaryClose);
+
+            return outStream.ToArray();
+        }
+
         public virtual void SanitizeBody(RequestOrResponse message)
         {
             if (message.Body != null)
             {
                 message.TryGetContentType(out string contentType);
 
-                if (message.TryGetBodyAsText(out string text))
+                if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
+                {
+                    message.Body = SanitizeMultipartBody(boundary, message.Body);
+                }
+                else if (message.TryGetBodyAsText(out string text))
                 {
                     message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
                 }

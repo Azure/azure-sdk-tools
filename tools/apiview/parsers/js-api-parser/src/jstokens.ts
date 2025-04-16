@@ -207,12 +207,21 @@ function getRenderClass(kind: ApiItemKind) {
  * @param reviewTokens - {@link ReviewToken} array to add the built token
  * @param s
  * @param item
+ * @param deprecated Whether the Api is deprecated or not
  * @returns
  */
-export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiItem) {
+export function splitAndBuild(
+  reviewTokens: ReviewToken[],
+  s: string,
+  item: ApiItem,
+  deprecated: boolean,
+) {
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
-  const lines = s.replace(/export declare function/g, "export function").split("\n");
+  const lines = s
+    .replace(/export declare function/g, "export function")
+    .replace(/export declare class/g, "export class")
+    .split("\n");
   const { kind: memberKind, displayName: currentTypeName } = item;
   const currentTypeid = item.canonicalReference.toString();
   for (const l of lines) {
@@ -227,11 +236,13 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
         reviewToken = buildToken({
           Kind: TokenKind.Keyword,
           Value: token.value,
+          IsDeprecated: deprecated,
         });
       } else if (token.value === currentTypeName) {
         reviewToken = buildToken({
           Kind: TokenKind.MemberName,
           Value: token.value,
+          IsDeprecated: deprecated,
         });
         const renderClass = getRenderClass(memberKind);
         if (renderClass !== "") {
@@ -250,11 +261,13 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
         reviewToken = buildToken({
           Kind: TokenKind.StringLiteral,
           Value: token.value,
+          IsDeprecated: deprecated,
         });
       } else if (token.type === "Punctuator") {
         reviewToken = buildToken({
           Kind: TokenKind.Punctuation,
           Value: token.value,
+          IsDeprecated: deprecated,
         });
       } else if (token.type === "WhiteSpace") {
         if (token.value.length > 1) {
@@ -262,6 +275,7 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
           reviewToken = buildToken({
             Kind: TokenKind.Text,
             Value: token.value,
+            IsDeprecated: deprecated,
           });
         }
         if (reviewTokens.length > 0) {
@@ -272,6 +286,7 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
         reviewToken = buildToken({
           Kind: TokenKind.Text,
           Value: token.value,
+          IsDeprecated: deprecated,
         });
         const typeParameters = isTypeMember(item.kind)
           ? (item.parent as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> })
@@ -302,11 +317,13 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
  * @param currentTypeid
  * @param currentTypeName
  * @param memberKind
+ * @param deprecated Whether the Api is deprecated or not
  */
 export function splitAndBuildMultipleLine(
   line: ReviewLine,
   excerptTokens: readonly ExcerptToken[],
   item: ApiItem,
+  deprecated: boolean,
 ) {
   let firstReviewLine: boolean = true;
   for (const excerpt of excerptTokens) {
@@ -315,6 +332,7 @@ export function splitAndBuildMultipleLine(
         Kind: TokenKind.TypeName,
         NavigateToId: excerpt.canonicalReference.toString(),
         Value: excerpt.text,
+        IsDeprecated: deprecated,
       });
       if (line.Children.length > 0) {
         line.Children[line.Children.length - 1].Tokens.push(token);
@@ -331,10 +349,11 @@ export function splitAndBuildMultipleLine(
             Kind: TokenKind.Comment,
             IsDocumentation: true,
             Value: l,
+            IsDeprecated: deprecated,
           });
           reviewTokens.push(commentToken);
         } else {
-          splitAndBuild(reviewTokens, l, item);
+          splitAndBuild(reviewTokens, l, item, deprecated);
         }
 
         if (firstReviewLine) {

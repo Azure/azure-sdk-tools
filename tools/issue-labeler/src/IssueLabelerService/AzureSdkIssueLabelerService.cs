@@ -9,10 +9,8 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Linq;
 using IssueLabeler.Shared;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace IssueLabelerService
 {
@@ -68,7 +66,7 @@ namespace IssueLabelerService
                 // Get the Qna model based on configuration
                 var qnaService = _answerServices.GetAnswerService(config);
 
-                var answer = await qnaService.AnswerQuery(issue);
+                var answer = await qnaService.AnswerQuery(issue, labels);
 
                 TriageOutput result = new TriageOutput
                 {

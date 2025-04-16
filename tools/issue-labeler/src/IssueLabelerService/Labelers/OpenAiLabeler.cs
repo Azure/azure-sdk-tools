@@ -90,7 +90,7 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Service: {output.Service} Category: {output.Category}");
 
-            return [output.Service, output.Category];
+            return [output.Category, output.Service];
         }
 
         private class LabelOutput

@@ -53,7 +53,9 @@ async function automationGenerateInPipeline(
                     swaggerRepoUrl: repoHttpsUrl,
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
-                    runningEnvironment: runningEnvironment
+                    runningEnvironment: runningEnvironment,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
@@ -70,7 +72,9 @@ async function automationGenerateInPipeline(
                     sdkGenerationType: sdkGenerationType === 'command' ? 'command' : 'script',
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
-                    gitCommitId: gitCommitId
+                    gitCommitId: gitCommitId,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
 

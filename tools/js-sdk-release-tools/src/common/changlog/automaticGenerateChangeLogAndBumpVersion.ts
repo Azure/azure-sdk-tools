@@ -23,13 +23,12 @@ import { ApiVersionType, SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { tryGetNpmView } from '../npmUtils.js';
-import { ModularClientPackageOptions } from '../../common/types.js';
 
-export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: ModularClientPackageOptions) {
+export async function generateChangelogAndBumpVersion(packageFolderPath: string,  sdkReleaseType?: string) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = options.sdkReleaseType;
+    const ApiType = sdkReleaseType || getApiVersionType(packageFolderPath);
     const isStableRelease = ApiType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);

@@ -17,7 +17,7 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory,updateApiVersionInTspConfig } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
@@ -38,6 +38,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string;
+    sdkReleaseType: string;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -74,7 +76,10 @@ export async function generateRLCInPipeline(options: {
             } else {
                 logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
+                const tspConfigPath = path.join(tspDefDir, 'tspconfig.yaml')
+                logger.info(`rlc:tspConfigPath: ${tspConfigPath}`);
+                updateApiVersionInTspConfig(tspConfigPath, options.apiVersion);
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', tspConfigPath, '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
@@ -243,7 +248,7 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
-            const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
+            const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options.sdkReleaseType);
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
             outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;

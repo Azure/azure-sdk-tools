@@ -41,7 +41,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
         // TODO: to be compatible with current tool, input relative generated package dir
-        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
+        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options.sdkReleaseType);
         updateChangelogResult(packageResult, changelog);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);

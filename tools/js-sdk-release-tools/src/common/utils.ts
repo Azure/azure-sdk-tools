@@ -9,6 +9,7 @@ import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
+import { dump, load as yamlLoad } from 'js-yaml';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -296,4 +297,23 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
             configPath: typeSpecDirectory,
         });
     return options
+}
+
+export function updateApiVersionInTspConfig(tspConfigPath: string, apiVersion: string) {
+    if (!fs.existsSync(tspConfigPath)) {
+        throw new Error(`tspconfig.yaml not found at path: ${tspConfigPath}`);
+    }
+
+    const tspConfigContent = fs.readFileSync(tspConfigPath, 'utf8');
+    const tspConfig = yamlLoad(tspConfigContent);
+
+    if (typeof tspConfig !== 'object' || tspConfig === null) {
+        throw new Error('Invalid tspconfig.yaml format.');
+    }
+
+    tspConfig['options']['@azure-tools/typespec-ts']['api-version'] = apiVersion;
+
+    const updatedTspConfigContent = dump(tspConfig);
+    fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
+    logger.info(`Updated API version to ${apiVersion} in tspconfig.yaml in pipeline only.`);
 }

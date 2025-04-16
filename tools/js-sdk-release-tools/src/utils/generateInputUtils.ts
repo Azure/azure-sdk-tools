@@ -54,8 +54,8 @@ export async function parseInputJson(inputJson: any) {
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
     const autorestConfig: string | undefined = inputJson['autorestConfig'];
-    const apiVersion: string | undefined = inputJson['apiVersion'];
-    const sdkReleaseType: string | undefined = inputJson['sdkReleaseType'];
+    const apiVersion: string = inputJson['apiVersion'];
+    const sdkReleaseType: string = inputJson['sdkReleaseType'];
     const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
     // TODO: consider remove it, since it's not defined in inputJson schema
     const skipGeneration: boolean | undefined = inputJson['skipGeneration'];

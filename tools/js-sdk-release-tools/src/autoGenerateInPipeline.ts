@@ -37,11 +37,6 @@ async function automationGenerateInPipeline(
         sdkReleaseType,
     } = await parseInputJson(inputJson);
 
-    console.log(`sdkType: ${sdkType}`);
-    console.log(`apiVersion: ${apiVersion}`);
-    console.log(`sdkReleaseType: ${sdkReleaseType}`);
-    //process.exit(1);
-
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));

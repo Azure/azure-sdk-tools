@@ -19,7 +19,7 @@ export async function generateTypeScriptCodeFromTypeSpec(
     packageDirectory: string
 ): Promise<void> {    
     const tspConfigPath = join(options.typeSpecDirectory, 'tspconfig.yaml');
-    console.log(`tspConfigPath: ${tspConfigPath}`);
+    logger.info(`tspConfigPath: ${tspConfigPath}`);
     // update tspconfig first.      
     updateApiVersionInTspConfig(tspConfigPath, options.apiVersion);
     //process.exit(1);
@@ -68,5 +68,5 @@ function updateApiVersionInTspConfig(tspConfigPath: string, apiVersion: string |
 
     const updatedTspConfigContent = dump(tspConfig);
     fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
-    logger.info(`Updated API version to ${apiVersion} in tspconfig.yaml.`);
+    logger.info(`Updated API version to ${apiVersion} in tspconfig.yaml in pipeline only.`);
 }

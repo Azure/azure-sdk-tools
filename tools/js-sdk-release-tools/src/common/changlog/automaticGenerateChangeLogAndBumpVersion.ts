@@ -29,7 +29,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = options.sdkReleaseType || await getApiVersionType(packageFolderPath);
+    const ApiType = options.sdkReleaseType;
     const isStableRelease = ApiType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);

@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -83,6 +85,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return record;
         }
 
+        private static byte[] DeserializeMultipartBody(JsonElement property, string boundary)
+        {
+            using var ms = new MemoryStream();
+            foreach (var item in property.EnumerateArray())
+            {
+                var segment = item.GetString();
+                if (segment.StartsWith("b64:", StringComparison.Ordinal))
+                {
+                    var bytes = Convert.FromBase64String(segment.Substring(4));
+                    ms.Write(bytes);
+                }
+                else
+                {
+                    ms.Write(Encoding.ASCII.GetBytes(segment));
+                }
+            }
+            return ms.ToArray();
+        }
+
         private static void DeserializeBody(RequestOrResponse requestOrResponse, in JsonElement property)
         {
             if (property.ValueKind == JsonValueKind.Null)
@@ -114,6 +135,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
                 NormalizeJsonBody(requestOrResponse);
+            }
+            else if (ContentTypeUtilities.IsMultipartMixed(requestOrResponse.Headers, out var boundary) && property.ValueKind == JsonValueKind.Array)
+            {
+                requestOrResponse.Body = DeserializeMultipartBody(property, boundary);
             }
             else if (property.ValueKind == JsonValueKind.Array)
             {
@@ -189,6 +214,66 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             jsonWriter.WriteEndObject();
         }
 
+        private static byte[] ReadAllBytes(Stream s)
+        {
+            if (s is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> seg))
+                return seg.Array.AsSpan(seg.Offset, seg.Count).ToArray();
+            using var copy = new MemoryStream();
+            s.CopyTo(copy);
+            return copy.ToArray();
+        }
+
+        private static void SerializeMultipartBody(Utf8JsonWriter jsonWriter,
+                                           string name,
+                                           byte[] raw,
+                                           string boundary)
+        {
+            jsonWriter.WriteStartArray(name);
+
+            var rdr = new MultipartReader(boundary, new MemoryStream(raw));
+            var spanBoundary = $"--{boundary}\r\n";
+            var spanBoundaryEnd = $"--{boundary}--\r\n";
+
+            MultipartSection section;
+            while ((section = rdr.ReadNextSectionAsync()
+                                 .GetAwaiter()
+                                 .GetResult()) != null)
+            {
+                // opening boundary
+                jsonWriter.WriteStringValue(spanBoundary);
+
+                // headers
+                foreach (var h in section.Headers)
+                    jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
+
+                // blank line separating headers / body
+                jsonWriter.WriteStringValue("\r\n");
+
+                // body
+                if (IsTextContentType(section.Headers, out var enc))
+                {
+                    var txt = enc.GetString(ReadAllBytes(section.Body));
+
+                    // keep existing “split‑on‑newline” behaviour
+                    var lines = txt.Split("\n");          // keeps '\r' on previous line
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        var l = i < lines.Length - 1 ? lines[i] + "\n" : lines[i];
+                        jsonWriter.WriteStringValue(l);
+                    }
+                }
+                else
+                {
+                    var b64 = Convert.ToBase64String(ReadAllBytes(section.Body));
+                    jsonWriter.WriteStringValue($"b64:{b64}\r\n");
+                }
+            }
+
+            jsonWriter.WriteStringValue(spanBoundaryEnd);
+            jsonWriter.WriteEndArray();
+        }
+
+
         private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers)
         {
             if (requestBody == null)
@@ -252,6 +337,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                     jsonWriter.WriteEndArray();
                 }
+            }
+            else if (ContentTypeUtilities.IsMultipartMixed(headers, out var boundary))
+            {
+                SerializeMultipartBody(jsonWriter, name, requestBody, boundary);
             }
             else
             {

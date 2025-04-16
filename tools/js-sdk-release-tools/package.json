@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.7.25",
+  "version": "2.7.26",
   "description": "",
   "files": [
     "dist"

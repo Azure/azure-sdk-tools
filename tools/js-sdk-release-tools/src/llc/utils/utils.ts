@@ -4,7 +4,7 @@ import {logger} from "../../utils/logger.js";
 import {getLatestStableVersion} from "../../utils/version.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
 import readline from 'readline';
-
+import yaml from "js-yaml"
 export function validPackageName(packageName) {
     const match = /@azure-rest\/[a-zA-Z-]+/.exec(packageName);
     if (!match)
@@ -100,7 +100,6 @@ export function getConfigFromReadmeMd(readmePath: string) {
     if (!match || match.length !== 3) {
         throw new Error(`Cannot find valid package name from ${readmePath}`);
     }
-    const yaml = require('js-yaml');
     return yaml.load(match[1]);
 }
 

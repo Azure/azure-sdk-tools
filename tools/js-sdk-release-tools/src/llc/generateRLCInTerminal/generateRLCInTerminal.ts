@@ -6,7 +6,7 @@ import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../../utils/cha
 import {generateExtraFiles} from "../utils/generateExtraFiles.js";
 import { defaultChildProcessTimeout } from "../../common/utils.js";
 
-const shell = require('shelljs')
+import shell from 'shelljs';
 
 export async function generateCodes(sdkRepo: string, packagePath: string, packageName: string) {
     let cmd = `autorest  --typescript README.md`;

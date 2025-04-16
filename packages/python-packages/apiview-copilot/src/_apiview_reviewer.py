@@ -6,6 +6,7 @@ import json
 import os
 import prompty
 import prompty.azure_beta
+import threading
 from time import time
 from typing import Literal, List
 
@@ -76,6 +77,7 @@ class ApiViewReview:
         PROCESSING = "▒"
         SUCCESS = "\033[32m█\033[0m"  # Green square
         FAILURE = "\033[31m█\033[0m"  # Red square
+        CANCELED = "\033[33m█\033[0m"  # Yellow square for canceled
 
         # Print initial progress bar
         print("Processing chunks: ", end="", flush=True)
@@ -85,93 +87,155 @@ class ApiViewReview:
         prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
         prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
 
-        # Define a function to process a single chunk and update progress
-        def process_chunk(chunk_info):
-            i, chunk = chunk_info
-            chunk_idx = chunks_to_process.index((i, chunk))
-            max_retries = 5
+        # Flag to indicate cancellation
+        cancel_event = threading.Event()
 
-            for j in range(max_retries):
-                chunk_status[chunk_idx] = PROCESSING
-                print(
-                    "\r" + "Processing chunks: " + "".join(chunk_status),
-                    end="",
-                    flush=True,
-                )
+        # Set up keyboard interrupt handler for more responsive cancellation
+        def keyboard_interrupt_handler(signal, frame):
+            print("\n\nCancellation requested! Terminating process...")
+            cancel_event.set()
+            # Exit immediately without further processing
+            os._exit(1)  # Force immediate exit
 
-                try:
-                    if use_rag:
-                        # use the Azure OpenAI service to get guidelines
-                        context = self._retrieve_and_resolve_guidelines(str(chunk))
-                    else:
-                        context = guidelines
-                    response = prompty.execute(
-                        prompt_path,
-                        inputs={
-                            "language": self.language,
-                            "context": (
-                                context.to_markdown()
-                                if use_rag
-                                else json.dumps(context)
-                            ),
-                            "apiview": chunk.numbered(),
-                        },
-                    )
-                    json_response = json.loads(response)
-                    chunk_status[chunk_idx] = SUCCESS  # Green for success
+        # Register the handler for SIGINT (Ctrl+C)
+        import signal
+
+        original_handler = signal.getsignal(signal.SIGINT)
+        signal.signal(signal.SIGINT, keyboard_interrupt_handler)
+
+        try:
+            # Define a function to process a single chunk and update progress
+            def process_chunk(chunk_info):
+                # Check for cancellation
+                if cancel_event.is_set():
+                    return chunk_info[1], None
+
+                i, chunk = chunk_info
+                chunk_idx = chunks_to_process.index((i, chunk))
+                max_retries = 5
+
+                for j in range(max_retries):
+                    # Check for cancellation again
+                    if cancel_event.is_set():
+                        return chunk, None
+
+                    chunk_status[chunk_idx] = PROCESSING
                     print(
                         "\r" + "Processing chunks: " + "".join(chunk_status),
                         end="",
                         flush=True,
                     )
-                    return chunk, json_response
-                except json.JSONDecodeError:
-                    if j == max_retries - 1:
-                        chunk_status[chunk_idx] = FAILURE  # Red for failure
+
+                    try:
+                        if use_rag:
+                            # use the Azure OpenAI service to get guidelines
+                            context = self._retrieve_and_resolve_guidelines(str(chunk))
+                        else:
+                            context = guidelines
+                        response = prompty.execute(
+                            prompt_path,
+                            inputs={
+                                "language": self.language,
+                                "context": (
+                                    context.to_markdown()
+                                    if use_rag
+                                    else json.dumps(context)
+                                ),
+                                "apiview": chunk.numbered(),
+                            },
+                        )
+                        json_response = json.loads(response)
+                        chunk_status[chunk_idx] = SUCCESS  # Green for success
                         print(
                             "\r" + "Processing chunks: " + "".join(chunk_status),
                             end="",
                             flush=True,
                         )
-                        return chunk, None
-                    else:
-                        continue
-                except Exception as e:
-                    if j == max_retries - 1:
-                        chunk_status[chunk_idx] = FAILURE  # Red for failure
-                        print(
-                            "\r" + "Processing chunks: " + "".join(chunk_status),
-                            end="",
-                            flush=True,
-                        )
-                        return chunk, None
+                        return chunk, json_response
+                    except json.JSONDecodeError:
+                        if j == max_retries - 1:
+                            chunk_status[chunk_idx] = FAILURE  # Red for failure
+                            print(
+                                "\r" + "Processing chunks: " + "".join(chunk_status),
+                                end="",
+                                flush=True,
+                            )
+                            return chunk, None
+                        else:
+                            continue
+                    except Exception as e:
+                        if j == max_retries - 1:
+                            chunk_status[chunk_idx] = FAILURE  # Red for failure
+                            print(
+                                "\r" + "Processing chunks: " + "".join(chunk_status),
+                                end="",
+                                flush=True,
+                            )
+                            return chunk, None
 
-            chunk_status[chunk_idx] = FAILURE  # Red for failure
-            print(
-                "\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True
-            )
-            return chunk, None
+                chunk_status[chunk_idx] = FAILURE  # Red for failure
+                print(
+                    "\r" + "Processing chunks: " + "".join(chunk_status),
+                    end="",
+                    flush=True,
+                )
+                return chunk, None
 
-        # Process chunks in parallel using ThreadPoolExecutor
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = list(executor.map(process_chunk, chunks_to_process))
+            # Process chunks in parallel using ThreadPoolExecutor
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                # Submit all tasks
+                future_to_chunk = {
+                    executor.submit(process_chunk, chunk_info): chunk_info
+                    for chunk_info in chunks_to_process
+                }
 
-        print()  # Add newline after progress bar is complete
+                # Process results as they complete
+                results = []
+                try:
+                    for future in concurrent.futures.as_completed(future_to_chunk):
+                        chunk_info = future_to_chunk[future]
+                        try:
+                            result = future.result()
+                            results.append(result)
+                        except Exception as e:
+                            i, chunk = chunk_info
+                            chunk_idx = chunks_to_process.index((i, chunk))
+                            chunk_status[chunk_idx] = FAILURE
+                            print(
+                                "\r" + "Processing chunks: " + "".join(chunk_status),
+                                end="",
+                                flush=True,
+                            )
+                            results.append((chunk, None))
+                            print(f"\nError processing chunk {i}: {str(e)}")
+                except KeyboardInterrupt:
+                    # This should not be reached as our signal handler will catch it,
+                    # but just in case the signal handler isn't active
+                    print("\n\nCancellation requested! Terminating process...")
+                    os._exit(1)  # Force exit without further processing
+
+                print()  # Add newline after progress bar is complete
+
+        except KeyboardInterrupt:
+            # This should not be reached as our signal handler will catch it,
+            # but just in case the signal handler isn't active
+            print("\n\nCancellation requested! Terminating process...")
+            os._exit(1)  # Force exit without further processing
 
         bad_chunks = [chunk for chunk, chunk_result in results if chunk_result is None]
 
-        # Merge results
+        # Merge results from completed chunks
         for chunk, chunk_response in results:
             if chunk_response is not None:
                 chunk_result = ReviewResult(**chunk_response)
                 final_results.merge(chunk_result, section=chunk)
 
-        # final_results.validate(guideline_ids=guideline_ids)
         final_results.sort()
         end_time = time()
         print(f"Review generated in {end_time - start_time:.2f} seconds.")
         if bad_chunks:
             print(f"WARNING: Failed to process {len(bad_chunks)} chunks.")
+
         return final_results
 
     def _retrieve_and_resolve_guidelines(self, query: str) -> List[object]:

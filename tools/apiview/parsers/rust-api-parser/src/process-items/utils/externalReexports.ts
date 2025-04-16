@@ -137,27 +137,31 @@ function createModuleHeaderLine(itemId: Id, itemSummary: ItemSummary): ReviewLin
 }
 
 /**
- * Finds all child items of a module based on path
+ * Returns all child item IDs of a module based on path
  */
-function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
-  const children: ReviewLine[] = [];
-
-  // Process all items in paths to find children
+export function getModuleChildIdsByPath(currentPath: string, apiJson: Crate): string[] {
+  const childIds: string[] = [];
   for (const childId in apiJson.paths) {
     const childItemSummary = apiJson.paths[childId];
-
-    // Skip if the child doesn't have a path
-    if (!hasValidPath(childItemSummary)) {
-      continue;
-    }
-
+    if (!hasValidPath(childItemSummary)) continue;
     const childPath = childItemSummary.path.join("::");
-
-    // Check if this is a child path (starts with the current path and is not the same path)
     if (childPath !== currentPath && childPath.startsWith(currentPath + "::")) {
-      // Add as a child
-      children.push(createItemLine(Number(childId), childItemSummary));
+      childIds.push(childId);
     }
+  }
+  return childIds;
+}
+
+/**
+ * Finds all child items of a module based on path and returns ReviewLines
+ */
+function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
+  const childIds = getModuleChildIdsByPath(currentPath, apiJson);
+  const children: ReviewLine[] = [];
+
+  for (const childId of childIds) {
+    const childItemSummary = apiJson.paths[childId];
+    children.push(createItemLine(Number(childId), childItemSummary));
   }
 
   // Sort children by kind and then by path

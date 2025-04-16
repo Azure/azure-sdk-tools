@@ -1,10 +1,11 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Id, Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
+import { Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
-import { isModuleItem } from "./utils/typeGuards";
+import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import { getAPIJson } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
+import { externalReexports, getModuleChildIdsByPath } from "./utils/externalReexports";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -65,7 +66,7 @@ export function processModule(
     HasSuffixSpace: false,
   });
 
-  if (item.inner && "module" in item.inner && item.inner.module.items) {
+  if (item.inner.module.items.length > 0) {
     const result = processModuleChildren(item, reviewLine, parentModule);
     reviewLines.push(...result);
   } else {
@@ -100,13 +101,58 @@ function processModuleChildren(
   if (!isModuleItem(item)) {
     return [];
   }
-  const sortedChildIds = getSortedChildIds(item.inner.module.items);
+
+  const childrenFromUseModules = [];
+  // get "id"s of use items that are modules
+  for (let i = 0; i < item.inner.module.items.length; i++) {
+    const childId = item.inner.module.items[i];
+    const childItem = apiJson.index[childId];
+    if (isUseItem(childItem)) {
+      if (childItem.inner.use.id in apiJson.index) {
+        const useRefItem = apiJson.index[childItem.inner.use.id];
+        if (isModuleItem(useRefItem)) {
+          // we only want to process the items inside the glob, do not show the glob name
+          // to avoid showing the internal details such as "generated::*"
+          // we will recursively process the items inside the glob, which may also include more globs
+          childrenFromUseModules.push(...useRefItem.inner.module.items);
+        }
+        // else not a module, do nothing
+      } else if (childItem.inner.use.id in apiJson.paths) {
+        // it is in paths
+        const useRefItem = apiJson.paths[childItem.inner.use.id];
+        if (useRefItem.kind == ItemKind.Module) {
+          childrenFromUseModules.push(
+            ...getModuleChildIdsByPath(useRefItem.path.join("::"), apiJson),
+          );
+        }
+        // else not a module, do nothing
+      }
+    }
+  }
+
+  const sortedChildIds = getSortedChildIds(item.inner.module.items.concat(childrenFromUseModules));
 
   // Process non-module children in the sorted order
   for (let i = 0; i < sortedChildIds.nonModule.length; i++) {
     const childId = sortedChildIds.nonModule[i];
-    const childItem = apiJson.index[childId];
-    if (!isModuleItem(childItem)) {
+    if (childId in apiJson.index) {
+      const childItem = apiJson.index[childId];
+      // Check if the child item is a module or a use item that refers to a module
+      // If it is not, process it as a regular item
+      if (isModuleItem(childItem)) {
+        continue;
+      }
+      if (isUseItem(childItem)) {
+        const useItemId = childItem.inner.use.id;
+        // Check if the use item refers to a module
+        // If it does, skip processing it as a regular item
+        if (
+          (useItemId in apiJson.index && isModuleItem(apiJson.index[useItemId])) ||
+          (useItemId in apiJson.paths && apiJson.paths[useItemId].kind == ItemKind.Module)
+        ) {
+          continue;
+        }
+      }
       const childReviewLines = processItem(childItem);
       if (childReviewLines) {
         if (!moduleReviewLine.Children) {
@@ -115,6 +161,31 @@ function processModuleChildren(
         moduleReviewLine.Children.push(...childReviewLines.filter((item) => item != null));
       }
       nonModuleChildrenExist = true;
+    }
+  }
+
+  const siblingModuleLines: ReviewLine[] = [];
+
+  const modulePrefix = parentModule
+    ? parentModule.prefix
+      ? `${parentModule.prefix}::${item.name}`
+      : item.name
+    : item.name;
+  // Then process module children
+  for (let i = 0; i < sortedChildIds.module.length; i++) {
+    const moduleChildId = sortedChildIds.module[i];
+    if (moduleChildId in apiJson.index) {
+      const moduleChild = apiJson.index[moduleChildId];
+      siblingModuleLines.push(
+        ...processModule(moduleChild, {
+          id: item.id,
+          prefix: modulePrefix,
+        }),
+      );
+    } else if (moduleChildId in apiJson.paths) {
+      const externalModules = externalReexports(moduleChildId).modules;
+      siblingModuleLines.push(...externalModules);
+      // TODO: fix how we are showing them
     }
   }
 
@@ -137,23 +208,8 @@ function processModuleChildren(
     });
   }
 
-  // Then process module children
-  for (let i = 0; i < sortedChildIds.module.length; i++) {
-    const moduleChildId = sortedChildIds.module[i];
-    const moduleChild = apiJson.index[moduleChildId];
-    const childItem = apiJson.index[moduleChild.id];
-    const modulePrefix = parentModule
-      ? parentModule.prefix
-        ? `${parentModule.prefix}::${item.name}`
-        : item.name
-      : item.name;
-    const siblingModuleLines = processModule(childItem, {
-      id: item.id,
-      prefix: modulePrefix,
-    });
-    if (siblingModuleLines) {
-      resultLines.push(...siblingModuleLines);
-    }
+  if (siblingModuleLines) {
+    resultLines.push(...siblingModuleLines);
   }
 
   return resultLines;

@@ -23,17 +23,6 @@ function processRootItem(codeFile: CodeFile): void {
 }
 
 /**
- * Processes internal reexport lines and adds them to the code file
- * @param codeFile The code file to add review lines to
- */
-function processInternalReexports(codeFile: CodeFile): void {
-  if (reexportLines.internal.length > 0) {
-    addSectionHeader(codeFile, "Internal module re-exports");
-    codeFile.ReviewLines.push(...reexportLines.internal);
-  }
-}
-
-/**
  * Adds a section header to the code file
  * @param codeFile The code file to add the header to
  * @param headerText The header text
@@ -145,7 +134,6 @@ function buildCodeFile(): CodeFile {
   PACKAGE_NAME = codeFile.PackageName;
 
   processRootItem(codeFile);
-  processInternalReexports(codeFile);
   processExternalModuleReexports(codeFile);
   processExternalItemReexports(codeFile);
   addSectionHeader(codeFile, "End");

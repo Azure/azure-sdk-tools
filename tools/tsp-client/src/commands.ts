@@ -487,37 +487,49 @@ export async function generateConfigFilesCommand(argv: any) {
 
   try {
     const existingEmitterPackageJson = JSON.parse(await readFile(emitterPath, "utf8"));
-    // If there's an existing emitter-package.json, we need to merge any untracked devDependencies
+    // If there's an existing emitter-package.json, we need to check for any manually added devDependencies
     if (existingEmitterPackageJson) {
-      const currentDevDependencies = existingEmitterPackageJson["devDependencies"] ?? {};
+      // If there are manually pinned dependencies, create create a new object with all
+      // the manually pinned dependencies and their current values
+      const manualDevDependencies = {};
+      for (const [key, value] of Object.entries(
+        existingEmitterPackageJson["devDependencies"] ?? {},
+      )) {
+        if (!Object.keys(emitterPackageJson["devDependencies"] ?? {}).includes(key)) {
+          Object.assign(manualDevDependencies, { [key]: value });
+        }
+      }
+
+      // Attempt to read package-lock.json and find the version of the manually added dependencies
       const packageLockPath = joinPaths(dirname(packageJsonPath), "package-lock.json");
       let existingPackageLockJson;
       try {
-        // Attempt to read package-lock.json
         existingPackageLockJson = JSON.parse(await readFile(packageLockPath, "utf8"));
       } catch (err) {
         Logger.debug(`Unable to read package-lock.json: ${packageLockPath}`);
       }
-      // If there are untracked dependencies, we will check the package-lock.json of the
-      // target emitter for a compatible version, otherwise we will leave the version from
-      // the emitter-package.json unchanged
-      for (const key of Object.keys(currentDevDependencies)) {
-        if (
-          emitterPackageJson["devDependencies"] &&
-          emitterPackageJson["devDependencies"][key] === undefined
-        ) {
-          if (existingPackageLockJson && existingPackageLockJson["packages"]) {
-            // Check if the package is in the package-lock.json
-            emitterPackageJson["devDependencies"][key] =
-              existingPackageLockJson["packages"][`node_modules/${key}`]["version"];
-          } else {
-            // If the package is not in the package-lock.json, we will leave the version
-            // from emitter-package.json unchanged
-            emitterPackageJson["devDependencies"][key] =
-              existingEmitterPackageJson["devDependencies"][key];
+      if (existingPackageLockJson && existingPackageLockJson["packages"]) {
+        for (const key in Object.keys(manualDevDependencies)) {
+          // Check if the package is in the package-lock.json
+          if (existingPackageLockJson["packages"][`node_modules/${key}`]) {
+            // If it is, we will add it to the emitter package.json
+            Object.assign(manualDevDependencies, {
+              [key]: existingPackageLockJson["packages"][`node_modules/${key}`]["version"],
+            });
           }
         }
       }
+      if (
+        Object.keys(manualDevDependencies).length > 0 &&
+        emitterPackageJson["devDependencies"] === undefined
+      ) {
+        // Add a devDependencies entry in the new emitter-package.json content to create
+        emitterPackageJson["devDependencies"] = {};
+      }
+      emitterPackageJson["devDependencies"] = {
+        ...emitterPackageJson["devDependencies"],
+        ...manualDevDependencies,
+      };
     }
   } catch (err) {
     Logger.debug(`Couldn't read file. Rewriting ${basename(emitterPath)} file. Error: ${err}`);

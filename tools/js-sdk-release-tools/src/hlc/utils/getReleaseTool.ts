@@ -1,12 +1,10 @@
-
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-
+import { readFileSync } from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 export function getReleaseTool() {
-    const __dirname = import.meta.dirname;
-    const packageJsonPath = resolve(__dirname, '..', '..', '..', 'package.json');
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, '..', '..', '..', 'package.json'), 'utf-8'));
     const { name, version } = packageJson;
 
     return `${name}@${version}`;

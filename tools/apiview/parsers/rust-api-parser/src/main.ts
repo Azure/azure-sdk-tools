@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
-import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
+import { CodeFile, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
-import { reexportLines } from "./process-items/utils/externalReexports";
+import { externalReferencesLines } from "./process-items/utils/externalReexports";
 import { sortExternalItems } from "./process-items/utils/sorting";
 
 let apiJson: Crate;
@@ -43,51 +43,25 @@ function addSectionHeader(codeFile: CodeFile, headerText: string): void {
 }
 
 /**
- * Checks if an item is already included in any of the external modules
- * @param reexportItem The item to check
- * @returns Whether the item is already included
- */
-function isItemAlreadyIncludedInModules(reexportItem: ReviewLine): boolean {
-  for (let j = 0; j < reexportLines.external.modules.length; j++) {
-    const moduleReexport = reexportLines.external.modules[j];
-
-    if (moduleReexport.Children && moduleReexport.Children.length > 0) {
-      for (let k = 0; k < moduleReexport.Children.length; k++) {
-        if (moduleReexport.Children[k].LineId === reexportItem.LineId) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
-}
-
-/**
- * Processes external item reexports and adds them to the code file
+ * Processes external references and adds them to the code file
  * @param codeFile The code file to add review lines to
  */
-function processExternalItemReexports(codeFile: CodeFile): void {
-  if (reexportLines.external.items.length > 0) {
+function processExternalReferences(codeFile: CodeFile): void {
+  if (externalReferencesLines.length > 0) {
     addSectionHeader(codeFile, "External references");
 
     // Sort the external items by kind (using itemKindOrder) and then by name
-    sortExternalItems(reexportLines.external.items);
+    sortExternalItems(externalReferencesLines);
 
     // Process external item re-exports that aren't already included in modules
-    for (let i = 0; i < reexportLines.external.items.length; i++) {
-      const reexportItem = reexportLines.external.items[i];
-
-      // Only add the item if it's not already included in external module reexports
-      if (!isItemAlreadyIncludedInModules(reexportItem)) {
-        codeFile.ReviewLines.push(reexportItem);
-      }
+    for (let i = 0; i < externalReferencesLines.length; i++) {
+      codeFile.ReviewLines.push(externalReferencesLines[i]);
     }
   }
 }
 
 /**
- * Builds the code file by processing items and reexports
+ * Builds the code file by processing items and paths from the rustdoc output
  * @returns The built code file
  */
 function buildCodeFile(): CodeFile {
@@ -101,7 +75,7 @@ function buildCodeFile(): CodeFile {
   PACKAGE_NAME = codeFile.PackageName;
 
   processRootItem(codeFile);
-  processExternalItemReexports(codeFile);
+  processExternalReferences(codeFile);
   return codeFile;
 }
 

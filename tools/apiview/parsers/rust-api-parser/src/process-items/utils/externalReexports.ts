@@ -2,51 +2,23 @@ import { Crate, Id, ItemSummary } from "../../../rustdoc-types/output/rustdoc-ty
 import { getAPIJson } from "../../main";
 import { ReviewLine, TokenKind } from "../../models/apiview-models";
 
-export const reexportLines: {
-  internal: ReviewLine[];
-  external: { items: ReviewLine[]; modules: ReviewLine[] };
-} = {
-  internal: [],
-  external: { items: [], modules: [] },
-};
+export const externalReferencesLines: ReviewLine[] = [];
 
 /**
- * Adds external re-export lines if the item exists in paths and is not already added.
- * @param useItemId The ID of the item being used/re-exported.
+ * Adds external references lines if the item exists in paths and is not already added.
+ * @param itemId The ID of the item being used/re-exported.
  */
-export function addExternalReexportIfNotExists(useItemId: Id): void {
+export function addExternalReferencesIfNotExists(itemId: Id): void {
   const apiJson = getAPIJson();
   if (
-    useItemId in apiJson.index ||
-    !(useItemId in apiJson.paths) ||
-    reexportLines.external.items.some((line) => line.LineId === useItemId.toString()) // Check if the re-export line already exists
+    itemId in apiJson.index ||
+    !(itemId in apiJson.paths) ||
+    externalReferencesLines.some((line) => line.LineId === itemId.toString()) // Check if the item already exists
   ) {
     return;
   }
 
-  const lines = externalReexports(useItemId, apiJson);
-  reexportLines.external.items.push(...lines);
-}
-
-/**
- * Processes external non-module re-exports and creates a structured view
- * @param itemId id of the item being re-exported
- * @param apiJson The parsed rustdoc JSON object
- * @returns Object containing ReviewLine arrays for both items and modules
- */
-export function externalReexports(itemId: Id, apiJson: Crate): ReviewLine[] {
-  if (!isValidItemId(itemId, apiJson)) return [];
-  const itemSummary = apiJson.paths[itemId];
-  // Check if the item has a path
-  if (!hasValidPath(itemSummary)) return [];
-  return [createItemLine(itemId, itemSummary, apiJson)];
-}
-
-/**
- * Checks if the item ID is valid in the given API JSON
- */
-function isValidItemId(itemId: Id, apiJson: Crate): boolean {
-  return !!(itemId && apiJson && apiJson.paths && apiJson.paths[itemId]);
+  externalReferencesLines.push(createItemLine(itemId, apiJson.paths[itemId]));
 }
 
 /**
@@ -59,7 +31,7 @@ function hasValidPath(itemSummary: ItemSummary): boolean {
 /**
  * Creates a single ReviewLine representing a non-module item
  */
-function createItemLine(itemId: Id, itemSummary: ItemSummary, apiJson: Crate): ReviewLine {
+function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
   return {
     LineId: itemId.toString(),
     Tokens: [
@@ -187,7 +159,7 @@ function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
 
   for (const childId of childIds) {
     const childItemSummary = apiJson.paths[childId];
-    children.push(createItemLine(Number(childId), childItemSummary, apiJson));
+    children.push(createItemLine(Number(childId), childItemSummary));
   }
 
   // Sort children by kind and then by path

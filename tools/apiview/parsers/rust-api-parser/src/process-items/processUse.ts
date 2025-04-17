@@ -1,15 +1,15 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Item, ItemKind, Crate, Id } from "../../rustdoc-types/output/rustdoc-types";
+import { Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
-import { addExternalReexportIfNotExists } from "./utils/externalReexports";
+import { addExternalReferencesIfNotExists } from "./utils/externalReexports";
 import { getAPIJson } from "../main";
 import { replaceCratePath } from "./utils/cratePathUtils";
 
 export function processUse(item: Item): ReviewLine[] | undefined {
   if (!isUseItem(item)) return;
   const apiJson = getAPIJson();
-  // code path where use items are modules is handled in processModule
+  // code path where use items are "modules" is handled in processModule
   const useItemId = item.inner.use.id;
   if (
     (useItemId in apiJson.index && isModuleItem(apiJson.index[useItemId])) ||
@@ -53,7 +53,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   });
 
   reviewLines.push(reviewLine);
-  addExternalReexportIfNotExists(useItemId);
+  addExternalReferencesIfNotExists(useItemId);
 
   return reviewLines;
 }

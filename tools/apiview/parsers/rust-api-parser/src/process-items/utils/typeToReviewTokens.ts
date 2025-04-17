@@ -1,6 +1,6 @@
 import { Type } from "../../../rustdoc-types/output/rustdoc-types";
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
-import { addExternalReexportIfNotExists } from "./externalReexports";
+import { addExternalReferencesIfNotExists } from "./externalReexports";
 import { processFunctionPointer } from "./processFunctionPointer";
 import { processGenericArgs } from "./processGenerics";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
@@ -21,8 +21,8 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       NavigateToId: type.resolved_path.id.toString(),
     };
 
-    // Add external re-export if it's an external type and not already added
-    addExternalReexportIfNotExists(type.resolved_path.id);
+    // Add references if it's an external type
+    addExternalReferencesIfNotExists(type.resolved_path.id);
     // If there are no generic arguments, just return the base token
     if (!type.resolved_path.args) {
       return [baseToken];

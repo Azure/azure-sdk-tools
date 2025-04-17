@@ -217,7 +217,7 @@ namespace IssueLabelerService
 
         public string LabelsFilter(Dictionary<string, string> labels)
         {
-            if (labels != null && labels.Count > 0)
+            if (labels?.Take(2).Count() == 2)
             {
                 // Dynamically construct the filter string
                 var filters = labels.Select(label => $"{label.Key} eq '{label.Value}'");

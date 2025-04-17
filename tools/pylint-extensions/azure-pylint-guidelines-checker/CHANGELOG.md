@@ -1,5 +1,8 @@
 # Release History
 
+## 0.5.4 (2025-04-16)
+- Bug fix for `do-not-import-asyncio` checker
+
 ## 0.5.3 (2025-04-15)
 - Updating documentation
 - Bug fix for `do-not-import-asyncio` checker, was incorrectly flagging `azure.core` imports.

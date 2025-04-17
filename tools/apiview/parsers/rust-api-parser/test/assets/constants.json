@@ -1,0 +1,59 @@
+[
+  {
+    "LineId": "const_example_doc_0",
+    "Tokens": [
+      {
+        "Kind": "Documentation",
+        "Value": "Maximum allowed size in bytes"
+      }
+    ],
+    "Children": []
+  },
+  {
+    "LineId": "const_example",
+    "Tokens": [
+      {
+        "Kind": "Keyword",
+        "Value": "pub const"
+      },
+      {
+        "Kind": "MemberName",
+        "Value": "MAX_SIZE",
+        "HasSuffixSpace": false,
+        "NavigateToId": "const_example",
+        "NavigationDisplayName": "MAX_SIZE",
+        "RenderClasses": ["interface"]
+      },
+      {
+        "Kind": "Punctuation",
+        "Value": ":"
+      },
+      {
+        "Kind": "TypeName",
+        "Value": "usize"
+      },
+      {
+        "Kind": "Punctuation",
+        "Value": " ="
+      },
+      {
+        "Kind": "Text",
+        "Value": "1024 * 1024",
+        "HasSuffixSpace": false
+      },
+      {
+        "Kind": "Punctuation",
+        "Value": ";"
+      },
+      {
+        "Kind": "Punctuation",
+        "Value": "//"
+      },
+      {
+        "Kind": "Text",
+        "Value": "1048576"
+      }
+    ],
+    "Children": []
+  }
+]

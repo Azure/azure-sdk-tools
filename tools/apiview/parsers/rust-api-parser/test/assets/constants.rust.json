@@ -1,0 +1,14 @@
+{
+  "id": "const_example",
+  "name": "MAX_SIZE",
+  "docs": "Maximum allowed size in bytes",
+  "inner": {
+    "constant": {
+      "type": "usize",
+      "const": {
+        "expr": "1024 * 1024",
+        "value": "1048576"
+      }
+    }
+  }
+}

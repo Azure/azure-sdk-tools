@@ -89,9 +89,9 @@ export async function buildPackage(
 
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryBuildSamples(packageDirectory, rushxScript);
-    await tryFormatSamples(packageDirectory);
+    await tryBuildSamples(packageDirectory, rushxScript);    
     await tryTestPackage(packageDirectory, rushxScript);
+    await tryFormatSamples(packageDirectory);
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');

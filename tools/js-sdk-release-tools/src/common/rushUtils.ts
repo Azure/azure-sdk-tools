@@ -90,6 +90,7 @@ export async function buildPackage(
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
     await tryBuildSamples(packageDirectory, rushxScript);
+    await tryFormatSamples(packageDirectory);
     await tryTestPackage(packageDirectory, rushxScript);
 
     // restore in temp folder
@@ -109,6 +110,20 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
+    }
+}
+
+// no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
+export async function tryFormatSamples(packageDirectory: string) {
+    logger.info(`Start to format samples in '${packageDirectory}'.`);
+    const cwd = packageDirectory;
+    const options = { ...runCommandOptions, cwd };
+    const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
+    try {
+        await runCommand(`npm`, ['exec -- dev-tool', formatCommand], options, true, 300, true);
+        logger.info(`format samples successfully.`);
+    } catch (err) {
+        logger.warn(`Failed to format samples due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 

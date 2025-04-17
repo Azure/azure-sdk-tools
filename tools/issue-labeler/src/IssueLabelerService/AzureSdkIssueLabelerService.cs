@@ -45,6 +45,7 @@ namespace IssueLabelerService
             }
 
             var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
+            Dictionary<string, string> labels;
 
             try
             {
@@ -52,7 +53,7 @@ namespace IssueLabelerService
                 var labeler = _labelers.GetLabeler(config);
 
                 // Predict labels for the issue
-                Dictionary<string, string> labels = await labeler.PredictLabels(issue);
+                labels = await labeler.PredictLabels(issue);
 
                 // If no labels are returned, do not generate an answer
                 // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
@@ -61,13 +62,20 @@ namespace IssueLabelerService
                     _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
                     return EmptyResult;
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error labeling issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                return EmptyResult;
+            }
+
+            try{
 
                 // Get the Qna model based on configuration
                 var qnaService = _answerServices.GetAnswerService(config);
 
                 var answer = await qnaService.AnswerQuery(issue, labels);
 
-                // Update the Labels assignment to convert the Dictionary<string, string> to a string[].
                 TriageOutput result = new TriageOutput
                 {
                     Labels = labels.Values,
@@ -79,8 +87,14 @@ namespace IssueLabelerService
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error processing issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                return EmptyResult;
+                _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+
+                TriageOutput result = new TriageOutput
+                {
+                    Labels = labels.Values,
+                    Answer = null,
+                    AnswerType = null
+                };
             }
         }
 

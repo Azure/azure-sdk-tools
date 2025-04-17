@@ -4,7 +4,7 @@ import {logger} from "./utils/logger.js";
 import {getLastCommitId} from "./utils/git.js";
 import {generateMgmt} from "./hlc/generateMgmt.js";
 
-const shell = require('shelljs');
+import shell from 'shelljs';
 
 async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, additionalArgs?: string) {
     const regexResult = /^(.*[\/\\]azure-rest-api-specs[-pr]*)[\/\\](specification.*)/.exec(absoluteReadmeMd);
@@ -32,6 +32,6 @@ const optionDefinitions = [
     { name: 'readme', type: String },
     { name: 'additional-args', type: String },
 ];
-const commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
 automationGenerateInTerminal(options.readme, options.tag, options.use, options['additional-args']);

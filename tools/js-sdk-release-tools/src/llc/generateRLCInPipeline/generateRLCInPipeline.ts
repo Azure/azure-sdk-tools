@@ -211,7 +211,7 @@ export async function generateRLCInPipeline(options: {
         const packageName = packageJson.name;
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);
         if (!options.skipGeneration) {
-            await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, false);
+            await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, packageName.includes("arm"));
 
             await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 

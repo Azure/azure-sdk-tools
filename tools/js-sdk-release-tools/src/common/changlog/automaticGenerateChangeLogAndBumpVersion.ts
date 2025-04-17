@@ -30,8 +30,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
     const apiVersionType = await getApiVersionType(packageFolderPath);
     logger.info(`Detected api version type is ${apiVersionType}`);
-    const ApiType = apiVersionType;
-    const isStableRelease = ApiType != ApiVersionType.Preview;
+    const isStableRelease = sdkReleaseType !== undefined ? sdkReleaseType == 'stable' : apiVersionType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = getVersion(npmViewResult, "latest");

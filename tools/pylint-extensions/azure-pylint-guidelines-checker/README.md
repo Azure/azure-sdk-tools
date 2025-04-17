@@ -65,7 +65,7 @@ You can identify a custom checker by the link to the guidelines included in its 
 | C4770 | missing-logging-policy | You should include a LoggingPolicy in your HTTP pipeline. | # pylint:disable=missing-logging-policy | [Network operations](https://azure.github.io/azure-sdk/python_implementation.html#network-operations) | [Example](code_examples.md#missing-logging-policy) |
 | C4771 | missing-retry-policy | You should include a RetryPolicy in your HTTP pipeline. | # pylint:disable=missing-retry-policy | [Network operations](https://azure.github.io/azure-sdk/python_implementation.html#network-operations) | [Example](code_examples.md#missing-retry-policy) |
 | C4772 | missing-distributed-tracing-policy | You should include a DistributedTracingPolicy in your HTTP pipeline. | # pylint:disable=missing-distributed-tracing-policy | [Network operations](https://azure.github.io/azure-sdk/python_implementation.html#network-operations) | [Example](code_examples.md#missing-distributed-tracing-policy) |
-| C4773 | do-not-use-logging-exception | Do not use Exception level logging. Use another logging level instead. | # pylint:disable=do-not-use-logging-exception | No Link. | [Example](code_examples.md#do-not-use-logging-exception) |
+| C4773 | do-not-use-logging-exception | Do not use Exception level logging, this is an error log and may leak sensitive information. Use another logging level instead. | # pylint:disable=do-not-use-logging-exception | No Link. | [Example](code_examples.md#do-not-use-logging-exception) |
 
 ## How to disable a pylint error (do not do this without permission from an azure sdk team member)
 

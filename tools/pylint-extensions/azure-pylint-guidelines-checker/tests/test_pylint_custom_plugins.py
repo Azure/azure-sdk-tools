@@ -3953,20 +3953,20 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         return node
 
     def test_bad_logging_exception(self, setup):
-        function_node = setup.body[1].value
+        function_node = setup.body[1].handlers[0].body[0].value
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-logging-exception",
-                line=3,
+                line=6,
                 node=function_node,
-                col_offset=0,
-                end_line=3,
-                end_col_offset=26,
+                col_offset=4,
+                end_line=6,
+                end_col_offset=35,
             )
         ):
             self.checker.visit_call(function_node)
 
     def test_ignores_correct_logging(self, setup):
-        function_node = setup.body[2].value
+        function_node = setup.body[1].handlers[0].body[1].value
         with self.assertNoMessages():
             self.checker.visit_call(function_node)

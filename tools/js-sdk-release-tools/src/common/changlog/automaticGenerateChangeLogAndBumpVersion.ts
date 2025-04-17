@@ -28,12 +28,15 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = sdkReleaseType || getApiVersionType(packageFolderPath);
+    const apiVersionType = await getApiVersionType(packageFolderPath);
+    logger.info(`Detected api version type is ${apiVersionType}`);
+    const ApiType = apiVersionType;
     const isStableRelease = ApiType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = getVersion(npmViewResult, "latest");
     const nextVersion = getVersion(npmViewResult, "next");
+    logger.info(`Latest version is ${stableVersion}, next version is ${nextVersion}`);
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ': ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ': ' stable'} release.`);

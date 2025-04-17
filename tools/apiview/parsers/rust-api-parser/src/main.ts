@@ -4,6 +4,7 @@ import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION, ItemKind } from "../rustdoc-types/output/rustdoc-types";
 import { reexportLines } from "./process-items/processUse";
 import { itemKindOrder, sortExternalItems } from "./process-items/utils/sorting";
+import { applyStableLineIds } from "./utils/lineIdUtils";
 
 let apiJson: Crate;
 export function getAPIJson(): Crate {
@@ -147,6 +148,8 @@ function buildCodeFile(): CodeFile {
   processExternalModuleReexports(codeFile);
   processExternalItemReexports(codeFile);
   addSectionHeader(codeFile, "End");
+  // Post-process the code file to ensure line IDs are stable
+  // applyStableLineIds(codeFile.ReviewLines);
 
   return codeFile;
 }

@@ -1,6 +1,6 @@
 # Release
 
-## 2025-04-16 - 0.21.0
+## 2025-04-21 - 0.21.0
 
 - Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.
 

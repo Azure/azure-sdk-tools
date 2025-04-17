@@ -75,6 +75,28 @@ class Example(BaseModel):
     )
 
 
+class Note(BaseModel):
+    """
+    Represents a note stored in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the note.")
+    content: str = Field(description="Contents of the note.")
+
+    # Classification fields
+    lang: Optional[str] = Field(
+        None, description="If this note is specific to a language (e.g., 'python')."
+    )
+    service: Optional[str] = Field(
+        None,
+        description="If this note is specific to a service (e.g., 'azure-functions').",
+    )
+    is_exception: bool = Field(
+        False,
+        description="Indicates if this note provides an exception to the guidelines rather than an amplification.",
+    )
+
+
 class ReviewResult(BaseModel):
     status: str = Field(
         description="Succeeded if the request has no violations. Error if there are violations."

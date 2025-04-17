@@ -2,7 +2,7 @@ import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
-import { reexportLines } from "./process-items/processUse";
+import { reexportLines } from "./process-items/utils/externalReexports";
 import { sortExternalItems } from "./process-items/utils/sorting";
 
 let apiJson: Crate;
@@ -69,7 +69,7 @@ function isItemAlreadyIncludedInModules(reexportItem: ReviewLine): boolean {
  */
 function processExternalItemReexports(codeFile: CodeFile): void {
   if (reexportLines.external.items.length > 0) {
-    addSectionHeader(codeFile, "External items");
+    addSectionHeader(codeFile, "External references");
 
     // Sort the external items by kind (using itemKindOrder) and then by name
     sortExternalItems(reexportLines.external.items);

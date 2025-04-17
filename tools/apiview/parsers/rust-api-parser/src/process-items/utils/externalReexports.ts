@@ -1,5 +1,32 @@
 import { Crate, Id, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
+import { getAPIJson } from "../../main";
 import { ReviewLine, TokenKind } from "../../models/apiview-models";
+
+export const reexportLines: {
+  internal: ReviewLine[];
+  external: { items: ReviewLine[]; modules: ReviewLine[] };
+} = {
+  internal: [],
+  external: { items: [], modules: [] },
+};
+
+/**
+ * Adds external re-export lines if the item exists in paths and is not already added.
+ * @param useItemId The ID of the item being used/re-exported.
+ */
+export function addExternalReexportIfNotExists(useItemId: Id): void {
+  const apiJson = getAPIJson();
+  if (
+    useItemId in apiJson.index ||
+    !(useItemId in apiJson.paths) ||
+    reexportLines.external.items.some((line) => line.LineId === useItemId.toString()) // Check if the re-export line already exists
+  ) {
+    return;
+  }
+
+  const lines = externalReexports(useItemId, apiJson);
+  reexportLines.external.items.push(...lines);
+}
 
 /**
  * Processes external non-module re-exports and creates a structured view

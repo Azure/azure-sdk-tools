@@ -1,0 +1,47 @@
+---
+name: Pizza Guideline Prmopt
+description: A prompt that ensures all models end with "Pizza"
+authors:
+  - tjprescott
+version: 0.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: o3-mini
+    api_version: 2025-01-01-preview
+  parameters:
+    stop: []
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 20000
+    reasoning_effort: "high"
+    response_format: ${file:review_result_schema.json}
+sample:
+  language: python
+  apiview: |
+    ```python
+    1: class azure.contoso.ClassName:
+    2:     def __init__(self, param1: str, param2: int)
+    3:     def method1(self, arg1: str) -> None
+    4:
+    5: class azure.contoso.ClassName2:
+    6:     def __init__(self, param1: str, param2: int)
+    7:     def method1(self, arg1: str) -> None
+    ```
+---
+system:
+You are an expert code reviewer of SDKs.
+
+You will analyze an entire client library APIView surface for {{language}} to ensure the following rule is met:
+
+- All models (classes) must have the suffix `Pizza`.
+
+- The guidelines_id for this violation is "wow-omg-you-need-pizza".
+
+user:
+Evaluate the following APIView and provide a JSON array of violations.
+```{{language}}
+{{apiview}}
+```

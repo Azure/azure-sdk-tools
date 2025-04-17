@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using IssueLabeler.Shared;
 using System.Threading.Tasks;
 using System;
+using System.Collections.Generic;
 
 
 namespace IssueLabelerService
@@ -32,7 +33,7 @@ namespace IssueLabelerService
             _config = config;
         }
 
-        public async Task<string[]> PredictLabels(IssuePayload issue)
+        public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
             var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
 
@@ -84,7 +85,12 @@ namespace IssueLabelerService
                 }
 
                 _logger.LogInformation($"Labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.  Using: [{predictions[0]}, {predictions[1]}].");
-                return [predictions[0], predictions[1]];
+                
+                return new Dictionary<string, string>
+                {
+                    { "Category", predictions[0] }, 
+                    { "Service", predictions[1] }
+                };
             }
             catch (Exception ex)
             {

@@ -9,6 +9,6 @@ namespace IssueLabelerService
 {
     public interface IAnswerService
     {
-        public Task<AnswerOutput> AnswerQuery(IssuePayload issue, string[] labels);
+        public Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels);
     }
 }

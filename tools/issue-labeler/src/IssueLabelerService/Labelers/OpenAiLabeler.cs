@@ -17,7 +17,7 @@ namespace IssueLabelerService
         public OpenAiLabeler(ILogger<LabelerFactory> logger, RepositoryConfiguration config, TriageRag ragService) =>
             (_logger, _config, _ragService) = (logger, config, ragService);
 
-        public async Task<string[]> PredictLabels(IssuePayload issue)
+        public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
             // Configuration for Azure services
             var modelName = _config.LabelModelName;
@@ -65,22 +65,11 @@ namespace IssueLabelerService
 
             string instructions = _config.LabelInstructions;
             string userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelUserPrompt, replacements, _logger);
-            
 
-            var structure = BinaryData.FromString("""
-            {
-              "type": "object",
-              "properties": {
-                "Category": { "type": "string" },
-                "Service": { "type": "string" }
-              },
-              "required": [ "Category", "Service"],
-              "additionalProperties": false
-            }
-            """);
+            var structure = BuildSearchStructure();
 
             var result = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName, structure);
-            var output = JsonConvert.DeserializeObject<LabelOutput>(result);
+            var output = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
 
             if (string.IsNullOrEmpty(result))
             {
@@ -88,15 +77,27 @@ namespace IssueLabelerService
             }
 
 
-            _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Service: {output.Service} Category: {output.Category}");
+            _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}: {string.Join(", ", output.Select(kv => $"{kv.Key}: {kv.Value}"))}");
 
-            return [output.Category, output.Service];
+            return output;
         }
 
-        private class LabelOutput
+        private BinaryData BuildSearchStructure()
         {
-            public string Category { get; set; }
-            public string Service { get; set; }
+            // Dynamically generate the JSON schema based on the configured labels
+            var labelKeys = _config.LabelNames.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            var properties = string.Join(", ", labelKeys.Select(key => $"\"{key}\": {{ \"type\": \"string\" }}"));
+            var required = string.Join(", ", labelKeys.Select(key => $"\"{key}\""));
+            return BinaryData.FromString($$"""
+            {
+              "type": "object",
+              "properties": {
+                {{properties}}
+              },
+              "required": [ {{required}} ],
+              "additionalProperties": false
+            }
+            """);
         }
     }
 }

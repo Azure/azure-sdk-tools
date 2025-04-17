@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 using Azure.AI.OpenAI;
+using System.Linq;
 
 namespace IssueLabelerService
 {
@@ -125,7 +126,7 @@ namespace IssueLabelerService
             string query,
             int count,
             double scoreThreshold,
-            string[] labels = null)
+            Dictionary<string, string> labels = null)
         {
             string filter = LabelsFilter(labels);
             var searchResults = await AzureSearchQueryAsync<Document>(
@@ -133,8 +134,7 @@ namespace IssueLabelerService
                 semanticConfigName,
                 field,
                 query,
-                count,
-                filter);
+                count);
 
             List<Document> filteredDocuments = new List<Document>();
             foreach (var (document, score) in searchResults)
@@ -157,7 +157,7 @@ namespace IssueLabelerService
             string query,
             int count,
             double scoreThreshold,
-            string[] labels = null)
+            Dictionary<string, string> labels = null)
         {
             string filter = LabelsFilter(labels);
             var searchResults = await AzureSearchQueryAsync<Issue>(
@@ -215,14 +215,13 @@ namespace IssueLabelerService
             return highestScore;
         }
 
-        public string LabelsFilter(string[] labels)
+        public string LabelsFilter(Dictionary<string, string> labels)
         {
-            if (labels != null && labels.Length >= 2)
+            if (labels != null && labels.Count > 0)
             {
-                string categoryFilter = $"Category eq '{labels[0]}'";
-                string serviceFilter = $"Service eq '{labels[1]}'";
-                _logger.LogInformation($"Filtering by: {categoryFilter} and {serviceFilter}");
-                return $"{categoryFilter} and {serviceFilter}";
+                // Dynamically construct the filter string
+                var filters = labels.Select(label => $"{label.Key} eq '{label.Value}'");
+                return string.Join(" and ", filters);
             }
 
             return null;

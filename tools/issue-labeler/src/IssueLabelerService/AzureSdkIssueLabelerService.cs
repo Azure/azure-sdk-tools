@@ -18,7 +18,6 @@ namespace IssueLabelerService
     {
         private static readonly ActionResult EmptyResult = new JsonResult(new TriageOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
-        private readonly TriageRag _ragService;
         private readonly Configuration _configurationService;
         private LabelerFactory _labelers;
         private AnswerFactory _answerServices;
@@ -26,7 +25,6 @@ namespace IssueLabelerService
         public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, LabelerFactory labelers, AnswerFactory answerServices)
         {
             _logger = logger;
-            _ragService = ragService;
             _labelers = labelers;
             _configurationService = configService;
             _answerServices = answerServices;
@@ -54,10 +52,11 @@ namespace IssueLabelerService
                 var labeler = _labelers.GetLabeler(config);
 
                 // Predict labels for the issue
-                string[] labels = await labeler.PredictLabels(issue);
+                Dictionary<string, string> labels = await labeler.PredictLabels(issue);
 
                 // If no labels are returned, do not generate an answer
-                if (labels == null || labels.Length == 0)
+                // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
+                if (labels == null || labels.Count == 0)
                 {
                     _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
                     return EmptyResult;
@@ -68,9 +67,10 @@ namespace IssueLabelerService
 
                 var answer = await qnaService.AnswerQuery(issue, labels);
 
+                // Update the Labels assignment to convert the Dictionary<string, string> to a string[].
                 TriageOutput result = new TriageOutput
                 {
-                    Labels = labels,
+                    Labels = labels.Values,
                     Answer = answer.Answer,
                     AnswerType = answer.AnswerType
                 };

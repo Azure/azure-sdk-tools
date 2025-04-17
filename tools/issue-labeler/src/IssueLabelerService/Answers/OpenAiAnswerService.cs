@@ -19,7 +19,7 @@ namespace IssueLabelerService
             _ragService = ragService;
             _logger = logger;
         }
-        public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, string[] labels)
+        public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels)
         {
             // Configuration for Azure services
             var modelName = _config.AnswerModelName;
@@ -41,9 +41,7 @@ namespace IssueLabelerService
             double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
             var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
-
-            // TODO: Add labels once dotnet has Service and Category fields in Document Index
-            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold);
+            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
 
             // Filtered out all sources for either one then not enough information to answer the issue. 
             if (docs.Count == 0 && issues.Count == 0)

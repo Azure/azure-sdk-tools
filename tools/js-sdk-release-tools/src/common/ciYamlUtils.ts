@@ -1,11 +1,12 @@
 import { NpmPackageInfo, VersionPolicyName } from './types.js';
-import { posix } from 'path';
+import { dirname, posix, } from 'path';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils.js';
 import { parse, stringify } from 'yaml';
 import { readFile, writeFile } from 'fs/promises';
 
 import { existsAsync } from './utils.js';
 import { logger } from '../utils/logger.js';
+import { fileURLToPath } from 'url';
 
 interface ArtifactInfo {
     name: string;
@@ -98,7 +99,7 @@ async function createManagementPlaneCiYaml(
     npmPackageInfo: NpmPackageInfo
 ): Promise<void> {
     const artifact = getArtifact(npmPackageInfo);
-    const __dirname = import.meta.dirname;
+    const __dirname = dirname(fileURLToPath(import.meta.url));
     const templatePath = posix.join(__dirname, 'ciYamlTemplates/ci.mgmt.template.yml');
     const template = await readFile(templatePath, { encoding: 'utf-8' });
     const parsed = parse(template.toString());

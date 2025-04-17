@@ -25,10 +25,13 @@ import { processAssocType } from "./processAssocType";
  * @param {Item} item - The item to process.
  * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
  */
-export function processItem(item: Item): ReviewLine[] | null {
+export function processItem(
+  item: Item,
+  parentModule?: { prefix: string; id: number },
+): ReviewLine[] | null {
   if (typeof item.inner === "object") {
     if ("module" in item.inner) {
-      return processModule(item);
+      return processModule(item, parentModule);
     } else if ("use" in item.inner) {
       return processUse(item);
     } else if ("union" in item.inner) {

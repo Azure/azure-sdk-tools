@@ -2,40 +2,23 @@ import { Crate, Id, ItemSummary } from "../../../rustdoc-types/output/rustdoc-ty
 import { getAPIJson } from "../../main";
 import { ReviewLine, TokenKind } from "../../models/apiview-models";
 
+export const externalReferencesLines: ReviewLine[] = [];
+
 /**
- * Processes external re-exports and creates a structured view
- * @param itemId id of the item being re-exported
- * @returns Object containing ReviewLine arrays for both items and modules
+ * Adds external references lines if the item exists in paths and is not already added.
+ * @param itemId The ID of the item being used/re-exported.
  */
-export function externalReexports(itemId: Id): { items: ReviewLine[]; modules: ReviewLine[] } {
+export function addExternalReferencesIfNotExists(itemId: Id): void {
   const apiJson = getAPIJson();
-  if (!isValidItemId(itemId, apiJson)) {
-    return { items: [], modules: [] };
+  if (
+    itemId in apiJson.index ||
+    !(itemId in apiJson.paths) ||
+    externalReferencesLines.some((line) => line.LineId === itemId.toString()) // Check if the item already exists
+  ) {
+    return;
   }
 
-  const itemSummary = apiJson.paths[itemId];
-  // Check if the item has a path
-  if (!hasValidPath(itemSummary)) {
-    return { items: [], modules: [] };
-  }
-
-  // Handle differently based on item kind
-  if (itemSummary.kind === "module") {
-    return processModuleReexport(itemId, itemSummary, apiJson);
-  } else {
-    // For non-module items, just represent them directly
-    return {
-      items: [createItemLine(itemId, itemSummary)],
-      modules: [],
-    };
-  }
-}
-
-/**
- * Checks if the item ID is valid in the given API JSON
- */
-function isValidItemId(itemId: Id, apiJson: Crate): boolean {
-  return !!(itemId && apiJson && apiJson.paths && apiJson.paths[itemId]);
+  externalReferencesLines.push(createItemLine(itemId, apiJson.paths[itemId]));
 }
 
 /**
@@ -62,7 +45,7 @@ function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
       },
       {
         Kind: TokenKind.TypeName,
-        Value: itemSummary.path.concat().join("::"),
+        Value: itemSummary.path.join("::"),
         RenderClasses: ["dependencies"],
         NavigateToId: itemId.toString(),
       },
@@ -73,12 +56,13 @@ function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
 /**
  * Processes a module re-export, including finding all its children
  */
-function processModuleReexport(
+export function processModuleReexport(
   itemId: Id,
   itemSummary: ItemSummary,
   apiJson: Crate,
-): { items: ReviewLine[]; modules: ReviewLine[] } {
-  const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary);
+  parentModule?: { prefix: string; id: number },
+): ReviewLine[] {
+  const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary, parentModule);
   const children = findModuleChildren(itemSummary.path.join("::"), apiJson);
 
   if (children.length === 0) {
@@ -87,77 +71,95 @@ function processModuleReexport(
       Kind: TokenKind.Punctuation,
       Value: "}",
     });
-    return {
-      modules: [moduleHeaderLine],
-      items: [],
-    };
-  } else {
-    // Add children and a separate closing brace line for non-empty modules
-    moduleHeaderLine.Children = children;
-    return {
-      modules: [
-        moduleHeaderLine,
-        {
-          RelatedToLine: itemId.toString(),
-          Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-        },
-      ],
-      items: [],
-    };
+    return [moduleHeaderLine];
   }
+  // Add children and a separate closing brace line for non-empty modules
+  moduleHeaderLine.Children = children;
+  return [
+    moduleHeaderLine,
+    {
+      RelatedToLine: itemId.toString(),
+      Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+    },
+  ];
 }
 
 /**
  * Creates the header line for a module
  */
-function createModuleHeaderLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
+function createModuleHeaderLine(
+  itemId: Id,
+  itemSummary: ItemSummary,
+  parentModule?: { prefix: string; id: number },
+): ReviewLine {
   return {
     LineId: itemId.toString(),
     Tokens: [
       {
         Kind: TokenKind.Keyword,
-        Value: "pub",
-      },
-      {
-        Kind: TokenKind.Keyword,
-        Value: itemSummary.kind,
+        Value: "pub mod",
       },
       {
         Kind: TokenKind.TypeName,
-        Value: itemSummary.path.concat().join("::"),
+        Value: parentModule.prefix,
+        NavigateToId: parentModule.id.toString(),
+        HasSuffixSpace: false,
+        RenderClasses: ["namespace"],
+      },
+      {
+        Kind: TokenKind.Punctuation,
+        Value: `::`,
+        HasSuffixSpace: false,
+      },
+      {
+        Kind: TokenKind.TypeName,
+        Value: itemSummary.path[itemSummary.path.length - 1],
         NavigateToId: itemId.toString(),
+        NavigationDisplayName:
+          parentModule.prefix + "::" + itemSummary.path[itemSummary.path.length - 1],
+        RenderClasses: ["namespace"],
       },
       {
         Kind: TokenKind.Punctuation,
         Value: "{",
         HasSuffixSpace: false,
       },
+      {
+        Kind: TokenKind.Comment,
+        Value: `/* re-export of ${itemSummary.path.join("::")} */`,
+        HasPrefixSpace: true,
+        HasSuffixSpace: true,
+      },
     ],
   };
 }
 
 /**
- * Finds all child items of a module based on path
+ * Returns all child item IDs of a module based on path
  */
-function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
-  const children: ReviewLine[] = [];
-
-  // Process all items in paths to find children
+export function getModuleChildIdsByPath(currentPath: string, apiJson: Crate): number[] {
+  const childIds: number[] = [];
   for (const childId in apiJson.paths) {
     const childItemSummary = apiJson.paths[childId];
-
-    // Skip if the child doesn't have a path
-    if (!hasValidPath(childItemSummary)) {
-      continue;
-    }
-
+    if (!hasValidPath(childItemSummary)) continue;
     const childPath = childItemSummary.path.join("::");
-
-    // Check if this is a child path (starts with the current path and is not the same path)
     if (childPath !== currentPath && childPath.startsWith(currentPath + "::")) {
-      // Add as a child
-      children.push(createItemLine(Number(childId), childItemSummary));
+      childIds.push(Number(childId));
     }
+  }
+  return childIds;
+}
+
+/**
+ * Finds all child items of a module based on path and returns ReviewLines
+ */
+function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
+  const childIds = getModuleChildIdsByPath(currentPath, apiJson);
+  const children: ReviewLine[] = [];
+
+  for (const childId of childIds) {
+    const childItemSummary = apiJson.paths[childId];
+    children.push(createItemLine(Number(childId), childItemSummary));
   }
 
   // Sort children by kind and then by path

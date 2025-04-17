@@ -12,7 +12,7 @@ import { isAssocConstItem } from "./utils/typeGuards";
  */
 export function processAssocConst(item: Item): ReviewLine[] | null {
   if (!isAssocConstItem(item)) return null;
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item): [];
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {

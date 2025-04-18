@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
+using APIViewWeb.DTOs;
 
 namespace APIViewWeb.Managers
 {
@@ -330,26 +331,18 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task<int> GenerateAIReview(string reviewId, string revisionId)
+        public async Task<int> GenerateAIReview(string reviewId, string apiRevisionId)
         {
-            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            var revision = revisions.Where(r => r.Id == revisionId).FirstOrDefault();
+            var revision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var codeLines = codeFile.RenderText(false);
 
-            var reviewText = new StringBuilder();
-            foreach (var codeLine in codeLines)
-            {
-                reviewText.Append(codeLine.DisplayString);
-                reviewText.Append("\\n");
-            }
-
+            var codeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
             var url = "https://apiview-gpt.azurewebsites.net/python";
             var client = new HttpClient();
             client.Timeout = TimeSpan.FromMinutes(20);
             var payload = new
             {
-                content = reviewText.ToString()
+                content = String.Join("\\n", codeLines.Select(item => item.lineText.Trim()))
             };
 
             var result = new AIReviewModel();
@@ -371,10 +364,10 @@ namespace APIViewWeb.Managers
                 var comment = new CommentItemModel();
                 comment.CreatedOn = DateTime.UtcNow;
                 comment.ReviewId = reviewId;
-                comment.APIRevisionId = revisionId;
-                comment.ElementId = codeLine.ElementId;
+                comment.APIRevisionId = apiRevisionId;
+                comment.ElementId = codeLine.lineId;
                 //comment.SectionClass = sectionClass; // This will be needed for swagger
-
+            
                 var commentText = new StringBuilder();
                 commentText.AppendLine($"Suggestion: `{violation.Suggestion}`");
                 commentText.AppendLine();
@@ -386,7 +379,7 @@ namespace APIViewWeb.Managers
                 comment.ResolutionLocked = false;
                 comment.CreatedBy = "azure-sdk";
                 comment.CommentText = commentText.ToString();
-
+            
                 await _commentsRepository.UpsertCommentAsync(comment);
             }
             return result.Violations.Count;

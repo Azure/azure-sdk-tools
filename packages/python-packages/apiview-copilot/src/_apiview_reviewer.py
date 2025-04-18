@@ -101,7 +101,7 @@ class ApiViewReview:
         start_time = time()
         apiview = self.unescape(apiview)
         static_guidelines = self.search.retrieve_static_guidelines(
-            self.language, include_general_guidelines=True
+            self.language, include_general_guidelines=False
         )
         static_guideline_ids = [x["id"] for x in static_guidelines]
 

@@ -233,7 +233,7 @@ class ReviewResult(BaseModel):
             pass
         # Search up until the start of the chunk or an empty line is reached for a match
         for i in range(target_idx - 1, -1, -1):
-            if chunk.lines[i].strip().startswish(bad_code.strip()):
+            if chunk.lines[i].strip().startswith(bad_code.strip()):
                 updated_idx = chunk.start_line_no + i + 1
                 return updated_idx
             if not chunk.lines[i].strip():
@@ -241,7 +241,7 @@ class ReviewResult(BaseModel):
 
         # If that doesn't work, search down until the end of the chunk or an empty line is reached for a match
         for i in range(target_idx + 1, len(chunk.lines)):
-            if chunk.lines[i].strip().statswith(bad_code.strip()):
+            if chunk.lines[i].strip().startswith(bad_code.strip()):
                 updated_idx = chunk.start_line_no + i + 1
                 return updated_idx
             if not chunk.lines[i].strip():

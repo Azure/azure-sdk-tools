@@ -104,9 +104,9 @@ namespace IssueLabelerService
                 try
                 {
                     var confidence = double.Parse(output[$"{label.Key}ConfidenceScore"]);
-                    if(label.Value == "UNKOWN")
+                    if(label.Value == "UNKNOWN")
                     {
-                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKOWN label.");
+                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
                     }
                     if (confidence < double.Parse(_config.ConfidenceThreshold))
                     {

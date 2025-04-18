@@ -24,8 +24,7 @@ import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { tryGetNpmView } from '../npmUtils.js';
 
-export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
-    console.log(`More information: [https://aka.ms/azsdk/spec-gen-sdk-config](https://aka.ms/azsdk/spec-gen-sdk-config)`);
+export async function generateChangelogAndBumpVersion(packageFolderPath: string) {    
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);

@@ -20,6 +20,8 @@ async function automationGenerateInPipeline(
     sdkGenerationType: string | undefined,
     local: boolean
 ) {
+    console.log(`More information: [https://aka.ms/azsdk/spec-gen-sdk-config](https://aka.ms/azsdk/spec-gen-sdk-config)`);
+    console.log(`More information: https://aka.ms/azsdk/spec-gen-sdk-config`);
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
         sdkType,

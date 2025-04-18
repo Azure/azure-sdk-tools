@@ -197,10 +197,11 @@ class ReviewResult(BaseModel):
 
         combined_violations = {}
         for violation in violations:
-            # TODO: Re-visit this logic if line numbers from the GPT are wrong.
-            # line_no = self._find_line_number(section, violation.bad_code)
-            # violation.line_no = line_no
-            line_no = violation.line_no
+            # Cure minor deviations in line numbers. If the line number can't be resolved, skip
+            line_no = self._find_line_number(section, violation)
+            if line_no is None:
+                continue
+            violation.line_no = line_no
             existing = combined_violations.get(line_no, None)
             if existing:
                 for rule_id in violation.rule_ids:
@@ -219,36 +220,38 @@ class ReviewResult(BaseModel):
         ]
         self.violations.extend(filtered_violations)
 
-    def _find_line_number(self, chunk: Section, bad_code: str) -> Optional[int]:
+    def _find_line_number(self, chunk: Section, violation: Violation) -> Optional[int]:
         """
-        Find the line number of the bad code in the chunk.
-        This is a bit of a hack, but it works for now.
+        Algorithm to correct line numbers that are slightly off.
         """
-        offset = chunk.start_line_no
-        line_no = None
-        for i, line in enumerate(chunk.lines):
-            # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
-            if line.strip().startswith(bad_code.strip()):
-                if line_no is None:
-                    line_no = offset + i
-                else:
-                    print(
-                        f"WARNING: Found multiple instances of bad code, default to first: {bad_code}"
-                    )
-        # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
-        if not line_no:
-            print(
-                f"WARNING: Could not find bad code. Trying less precise method: {bad_code}"
-            )
-            for i, line in enumerate(chunk.lines):
-                if bad_code.strip().startswith(line.strip()):
-                    if line_no is None:
-                        line_no = offset + i
-                    else:
-                        print(
-                            f"WARNING: Found multiple instances of bad code, default to first: {bad_code}"
-                        )
-        return line_no
+        bad_code = violation.bad_code
+        target_idx = violation.line_no - chunk.start_line_no - 1
+        try:
+            if chunk.lines[target_idx].strip() == bad_code.strip():
+                return violation.line_no
+        except IndexError:
+            pass
+        # Search up until the start of the chunk or an empty line is reached for a match
+        for i in range(target_idx - 1, -1, -1):
+            if chunk.lines[i].strip().startswish(bad_code.strip()):
+                updated_idx = chunk.start_line_no + i + 1
+                return updated_idx
+            if not chunk.lines[i].strip():
+                break
+
+        # If that doesn't work, search down until the end of the chunk or an empty line is reached for a match
+        for i in range(target_idx + 1, len(chunk.lines)):
+            if chunk.lines[i].strip().statswith(bad_code.strip()):
+                updated_idx = chunk.start_line_no + i + 1
+                return updated_idx
+            if not chunk.lines[i].strip():
+                break
+
+        # If no match is found, return None
+        print(
+            f"WARNING: Could not find match for code '{violation.bad_code}' at or near line {violation.line_no}"
+        )
+        return None
 
     def sort(self):
         """

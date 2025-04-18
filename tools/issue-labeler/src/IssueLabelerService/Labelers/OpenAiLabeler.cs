@@ -191,11 +191,5 @@ namespace IssueLabelerService
             // Validate that all values in the dictionary exist in the label names
             return labelsToValidate.Values.All(label => labelNames.Contains(label));
         }
-
-        private class Label
-        {
-            public string Name { get; set; }
-            public string Color { get; set; }
-        }
     }
 }

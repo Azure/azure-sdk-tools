@@ -251,6 +251,8 @@ namespace IssueLabelerService
     {
         public string chunk { get; set; }
         public string Url { get; set; }
+        public string Service { get; set; }
+        public string Category { get; set; }
         public double? Score { get; set; }
 
         public override string ToString()

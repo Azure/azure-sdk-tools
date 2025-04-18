@@ -159,6 +159,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
+              ""Dotenv"": true,
               ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]
@@ -170,7 +171,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             };
 
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
-            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var testFolder = TestHelpers.DescribeTestFolder(inputJson, Guid.NewGuid().ToString(), folderStructure);
 
             try
             {
@@ -228,7 +229,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             GitStore additionalStore = new GitStore();
-
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
             var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);

@@ -7,8 +7,8 @@
             ],
             "line_no": 10,
             "bad_code": "connection_string: Optional[str] = None,",
-            "suggestion": "Remove the connection_string parameter from the constructor and implement a separate factory classmethod (from_connection_string) to create the client from a connection string.",
-            "comment": "Per the SDK guidelines, the client __init__ must not accept a connection string; a factory method should be provided instead."
+            "suggestion": "Remove the connection_string parameter from the constructor and provide a separate classmethod, for example from_connection_string, to create a client from a connection string.",
+            "comment": "The constructor must not take a connection string per the guideline."
         },
         {
             "rule_ids": [
@@ -16,26 +16,8 @@
             ],
             "line_no": 53,
             "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "suggestion": "Rename the async client to 'ImageAnalysisClient' in the 'azure.ai.vision.imageanalysis.aio' namespace so that both sync and async clients share the same name.",
-            "comment": "SDK guidelines dictate that async and sync clients should have the same class name, with the async version placed in the .aio namespace."
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-static-methods"
-            ],
-            "line_no": 88,
-            "bad_code": "@staticmethod\ndef send_request(self, request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]",
-            "suggestion": "Either remove the @staticmethod decorator and use 'self' as an instance method, or eliminate the 'self' parameter if a static method is truly intended.",
-            "comment": "Static methods should not have a 'self' parameter and are generally discouraged; this violates the static method coding guidelines."
-        },
-        {
-            "rule_ids": [
-                "general_design.html#general-response-no-reserved-words"
-            ],
-            "line_no": 168,
-            "bad_code": "ivar list: List[DenseCaption]",
-            "suggestion": "Rename the property 'list' to a non-reserved identifier such as 'items'.",
-            "comment": "Using built-in names like 'list' as a property can lead to conflicts and confusion; choose a name that avoids collision with Python built-ins."
+            "suggestion": "Rename the async client to ImageAnalysisClient so that both sync and async clients share the same client name in their respective namespaces.",
+            "comment": "The async and sync clients must use the same client name according to the guidelines."
         },
         {
             "rule_ids": [
@@ -44,16 +26,16 @@
             "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
             "suggestion": "Rename the class to 'DetectedPerson' using PascalCase.",
-            "comment": "Class names must follow PascalCase naming conventions."
+            "comment": "Class names should use PascalCase."
         },
         {
             "rule_ids": [
-                "python_design.html#python-models-async"
+                "python_implementation.html#python-codestyle-properties"
             ],
-            "line_no": 432,
-            "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
-            "suggestion": "Define PeopleResult in the common models namespace (azure.ai.vision.imageanalysis.models) and reuse it in both sync and async clients.",
-            "comment": "Models should not be duplicated between the root namespace and the .aio namespace."
+            "line_no": 411,
+            "bad_code": "def get_result(self) -> ObjectsResult",
+            "suggestion": "Replace the simple getter (and similarly the setter on line 413) with a property (using @property and @<name>.setter).",
+            "comment": "Simple getter and setter methods should be implemented as properties."
         },
         {
             "rule_ids": [
@@ -61,8 +43,8 @@
             ],
             "line_no": 517,
             "bad_code": "tags = 'tags'",
-            "suggestion": "Rename the enum member to 'TAGS = 'tags'' so that it is in all uppercase.",
-            "comment": "Enum member names should be uppercase as per the SDK style guidelines."
+            "suggestion": "Rename the enum member to 'TAGS' so that all enum member names are uppercase.",
+            "comment": "Enum member names should be in UPPERCASE."
         }
     ]
 }

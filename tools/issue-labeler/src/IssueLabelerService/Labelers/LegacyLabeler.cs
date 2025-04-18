@@ -88,8 +88,8 @@ namespace IssueLabelerService
                 
                 return new Dictionary<string, string>
                 {
-                    { "Category", predictions[0] }, 
-                    { "Service", predictions[1] }
+                    { "Service", predictions[0] }, 
+                    { "Category", predictions[1] }
                 };
             }
             catch (Exception ex)

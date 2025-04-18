@@ -69,32 +69,48 @@ namespace IssueLabelerService
                 return EmptyResult;
             }
 
-            try{
-
-                // Get the Qna model based on configuration
-                var qnaService = _answerServices.GetAnswerService(config);
-
-                var answer = await qnaService.AnswerQuery(issue, labels);
-
-                TriageOutput result = new TriageOutput
-                {
-                    Labels = labels.Values,
-                    Answer = answer.Answer,
-                    AnswerType = answer.AnswerType
-                };
-
-                return new JsonResult(result);
-            }
-            catch (Exception ex)
+            if(bool.Parse(config.EnableAnswers))
             {
-                _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                try{
 
+                    // Get the Qna model based on configuration
+                    var qnaService = _answerServices.GetAnswerService(config);
+
+                    var answer = await qnaService.AnswerQuery(issue, labels);
+
+                    TriageOutput result = new TriageOutput
+                    {
+                        Labels = labels.Values,
+                        Answer = answer.Answer,
+                        AnswerType = answer.AnswerType
+                    };
+
+                    return new JsonResult(result);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+
+                    TriageOutput result = new TriageOutput
+                    {
+                        Labels = labels.Values,
+                        Answer = null,
+                        AnswerType = null
+                    };
+
+                    return new JsonResult(result);
+                }
+            }
+            else
+            {
                 TriageOutput result = new TriageOutput
                 {
                     Labels = labels.Values,
                     Answer = null,
                     AnswerType = null
                 };
+
+                return new JsonResult(result);
             }
         }
 

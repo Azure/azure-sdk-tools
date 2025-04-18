@@ -3,66 +3,327 @@
     "violations": [
         {
             "rule_ids": [
-                "python_design.html#python-client-connection-string"
+                "missing-pizza"
             ],
-            "line_no": 10,
-            "bad_code": "connection_string: Optional[str] = None,",
-            "suggestion": "Remove the connection_string parameter from the constructor and implement a separate factory classmethod (from_connection_string) to create the client from a connection string.",
-            "comment": "Per the SDK guidelines, the client __init__ must not accept a connection string; a factory method should be provided instead."
+            "line_no": 5,
+            "bad_code": "class azure.ai.vision.imageanalysis.ImageAnalysisClient(ImageAnalysisClient): implements ContextManager",
+            "suggestion": "Rename the class to have a suffix 'Pizza'. For example: 'ImageAnalysisClientPizza'.",
+            "comment": "The class name does not conform to the 'missing-pizza' guideline. All model classes must end with 'Pizza'."
         },
         {
             "rule_ids": [
-                "python_design.html#python-client-same-name-sync-async"
+                "missing-noodle"
+            ],
+            "line_no": 17,
+            "bad_code": "def analyze(",
+            "suggestion": "Add 'noodle: Optional[str] = None' as a keyword-only parameter after the '*' (for example, after 'smart_crops_aspect_ratios') and before **kwargs.",
+            "comment": "The service operation 'analyze' is missing the required 'noodle' parameter."
+        },
+        {
+            "rule_ids": [
+                "missing-noodle"
+            ],
+            "line_no": 30,
+            "bad_code": "def analyze_from_url(",
+            "suggestion": "Include 'noodle: Optional[str] = None' as a keyword-only argument after the existing keyword parameters and before **kwargs.",
+            "comment": "The service operation 'analyze_from_url' is missing the required 'noodle' parameter."
+        },
+        {
+            "rule_ids": [
+                "missing-noodle"
+            ],
+            "line_no": 43,
+            "bad_code": "def send_request(",
+            "suggestion": "Add 'noodle: Optional[str] = None' as a keyword-only parameter after the '*' (right after the 'stream' parameter) and before **kwargs.",
+            "comment": "The service operation 'send_request' is missing the required 'noodle' parameter."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
             ],
             "line_no": 53,
             "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "suggestion": "Rename the async client to 'ImageAnalysisClient' in the 'azure.ai.vision.imageanalysis.aio' namespace so that both sync and async clients share the same name.",
-            "comment": "SDK guidelines dictate that async and sync clients should have the same class name, with the async version placed in the .aio namespace."
+            "suggestion": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClientPizza(ImageAnalysisClient): implements AsyncContextManager",
+            "comment": "The model class name must have the 'Pizza' suffix. Add 'Pizza' to the class name."
         },
         {
             "rule_ids": [
-                "python_implementation.html#python-codestyle-static-methods"
+                "missing-noodle"
             ],
-            "line_no": 88,
-            "bad_code": "@staticmethod\ndef send_request(self, request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]",
-            "suggestion": "Either remove the @staticmethod decorator and use 'self' as an instance method, or eliminate the 'self' parameter if a static method is truly intended.",
-            "comment": "Static methods should not have a 'self' parameter and are generally discouraged; this violates the static method coding guidelines."
+            "line_no": 61,
+            "bad_code": "async def analyze(",
+            "suggestion": "Insert a keyword-only parameter 'noodle: Optional[str] = None' immediately after the '*' block and before **kwargs. For example:\n    async def analyze(self, image_data: bytes, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., noodle: Optional[str] = None, **kwargs: Any) -> ImageAnalysisResult",
+            "comment": "The service operation 'analyze' is missing the required noodle parameter."
         },
         {
             "rule_ids": [
-                "general_design.html#general-response-no-reserved-words"
+                "missing-noodle"
             ],
-            "line_no": 168,
-            "bad_code": "ivar list: List[DenseCaption]",
-            "suggestion": "Rename the property 'list' to a non-reserved identifier such as 'items'.",
-            "comment": "Using built-in names like 'list' as a property can lead to conflicts and confusion; choose a name that avoids collision with Python built-ins."
+            "line_no": 74,
+            "bad_code": "async def analyze_from_url(",
+            "suggestion": "Insert a keyword-only parameter 'noodle: Optional[str] = None' immediately after the '*' block and before **kwargs. For example:\n    async def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., noodle: Optional[str] = None, **kwargs: Any) -> ImageAnalysisResult",
+            "comment": "The service operation 'analyze_from_url' is missing the required noodle parameter."
         },
         {
             "rule_ids": [
-                "python_implementation.html#python-codestyle-type-naming"
+                "missing-pizza"
+            ],
+            "line_no": 99,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.CaptionResult(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.CaptionResultPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names must have the 'Pizza' suffix."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 120,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.CropRegion(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.CropRegionPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names must end with the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 143,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DenseCaption(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.DenseCaptionPizza(MutableMapping[str, Any]):",
+            "comment": "Model classes should have names ending with 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 167,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DenseCaptionsResult(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to 'DenseCaptionsResultPizza' to include the required 'Pizza' suffix.",
+            "comment": "Model classes must have names that end with the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 187,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DetectedObject(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedObjectPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 188,
+            "bad_code": "ivar bounding_box: ImageBoundingBox",
+            "suggestion": "ivar bounding_box: ImageBoundingBoxPizza",
+            "comment": "Model names must have the 'Pizza' suffix. Change 'ImageBoundingBox' to 'ImageBoundingBoxPizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 189,
+            "bad_code": "ivar tags: List[DetectedTag]",
+            "suggestion": "ivar tags: List[DetectedTagPizza]",
+            "comment": "The model 'DetectedTag' must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 195,
+            "bad_code": "bounding_box: ImageBoundingBox,",
+            "suggestion": "Rename the model type from 'ImageBoundingBox' to 'ImageBoundingBoxPizza'.",
+            "comment": "All model classes must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 196,
+            "bad_code": "tags: List[DetectedTag]",
+            "suggestion": "Rename the model type from 'DetectedTag' to 'DetectedTagPizza'.",
+            "comment": "All model classes must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-noodle"
+            ],
+            "line_no": 206,
+            "bad_code": ") -> None",
+            "suggestion": "Modify the service operation’s signature to include the keyword-only parameter 'noodle'. For example, if the original signature is 'def operation(...):', it should be updated to 'def operation(..., *, noodle: Optional[str] = None):'.",
+            "comment": "Service operations must include an optional keyword-only argument named 'noodle' of type Optional[str] = None. This operation is missing that parameter."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
             ],
             "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
-            "suggestion": "Rename the class to 'DetectedPerson' using PascalCase.",
-            "comment": "Class names must follow PascalCase naming conventions."
+            "suggestion": "Rename the class to include the 'Pizza' suffix, for example, 'detectedPersonPizza'.",
+            "comment": "All model classes must end with 'Pizza'."
         },
         {
             "rule_ids": [
-                "python_design.html#python-models-async"
+                "missing-pizza"
+            ],
+            "line_no": 210,
+            "bad_code": "ivar bounding_box: ImageBoundingBox",
+            "suggestion": "Rename 'ImageBoundingBox' to 'ImageBoundingBoxPizza' so that it adheres to the model naming convention.",
+            "comment": "The model 'ImageBoundingBox' does not include the required 'Pizza' suffix."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 214,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DetectedTag(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to include the 'Pizza' suffix. For example, change the name to DetectedTagPizza.",
+            "comment": "All model classes must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-noodle"
+            ],
+            "line_no": 233,
+            "bad_code": ") -> None",
+            "suggestion": "Modify the service operation signature to include a keyword-only parameter 'noodle: Optional[str] = None'. For example, if the signature was split over multiple lines, change the end of the parameter list to something like: \n\n  ..., *, noodle: Optional[str] = None) -> None",
+            "comment": "This service operation is missing the required optional keyword-only argument 'noodle'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 236,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DetectedTextBlock(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedTextBlockPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names should have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 255,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DetectedTextLine(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to DetectedTextLinePizza to meet the naming requirement.",
+            "comment": "The model class name does not end with 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 279,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.DetectedTextWord(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to include the 'Pizza' suffix (e.g., DetectedTextWordPizza).",
+            "comment": "All model classes must end with 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 303,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.ImageAnalysisResult(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.ImageAnalysisResultPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names must end with 'Pizza'. Rename the class to include the 'Pizza' suffix."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 339,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.ImageBoundingBox(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to include the suffix 'Pizza'. For example, change it to 'ImageBoundingBoxPizza'.",
+            "comment": "Model class names must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 364,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.ImageMetadata(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.ImageMetadataPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 386,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.ImagePoint(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to include the 'Pizza' suffix. For example: class azure.ai.vision.imageanalysis.models.ImagePointPizza(MutableMapping[str, Any]):",
+            "comment": "Model class names must end with 'Pizza' as per the 'missing-pizza' guideline."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 408,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.ObjectsResult(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to 'ObjectsResultPizza', for example:\n\nclass azure.ai.vision.imageanalysis.models.ObjectsResultPizza(MutableMapping[str, Any]):",
+            "comment": "Model classes must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-noodle"
+            ],
+            "line_no": 411,
+            "bad_code": "def get_result(self) -> ObjectsResult",
+            "suggestion": "def get_result(self, *, noodle: Optional[str] = None) -> ObjectsResult",
+            "comment": "Service operations must include an optional keyword-only argument 'noodle' of type Optional[str] = None."
+        },
+        {
+            "rule_ids": [
+                "missing-noodle"
+            ],
+            "line_no": 413,
+            "bad_code": "def set_result(self, obj) -> None",
+            "suggestion": "def set_result(self, obj, *, noodle: Optional[str] = None) -> None",
+            "comment": "Service operations must include an optional keyword-only argument 'noodle' of type Optional[str] = None."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
             ],
             "line_no": 432,
             "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
-            "suggestion": "Define PeopleResult in the common models namespace (azure.ai.vision.imageanalysis.models) and reuse it in both sync and async clients.",
-            "comment": "Models should not be duplicated between the root namespace and the .aio namespace."
+            "suggestion": "Rename the class to end with 'Pizza', e.g. 'PeopleResultPizza'.",
+            "comment": "Model classes must have the suffix 'Pizza'."
         },
         {
             "rule_ids": [
-                "python_design.html#python-models-enum-name-uppercase"
+                "missing-pizza"
             ],
-            "line_no": 517,
-            "bad_code": "tags = 'tags'",
-            "suggestion": "Rename the enum member to 'TAGS = 'tags'' so that it is in all uppercase.",
-            "comment": "Enum member names should be uppercase as per the SDK style guidelines."
+            "line_no": 452,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.ReadResult(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.ReadResultPizza(MutableMapping[str, Any]):",
+            "comment": "The model class name 'ReadResult' must include the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 472,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.SmartCropsResult(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.SmartCropsResultPizza(MutableMapping[str, Any]):",
+            "comment": "Model classes must have the suffix 'Pizza'."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 491,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.TagsResult(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to include the 'Pizza' suffix. For example, change it to 'TagsResultPizza'.",
+            "comment": "All model classes must have the suffix 'Pizza' as per the guideline."
+        },
+        {
+            "rule_ids": [
+                "missing-pizza"
+            ],
+            "line_no": 510,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.VisualFeaturesPizza(str, Enum):",
+            "comment": "Model class names must have the suffix 'Pizza'."
         }
     ]
 }

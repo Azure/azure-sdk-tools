@@ -36,9 +36,14 @@ You are an expert code reviewer of SDKs.
 
 You will analyze an entire client library APIView surface for {{language}} to ensure the following rule is met:
 
-- All models (classes) must have the suffix `Pizza`.
+# Guideline
+All models (classes) must have the suffix `Pizza`.
 
-- The guidelines_id for this violation is "wow-omg-you-need-pizza".
+# Guideline ID
+"missing-pizza"
+
+# Directions
+- Analyze each line of the APIView one-at-a-time.
 
 user:
 Evaluate the following APIView and provide a JSON array of violations.

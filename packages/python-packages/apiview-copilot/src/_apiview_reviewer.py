@@ -10,7 +10,7 @@ import threading
 from time import time
 from typing import Literal, List
 
-from ._sectioned_document import SectionedDocument
+from ._sectioned_document import SectionedDocument, Section
 from ._search_manager import SearchManager
 from ._models import ReviewResult
 
@@ -106,63 +106,83 @@ class ApiViewReview:
         start_time = time()
         apiview = self.unescape(apiview)
 
-        # wrap the entire document as a single section
-        doc = SectionedDocument(apiview.splitlines(), chunk=False)
-        section = next(iter(doc))  # only one section
+        # chunk the document into sections if desired
+        doc = SectionedDocument(apiview.splitlines(), chunk=True)
+        chunks = list(doc)  # each chunk is a Section
 
         prompts = [
             "pizza_guideline_o3_mini",
             "noodle_parameter_guideline_o3_mini",
-            # add more prompts here as needed
+            # add more prompts here
         ]
         prompt_paths = [os.path.join(_PROMPTS_FOLDER, p + ".prompty") for p in prompts]
 
         final_results = ReviewResult(status="Success", violations=[])
 
+        # ANSI status symbols
         PENDING = "░"
         PROCESSING = "▒"
         SUCCESS = "\033[32m█\033[0m"
         FAILURE = "\033[31m█\033[0m"
 
-        status = [PENDING] * len(prompt_paths)
-        print("Processing prompts: " + "".join(status), end="", flush=True)
+        # one slot per (chunk, prompt) pair
+        total = len(chunks) * len(prompt_paths)
+        status = [PENDING] * total
+        print("Processing chunks/prompts: " + "".join(status), end="", flush=True)
 
-        def run_prompt(idx, prompt_path):
+        def run_task(chunk_idx: int, chunk: Section, prompt_idx: int, prompt_path: str):
             try:
                 resp = prompty.execute(
                     prompt_path,
                     inputs={
                         "language": self.language,
-                        "context": apiview,
-                        "apiview": section.numbered(),
+                        "apiview": chunk.numbered(),  # numbered lines
                     },
                 )
                 data = json.loads(resp)
-                return idx, ReviewResult(**data), None
+                return chunk_idx, prompt_idx, ReviewResult(**data), None
             except Exception as e:
-                return idx, None, e
+                return chunk_idx, prompt_idx, None, e
 
+        # schedule all (chunk, prompt) tasks
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = {
-                executor.submit(run_prompt, idx, path): idx
-                for idx, path in enumerate(prompt_paths)
-            }
+            futures = {}
+            index_map: List[tuple[int, int]] = []
+            slot = 0
+            for c_idx, chunk in enumerate(chunks):
+                for p_idx, path in enumerate(prompt_paths):
+                    fut = executor.submit(run_task, c_idx, chunk, p_idx, path)
+                    futures[fut] = slot
+                    index_map.append((c_idx, p_idx))
+                    slot += 1
 
+            # process results as they arrive
             for fut in concurrent.futures.as_completed(futures):
-                idx = futures[fut]
-                status[idx] = PROCESSING
-                print("\rProcessing prompts: " + "".join(status), end="", flush=True)
+                slot = futures[fut]
+                c_idx, p_idx = index_map[slot]
 
-                i, result, error = fut.result()
+                status[slot] = PROCESSING
+                print(
+                    "\rProcessing chunks/prompts: " + "".join(status),
+                    end="",
+                    flush=True,
+                )
+
+                _, _, result, error = fut.result()
                 if error:
-                    status[i] = FAILURE
-                    logger.error(f"Error running prompt '{prompts[i]}': {error}")
+                    status[slot] = FAILURE
+                    logger.error(
+                        f"Error in chunk {c_idx}, prompt '{prompts[p_idx]}': {error}"
+                    )
                 else:
-                    status[i] = SUCCESS
-                    # now supply the single section
-                    final_results.merge(result, section=section)
+                    status[slot] = SUCCESS
+                    final_results.merge(result, section=chunks[c_idx])
 
-                print("\rProcessing prompts: " + "".join(status), end="", flush=True)
+                print(
+                    "\rProcessing chunks/prompts: " + "".join(status),
+                    end="",
+                    flush=True,
+                )
 
         print()  # newline after bar
 

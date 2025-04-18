@@ -3,39 +3,66 @@
     "violations": [
         {
             "rule_ids": [
-                "python_implementation.html#python-codestyle-type-naming"
+                "python_design.html#python-client-connection-string"
             ],
-            "line_no": "209",
-            "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
-            "suggestion": "Rename the class from 'detectedPerson' to 'DetectedPerson'.",
-            "comment": "Type names must use PascalCase. The name 'detectedPerson' does not follow this convention and should be 'DetectedPerson'."
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-type-naming"
-            ],
-            "line_no": "433",
-            "bad_code": "    ivar list: List[detectedPerson]",
-            "suggestion": "Change the annotation to 'List[DetectedPerson]'.",
-            "comment": "The type 'detectedPerson' is referenced in a type annotation using incorrect casing. It should use PascalCase (i.e., 'DetectedPerson') to be consistent with SDK naming conventions. See line 209 for the class definition."
+            "line_no": 10,
+            "bad_code": "connection_string: Optional[str] = None,",
+            "suggestion": "Remove the connection_string parameter from the constructor and implement a separate factory classmethod (from_connection_string) to create the client from a connection string.",
+            "comment": "Per the SDK guidelines, the client __init__ must not accept a connection string; a factory method should be provided instead."
         },
         {
             "rule_ids": [
                 "python_design.html#python-client-same-name-sync-async"
             ],
-            "line_no": "53",
+            "line_no": 53,
             "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "suggestion": "Rename the async client class to 'ImageAnalysisClient' within the azure.ai.vision.imageanalysis.aio namespace.",
-            "comment": "The async client is incorrectly named 'AsyncImageAnalysisClient'. According to guidelines, the async client should use the same client name as its synchronous counterpart ('ImageAnalysisClient') and reside in the .aio namespace."
+            "suggestion": "Rename the async client to 'ImageAnalysisClient' in the 'azure.ai.vision.imageanalysis.aio' namespace so that both sync and async clients share the same name.",
+            "comment": "SDK guidelines dictate that async and sync clients should have the same class name, with the async version placed in the .aio namespace."
         },
         {
             "rule_ids": [
-                "python_implementation.html#python-tooling-pylint"
+                "python_implementation.html#python-codestyle-static-methods"
             ],
-            "line_no": "90",
-            "bad_code": "        self,",
-            "suggestion": "Remove the 'self' parameter from the static method signature. For example, define the method as: 'def send_request(request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]'.",
-            "comment": "The method 'send_request' in the async client is decorated as a static method but still accepts a 'self' parameter. Static methods should not include a reference to the instance."
+            "line_no": 88,
+            "bad_code": "@staticmethod\ndef send_request(self, request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]",
+            "suggestion": "Either remove the @staticmethod decorator and use 'self' as an instance method, or eliminate the 'self' parameter if a static method is truly intended.",
+            "comment": "Static methods should not have a 'self' parameter and are generally discouraged; this violates the static method coding guidelines."
+        },
+        {
+            "rule_ids": [
+                "general_design.html#general-response-no-reserved-words"
+            ],
+            "line_no": 168,
+            "bad_code": "ivar list: List[DenseCaption]",
+            "suggestion": "Rename the property 'list' to a non-reserved identifier such as 'items'.",
+            "comment": "Using built-in names like 'list' as a property can lead to conflicts and confusion; choose a name that avoids collision with Python built-ins."
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 209,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to 'DetectedPerson' using PascalCase.",
+            "comment": "Class names must follow PascalCase naming conventions."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-async"
+            ],
+            "line_no": 432,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
+            "suggestion": "Define PeopleResult in the common models namespace (azure.ai.vision.imageanalysis.models) and reuse it in both sync and async clients.",
+            "comment": "Models should not be duplicated between the root namespace and the .aio namespace."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 517,
+            "bad_code": "tags = 'tags'",
+            "suggestion": "Rename the enum member to 'TAGS = 'tags'' so that it is in all uppercase.",
+            "comment": "Enum member names should be uppercase as per the SDK style guidelines."
         }
     ]
 }

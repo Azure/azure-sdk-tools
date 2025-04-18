@@ -7,11 +7,12 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
+from src._apiview_reviewer import supported_models
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from typing import Literal, Optional, List
+from typing import Optional, List
 
 helps[
     "review"
@@ -45,7 +46,7 @@ helps[
 def local_review(
     language: str,
     path: str,
-    model: Literal["gpt-4o-mini", "o3-mini"],
+    model: str,
     chunk_input: bool = False,
     use_rag: bool = False,
 ):
@@ -293,7 +294,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The model to use for the review",
                 options_list=("--model", "-m"),
-                choices=["gpt-4o-mini", "gpt-4.1-nano", "o3-mini"],
+                choices=supported_models,
             )
             ac.argument(
                 "chunk_input",

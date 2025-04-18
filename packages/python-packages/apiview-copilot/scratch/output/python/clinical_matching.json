@@ -3,41 +3,39 @@
     "violations": [
         {
             "rule_ids": [
-                "python_design.html#python-client-namespace-sync"
+                "python_design.html#python-client-naming"
             ],
-            "line_no": "125",
-            "bad_code": "namespace azure.healthinsights.clinicalmatching.aio",
-            "suggestion": "Ensure that the async namespace is correctly suffixed and structured according to the guidelines.",
-            "comment": "The namespace for the async client should reflect that it is distinct from the synchronous namespace."
-        },
-        {
-            "rule_ids": [
-                "general_design.html#general-network-support-sync-and-async",
-                "python_design.html#python-client-separate-sync-async"
-            ],
-            "line_no": "127",
-            "bad_code": "class azure.healthinsights.clinicalmatching.aio.ClinicalMatchingClient(ClinicalMatchingClientOperationsMixin): implements AsyncContextManager",
-            "suggestion": "Separate into two classes: one for sync (ClinicalMatching) and one for async (ClinicalMatchingClient) operations.",
-            "comment": "The class combines sync and async operations, violating the guideline to provide separate client classes for synchronous and asynchronous operations."
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-client-sync-async"
-            ],
-            "line_no": "4",
-            "bad_code": "namespace azure.healthinsights.clinicalmatching",
-            "suggestion": "Use a consistent namespace for both sync and async clients, with .aio suffix for async.",
-            "comment": "Namespace should clearly differentiate between sync and async clients."
-        },
-        {
-            "rule_ids": [
-                "general_design.html#general-network-support-sync-and-async",
-                "python_design.html#python-client-separate-sync-async"
-            ],
-            "line_no": "6",
+            "line_no": 6,
             "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
-            "suggestion": "Separate into two classes: one for sync (ClinicalMatching) and one for async (ClinicalMatchingClient) operations.",
-            "comment": "The class combines sync and async operations, violating the guideline to provide separate client classes for synchronous and asynchronous operations."
+            "suggestion": "Rename the class to 'ClinicalMatchingClient' so that the service client type has the required 'Client' suffix.",
+            "comment": "In Python, service client types should end with 'Client' as per naming guidelines."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 66,
+            "bad_code": "def create_trials(\n        self, \n        body: TrialMatcherData, \n        *, \n        options: Optional[CreateTrialsOptions] = None,",
+            "suggestion": "Remove the use of an options bag parameter and instead expose each optional parameter as an individual keyword-only argument.",
+            "comment": "Python client guidelines discourage grouping optional parameters in an options bag."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 102,
+            "bad_code": "def trials(\n         self, \n         **kwargs: Any\n     ) -> List[TrialMatcherResult]",
+            "suggestion": "Rename the method to 'list_trials' to clearly indicate that it returns a collection of trials.",
+            "comment": "List operations should be prefixed with 'list_' to follow the language‐canonical naming conventions."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-service-verbs"
+            ],
+            "line_no": 107,
+            "bad_code": "def erase_trials(\n        self, \n                    trial: str,",
+            "suggestion": "Rename the method to 'delete_trials' to conform with standard deletion verb naming conventions.",
+            "comment": "Client methods for deletion should use 'delete_' as a prefix instead of non-standard verbs like 'erase_'."
         }
     ]
 }

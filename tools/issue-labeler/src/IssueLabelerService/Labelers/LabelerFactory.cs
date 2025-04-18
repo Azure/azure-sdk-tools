@@ -32,6 +32,8 @@ namespace IssueLabelerService
                             return new OpenAiLabeler(_logger, config, _ragService);
                         case "Legacy":
                             return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);
+                        case "Prompt":
+                            return new PromptLabeler(_logger, _ragService, config);
                         default:
                             _logger.LogWarning($"Unknown labeler type: {key} Running Legacy.");
                             return new LegacyLabeler(_logger, _modelHolderFactory, _labeler, config);

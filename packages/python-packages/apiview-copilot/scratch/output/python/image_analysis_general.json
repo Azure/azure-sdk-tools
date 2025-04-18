@@ -1,0 +1,29 @@
+{
+    "status": "Error",
+    "improvements": [
+        {
+            "line_no": 30,
+            "bad_code": "def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
+            "suggestion": "Insert a '*' after the 'visual_features' parameter so that all following parameters become keyword-only, as done in the 'analyze' method. For example: 'def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., ...)'",
+            "comment": "Making these optional parameters keyword-only improves clarity and consistency across the API."
+        },
+        {
+            "line_no": 209,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
+            "suggestion": "Rename the class to 'DetectedPerson' with PascalCase.",
+            "comment": "Consistent class naming that follows Python conventions improves readability and developer experience."
+        },
+        {
+            "line_no": 517,
+            "bad_code": "tags = 'tags'",
+            "suggestion": "Change the enum member to 'TAGS = 'tags'' to align with the uppercase naming used for the other enum members.",
+            "comment": "Enum members should follow a consistent naming pattern (typically uppercase) for clarity."
+        },
+        {
+            "line_no": 168,
+            "bad_code": "ivar list: List[DenseCaption]",
+            "suggestion": "Consider renaming the 'list' attribute to a more descriptive name such as 'items' or 'captions' to avoid shadowing the built-in 'list' type.",
+            "comment": "Using a built-in type name as an attribute can be confusing. A more descriptive name enhances clarity and reduces potential conflicts."
+        }
+    ]
+}

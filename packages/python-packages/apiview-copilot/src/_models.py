@@ -5,6 +5,24 @@ from typing import List, Optional, Union, Dict
 from ._sectioned_document import Section
 
 
+class Improvement(BaseModel):
+    line_no: int = Field(description="Line number of the improvement.")
+    bad_code: str = Field(
+        description="the original code that was bad, cited verbatim. Should contain a single line of code."
+    )
+    suggestion: str = Field(
+        description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
+    )
+    comment: str = Field(description="a comment about the improvement.")
+
+
+class GeneralReviewResult(BaseModel):
+    status: str = Field(
+        description="Success if the request has no improvements. Error if there are improvements."
+    )
+    improvements: List[Improvement] = Field(description="list of improvements if any")
+
+
 class Violation(BaseModel):
     rule_ids: List[str] = Field(
         description="Unique guideline ID or IDs that were violated."

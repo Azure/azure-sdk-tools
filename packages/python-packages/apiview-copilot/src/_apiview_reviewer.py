@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import prompty
+import pathlib
 import prompty.azure_beta
 import sys
 import threading
@@ -12,7 +13,7 @@ from typing import Literal, List
 
 from ._sectioned_document import SectionedDocument
 from ._search_manager import SearchManager
-from ._models import ReviewResult
+from ._models import ReviewResult, GeneralReviewResult
 
 # Set up the logger at the module level
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -94,6 +95,26 @@ class ApiViewReview:
                 missing.append(var)
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
+
+    def get_general_review_response(self, apiview: str) -> GeneralReviewResult:
+        lines = self.unescape(apiview).splitlines()
+        start_line_no = 0
+        numbered_lines = []
+        for i, line in enumerate(lines):
+            numbered_lines.append(f"{start_line_no + i + 1:4d}: {line}")
+        apiview = "\n".join(numbered_lines)
+
+        prompt_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}.prompty"
+
+        response = prompty.execute(
+            prompt_path,
+            inputs={
+                "language": self.language,
+                "apiview": apiview,
+            }
+        )
+        json_response = json.loads(response)
+        return GeneralReviewResult(**json_response)
 
     def get_response(
         self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False

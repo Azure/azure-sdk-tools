@@ -57,7 +57,7 @@ namespace IssueLabelerService
 
                 // If no labels are returned, do not generate an answer
                 // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
-                if (labels == null || labels.Count == 0)
+                if (labels?.Count == 0)
                 {
                     _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
                     return EmptyResult;

@@ -32,7 +32,9 @@ async function automationGenerateInPipeline(
         skipGeneration,
         runningEnvironment,
         typespecProject,
-        autorestConfig
+        autorestConfig,
+        apiVersion,
+        sdkReleaseType,
     } = await parseInputJson(inputJson);
 
     try {
@@ -51,7 +53,9 @@ async function automationGenerateInPipeline(
                     swaggerRepoUrl: repoHttpsUrl,
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
-                    runningEnvironment: runningEnvironment
+                    runningEnvironment: runningEnvironment,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
@@ -68,7 +72,9 @@ async function automationGenerateInPipeline(
                     sdkGenerationType: sdkGenerationType === 'command' ? 'command' : 'script',
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
-                    gitCommitId: gitCommitId
+                    gitCommitId: gitCommitId,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
 
@@ -86,7 +92,9 @@ async function automationGenerateInPipeline(
                     repoUrl,
                     local,
                     // support MPG for now
-                    versionPolicyName: 'management'
+                    versionPolicyName: 'management',
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 };
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];

@@ -24,16 +24,22 @@ import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { tryGetNpmView } from '../npmUtils.js';
 
-export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
+export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options?: { apiVersion: string, sdkReleaseType: string }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = await getApiVersionType(packageFolderPath);
-    const isStableRelease = ApiType != ApiVersionType.Preview;
+    const apiVersionType = await getApiVersionType(packageFolderPath);
+    logger.info(`Detected api version type is ${apiVersionType} from ${packageFolderPath}`);
+    let isStableRelease = apiVersionType != ApiVersionType.Preview;
+    if(options && options.apiVersion !== '' && options.sdkReleaseType !== '') {
+        logger.info(`Detected appVersion is ${options.apiVersion}, sdkReleaseType is ${options.sdkReleaseType}`);
+        isStableRelease = options.sdkReleaseType == 'stable'
+    }
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = getVersion(npmViewResult, "latest");
     const nextVersion = getVersion(npmViewResult, "next");
+    logger.info(`Latest version is ${stableVersion}, next version is ${nextVersion}`);
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ': ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ': ' stable'} release.`);

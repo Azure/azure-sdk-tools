@@ -361,8 +361,14 @@ const handleBarHelpers = {
   renderParseSuppressionLinesErrors: (parseSuppressionLinesErrors: string[]) => {
     return `<pre><strong>Parse Suppression File Errors</strong><BR>${parseSuppressionLinesErrors.map(trimNewLine).join('<BR>')}</pre>`;
   },
-  getPullRequestLink: (specRepoHttpsUrl: string, prNumber: string) => {
-    return `${specRepoHttpsUrl}/pull/${prNumber}`;
+  renderPullRequestLink: (specRepoHttpsUrl: string, prNumber: string) => {
+    const url = `${specRepoHttpsUrl}/pull/${prNumber}`;
+    return `<a target="_blank" class="issue-link js-issue-link" href="${url}" data-hovercard-type="pull_request" data-hovercard-url="${url}/hovercard">#${prNumber}</a>`
+  },
+  renderCommitLink: (specRepoHttpsUrl: string, commitSha: string) => {
+    const shortSha = commitSha.substring(0, 7);
+    const url = `${specRepoHttpsUrl}/commit/${commitSha}`;
+    return `<a target="_blank" class="commit-link" href="${url}" data-hovercard-type="commit" data-hovercard-url="${url}/hovercard"><tt>${shortSha}</tt></a>`;
   },
   shouldRender: (messages: boolean | string[] | undefined,
     isBetaMgmtSdk: boolean | undefined,

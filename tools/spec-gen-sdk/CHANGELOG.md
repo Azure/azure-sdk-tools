@@ -1,9 +1,9 @@
 # Release
 
-## 2025-04-10 - 0.4.1
+## 2025-04-17 - 0.4.1
 
-- Add captureTransport for each script log
-- Add pull request link for the html which generate by filter logs,
+- Added pull request link to the generated html report
+- Added captureTransport to each script log
 
 ## 2025-04-10 - 0.4.0
 

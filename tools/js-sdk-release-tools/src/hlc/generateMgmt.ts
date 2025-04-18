@@ -110,8 +110,8 @@ export async function generateMgmt(options: {
             
             await migratePackage(packagePath);
             
-            logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-            execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+            logger.info(`Start to run command: 'rush build -t ${packageName} --verbose', that builds generated codes, except test and sample, which may be written manually.`);
+            execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
             logger.info('Start to generate changelog and bump version...');
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {

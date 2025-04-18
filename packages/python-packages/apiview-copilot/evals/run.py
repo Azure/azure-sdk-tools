@@ -305,6 +305,18 @@ def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) ->
             with open(str(output_path), "w") as f:
                 json.dump(result, indent=4, fp=f)
 
+    # whether or not we establish a baseline, we want to write results to a temp dir
+    log_path = pathlib.Path(__file__).parent / "results" / args.language / ".log"
+    if not log_path.exists():
+        log_path.mkdir(parents=True, exist_ok=True)
+
+    for name, result in all_results.items():
+        output_path = (
+            log_path / name[:-1]
+        )
+        with open(str(output_path), "w") as f:
+            json.dump(result, indent=4, fp=f)
+
 
 def record_run_result(
     result: dict[str, Any], rule_ids: Set[str]

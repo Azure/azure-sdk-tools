@@ -156,11 +156,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 message.TryGetContentType(out string contentType);
 
-                if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
-                {
-                    message.Body = SanitizeMultipartBody(boundary, message.Body);
-                }
-                else if (message.TryGetBodyAsText(out string text))
+                //if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
+                //{
+                //    message.Body = SanitizeMultipartBody(boundary, message.Body);
+                //}
+                //else 
+                if (message.TryGetBodyAsText(out string text))
                 {
                     message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
                 }

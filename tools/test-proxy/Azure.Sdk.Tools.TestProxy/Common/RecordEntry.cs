@@ -230,14 +230,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             jsonWriter.WriteStartArray(name);
 
+            // we need to update this to parse from the content itself as it was accidentally stomped by a sanitizer, the multipart reader REQUIRES that the first boundary matches
+            // otherwise we hit some really weird issues
+            if (boundary == "REDACTED")
+            {
+                ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
+                int idx = raw.IndexOf(crlf);
+
+                var firstBoundary = Encoding.ASCII.GetString(raw, 0, idx);
+                boundary = firstBoundary.Substring(2);
+            }
+
             var rdr = new MultipartReader(boundary, new MemoryStream(raw));
             var spanBoundary = $"--{boundary}\r\n";
             var spanBoundaryEnd = $"--{boundary}--\r\n";
 
             MultipartSection section;
             while ((section = rdr.ReadNextSectionAsync()
-                                 .GetAwaiter()
-                                 .GetResult()) != null)
+                                    .GetAwaiter()
+                                    .GetResult()) != null)
             {
                 // opening boundary
                 jsonWriter.WriteStringValue(spanBoundary);
@@ -254,8 +265,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     var txt = enc.GetString(ReadAllBytes(section.Body));
 
-                    // keep existing “split‑on‑newline” behaviour
-                    var lines = txt.Split("\n");          // keeps '\r' on previous line
+                    var lines = txt.Split("\n");
                     for (int i = 0; i < lines.Length; i++)
                     {
                         var l = i < lines.Length - 1 ? lines[i] + "\n" : lines[i];

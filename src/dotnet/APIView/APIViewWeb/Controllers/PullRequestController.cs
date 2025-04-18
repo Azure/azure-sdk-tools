@@ -59,7 +59,7 @@ namespace APIViewWeb.Controllers
             int pullRequestNumber = 0,
             string codeFile = null,
             string baselineCodeFile = null,
-            bool commentOnPR = true,
+            bool commentOnPR = false,
             string language = null,
             string project = "internal")
         {
@@ -78,7 +78,7 @@ namespace APIViewWeb.Controllers
                     repoName: repoName, packageName: packageName,
                     prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    commentOnPR: commentOnPR, language: language, project: project);
+                    language: language, project: project);
 
                 return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
             }
@@ -98,7 +98,6 @@ namespace APIViewWeb.Controllers
             string hostName,
             string codeFileName = null,
             string baselineCodeFileName = null,
-            bool commentOnPR = true,
             string language = null,
             string project = "internal")
         {
@@ -161,11 +160,6 @@ namespace APIViewWeb.Controllers
                     // Update pull request metadata in DB
                     await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
                     pullRequests = (await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
-                }
-                //Generate combined single comment to update on PR or add a comment stating no API changes.            
-                if (commentOnPR)
-                {
-                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
                 }
             }
             catch (OverflowException exception)

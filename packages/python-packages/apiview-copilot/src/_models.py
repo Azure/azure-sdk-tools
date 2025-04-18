@@ -1,6 +1,6 @@
 from enum import Enum
-from pydantic import BaseModel, Field
-from typing import List, Optional, Union, Dict
+from pydantic import BaseModel, Field, PrivateAttr
+from typing import List, Optional, Dict, Set
 
 from ._sectioned_document import Section
 
@@ -79,12 +79,26 @@ class ReviewResult(BaseModel):
     status: str = Field(
         description="Succeeded if the request has no violations. Error if there are violations."
     )
-    violations: List[Violation] = Field(description="list of violations if any")
+    violations: List[Violation] = Field(description="List of violations if any")
 
-    def __init__(self, **data):
+    # truly private, never part of Pydantic’s schema or serialization
+    _guideline_ids: Set[str] = PrivateAttr(default_factory=set)
+
+    def __init__(
+        self,
+        *,
+        guideline_ids: Optional[List[str]] = None,
+        **data,
+    ):
         actual_violations = data.pop("violations", [])
         data["violations"] = []
         super().__init__(**data)
+        # initialize private attr outside of Pydantic’s field system
+        object.__setattr__(
+            self,
+            "_guideline_ids",
+            set(guideline_ids) if guideline_ids else set(),
+        )
         self._process_violations(actual_violations)
 
     def _process_violations(self, violations: List[Dict]):
@@ -102,6 +116,8 @@ class ReviewResult(BaseModel):
             # if violation doesn't have suggestion, set it to empty string
             if "suggestion" not in violation:
                 violation["suggestion"] = ""
+
+            # handle common line number issues from the LLM
             for item in raw_line_no.split(","):
                 item = item.strip()
                 violation_copy = (
@@ -130,64 +146,54 @@ class ReviewResult(BaseModel):
         """
         Merge two ReviewResult objects.
         """
-        self.violations.extend(self._merge_violations(other.violations, section))
+        self._guideline_ids.update(other._guideline_ids)
+        self._merge_violations(other.violations, section)
         if len(self.violations) > 0:
             self.status = "Error"
 
-    def validate(self, *, guideline_ids: List[str]):
+    def _validate(self, item: Violation) -> bool:
         """
-        Runs validations on the ReviewResult collection.
-        For now this is just ensure rule IDs are valid.
+        Validates the Violation object.
+        If the result of validation is that the violation is invalid, return False.
+        Even if the violation is changed during validation, if it is still valid, return True.
         """
-        # TODO: Disable for now. See: https://github.com/Azure/azure-sdk-tools/issues/10303
-        # self._process_rule_ids(guideline_ids)
+        # Validate and sanitize rule IDs
+        resolved_rule_ids = set()
+        for rule_id in item.rule_ids:
+            resolved_rule_id = self._resolve_rule_id(rule_id)
+            if resolved_rule_id:
+                resolved_rule_ids.add(resolved_rule_id)
+        if not resolved_rule_ids:
+            return False
+        else:
+            item.rule_ids = list(resolved_rule_ids)
+        return True
 
-    def _process_rule_ids(self, guideline_ids: List[str]):
+    def _resolve_rule_id(self, rid: str) -> str | None:
         """
-        Ensure that each rule ID matches with an actual guideline ID.
+        Ensure that the rule ID matches with an actual guideline ID.
         This ensures that the links that appear in APIView should never be broken (404).
+        Allows for specific partial matches.
         """
-        return
-        # FIXME: Fix up this logic...
-        # create an index for easy lookup
-        # index = set(guideline_ids)
-        # for violation in self.violations:
-        #     to_remove = []
-        #     to_add = []
-        #     for rule_id in violation.rule_ids:
-        #         if rule_id in index:
-        #             # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
-        #             matched = False
-        #             for gid in guideline_ids:
-        #                 if gid.endswith(rule_id):
-        #                     to_remove.append(rule_id)
-        #                     to_add.append(gid)
-        #                     index[rule_id] = gid
-        #                     matched = True
-        #                     break
-        #             if matched:
-        #                 continue
-        #             # no match or partial match found, so remove the rule_id
-        #             to_remove.append(rule_id)
-        #             print(
-        #                 f"WARNING: Rule ID {rule_id} not found. Possible hallucination."
-        #             )
-        #     # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
-        #     for rule_id in to_remove:
-        #         violation.rule_ids.remove(rule_id)
-        #     for rule_id in to_add:
-        #         violation.rule_ids.append(rule_id)
+        if rid in self._guideline_ids:
+            return rid
 
-    def _merge_violations(
-        self, violations: List[Violation], section: Section
-    ) -> List[Violation]:
+        # check if the part of the guideline_id after the # matches the rule_id
+        for gid in self._guideline_ids:
+            gid_end = gid.split("#")[-1]
+            if rid == gid_end:
+                return gid
+        print(f"WARNING: Rule ID {rid} not found. Possible hallucination.")
+        return None
+
+    def _merge_violations(self, violations: List[Violation], section: Section):
         """
         Process and combine batches of violations as needed. Attempts to
         determine line numbers and ignores violations that can't be mapped to a line.
         If multiple of the same violation are found on the same line, they are combined.
         """
         if not violations:
-            return violations
+            return
 
         combined_violations = {}
         for violation in violations:
@@ -206,10 +212,14 @@ class ReviewResult(BaseModel):
                         existing.comment = existing.comment + " " + violation.comment
             else:
                 combined_violations[line_no] = violation
-        # this logic tosses out violations that can't be mapped to an actual line
-        return [x for x in combined_violations.values() if x.line_no != 1]
 
-    def _find_line_number(self, chunk: Section, bad_code: str) -> Union[int, None]:
+        # remove any violations that don't pass validation and then add them to the list
+        filtered_violations = [
+            x for x in combined_violations.values() if self._validate(x)
+        ]
+        self.violations.extend(filtered_violations)
+
+    def _find_line_number(self, chunk: Section, bad_code: str) -> Optional[int]:
         """
         Find the line number of the bad code in the chunk.
         This is a bit of a hack, but it works for now.

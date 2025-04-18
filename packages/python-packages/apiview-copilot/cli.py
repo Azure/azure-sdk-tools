@@ -7,7 +7,7 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import supported_models
+from src._apiview_reviewer import supported_models, DEFAULT_MODEL
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -46,7 +46,7 @@ helps[
 def local_review(
     language: str,
     path: str,
-    model: str,
+    model: str = DEFAULT_MODEL,
     chunk_input: bool = False,
     use_rag: bool = False,
 ):

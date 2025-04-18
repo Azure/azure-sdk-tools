@@ -114,21 +114,21 @@ class ApiViewReview:
                 "apiview": apiview,
             }
         )
-        json_response = json.loads(response)
-       
+        initial_review = json.loads(response)
+
         response = prompty.execute(
             judge_path,
             inputs={
                 "language": self.language,
                 "apiview": apiview,
-                "review_results": json_response,
+                "review_results": initial_review,
                 "guidelines": self.search.retrieve_static_guidelines(
                     self.language, include_general_guidelines=False
                 ),
             }
         )
-
-        return GeneralReviewResult(**response)
+        final_review = json.loads(response)
+        return GeneralReviewResult(**final_review)
 
     def get_response(
         self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False

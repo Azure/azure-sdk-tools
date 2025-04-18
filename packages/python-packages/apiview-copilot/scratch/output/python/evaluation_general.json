@@ -4,56 +4,38 @@
         {
             "line_no": 34,
             "bad_code": "thread_ids: Union[str, List[str]] = Union[str, List[str]]",
-            "suggestion": "Replace the default value with a proper placeholder (e.g., ellipsis or None):\n    thread_ids: Union[str, List[str]] = ...  or  thread_ids: Optional[Union[str, List[str]]] = None",
-            "comment": "Using a type expression as a default value is not valid; the default should be a concrete value indicating absence."
-        },
-        {
-            "line_no": 35,
-            "bad_code": "filename: str = None",
-            "suggestion": "Annotate the parameter as Optional to clarify that it can be None:\n    filename: Optional[str] = None",
-            "comment": "This makes it clear from the type hint that 'filename' is allowed to be None."
-        },
-        {
-            "line_no": 83,
-            "bad_code": "ivar id = code_vulnerability",
-            "suggestion": "Use an explicit string literal for the evaluator ID, for example:\n    id = \"code_vulnerability\"",
-            "comment": "Evaluator identifiers should be clear, unambiguous string constants for consistency."
-        },
-        {
-            "line_no": 111,
-            "bad_code": "class azure.ai.evaluation.CoherenceEvaluator(PromptyEvaluatorBase[Union[str, float]]):",
-            "suggestion": "Verify the naming of the base class. If 'PromptyEvaluatorBase' is a typo, consider renaming it to 'PromptEvaluatorBase'.",
-            "comment": "Clear and conventional naming improves discoverability and reduces user confusion."
+            "suggestion": "Replace the default value that echoes the type with a proper default (e.g. use 'None' or remove the default) so that it’s clear what happens when no value is provided.",
+            "comment": "Using a type as its own default is non‐idiomatic and may confuse developers regarding the intended behavior."
         },
         {
             "line_no": 714,
             "bad_code": "-> :rtype: Dict[str, Union[float, Dict[str, List[str, float]]]]",
-            "suggestion": "Change the return type annotation to standard Python syntax, for example:\n    -> Dict[str, Union[float, Dict[str, List[Union[str, float]]]]]",
-            "comment": "The ':rtype:' syntax is non-standard in type hints and the nested list type should properly use Union for the element types."
+            "suggestion": "Change the return type annotation to standard Python syntax, for example: '-> Dict[str, Union[float, Dict[str, List[Union[str, float]]]]]' (and remove the ':rtype:' prefix).",
+            "comment": "The current syntax is non-standard and could lead to confusion during type checking."
+        },
+        {
+            "line_no": 722,
+            "bad_code": "def __init__(self, model_config: Union[AzureOpenAIModelConfiguration, OpenAIModelConfiguration], *, threshold: float = 3) -> Callable",
+            "suggestion": "Remove or change the return type annotation for __init__ (it should return None, so either remove the annotation or use '-> None').",
+            "comment": "In Python, __init__ methods must not return a value, making a 'Callable' return type misleading."
+        },
+        {
+            "line_no": 111,
+            "bad_code": "PromptyEvaluatorBase",
+            "suggestion": "If 'PromptyEvaluatorBase' is intended to refer to prompt-based evaluation functionality, consider renaming it to 'PromptEvaluatorBase' for clarity and consistency.",
+            "comment": "The current naming may appear as a typo and could confuse developers regarding its purpose."
         },
         {
             "line_no": 1092,
             "bad_code": "-> Dict[str, [List[Dict[str, Any]]]]",
-            "suggestion": "Update the return type to remove the extra square brackets:\n    -> Dict[str, List[Dict[str, Any]]]",
-            "comment": "Extra square brackets around the List[...] are not valid in Python type annotations."
+            "suggestion": "Change the return type to use valid syntax, for example: '-> Dict[str, List[Dict[str, Any]]]'",
+            "comment": "Bracket usage around the list type is invalid; using 'List[...]' directly is the proper Python type hint notation."
         },
         {
             "line_no": 1146,
             "bad_code": "conversation_turns: List[List[Union[str, Dict[str, Any]]]] = []",
-            "suggestion": "Use a default of None and assign an empty list inside the function, for example:\n    conversation_turns: Optional[List[List[Union[str, Dict[str, Any]]]]] = None",
-            "comment": "Mutable default arguments (like an empty list) can lead to unintended shared state across invocations."
-        },
-        {
-            "line_no": 1150,
-            "bad_code": "query_response_generating_prompty_options: Dict[str, Any] = {}",
-            "suggestion": "Change the default to None and initialize to an empty dict inside the function:\n    query_response_generating_prompty_options: Optional[Dict[str, Any]] = None",
-            "comment": "Mutable default values such as {} should be avoided to prevent side effects."
-        },
-        {
-            "line_no": 1155,
-            "bad_code": "user_simulator_prompty_options: Dict[str, Any] = {}",
-            "suggestion": "Change the default to None and initialize to an empty dict internally:\n    user_simulator_prompty_options: Optional[Dict[str, Any]] = None",
-            "comment": "Avoid mutable default values to ensure that each function call starts with a fresh dictionary."
+            "suggestion": "Avoid using mutable default arguments. Instead, use 'None' as the default and initialize an empty list within the function body.",
+            "comment": "Mutable defaults can lead to unexpected behavior if the function modifies the list across multiple calls."
         }
     ]
 }

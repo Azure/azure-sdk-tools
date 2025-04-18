@@ -3363,14 +3363,14 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_error_level_not_logged(self, setup):
         """Check that any exceptions raised aren't logged at error level in the exception block."""
-        try_node, expression_node = setup.body[1].body[0], setup.body[1].body[0].handlers[0].body[0]
+        try_node, expression_node = setup.body[2].body[0], setup.body[2].body[0].handlers[0].body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=9,
+                    line=10,
                     node=expression_node,
                     col_offset=8,
-                    end_line=9,
+                    end_line=10,
                     end_col_offset=29,
                 )
         ):
@@ -3378,14 +3378,14 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_warning_level_not_logged(self, setup):
         """Check that any exceptions raised aren't logged at warning level in the exception block."""
-        try_node, expression_node = setup.body[2].body[0], setup.body[2].body[0].handlers[0].body[0]
+        try_node, expression_node = setup.body[3].body[0], setup.body[3].body[0].handlers[0].body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=18,
+                    line=19,
                     node=expression_node,
                     col_offset=8,
-                    end_line=18,
+                    end_line=19,
                     end_col_offset=31,
                 )
         ):
@@ -3393,32 +3393,32 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_warning_level_logging_ok_when_no_raise(self, setup):
         """Check that exceptions can be logged if the exception isn't raised."""
-        try_node = setup.body[3].body[0]
+        try_node = setup.body[4].body[0]
         with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
     def test_unlogged_exception_block(self, setup):
         """Check that exceptions raised without logging are allowed."""
-        try_node = setup.body[4].body[0]
+        try_node = setup.body[5].body[0]
         with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
     def test_mult_exception_blocks_separate_raise(self, setup):
         """Check multiple exception blocks with separate raise and logging is allowed."""
-        try_node = setup.body[5].body[0]
+        try_node = setup.body[6].body[0]
         with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
     def test_mult_exception_blocks_with_raise(self, setup):
         """Check that multiple exception blocks with raise and logging is not allowed."""
-        try_node, expression_node = setup.body[6].body[0], setup.body[6].body[0].handlers[1].body[0]
+        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[1].body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=55,
+                    line=56,
                     node=expression_node,
                     col_offset=8,
-                    end_line=55,
+                    end_line=56,
                     end_col_offset=29,
                 )
         ):
@@ -3426,14 +3426,14 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_implicit_else_exception_logged(self, setup):
         """Check that any exceptions raised in branches aren't logged at error level."""
-        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[0].body[1]
+        try_node, expression_node = setup.body[8].body[0], setup.body[8].body[0].handlers[0].body[1]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=70,
+                    line=71,
                     node=expression_node,
                     col_offset=8,
-                    end_line=70,
+                    end_line=71,
                     end_col_offset=56,
                 )
         ):
@@ -3441,33 +3441,33 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_branch_exceptions_logged(self, setup):
         """Check that any exceptions raised in if branches aren't logged at error level."""
-        try_node = setup.body[8].body[0]
-        expression_node_a = setup.body[8].body[0].handlers[0].body[0].body[0]
-        expression_node_b = setup.body[8].body[0].handlers[0].body[0].orelse[0].body[0]
-        expression_node_c = setup.body[8].body[0].handlers[0].body[0].orelse[0].orelse[0].body[0]
+        try_node = setup.body[9].body[0]
+        expression_node_a = setup.body[9].body[0].handlers[0].body[0].body[0]
+        expression_node_b = setup.body[9].body[0].handlers[0].body[0].orelse[0].body[0]
+        expression_node_c = setup.body[9].body[0].handlers[0].body[0].orelse[0].orelse[0].body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=80,
+                    line=81,
                     node=expression_node_a,
                     col_offset=12,
-                    end_line=80,
+                    end_line=81,
                     end_col_offset=86,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=83,
+                    line=84,
                     node=expression_node_b,
                     col_offset=12,
-                    end_line=83,
+                    end_line=84,
                     end_col_offset=69,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=86,
+                    line=87,
                     node=expression_node_c,
                     col_offset=12,
-                    end_line=86,
+                    end_line=87,
                     end_col_offset=42,
                 )
         ):
@@ -3475,15 +3475,15 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_explicit_else_branch_exception_logged(self, setup):
         """Check that any exceptions raised in else branches aren't logged at error level."""
-        try_node = setup.body[9].body[0]
-        expression_node = setup.body[9].body[0].handlers[0].body[0].orelse[0].orelse[0]
+        try_node = setup.body[10].body[0]
+        expression_node = setup.body[10].body[0].handlers[0].body[0].orelse[0].orelse[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=103,
+                    line=104,
                     node=expression_node,
                     col_offset=12,
-                    end_line=103,
+                    end_line=104,
                     end_col_offset=60,
                 )
         ):
@@ -3491,42 +3491,42 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_extra_nested_branches_exception_logged(self, setup):
         """Check that any exceptions raised in nested branches aren't logged at warning level."""
-        try_node = setup.body[10].body[0]
-        expression_node_a = setup.body[10].body[0].handlers[0].body[0].body[0].body[0]
-        expression_node_b = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].body[0]
-        expression_node_c = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].orelse[0]
-        expression_node_d = setup.body[10].body[0].handlers[0].body[0].orelse[0]
+        try_node = setup.body[11].body[0]
+        expression_node_a = setup.body[11].body[0].handlers[0].body[0].body[0].body[0]
+        expression_node_b = setup.body[11].body[0].handlers[0].body[0].body[0].orelse[0].body[0]
+        expression_node_c = setup.body[11].body[0].handlers[0].body[0].body[0].orelse[0].orelse[0]
+        expression_node_d = setup.body[11].body[0].handlers[0].body[0].orelse[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=114,
+                    line=115,
                     node=expression_node_a,
                     col_offset=16,
-                    end_line=114,
+                    end_line=115,
                     end_col_offset=42,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=117,
+                    line=118,
                     node=expression_node_b,
                     col_offset=16,
-                    end_line=117,
+                    end_line=118,
                     end_col_offset=42,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=120,
+                    line=121,
                     node=expression_node_c,
                     col_offset=16,
-                    end_line=120,
+                    end_line=121,
                     end_col_offset=42,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=123,
+                    line=124,
                     node=expression_node_d,
                     col_offset=12,
-                    end_line=123,
+                    end_line=124,
                     end_col_offset=60,
                 )
         ):
@@ -3604,7 +3604,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         debug_node = setup.body[1].body[0].handlers[0].body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=9,
                 node=error_node,
                 col_offset=8,
@@ -3612,7 +3612,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=39,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=10,
                 node=warning_node,
                 col_offset=8,
@@ -3620,7 +3620,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=31,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=11,
                 node=info_node,
                 col_offset=8,
@@ -3639,7 +3639,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         debug_node = setup.body[2].body[0].handlers[0].body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=20,
                 node=error_node,
                 col_offset=8,
@@ -3647,7 +3647,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=30,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=21,
                 node=warning_node,
                 col_offset=8,
@@ -3655,7 +3655,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=32,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=22,
                 node=info_node,
                 col_offset=8,
@@ -3679,7 +3679,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         info_node = setup.body[4].body[0].handlers[0].body[0].orelse[0].orelse[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=43,
                 node=error_node,
                 col_offset=12,
@@ -3687,7 +3687,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=33,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=46,
                 node=warning_node,
                 col_offset=12,
@@ -3695,7 +3695,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=36,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=49,
                 node=info_node,
                 col_offset=12,
@@ -3712,7 +3712,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         warning_node = setup.body[5].body[0].handlers[0].body[0].orelse[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=58,
                 node=error_node,
                 col_offset=12,
@@ -3720,7 +3720,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=65,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=61,
                 node=warning_node,
                 col_offset=12,
@@ -3937,3 +3937,36 @@ class TestDedent(pylint.testutils.CheckerTestCase):
             )
         ):
             self.checker.visit_classdef(function_node)
+
+class TestLoggingException(pylint.testutils.CheckerTestCase):
+    """Test that we are checking logging exceptions"""
+
+    CHECKER_CLASS = checker.DoNotUseLoggingException
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_use_logging_exception.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_bad_logging_exception(self, setup):
+        function_node = setup.body[1].handlers[0].body[0].value
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-exception",
+                line=6,
+                node=function_node,
+                col_offset=4,
+                end_line=6,
+                end_col_offset=35,
+            )
+        ):
+            self.checker.visit_call(function_node)
+
+    def test_ignores_correct_logging(self, setup):
+        function_node = setup.body[1].handlers[0].body[1].value
+        with self.assertNoMessages():
+            self.checker.visit_call(function_node)

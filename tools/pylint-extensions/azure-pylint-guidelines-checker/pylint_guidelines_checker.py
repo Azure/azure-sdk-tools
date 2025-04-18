@@ -2730,52 +2730,106 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
     name = "do-not-log-raised-errors"
     priority = -1
     msgs = {"C4762": (
-            "Do not log errors that get raised in an exception block.",
+            "Do not log an exception that you re-raise 'as-is'",
             "do-not-log-raised-errors",
-            "Do not log errors at error or warning level when error is raised in an exception block",
+            "Do not log an exception that you re-raise 'as-is'",
             ),
             }
 
     def visit_try(self, node):
-        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
+        """Check that raised errors aren't logged in exception blocks.
            Go through exception block and branches and ensure error hasn't been logged if exception is raised.
         """
-        # Return a list of exception blocks
-        except_block = node.handlers
-        # Iterate through each exception block
-        for nod in except_block:
-            # Get the nodes in each block (e.g. nodes Expr and Raise)
-            exception_block_body = nod.body
-            self.check_for_raise(exception_block_body)
+        try:
+            # Return a list of exception blocks
+            except_block = node.handlers
+            # Iterate through each exception block
+            for nod in except_block:
+                # Get the nodes in each block (e.g. nodes Expr and Raise)
+                exception_block_body = nod.body
+                exception_name = nod.name.name
+                self.check_for_raise(exception_block_body, exception_name)
+        except:
+            pass
 
-    def check_for_raise(self, node):
+    def check_for_raise(self, node, exception_name):
         """ Helper function - checks for instance of 'Raise' node
             Also checks 'If' and nested 'If' branches
         """
         for i in node:
             if isinstance(i, astroid.Raise):
-                self.check_for_logging(node)
+                self.check_for_logging(node, exception_name)
             # Check for any nested 'If' branches
             if isinstance(i, astroid.If):
-                self.check_for_raise(i.body)
+                self.check_for_raise(i.body, exception_name)
 
                 # Check any 'elif' or 'else' branches
-                self.check_for_raise(i.orelse)
+                self.check_for_raise(i.orelse, exception_name)
 
-    def check_for_logging(self, node):
-        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
-            levels. Called from 'check_for_raise' function
+
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - Called from 'check_for_raise' function
+            Checks if the same exception that's being raised is also being logged
         """
-        matches = [".warning", ".error", ".exception"]
-        for j in node:
-            if isinstance(j, astroid.Expr):
-                expression = j.as_string().lower()
-                if any(x in expression for x in matches):
-                    self.add_message(
-                        msgid=f"do-not-log-raised-errors",
-                        node=j,
-                        confidence=None,
-                    )
+
+        try:
+            # Find all function calls in the code
+            for j in node:
+                if isinstance(j, astroid.Expr) and isinstance(j.value.func, astroid.Attribute):
+                    # check that the attribute is a logging level
+                    if j.value.func.attrname in ["debug", "info", "warning", "error", "exception", "critical"]:
+                    
+                        # Check all arguments to the logger
+                        # The exception could be logged in various ways:
+                        # 1. logger.debug(exception)
+                        # 2. logger.debug(f"something {exception}")
+                        # 3. logger.debug("Failed: %r", exception)
+                        
+                        
+                        # Check for f-strings that might contain the exception
+                        for log_arg in j.value.args:
+                            if isinstance(log_arg, astroid.Name) and log_arg.name == exception_name:
+                                self.add_message(
+                                    msgid="do-not-log-raised-errors",
+                                    node=j, 
+                                    confidence=None,
+                                )
+                                return
+                            if isinstance(log_arg, astroid.Call):
+                                for arg in log_arg.args:
+                                    if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                        self.add_message(
+                                            msgid="do-not-log-raised-errors",
+                                            node=j,
+                                            confidence=None,
+                                        )
+                                        return
+                            if isinstance(log_arg, astroid.JoinedStr):
+                                for value in log_arg.values:
+                                    if isinstance(value, astroid.FormattedValue):
+                                        try:
+                                            if isinstance(value.value, astroid.Name) and value.value.name == exception_name:
+                                                self.add_message(
+                                                    msgid="do-not-log-raised-errors",
+                                                    node=j,
+                                                    confidence=None,
+                                                )
+                                                return
+                                        except AttributeError:
+                                            pass
+                        
+                        # Check for string formatting with exception as argument
+                        if len(j.value.args) > 1:
+                            for idx in range(1, len(j.value.args)):
+                                if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == exception_name:
+                                    self.add_message(
+                                        msgid="do-not-log-raised-errors",
+                                        node=j,
+                                        confidence=None,
+                                    )
+                                    return
+        except:
+            pass
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):
@@ -2786,9 +2840,9 @@ class NoImportTypingFromTypeCheck(BaseChecker):
     priority = -1
     msgs = {
         "C4760": (
-            "Do not import from typing inside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
             "no-typing-import-in-type-check",
-            "Do not import from typing inside of TYPE_CHECKING. You can import from typing outside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
         ),
     }
 
@@ -2954,12 +3008,12 @@ class DoNotLogExceptions(BaseChecker):
 
     """Rule to check that exceptions aren't logged"""
 
-    name = "do-not-log-exceptions"
+    name = "do-not-log-exceptions-if-not-debug"
     priority = -1
     msgs = {"C4766": (
             "Do not log exceptions. See Details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
-            "do-not-log-exceptions",
+            "do-not-log-exceptions-if-not-debug",
             "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
             ),
             }
@@ -3009,13 +3063,13 @@ class DoNotLogExceptions(BaseChecker):
                                     #  error
                                     if ".__name__" not in expression1[i+1]:
                                         self.add_message(
-                                            msgid=f"do-not-log-exceptions",
+                                            msgid=f"do-not-log-exceptions-if-not-debug",
                                             node=j,
                                             confidence=None,
                                         )
                                 else:
                                     self.add_message(
-                                        msgid=f"do-not-log-exceptions",
+                                        msgid=f"do-not-log-exceptions-if-not-debug",
                                         node=j,
                                         confidence=None,
                                     )
@@ -3035,9 +3089,9 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
     priority = -1
     msgs = {
         "C4767": (
-            "Do not hardcode a boolean value to connection_verify",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to set it.",
             "do-not-hardcode-connection-verify",
-            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to be able to set it",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to set it",
         ),
     }
 
@@ -3099,6 +3153,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                         )
             except:
                 pass
+
 
 class DoNotDedentDocstring(BaseChecker):
 
@@ -3175,6 +3230,30 @@ class DoNotDedentDocstring(BaseChecker):
     # this line makes it work for async functions
     visit_asyncfunctiondef = visit_functiondef
 
+class DoNotUseLoggingException(BaseChecker):
+    """Rule to check that exceptions aren't logged using exception method"""
+
+    name = "do-not-use-logging-exception"
+    priority = -1
+    msgs = {
+        "C4769": (
+            "Do not use Exception level logging. Use logging.error instead.",
+            "do-not-use-logging-exception",
+            "Do not use Exception level logging. Use logging.error instead.",
+        ),
+    }
+
+    def visit_call(self, node):
+        """Check that we aren't using logging.exception or logger.exception."""
+        try:
+            if node.func.attrname == "exception":
+                self.add_message(
+                    msgid="do-not-use-logging-exception",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3225,3 +3304,4 @@ def register(linter):
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
+    linter.register_checker(DoNotUseLoggingException(linter))

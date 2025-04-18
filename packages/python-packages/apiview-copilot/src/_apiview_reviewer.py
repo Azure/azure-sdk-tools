@@ -58,16 +58,19 @@ model_map = {
     "gpt-4.1-nano": "regular",
     "gpt-4o": "regular",
     "gpt-4.1": "regular",
+    "o3": "reasoning",
     "o3-mini": "reasoning",
     "o4-mini": "reasoning",
 }
 
 supported_models = [x for x in model_map.keys()]
 
+DEFAULT_MODEL = "o3-mini"
+
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: str = "o3-mini"):
+    def __init__(self, *, language: str, model: str = DEFAULT_MODEL):
         self.language = language
         self.model = model
         self.search = SearchManager(language=language)

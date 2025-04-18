@@ -13,6 +13,7 @@ For e.g. TypeSpec validation
 
 - .NET 9.0 SDK
 - Node.js and npm (for TypeSpec validation)
+- GitHub client (for authentication)
 
 ## Getting Started
 This tool will be published as a static executable but currently it is available to run from source only.

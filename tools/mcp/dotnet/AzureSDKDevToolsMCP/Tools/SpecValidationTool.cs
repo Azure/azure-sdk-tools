@@ -94,7 +94,8 @@ namespace AzureSDKDevToolsMCP.Tools
             return "TypeSpec validation completed successfully";
         }
 
-        private static bool IsValidTypeSpecProjectPath(string typeSpecProjectRootPath)
+        [McpServerTool, Description("Check if the given path is a TypeSpec project")]
+        public static bool IsValidTypeSpecProjectPath(string typeSpecProjectRootPath)
         {
             if (string.IsNullOrEmpty(typeSpecProjectRootPath))
             {

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35406.7 main
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureSDKDevToolsMCP", "AzureSDKDevToolsMCP.csproj", "{973B4195-BE96-4B89-98A7-587B0132E339}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureSDKDSpecTools", "AzureSDKDSpecTools.csproj", "{7AB7A6CA-5B32-48EE-92A0-CE0579C5746D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{973B4195-BE96-4B89-98A7-587B0132E339}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{973B4195-BE96-4B89-98A7-587B0132E339}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{973B4195-BE96-4B89-98A7-587B0132E339}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{973B4195-BE96-4B89-98A7-587B0132E339}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AB7A6CA-5B32-48EE-92A0-CE0579C5746D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AB7A6CA-5B32-48EE-92A0-CE0579C5746D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AB7A6CA-5B32-48EE-92A0-CE0579C5746D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AB7A6CA-5B32-48EE-92A0-CE0579C5746D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

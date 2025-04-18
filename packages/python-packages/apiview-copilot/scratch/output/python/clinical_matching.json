@@ -1,4 +1,41 @@
 {
-    "status": "Success",
-    "violations": []
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 6,
+            "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
+            "suggestion": "Rename the class to 'ClinicalMatchingClient' so that the service client type has the required 'Client' suffix.",
+            "comment": "In Python, service client types should end with 'Client' as per naming guidelines."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 66,
+            "bad_code": "def create_trials(\n        self, \n        body: TrialMatcherData, \n        *, \n        options: Optional[CreateTrialsOptions] = None,",
+            "suggestion": "Remove the use of an options bag parameter and instead expose each optional parameter as an individual keyword-only argument.",
+            "comment": "Python client guidelines discourage grouping optional parameters in an options bag."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 102,
+            "bad_code": "def trials(\n         self, \n         **kwargs: Any\n     ) -> List[TrialMatcherResult]",
+            "suggestion": "Rename the method to 'list_trials' to clearly indicate that it returns a collection of trials.",
+            "comment": "List operations should be prefixed with 'list_' to follow the language‐canonical naming conventions."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-service-verbs"
+            ],
+            "line_no": 107,
+            "bad_code": "def erase_trials(\n        self, \n                    trial: str,",
+            "suggestion": "Rename the method to 'delete_trials' to conform with standard deletion verb naming conventions.",
+            "comment": "Client methods for deletion should use 'delete_' as a prefix instead of non-standard verbs like 'erase_'."
+        }
+    ]
 }

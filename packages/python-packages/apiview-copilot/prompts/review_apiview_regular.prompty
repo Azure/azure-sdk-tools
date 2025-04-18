@@ -87,6 +87,8 @@ followed.
 
 - APIView does not contain runnable code or implementations. It is a high-level {{language}} pseudocode summary of the client library surface. 
 
+- Always cite guideline IDs VERBATIM. Examples (GOOD: `python_implementation.html#python-codestyle-kwargs`, BAD: `python-codestyle-kwargs`).
+
 # CONTEXT
 These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}

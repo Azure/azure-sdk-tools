@@ -300,7 +300,7 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
 }
 
 export function updateApiVersionInTspConfig(tspConfigPath: string, apiVersion?: string) {
-    if (!apiVersion) {
+    if (!apiVersion || apiVersion === '') {
         logger.warn(`No apiVersion provided, skipping update to tspconfig.yaml.`);
         return;
     }

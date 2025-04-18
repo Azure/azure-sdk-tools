@@ -30,8 +30,8 @@ export async function generateMgmt(options: {
     downloadUrlPrefix?: string;
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
-    apiVersion?: string;
-    sdkReleaseType?: string;
+    apiVersion: string;
+    sdkReleaseType: string;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
@@ -117,7 +117,7 @@ export async function generateMgmt(options: {
             logger.info('Start to generate changelog and bump version...');
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {
-                changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options.sdkReleaseType);
+                changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
             }
             logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
             execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});

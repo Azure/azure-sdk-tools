@@ -56,7 +56,9 @@ CREDENTIAL = DefaultAzureCredential()
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"]):
+    def __init__(
+        self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini", "gpt-4.1-nano"]
+    ):
         self.language = language
         self.model = model
         self.search = SearchManager(language=language)

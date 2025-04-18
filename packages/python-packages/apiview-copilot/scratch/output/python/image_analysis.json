@@ -3,39 +3,57 @@
     "violations": [
         {
             "rule_ids": [
+                "python_design.html#python-client-constructor-form"
+            ],
+            "line_no": 10,
+            "bad_code": "     connection_string: Optional[str] = None,",
+            "suggestion": "Remove connection_string from the __init__ method and provide a factory classmethod from_connection_string instead.",
+            "comment": "Client constructors in Python must not accept a connection string directly; use from_connection_string as a factory method according to the guidelines."
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-static-methods"
+            ],
+            "line_no": 88,
+            "bad_code": "    @staticmethod",
+            "suggestion": "Remove the @staticmethod decorator and use an instance or class method for send_request, if needed.",
+            "comment": "Static methods are discouraged; use instance or module-level functions according to guidelines."
+        },
+        {
+            "rule_ids": [
                 "python_implementation.html#python-codestyle-type-naming"
             ],
-            "line_no": "209",
+            "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
-            "suggestion": "Rename the class from 'detectedPerson' to 'DetectedPerson'.",
-            "comment": "Type names must use PascalCase. The name 'detectedPerson' does not follow this convention and should be 'DetectedPerson'."
+            "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedPerson(MutableMapping[str, Any]):",
+            "comment": "Class names should be in PascalCase (DetectedPerson), not camelCase or lowercase."
         },
         {
             "rule_ids": [
-                "python_implementation.html#python-codestyle-type-naming"
+                "python_implementation.html#python-codestyle-properties"
             ],
-            "line_no": "433",
-            "bad_code": "    ivar list: List[detectedPerson]",
-            "suggestion": "Change the annotation to 'List[DetectedPerson]'.",
-            "comment": "The type 'detectedPerson' is referenced in a type annotation using incorrect casing. It should use PascalCase (i.e., 'DetectedPerson') to be consistent with SDK naming conventions. See line 209 for the class definition."
+            "line_no": 411,
+            "bad_code": "    def get_result(self) -> ObjectsResult",
+            "suggestion": "Use properties instead of getter/setter methods; for example, define a property 'result'.",
+            "comment": "Do not use 'get_' and 'set_' methods for attribute access; use Python properties."
         },
         {
             "rule_ids": [
-                "python_design.html#python-client-same-name-sync-async"
+                "python_implementation.html#python-codestyle-properties"
             ],
-            "line_no": "53",
-            "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "suggestion": "Rename the async client class to 'ImageAnalysisClient' within the azure.ai.vision.imageanalysis.aio namespace.",
-            "comment": "The async client is incorrectly named 'AsyncImageAnalysisClient'. According to guidelines, the async client should use the same client name as its synchronous counterpart ('ImageAnalysisClient') and reside in the .aio namespace."
+            "line_no": 413,
+            "bad_code": "    def set_result(self, obj) -> None",
+            "suggestion": "Use properties instead of setter methods; for example, define a property 'result'.",
+            "comment": "Do not use 'get_' and 'set_' methods for attribute access; use Python properties."
         },
         {
             "rule_ids": [
-                "python_implementation.html#python-tooling-pylint"
+                "python_design.html#python-models-enum-name-uppercase"
             ],
-            "line_no": "90",
-            "bad_code": "        self,",
-            "suggestion": "Remove the 'self' parameter from the static method signature. For example, define the method as: 'def send_request(request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]'.",
-            "comment": "The method 'send_request' in the async client is decorated as a static method but still accepts a 'self' parameter. Static methods should not include a reference to the instance."
+            "line_no": 517,
+            "bad_code": "    tags = 'tags'",
+            "suggestion": "    TAGS = 'tags'",
+            "comment": "Enum member names must be UPPERCASE, but 'tags' is lowercase here."
         }
     ]
 }

@@ -23,5 +23,7 @@ def api_reviewer(language: str):
         return jsonify({"error": "Unsupported language"}), 400
     data = request.get_json()
     content = data["content"]
-    result = ApiViewReview(language=language, model="o3-mini").get_response(content)
+    result = ApiViewReview(language=language, model="gpt-4.1-nano").get_response(
+        content
+    )
     return jsonify(result.model_dump_json())

@@ -8,9 +8,9 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai_beta
+    type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1-nano
+    azure_deployment: gpt-4.1
     api_version: 2025-01-01-preview
   parameters:
     temperature: 1

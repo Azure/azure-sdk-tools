@@ -53,17 +53,30 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 
 CREDENTIAL = DefaultAzureCredential()
 
+model_map = {
+    "gpt-4o-mini": "regular",
+    "gpt-4.1-nano": "regular",
+    "gpt-4o": "regular",
+    "gpt-4.1": "regular",
+    "o3-mini": "reasoning",
+    "o4-mini": "reasoning",
+}
+
+supported_models = [x for x in model_map.keys()]
+
 
 class ApiViewReview:
 
-    def __init__(
-        self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini", "gpt-4.1-nano"]
-    ):
+    def __init__(self, *, language: str, model: str = "o3-mini"):
         self.language = language
         self.model = model
         self.search = SearchManager(language=language)
         self.output_parser = ReviewResult
         self.semantic_search_failed = False
+        if model not in supported_models:
+            raise ValueError(
+                f"Model {model} not supported. Supported models are: {', '.join(supported_models)}"
+            )
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
@@ -120,8 +133,11 @@ class ApiViewReview:
         chunk_status = [PENDING] * len(chunks_to_process)
 
         # select the appropriate prompty file
-        prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
+        prompty_type = model_map[self.model]
+        prompt_file = f"review_apiview_{prompty_type}.prompty".replace("-", "_")
         prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
+        # set the model name in the env var so we don't need a prompty file per model
+        os.environ["PROMPTY_MODEL_DEPLOYMENT"] = self.model
 
         # Flag to indicate cancellation
         cancel_event = threading.Event()

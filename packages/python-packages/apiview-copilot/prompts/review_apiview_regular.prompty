@@ -8,16 +8,17 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai_beta
+    type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
-    azure_deployment: o3-mini
+    azure_deployment: ${env:PROMPTY_MODEL_DEPLOYMENT}
     api_version: 2025-01-01-preview
   parameters:
+    temperature: 0.7
+    top_p: 0.95
     stop: []
     frequency_penalty: 0
     presence_penalty: 0
-    max_completion_tokens: 20000
-    reasoning_effort: "high"
+    max_tokens: 16384
     response_format: ${file:review_result_schema.json}
 sample:
   language: python
@@ -89,6 +90,7 @@ followed.
 # CONTEXT
 These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}
+
 
 user:
 Evaluate the following APIView and provide a JSON array of violations.

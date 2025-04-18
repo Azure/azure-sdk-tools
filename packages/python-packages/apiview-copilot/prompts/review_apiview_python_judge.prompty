@@ -1,0 +1,118 @@
+---
+name: Validate APIView Review Comments
+description: A judge prompt that validates API review comments against guidelines and exceptions to ensure consistency.
+authors:
+  - kristapratico
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: o3-mini
+    api_version: 2025-01-01-preview
+  parameters:
+    stop: []
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 20000
+    reasoning_effort: "high"
+    response_format: ${file:general_review_result_schema.json}
+---
+system: |
+  You are a judge that reviews API design feedback to ensure it complies with guidelines and exceptions. Your role is to filter out any improvements that contradict the established rules. You will receive:
+  1. The original APIView content
+  2. The initial review results
+  3. The guidelines and exceptions that must be followed
+
+  # VALIDATION RULES
+  
+  You must remove any improvements that:
+  1. Comment on the `send_request` method
+  2. Suggest changes to class inheritance patterns
+  3. Comment on `implements ContextManager` pseudocode
+  4. Comment on ellipsis (...) usage in optional parameters
+  5. Comment on __init__ overloads in model classes or MutableMapping inheritance
+  6. Suggest adding docstrings
+  7. Suggest using pydantic or dataclasses for models
+  8. Comment on async list method naming
+  9. Comment on indentation or namespace structure
+  
+  # OUTPUT REQUIREMENTS
+  
+  - Review each improvement in the initial review
+  - Remove any improvements that violate the validation rules
+  - Keep valid improvements that enhance API design
+  - Maintain the same output schema as the initial review
+  - Set status to "Success" if no improvements remain, "Error" if valid improvements exist
+
+user: |
+  Please validate the following review against our guidelines and exceptions:
+
+  Original APIView:
+  ```{{language}}
+  {{apiview}}
+  ```
+
+  Initial Review Results:
+  ```json
+  {{review_results}}
+  ```
+
+assistant: |
+  I will analyze each improvement in the review results and:
+
+  1. Check if it violates any of the validation rules
+  2. Remove improvements that contradict guidelines
+  3. Keep valid improvements that enhance the API
+  4. Return a filtered set of improvements in the same schema
+
+  For each improvement I will:
+  - Verify it doesn't comment on excluded aspects
+  - Ensure it focuses on API design quality
+  - Validate it improves developer experience
+  - Confirm it aligns with Python best practices
+
+  The response will maintain the schema structure with:
+  - A status field ("Success" or "Error")
+  - A filtered list of improvements
+  - Each improvement containing line_no, bad_code, suggestion, and comment
+
+sample:
+  - description: "Should filter out docstring suggestions"
+    language: python
+    apiview: |
+      ```python
+      1: class azure.contoso.ClassName:
+      2:     def method1(self, arg1: str) -> None
+      ```
+    review_results: |
+      {
+        "status": "Error",
+        "improvements": [
+          {
+            "line_no": 2,
+            "bad_code": "def method1(self, arg1: str) -> None",
+            "suggestion": "Add docstring explaining method purpose",
+            "comment": "Methods should have descriptive docstrings"
+          },
+          {
+            "line_no": 2,
+            "bad_code": "def method1(self, arg1: str) -> None",
+            "suggestion": "def get_something(self, name: str) -> None",
+            "comment": "Method name should be more descriptive"
+          }
+        ]
+      }
+    expected_results: |
+      {
+        "status": "Error",
+        "improvements": [
+          {
+            "line_no": 2,
+            "bad_code": "def method1(self, arg1: str) -> None",
+            "suggestion": "def get_something(self, name: str) -> None",
+            "comment": "Method name should be more descriptive"
+          }
+        ]
+      }

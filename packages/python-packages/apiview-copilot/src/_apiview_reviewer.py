@@ -105,6 +105,7 @@ class ApiViewReview:
         apiview = "\n".join(numbered_lines)
 
         prompt_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}.prompty"
+        judge_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}_judge.prompty"
 
         response = prompty.execute(
             prompt_path,
@@ -114,7 +115,20 @@ class ApiViewReview:
             }
         )
         json_response = json.loads(response)
-        return GeneralReviewResult(**json_response)
+       
+        response = prompty.execute(
+            judge_path,
+            inputs={
+                "language": self.language,
+                "apiview": apiview,
+                "review_results": json_response,
+                "guidelines": self.search.retrieve_static_guidelines(
+                    self.language, include_general_guidelines=False
+                ),
+            }
+        )
+
+        return GeneralReviewResult(**response)
 
     def get_response(
         self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False

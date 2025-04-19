@@ -3,17 +3,15 @@
 
 using Azure.Core;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Pipelines;
 using System.Linq;
+using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -230,20 +228,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private static byte[] ReadAllBytes(Stream s)
         {
             if (s is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> seg))
-                return seg.Count == 0 ? Array.Empty<byte>()
-                                      : seg.Array.AsSpan(seg.Offset, seg.Count).ToArray();
-
+                return seg.AsSpan(seg.Offset, seg.Count).ToArray();
+            
             using var copy = new MemoryStream();
 
-            if (s.Length == 0)
-            {
+            int first = s.ReadByte();
+            if (first == -1)
                 return Array.Empty<byte>();
-            }
-            else
-            {
-                s.CopyTo(copy);
-                return copy.ToArray();
-            }
+
+            copy.WriteByte((byte)first);
+            s.CopyTo(copy);
+            return copy.ToArray();
         }
 
         /// <summary>
@@ -255,24 +250,45 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="buf"></param>
         /// <returns></returns>
-        private static byte[] NormalizeBareLf(byte[] buf)
+        /// Rewrites a complete multipart entity so that every header line
+        /// (from the delimiter up to the first blank line) ends with CR LF,
+        /// and every delimiter line starts with CR LF. The body region is
+        /// left byte‑for‑byte intact.
+        private static byte[] NormalizeBareLf(byte[] src)
         {
-            var ms = new MemoryStream(buf.Length + 16);
-            byte prev = 0;
-            for (int i = 0; i < buf.Length; i++)
+            const byte CR = 0x0D, LF = 0x0A;
+
+            var dst = new byte[src.Length + 32];
+            int w = 0;
+            bool atLineStart = true;
+            bool inHeaders = false;  // true between delimiter and first blank line
+
+            for (int i = 0; i < src.Length; i++)
             {
-                byte cur = buf[i];
-                if (prev == 0x0A && cur == 0x2D &&            // "\n-"
-                    (i < 2 || buf[i - 2] != 0x0D))            // prev prev byte not CR
+                byte b = src[i];
+
+                // Detect start of a delimiter line to re‑enter header mode
+                if (atLineStart && b == 0x2D && i + 1 < src.Length && src[i + 1] == 0x2D)
+                    inHeaders = true;
+
+                if (inHeaders && prev == LF && b == LF && dst[w - 2] == CR)
                 {
-                    ms.Seek(-1, SeekOrigin.Current);          // overwrite the LF we wrote
-                    ms.WriteByte(0x0D);                       // write CR
-                    ms.WriteByte(0x0A);                       // write LF
+                    dst[w - 1] = CR;   // overwrite the second LF with CR
+                    dst[w++] = LF;   // re‑add LF
+                    prev = LF;         // current byte already handled
+                    continue;
                 }
-                ms.WriteByte(cur);
-                prev = cur;
+
+                dst[w++] = b;
+                atLineStart = b == LF;
+
+                // First empty line ends header mode
+                if (inHeaders && atLineStart &&
+                    (i + 1 == src.Length || src[i + 1] == CR || src[i + 1] == LF))
+                    inHeaders = false;
             }
-            return ms.ToArray();
+
+            return w == src.Length ? src : dst.AsSpan(0, w).ToArray();
         }
 
         private static void SerializeMultipartBody(
@@ -283,84 +299,126 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             jsonWriter.WriteStartArray(name);
 
-            // Recover boundary if a sanitizer cleared it
+            // Boundary might have been sanitised to "REDACTED"
             if (boundary == "REDACTED")
             {
-                // First CRLF marks the end of the opening delimiter line
                 ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
-                int idx = raw.AsSpan().IndexOf(crlf);           // always ≥ 0 in a valid message
-                if (idx == -1) throw new InvalidDataException("Unable to locate CRLF in multipart body.");
+                int idx = raw.AsSpan().IndexOf(crlf);
+                if (idx == -1) throw new InvalidDataException("Multipart body missing CRLF.");
 
-                // Opening line is "--<token>" (no CRLF); skip the two leading dashes
-                boundary = Encoding.ASCII.GetString(raw, 2, idx - 2);
+                boundary = Encoding.ASCII.GetString(raw, 2, idx - 2); // skip leading "--"
             }
 
-            var adjustedByteArray = NormalizeBareLf(raw);
-            var rdr = new MultipartReader(boundary, new MemoryStream(adjustedByteArray));
+            // Only run the LF→CRLF fixer once at the outermost level
+            byte[] fixedRaw = NormalizeBareLf(raw);
 
-            string spanBoundary = $"--{boundary}\r\n";
-            string spanBoundaryEnd = $"--{boundary}--\r\n";
+            var lol = Encoding.UTF8.GetString(fixedRaw);
+            DebugLogger.LogInformation(lol);
+            DebugLogger.LogInformation(Convert.ToBase64String(fixedRaw));
+            DebugLogger.LogInformation(raw.Length == fixedRaw.Length ? "We didn't insert anything." : "We did insert a character.");
+            
+            WriteMultipartLines(jsonWriter,
+                                new MemoryStream(fixedRaw, writable: false),
+                                boundary);
 
-            MultipartSection section;
-            // this next section of code walks each section of the multipart/mixed body and is writing its components
-            // to the body array
-            while ((section = rdr.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+            jsonWriter.WriteEndArray();
+        }
+
+        private static bool IsNestedMultipart(
+            IDictionary<string, StringValues> headers,
+            out string boundary)
+        {
+            boundary = null;
+            if (!headers.TryGetValue("Content-Type", out var v)) return false;
+
+            if (!MediaTypeHeaderValue.TryParse(v[0], out var mt)) return false;
+            if (!mt.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            boundary = mt.Boundary.Value?.Trim('"');
+            return !string.IsNullOrEmpty(boundary);
+        }
+
+        private static void WriteTextBody(Utf8JsonWriter w, ReadOnlySpan<char> text)
+        {
+            while (true)
             {
-                // write opening delimiter (exact bytes, incl. CRLF)
-                jsonWriter.WriteStringValue(spanBoundary);
+                int idx = text.IndexOf('\n');
+                if (idx == -1) break;
+                idx += 1;                            // keep '\n'
+                w.WriteStringValue(text[..idx]);
+                text = text[idx..];
+            }
+            if (!text.IsEmpty) w.WriteStringValue(text);
+        }
 
-                // write each part headers
-                foreach (var h in section.Headers)
+        private static void DumpAscii(ReadOnlySpan<byte> bytes, int count = 256)
+        {
+            var sb = new StringBuilder();
+            int n = Math.Min(count, bytes.Length);
+
+            for (int i = 0; i < n; i++)
+            {
+                byte b = bytes[i];
+                sb.Append(b switch
+                {
+                    0x0D => '␍',   // CR
+                    0x0A => '␊',   // LF
+                    _ => (char)b
+                });
+            }
+            DebugLogger.LogInformation("‑‑‑‑‑‑‑‑‑‑ first " + n + " bytes ‑‑‑‑‑‑‑‑‑‑");
+            DebugLogger.LogInformation(sb.ToString() + Environment.NewLine);
+        }
+
+        private static void WriteMultipartLines(
+            Utf8JsonWriter jsonWriter,
+            Stream stream,
+            string boundary)
+        {
+            var reader = new MultipartReader(boundary, stream);
+            string open = $"--{boundary}\r\n";
+            string close = $"--{boundary}--\r\n";
+
+            MultipartSection part;
+            while ((part = reader.ReadNextSectionAsync()
+                                 .GetAwaiter().GetResult()) != null)
+            {
+                jsonWriter.WriteStringValue(open);
+
+                foreach (var h in part.Headers)
                     jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
 
-                // write blank line between headers and body
                 jsonWriter.WriteStringValue("\r\n");
 
-                // write the body
-                // if this is a text content type we should attempt to write it and preserve all the bytes we expect to be there
-                if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
+                if (IsNestedMultipart(part.Headers, out var nestedBoundary))
                 {
-                    ReadOnlySpan<char> bodyChars = enc.GetString(ReadAllBytes(section.Body));
-
-                    // we need to preserve every line ending
-                    int pos;
-                    // include the '\n'
-                    while ((pos = bodyChars.IndexOf('\n')) != -1)
-                    {
-                        pos += 1;                                      
-                        jsonWriter.WriteStringValue(bodyChars[..pos]);
-                        bodyChars = bodyChars[pos..];
-                    }
-
-                    // trailing text w/o newline
-                    if (!bodyChars.IsEmpty)
-                        jsonWriter.WriteStringValue(bodyChars);
+                    byte[] fixedRaw = NormalizeBareLf(ReadAllBytes(part.Body));
+                    WriteMultipartLines(jsonWriter,
+                                        new MemoryStream(fixedRaw, false),
+                                        nestedBoundary);
                 }
-                // if it's not a text content type, just write this array item with a preceding b64: prefix
-                // so that during DESERIALIZATION we know that this should be base64 decoded to a raw byte string
+                else if (ContentTypeUtilities.IsTextContentType(part.Headers, out var enc))
+                {
+                    WriteTextBody(jsonWriter, enc.GetString(ReadAllBytes(part.Body)));
+                }
                 else
                 {
-                    var bytes = ReadAllBytes(section.Body);
-
+                    byte[] bytes = ReadAllBytes(part.Body);
                     if (bytes.Length == 0)
                     {
-                        // mirror the "empty array" rule we use for zero‑length bodies elsewhere
-                        jsonWriter.WriteStartArray();      // []
+                        jsonWriter.WriteStartArray();
                         jsonWriter.WriteEndArray();
                     }
                     else
                     {
-                        var b64 = Convert.ToBase64String(bytes);
-                        jsonWriter.WriteStringValue($"b64:{b64}\r\n");
+                        jsonWriter.WriteStringValue($"b64:{Convert.ToBase64String(bytes)}\r\n");
                     }
                 }
             }
 
-            // 3. closing delimiter and array terminator
-            jsonWriter.WriteStringValue(spanBoundaryEnd);
-            jsonWriter.WriteEndArray();
+            jsonWriter.WriteStringValue(close);
         }
-
 
         private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers)
         {

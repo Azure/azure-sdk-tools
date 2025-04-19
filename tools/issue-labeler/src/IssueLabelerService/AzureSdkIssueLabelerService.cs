@@ -69,49 +69,35 @@ namespace IssueLabelerService
                 return EmptyResult;
             }
 
+            TriageOutput result = new TriageOutput { Labels = labels.Values };
+
             if(bool.Parse(config.EnableAnswers))
             {
                 try{
 
-                    // Get the Qna model based on configuration
-                    var qnaService = _answerServices.GetAnswerService(config);
+                    // Get the Answer Service based on configuration
+                    var answerService = _answerServices.GetAnswerService(config);
 
-                    var answer = await qnaService.AnswerQuery(issue, labels);
+                    var answer = await answerService.AnswerQuery(issue, labels);
 
-                    TriageOutput result = new TriageOutput
-                    {
-                        Labels = labels.Values,
-                        Answer = answer.Answer,
-                        AnswerType = answer.AnswerType
-                    };
-
-                    return new JsonResult(result);
+                    result.Answer = answer.Answer;
+                    result.AnswerType = answer.AnswerType;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
 
-                    TriageOutput result = new TriageOutput
-                    {
-                        Labels = labels.Values,
-                        Answer = null,
-                        AnswerType = null
-                    };
-
-                    return new JsonResult(result);
+                    result.Answer = null;
+                    result.AnswerType = null;
                 }
             }
             else
             {
-                TriageOutput result = new TriageOutput
-                {
-                    Labels = labels.Values,
-                    Answer = null,
-                    AnswerType = null
-                };
-
-                return new JsonResult(result);
+                result.Answer = null;
+                result.AnswerType = null;
             }
+
+            return new JsonResult(result);
         }
 
         private async Task<IssuePayload> DeserializeIssuePayloadAsync(HttpRequest request)

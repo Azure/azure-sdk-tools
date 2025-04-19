@@ -1037,7 +1037,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     foreach (var sanitizer in sanitizers)
                     {
                         session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
-                        await SanitizerRegistry.Register(session, sanitizer, shouldLock: false);
+                        registrations.Add(await SanitizerRegistry.Register(session, sanitizer, shouldLock: false));
                     }
                 }
                 finally

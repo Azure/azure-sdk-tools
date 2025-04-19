@@ -689,7 +689,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Request.Headers, targetEntry.Request.Headers, new HashSet<string>(), new HashSet<string>()));
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Response.Headers, targetEntry.Response.Headers, new HashSet<string>(), new HashSet<string>()));
-            
+
             targetUntouchedEntry.Request.TryGetContentType(out var contentType);
             Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, contentType));
             Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, contentType));
@@ -845,26 +845,23 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(sanitizerCount, testDict.DefaultSanitizerList.Count);
         }
 
+        [Theory]
+        [InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
+        [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
+        public async Task GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
+        {
+            var session = TestHelpers.LoadRecordSession(targetFile);
 
+            var targetEntry = session.Session.Entries[0];
+            var matcher = new RecordMatcher();
 
-        // Re-enable w/ Azure/azure-sdk-tools#2900
-        //[Theory]
-        //[InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
-        //[InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
-        //public void GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
-        //{
-        //    var session = TestHelpers.LoadRecordSession(targetFile);
+            var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
+            await session.Session.Sanitize(sanitizer);
 
-        //    var targetEntry = session.Session.Entries[0];
-        //    var matcher = new RecordMatcher();
+            var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
 
-        //    var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
-        //    session.Session.Sanitize(sanitizer);
-
-        //    var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
-
-        //    Assert.DoesNotContain(regex, bodyString);
-        //    Assert.Contains(replacementValue, bodyString);
-        //}
+            Assert.DoesNotContain(regex, bodyString);
+            Assert.Contains(replacementValue, bodyString);
+        }
     }
 }

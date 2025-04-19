@@ -2,11 +2,13 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -83,13 +85,43 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return record;
         }
 
+        private static byte[] DeserializeMultipartBody(JsonElement property, string boundary)
+        {
+            using var ms = new MemoryStream();
+
+            foreach (var item in property.EnumerateArray())
+            {
+                // Handle the “empty binary part” marker: []
+                if (item.ValueKind == JsonValueKind.Array)
+                {
+                    // nothing to write – it really was a 204 / empty body
+                    continue;
+                }
+
+                var segment = item.GetString();
+
+                if (segment.StartsWith("b64:", StringComparison.Ordinal))
+                {
+                    var bytes = Convert.FromBase64String(segment.Substring(4));
+                    ms.Write(bytes);
+                }
+                else
+                {
+                    // Delimiter lines, headers, and text bodies are ASCII by spec.
+                    ms.Write(Encoding.ASCII.GetBytes(segment));
+                }
+            }
+
+            return ms.ToArray();
+        }
+
         private static void DeserializeBody(RequestOrResponse requestOrResponse, in JsonElement property)
         {
             if (property.ValueKind == JsonValueKind.Null)
             {
                 requestOrResponse.Body = null;
             }
-            else if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
+            else if (ContentTypeUtilities.IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
                 if (property.ValueKind == JsonValueKind.Array)
                 {
@@ -114,6 +146,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
                 NormalizeJsonBody(requestOrResponse);
+            }
+            else if (ContentTypeUtilities.IsMultipartMixed(requestOrResponse.Headers, out var boundary) && property.ValueKind == JsonValueKind.Array)
+            {
+                requestOrResponse.Body = DeserializeMultipartBody(property, boundary);
             }
             else if (property.ValueKind == JsonValueKind.Array)
             {
@@ -189,6 +225,208 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             jsonWriter.WriteEndObject();
         }
 
+        private static byte[] ReadAllBytes(Stream s)
+        {
+            if (s is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> seg))
+                return seg.AsSpan(seg.Offset, seg.Count).ToArray();
+            
+            using var copy = new MemoryStream();
+
+            int first = s.ReadByte();
+            if (first == -1)
+                return Array.Empty<byte>();
+
+            copy.WriteByte((byte)first);
+            s.CopyTo(copy);
+            return copy.ToArray();
+        }
+
+        /// <summary>
+        /// This function is necessary because while the MultipartReader REQUIRES a payload that follows the spec for multipart/mixed,
+        /// azure services don't actually return totally compliant mixed bodies. A lot of the time they merely include LF--<boundary> instead of the spec-required
+        /// CRLF--<boundary>
+        /// 
+        /// So what we do is 
+        /// </summary>
+        /// <param name="buf"></param>
+        /// <returns></returns>
+        /// Rewrites a complete multipart entity so that every header line
+        /// (from the delimiter up to the first blank line) ends with CR LF,
+        /// and every delimiter line starts with CR LF. The body region is
+        /// left byte‑for‑byte intact.
+        private static byte[] NormalizeBareLf(byte[] src)
+        {
+            const byte CR = 0x0D, LF = 0x0A, DASH = 0x2D;
+
+            var dst = new byte[src.Length + 64];
+            int w = 0;
+            bool atLineStart = true;
+            bool inHeaders = false;
+
+            for (int i = 0; i < src.Length; i++)
+            {
+                byte b = src[i];
+
+                // 1. a delimiter line means the next lines are headers
+                if (atLineStart && b == DASH && i + 1 < src.Length && src[i + 1] == DASH)
+                    inHeaders = true;
+
+                // 2. inside headers, look ahead for the pattern LF LF
+                if (inHeaders && b == LF && i + 1 < src.Length && src[i + 1] == LF)
+                {
+                    // we’re on the *first* LF of LF LF
+                    // ensure we output CR LF CR LF
+                    if (w == 0 || dst[w - 1] != CR) dst[w++] = CR;
+                    dst[w++] = LF;   // current LF
+                    dst[w++] = CR;   // injected CR before second LF
+                    dst[w++] = LF;   // second LF
+                    i++;             // skip over original second LF
+                    atLineStart = true;
+                    inHeaders = false;   // blank line ends header block
+                    continue;
+                }
+
+                // 3. bare LF at end of a non‑blank header line
+                if (inHeaders && b == LF && (w == 0 || dst[w - 1] != CR))
+                    dst[w++] = CR;
+
+                dst[w++] = b;
+                atLineStart = b == LF;
+
+                // 4. CR LF CR LF already correct → leave header mode
+                if (inHeaders && atLineStart &&
+                    i + 1 < src.Length && (src[i + 1] == CR || src[i + 1] == LF))
+                    inHeaders = false;
+            }
+
+            return w == src.Length ? src : dst.AsSpan(0, w).ToArray();
+        }
+
+        private static void SerializeMultipartBody(
+            Utf8JsonWriter jsonWriter,
+            string name,
+            byte[] raw,
+            string boundary)
+        {
+            jsonWriter.WriteStartArray(name);
+
+            // Boundary might have been sanitised to "REDACTED"
+            if (boundary == "REDACTED")
+            {
+                ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
+                int idx = raw.AsSpan().IndexOf(crlf);
+                if (idx == -1) throw new InvalidDataException("Multipart body missing CRLF.");
+
+                boundary = Encoding.ASCII.GetString(raw, 2, idx - 2); // skip leading "--"
+            }
+
+            // Only run the LF→CRLF fixer once at the outermost level
+            byte[] fixedRaw = NormalizeBareLf(raw);
+
+            var lol = Encoding.UTF8.GetString(fixedRaw);
+            DebugLogger.LogInformation(lol);
+            DebugLogger.LogInformation(Convert.ToBase64String(fixedRaw));
+            DebugLogger.LogInformation(raw.Length == fixedRaw.Length ? "We didn't insert anything." : "We did insert a character.");
+            
+            WriteMultipartLines(jsonWriter,
+                                new MemoryStream(fixedRaw, writable: false),
+                                boundary);
+
+            jsonWriter.WriteEndArray();
+        }
+
+        private static bool IsNestedMultipart(
+            IDictionary<string, StringValues> headers,
+            out string boundary)
+        {
+            boundary = null;
+            if (!headers.TryGetValue("Content-Type", out var v)) return false;
+
+            if (!MediaTypeHeaderValue.TryParse(v[0], out var mt)) return false;
+            if (!mt.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            boundary = mt.Boundary.Value?.Trim('"');
+            return !string.IsNullOrEmpty(boundary);
+        }
+
+        private static void WriteTextBody(Utf8JsonWriter w, ReadOnlySpan<char> text)
+        {
+            while (true)
+            {
+                int idx = text.IndexOf('\n');
+                if (idx == -1) break;
+                idx += 1;                            // keep '\n'
+                w.WriteStringValue(text[..idx]);
+                text = text[idx..];
+            }
+            if (!text.IsEmpty) w.WriteStringValue(text);
+        }
+
+        private static void DumpAscii(ReadOnlySpan<byte> bytes, int count = 256)
+        {
+            var sb = new StringBuilder();
+            int n = Math.Min(count, bytes.Length);
+
+            for (int i = 0; i < n; i++)
+            {
+                byte b = bytes[i];
+                sb.Append(b switch
+                {
+                    0x0D => '␍',   // CR
+                    0x0A => '␊',   // LF
+                    _ => (char)b
+                });
+            }
+            DebugLogger.LogInformation("‑‑‑‑‑‑‑‑‑‑ first " + n + " bytes ‑‑‑‑‑‑‑‑‑‑");
+            DebugLogger.LogInformation(sb.ToString() + Environment.NewLine);
+        }
+
+        private static void WriteMultipartLines(
+            Utf8JsonWriter jsonWriter,
+            Stream stream,
+            string boundary)
+        {
+            byte[] buf = NormalizeBareLf(ReadAllBytes(stream));
+            var reader = new MultipartReader(boundary, new MemoryStream(buf, false));
+
+            string open = $"--{boundary}\r\n";
+            string close = $"--{boundary}--\r\n";
+
+            MultipartSection part;
+            while ((part = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+            {
+                jsonWriter.WriteStringValue(open);
+
+                foreach (var h in part.Headers)
+                    jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
+                jsonWriter.WriteStringValue("\r\n");
+
+                if (IsNestedMultipart(part.Headers, out var childBoundary))
+                {
+                    WriteMultipartLines(jsonWriter, part.Body, childBoundary);
+                }
+                else if (ContentTypeUtilities.IsTextContentType(part.Headers, out var enc))
+                {
+                    WriteTextBody(jsonWriter, enc.GetString(ReadAllBytes(part.Body)));
+                }
+                else
+                {
+                    byte[] bytes = ReadAllBytes(part.Body);
+                    if (bytes.Length == 0)
+                    {
+                        jsonWriter.WriteStartArray(); jsonWriter.WriteEndArray();
+                    }
+                    else
+                    {
+                        jsonWriter.WriteStringValue($"b64:{Convert.ToBase64String(bytes)}\r\n");
+                    }
+                }
+            }
+
+            jsonWriter.WriteStringValue(close);
+        }
+
         private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers)
         {
             if (requestBody == null)
@@ -200,7 +438,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 jsonWriter.WriteStartArray(name);
                 jsonWriter.WriteEndArray();
             }
-            else if (IsTextContentType(headers, out Encoding encoding))
+            else if (ContentTypeUtilities.IsTextContentType(headers, out Encoding encoding))
             {
                 // Try parse response as JSON and write it directly if possible
                 try
@@ -253,6 +491,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteEndArray();
                 }
             }
+            else if (ContentTypeUtilities.IsMultipartMixed(headers, out var boundary))
+            {
+                SerializeMultipartBody(jsonWriter, name, requestBody, boundary);
+            }
             else
             {
                 jsonWriter.WriteString(name, Convert.ToBase64String(requestBody));
@@ -297,25 +539,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteEndArray();
                 }
             }
-        }
-
-        public static bool TryGetContentType(IDictionary<string, string[]> requestHeaders, out string contentType)
-        {
-            contentType = null;
-            if (requestHeaders.TryGetValue("Content-Type", out var contentTypes) &&
-                contentTypes.Length == 1)
-            {
-                contentType = contentTypes[0];
-                return true;
-            }
-            return false;
-        }
-
-        public static bool IsTextContentType(IDictionary<string, string[]> requestHeaders, out Encoding encoding)
-        {
-            encoding = null;
-            return TryGetContentType(requestHeaders, out string contentType) &&
-                   ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
         }
 
         /// <summary>

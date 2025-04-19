@@ -27,6 +27,8 @@ namespace SearchIndexCreator
             Console.WriteLine("2. Process Docs");
             Console.WriteLine("3. Process Issue Examples");
             Console.WriteLine("4. Process Demo");
+            Console.WriteLine("5. Create or Refresh Labels");
+
 
             var input = Console.ReadLine();
 
@@ -45,6 +47,9 @@ namespace SearchIndexCreator
                         break;
                     case "4":
                         await ProcessDemo(config);
+                        break;
+                    case "5":
+                        await ProcessLabels(config);
                         break;
                     default:
                         Console.WriteLine("Invalid option selected.");
@@ -134,6 +139,13 @@ namespace SearchIndexCreator
 
                 await client.Issue.Create("jeo02", "issue-examples", newIssue);
             }
+        }
+
+        private static async Task ProcessLabels(IConfigurationSection config)
+        {
+            var tokenAuth = new Credentials(config["GithubKey"]);
+            var labelRetrieval = new LabelRetrieval(tokenAuth, config);
+            await labelRetrieval.CreateOrRefreshLabels("Azure");
         }
     }
 }

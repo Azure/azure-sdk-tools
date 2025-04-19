@@ -13,6 +13,7 @@ using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
 using Azure.Core;
 using IssueLabelerService;
+using Azure.Storage.Blobs;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -56,6 +57,12 @@ var host = new HostBuilder()
             
             var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
             return openAIClient;
+        });
+
+        services.AddSingleton<BlobServiceClient>(sp =>
+        {
+            var blobServiceEndpoint = new Uri(config.BlobAccountUri);
+            return new BlobServiceClient(blobServiceEndpoint, credential);
         });
 
         services.AddSingleton<SearchIndexClient>(sp =>

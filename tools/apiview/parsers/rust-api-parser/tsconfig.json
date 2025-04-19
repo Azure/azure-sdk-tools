@@ -6,5 +6,5 @@
     "sourceMap": true,
     "outDir": "./dist"
   },
-  "include": ["./src/**/*.ts", "./rustdoc-types/*.ts", "./rustdoc-types/output/*.ts"]
+  "include": ["./src/**/*.ts", "./test/**/*.ts", "./rustdoc-types/*.ts", "./rustdoc-types/output/*.ts"]
 }

@@ -256,35 +256,46 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// left byte‑for‑byte intact.
         private static byte[] NormalizeBareLf(byte[] src)
         {
-            const byte CR = 0x0D, LF = 0x0A;
+            const byte CR = 0x0D, LF = 0x0A, DASH = 0x2D;
 
-            var dst = new byte[src.Length + 32];
+            var dst = new byte[src.Length + 64];
             int w = 0;
             bool atLineStart = true;
-            bool inHeaders = false;  // true between delimiter and first blank line
+            bool inHeaders = false;
 
             for (int i = 0; i < src.Length; i++)
             {
                 byte b = src[i];
 
-                // Detect start of a delimiter line to re‑enter header mode
-                if (atLineStart && b == 0x2D && i + 1 < src.Length && src[i + 1] == 0x2D)
+                // 1. a delimiter line means the next lines are headers
+                if (atLineStart && b == DASH && i + 1 < src.Length && src[i + 1] == DASH)
                     inHeaders = true;
 
-                if (inHeaders && prev == LF && b == LF && dst[w - 2] == CR)
+                // 2. inside headers, look ahead for the pattern LF LF
+                if (inHeaders && b == LF && i + 1 < src.Length && src[i + 1] == LF)
                 {
-                    dst[w - 1] = CR;   // overwrite the second LF with CR
-                    dst[w++] = LF;   // re‑add LF
-                    prev = LF;         // current byte already handled
+                    // we’re on the *first* LF of LF LF
+                    // ensure we output CR LF CR LF
+                    if (w == 0 || dst[w - 1] != CR) dst[w++] = CR;
+                    dst[w++] = LF;   // current LF
+                    dst[w++] = CR;   // injected CR before second LF
+                    dst[w++] = LF;   // second LF
+                    i++;             // skip over original second LF
+                    atLineStart = true;
+                    inHeaders = false;   // blank line ends header block
                     continue;
                 }
+
+                // 3. bare LF at end of a non‑blank header line
+                if (inHeaders && b == LF && (w == 0 || dst[w - 1] != CR))
+                    dst[w++] = CR;
 
                 dst[w++] = b;
                 atLineStart = b == LF;
 
-                // First empty line ends header mode
+                // 4. CR LF CR LF already correct → leave header mode
                 if (inHeaders && atLineStart &&
-                    (i + 1 == src.Length || src[i + 1] == CR || src[i + 1] == LF))
+                    i + 1 < src.Length && (src[i + 1] == CR || src[i + 1] == LF))
                     inHeaders = false;
             }
 
@@ -376,27 +387,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Stream stream,
             string boundary)
         {
-            var reader = new MultipartReader(boundary, stream);
+            byte[] buf = NormalizeBareLf(ReadAllBytes(stream));
+            var reader = new MultipartReader(boundary, new MemoryStream(buf, false));
+
             string open = $"--{boundary}\r\n";
             string close = $"--{boundary}--\r\n";
 
             MultipartSection part;
-            while ((part = reader.ReadNextSectionAsync()
-                                 .GetAwaiter().GetResult()) != null)
+            while ((part = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
             {
                 jsonWriter.WriteStringValue(open);
 
                 foreach (var h in part.Headers)
                     jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
-
                 jsonWriter.WriteStringValue("\r\n");
 
-                if (IsNestedMultipart(part.Headers, out var nestedBoundary))
+                if (IsNestedMultipart(part.Headers, out var childBoundary))
                 {
-                    byte[] fixedRaw = NormalizeBareLf(ReadAllBytes(part.Body));
-                    WriteMultipartLines(jsonWriter,
-                                        new MemoryStream(fixedRaw, false),
-                                        nestedBoundary);
+                    WriteMultipartLines(jsonWriter, part.Body, childBoundary);
                 }
                 else if (ContentTypeUtilities.IsTextContentType(part.Headers, out var enc))
                 {
@@ -407,8 +415,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     byte[] bytes = ReadAllBytes(part.Body);
                     if (bytes.Length == 0)
                     {
-                        jsonWriter.WriteStartArray();
-                        jsonWriter.WriteEndArray();
+                        jsonWriter.WriteStartArray(); jsonWriter.WriteEndArray();
                     }
                     else
                     {

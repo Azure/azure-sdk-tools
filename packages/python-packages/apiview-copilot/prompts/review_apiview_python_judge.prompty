@@ -39,6 +39,7 @@ system: |
   9. Comment on indentation or namespace structure
   10.Suggest consolidating multiple overloads
   11.Suggest providing convenience methods directly on the client
+  12.Comment on non-standard use of TypedDict syntax
   
   # OUTPUT REQUIREMENTS
   

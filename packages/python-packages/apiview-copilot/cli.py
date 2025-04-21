@@ -49,6 +49,7 @@ def local_review(
     model: str = DEFAULT_MODEL,
     chunk_input: bool = False,
     use_rag: bool = False,
+    general_review: bool = False,
 ):
     """
     Generates a review using the locally installed code.
@@ -62,16 +63,30 @@ def local_review(
 
     with open(path, "r") as f:
         apiview = f.read()
-    review = rg.get_response(apiview)
-    output_path = os.path.join("scratch", "output", language)
-    os.makedirs(output_path, exist_ok=True)
-    output_file = os.path.join(output_path, f"{filename}.json")
 
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(review.model_dump_json(indent=4))
+    if general_review is False:
+        review = rg.get_response(apiview)
+        output_path = os.path.join("scratch", "output", language)
+        os.makedirs(output_path, exist_ok=True)
+        output_file = os.path.join(output_path, f"{filename}.json")
 
-    print(f"Review written to {output_file}")
-    print(f"Found {len(review.violations)} violations.")
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(review.model_dump_json(indent=4))
+
+        print(f"Review written to {output_file}")
+        print(f"Found {len(review.violations)} violations.")
+    else:
+        review = rg.get_general_review_response(apiview)
+
+        output_path = os.path.join("scratch", "output", language)
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, f"{filename}_general.json")
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(review.model_dump_json(indent=4))
+
+        print(f"Review written to {output_file}")
+        print(f"Found {len(review.improvements)} improvements.")
 
 
 def create_test_case(
@@ -307,6 +322,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 "use_rag",
                 action="store_true",
                 help="Use RAG pattern to generate the review.",
+            )
+            ac.argument(
+                "general_review",
+                action="store_true",
+                help="Run general review against general language guidance.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

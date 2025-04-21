@@ -91,11 +91,6 @@ namespace IssueLabelerService
                     result.AnswerType = null;
                 }
             }
-            else
-            {
-                result.Answer = null;
-                result.AnswerType = null;
-            }
 
             return new JsonResult(result);
         }

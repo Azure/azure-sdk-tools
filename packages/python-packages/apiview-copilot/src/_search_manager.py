@@ -205,9 +205,11 @@ class ContextItem:
 
 class SearchManager:
 
-    def __init__(self, *, language: str):
+    def __init__(self, *, language: str, include_general_guidelines: bool = False):
         self.language = language
-        self.filter_expression = f"lang eq '{language}' or lang eq '' or lang eq null"
+        self.filter_expression = f"lang eq '{language}'"
+        if include_general_guidelines:
+            self.filter_expression += " or lang eq '' or lang eq null"
 
     def _ensure_env_vars(self, vars: List[str]):
         """

@@ -15,7 +15,6 @@ from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvalu
 
 dotenv.load_dotenv()
 
-MODEL = "o3-mini"
 NUM_RUNS: int = 3
 
 
@@ -101,8 +100,8 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    ai_review = ApiViewReview(language=language, model=MODEL)
-    review = ai_review.get_response(query, chunk_input=False, use_rag=False)
+    ai_review = ApiViewReview(language=language)
+    review = ai_review.get_response(query)
     return {"response": review.model_dump_json()}
 
 
@@ -311,9 +310,7 @@ def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) ->
         log_path.mkdir(parents=True, exist_ok=True)
 
     for name, result in all_results.items():
-        output_path = (
-            log_path / name[:-1]
-        )
+        output_path = log_path / name[:-1]
         with open(str(output_path), "w") as f:
             json.dump(result, indent=4, fp=f)
 
@@ -370,18 +367,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run evals for APIview copilot.")
     parser.add_argument(
         "--language",
+        "-l",
         type=str,
         default="python",
         help="The language to run evals for. Defaults to python.",
     )
     parser.add_argument(
-        "--n",
+        "--num-runs",
+        "-n",
         type=int,
         default=NUM_RUNS,
         help="The number of runs to perform, with the median of results kept. Defaults to 3.",
     )
     parser.add_argument(
         "--test-file",
+        "-t",
         type=str,
         default="all",
         help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
@@ -412,8 +412,8 @@ if __name__ == "__main__":
             continue
 
         run_results = []
-        for run in range(args.n):
-            print(f"Running evals {run + 1}/{args.n} for {file.name}...")
+        for run in range(args.num_runs):
+            print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
             result = evaluate(
                 data=str(file),
                 evaluators={
@@ -458,7 +458,7 @@ if __name__ == "__main__":
 
             run_result = record_run_result(result, rule_ids)
             print(
-                f"Average score for {file.name} run {run + 1}/{args.n}: {run_result[-1]['average_score']:.2f}"
+                f"Average score for {file.name} run {run + 1}/{args.num_runs}: {run_result[-1]['average_score']:.2f}"
             )
             run_results.append(run_result)
 

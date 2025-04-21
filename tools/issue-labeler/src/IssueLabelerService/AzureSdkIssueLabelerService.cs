@@ -9,10 +9,8 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Linq;
 using IssueLabeler.Shared;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace IssueLabelerService
 {
@@ -20,7 +18,6 @@ namespace IssueLabelerService
     {
         private static readonly ActionResult EmptyResult = new JsonResult(new TriageOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
-        private readonly TriageRag _ragService;
         private readonly Configuration _configurationService;
         private LabelerFactory _labelers;
         private AnswerFactory _answerServices;
@@ -28,7 +25,6 @@ namespace IssueLabelerService
         public AzureSdkIssueLabelerService(ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService, Configuration configService, LabelerFactory labelers, AnswerFactory answerServices)
         {
             _logger = logger;
-            _ragService = ragService;
             _labelers = labelers;
             _configurationService = configService;
             _answerServices = answerServices;
@@ -49,6 +45,7 @@ namespace IssueLabelerService
             }
 
             var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
+            Dictionary<string, string> labels;
 
             try
             {
@@ -56,23 +53,32 @@ namespace IssueLabelerService
                 var labeler = _labelers.GetLabeler(config);
 
                 // Predict labels for the issue
-                string[] labels = await labeler.PredictLabels(issue);
+                labels = await labeler.PredictLabels(issue);
 
                 // If no labels are returned, do not generate an answer
-                if (labels == null || labels.Length == 0)
+                // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
+                if (labels?.Count == 0)
                 {
                     _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
                     return EmptyResult;
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error labeling issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                return EmptyResult;
+            }
+
+            try{
 
                 // Get the Qna model based on configuration
                 var qnaService = _answerServices.GetAnswerService(config);
 
-                var answer = await qnaService.AnswerQuery(issue);
+                var answer = await qnaService.AnswerQuery(issue, labels);
 
                 TriageOutput result = new TriageOutput
                 {
-                    Labels = labels,
+                    Labels = labels.Values,
                     Answer = answer.Answer,
                     AnswerType = answer.AnswerType
                 };
@@ -81,8 +87,14 @@ namespace IssueLabelerService
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error processing issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                return EmptyResult;
+                _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+
+                TriageOutput result = new TriageOutput
+                {
+                    Labels = labels.Values,
+                    Answer = null,
+                    AnswerType = null
+                };
             }
         }
 

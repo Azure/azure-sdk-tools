@@ -3,39 +3,67 @@
     "violations": [
         {
             "rule_ids": [
-                "python_design.html#python-client-naming"
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-same-name-sync-async"
             ],
             "line_no": 6,
             "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
-            "suggestion": "Rename the class to 'ClinicalMatchingClient' so that the service client type has the required 'Client' suffix.",
-            "comment": "In Python, service client types should end with 'Client' as per naming guidelines."
+            "suggestion": "Rename the sync client to 'ClinicalMatchingClient' so that it ends with 'Client' and matches the async client naming.",
+            "comment": "Service client types should have a 'Client' suffix and the sync and async clients should share the same name (see guidelines python_design.html#python-client-naming and python_design.html#python-client-same-name-sync-async)."
         },
         {
             "rule_ids": [
                 "python_design.html#python-client-options-naming"
             ],
-            "line_no": 66,
-            "bad_code": "def create_trials(\n        self, \n        body: TrialMatcherData, \n        *, \n        options: Optional[CreateTrialsOptions] = None,",
-            "suggestion": "Remove the use of an options bag parameter and instead expose each optional parameter as an individual keyword-only argument.",
-            "comment": "Python client guidelines discourage grouping optional parameters in an options bag."
+            "line_no": 70,
+            "bad_code": "options: Optional[CreateTrialsOptions] = None,",
+            "suggestion": "Remove the options bag parameter and expose the individual optional keyword arguments instead.",
+            "comment": "Using an options bag to group optional parameters violates the guideline (python_design.html#python-client-options-naming)."
         },
         {
             "rule_ids": [
                 "python_design.html#python-paged-prefix"
             ],
             "line_no": 102,
-            "bad_code": "def trials(\n         self, \n         **kwargs: Any\n     ) -> List[TrialMatcherResult]",
-            "suggestion": "Rename the method to 'list_trials' to clearly indicate that it returns a collection of trials.",
-            "comment": "List operations should be prefixed with 'list_' to follow the language‐canonical naming conventions."
+            "bad_code": "def trials(",
+            "suggestion": "Rename the method to 'list_trials' and consider returning an ItemPaged type for consistency with listing operations.",
+            "comment": "Methods that enumerate resources should be prefixed with 'list_' (python_design.html#python-paged-prefix)."
         },
         {
             "rule_ids": [
                 "python_design.html#python-client-service-verbs"
             ],
-            "line_no": 107,
-            "bad_code": "def erase_trials(\n        self, \n                    trial: str,",
-            "suggestion": "Rename the method to 'delete_trials' to conform with standard deletion verb naming conventions.",
-            "comment": "Client methods for deletion should use 'delete_' as a prefix instead of non-standard verbs like 'erase_'."
+            "line_no": 108,
+            "bad_code": "def erase_trials(",
+            "suggestion": "Rename the method to 'delete_trials' to adhere to the preferred service verb usage.",
+            "comment": "Deletion operations should use the 'delete_' prefix rather than non-standard verbs like 'erase_' (python_design.html#python-client-service-verbs)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 191,
+            "bad_code": "options: Optional[CreateTrialsOptions] = None,",
+            "suggestion": "Remove the options bag parameter and expose the individual optional keyword arguments instead.",
+            "comment": "Using an options bag to group optional parameters violates the guideline (python_design.html#python-client-options-naming)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 223,
+            "bad_code": "def trials(",
+            "suggestion": "Rename the method to 'list_trials' and consider returning an ItemPaged type for consistency with listing operations.",
+            "comment": "Methods that enumerate resources should be prefixed with 'list_' (python_design.html#python-paged-prefix)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-service-verbs"
+            ],
+            "line_no": 229,
+            "bad_code": "async def erase_trials(",
+            "suggestion": "Rename the method to 'delete_trials' to adhere to the preferred service verb usage.",
+            "comment": "Deletion operations should use the 'delete_' prefix rather than non-standard verbs like 'erase_' (python_design.html#python-client-service-verbs)."
         }
     ]
 }

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 using Azure.AI.OpenAI;
+using System.Linq;
 
 namespace IssueLabelerService
 {
@@ -33,9 +34,9 @@ namespace IssueLabelerService
             string semanticConfigName,
             string field,
             string query,
-            int count)
+            int count,
+            string filter = null)
         {
-
             SearchClient searchClient = s_searchIndexClient.GetSearchClient(indexName);
 
             _logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
@@ -61,6 +62,9 @@ namespace IssueLabelerService
             {
                 SemanticConfigurationName = semanticConfigName
             };
+
+            options.Filter = filter;
+
 
             SearchResults<T> response = await searchClient.SearchAsync<T>(
                 query,
@@ -121,8 +125,10 @@ namespace IssueLabelerService
             string field,
             string query,
             int count,
-            double scoreThreshold)
+            double scoreThreshold,
+            Dictionary<string, string> labels = null)
         {
+            string filter = LabelsFilter(labels);
             var searchResults = await AzureSearchQueryAsync<Document>(
                 indexName,
                 semanticConfigName,
@@ -150,14 +156,17 @@ namespace IssueLabelerService
             string field,
             string query,
             int count,
-            double scoreThreshold)
+            double scoreThreshold,
+            Dictionary<string, string> labels = null)
         {
+            string filter = LabelsFilter(labels);
             var searchResults = await AzureSearchQueryAsync<Issue>(
                 indexName,
                 semanticConfigName,
                 field,
                 query,
-                count);
+                count,
+                filter);
 
             List<Issue> filteredIssues = new List<Issue>();
             foreach (var (issue, score) in searchResults)
@@ -204,6 +213,18 @@ namespace IssueLabelerService
             }
 
             return highestScore;
+        }
+
+        public string LabelsFilter(Dictionary<string, string> labels)
+        {
+            if (labels?.Take(2).Count() == 2)
+            {
+                // Dynamically construct the filter string
+                var filters = labels.Select(label => $"{label.Key} eq '{label.Value}'");
+                return string.Join(" and ", filters);
+            }
+
+            return null;
         }
     }
 

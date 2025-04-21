@@ -3011,7 +3011,7 @@ class DoNotLogExceptions(BaseChecker):
     name = "do-not-log-exceptions-if-not-debug"
     priority = -1
     msgs = {"C4766": (
-            "Do not log exceptions. See Details:"
+            "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information. See Details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
             "do-not-log-exceptions-if-not-debug",
             "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
@@ -3039,40 +3039,46 @@ class DoNotLogExceptions(BaseChecker):
             levels.
         """
         try:
-            levels_matches = [".warning", ".error", ".info"]
+            levels_matches = ["warning", "error", "info"]
             for j in node:
                 if isinstance(j, astroid.Expr):
                     expression = j.as_string().lower()
-                    if any(x in expression for x in levels_matches) and "logger" in expression:
-                        # Check for variables after strings
-                        end_finder = expression.rfind("'")
-                        delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
-                        if end_finder != -1:
-                            expression_a = expression[end_finder + 1:]
-                            # If there are variables after a string
-                            if len(expression_a) > 1:
-                                expression = expression_a
-                        for delimiter in delimiters:
-                            expression = " ".join(expression.split(delimiter))
-                        expression1 = expression.split()
-                        # Check for presence of exception name
-                        for i in range(len(expression1)):
-                            if exception_name == expression1[i]:
-                                if i+1 < len(expression1):
-                                    # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
-                                    #  error
-                                    if ".__name__" not in expression1[i+1]:
+                    
+                    # if this is a logging expression
+                    if j.value.func.attrname in levels_matches:
+                        # in the logging function call check if in exc_info we are only enabled for debug log
+                        if "isenabledfor(logging.debug)" in expression:
+                            pass
+                        else:
+                            # Check for variables after strings
+                            end_finder = expression.rfind("'")
+                            delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
+                            if end_finder != -1:
+                                expression_a = expression[end_finder + 1:]
+                                # If there are variables after a string
+                                if len(expression_a) > 1:
+                                    expression = expression_a
+                            for delimiter in delimiters:
+                                expression = " ".join(expression.split(delimiter))
+                            expression1 = expression.split()
+                            # Check for presence of exception name
+                            for i in range(len(expression1)):
+                                if exception_name == expression1[i]:
+                                    if i+1 < len(expression1):
+                                        # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
+                                        #  error
+                                        if ".__name__" not in expression1[i+1]:
+                                            self.add_message(
+                                                msgid=f"do-not-log-exceptions-if-not-debug",
+                                                node=j,
+                                                confidence=None,
+                                            )
+                                    else:
                                         self.add_message(
                                             msgid=f"do-not-log-exceptions-if-not-debug",
                                             node=j,
                                             confidence=None,
                                         )
-                                else:
-                                    self.add_message(
-                                        msgid=f"do-not-log-exceptions-if-not-debug",
-                                        node=j,
-                                        confidence=None,
-                                    )
                 if isinstance(j, astroid.If):
                     self.check_for_logging(j.body, exception_name)
                     # Check any 'elif' or 'else' branches

@@ -15,35 +15,29 @@ from ._sectioned_document import SectionedDocument
 from ._search_manager import SearchManager
 from ._models import ReviewResult, GeneralReviewResult
 
-# Set up the logger at the module level
+# Set up paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
-# Create output folder for logs
-output_folder = os.path.join(_PACKAGE_ROOT, "scratch", "output")
-os.makedirs(output_folder, exist_ok=True)
-log_file = os.path.join(output_folder, "error.log")
+# Configure logger to write to project root error.log
+log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 
-# Configure logger for immediate outputs (no buffering)
 logging.basicConfig(
     filename=log_file,
-    filemode="w",  # 'w' means write mode (overwrites existing file)
+    filemode="w",  # overwrite on each run
     level=logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    force=True,  # Override any existing logger configuration
+    force=True,
 )
 
 for handler in logging.root.handlers:
     if isinstance(handler, logging.FileHandler):
         handler.setLevel(logging.ERROR)
-
-        # Instead, call flush() after each log message if needed
-        # Or use this approach to make writes unbuffered:
         handler.formatter = logging.Formatter(
             "%(asctime)s - %(levelname)s - %(message)s"
         )
 
-# Create a module-level logger that can be used anywhere in the file
+# Create module-level logger
 logger = logging.getLogger(__name__)
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -67,20 +61,30 @@ model_map = {
 supported_models = [x for x in model_map.keys()]
 
 DEFAULT_MODEL = "o3-mini"
+DEFAULT_USE_RAG = False
+DEFAULT_CHUNK_INPUT = False
 
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: str = DEFAULT_MODEL):
-        self.language = language
-        self.model = model
-        self.search = SearchManager(language=language)
-        self.output_parser = ReviewResult
-        self.semantic_search_failed = False
+    def __init__(
+        self,
+        *,
+        language: str,
+        model: str = DEFAULT_MODEL,
+        use_rag: bool = DEFAULT_USE_RAG,
+        chunk_input: bool = DEFAULT_CHUNK_INPUT,
+    ):
         if model not in supported_models:
             raise ValueError(
                 f"Model {model} not supported. Supported models are: {', '.join(supported_models)}"
             )
+        self.language = language
+        self.model = model
+        self.use_rag = use_rag
+        self.chunk_input = chunk_input
+        self.search = SearchManager(language=language)
+        self.semantic_search_failed = False
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
@@ -130,25 +134,27 @@ class ApiViewReview:
         final_review = json.loads(response)
         return GeneralReviewResult(**final_review)
 
-    def get_response(
-        self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False
-    ) -> ReviewResult:
+    def get_response(self, apiview: str) -> ReviewResult:
         print(f"Generating review...")
 
         logger.info(
-            f"Starting review with model: {self.model}, language: {self.language}, RAG: {use_rag}"
+            f"Starting review with model: {self.model}, language: {self.language}, RAG: {self.use_rag}"
         )
 
         start_time = time()
         apiview = self.unescape(apiview)
-        if not use_rag:
-            guidelines = self.search.retrieve_static_guidelines(
-                self.language, include_general_guidelines=True
-            )
+        static_guidelines = self.search.retrieve_static_guidelines(
+            self.language, include_general_guidelines=False
+        )
+        static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
-        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
-        final_results = ReviewResult(status="Success", violations=[])
+        chunked_apiview = SectionedDocument(
+            apiview.splitlines(), chunk=self.chunk_input
+        )
+        final_results = ReviewResult(
+            guideline_ids=static_guideline_ids, status="Success", violations=[]
+        )
 
         # Skip header if multiple sections
         chunks_to_process = []
@@ -217,22 +223,20 @@ class ApiViewReview:
                     )
 
                     try:
-                        if use_rag:
+                        # build the context string
+                        if self.use_rag:
                             context = self._retrieve_and_resolve_guidelines(str(chunk))
-                            if context is None:
+                            if context:
+                                context_string = context.to_markdown()
+                            else:
+                                # Use static guidelines as fallback if semantic search fails
                                 logger.warning(
                                     f"Failed to retrieve guidelines for chunk {i}, using static guidelines instead."
                                 )
                                 self.semantic_search_failed = True
-                                context = self.search.retrieve_static_guidelines(
-                                    self.language, include_general_guidelines=True
-                                )
-                                context_string = json.dumps(context)
-                            else:
-                                context_string = context.to_markdown()
+                                context_string = json.dumps(static_guidelines)
                         else:
-                            context = guidelines
-                            context_string = json.dumps(context)
+                            context_string = json.dumps(static_guidelines)
 
                         response = prompty.execute(
                             prompt_path,

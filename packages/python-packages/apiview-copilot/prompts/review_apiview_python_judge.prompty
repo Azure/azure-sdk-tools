@@ -25,7 +25,7 @@ system: |
   2. The initial review results
   3. The guidelines and exceptions that must be followed
 
-  # VALIDATION RULES
+  # EXCEPTIONS
   
   You must remove any improvements that:
   1. Comment on the `send_request` method
@@ -41,6 +41,7 @@ system: |
   11.Suggest providing convenience methods directly on the client
   12.Comment on non-standard use of TypedDict syntax
   13.Comment about ivar being non-standard use
+  14.Comment about use of distributed_trace/async decorators
   
   # OUTPUT REQUIREMENTS
   
@@ -56,6 +57,11 @@ user: |
   Original APIView:
   ```{{language}}
   {{apiview}}
+  ```
+
+  Guidelines: 
+  ```json
+  {{guidelines}}
   ```
 
   Initial Review Results:

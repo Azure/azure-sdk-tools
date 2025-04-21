@@ -42,8 +42,7 @@ namespace IssueLabelerService
 
             var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
             var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
-
-            // Filtered out all sources for either one then not enough information to answer the issue. 
+ 
             if (docs.Count == 0 && issues.Count == 0)
             {
                 throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {docs.Count}, Issues: {issues.Count}.");
@@ -58,7 +57,7 @@ namespace IssueLabelerService
             var printableIssues = string.Join("\n", issues.Select(r => JsonConvert.SerializeObject(r)));
             var printableDocs = string.Join("\n", docs.Select(r => JsonConvert.SerializeObject(r)));
 
-            var replacements_UserPrompt = new Dictionary<string, string>
+            var replacementsUserPrompt = new Dictionary<string, string>
             {
                 { "Query", query },
                 { "PrintableDocs", printableDocs },
@@ -69,18 +68,18 @@ namespace IssueLabelerService
             if (solution)
             {
                 instructions = _config.SolutionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacements_UserPrompt, _logger);
+                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacementsUserPrompt, _logger);
             }
             else
             {
                 instructions = _config.SuggestionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionUserPrompt, replacements_UserPrompt, _logger);
+                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionUserPrompt, replacementsUserPrompt, _logger);
             }
 
             var response = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName);
 
             string intro, outro;
-            var replacements_intro = new Dictionary<string, string>
+            var replacementsIntro = new Dictionary<string, string>
             {
                 { "IssueUserLogin", issue.IssueUserLogin },
                 { "RepositoryName", issue.RepositoryName }
@@ -88,12 +87,12 @@ namespace IssueLabelerService
 
             if (solution)
             {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacements_intro, _logger);
+                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacementsIntro, _logger);
                 outro = _config.SolutionResponseConclusion;
             }
             else
             {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacements_intro, _logger);
+                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacementsIntro, _logger);
                 outro = _config.SuggestionResponseConclusion;
             }
 

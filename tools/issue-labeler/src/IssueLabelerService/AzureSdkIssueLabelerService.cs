@@ -69,33 +69,30 @@ namespace IssueLabelerService
                 return EmptyResult;
             }
 
-            try{
+            TriageOutput result = new TriageOutput { Labels = labels.Values };
 
-                // Get the Qna model based on configuration
-                var qnaService = _answerServices.GetAnswerService(config);
-
-                var answer = await qnaService.AnswerQuery(issue, labels);
-
-                TriageOutput result = new TriageOutput
-                {
-                    Labels = labels.Values,
-                    Answer = answer.Answer,
-                    AnswerType = answer.AnswerType
-                };
-
-                return new JsonResult(result);
-            }
-            catch (Exception ex)
+            if(bool.Parse(config.EnableAnswers))
             {
-                _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                try{
 
-                TriageOutput result = new TriageOutput
+                    // Get the Answer Service based on configuration
+                    var answerService = _answerServices.GetAnswerService(config);
+
+                    var answer = await answerService.AnswerQuery(issue, labels);
+
+                    result.Answer = answer.Answer;
+                    result.AnswerType = answer.AnswerType;
+                }
+                catch (Exception ex)
                 {
-                    Labels = labels.Values,
-                    Answer = null,
-                    AnswerType = null
-                };
+                    _logger.LogError($"Error commenting on issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+
+                    result.Answer = null;
+                    result.AnswerType = null;
+                }
             }
+
+            return new JsonResult(result);
         }
 
         private async Task<IssuePayload> DeserializeIssuePayloadAsync(HttpRequest request)

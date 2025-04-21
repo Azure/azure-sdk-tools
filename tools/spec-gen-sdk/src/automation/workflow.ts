@@ -41,6 +41,7 @@ export type WorkflowContext = SdkAutoContext & {
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
   specConfigPath?: string;
+  services: string[];
   pendingPackages: PackageData[];
   handledPackages: PackageData[];
   status: SDKAutomationState;
@@ -71,6 +72,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 
   return {
     ...context,
+    services: [],
     pendingPackages: [],
     handledPackages: [],
     vsoLogs: new Map(),

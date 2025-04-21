@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using AzureSDKDevToolsMCP.Services;
 using LibGit2Sharp;
 
 
@@ -11,16 +12,17 @@ namespace AzureSDKDevToolsMCP.Helpers
 {
     public interface IGitHelper
     {
-        public string GetRepoOwnerName(string path);
+        // Get the owner 
+        public Task<string> GetRepoOwnerName(string path, bool findForkParent = true);
         public string GetRepoName(string path);
         public string GetRepoRootPath(string path);
         public bool IsRepoPathForPublicSpecRepo(string path);
-        public string GetCurrentCommitSha(string path);
-        public string GetCurrentBranchName(string path);
+        public string GetBranchName(string path);
         public IList<string> GetChangedFiles(string path);
     }
-    public class GitHelper : IGitHelper
+    public class GitHelper(IGitHubService gitHubService) : IGitHelper
     {
+        readonly IGitHubService gitHubService = gitHubService;
         readonly static string SPEC_REPO_NAME = "azure-rest-api-specs";
         public IList<string> GetChangedFiles(string repoPath)
         {
@@ -42,18 +44,11 @@ namespace AzureSDKDevToolsMCP.Helpers
             return changedFiles;
         }
 
-        public string GetCurrentBranchName(string repoPath)
+        public string GetBranchName(string repoPath)
         {
             using var repo = new Repository(repoPath);
-            var currentBranch = repo.Head;
-            return currentBranch.FriendlyName;
-        }
-
-        public string GetCurrentCommitSha(string repoPath)
-        {
-            using var repo = new Repository(repoPath);
-            var currentCommit = repo.Head.Tip;
-            return currentCommit.Sha;
+            var branchName = repo.Head.FriendlyName;
+            return branchName;
         }
 
         private static Uri GetRepoRemoteUri(string path)
@@ -73,19 +68,42 @@ namespace AzureSDKDevToolsMCP.Helpers
             var segments = uri.Segments;
             if (segments.Length > 1)
             {
-                return segments[segments.Length - 1].TrimEnd('/');
+                return segments[^1].TrimEnd(".git".ToCharArray());
             }
             throw new InvalidOperationException("Unable to determine repository name.");
         }
 
-        public string GetRepoOwnerName(string path)
+        public async Task<string> GetRepoOwnerName(string path, bool findForkParent = true)
         {
             var uri = GetRepoRemoteUri(path);
             var segments = uri.Segments;
+            string repoOwner = string.Empty;
+            string repoName = string.Empty;
             if (segments.Length > 2)
             {
-                return segments[segments.Length - 2].TrimEnd('/');
+                repoOwner = segments[^2].TrimEnd('/');
+                repoName = segments[^1].TrimEnd(".git".ToCharArray());
             }
+
+            if(findForkParent) {
+                // Check if the repo is a fork and get the parent repo
+                var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrl(repoOwner, repoName);
+                Console.WriteLine($"Parent repo URL: {parentRepoUrl}");
+                if (!string.IsNullOrEmpty(parentRepoUrl))
+                {
+                    var parentSegments = new Uri(parentRepoUrl).Segments;
+                    if (parentSegments.Length > 2)
+                    {
+                        repoOwner = parentSegments[^2].TrimEnd('/');
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(repoOwner))
+            {
+                return repoOwner;
+            }
+
             throw new InvalidOperationException("Unable to determine repository owner.");
         }
 
@@ -95,11 +113,21 @@ namespace AzureSDKDevToolsMCP.Helpers
             var uri = GetRepoRemoteUri(path);
             return uri.ToString().Contains(SPEC_REPO_NAME);            
         }
-        public string GetRepoRootPath(string specPath)
+        public string GetRepoRootPath(string path)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("path cannot be null or empty.", nameof(path));
+            }
+
+            if (Directory.Exists(Path.Combine(path, "specification")))
+            {
+                return path;
+            }
+
             // Get absolute path for repo root from given path.
             // Repo root is the parent of "specification" folder.
-            var currentDirectory = new DirectoryInfo(specPath);
+            var currentDirectory = new DirectoryInfo(path);
             while (currentDirectory != null && !currentDirectory.Name.Equals("specification"))
             {
                 currentDirectory = currentDirectory.Parent;

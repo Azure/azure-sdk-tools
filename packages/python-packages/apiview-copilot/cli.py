@@ -55,12 +55,14 @@ def local_review(
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(language=language, model=model)
+    rg = ApiViewReview(
+        language=language, model=model, chunk_input=chunk_input, use_rag=use_rag
+    )
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
         apiview = f.read()
-    review = rg.get_response(apiview, chunk_input=chunk_input, use_rag=use_rag)
+    review = rg.get_response(apiview)
     output_path = os.path.join("scratch", "output", language)
     os.makedirs(output_path, exist_ok=True)
     output_file = os.path.join(output_path, f"{filename}.json")

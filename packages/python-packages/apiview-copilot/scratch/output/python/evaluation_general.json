@@ -4,38 +4,50 @@
         {
             "line_no": 34,
             "bad_code": "thread_ids: Union[str, List[str]] = Union[str, List[str]]",
-            "suggestion": "Replace the default value that echoes the type with a proper default (e.g. use 'None' or remove the default) so that it’s clear what happens when no value is provided.",
-            "comment": "Using a type as its own default is non‐idiomatic and may confuse developers regarding the intended behavior."
+            "suggestion": "thread_ids: Optional[Union[str, List[str]]] = None",
+            "comment": "Using a type union as the default value is incorrect. Using None makes it clear that the parameter is optional."
+        },
+        {
+            "line_no": 35,
+            "bad_code": "filename: str = None",
+            "suggestion": "filename: Optional[str] = None",
+            "comment": "The parameter should be explicitly marked as optional to reflect that it can be None."
+        },
+        {
+            "line_no": 29,
+            "bad_code": "exclude_tool_calls_previous_runs: bool = False",
+            "suggestion": "exclude_previous_tool_calls: bool = False",
+            "comment": "The original name is overly verbose. A shorter, clear name improves readability without losing meaning."
+        },
+        {
+            "line_no": 77,
+            "bad_code": "def __init__(self, *, threshold = 0.5)",
+            "suggestion": "def __init__(self, *, threshold: float = 0.5)",
+            "comment": "Adding an explicit type annotation for the 'threshold' default parameter improves clarity and aligns with Python best practices."
         },
         {
             "line_no": 714,
             "bad_code": "-> :rtype: Dict[str, Union[float, Dict[str, List[str, float]]]]",
-            "suggestion": "Change the return type annotation to standard Python syntax, for example: '-> Dict[str, Union[float, Dict[str, List[Union[str, float]]]]]' (and remove the ':rtype:' prefix).",
-            "comment": "The current syntax is non-standard and could lead to confusion during type checking."
-        },
-        {
-            "line_no": 722,
-            "bad_code": "def __init__(self, model_config: Union[AzureOpenAIModelConfiguration, OpenAIModelConfiguration], *, threshold: float = 3) -> Callable",
-            "suggestion": "Remove or change the return type annotation for __init__ (it should return None, so either remove the annotation or use '-> None').",
-            "comment": "In Python, __init__ methods must not return a value, making a 'Callable' return type misleading."
-        },
-        {
-            "line_no": 111,
-            "bad_code": "PromptyEvaluatorBase",
-            "suggestion": "If 'PromptyEvaluatorBase' is intended to refer to prompt-based evaluation functionality, consider renaming it to 'PromptEvaluatorBase' for clarity and consistency.",
-            "comment": "The current naming may appear as a typo and could confuse developers regarding its purpose."
+            "suggestion": "-> Dict[str, Union[float, Dict[str, List[Union[str, float]]]]]",
+            "comment": "The current return type annotation uses an incorrect syntax. Adjusting to use Union[...] ensures valid and clear type hints."
         },
         {
             "line_no": 1092,
             "bad_code": "-> Dict[str, [List[Dict[str, Any]]]]",
-            "suggestion": "Change the return type to use valid syntax, for example: '-> Dict[str, List[Dict[str, Any]]]'",
-            "comment": "Bracket usage around the list type is invalid; using 'List[...]' directly is the proper Python type hint notation."
+            "suggestion": "-> Dict[str, List[Dict[str, Any]]]",
+            "comment": "Extra brackets around the List type are not valid in Python type hints. Removing them yields the correct annotation."
         },
         {
-            "line_no": 1146,
-            "bad_code": "conversation_turns: List[List[Union[str, Dict[str, Any]]]] = []",
-            "suggestion": "Avoid using mutable default arguments. Instead, use 'None' as the default and initialize an empty list within the function body.",
-            "comment": "Mutable defaults can lead to unexpected behavior if the function modifies the list across multiple calls."
+            "line_no": 1045,
+            "bad_code": "concurrent_async_task: int = 3",
+            "suggestion": "concurrent_async_tasks: int = 3",
+            "comment": "This parameter name is inconsistent with similar parameters (e.g., in Simulator which uses 'concurrent_async_tasks'). Standardizing the naming improves consistency across the API."
+        },
+        {
+            "line_no": 15,
+            "bad_code": "target: Optional[Callable] = ...",
+            "suggestion": "target: Optional[Callable] = ...  // Consider renaming to something more descriptive such as 'evaluation_target' or 'callback_function'",
+            "comment": "The generic name 'target' can be ambiguous. A more descriptive name can aid discoverability and user understanding of its purpose."
         }
     ]
 }

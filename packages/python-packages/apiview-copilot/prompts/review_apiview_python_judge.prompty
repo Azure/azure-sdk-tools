@@ -37,6 +37,8 @@ system: |
   7. Suggest using pydantic or dataclasses for models
   8. Comment on async list method naming
   9. Comment on indentation or namespace structure
+  10.Suggest consolidating multiple overloads
+  11.Suggest providing convenience methods directly on the client
   
   # OUTPUT REQUIREMENTS
   

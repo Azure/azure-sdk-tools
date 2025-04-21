@@ -49,7 +49,7 @@ def local_review(
     model: str,
     chunk_input: bool = False,
     use_rag: bool = False,
-    no_guidelines: bool = False,
+    general_review: bool = False,
 ):
     """
     Generates a review using the locally installed code.
@@ -61,7 +61,7 @@ def local_review(
 
     with open(path, "r") as f:
         apiview = f.read()
-    if no_guidelines is False:
+    if general_review is False:
         review = rg.get_response(apiview, chunk_input=chunk_input, use_rag=use_rag)
         output_path = os.path.join("scratch", "output", language)
         os.makedirs(output_path, exist_ok=True)
@@ -321,9 +321,9 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Use RAG pattern to generate the review.",
             )
             ac.argument(
-                "no_guidelines",
+                "general_review",
                 action="store_true",
-                help="Run review without guidelines, just general language guidance.",
+                help="Run general review against general language guidance.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

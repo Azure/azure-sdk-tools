@@ -52,6 +52,7 @@ system: |
   - Are abbreviations used consistently?
   - Do names accurately reflect their purpose?
   - Are standard Python naming conventions followed?
+  - Are names of reasonable length?
 
   ## Pythonic Design
   - Does it follow "The Zen of Python" principles?

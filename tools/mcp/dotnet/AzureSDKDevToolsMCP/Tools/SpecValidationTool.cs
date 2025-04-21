@@ -129,7 +129,7 @@ namespace AzureSDKDevToolsMCP.Tools
         private static string GetGitRepoRootPath(string typeSpecProjectRootPath)
         {
             var currentDirectory = new DirectoryInfo(typeSpecProjectRootPath);
-            while (currentDirectory != null && !currentDirectory.Name.Equals("specification"))
+            while (currentDirectory != null && !currentDirectory.Name.Equals("specification", StringComparison.OrdinalIgnoreCase))
             {
                 currentDirectory = currentDirectory.Parent;
             }

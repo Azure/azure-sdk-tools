@@ -65,7 +65,7 @@ The `SpecValidationTool` validates TypeSpec specifications for Azure SDK service
 #### Usage
 
 1. Open GitHub Copilot window and select `Agent` mode.
-2. Prompt copilot to run TypeSpec validation for a TypeSpec project. For e.g. `Run TypeSpec validation for Contoso.WidgeManager` or `Validate TypeSpec for for Contoso.WidgeManager`
+2. Prompt copilot to run TypeSpec validation for a TypeSpec project. For e.g. `Run TypeSpec validation for Contoso.WidgeManager` or `Validate TypeSpec for Contoso.WidgeManager`
 
 
 ## License

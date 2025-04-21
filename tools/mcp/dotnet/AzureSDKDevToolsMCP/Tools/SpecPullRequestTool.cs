@@ -29,12 +29,14 @@ namespace AzureSDKDevToolsMCP.Tools
         }
 
         [McpServerTool, Description("Get Pull Request: Get TypeSpec pull request details for a given pull request number.")]
-        public async Task<string> GetPullRequestDetails(int pullRequestNumber, string repoPath, string repoOwner = "Azure")
+        public async Task<string> GetPullRequestDetails(int pullRequestNumber, string typeSpecProjectPath, string repoOwner = "Azure")
         {
             try
             {
                 Console.WriteLine($"Getting pull request details for {pullRequestNumber}...");
                 Console.WriteLine($"Repo owner: {repoOwner}");
+                var repoPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
+                Console.WriteLine($"Repo path: {repoPath}");
                 var repoName = gitHelper.GetRepoName(repoPath);
                 Console.WriteLine($"Repo name: {repoName}");
                 var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
@@ -59,9 +61,10 @@ namespace AzureSDKDevToolsMCP.Tools
             }
         }
 
-        [McpServerTool, Description("Get TypeSpec pull request checks for a given pull request number. This tool calls Get Pull Request tool.")]
-        public async Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string repoPath, string repoOwner = "Azure")
+        [McpServerTool, Description("Get TypeSpec pull request checks for a given pull request number and TypeSpec project path. This tool calls Get Pull Request tool.")]
+        public async Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string typeSpecProjectPath, string repoOwner = "Azure")
         {
+            var repoPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
             var repoName = gitHelper.GetRepoName(repoPath);
             var checkResults = new List<string>();
             var pullRequest = await GetPullRequestDetails(pullRequestNumber, repoPath);
@@ -122,7 +125,7 @@ namespace AzureSDKDevToolsMCP.Tools
         public async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner = "Azure")
         {
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
-            if (comments == null || comments.Count > 0)
+            if (comments == null || comments.Count == 0)
             {
                 return new List<string>() { "No comments found for the pull request." };
             }

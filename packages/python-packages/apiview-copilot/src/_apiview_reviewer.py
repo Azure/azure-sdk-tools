@@ -60,20 +60,30 @@ model_map = {
 supported_models = [x for x in model_map.keys()]
 
 DEFAULT_MODEL = "o3-mini"
+DEFAULT_USE_RAG = False
+DEFAULT_CHUNK_INPUT = False
 
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: str = DEFAULT_MODEL):
-        self.language = language
-        self.model = model
-        self.search = SearchManager(language=language)
-        self.output_parser = ReviewResult
-        self.semantic_search_failed = False
+    def __init__(
+        self,
+        *,
+        language: str,
+        model: str = DEFAULT_MODEL,
+        use_rag: bool = DEFAULT_USE_RAG,
+        chunk_input: bool = DEFAULT_CHUNK_INPUT,
+    ):
         if model not in supported_models:
             raise ValueError(
                 f"Model {model} not supported. Supported models are: {', '.join(supported_models)}"
             )
+        self.language = language
+        self.model = model
+        self.use_rag = use_rag
+        self.chunk_input = chunk_input
+        self.search = SearchManager(language=language)
+        self.semantic_search_failed = False
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
@@ -89,13 +99,11 @@ class ApiViewReview:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def get_response(
-        self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False
-    ) -> ReviewResult:
+    def get_response(self, apiview: str) -> ReviewResult:
         print(f"Generating review...")
 
         logger.info(
-            f"Starting review with model: {self.model}, language: {self.language}, RAG: {use_rag}"
+            f"Starting review with model: {self.model}, language: {self.language}, RAG: {self.use_rag}"
         )
 
         start_time = time()
@@ -106,7 +114,9 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
-        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
+        chunked_apiview = SectionedDocument(
+            apiview.splitlines(), chunk=self.chunk_input
+        )
         final_results = ReviewResult(
             guideline_ids=static_guideline_ids, status="Success", violations=[]
         )
@@ -179,7 +189,7 @@ class ApiViewReview:
 
                     try:
                         # build the context string
-                        if use_rag:
+                        if self.use_rag:
                             context = self._retrieve_and_resolve_guidelines(str(chunk))
                             if context:
                                 context_string = context.to_markdown()

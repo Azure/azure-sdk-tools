@@ -106,6 +106,7 @@ export interface SDKRepositoryPackageData {
 }
 
 export type PackageData = SDKRepositoryPackageData & {
+  serviceName?: string;
   artifactPaths: string[];
   apiViewArtifactPath?: string;
   language?: string;

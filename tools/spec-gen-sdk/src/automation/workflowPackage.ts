@@ -138,11 +138,11 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   if (language.toLowerCase() === 'go') {
     serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, ""); // go uses relative path as package name
   }
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
+  pkg.serviceName = serviceName;
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
+  context.stagedArtifactsFolder = stagedArtifactsFolder;
 
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 
@@ -154,7 +154,6 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkArtifactFolder = destination;
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.HasSDKArtifact]true`);
   for (const artifactPath of pkg.artifactPaths) {
     const fileName = path.basename(artifactPath);
     if (context.config.runEnv !== 'test') {
@@ -177,7 +176,6 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkApiViewArtifactFolder = destination;
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.HasApiViewArtifact]true`);
   const fileName = path.basename(pkg.apiViewArtifactPath);
   context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
   copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), path.join(destination, fileName));

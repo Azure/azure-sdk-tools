@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-17 - 0.4.2
+
+- Directly using sdk-suppressions.yaml link
+
 ## 2025-04-17 - 0.4.1
 
 - Added pull request link to the generated html report

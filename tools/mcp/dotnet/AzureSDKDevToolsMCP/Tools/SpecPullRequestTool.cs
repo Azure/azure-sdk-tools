@@ -94,9 +94,9 @@ namespace AzureSDKDevToolsMCP.Tools
         }
 
         [McpServerTool, Description("Create pull request for spec changes. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main", string targetRepoOwner= "Azure")
+        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main", string targetRepoOwner = "Azure")
         {
-            List<string> results = new ();
+            List<string> results = new();
             //Get head branch name
             var repoRootPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
             var headBranchName = gitHelper.GetBranchName(repoRootPath);
@@ -116,6 +116,17 @@ namespace AzureSDKDevToolsMCP.Tools
             var createResponseList = await gitHubService.CreatePullRequest(repoName, targetRepoOwner, targetBranch, headBranch, title, description);
             results.AddRange(createResponseList);
             return results;
+        }
+
+        [McpServerTool, Description("Get pull request comments.")]
+        public async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner = "Azure")
+        {
+            var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
+            if (comments == null || comments.Count > 0)
+            {
+                return new List<string>() { "No comments found for the pull request." };
+            }
+            return comments;
         }
     }
 }

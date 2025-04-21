@@ -15,6 +15,7 @@ namespace AzureSDKDevToolsMCP.Services
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string> GetGitHubParentRepoUrl(string owner, string repoName);
         public Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
+        public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
     }
 
     public class GitHubService : IGitHubService
@@ -164,6 +165,30 @@ namespace AzureSDKDevToolsMCP.Services
             catch (Exception ex)
             {
                 responseList.Add($"Failed to create pull request. Error: {ex.Message}");
+                return responseList;
+            }
+        }
+
+        public async Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber)
+        {
+            List<string> responseList = new List<string>();
+            try
+            {
+                var comments = await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber);
+                if (comments == null || comments.Count == 0)
+                {
+                    responseList.Add($"No comments found for pull request {pullRequestNumber}.");
+                    return responseList;
+                }
+                foreach (var comment in comments)
+                {
+                    responseList.Add($"Comment by {comment.User.Login}: {comment.Body}");
+                }
+                return responseList;
+            }
+            catch (Exception ex)
+            {
+                responseList.Add($"Failed to get comments for pull request {pullRequestNumber}. Error: {ex.Message}");
                 return responseList;
             }
         }

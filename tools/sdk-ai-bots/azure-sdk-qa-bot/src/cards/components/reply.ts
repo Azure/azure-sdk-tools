@@ -1,6 +1,6 @@
 import { feedbackCard } from "./feedback";
 import { humanHelpCard } from "./human-help";
-import { RAGReply } from "../../rag/network";
+import { RAGReply } from "../../backend/rag";
 import { createReferencesListCard } from "./reference-list";
 
 export function createReplyCard(reply: RAGReply) {

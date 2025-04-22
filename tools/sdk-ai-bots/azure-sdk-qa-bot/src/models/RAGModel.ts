@@ -7,7 +7,7 @@ import {
 } from "@microsoft/teams-ai";
 import { PromptResponse } from "@microsoft/teams-ai/lib/types";
 import { CardFactory, MessageFactory, TurnContext } from "botbuilder";
-import { getRAGReply, RAGOptions } from "../rag/network";
+import { getRAGReply, RAGOptions } from "../backend/rag";
 import { createReplyCard } from "../cards/components/reply";
 
 export class RAGModel implements PromptCompletionModel {
@@ -40,6 +40,7 @@ export class RAGModel implements PromptCompletionModel {
         const replyCard = MessageFactory.attachment(attachment);
         replyCard.id = id;
         await context.updateActivity(replyCard);
+        this.thinkingMessage = "⏳Thinking";
         if (timerHandler) clearTimeout(timerHandler);
         return {
             status: ragReply.has_result ? "success" : "error",

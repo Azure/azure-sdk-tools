@@ -5,6 +5,7 @@ import config from "../config";
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from "@microsoft/teams-ai";
 import { RAGModel } from "../models/RAGModel";
+import { FeedbackReaction, sendFeedback } from "../backend/feedback";
 
 // Create AI components
 const model = new RAGModel({
@@ -41,22 +42,22 @@ const isSubmitMessage = async (ctx: TurnContext) =>
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
     const action = context.activity.value?.action;
+    const conversation = context.activity.value?.conversation;
     switch (action) {
         case "feedback-like":
+            await sendFeedback(["test good"], FeedbackReaction.good);
             await context.sendActivity(
                 "You liked my service. Thanks for your feedback!"
             );
             break;
         case "feedback-dislike":
+            await sendFeedback(["test bad"], FeedbackReaction.bad);
             await context.sendActivity(
                 "You disliked my service. Thanks for your feedback!"
             );
             break;
         default:
-            // await context.sendActivity("请点击按钮以获取更多帮助。");
             break;
     }
-    const text = context.activity.text;
-    // await context.sendActivity(`你刚才说：${text}`);
 });
 export default app;

@@ -34,10 +34,8 @@ export async function getRAGReply(
     const response = await axios.post(
         options.endpoint,
         {
-            // TODO: move to config
             tenant_id: options.tenantId,
             message: {
-                // TODO: move to config
                 role: "user",
                 content: question,
             },

@@ -4,6 +4,7 @@ pr: none
 
 variables:
 - template: ../../eng/pipelines/templates/variables/globals.yml
+- template: ../../eng/pipelines/templates/variables/image.yml
 - name: GoVersion
   value: '1.23.0'
 
@@ -12,8 +13,9 @@ jobs:
   timeoutInMinutes: 360
 
   pool:
-    name: "azsdk-pool-mms-ubuntu-2004-general"
-    vmImage: "MMSUbuntu20.04"
+    name: azsdk-pool-mms-ubuntu-2004-general
+    image: azsdk-pool-mms-ubuntu-2004-1espt
+    os: linux
 
   steps:
   - task: GoTool@0

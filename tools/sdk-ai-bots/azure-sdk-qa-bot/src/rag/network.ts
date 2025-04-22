@@ -7,11 +7,17 @@ export interface RAGOptions {
     tenantId: string;
 }
 
-interface RAGReply {
+interface RAGReference {
+    title: string;
+    source: string;
+    link: string;
+    content: string;
+}
+
+export interface RAGReply {
     answer: string;
     has_result: boolean;
-    // TODO: ask for type
-    references: any;
+    references: RAGReference[];
 }
 
 export async function getRAGReply(

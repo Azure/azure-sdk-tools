@@ -8,18 +8,15 @@ import {
 import { PromptResponse } from "@microsoft/teams-ai/lib/types";
 import { CardFactory, MessageFactory, TurnContext } from "botbuilder";
 import { getRAGReply, RAGOptions } from "../rag/network";
-import * as ACData from "adaptivecards-templating";
-import { createReplyCardTemplate } from "../cards/card-kit";
+import { createReplyCard } from "../cards/components/reply";
 
 export class RAGModel implements PromptCompletionModel {
     private options: RAGOptions;
-    private replyCardTemplate: ACData.Template;
     private thinkEmojis = ["⏳", "🤔", "💭", "🧠", "🤩", "🧐", "🚨", "🤭"];
     private thinkingMessage = "⏳Thinking";
 
     constructor(options: RAGOptions) {
         this.options = options;
-        this.replyCardTemplate = createReplyCardTemplate();
     }
 
     public async completePrompt(
@@ -37,22 +34,15 @@ export class RAGModel implements PromptCompletionModel {
             .toLowerCase()
             .replace(/\n|\r/g, "")
             .trim();
-        const createdTime = new Date().toLocaleDateString();
         const ragReply = await getRAGReply(txt, this.options);
-        const reply = ragReply.answer;
-        // TODO: make it cofigurable
-        const icmUrl =
-            "https://portal.microsofticm.com/imp/v3/incidents/create";
-        const card = this.replyCardTemplate.expand({
-            $root: { createdTime, reply, icmUrl },
-        });
+        const card = createReplyCard(ragReply);
         const attachment = CardFactory.adaptiveCard(card);
         const replyCard = MessageFactory.attachment(attachment);
         replyCard.id = id;
         await context.updateActivity(replyCard);
         if (timerHandler) clearTimeout(timerHandler);
         return {
-            status: "success",
+            status: ragReply.has_result ? "success" : "error",
         };
     }
 

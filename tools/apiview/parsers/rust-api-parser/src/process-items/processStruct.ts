@@ -51,6 +51,7 @@ export function processStruct(item: Item): ReviewLine[] {
     RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
+    HasSuffixSpace: false,
   });
 
   const genericsTokens = processGenerics(item.inner.struct.generics);
@@ -74,6 +75,7 @@ export function processStruct(item: Item): ReviewLine[] {
       Kind: TokenKind.Punctuation,
       Value: "{",
       HasSuffixSpace: false,
+      HasPrefixSpace: true,
     });
     item.inner.struct.kind.plain.fields.forEach((fieldId: number) => {
       const fieldItem = apiJson.index[fieldId];

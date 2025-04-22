@@ -15,8 +15,8 @@ export function processMacro(item: Item): ReviewLine[] | null {
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Split the macro value by newlines
-  const macroLines = item.inner.macro.split('\n');
-  
+  const macroLines = item.inner.macro.split("\n");
+
   // Create ReviewLines for each macro line
   macroLines.forEach((line, index) => {
     const reviewLine: ReviewLine = {

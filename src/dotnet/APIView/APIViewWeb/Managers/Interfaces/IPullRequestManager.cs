@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers
@@ -12,5 +13,10 @@ namespace APIViewWeb.Managers
         public Task<PullRequestModel> GetPullRequestModelAsync(int prNumber, string repoName, string packageName, string originalFile, string language);
         public Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName, string commitSha);
         public Task CleanupPullRequestData();
+        public Task<string> CreateAPIRevisionIfAPIHasChanges(
+            string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
+            string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
+            string codeFileName = null, string baselineCodeFileName = null, bool commentOnPR = true,
+            string language = null, string project = "internal");
     }
 }

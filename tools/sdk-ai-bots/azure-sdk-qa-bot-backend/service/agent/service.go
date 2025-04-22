@@ -113,6 +113,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
 	}
 	chunks := make([]string, 0)
+	references := make([]model.Reference, 0)
 	chunkLength := 0
 	for _, result := range mergedChunks {
 		chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
@@ -125,6 +126,12 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			break
 		}
 		chunks = append(chunks, chunk)
+		references = append(references, model.Reference{
+			Title:   result.Title,
+			Source:  result.ContextID,
+			Link:    model.GetIndexLink(result),
+			Content: result.Chunk,
+		})
 	}
 	promptStr, error := prompt.BuildPrompt(strings.Join(chunks, "-------------------------\n"), *req.PromptTemplate)
 	if error != nil {
@@ -173,7 +180,9 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		result.HasResult = true
 		log.Printf("Got chat completions reply\n")
 	}
-
+	if req.ReturnReferences {
+		result.References = references
+	}
 	log.Printf("done")
 	return result, nil
 }

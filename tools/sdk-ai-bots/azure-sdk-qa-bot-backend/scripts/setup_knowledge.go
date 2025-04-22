@@ -44,12 +44,28 @@ func main() {
 			if err != nil {
 				return err
 			}
+			if info.IsDir() {
+				return nil
+			}
 
-			// Only process markdown files
-			if !info.IsDir() && (strings.HasSuffix(path, ".md") || strings.HasSuffix(path, ".mdx")) {
-				if err := processMarkdownFile(path, source, targetDir); err != nil {
-					fmt.Printf("Error processing file %s: %v\n", path, err)
-				}
+			if !strings.HasSuffix(path, ".md") && !strings.HasSuffix(path, ".mdx") {
+				return nil
+			}
+
+			if strings.HasPrefix(info.Name(), "release-") {
+				return nil
+			}
+
+			relPath, err := filepath.Rel(source.path, path)
+			if err != nil {
+				return fmt.Errorf("error getting relative path: %w", err)
+			}
+			if strings.HasPrefix(relPath, "reference") || strings.HasPrefix(relPath, "release-notes") {
+				return nil
+			}
+
+			if err := processMarkdownFile(path, source, targetDir); err != nil {
+				fmt.Printf("Error processing file %s: %v\n", path, err)
 			}
 			return nil
 		})
@@ -59,13 +75,13 @@ func main() {
 			return
 		}
 	}
-
 	// Upload all files to blob storage
 	storageService, err := storage.NewStorageService()
 	if err != nil {
 		fmt.Printf("Error creating storage service: %v\n", err)
 		return
 	}
+	currentFiles := []string{}
 	for _, source := range sources {
 		targetDir := "temp_docs/" + source.folder
 		err := filepath.Walk(targetDir, func(path string, info os.FileInfo, err error) error {
@@ -76,21 +92,30 @@ func main() {
 			if info.IsDir() {
 				return nil
 			}
+			fileName := strings.ToLower(strings.ReplaceAll(info.Name(), " ", "-"))
+			blobPath := filepath.Join(source.folder, fileName)
+			currentFiles = append(currentFiles, blobPath)
 			// read the content of the target file
 			content, err := os.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("error reading target file: %w", err)
 			}
-			if err := storageService.PutBlob(filepath.Join(source.folder, info.Name()), content); err != nil {
+			if err := storageService.PutBlob(blobPath, content); err != nil {
 				fmt.Printf("Error uploading file %s: %v\n", path, err)
 			}
-			fmt.Printf("Uploaded %s to blob storage\n", path)
+			fmt.Printf("Uploaded %s to blob storage\n", blobPath)
 			return nil
 		})
 		if err != nil {
 			fmt.Printf("Error walking through directory: %v\n", err)
 			return
 		}
+	}
+	// Delete expired blobs
+	err = deleteExpiredBlobs(currentFiles)
+	if err != nil {
+		fmt.Printf("Error deleting expired blobs: %v\n", err)
+		return
 	}
 	// Remove the temp_docs directory
 	if err := os.RemoveAll("temp_docs"); err != nil {
@@ -113,9 +138,8 @@ func processMarkdownFile(filePath string, source Source, targetDir string) error
 	if err != nil {
 		return fmt.Errorf("error getting relative path: %w", err)
 	}
-
 	// Replace path separators with underscores to create unique filename
-	newFileName := strings.ReplaceAll(relPath, string(os.PathSeparator), "_")
+	newFileName := strings.ReplaceAll(relPath, string(os.PathSeparator), "#")
 	targetPath := filepath.Join(targetDir, newFileName)
 
 	// Create target file
@@ -185,5 +209,32 @@ func convertMarkdown(r io.Reader, w io.Writer) error {
 		return fmt.Errorf("error scanning file: %w", err)
 	}
 
+	return nil
+}
+
+func deleteExpiredBlobs(currentFiles []string) error {
+	currentFileMap := make(map[string]bool)
+	for _, file := range currentFiles {
+		currentFileMap[file] = true
+	}
+	storageService, err := storage.NewStorageService()
+	if err != nil {
+		fmt.Printf("Error creating storage service: %v\n", err)
+		return err
+	}
+
+	// List all blobs in the container
+	blobs := storageService.GetBlobs()
+	// Iterate through blobs and delete those not in the current files list
+	for _, blob := range blobs {
+		if _, exists := currentFileMap[blob]; !exists {
+			if err := storageService.DeleteBlob(blob); err != nil {
+				fmt.Printf("Error deleting blob %s: %v\n", blob, err)
+				return err
+			} else {
+				fmt.Printf("Deleted blob %s\n", blob)
+			}
+		}
+	}
 	return nil
 }

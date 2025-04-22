@@ -42,7 +42,7 @@ type Index struct {
 }
 
 func GetIndexLink(chunk Index) string {
-	path := strings.Join(strings.Split(chunk.Title, "_"), "/")
+	path := strings.Join(strings.Split(chunk.Title, "#"), "/")
 	path = strings.TrimSuffix(path, ".md")
 	path = strings.TrimSuffix(path, ".mdx")
 	path = strings.TrimPrefix(path, "docs/")

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModelContextProtocol.Server;
 using AzureSDKDSpecTools.Services;
+using AzureSDKDSpecTools.Helpers;
 
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -23,4 +24,5 @@ builder.Services
 builder.Services.AddSingleton<IGitHubService, GitHubService>();
 builder.Services.AddSingleton<IGitHelper, GitHelper>();
 builder.Services.AddSingleton<IDevOpsService, DevOpsService>();
+builder.Services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
 await builder.Build().RunAsync();

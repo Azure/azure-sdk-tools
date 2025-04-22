@@ -32,7 +32,6 @@ namespace AzureSDKDSpecTools.Services
     {
         private static readonly string devOpsUrl = "https://dev.azure.com/azure-sdk";
         private static readonly string releaseProject = "release";
-        private static readonly string organization = "azure-sdk";
 
         private readonly BuildHttpClient buildClient;
         private readonly WorkItemTrackingHttpClient workItemClient;

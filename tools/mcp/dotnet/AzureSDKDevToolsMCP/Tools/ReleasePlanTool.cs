@@ -1,17 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using ModelContextProtocol.Server;
+using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using AzureSDKDSpecTools.Services;
+using ModelContextProtocol.Server;
 
 namespace AzureSDKDSpecTools.Tools
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public class ReleasePlanTool(IDevOpsService devOpsService)
+    public class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper helper)
     {
         private readonly IDevOpsService devOpsService = devOpsService;
+        private readonly ITypeSpecHelper typeSpecHelper = helper;
 
         [McpServerTool, Description("Get release plan for a service, product and API spec pull request")]
         public async Task<List<string>> GetReleasePlan(string serviceTreeId, string productTreeId, string pullRequestLink)
@@ -65,20 +67,28 @@ namespace AzureSDKDSpecTools.Tools
             }
         }
 
-        [McpServerTool, Description("Create Release Plan: Create a new release plan work item.")]
-        public async Task<string> CreateReleasePlanWorkItem(string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, bool isManagementPlane, string specPullRequestUrl, string specType = "TypeSpec")
+        [McpServerTool, Description("Create Release Plan work item.")]
+        public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl)
         {
             try
             {
+                if (string.IsNullOrEmpty(typeSpecProjectPath))
+                {
+                    throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
+                }
+
+                var specType = typeSpecHelper.IsTypeSpecProjectPath(typeSpecProjectPath)? "TypeSpec" : "OpenAPI";
+                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
+
                 var releasePlan = new ReleasePlan
                 {
                     SDKReleaseMonth = targetReleaseMonthYear,
                     ServiceTreeId = serviceTreeId,
                     ProductTreeId = productTreeId,
                     SpecAPIVersion = specApiVersion,
-                    SpecType = "TypeSpec",
-                    IsManagementPlane = isManagementPlane,
-                    IsDataPlane = !isManagementPlane,
+                    SpecType = specType,
+                    IsManagementPlane = isMgmt,
+                    IsDataPlane = !isMgmt,
                     SpecPullRequests = [specPullRequestUrl]
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItem(releasePlan);

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
+using AzureSDKDSpecTools.Helpers;
 using Microsoft.Extensions.Primitives;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol.Messages;
@@ -20,42 +21,32 @@ namespace AzureSDKDevToolsMCP.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools
+    public class SpecValidationTools(ITypeSpecHelper helper)
     {
-        static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
+        private readonly ITypeSpecHelper typeSpecHelper = helper;
 
         /// <summary>
         /// Validates the TypeSpec API specification.
         /// </summary>
         /// <param name="typeSpecProjectRootPath">The root path of the TypeSpec project.</param>
-        /// <param name="githubRepoRoot">GitHub repo root path of cloned repo.</param>
-        [McpServerTool, Description("Run TypeSpec validation. This tool runs TypeSpec validation and TypeSpec configuration validation. This tool first invokes 'Is valid TypeSpec project' before running current tool.")]
-        public static async Task<IList<string>> RunTypeSpecValidation(
-            IMcpServer server,
-            RequestContext<CallToolRequestParams> context,
-            string typeSpecProjectRootPath)
+        [McpServerTool, Description("Run TypeSpec validation. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
+        public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
             var validationResults = new List<string>();
-            if (!IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
+            if (!typeSpecHelper.IsTypeSpecProjectPath(typeSpecProjectRootPath))
             {
                 validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
                 return validationResults;
             }
 
-            var progressToken = context.Params?.Meta?.ProgressToken;
-            var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
-
             try
             {
+                var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
                 // Run npm ci
-                await SendNotificationAsync(server, progressToken, "Running npm ci...");
                 RunNpmCi(specRepoRootPath);
-                await SendNotificationAsync(server, progressToken, "Completed npm ci...");
 
                 //Run TypeSpec validation
-                await SendNotificationAsync(server, progressToken, $"Running TypeSpec validation for {typeSpecProjectRootPath}...");
                 ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                await SendNotificationAsync(server, progressToken, "Completed TypeSpec validation...");
             }
             catch (Exception ex)
             {
@@ -93,38 +84,7 @@ namespace AzureSDKDevToolsMCP.Tools
 
             return "TypeSpec validation completed successfully";
         }
-
-        [McpServerTool, Description("Is valid TypeSpec project: Check if the given path is a TypeSpec project")]
-        public static bool IsValidTypeSpecProjectPath(string typeSpecProjectRootPath)
-        {
-            if (string.IsNullOrEmpty(typeSpecProjectRootPath))
-            {
-                throw new ArgumentException("TypeSpec project root path cannot be null or empty.", nameof(typeSpecProjectRootPath));
-            }
-
-            // Check if the path is a valid TypeSpec project path
-            if(!Directory.Exists(typeSpecProjectRootPath) || !File.Exists(Path.Combine(typeSpecProjectRootPath, TSPCONFIG_FILENAME)))
-            {
-                return false;
-            }
-            return true;
-        }
-
-        private static async Task SendNotificationAsync(
-            IMcpServer server,
-            ProgressToken? progressToken,
-            string message)
-        {
-            if (progressToken is not null)
-            {
-                // Send progress notification
-                await server.SendNotificationAsync("notification/progress", new
-                {
-                    Token = progressToken,
-                    Message = message
-                });
-            }
-        }        
+       
 
         private static string GetGitRepoRootPath(string typeSpecProjectRootPath)
         {

@@ -858,7 +858,7 @@ logger = logging.getLogger(__name__)
 try:
     # some operation
 except Exception as e:
-    logger.debug(f"Operation failed: {e}")  # Log at debug level before raising
+    logger.debug(f"Operation failed: {e.__name__}")  # Log at debug level before raising
     # Or just don't log the exception details at all
     raise BlobError("Operation failed") from e
 ```

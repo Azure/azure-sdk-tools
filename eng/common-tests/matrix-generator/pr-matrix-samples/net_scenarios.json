@@ -205,7 +205,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core.Amqp",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -234,7 +234,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core.Experimental",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -263,7 +263,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core.Expressions.DataFactory",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -292,7 +292,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Microsoft.Azure.Core.NewtonsoftJson",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -321,7 +321,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Microsoft.Azure.Core.Spatial",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -350,7 +350,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -379,7 +379,7 @@
         "IsNewSdk": true,
         "ArtifactName": "System.ClientModel",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
+        "IncludedForValidation": true,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [

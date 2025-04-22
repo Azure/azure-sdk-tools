@@ -2,7 +2,8 @@
 
 ## 2025-04-17 - 0.4.2
 
-- Directly using sdk-suppressions.yaml link
+- Refactor sdk-suppressions.yaml link
+- Remove render template's sdk-suppressions context and sdk-suppressions link
 
 ## 2025-04-17 - 0.4.1
 

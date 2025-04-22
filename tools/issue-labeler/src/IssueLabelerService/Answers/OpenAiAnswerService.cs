@@ -53,9 +53,13 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            // Makes it nicer for the model to read (Can probably be made more readable but oh well)
-            var printableIssues = string.Join("\n", issues.Select(r => JsonConvert.SerializeObject(r)));
-            var printableDocs = string.Join("\n", docs.Select(r => JsonConvert.SerializeObject(r)));
+            // Format issues 
+            var printableIssues = string.Join("\n\n", issues.Select(issue =>
+                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
+
+            // Format documents 
+            var printableDocs = string.Join("\n\n", docs.Select(doc =>
+                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
 
             var replacementsUserPrompt = new Dictionary<string, string>
             {

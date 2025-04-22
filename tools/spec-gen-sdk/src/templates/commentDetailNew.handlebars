@@ -23,9 +23,6 @@
         {{/if}}
         {{#if (shouldRender hasBreakingChange isBetaMgmtSdk)}}
         <b>Breaking Change Detected</b> 
-          {{#if sdkSuppressionFilePath}}
-            [<a href="{{sdkSuppressionFilePath}}">Suppression File</a>]
-          {{/if}}
         {{/if}}
       </span>
     </div>

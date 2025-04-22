@@ -3243,9 +3243,9 @@ class DoNotUseLoggingException(BaseChecker):
     priority = -1
     msgs = {
         "C4769": (
-            "Do not use Exception level logging. Use logging.error instead.",
+            "Do not use Exception level logging. This can cause sensitive information to get leaked.",
             "do-not-use-logging-exception",
-            "Do not use Exception level logging. Use logging.error instead.",
+            "Do not use Exception level logging. This can cause sensitive information to get leaked.",
         ),
     }
 

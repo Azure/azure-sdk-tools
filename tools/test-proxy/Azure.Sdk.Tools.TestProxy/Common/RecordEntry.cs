@@ -87,6 +87,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private static byte[] DeserializeMultipartBody(JsonElement property, string boundary)
         {
+            // this is a patch for the _old_ way of storing `multipart/mixed` recordings. On disk, `ResponseBody` was just a pure base64 string.
+            // the bytes just need to be read exactly as they are.
+            if (property.ValueKind == JsonValueKind.String)
+            {
+                return Convert.FromBase64String(property.GetString());
+            }
+
             using var ms = new MemoryStream();
 
             foreach (var item in property.EnumerateArray())

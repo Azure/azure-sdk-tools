@@ -11,49 +11,44 @@ For e.g. TypeSpec validation
 
 ## Prerequisites
 
-- .NET 9.0 SDK
+- .NET 8.0 SDK
 - Node.js and npm (for TypeSpec validation)
 - GitHub client (for authentication)
 
 ## Getting Started
-This tool will be published as a static executable but currently it is available to run from source only.
+Compile and build the tools to generate static exe.
 
 1. Clone the repository:
-   ```bash
+   ```
    git clone https://github.com/azure/azure-sdk-tools.git
    ```
 
 2. Navigate to the project directory:
-   ```bash
+   ```
    cd tools/mcp/AzureSDKDevTools
    ```
 
-3. Restore dependencies:
-   ```bash
-   dotnet restore
+3. Build the project:
+   ```
+   dotnet build .
    ```
 
-4. Run the application:
-   ```bash
-   dotnet run
+4. Generate the static executable:
+   ```
+   dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:GenerateBuildInfoConfigFile=false
    ```
 
-5. Access the application at:
-   - HTTP: `http://localhost:5134/sse`
-   - HTTPS: `https://localhost:7133/sse`
+5. Add an entry in VS Code MCP server settings for `AzureSDKDevTools` by copying below JSON into mcp.json.
 
-6. Add an entry in VS Code MCP server settings for `AzureSDKDevTools` by copying below JSON into MCP settings.
-
-Use CTRL+SHIFT+P and select `Open User Settings(JSON)` and add below MCP settings to enable VS code to connect to MCP server.
 ```
-"mcp": {
-        "servers": {
-            "AzureSDKDevTools": {
-                "type": "sse",
-                "url": "http://localhost:5134/sse"
-            }
-        }
+{  
+    "servers": {
+      "Azure SDK Dev Tools": {
+        "type": "stdio",
+        "command": "<Path to exe>\\AzureSDKDSpecTools.exe",
     }
+  }
+}
 ```
 
 ## Tools

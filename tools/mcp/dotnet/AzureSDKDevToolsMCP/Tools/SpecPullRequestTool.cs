@@ -28,8 +28,8 @@ namespace AzureSDKDevToolsMCP.Tools
                 : "Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.";
         }
 
-        [McpServerTool, Description("Get Pull Request: Get TypeSpec pull request details for a given pull request number.")]
-        public async Task<string> GetPullRequestDetails(int pullRequestNumber, string typeSpecProjectPath, string repoOwner = "Azure")
+        [McpServerTool, Description("Get Pull Request Status: Get TypeSpec pull request status for a given pull request number.")]
+        public async Task<string> GetPullRequestStatus(int pullRequestNumber, string typeSpecProjectPath, string repoOwner = "Azure")
         {
             try
             {
@@ -67,7 +67,7 @@ namespace AzureSDKDevToolsMCP.Tools
             var repoPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
             var repoName = gitHelper.GetRepoName(repoPath);
             var checkResults = new List<string>();
-            var pullRequest = await GetPullRequestDetails(pullRequestNumber, repoPath);
+            var pullRequest = await GetPullRequestStatus(pullRequestNumber, repoPath);
             if (pullRequest != null)
             {
                 var checks = await gitHubService.GetPullRequestChecksAsync(repoOwner, repoName, pullRequestNumber);
@@ -96,6 +96,31 @@ namespace AzureSDKDevToolsMCP.Tools
             return isPublicRepo;
         }
 
+        [McpServerTool, Description("Get pull request for current branch")]
+        public async Task<string> GetPullRequestForCurrentBranch(string typeSpecProjectPath, string repoOwner = "Azure")
+        {
+            var repoRootPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
+            if (string.IsNullOrEmpty(repoRootPath))
+            {
+                return "Failed to get repo root path. Please make sure to select the TypeSpec project path.";
+            }
+            var repoName = gitHelper.GetRepoName(repoRootPath);
+            var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
+            var headBranchName = gitHelper.GetBranchName(repoRootPath);
+            var headBranchRef = $"{headRepoOwner}:{headBranchName}";
+            Console.WriteLine($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
+            if (string.IsNullOrEmpty(headBranchName) || string.IsNullOrEmpty(repoName) || string.IsNullOrEmpty(headRepoOwner))
+            {
+                return "Failed to get repo details. Please make sure to select the TypeSpec project path and try again.";
+            }
+
+            Console.WriteLine($"Getting pull request for branch {headBranchRef}...");
+            var pullRequest = await gitHubService.GetPullRequestForBranchAsync(repoOwner, repoName, headBranchRef);
+            return pullRequest != null
+                ? $"Pull request found: {pullRequest.HtmlUrl}"
+                : "No pull request found for the current branch.";
+        }
+
         [McpServerTool, Description("Create pull request for spec changes. Creates a pull request for committed changes in the current branch.")]
         public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main", string targetRepoOwner = "Azure")
         {
@@ -114,7 +139,8 @@ namespace AzureSDKDevToolsMCP.Tools
             var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
 
             var headBranch = $"{headRepoOwner}:{headBranchName}";
-
+            Console.WriteLine($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
+            Console.WriteLine($"Creating pull request in {targetRepoOwner}:{repoName}");
             //Create pull request
             var createResponseList = await gitHubService.CreatePullRequest(repoName, targetRepoOwner, targetBranch, headBranch, title, description);
             results.AddRange(createResponseList);

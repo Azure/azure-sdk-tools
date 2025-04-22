@@ -16,6 +16,7 @@ namespace AzureSDKDevToolsMCP.Services
         public Task<string> GetGitHubParentRepoUrl(string owner, string repoName);
         public Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
+        public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
     }
 
     public class GitHubService : IGitHubService
@@ -92,7 +93,7 @@ namespace AzureSDKDevToolsMCP.Services
             return repository.Parent?.Url ?? repository.Url;
         }
 
-        private async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
+        public async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             Console.WriteLine($"Branch name: {remoteBranch}");

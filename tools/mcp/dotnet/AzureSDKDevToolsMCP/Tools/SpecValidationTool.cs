@@ -29,7 +29,7 @@ namespace AzureSDKDevToolsMCP.Tools
         /// </summary>
         /// <param name="typeSpecProjectRootPath">The root path of the TypeSpec project.</param>
         /// <param name="githubRepoRoot">GitHub repo root path of cloned repo.</param>
-        [McpServerTool, Description("Run TypeSpec validation. Validates TypeSpec specification for a TypeSpec project.")]
+        [McpServerTool, Description("Run TypeSpec validation. This tool runs TypeSpec validation and TypeSpec configuration validation. This tool first invokes 'Is valid TypeSpec project' before running current tool.")]
         public static async Task<IList<string>> RunTypeSpecValidation(
             IMcpServer server,
             RequestContext<CallToolRequestParams> context,
@@ -94,7 +94,7 @@ namespace AzureSDKDevToolsMCP.Tools
             return "TypeSpec validation completed successfully";
         }
 
-        [McpServerTool, Description("Check if the given path is a TypeSpec project")]
+        [McpServerTool, Description("Is valid TypeSpec project: Check if the given path is a TypeSpec project")]
         public static bool IsValidTypeSpecProjectPath(string typeSpecProjectRootPath)
         {
             if (string.IsNullOrEmpty(typeSpecProjectRootPath))

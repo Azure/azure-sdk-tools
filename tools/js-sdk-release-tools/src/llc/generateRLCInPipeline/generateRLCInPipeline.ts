@@ -82,7 +82,7 @@ export async function generateRLCInPipeline(options: {
             }
             packagePath = generatedPackageDir;
             relativePackagePath = path.relative(options.sdkRepo, packagePath);
-            updateTspLocation(relativePackagePath);
+            updateTspLocation(packagePath);
             logger.info(`Update tsp-location.yaml successfully`);
         }
     } else {

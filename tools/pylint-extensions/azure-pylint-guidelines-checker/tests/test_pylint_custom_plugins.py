@@ -3371,7 +3371,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                     node=expression_node,
                     col_offset=8,
                     end_line=10,
-                    end_col_offset=29,
+                    end_col_offset=24,
                 )
         ):
             self.checker.visit_try(try_node)
@@ -3386,7 +3386,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                     node=expression_node,
                     col_offset=8,
                     end_line=19,
-                    end_col_offset=31,
+                    end_col_offset=26,
                 )
         ):
             self.checker.visit_try(try_node)
@@ -3419,7 +3419,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                     node=expression_node,
                     col_offset=8,
                     end_line=56,
-                    end_col_offset=29,
+                    end_col_offset=24,
                 )
         ):
             self.checker.visit_try(try_node)

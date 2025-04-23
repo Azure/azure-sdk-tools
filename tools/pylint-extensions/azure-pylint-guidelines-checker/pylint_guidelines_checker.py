@@ -2784,7 +2784,21 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                         # 1. logger.debug(exception)
                         # 2. logger.debug(f"something {exception}")
                         # 3. logger.debug("Failed: %r", exception)
-                        
+
+                        # if we have exception.__name__ or str(exception) lets not raise an error
+                        for log_arg in j.value.args:
+                            # Check for calls like str(exception) or exception.__name__
+                            if isinstance(log_arg, astroid.Call) and isinstance(log_arg.func, astroid.Name) and log_arg.func.name == "str":
+                                for arg in log_arg.args:
+                                    if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                        # This is str(exception), which is fine
+                                        return
+                            
+                            # Check for attribute access like exception.__name__
+                            if isinstance(log_arg, astroid.Attribute) and isinstance(log_arg.expr, astroid.Name):
+                                if log_arg.expr.name == exception_name and log_arg.attrname == "__name__":
+                                    # This is exception.__name__, which is fine
+                                    return
                         
                         # Check for f-strings that might contain the exception
                         for log_arg in j.value.args:

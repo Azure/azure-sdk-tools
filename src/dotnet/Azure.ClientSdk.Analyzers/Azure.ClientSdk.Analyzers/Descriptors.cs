@@ -259,6 +259,15 @@ namespace Azure.ClientSdk.Analyzers
             "{0} is defined in assembly {1} and is marked internal without a [Friend] attribute.",
             "Naming",
             DiagnosticSeverity.Warning, true);
-      #endregion
+
+        public static DiagnosticDescriptor AZC0150 = new DiagnosticDescriptor(
+            id: "AZC0150",
+            title: "Use ModelReaderWriter overloads with ModelReaderWriterContext",
+            messageFormat: "Use the overload of ModelReaderWriter.{0} that accepts ModelReaderWriterContext as the last parameter for AOT compatibility",
+            category: DiagnosticCategory.Usage,
+            defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true,
+            description: "For AOT compatibility, all invocations of ModelReaderWriter.Read and ModelReaderWriter.Write should use the overload that accepts a ModelReaderWriterContext parameter.");
+        #endregion
     }
 }

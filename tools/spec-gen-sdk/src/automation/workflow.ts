@@ -41,6 +41,7 @@ export type WorkflowContext = SdkAutoContext & {
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
   specConfigPath?: string;
+  services: string[];
   pendingPackages: PackageData[];
   handledPackages: PackageData[];
   status: SDKAutomationState;
@@ -71,6 +72,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 
   return {
     ...context,
+    services: [],
     pendingPackages: [],
     handledPackages: [],
     vsoLogs: new Map(),
@@ -239,15 +241,14 @@ export const workflowInitGetSdkSuppressionsYml = async (
     // Use file parsing to obtain yaml content and check if the suppression file has any grammar errors
     const sdkSuppressionFilesParseErrorTotal: string[] = [];
     let suppressionFileData: string = '';
-    const filePath = path.join(context.config.localSpecRepoPath, sdkSuppressionFilePath);
     try {
-      suppressionFileData = fs.readFileSync(filePath).toString();
+      suppressionFileData = fs.readFileSync(sdkSuppressionFilePath).toString();
     } catch (error) {
       context.logger.error(`IOError: Fails to read SDK suppressions file with path of '${sdkSuppressionFilePath}'. Assuming no suppressions are present. Please ensure the suppression file exists in the right path in order to load the suppressions for the SDK breaking changes. Error: ${error.message}`);
       continue;
     }
     // parse file both to get yaml content and validate the suppression file has grammar error
-    const suppressionFileParseResult = parseYamlContent(suppressionFileData, filePath);
+    const suppressionFileParseResult = parseYamlContent(suppressionFileData, sdkSuppressionFilePath);
     if (!suppressionFileParseResult.result) {
       sdkSuppressionFilesParseErrorTotal.push(suppressionFileParseResult.message);
       continue;

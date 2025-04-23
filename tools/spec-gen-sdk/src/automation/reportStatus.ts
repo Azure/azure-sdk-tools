@@ -85,6 +85,7 @@ export const generateReport = (context: WorkflowContext) => {
 
   executionReport = {
     packages: packageReports,
+    services: context.services,
     executionResult: context.status,
     fullLogPath: context.fullLogFileName,
     filteredLogPath: context.filteredLogFileName,

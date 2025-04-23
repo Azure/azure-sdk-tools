@@ -55,12 +55,12 @@ namespace IssueLabelerService
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
             // Format issues 
-            var printableIssues = string.Join("\n", issues.Select(issue =>
-                $"Title: {issue.Title}\nDescription: {issue.chunk}\nService: {issue.Service}"));
+            var printableIssues = string.Join("\n\n", issues.Select(issue =>
+                $"Title: {issue.Title}\nDescription: {issue.chunk}\nService: {issue.Service}\nScore: {issue.Score}"));
 
             // Format documents 
-            var printableDocs = string.Join("\n", docs.Select(doc =>
-                $"Content: {doc.chunk}\nService: {doc.Service}"));
+            var printableDocs = string.Join("\n\n", docs.Select(doc =>
+                $"Content: {doc.chunk}\nService: {doc.Service}\nScore: {doc.Score}"));
 
             // Get labels for this repository
             var labels = await GetLabelsAsync(issue.RepositoryName);

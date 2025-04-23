@@ -76,7 +76,6 @@ namespace IssueLabelerService
             List<(T, double)> results = new List<(T, double)>();
             foreach (SearchResult<T> result in response.GetResults())
             {
-                _logger.LogInformation(result.SemanticSearch.RerankerScore.ToString());
                 results.Add((result.Document, result.SemanticSearch.RerankerScore ?? 0.0));
             }
 

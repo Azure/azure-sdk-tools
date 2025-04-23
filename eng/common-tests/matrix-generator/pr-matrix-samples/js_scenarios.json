@@ -31,7 +31,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-abort-controller",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-abort-controller",
@@ -58,7 +58,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-amqp",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-amqp",
@@ -85,7 +85,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-auth",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-auth",
@@ -112,7 +112,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-client",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-client",
@@ -139,7 +139,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-http-compat",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-http-compat",
@@ -166,7 +166,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-lro",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-lro",
@@ -193,7 +193,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-paging",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-paging",
@@ -220,7 +220,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-rest-pipeline",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-rest-pipeline",
@@ -247,7 +247,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-sse",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-sse",
@@ -274,7 +274,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-tracing",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-tracing",
@@ -301,7 +301,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-util",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-util",
@@ -328,7 +328,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-xml",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-xml",
@@ -355,7 +355,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-logger",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-logger",
@@ -408,7 +408,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-rest-core-client",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-rest-core-client",
@@ -514,7 +514,7 @@
         "IsNewSdk": true,
         "ArtifactName": "typespec-ts-http-runtime",
         "ReleaseStatus": "2024-12-03",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "typespec-ts-http-runtime",
@@ -541,7 +541,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-arm-resources",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-arm-resources",
@@ -574,7 +574,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-identity",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": [
           "@azure-tests/perf-storage-blob"
         ],
@@ -609,7 +609,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-service-bus",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-service-bus",
@@ -641,7 +641,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-template",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-template",

@@ -73,7 +73,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Template",
         "ReleaseStatus": "2022-04-26",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "Azure.Template",
@@ -126,7 +126,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.AI.TextAnalytics",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "Azure.AI.TextAnalytics",
@@ -172,7 +172,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "Azure.Core",
@@ -205,7 +205,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core.Amqp",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -234,7 +234,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core.Experimental",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -263,7 +263,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core.Expressions.DataFactory",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -292,7 +292,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Microsoft.Azure.Core.NewtonsoftJson",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -321,7 +321,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Microsoft.Azure.Core.Spatial",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -350,7 +350,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -379,7 +379,7 @@
         "IsNewSdk": true,
         "ArtifactName": "System.ClientModel",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -427,7 +427,7 @@
         "IsNewSdk": true,
         "ArtifactName": "Azure.Core",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "Azure.Core",

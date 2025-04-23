@@ -979,7 +979,7 @@
           "IsNewSdk": false,
           "ArtifactName": "azure-identity-broker",
           "ReleaseStatus": "Unreleased",
-          "IncludedForValidation": true,
+          "IncludedForValidation": false,
           "AdditionalValidationPackages": [
             ""
           ],
@@ -1014,7 +1014,7 @@
           "IsNewSdk": true,
           "ArtifactName": "azure-identity",
           "ReleaseStatus": "Unreleased",
-          "IncludedForValidation": true,
+          "IncludedForValidation": false,
           "AdditionalValidationPackages": [
             ""
           ],

@@ -1,5 +1,126 @@
 [
   {
+    "name": "Individual eng/ file change + Identity",
+    "diff": {
+      "ChangedFiles": [
+        "eng/Packages.Data.props",
+        "sdk/identity/Azure.Identity/src/Azure.Identity.csproj",
+        "sdk/identity/Azure.Identity/src/CredentialPipeline.cs",
+        "sdk/identity/Azure.Identity/src/HttpPipelineClientFactory.cs",
+        "sdk/identity/Azure.Identity/src/MsalManagedIdentityClient.cs",
+        "sdk/identity/Azure.Identity/tests/ManagedIdentityCredentialTests.cs"
+      ],
+      "ChangedServices": [
+        "identity"
+      ],
+      "ExcludePaths": [],
+      "DeletedFiles": [],
+      "PRNumber": "49578"
+    },
+    "expected_package_output": [
+      {
+        "Name": "Azure.Identity",
+        "Version": "1.10.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/identity/Azure.Identity",
+        "ServiceDirectory": "identity",
+        "ReadMePath": "sdk/identity/Azure.Identity/README.md",
+        "ChangeLogPath": "sdk/identity/Azure.Identity/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "Azure.Identity",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "Azure.Identity",
+          "safeName": "AzureIdentity",
+          "triggeringPaths": [
+            "/sdk/identity/Azure.Identity.Shared",
+            "/sdk/identity/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [],
+          "AOTTestInputs": [],
+          "CheckAOTCompat": false,
+          "BuildSnippets": true
+        }
+      },
+      {
+        "Name": "Azure.Core",
+        "Version": "1.46.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/Azure.Core",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/Azure.Core/README.md",
+        "ChangeLogPath": "sdk/core/Azure.Core/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "Azure.Core",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "Azure.Core",
+          "safeName": "AzureCore",
+          "triggeringPaths": [
+            "/sdk/resourcemanager",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [],
+          "AOTTestInputs": {
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          },
+          "CheckAOTCompat": true,
+          "BuildSnippets": false
+        }
+      },
+      {
+        "Name": "Azure.Template",
+        "Version": "1.0.3-beta.20",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/Azure.Template",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/Azure.Template/README.md",
+        "ChangeLogPath": "sdk/template/Azure.Template/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "Azure.Template",
+        "ReleaseStatus": "2022-04-26",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "Azure.Template",
+          "safeName": "AzureTemplate",
+          "triggeringPaths": [
+            "config",
+            "devcontainer",
+            "github",
+            "vscode",
+            "/common",
+            "/doc",
+            "/eng",
+            "/samples",
+            "/sdk/template/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [],
+          "AOTTestInputs": [],
+          "CheckAOTCompat": false,
+          "BuildSnippets": true
+        }
+      }
+    ]
+  },
+  {
     "name": "Individual Package Change",
     "diff": {
       "ChangedFiles": [

@@ -993,7 +993,7 @@ class AsyncClientCorrectNaming(BaseChecker):
         try:
             # avoid false positive when async name is used with a base class.
             if (
-                "client" in node.name.lower()
+                node.name.endswith("Client")
                 and "async" in node.name.lower()
                 and "base" not in node.name.lower()
             ):

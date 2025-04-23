@@ -17,16 +17,12 @@ class Improvement(BaseModel):
 
 
 class GeneralReviewResult(BaseModel):
-    status: str = Field(
-        description="Success if the request has no improvements. Error if there are improvements."
-    )
+    status: str = Field(description="Success if the request has no improvements. Error if there are improvements.")
     improvements: List[Improvement] = Field(description="list of improvements if any")
 
 
 class Violation(BaseModel):
-    rule_ids: List[str] = Field(
-        description="Unique guideline ID or IDs that were violated."
-    )
+    rule_ids: List[str] = Field(description="Unique guideline ID or IDs that were violated.")
     line_no: int = Field(description="Line number of the violation.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
@@ -54,9 +50,7 @@ class Guideline(BaseModel):
     related_guidelines: Optional[List[str]] = Field(
         description="List of guideline IDs that are related to this guideline."
     )
-    related_examples: Optional[List[str]] = Field(
-        description="List of example IDs that are related to this guideline."
-    )
+    related_examples: Optional[List[str]] = Field(description="List of example IDs that are related to this guideline.")
 
 
 class ExampleType(str, Enum):
@@ -70,19 +64,13 @@ class Example(BaseModel):
     """
 
     id: str = Field(description="Unique identifier for the example.")
-    guideline_ids: List[str] = Field(
-        description="List of guideline IDs to which this example applies."
-    )
+    guideline_ids: List[str] = Field(description="List of guideline IDs to which this example applies.")
     content: str = Field(description="Code snippet demonstrating the example.")
     explanation: str = Field(description="Explanation of why this is good/bad.")
-    example_type: ExampleType = Field(
-        description="Whether this example is 'good' or 'bad'."
-    )
+    example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
 
     # Classification fields
-    lang: Optional[str] = Field(
-        None, description="If this example is specific to a language (e.g., 'python')."
-    )
+    lang: Optional[str] = Field(None, description="If this example is specific to a language (e.g., 'python').")
     service: Optional[str] = Field(
         None,
         description="If this example is specific to a service (e.g., 'azure-functions').",
@@ -94,9 +82,7 @@ class Example(BaseModel):
 
 
 class ReviewResult(BaseModel):
-    status: str = Field(
-        description="Succeeded if the request has no violations. Error if there are violations."
-    )
+    status: str = Field(description="Succeeded if the request has no violations. Error if there are violations.")
     violations: List[Violation] = Field(description="List of violations if any")
 
     # truly private, never part of Pydantic’s schema or serialization
@@ -138,9 +124,7 @@ class ReviewResult(BaseModel):
             # handle common line number issues from the LLM
             for item in raw_line_no.split(","):
                 item = item.strip()
-                violation_copy = (
-                    violation.copy()
-                )  # Create a copy of the violation dictionary
+                violation_copy = violation.copy()  # Create a copy of the violation dictionary
                 if "-" in item:
                     # Handle range format (e.g., "10-20")
                     first_num = item.split("-")[0].strip()
@@ -233,9 +217,7 @@ class ReviewResult(BaseModel):
                 combined_violations[line_no] = violation
 
         # remove any violations that don't pass validation and then add them to the list
-        filtered_violations = [
-            x for x in combined_violations.values() if self._validate(x)
-        ]
+        filtered_violations = [x for x in combined_violations.values() if self._validate(x)]
         self.violations.extend(filtered_violations)
 
     def _find_line_number(self, chunk: Section, violation: Violation) -> Optional[int]:
@@ -266,9 +248,7 @@ class ReviewResult(BaseModel):
                 break
 
         # If no match is found, return None
-        print(
-            f"WARNING: Could not find match for code '{violation.bad_code}' at or near line {violation.line_no}"
-        )
+        print(f"WARNING: Could not find match for code '{violation.bad_code}' at or near line {violation.line_no}")
         return None
 
     def sort(self):

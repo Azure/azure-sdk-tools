@@ -26,7 +26,5 @@ def api_reviewer(language: str):
     target_apiview = data.get("target", data.get("content", None))
     base_apiview = data.get("base", None)
     apiview_diff = data.get("diff", None)
-    result = ApiViewReview(language=language).get_response(
-        target=target_apiview, base=base_apiview, diff=apiview_diff
-    )
+    result = ApiViewReview(language=language).get_response(target=target_apiview, base=base_apiview, diff=apiview_diff)
     return jsonify(result.model_dump_json())

@@ -56,9 +56,7 @@ def local_review(
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(
-        language=language, model=model, chunk_input=chunk_input, use_rag=use_rag
-    )
+    rg = ApiViewReview(language=language, model=model, chunk_input=chunk_input, use_rag=use_rag)
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
@@ -160,34 +158,18 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
 
     apiview = test_cases[test_case].get("query", "")
     expected = test_cases[test_case].get("response", "")
-    deconstructed_apiview = (
-        pathlib.Path(__file__).parent
-        / "evals"
-        / "tests"
-        / language
-        / f"{test_case}.txt"
-    )
-    deconstructed_expected = (
-        pathlib.Path(__file__).parent
-        / "evals"
-        / "tests"
-        / language
-        / f"{test_case}.json"
-    )
+    deconstructed_apiview = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.txt"
+    deconstructed_expected = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.json"
     with open(deconstructed_apiview, "w") as f:
         f.write(apiview)
 
     with open(deconstructed_expected, "w") as f:
         # sort violations by line number
         expected = json.loads(expected)
-        expected["violations"] = sorted(
-            expected["violations"], key=lambda x: x["line_no"]
-        )
+        expected["violations"] = sorted(expected["violations"], key=lambda x: x["line_no"])
         f.write(json.dumps(expected, indent=4))
 
-    print(
-        f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}."
-    )
+    print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
 
 
 def deploy_flask_app(
@@ -222,9 +204,7 @@ def search_examples(path: str, language: str):
     print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
 
 
-def search_guidelines(
-    language: str, text: Optional[str] = None, path: Optional[str] = None
-):
+def search_guidelines(language: str, text: Optional[str] = None, path: Optional[str] = None):
     """Search the guidelines-index for a query."""
     from scripts.search_guidelines import search_guidelines
 
@@ -353,12 +333,8 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "eval deconstruct") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
-            ac.argument(
-                "test_case", type=str, help="The specific test case to deconstruct."
-            )
-            ac.argument(
-                "test_file", type=str, help="The full path to the JSONL test file."
-            )
+            ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
+            ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
         with ArgumentsContext(self, "app deploy") as ac:
             ac.argument(
                 "app_name",

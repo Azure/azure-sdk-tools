@@ -23,10 +23,7 @@ def _zip_current_repo(output_filename: str):
                 rel_path = os.path.relpath(file_path, ".")
                 # get the top_level folder name
                 top_level_folder = rel_path.split(os.sep)[0]
-                if (
-                    not top_level_folder in folders_to_keep
-                    and rel_path not in files_to_keep
-                ):
+                if not top_level_folder in folders_to_keep and rel_path not in files_to_keep:
                     continue
                 zipf.write(file_path, rel_path)
     print(f"Repository zipped to {output_filename}")
@@ -51,9 +48,7 @@ def deploy_app_to_azure(
         missing_vars.append("AZURE_SUBSCRIPTION_ID")
 
     if missing_vars:
-        raise ValueError(
-            f"Missing required environment variables: {', '.join(missing_vars)}"
-        )
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
     zip_file = "repo.zip"
     _zip_current_repo(zip_file)

@@ -11,16 +11,19 @@ const yyyy = todayDate.getFullYear();
 
 const date = yyyy + '-' + mm + '-' + dd;
 
-export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
-    const sdkType = getSDKType(packageFolderPath);
-    const isModularClient = (sdkType==='ModularClient')? true : false;
+export function getFirstReleaseContent(packageFolderPath: string, isStableRelease: boolean) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
-    const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
-    const serviceName = packageJsonData.description.split(' ')[packageJsonData.description.split(' ').length-1].replace("Client.","");
-    const firstBetaAndModularClientContent = `Initial release of the ${serviceName} package`;
+    const sdkType = getSDKType(packageFolderPath);
+    const isModularClient = (sdkType === 'ModularClient')? true : false;
+    const firstBetaAndModularClientContent = `Initial release of the ${packageJsonData.name} package`;
     const firstStableAndModularClientContent = `This is the first stable version with the package of ${packageJsonData.name}`;
     const defaultContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
-    const contentLog = isModularClient? isStableRelease ? firstStableAndModularClientContent : firstBetaAndModularClientContent:defaultContent
+    return isModularClient? isStableRelease ? firstStableAndModularClientContent : firstBetaAndModularClientContent : defaultContent;
+}
+
+export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+    const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
+    const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
     const content = `# Release History
     
 ## ${newVersion} (${date})
@@ -29,7 +32,6 @@ export async function makeChangesForFirstRelease(packageFolderPath: string, isSt
 
 ${contentLog}
 `;
-    
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
     updateUserAgent(packageFolderPath, newVersion);

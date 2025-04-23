@@ -3,9 +3,9 @@ import * as path from "path";
 
 import { describe, expect, test } from 'vitest';
 import { join } from 'path';
-import { updateUserAgent } from '../../xlc/codeUpdate/updateUserAgent.js';
+import { updateTspLocation, updateUserAgent } from '../../xlc/codeUpdate/generatedSdkUpdater.js';
 
-describe('Update package version in /src', () => {
+describe('update generated SDK', () => {
     test('update package version for userAgentInfo with modular type', async () => {
         const root = join(__dirname, 'testCases/modular-context/');
         const expectedVersion = "1.0.0";
@@ -28,5 +28,12 @@ describe('Update package version in /src', () => {
         updateUserAgent(root, expectedVersion);
         const data: string = fs.readFileSync(path.join(root, 'src', "testClient.ts"), 'utf8');
         expect(data.includes(`const packageDetails = \`azsdk-js-arm-test/${expectedVersion}\`;`)).toBe(true);
+    });
+
+    test('Update tsp-location.yaml', async () => {
+        const root = join(__dirname, 'testCases/');
+        updateTspLocation(root);
+        const data: string = fs.readFileSync(path.join(root, "tsp-location.yaml"), 'utf8');
+        expect(data.includes(`Azure/azure-rest-api-specs`)).toBe(true);
     });
 });

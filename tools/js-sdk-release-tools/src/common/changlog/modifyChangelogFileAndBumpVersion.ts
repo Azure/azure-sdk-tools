@@ -1,5 +1,5 @@
 import {Changelog} from "../../changelog/changelogGenerator.js";
-import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
+import { updateUserAgent } from "../../xlc/codeUpdate/generatedSdkUpdater.js";
 
 import fs from 'fs';
 import * as path from 'path';

@@ -48,3 +48,10 @@ export function updateUserAgent(packageFolderPath: string, packageVersion: strin
             logger.warn(`Unsupported SDK type ${sdkType} to update user agent`);
     }
 }
+
+export function updateTspLocation(packageFolderPath: string) {
+    logger.info('Start to update tsp-location.yaml');
+    const data: string = fs.readFileSync(path.join(packageFolderPath, 'tsp-location.yaml'), 'utf8');
+    const result = data.replace(`repo: ../azure-rest-api-specs`, `repo: Azure/azure-rest-api-specs`);
+    fs.writeFileSync(path.join(packageFolderPath, 'tsp-location.yaml'), result, 'utf8');
+}

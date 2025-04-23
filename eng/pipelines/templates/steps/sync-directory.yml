@@ -154,7 +154,7 @@ steps:
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         New-Item -ItemType Directory -Force -ErrorAction Ignore -Path $repoPath
 
-        $filePatterns = "${{ convertToJson(parameters.FilePatterns) }}" | ConvertFrom-Json
+        $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
         if (!$filePatterns) { $filePatterns = @("*")}
 
         foreach ($filePattern in $filePatterns) {

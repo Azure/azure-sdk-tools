@@ -40,7 +40,7 @@ stages:
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
                 $patchFiles = @()
 
-                $filePatterns = "${{ convertToJson(parameters.FilePatterns) }}" | ConvertFrom-Json
+                $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
                 if (!$filePatterns) { $filePatterns = @("*")}
 
                 foreach ($filePattern in $filePatterns) {

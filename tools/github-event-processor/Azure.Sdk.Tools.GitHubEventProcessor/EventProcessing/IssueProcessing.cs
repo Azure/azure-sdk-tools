@@ -119,8 +119,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     if ((issueEventPayload.Issue.Labels.Count == 0) && (issueEventPayload.Issue.Assignee == null))
                     {
                         // Query AI Triage and disable Answers if this is not a customer reported issue.
-                        IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(issueEventPayload, false, !isCustomerReported);
-                        if (triageOutput.Labels.Count() > 0)
+                        IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(
+                            issueEventPayload, 
+                            true, 
+                            !isCustomerReported);
+
+                        if (triageOutput.Labels.Any())
                         {
                             // If labels were predicted, add them to the issue
                             foreach (string label in triageOutput.Labels)

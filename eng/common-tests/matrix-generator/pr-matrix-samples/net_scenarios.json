@@ -68,6 +68,11 @@
           "safeName": "AzureCore",
           "triggeringPaths": [
             "/sdk/resourcemanager",
+            "/eng/Versioning.targets",
+            "/eng/Packages.Data.props",
+            "/eng/Directory.Build.Common.props",
+            "/eng/Directory.Build.Common.targets",
+            "/eng/service.proj",
             "/sdk/core/ci.yml"
           ]
         },
@@ -181,6 +186,44 @@
       "PRNumber": "48379"
     },
     "expected_package_output": [
+      {
+        "Name": "Azure.Core",
+        "Version": "1.46.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/Azure.Core",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/Azure.Core/README.md",
+        "ChangeLogPath": "sdk/core/Azure.Core/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "Azure.Core",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "Azure.Core",
+          "safeName": "AzureCore",
+          "triggeringPaths": [
+            "/sdk/resourcemanager",
+            "/eng/Versioning.targets",
+            "/eng/Packages.Data.props",
+            "/eng/Directory.Build.Common.props",
+            "/eng/Directory.Build.Common.targets",
+            "/eng/service.proj",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [],
+          "AOTTestInputs": {
+            "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
+            "ArtifactName": "Azure.Core"
+          },
+          "CheckAOTCompat": true,
+          "BuildSnippets": false
+        }
+      },
       {
         "Name": "Azure.Template",
         "Version": "1.0.3-beta.20",
@@ -300,6 +343,11 @@
           "safeName": "AzureCore",
           "triggeringPaths": [
             "/sdk/resourcemanager",
+            "/eng/Versioning.targets",
+            "/eng/Packages.Data.props",
+            "/eng/Directory.Build.Common.props",
+            "/eng/Directory.Build.Common.targets",
+            "/eng/service.proj",
             "/sdk/core/ci.yml"
           ]
         },
@@ -344,7 +392,7 @@
       },
       {
         "Name": "Azure.Core.Experimental",
-        "Version": "0.1.0-preview.37",
+        "Version": "0.1.0-preview.38",
         "DevVersion": null,
         "DirectoryPath": "sdk/core/Azure.Core.Experimental",
         "ServiceDirectory": "core",
@@ -489,7 +537,7 @@
       },
       {
         "Name": "System.ClientModel",
-        "Version": "1.4.0-beta.2",
+        "Version": "1.4.0-beta.5",
         "DevVersion": null,
         "DirectoryPath": "sdk/core/System.ClientModel",
         "ServiceDirectory": "core",
@@ -555,6 +603,11 @@
           "safeName": "AzureCore",
           "triggeringPaths": [
             "/sdk/resourcemanager",
+            "/eng/Versioning.targets",
+            "/eng/Packages.Data.props",
+            "/eng/Directory.Build.Common.props",
+            "/eng/Directory.Build.Common.targets",
+            "/eng/service.proj",
             "/sdk/core/ci.yml"
           ]
         },
@@ -720,6 +773,11 @@
           "safeName": "AzureCore",
           "triggeringPaths": [
             "/sdk/resourcemanager",
+            "/eng/Versioning.targets",
+            "/eng/Packages.Data.props",
+            "/eng/Directory.Build.Common.props",
+            "/eng/Directory.Build.Common.targets",
+            "/eng/service.proj",
             "/sdk/core/ci.yml"
           ]
         },

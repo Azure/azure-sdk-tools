@@ -3,7 +3,7 @@ import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 
 import fs from 'fs';
 import * as path from 'path';
-
+import { getSDKType} from "../utils.js";
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');
 const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -11,17 +11,25 @@ const yyyy = todayDate.getFullYear();
 
 const date = yyyy + '-' + mm + '-' + dd;
 
-export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+    const sdkType = getSDKType(packageFolderPath);
+    const isModularClient = (sdkType==='ModularClient')? true : false;
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
+    const serviceName = packageJsonData.description.split(' ')[packageJsonData.description.split(' ').length].replace("Client.","");
+    const firstBetaAndModularClientContent = `Initial release of the ${serviceName} package`;
+    const firstStableAndModularClientContent = `This is the first stable version with the package of ${packageJsonData.name}`;
+    const defaultContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
+    const contentLog = isModularClient? isStableRelease ? firstStableAndModularClientContent : firstBetaAndModularClientContent:defaultContent
     const content = `# Release History
     
 ## ${newVersion} (${date})
 
 ### Features Added
 
-The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
+${contentLog}
 `;
+    
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
     updateUserAgent(packageFolderPath, newVersion);

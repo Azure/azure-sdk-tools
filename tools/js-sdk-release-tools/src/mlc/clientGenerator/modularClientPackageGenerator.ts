@@ -70,7 +70,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
         packageResult.result = 'succeeded';
 
-        await updateTspLocation(relativePackageDirToSdkRoot);
+        updateTspLocation(relativePackageDirToSdkRoot);
         logger.info(`Update tsp-location.yaml successfully`);
 
         logger.info(`Generated package successfully.`);

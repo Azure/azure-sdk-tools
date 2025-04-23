@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-22 - 0.5.0
+
+- Output service names and artifact staging folder in execution report.
+
 ## 2025-04-17 - 0.4.2
 
 - Refactor sdk-suppressions.yaml link

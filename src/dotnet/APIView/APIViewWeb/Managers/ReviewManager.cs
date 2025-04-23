@@ -365,9 +365,9 @@ namespace APIViewWeb.Managers
             }
            
             // Write back result as comments to APIView
-            foreach (var violation in result.Violations)
+            foreach (var comment in result.Comments)
             {
-                var codeLine = codeLines[violation.LineNo];
+                var codeLine = codeLines[comment.LineNo];
                 var comment = new CommentItemModel();
                 comment.CreatedOn = DateTime.UtcNow;
                 comment.ReviewId = reviewId;
@@ -376,12 +376,13 @@ namespace APIViewWeb.Managers
                 //comment.SectionClass = sectionClass; // This will be needed for swagger
 
                 var commentText = new StringBuilder();
-                commentText.AppendLine($"Suggestion: `{violation.Suggestion}`");
+                commentText.AppendLine(comment.Comment);
                 commentText.AppendLine();
-                commentText.AppendLine(violation.Comment);
-                foreach (var id in violation.RuleIds)
+                commentText.AppendLine(comment.Suggestion);
+                commentText.AppendLine();
+                foreach (var id in comment.RuleIds)
                 {
-                    commentText.AppendLine($"See: https://guidelinescollab.github.io/azure-sdk/{id}");
+                    commentText.AppendLine($"See: https://azure.github.io/azure-sdk/{id}");
                 }
                 comment.ResolutionLocked = false;
                 comment.CreatedBy = "azure-sdk";
@@ -389,7 +390,7 @@ namespace APIViewWeb.Managers
 
                 await _commentsRepository.UpsertCommentAsync(comment);
             }
-            return result.Violations.Count;
+            return result.Comments.Count;
         }
 
         /// <summary>

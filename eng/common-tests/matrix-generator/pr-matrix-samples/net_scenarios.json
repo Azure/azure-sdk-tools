@@ -20,7 +20,7 @@
     "expected_package_output": [
       {
         "Name": "Azure.Identity",
-        "Version": "1.10.0-beta.1",
+        "Version": "1.14.0-beta.4",
         "DevVersion": null,
         "DirectoryPath": "sdk/identity/Azure.Identity",
         "ServiceDirectory": "identity",
@@ -34,18 +34,20 @@
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
-          "name": "Azure.Identity",
           "safeName": "AzureIdentity",
+          "name": "Azure.Identity",
           "triggeringPaths": [
-            "/sdk/identity/Azure.Identity.Shared",
             "/sdk/identity/ci.yml"
           ]
         },
         "CIParameters": {
           "CIMatrixConfigs": [],
-          "AOTTestInputs": [],
-          "CheckAOTCompat": false,
-          "BuildSnippets": true
+          "BuildSnippets": true,
+          "CheckAOTCompat": true,
+          "AOTTestInputs": {
+            "ExpectedWarningsFilepath": "None",
+            "ArtifactName": "Azure.Identity"
+          }
         }
       },
       {

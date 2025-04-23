@@ -45,9 +45,9 @@ stages:
 
                 foreach ($filePattern in $filePatterns) {
                   Write-Host "Creating patch files for pattern: $filePattern"
-                  $patchfiles += git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}/$filePattern"
+                  $patchFiles += git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}/$filePattern"
                 }
-                if ($patchfiles -and ($LASTEXITCODE -eq 0)) {
+                if ($patchFiles -and ($LASTEXITCODE -eq 0)) {
                   echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
                   echo "Setting PatchFilesLocation"
                 }

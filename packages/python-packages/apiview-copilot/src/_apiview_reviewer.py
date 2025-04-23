@@ -9,7 +9,7 @@ import prompty.azure_beta
 import sys
 import threading
 from time import time
-from typing import Literal, List
+from typing import List, Optional
 
 from ._sectioned_document import SectionedDocument
 from ._search_manager import SearchManager
@@ -108,15 +108,20 @@ class ApiViewReview:
             numbered_lines.append(f"{start_line_no + i + 1:4d}: {line}")
         apiview = "\n".join(numbered_lines)
 
-        prompt_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}.prompty"
-        judge_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}_judge.prompty"
+        prompt_path = (
+            pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}.prompty"
+        )
+        judge_path = (
+            pathlib.Path(_PROMPTS_FOLDER)
+            / f"review_apiview_{self.language}_judge.prompty"
+        )
 
         response = prompty.execute(
             prompt_path,
             inputs={
                 "language": self.language,
                 "apiview": apiview,
-            }
+            },
         )
         initial_review = json.loads(response)
 
@@ -129,12 +134,14 @@ class ApiViewReview:
                 "guidelines": self.search.retrieve_static_guidelines(
                     self.language, include_general_guidelines=False
                 ),
-            }
+            },
         )
         final_review = json.loads(response)
         return GeneralReviewResult(**final_review)
 
-    def get_response(self, apiview: str) -> ReviewResult:
+    def get_response(
+        self, *, target: str, base: Optional[str] = None, diff: Optional[str] = None
+    ) -> ReviewResult:
         print(f"Generating review...")
 
         logger.info(
@@ -142,16 +149,14 @@ class ApiViewReview:
         )
 
         start_time = time()
-        apiview = self.unescape(apiview)
+        target = self.unescape(target)
         static_guidelines = self.search.retrieve_static_guidelines(
             self.language, include_general_guidelines=False
         )
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
-        chunked_apiview = SectionedDocument(
-            apiview.splitlines(), chunk=self.chunk_input
-        )
+        chunked_apiview = SectionedDocument(target.splitlines(), chunk=self.chunk_input)
         final_results = ReviewResult(
             guideline_ids=static_guideline_ids, status="Success", violations=[]
         )

@@ -16,6 +16,7 @@
     "pyenv",
     "asyncio",
     "jsonable",
+    "jsonify",
     "loadenv",
     "dotenv",
     "prompty",

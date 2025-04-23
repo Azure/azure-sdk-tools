@@ -47,31 +47,41 @@ namespace IssueLabelerService
             var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
             Dictionary<string, string> labels;
 
-            try
+            if(!issue.DisableLabels)
             {
-                // Get the labeler based on the configuration
-                var labeler = _labelers.GetLabeler(config);
-
-                // Predict labels for the issue
-                labels = await labeler.PredictLabels(issue);
-
-                // If no labels are returned, do not generate an answer
-                // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
-                if (labels?.Count == 0)
+                try
                 {
-                    _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
+                    // Get the labeler based on the configuration
+                    var labeler = _labelers.GetLabeler(config);
+
+                    // Predict labels for the issue
+                    labels = await labeler.PredictLabels(issue);
+
+                    // If no labels are returned, do not generate an answer
+                    // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
+                    if (labels?.Count == 0)
+                    {
+                        _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
+                        return EmptyResult;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error labeling issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
                     return EmptyResult;
                 }
+
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError($"Error labeling issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                _logger.LogError($"Labeling is turned off for issue #{issue.IssueNumber} in repository {issue.RepositoryName}. Wihtout Labels answer service will not be called.");
                 return EmptyResult;
             }
 
             TriageOutput result = new TriageOutput { Labels = labels.Values };
-
-            if(bool.Parse(config.EnableAnswers))
+            
+            // Both config and passed in disable answers must be true to run answer service. 
+            if(!bool.Parse(config.DisableAnswers) && !issue.DisableAnswers)
             {
                 try{
 

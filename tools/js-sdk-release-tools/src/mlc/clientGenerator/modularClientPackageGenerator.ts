@@ -11,6 +11,7 @@ import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
 import unixify from 'unixify';
+import { updateTspLocation } from '../../xlc/codeUpdate/updateTspLocation.js';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -68,6 +69,10 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         packageResult.path.push(ciYamlPath);
 
         packageResult.result = 'succeeded';
+
+        await updateTspLocation(relativePackageDirToSdkRoot);
+        logger.info(`Update tsp-location.yaml successfully`);
+        
         logger.info(`Generated package successfully.`);
         logger.info(`Package summary: ${JSON.stringify(packageResult, undefined, 2)}`);
     } catch (err) {

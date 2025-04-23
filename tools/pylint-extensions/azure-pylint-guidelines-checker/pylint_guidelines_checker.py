@@ -2758,8 +2758,9 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """
         for i in node:
             if isinstance(i, astroid.Raise):
-                # If it is a bare raise, or explicitly raising the same exception as-is, or raise X from exception
-                if (isinstance(i.exc, astroid.Name) and i.exc.name == exception_name) or not i.exc or (isinstance(i.cause, astroid.Name) and i.cause.name == exception_name):
+                # If it is a bare raise, or explicitly raising the same exception as-is
+                # TODO: raise X from exception
+                if (isinstance(i.exc, astroid.Name) and i.exc.name == exception_name) or not i.exc:  #or (isinstance(i.cause, astroid.Name) and i.cause.name == exception_name):
                     # Check if the exception is being logged
                     self.check_for_logging(node, exception_name)
             # Check for any nested 'If' branches

@@ -16,7 +16,7 @@ export async function makeChangesForFirstRelease(packageFolderPath: string, isSt
     const isModularClient = (sdkType==='ModularClient')? true : false;
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
-    const serviceName = packageJsonData.description.split(' ')[packageJsonData.description.split(' ').length].replace("Client.","");
+    const serviceName = packageJsonData.description.split(' ')[packageJsonData.description.split(' ').length-1].replace("Client.","");
     const firstBetaAndModularClientContent = `Initial release of the ${serviceName} package`;
     const firstStableAndModularClientContent = `This is the first stable version with the package of ${packageJsonData.name}`;
     const defaultContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`

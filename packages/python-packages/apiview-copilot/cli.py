@@ -65,7 +65,7 @@ def local_review(
         apiview = f.read()
 
     if general_review is False:
-        review = rg.get_response(apiview)
+        review = rg.get_response(target=apiview)
         output_path = os.path.join("scratch", "output", language)
         os.makedirs(output_path, exist_ok=True)
         output_file = os.path.join(output_path, f"{filename}.json")

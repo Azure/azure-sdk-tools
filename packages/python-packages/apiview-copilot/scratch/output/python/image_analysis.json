@@ -1,14 +1,46 @@
 {
-    "status": "Error",
-    "violations": [
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 3,
+            "bad_code": "namespace azure.ai.vision.imageanalysis",
+            "suggestion": "Remove the 'namespace' declaration and rely on Python’s package structure (i.e. directories with __init__.py files) to organize modules.",
+            "comment": "Namespaces are not a standard Python construct and may confuse developers who expect a directory‐based module organization.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 5,
+            "bad_code": "class azure.ai.vision.imageanalysis.ImageAnalysisClient(ImageAnalysisClient): implements ContextManager",
+            "suggestion": "Remove the non‐Python 'implements' keyword. Instead, either inherit from contextlib.AbstractContextManager or implement the __enter__ and __exit__ methods directly. Also, verify that inheriting from ImageAnalysisClient (i.e. itself) is correct.",
+            "comment": "Using 'implements' and self‐inheritance is non‐idiomatic and could be misleading. Python prefers explicit dunder methods or inheritance from standard base classes for context management.",
+            "source": "generic"
+        },
         {
             "rule_ids": [
                 "python_design.html#python-client-connection-string"
             ],
             "line_no": 10,
             "bad_code": "connection_string: Optional[str] = None,",
-            "suggestion": "Remove the connection_string parameter from the constructor and provide a separate classmethod, for example from_connection_string, to create a client from a connection string.",
-            "comment": "The constructor must not take a connection string per the guideline."
+            "suggestion": "Remove the connection_string parameter from the __init__ method and instead provide a separate factory method (e.g. from_connection_string) that accepts a connection string.",
+            "comment": "The constructor for ImageAnalysisClient includes a 'connection_string' parameter, which violates the guideline that the constructor must not take a connection string.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 12,
+            "bad_code": "api_version: str = ...",
+            "suggestion": "Replace the ellipsis (...) with an explicit default value (such as None or an actual API version string) to make the API more explicit.",
+            "comment": "Using an ellipsis as a default is unusual in Python and can lead to ambiguity. An explicit default improves clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 22,
+            "bad_code": "gender_neutral_caption: Optional[bool] = ...",
+            "suggestion": "Use a concrete default (e.g. None or a Boolean value) instead of ellipsis for optional parameters.",
+            "comment": "Ellipsis as a default value is non‐idiomatic. Explicit defaults (or None) help users understand the intended behavior without guessing.",
+            "source": "generic"
         },
         {
             "rule_ids": [
@@ -16,8 +48,19 @@
             ],
             "line_no": 53,
             "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "suggestion": "Rename the async client to ImageAnalysisClient so that both sync and async clients share the same client name in their respective namespaces.",
-            "comment": "The async and sync clients must use the same client name according to the guidelines."
+            "suggestion": "Rename the async client to ImageAnalysisClient (in the azure.ai.vision.imageanalysis.aio namespace) so that it matches the synchronous client name.",
+            "comment": "The async client should have the same client name as the synchronous client as per the guidelines; using 'AsyncImageAnalysisClient' is a violation.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-static-methods"
+            ],
+            "line_no": 88,
+            "bad_code": "@staticmethod",
+            "suggestion": "Remove the @staticmethod decorator and define send_request as an instance method (or as a module-level function if appropriate).",
+            "comment": "Static methods are discouraged. The async send_request should be an instance method instead of a static method.",
+            "source": "guideline"
         },
         {
             "rule_ids": [
@@ -26,25 +69,44 @@
             "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
             "suggestion": "Rename the class to 'DetectedPerson' using PascalCase.",
-            "comment": "Class names should use PascalCase."
+            "comment": "Class names must use PascalCase. The identifier 'detectedPerson' should be renamed to 'DetectedPerson'.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 407,
+            "bad_code": "ivar list: List[DetectedObject]",
+            "suggestion": "Rename the attribute to something more descriptive like 'objects' or 'object_list' to avoid shadowing the built-in type 'list'.",
+            "comment": "Using 'list' as an attribute name can lead to confusion with Python's built-in list type and is best avoided.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 411,
+            "bad_code": "def get_result(self) -> ObjectsResult",
+            "suggestion": "Consider replacing explicit getter and setter methods with a property, for example using the @property decorator for 'result'.",
+            "comment": "Python idioms favor properties over get/set methods, which can lead to a cleaner and more natural API interface.",
+            "source": "generic"
         },
         {
             "rule_ids": [
-                "python_implementation.html#python-codestyle-properties"
+                "python_design.html#python-models-async"
             ],
-            "line_no": 411,
-            "bad_code": "def get_result(self) -> ObjectsResult",
-            "suggestion": "Replace the simple getter (and similarly the setter on line 413) with a property (using @property and @<name>.setter).",
-            "comment": "Simple getter and setter methods should be implemented as properties."
+            "line_no": 432,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
+            "suggestion": "Remove the duplicate PeopleResult model from the aio namespace and use the one defined in the root models package.",
+            "comment": "Models should not be duplicated between the root and aio namespaces. Having a separate PeopleResult in the aio namespace goes against this guideline.",
+            "source": "guideline"
         },
         {
             "rule_ids": [
                 "python_design.html#python-models-enum-name-uppercase"
             ],
             "line_no": 517,
-            "bad_code": "tags = 'tags'",
-            "suggestion": "Rename the enum member to 'TAGS' so that all enum member names are uppercase.",
-            "comment": "Enum member names should be in UPPERCASE."
+            "bad_code": "    tags = 'tags'",
+            "suggestion": "Rename the enum member to 'TAGS' in order to comply with the uppercase naming convention.",
+            "comment": "Enum members should be in ALL CAPS; 'tags' violates this guideline.",
+            "source": "guideline"
         }
     ]
 }

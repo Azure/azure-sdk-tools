@@ -35,4 +35,5 @@ You are an AI assistant whose sole job is to convert a given code snippet into a
 - Output should be in the form of a paragraph.
 
 user:
-{{question}}
+Convert the following code snippet into a structural description:
+  {{question}}

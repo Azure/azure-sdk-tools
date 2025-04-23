@@ -7,7 +7,12 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import supported_models, DEFAULT_MODEL
+from src._apiview_reviewer import (
+    supported_models,
+    DEFAULT_MODEL,
+    DEFAULT_CHUNK_INPUT,
+    DEFAULT_USE_RAG,
+)
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -47,9 +52,8 @@ def local_review(
     language: str,
     path: str,
     model: str = DEFAULT_MODEL,
-    chunk_input: bool = False,
-    use_rag: bool = False,
-    general_review: bool = False,
+    chunk_input: bool = DEFAULT_CHUNK_INPUT,
+    use_rag: bool = DEFAULT_USE_RAG,
 ):
     """
     Generates a review using the locally installed code.
@@ -62,29 +66,16 @@ def local_review(
     with open(path, "r") as f:
         apiview = f.read()
 
-    if general_review is False:
-        review = rg.get_response(target=apiview)
-        output_path = os.path.join("scratch", "output", language)
-        os.makedirs(output_path, exist_ok=True)
-        output_file = os.path.join(output_path, f"{filename}.json")
+    review = rg.get_response(target=apiview)
+    output_path = os.path.join("scratch", "output", language)
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, f"{filename}.json")
 
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(review.model_dump_json(indent=4))
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(review.model_dump_json(indent=4))
 
-        print(f"Review written to {output_file}")
-        print(f"Found {len(review.violations)} violations.")
-    else:
-        review = rg.get_general_review_response(apiview)
-
-        output_path = os.path.join("scratch", "output", language)
-        os.makedirs(output_path, exist_ok=True)
-
-        output_file = os.path.join(output_path, f"{filename}_general.json")
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(review.model_dump_json(indent=4))
-
-        print(f"Review written to {output_file}")
-        print(f"Found {len(review.improvements)} improvements.")
+    print(f"Review written to {output_file}")
+    print(f"Found {len(review.comments)} comments.")
 
 
 def create_test_case(
@@ -95,6 +86,9 @@ def create_test_case(
     test_file: str,
     overwrite: bool = False,
 ):
+    """
+    Creates or updates a test case for the APIView reviewer.
+    """
     with open(apiview_path, "r") as f:
         apiview_contents = f.read()
 
@@ -145,6 +139,9 @@ def create_test_case(
 
 
 def deconstruct_test_case(language: str, test_case: str, test_file: str):
+    """
+    Deconstructs a test case into its component APIView test and expected results file.
+    """
     test_cases = {}
     with open(test_file, "r") as f:
         for line in f:
@@ -302,11 +299,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 "use_rag",
                 action="store_true",
                 help="Use RAG pattern to generate the review.",
-            )
-            ac.argument(
-                "general_review",
-                action="store_true",
-                help="Run general review against general language guidance.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

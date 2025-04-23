@@ -8,6 +8,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
 using AzureSDKDSpecTools.Helpers;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol.Messages;
@@ -21,9 +22,10 @@ namespace AzureSDKDevToolsMCP.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper helper)
+    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> _logger)
     {
-        private readonly ITypeSpecHelper typeSpecHelper = helper;
+        private readonly ITypeSpecHelper typeSpecHelper = _helper;
+        private readonly ILogger<SpecValidationTools> logger = _logger;
 
         /// <summary>
         /// Validates the TypeSpec API specification.
@@ -43,10 +45,14 @@ namespace AzureSDKDevToolsMCP.Tools
             {
                 var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
                 // Run npm ci
+                logger.LogInformation("Running npm ci");                
                 RunNpmCi(specRepoRootPath);
+                logger.LogInformation("Completed runnign npm ci");
 
                 //Run TypeSpec validation
+                logger.LogInformation("Running npx tsv to run the validation");
                 ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
+                logger.LogInformation("Completed running TypeSpec validation");
             }
             catch (Exception ex)
             {
@@ -110,11 +116,9 @@ namespace AzureSDKDevToolsMCP.Tools
                 WorkingDirectory = workingDirectory
             };
             using var process = Process.Start(processInfo) ?? throw new Exception($"Failed to start the process: {args}");
-            Console.WriteLine($"Started process to run {args}");
             StringBuilder output = new ();
             while (!process.HasExited)
             {
-                Console.WriteLine($"Process is running {args}");
                 Thread.Sleep(2000);
                 process.Refresh();
                 output.Append(process.StandardOutput.ReadToEnd());                

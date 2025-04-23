@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
 using AzureSDKDSpecTools.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Work.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
@@ -25,7 +26,7 @@ namespace AzureSDKDSpecTools.Services
     public interface IDevOpsService
     {
         public Task<ReleasePlan> GetReleasePlan(int workItemId);
-        public Task<List<ReleasePlan>> GetReleasePlans(string serviceTreeId, string productTreeId, string pullRequest);
+        public Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid productTreeId, string pullRequest);
         public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
     }
     public class DevOpsService : IDevOpsService
@@ -33,21 +34,41 @@ namespace AzureSDKDSpecTools.Services
         private static readonly string devOpsUrl = "https://dev.azure.com/azure-sdk";
         private static readonly string releaseProject = "release";
 
-        private readonly BuildHttpClient buildClient;
-        private readonly WorkItemTrackingHttpClient workItemClient;
+        private BuildHttpClient buildClient;
+        private WorkItemTrackingHttpClient workItemClient;
+        private AccessToken token;
+        private ILogger<DevOpsService> logger;
 
-        public DevOpsService()
+        public DevOpsService(ILogger<DevOpsService> _logger)
         {
+            logger = _logger;
             // Connect to Azure DevOps using managed identity
-            var token = (new DefaultAzureCredential()).GetToken(new TokenRequestContext(["499b84ac-1321-427f-aa17-267ca6975798/.default"]));
+            token = GetToken();
             var connection = new VssConnection(new Uri(devOpsUrl), new VssOAuthAccessTokenCredential(token.Token));
             buildClient = connection.GetClient<BuildHttpClient>();
             workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
         }
 
+        private static AccessToken GetToken()
+        {
+            return (new DefaultAzureCredential()).GetToken(new TokenRequestContext(["499b84ac-1321-427f-aa17-267ca6975798/.default"]));
+        }
+
+        private void RefreshConnection()
+        {
+            if (token.ExpiresOn < DateTimeOffset.Now.AddMinutes(5))
+            {
+                token = GetToken();
+                var connection = new VssConnection(new Uri(devOpsUrl), new VssOAuthAccessTokenCredential(token.Token));
+                buildClient = connection.GetClient<BuildHttpClient>();
+                workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
+            }
+        }
+
         public async Task<ReleasePlan> GetReleasePlan(int workItemId)
         {
-            Console.WriteLine($"Fetching release plan work with id {workItemId}");
+            RefreshConnection();
+            logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await workItemClient.GetWorkItemAsync(workItemId);
             if (workItem?.Id == null)
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
@@ -59,7 +80,6 @@ namespace AzureSDKDSpecTools.Services
 
         private static ReleasePlan MapWorkItemToReleasePlan(WorkItem workItem)
         {
-            Console.WriteLine($"Work item details: {workItem.Fields.ToString()}");
             var releasePlan = new ReleasePlan()
             {
                 WorkItemId = workItem.Id ?? 0,
@@ -75,12 +95,13 @@ namespace AzureSDKDSpecTools.Services
             return releasePlan;
         }
 
-        public async Task<List<ReleasePlan>> GetReleasePlans(string serviceTreeId, string productTreeId, string pullRequest)
+        public async Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid productTreeId, string pullRequest)
         {
+            RefreshConnection();
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{releaseProject}' AND [System.WorkItemType] = 'Release Plan' AND [Custom.ServiceTreeID] = '{serviceTreeId}' AND [Custom.ProductServiceTreeID] = '{productTreeId}' AND [System.State] NOT IN ('Abandoned', 'Duplicate', 'Finished')";
             var workItems = await FetchWorkItems(query);
             List<ReleasePlan> releasePlans = new ();
-            Console.WriteLine($"Fetched {workItems.Count} release plans for service and product.");
+            logger.LogInformation($"Fetched {workItems.Count} release plans for service and product.");
             foreach (var workItem in workItems)
             {
                 if (workItem.Relations == null)
@@ -89,7 +110,6 @@ namespace AzureSDKDSpecTools.Services
                 var apiSpecRelations = workItem.Relations.Where(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Forward"));
                 foreach(var apiSpecRelation in apiSpecRelations)
                 {
-                    Console.WriteLine($"Found {apiSpecRelation.Title} as child work item");
                     var apiSpecWorkItemId = int.Parse(apiSpecRelation.Url.Split('/').Last());
                     var apiSpecWorkItem = await workItemClient.GetWorkItemAsync(apiSpecWorkItemId);
                     if (apiSpecWorkItem != null)
@@ -132,6 +152,7 @@ namespace AzureSDKDSpecTools.Services
 
             try
             {
+                RefreshConnection();
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 WorkItem releasePlanWorkItem = await CreateWorkItem(releasePlan, "Release Plan", releasePlanTitle);
@@ -152,11 +173,14 @@ namespace AzureSDKDSpecTools.Services
 
                 // Link API spec as child of release plan
                 await LinkWorkItemAsChild(releasePlanWorkItemId, apiSpecWorkItem.Url);
-                return releasePlanWorkItem;
+                if (releasePlanWorkItem != null)
+                    return releasePlanWorkItem;
+
+                throw new Exception("Failed to create API spec work item");
             }
             catch (Exception ex) {
                 var errorMesage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
-                Console.WriteLine(errorMesage);
+                logger.LogError(errorMesage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
@@ -176,7 +200,26 @@ namespace AzureSDKDSpecTools.Services
                 Value = title
             });
 
-            Console.WriteLine($"Creating {workItemType} work item");
+            if (workItemType == "API Spec" && releasePlan.SpecPullRequests.Count > 0)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach(var pr in releasePlan.SpecPullRequests)
+                {
+                    if (sb.Length > 0)
+                        sb.Append("<br>");
+                    sb.Append($"<a href=\"{pr}\">{pr}</a>");
+                }
+                var prLinks = sb.ToString();
+                logger.LogInformation($"Adding pull request {prLinks} to API spec work item.");
+                specDocument.Add(new JsonPatchOperation
+                {
+                    Operation = Operation.Add,
+                    Path = "/fields/Custom.RESTAPIReviews",
+                    Value = sb.ToString()
+                });
+            }
+
+            logger.LogInformation($"Creating {workItemType} work item");
             var workItem = await workItemClient.CreateWorkItemAsync(specDocument, releaseProject, workItemType);
             if (workItem == null)
             {
@@ -217,16 +260,11 @@ namespace AzureSDKDSpecTools.Services
             var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query });
             if (result != null && result.WorkItems != null)
             {
-                var workItems = await workItemClient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
-                foreach (var workItem in workItems)
-                {
-                    Console.WriteLine($"Work Item ID: {workItem.Id}, Title: {workItem.Fields["System.Title"]}");
-                }
-                return workItems;
+                return await workItemClient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
             }
             else
             {
-                Console.WriteLine("No work items found.");
+                logger.LogWarning("No work items found.");
                 return [];
             }
         }

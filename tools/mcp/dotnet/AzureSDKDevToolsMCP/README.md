@@ -1,6 +1,6 @@
 # AzureSDKDevToolsMCP
 
-AzureSDKDevToolsMCP is a .NET 9.0 web application designed to integrate with the Model Context Protocol (MCP) framework. It provides tools for service team to use in GitHub Copilot agent to run various TypeSpec based operations.
+AzureSDKDevToolsMCP is a .NET 8.0 web application designed to integrate with the Model Context Protocol (MCP) framework. It provides tools for service team to use in GitHub Copilot agent to run various TypeSpec based operations.
 For e.g. TypeSpec validation
 
 ## Features

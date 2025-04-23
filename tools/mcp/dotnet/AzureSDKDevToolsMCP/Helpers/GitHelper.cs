@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using AzureSDKDevToolsMCP.Services;
 using LibGit2Sharp;
+using Microsoft.Extensions.Logging;
 
 
 namespace AzureSDKDevToolsMCP.Helpers
@@ -20,8 +21,9 @@ namespace AzureSDKDevToolsMCP.Helpers
         public string GetBranchName(string path);
         public IList<string> GetChangedFiles(string path);
     }
-    public class GitHelper(IGitHubService gitHubService) : IGitHelper
+    public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
+        readonly ILogger<GitHelper> logger = logger;
         readonly IGitHubService gitHubService = gitHubService;
         readonly static string SPEC_REPO_NAME = "azure-rest-api-specs";
         public IList<string> GetChangedFiles(string repoPath)
@@ -31,14 +33,14 @@ namespace AzureSDKDevToolsMCP.Helpers
             {
                 // Get the current branch
                 Branch currentBranch = repo.Head;
-                Console.WriteLine($"Current branch: {currentBranch.FriendlyName}");
+                logger.LogInformation($"Current branch: {currentBranch.FriendlyName}");
                 // Get the changes in the working directory
                 var changes = repo.Diff.Compare<TreeChanges>(currentBranch.Tip.Tree, DiffTargets.WorkingDirectory);
                 // List changed files
                 foreach (var change in changes)
                 {
                     changedFiles.Add(change.Path);
-                    Console.WriteLine($"Changed file: {change.Path}");
+                    logger.LogInformation($"Changed file: {change.Path}");
                 }
             }
             return changedFiles;
@@ -88,7 +90,7 @@ namespace AzureSDKDevToolsMCP.Helpers
             if(findForkParent) {
                 // Check if the repo is a fork and get the parent repo
                 var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrl(repoOwner, repoName);
-                Console.WriteLine($"Parent repo URL: {parentRepoUrl}");
+                logger.LogInformation($"Parent repo URL: {parentRepoUrl}");
                 if (!string.IsNullOrEmpty(parentRepoUrl))
                 {
                     var parentSegments = new Uri(parentRepoUrl).Segments;

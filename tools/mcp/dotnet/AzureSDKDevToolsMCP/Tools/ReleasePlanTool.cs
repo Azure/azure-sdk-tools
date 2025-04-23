@@ -1,27 +1,30 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Text.Json;
 using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using AzureSDKDSpecTools.Services;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 
 namespace AzureSDKDSpecTools.Tools
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper helper)
+    public class ReleasePlanTool(IDevOpsService _devOpsService, ITypeSpecHelper _helper, ILogger<ReleasePlanTool> _logger)
     {
-        private readonly IDevOpsService devOpsService = devOpsService;
-        private readonly ITypeSpecHelper typeSpecHelper = helper;
+        private readonly IDevOpsService devOpsService = _devOpsService;
+        private readonly ITypeSpecHelper typeSpecHelper = _helper;
+        private readonly ILogger<ReleasePlanTool> logger = _logger;
 
         [McpServerTool, Description("Get release plan for a service, product and API spec pull request")]
         public async Task<List<string>> GetReleasePlan(string serviceTreeId, string productTreeId, string pullRequestLink)
         {
-            List<string> releasePlanList = new List<string>();
+            List<string> releasePlanList = [];
             try
             {
-                var releasePlans = await devOpsService.GetReleasePlans(serviceTreeId, productTreeId, pullRequestLink);
+                var releasePlans = await devOpsService.GetReleasePlans(Guid.Parse(serviceTreeId), Guid.Parse(productTreeId), pullRequestLink);
                 if (releasePlans == null || releasePlans.Count == 0)
                 {
                     releasePlanList.Add("Failed to get release plan details.");
@@ -37,7 +40,7 @@ namespace AzureSDKDSpecTools.Tools
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to get release plan details: {ex.Message}");
+                logger.LogError($"Failed to get release plan details: {ex.Message}");
                 releasePlanList.Add($"Failed to get release plan details: {ex.Message}");
             }
             return releasePlanList;
@@ -49,17 +52,8 @@ namespace AzureSDKDSpecTools.Tools
             try
             {
                 var releasePlan = await devOpsService.GetReleasePlan(workItemId);
-                if (releasePlan != null)
-                {
-                    return "{" +
-                             $"URL: {releasePlan.WorkItemUrl}, " +
-                             $"ID: {releasePlan.WorkItemId}," +
-                             $"Title: {releasePlan.Title}," +
-                             $"Service Tree ID: {releasePlan.ServiceTreeId}," +
-                             $"Product Tree ID: {releasePlan.ProductTreeId}" +
-                           "}";
-                }
-                return "Failed to get release plan details.";
+                return releasePlan != null ? JsonSerializer.Serialize(releasePlan) :
+                       "Failed to get release plan details.";
             }
             catch (Exception ex)
             {
@@ -92,9 +86,7 @@ namespace AzureSDKDSpecTools.Tools
                     SpecPullRequests = [specPullRequestUrl]
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItem(releasePlan);
-                return workItem != null
-                    ? $"Release plan work item created successfully with ID: {workItem.Id}"
-                    : "Failed to create release plan work item.";
+                return workItem != null ? JsonSerializer.Serialize(workItem) : "Failed to create release plan work item.";
             }
             catch (Exception ex)
             {

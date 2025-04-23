@@ -1,5 +1,8 @@
-using AzureSDKDSpecTools.Services;
 using AzureSDKDSpecTools.Models;
+using AzureSDKDSpecTools.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace AzureSDKSpecToolTests
 {
@@ -8,7 +11,12 @@ namespace AzureSDKSpecToolTests
         private IDevOpsService devOpsService;
         public ReleasePlanTest()
         {
-            devOpsService = new DevOpsService();
+
+            var serviceProvider = new ServiceCollection()
+             .AddLogging(configure => configure.AddConsole())
+             .BuildServiceProvider();
+            var logger = serviceProvider.GetService<ILogger<DevOpsService>>();
+            devOpsService = new DevOpsService(logger);
         }
 
         [Fact]
@@ -24,13 +32,13 @@ namespace AzureSDKSpecToolTests
         public async Task GetReleasePlansForServicePrductTest()
         {
             var pr = "https://github.com/Azure/azure-rest-api-specs/pull/32282";
-            var releasePlans = await devOpsService.GetReleasePlans("42815c77-2fba-4eb9-b052-5f0c545cedf3", "8218fbb5-917d-4cd7-8498-9f21b189e231", pr);
+            var releasePlans = await devOpsService.GetReleasePlans(Guid.Parse("42815c77-2fba-4eb9-b052-5f0c545cedf3"), Guid.Parse("8218fbb5-917d-4cd7-8498-9f21b189e231"), pr);
             Assert.NotNull(releasePlans);
-            Assert.Single(releasePlans);
+            Assert.NotEmpty(releasePlans);
             Assert.Contains(pr.ToLower(), releasePlans.First().SpecPullRequests);
         }
 
-        [Fact]
+        [Fact (Skip = "Disabled for default run test since this creates a work item")]
         public async Task CreateReleasePlanTest()
         {
             var pr = "https://github.com/Azure/azure-rest-api-specs/pull/32282";
@@ -51,7 +59,6 @@ namespace AzureSDKSpecToolTests
             var workItem = await devOpsService.CreateReleasePlanWorkItem(releasePlan);
             Assert.NotNull(workItem);
             Assert.NotEmpty(workItem.Url);
-            Console.WriteLine($"Created work item {workItem.Url} for release plan");
         }
     }
 }

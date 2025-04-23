@@ -5,6 +5,8 @@ using Octokit.Models;
 using Octokit.Clients;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using AzureSDKDSpecTools.Services;
 
 namespace AzureSDKDevToolsMCP.Services
 {
@@ -22,9 +24,11 @@ namespace AzureSDKDevToolsMCP.Services
     public class GitHubService : IGitHubService
     {
         private GitHubClient gitHubClient;
+        private ILogger<GitHubService> logger;
 
-        public GitHubService()
+        public GitHubService(ILogger<GitHubService> _logger)
         {
+            logger = _logger;
             var token = GetGitHubAuthToken();
             gitHubClient = new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"))
             {
@@ -95,22 +99,23 @@ namespace AzureSDKDevToolsMCP.Services
 
         public async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
+            logger.LogInformation($"Getting all pull request for {repoOwner}/{repoName}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
-            Console.WriteLine($"Branch name: {remoteBranch}");
+            logger.LogInformation($"Branch name: {remoteBranch}");
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 
         private async Task<bool> IsDiffMergeable(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
         {
+            logger.LogInformation("Comparing the headbranch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
-            Console.WriteLine($"Comparison: {comparison.Status}");
+            logger.LogInformation($"Comparison: {comparison.Status}");
             return comparison?.MergeBaseCommit != null;
         }
 
         public async Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body)
         {
             var responseList = new List<string>();
-
             // Check if a pull request already exists for the branch
             try
             {
@@ -124,6 +129,7 @@ namespace AzureSDKDevToolsMCP.Services
             }
             catch (Exception ex)
             {
+                logger.LogError(ex.Message);
                 responseList.Add($"Failed to check for existing pull request for the branch. Error: {ex.Message}");
                 return responseList;                
             }

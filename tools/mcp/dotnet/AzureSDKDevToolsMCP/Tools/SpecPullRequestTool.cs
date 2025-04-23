@@ -3,8 +3,11 @@
 
 using System;
 using System.ComponentModel;
+using System.Text.Json;
 using AzureSDKDevToolsMCP.Helpers;
 using AzureSDKDevToolsMCP.Services;
+using AzureSDKDSpecTools.Models;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using Octokit;
 
@@ -12,10 +15,11 @@ namespace AzureSDKDevToolsMCP.Tools
 {
     [Description("TypeSpec pull request tools")]
     [McpServerToolType]
-    public class SpecPullRequestTool(IGitHubService service, IGitHelper helper)
+    public class SpecPullRequestTool(IGitHubService _service, IGitHelper _helper, ILogger<SpecPullRequestTool> _logger)
     {
-        private readonly IGitHubService gitHubService = service;
-        private readonly IGitHelper gitHelper = helper;
+        private readonly IGitHubService gitHubService = _service;
+        private readonly IGitHelper gitHelper = _helper;
+        private readonly ILogger<SpecPullRequestTool> logger = _logger;
         readonly string TEST_IGNORE_TAG = "[TEST-IGNORE]";
 
 
@@ -33,12 +37,12 @@ namespace AzureSDKDevToolsMCP.Tools
         {
             try
             {
-                Console.WriteLine($"Getting pull request details for {pullRequestNumber}...");
-                Console.WriteLine($"Repo owner: {repoOwner}");
+                logger.LogInformation($"Getting pull request details for {pullRequestNumber}...");
+                logger.LogInformation($"Repo owner: {repoOwner}");
                 var repoPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
-                Console.WriteLine($"Repo path: {repoPath}");
+                logger.LogInformation($"Repo path: {repoPath}");
                 var repoName = gitHelper.GetRepoName(repoPath);
-                Console.WriteLine($"Repo name: {repoName}");
+                logger.LogInformation($"Repo name: {repoName}");
                 var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
                 var prStatus = pullRequest.State == ItemState.Open ? "Open" : "Closed";
                 var mergeStatus = pullRequest.Merged ? "Merged" : "Not Merged";
@@ -46,14 +50,7 @@ namespace AzureSDKDevToolsMCP.Tools
                 {
                     mergeStatus = pullRequest.Mergeable == true ? "Open (PR is Mergeable)" : "Open (PR is not ready to merge)";
                 }
-                return "{" +
-                       $"Pull request url: {pullRequest.HtmlUrl}, " +
-                       $"Title: {pullRequest.Title}, " +
-                       $"Status: {prStatus}, " +
-                       $"Merge status: {mergeStatus}, " +
-                       $"Created at: {pullRequest.CreatedAt}, " +
-                       $"Updated at: {pullRequest.UpdatedAt}" +
-                       "}";
+                return JsonSerializer.Serialize(pullRequest);
             }
             catch (Exception ex)
             {
@@ -108,13 +105,13 @@ namespace AzureSDKDevToolsMCP.Tools
             var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
             var headBranchName = gitHelper.GetBranchName(repoRootPath);
             var headBranchRef = $"{headRepoOwner}:{headBranchName}";
-            Console.WriteLine($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
+            logger.LogInformation($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
             if (string.IsNullOrEmpty(headBranchName) || string.IsNullOrEmpty(repoName) || string.IsNullOrEmpty(headRepoOwner))
             {
                 return "Failed to get repo details. Please make sure to select the TypeSpec project path and try again.";
             }
 
-            Console.WriteLine($"Getting pull request for branch {headBranchRef}...");
+            logger.LogInformation($"Getting pull request for branch {headBranchRef}...");
             var pullRequest = await gitHubService.GetPullRequestForBranchAsync(repoOwner, repoName, headBranchRef);
             return pullRequest != null
                 ? $"Pull request found: {pullRequest.HtmlUrl}"
@@ -139,8 +136,8 @@ namespace AzureSDKDevToolsMCP.Tools
             var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
 
             var headBranch = $"{headRepoOwner}:{headBranchName}";
-            Console.WriteLine($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
-            Console.WriteLine($"Creating pull request in {targetRepoOwner}:{repoName}");
+            logger.LogInformation($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
+            logger.LogInformation($"Creating pull request in {targetRepoOwner}:{repoName}");
             //Create pull request
             var createResponseList = await gitHubService.CreatePullRequest(repoName, targetRepoOwner, targetBranch, headBranch, title, description);
             results.AddRange(createResponseList);

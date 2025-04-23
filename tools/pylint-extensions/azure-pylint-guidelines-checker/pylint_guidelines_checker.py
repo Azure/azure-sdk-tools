@@ -2396,14 +2396,14 @@ class NonCoreNetworkImport(BaseChecker):
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
             return
         for import_, _ in node.names:
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from a blocked package."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
             return
         self._check_import(node.modname, node)
 

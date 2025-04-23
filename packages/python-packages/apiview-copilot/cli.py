@@ -182,14 +182,20 @@ def deploy_flask_app(
 
 def generate_review_from_app(language: str, path: str):
     """Generates a review using the deployed Flask app."""
-    from scripts.remove_review import generate_remote_review
+    from scripts.remote_review import generate_remote_review
 
-    response = asyncio.run(generate_remote_review(path, language))
-    # attempt to JSON decode the string
-    try:
-        response = json.loads(response)
+    # Read the file content
+    with open(path, "r", encoding="utf-8") as f:
+        query = f.read()
+
+    print(f"Generating review for {path}...")
+    response = asyncio.run(generate_remote_review(query, language))
+
+    # response is already a dict, no need to parse it
+    if isinstance(response, dict):
         pprint(response, indent=2)
-    except json.JSONDecodeError:
+    else:
+        # Handle error responses which are strings
         print(response)
 
 

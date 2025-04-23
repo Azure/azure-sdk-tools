@@ -11,14 +11,24 @@ async def generate_remote_review(query: str, language: str) -> str:
     """
     Sends the query to the API endpoint with the language as a path parameter and awaits the response.
     """
-    api_endpoint = f"{BASE_API_ENDPOINT}/{language}"  # Append language as a path parameter
-    async with aiohttp.ClientSession() as session:
+    api_endpoint = f"{BASE_API_ENDPOINT}/{language}"
+
+    # Increase timeout to 5 minutes
+    timeout = aiohttp.ClientTimeout(total=300)  # 5 minutes
+
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         try:
-            async with session.post(api_endpoint, json={"content": query}) as response:
+            print(f"Sending request to {api_endpoint}...")
+            async with session.post(api_endpoint, json={"target": query}) as response:
                 if response.status == 200:
+                    print("Request successful, waiting for response...")
+                    # Already parsed as JSON by response.json()
                     return await response.json()
                 else:
-                    return f"Error: Received status code {response.status} from API."
+                    error_text = await response.text()
+                    return f"Error: Received status code {response.status} from API. Details: {error_text}"
+        except asyncio.TimeoutError:
+            return "Error: Request timed out. The review is taking longer than expected."
         except aiohttp.ClientError as e:
             return f"Error: Failed to connect to API. Details: {e}"
 

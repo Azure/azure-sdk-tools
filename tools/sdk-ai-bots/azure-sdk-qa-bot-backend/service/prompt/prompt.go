@@ -75,7 +75,8 @@ func (p *DefaultPromptParser) ParseResponse(response, template string) (*model.C
 		return nil, err
 	}
 	return &model.CompletionResp{
-		Answer:    resp.Answer,
-		HasResult: resp.HasResult,
+		Answer:     resp.Answer,
+		HasResult:  resp.HasResult,
+		References: resp.References,
 	}, nil
 }

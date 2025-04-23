@@ -12,14 +12,20 @@ import (
 	"github.com/copilot-extensions/rag-extension/model"
 	"github.com/copilot-extensions/rag-extension/service/prompt"
 	"github.com/copilot-extensions/rag-extension/service/search"
-	"github.com/joho/godotenv"
 )
 
 type CompletionService struct {
+	apiKey   string
+	endpoint string
+	model    string
 }
 
 func NewCompletionService() (*CompletionService, error) {
-	return &CompletionService{}, nil
+	return &CompletionService{
+		apiKey:   os.Getenv("AOAI_CHAT_COMPLETIONS_API_KEY"),
+		endpoint: os.Getenv("AOAI_CHAT_COMPLETIONS_ENDPOINT"),
+		model:    os.Getenv("AOAI_CHAT_COMPLETIONS_MODEL"),
+	}, nil
 }
 
 func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
@@ -37,17 +43,6 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		defaultTemplate := "default.md"
 		req.PromptTemplate = &defaultTemplate
 	}
-	if req.ModelConfig == nil {
-		modelConfig := model.ModelConfig{}
-		err := godotenv.Load()
-		if err != nil {
-			log.Fatal(err)
-		}
-		modelConfig.APIKey = os.Getenv("AOAI_CHAT_COMPLETIONS_API_KEY")
-		modelConfig.Model = os.Getenv("AOAI_CHAT_COMPLETIONS_MODEL")
-		modelConfig.Endpoint = os.Getenv("AOAI_CHAT_COMPLETIONS_ENDPOINT")
-		req.ModelConfig = &modelConfig
-	}
 	return nil
 }
 
@@ -57,10 +52,10 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		return nil, err
 	}
 	result := &model.CompletionResp{}
-	keyCredential := azcore.NewKeyCredential(req.ModelConfig.APIKey)
+	keyCredential := azcore.NewKeyCredential(s.apiKey)
 	// In Azure OpenAI you must deploy a model before you can use it in your client. For more information
 	// see here: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
-	client, err := azopenai.NewClientWithKeyCredential(req.ModelConfig.Endpoint, keyCredential, nil)
+	client, err := azopenai.NewClientWithKeyCredential(s.endpoint, keyCredential, nil)
 
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -80,6 +75,12 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	}
 
 	userMessage := req.Message.Content
+	// lower case
+	userMessage = strings.ToLower(userMessage)
+	// replace keyword
+	for k, v := range model.KeywordReplaceMap {
+		userMessage = strings.ReplaceAll(userMessage, fmt.Sprintf(" %s ", k), fmt.Sprintf(" %s ", v))
+	}
 
 	// The user asks a question
 	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content)})
@@ -113,11 +114,11 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
 	}
 	chunks := make([]string, 0)
-	references := make([]model.Reference, 0)
 	chunkLength := 0
 	for _, result := range mergedChunks {
 		chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
-		chunk += fmt.Sprintf("- document_title: %s\n", result.Title)
+		chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
+		chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
 		chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
 		chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
 
@@ -126,12 +127,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			break
 		}
 		chunks = append(chunks, chunk)
-		references = append(references, model.Reference{
-			Title:   result.Title,
-			Source:  result.ContextID,
-			Link:    model.GetIndexLink(result),
-			Content: result.Chunk,
-		})
 	}
 	promptStr, error := prompt.BuildPrompt(strings.Join(chunks, "-------------------------\n"), *req.PromptTemplate)
 	if error != nil {
@@ -147,7 +142,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
-		DeploymentName: &req.ModelConfig.Model,
+		DeploymentName: &s.model,
 		Temperature:    &temperature,
 	}, nil)
 
@@ -179,9 +174,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	if gotReply {
 		result.HasResult = true
 		log.Printf("Got chat completions reply\n")
-	}
-	if req.ReturnReferences {
-		result.References = references
 	}
 	log.Printf("done")
 	return result, nil

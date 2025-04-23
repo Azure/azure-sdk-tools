@@ -75,7 +75,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 			{
 				Text:       query,
 				K:          k,
-				Fields:     "text_vector",
+				Fields:     "text_vector, title_vector",
 				Kind:       "text",
 				Exhaustive: true,
 			},

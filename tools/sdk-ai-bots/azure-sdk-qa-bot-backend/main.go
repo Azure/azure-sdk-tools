@@ -16,8 +16,9 @@ func setupRouter() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 
-	// Protected endpoint
+	// Protected endpoints
 	r.POST("/completion", auth.APIKeyAuth(), handler.CompletionHandler)
+	r.POST("/feedback", auth.APIKeyAuth(), handler.FeedBackHandler)
 
 	return r
 }

@@ -100,7 +100,7 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("error reading target file: %w", err)
 			}
-			if err := storageService.PutBlob(blobPath, content); err != nil {
+			if err := storageService.PutBlob(storage.KnowledgeBlobContainer, blobPath, content); err != nil {
 				fmt.Printf("Error uploading file %s: %v\n", path, err)
 			}
 			fmt.Printf("Uploaded %s to blob storage\n", blobPath)
@@ -224,7 +224,7 @@ func deleteExpiredBlobs(currentFiles []string) error {
 	}
 
 	// List all blobs in the container
-	blobs := storageService.GetBlobs()
+	blobs := storageService.GetBlobs(storage.KnowledgeBlobContainer)
 	// Iterate through blobs and delete those not in the current files list
 	for _, blob := range blobs {
 		if _, exists := currentFileMap[blob]; !exists {

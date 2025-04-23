@@ -22,6 +22,7 @@ import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { migratePackage } from "../../common/migration.js";
+import { updateTspLocation } from "../../xlc/codeUpdate/generatedSdkUpdater.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -81,6 +82,8 @@ export async function generateRLCInPipeline(options: {
             }
             packagePath = generatedPackageDir;
             relativePackagePath = path.relative(options.sdkRepo, packagePath);
+            updateTspLocation(relativePackagePath);
+            logger.info(`Update tsp-location.yaml successfully`);
         }
     } else {
         logger.info(`Start to generate SDK from '${options.readmeMd}'.`);

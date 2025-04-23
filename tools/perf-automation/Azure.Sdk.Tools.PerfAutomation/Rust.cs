@@ -148,16 +148,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
             }
+
             IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
-
-            // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
-            var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
-
-            var opsPerSecond = -1d;
-            if (match.Success)
-            {
-                opsPerSecond = double.Parse(match.Groups[1].Value);
-            }
+            //time: [48.680 µs 48.913 µs 49.152 µs] 
+            var opsPerSecond = CalculateOpsPerSecond(result);
 
             foreach (var key in packageVersions.Keys)
             {
@@ -192,6 +186,41 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return;
         }
 
-       
+        private double CalculateOpsPerSecond(ProcessResult result)
+        {
+            //time: [48.680 µs 48.913 µs 49.152 µs] we want the middle one the average, the others are min and max, and i dislike regexes
+            var output = result.StandardOutput;
+            var lines = output.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            var timeLine = "";
+            foreach (var line in lines)
+            {
+                if (line.Contains("time")) {
+                    timeLine = line;
+                    break;
+                }
+            }
+            var fragments = timeLine.Split(new[] { '[',' ',']' }, StringSplitOptions.RemoveEmptyEntries);
+            bool firstFragmentFound = false;
+            double timing=1.0;
+            foreach(var fragment in fragments)
+            {
+                // see if we can parse the values
+                if(Double.TryParse(fragment, out timing) )
+                {
+                    // we found a number, we want the second one 
+                    if (firstFragmentFound)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        // we found the first number, so we need to look for the next one
+                        firstFragmentFound = true;
+                    }
+                }
+            }
+            //results are in micro seconds
+            return Math.Pow(10,6)/timing;
+        }
     }
 }

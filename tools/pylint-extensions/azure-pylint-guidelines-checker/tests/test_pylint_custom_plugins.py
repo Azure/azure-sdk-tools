@@ -3358,6 +3358,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
             os.path.join(TEST_FOLDER, "test_files", "do_not_log_errors_end_up_raising.py")
         )
         node = astroid.parse(file.read())
+
         file.close()
         return node
 

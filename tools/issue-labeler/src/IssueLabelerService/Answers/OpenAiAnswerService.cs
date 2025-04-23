@@ -63,7 +63,8 @@ namespace IssueLabelerService
 
             var replacementsUserPrompt = new Dictionary<string, string>
             {
-                { "Query", query },
+                { "Title", issue.Title },
+                { "Description", issue.Body },
                 { "PrintableDocs", printableDocs },
                 { "PrintableIssues", printableIssues }
             };

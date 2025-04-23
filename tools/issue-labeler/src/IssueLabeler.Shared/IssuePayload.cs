@@ -14,7 +14,7 @@ namespace IssueLabeler.Shared
         public string IssueUserLogin { get; set; }
         public string RepositoryName { get; set; }
         public string RepositoryOwnerName { get; set; }
-        public bool DisableLabels { get; set; }
-        public bool DisableAnswers { get; set; }
+        public bool PredictLabels { get; set; }
+        public bool PredictAnswers { get; set; }
     }
 }

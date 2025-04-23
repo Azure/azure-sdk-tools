@@ -47,7 +47,8 @@ namespace IssueLabelerService
             var config = _configurationService.GetForRepository($"{issue.RepositoryOwnerName}/{issue.RepositoryName}");
             Dictionary<string, string> labels;
 
-            if(!issue.DisableLabels)
+            // Enable labels if both the configuration enable labels and the issue predict labels are true
+            if(bool.Parse(config.EnableLabels) && issue.PredictLabels)
             {
                 try
                 {
@@ -80,8 +81,8 @@ namespace IssueLabelerService
 
             TriageOutput result = new TriageOutput { Labels = labels.Values };
             
-            // Both config and passed in disable answers must be true to run answer service. 
-            if(!bool.Parse(config.DisableAnswers) && !issue.DisableAnswers)
+            // Enable answers if both the configuration enable answers and the issue predict answers are true
+            if(bool.Parse(config.EnableAnswers) && issue.PredictAnswers)
             {
                 try{
 

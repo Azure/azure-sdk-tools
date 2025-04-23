@@ -164,9 +164,7 @@ class ContextItem:
                 del example.guideline_ids
                 self.examples.append(example)
             else:
-                print(
-                    f"WARNING: Example {ex_id} not found for guideline {result.id}. Skipping."
-                )
+                print(f"WARNING: Example {ex_id} not found for guideline {result.id}. Skipping.")
 
     def _process_id(self, id: str) -> str:
         """
@@ -222,9 +220,7 @@ class SearchManager:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def retrieve_static_guidelines(
-        self, language, include_general_guidelines: bool = False
-    ) -> List[object]:
+    def retrieve_static_guidelines(self, language, include_general_guidelines: bool = False) -> List[object]:
         """
         Retrieves the guidelines for the given language, optional with general guidelines.
         This method retrieves guidelines statically from the file system. It does not
@@ -276,9 +272,7 @@ class SearchManager:
         returns the results as a SearchResult object.
         """
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(
-            endpoint=SEARCH_ENDPOINT, index_name="examples-index", credential=CREDENTIAL
-        )
+        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="examples-index", credential=CREDENTIAL)
         result = client.search(
             search_text=query,
             filter=self.filter_expression,
@@ -292,9 +286,7 @@ class SearchManager:
         )
         return SearchResult(result)
 
-    def build_context(
-        self, guideline_results: List[SearchResult], example_results: List[SearchResult]
-    ) -> Context:
+    def build_context(self, guideline_results: List[SearchResult], example_results: List[SearchResult]) -> Context:
         self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
         client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
         database = client.get_database_client(COSMOS_DB_NAME)
@@ -328,9 +320,7 @@ class SearchManager:
                 batch = id_list[i : i + batch_size]
                 placeholders = ",".join([f"@id{i}" for i in range(len(batch))])
                 query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
-                parameters = [
-                    {"name": f"@id{i}", "value": value} for i, value in enumerate(batch)
-                ]
+                parameters = [{"name": f"@id{i}", "value": value} for i, value in enumerate(batch)]
                 results.extend(
                     list(
                         container.query_items(
@@ -344,13 +334,7 @@ class SearchManager:
 
         while queue:
             batch_ids = list(
-                set(
-                    [
-                        queue.popleft()
-                        for _ in range(min(batch_size, len(queue)))
-                        if _ not in seen_guideline_ids
-                    ]
-                )
+                set([queue.popleft() for _ in range(min(batch_size, len(queue))) if _ not in seen_guideline_ids])
             )
             if not batch_ids:
                 continue
@@ -377,15 +361,11 @@ class SearchManager:
                             final_examples[ex] = None
                     except TypeError:
                         # FIXME: This shouldn't happen once the data integrity is cleaned up
-                        print(
-                            f"WARNING: Examples for guideline {gid} is not a string! Skipping."
-                        )
+                        print(f"WARNING: Examples for guideline {gid} is not a string! Skipping.")
                         continue
 
             # now resolve all examples
-            example_ids_to_lookup = [
-                eid for eid, val in final_examples.items() if val is None
-            ]
+            example_ids_to_lookup = [eid for eid, val in final_examples.items() if val is None]
             examples = batch_query(examples_container, example_ids_to_lookup)
 
             for ex in examples:
@@ -398,12 +378,8 @@ class SearchManager:
                         queue.append(gid)
 
         # flatten the results to just the values
-        final_guidelines = [
-            Guideline(**v) for v in final_guidelines.values() if v is not None
-        ]
-        final_examples = [
-            Example(**v) for v in final_examples.values() if v is not None
-        ]
+        final_guidelines = [Guideline(**v) for v in final_guidelines.values() if v is not None]
+        final_examples = [Example(**v) for v in final_examples.values() if v is not None]
 
         context = Context(guidelines=final_guidelines, examples=final_examples)
         return context

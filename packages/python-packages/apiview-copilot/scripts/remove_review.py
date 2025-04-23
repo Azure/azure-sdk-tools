@@ -11,9 +11,7 @@ async def generate_remote_review(query: str, language: str) -> str:
     """
     Sends the query to the API endpoint with the language as a path parameter and awaits the response.
     """
-    api_endpoint = (
-        f"{BASE_API_ENDPOINT}/{language}"  # Append language as a path parameter
-    )
+    api_endpoint = f"{BASE_API_ENDPOINT}/{language}"  # Append language as a path parameter
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(api_endpoint, json={"content": query}) as response:

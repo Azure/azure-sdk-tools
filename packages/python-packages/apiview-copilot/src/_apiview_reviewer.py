@@ -33,9 +33,7 @@ logging.basicConfig(
 for handler in logging.root.handlers:
     if isinstance(handler, logging.FileHandler):
         handler.setLevel(logging.ERROR)
-        handler.formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - %(message)s"
-        )
+        handler.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
 # Create module-level logger
 logger = logging.getLogger(__name__)
@@ -76,9 +74,7 @@ class ApiViewReview:
         chunk_input: bool = DEFAULT_CHUNK_INPUT,
     ):
         if model not in supported_models:
-            raise ValueError(
-                f"Model {model} not supported. Supported models are: {', '.join(supported_models)}"
-            )
+            raise ValueError(f"Model {model} not supported. Supported models are: {', '.join(supported_models)}")
         self.language = language
         self.model = model
         self.use_rag = use_rag
@@ -108,13 +104,8 @@ class ApiViewReview:
             numbered_lines.append(f"{start_line_no + i + 1:4d}: {line}")
         apiview = "\n".join(numbered_lines)
 
-        prompt_path = (
-            pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}.prompty"
-        )
-        judge_path = (
-            pathlib.Path(_PROMPTS_FOLDER)
-            / f"review_apiview_{self.language}_judge.prompty"
-        )
+        prompt_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}.prompty"
+        judge_path = pathlib.Path(_PROMPTS_FOLDER) / f"review_apiview_{self.language}_judge.prompty"
 
         response = prompty.execute(
             prompt_path,
@@ -131,35 +122,25 @@ class ApiViewReview:
                 "language": self.language,
                 "apiview": apiview,
                 "review_results": initial_review,
-                "guidelines": self.search.retrieve_static_guidelines(
-                    self.language, include_general_guidelines=False
-                ),
+                "guidelines": self.search.retrieve_static_guidelines(self.language, include_general_guidelines=False),
             },
         )
         final_review = json.loads(response)
         return GeneralReviewResult(**final_review)
 
-    def get_response(
-        self, *, target: str, base: Optional[str] = None, diff: Optional[str] = None
-    ) -> ReviewResult:
+    def get_response(self, *, target: str, base: Optional[str] = None, diff: Optional[str] = None) -> ReviewResult:
         print(f"Generating review...")
 
-        logger.info(
-            f"Starting review with model: {self.model}, language: {self.language}, RAG: {self.use_rag}"
-        )
+        logger.info(f"Starting review with model: {self.model}, language: {self.language}, RAG: {self.use_rag}")
 
         start_time = time()
         target = self.unescape(target)
-        static_guidelines = self.search.retrieve_static_guidelines(
-            self.language, include_general_guidelines=False
-        )
+        static_guidelines = self.search.retrieve_static_guidelines(self.language, include_general_guidelines=False)
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
         chunked_apiview = SectionedDocument(target.splitlines(), chunk=self.chunk_input)
-        final_results = ReviewResult(
-            guideline_ids=static_guideline_ids, status="Success", violations=[]
-        )
+        final_results = ReviewResult(guideline_ids=static_guideline_ids, status="Success", violations=[])
 
         # Skip header if multiple sections
         chunks_to_process = []
@@ -287,9 +268,7 @@ class ApiViewReview:
                             return chunk, None
 
                 # If we get here, we've exhausted all retries
-                logger.error(
-                    f"Failed to process chunk {i} after {max_retries} attempts"
-                )
+                logger.error(f"Failed to process chunk {i} after {max_retries} attempts")
                 chunk_status[chunk_idx] = FAILURE
                 print(
                     "\r" + "Processing chunks: " + "".join(chunk_status),
@@ -302,8 +281,7 @@ class ApiViewReview:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # Submit all tasks
                 future_to_chunk = {
-                    executor.submit(process_chunk, chunk_info): chunk_info
-                    for chunk_info in chunks_to_process
+                    executor.submit(process_chunk, chunk_info): chunk_info for chunk_info in chunks_to_process
                 }
 
                 # Process results as they complete - silently log errors without terminal output
@@ -355,9 +333,7 @@ class ApiViewReview:
                 f"{RED_TEXT}WARN: {len(bad_chunks)}/{len(chunks_to_process)} chunks had errors (see error.log){RESET_COLOR}"
             )
         if self.semantic_search_failed:
-            print(
-                f"{RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{RESET_COLOR}"
-            )
+            print(f"{RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{RESET_COLOR}")
 
         return final_results
 

@@ -54,3 +54,11 @@ class SectionedDocument:
     def __len__(self):
         # Return the number of sections in the document
         return len(self.sections)
+
+    def numbered(self) -> str:
+        """Returns the sections with line numbers."""
+        numbered_sections = []
+        for section in self.sections:
+            numbered_sections.append(section.numbered())
+        value = "\n\n".join(numbered_sections)
+        return value

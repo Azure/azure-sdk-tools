@@ -13,12 +13,13 @@ model:
     azure_deployment: ${env:PROMPTY_MODEL_DEPLOYMENT}
     api_version: 2025-01-01-preview
   parameters:
+    temperature: 0.7
+    top_p: 0.95
     stop: []
     frequency_penalty: 0
     presence_penalty: 0
-    max_completion_tokens: 20000
-    reasoning_effort: "high"
-    response_format: ${file:review_result_schema.json}
+    max_tokens: 16384
+    response_format: ${file:guideline_violation_schema.json}
 sample:
   language: python
   context: |
@@ -94,8 +95,9 @@ followed.
 These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}
 
+
 user:
-Evaluate the following APIView and provide a JSON array of violations.
+Evaluate the following APIView and make comments.
 ```{{language}}
 {{apiview}}
 ```

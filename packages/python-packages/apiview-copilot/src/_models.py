@@ -1,36 +1,25 @@
 from enum import Enum
 from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Dict, Set, Union
 
 from ._sectioned_document import Section
 
 
-class Improvement(BaseModel):
-    line_no: int = Field(description="Line number of the improvement.")
-    bad_code: str = Field(
-        description="the original code that was bad, cited verbatim. Should contain a single line of code."
-    )
-    suggestion: str = Field(
-        description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
-    )
-    comment: str = Field(description="a comment about the improvement.")
+class Comment(BaseModel):
+    """
+    Represents a comment in the review result.
+    """
 
-
-class GeneralReviewResult(BaseModel):
-    status: str = Field(description="Success if the request has no improvements. Error if there are improvements.")
-    improvements: List[Improvement] = Field(description="list of improvements if any")
-
-
-class Violation(BaseModel):
     rule_ids: List[str] = Field(description="Unique guideline ID or IDs that were violated.")
-    line_no: int = Field(description="Line number of the violation.")
+    line_no: int = Field(description="Line number of the comment.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
     suggestion: str = Field(
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
-    comment: str = Field(description="a comment about the violation.")
+    comment: str = Field(description="the contents of the comment.")
+    source: str = Field(description="unique tag for the prompt that produced the comment.")
 
 
 class Guideline(BaseModel):
@@ -82,8 +71,7 @@ class Example(BaseModel):
 
 
 class ReviewResult(BaseModel):
-    status: str = Field(description="Succeeded if the request has no violations. Error if there are violations.")
-    violations: List[Violation] = Field(description="List of violations if any")
+    comments: List[Comment] = Field(description="List of comments, if any")
 
     # truly private, never part of Pydantic’s schema or serialization
     _guideline_ids: Set[str] = PrivateAttr(default_factory=set)
@@ -94,8 +82,8 @@ class ReviewResult(BaseModel):
         guideline_ids: Optional[List[str]] = None,
         **data,
     ):
-        actual_violations = data.pop("violations", [])
-        data["violations"] = []
+        comments = data.pop("comments", [])
+        data["comments"] = []
         super().__init__(**data)
         # initialize private attr outside of Pydantic’s field system
         object.__setattr__(
@@ -103,63 +91,89 @@ class ReviewResult(BaseModel):
             "_guideline_ids",
             set(guideline_ids) if guideline_ids else set(),
         )
-        self._process_violations(actual_violations)
+        self._process_comments(comments)
 
-    def _process_violations(self, violations: List[Dict]):
+    def _process_comments(self, comments: List[Dict]):
         """
-        Process violation dictionaries, handling various line_no formats:
+        Process comment dictionaries, handling various line_no formats:
         - single number (e.g., "10"): Use as is, cast to int
         - range (e.g., "10-20"): Take the first number
-        - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the violation for each line
+        - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the comment for each line
         - invalid (e.g., "abc"): Use a fallback value of 0
         """
-        result_violations = []
+        result_comments = []
         default_line_no = 0
-        for violation in violations:
-            raw_line_no = str(violation.get("line_no", "0")).replace(" ", "").strip()
-            # if violation doesn't have suggestion, set it to empty string
-            if "suggestion" not in violation:
-                violation["suggestion"] = ""
+        for comment in comments:
+            raw_line_no = str(comment.get("line_no", "0")).replace(" ", "").strip()
+
+            # Ensure all required fields exist
+            if "suggestion" not in comment:
+                comment["suggestion"] = ""
+            if "rule_ids" not in comment:
+                comment["rule_ids"] = []
+            if "source" not in comment:
+                comment["source"] = "unknown"
 
             # handle common line number issues from the LLM
             for item in raw_line_no.split(","):
                 item = item.strip()
-                violation_copy = violation.copy()  # Create a copy of the violation dictionary
+                comment_copy = comment.copy()  # Create a copy of the comment dictionary
                 if "-" in item:
                     # Handle range format (e.g., "10-20")
                     first_num = item.split("-")[0].strip()
                     try:
-                        violation_copy["line_no"] = int(first_num)
+                        comment_copy["line_no"] = int(first_num)
                     except ValueError:
                         # Use fallback value if conversion fails
-                        violation_copy["line_no"] = default_line_no
-                    result_violations.append(Violation(**violation_copy))
+                        comment_copy["line_no"] = default_line_no
+                    result_comments.append(Comment(**comment_copy))
                 else:
                     try:
                         # Handle single number format (e.g., "10")
-                        violation_copy["line_no"] = int(item)
+                        comment_copy["line_no"] = int(item)
                     except ValueError:
                         # Use fallback value if conversion fails
-                        violation_copy["line_no"] = default_line_no
-                    result_violations.append(Violation(**violation_copy))
-        self.violations.extend(result_violations)
+                        comment_copy["line_no"] = default_line_no
+                    result_comments.append(Comment(**comment_copy))
+        self.comments.extend(result_comments)
+        self._deduplicate_comments()
+        self.sort()
+
+    def _deduplicate_comments(self):
+        """
+        Deduplicate comments based on line number and rule IDs.
+        """
+        seen = {}
+        for comment in self.comments:
+            key = comment.line_no
+            if key not in seen:
+                seen[key] = comment
+            else:
+                # Prefer a comment with rule IDs over ones without
+                if seen[key].rule_ids:
+                    continue
+                seen[key] = comment
+        self.comments = list(seen.values())
 
     def merge(self, other: "ReviewResult", *, section: Section):
         """
         Merge two ReviewResult objects.
         """
         self._guideline_ids.update(other._guideline_ids)
-        self._merge_violations(other.violations, section)
-        if len(self.violations) > 0:
-            self.status = "Error"
+        self._merge_comments(other.comments, section)
 
-    def _validate(self, item: Violation) -> bool:
+    def _validate(self, item: Comment) -> bool:
         """
-        Validates the Violation object.
-        If the result of validation is that the violation is invalid, return False.
-        Even if the violation is changed during validation, if it is still valid, return True.
+        Validates the Improvement object.
+        If the result of validation is that the comment is invalid, return False.
+        Even if the comment is changed during validation, if it is still valid, return True.
         """
-        # Validate and sanitize rule IDs
+        # If the rule IDs are empty, assume valid. These come from the
+        # general prompts as opposed to the guideline-specific ones.
+        if not item.rule_ids:
+            return True
+
+        # Validate and sanitize rule IDs, if provided
         resolved_rule_ids = set()
         for rule_id in item.rule_ids:
             resolved_rule_id = self._resolve_rule_id(rule_id)
@@ -188,71 +202,81 @@ class ReviewResult(BaseModel):
         print(f"WARNING: Rule ID {rid} not found. Possible hallucination.")
         return None
 
-    def _merge_violations(self, violations: List[Violation], section: Section):
+    def _merge_comments(self, comments: List[Comment], section: Section):
         """
-        Process and combine batches of violations as needed. Attempts to
-        determine line numbers and ignores violations that can't be mapped to a line.
-        If multiple of the same violation are found on the same line, they are combined.
+        Process and combine batches of comments as needed. Attempts to
+        determine line numbers and ignores comments that can't be mapped to a line.
+        If multiple of the same comment are found on the same line, they are combined.
         """
-        if not violations:
+        if not comments:
             return
 
-        combined_violations = {}
-        for violation in violations:
+        combined_comments = {}
+        for comment in comments:
             # Cure minor deviations in line numbers. If the line number can't be resolved, skip
-            line_no = self._find_line_number(section, violation)
+            line_no = self._find_line_number(section, comment)
             if line_no is None:
                 continue
-            violation.line_no = line_no
-            existing = combined_violations.get(line_no, None)
+            comment.line_no = line_no
+            existing = combined_comments.get(line_no, None)
             if existing:
-                for rule_id in violation.rule_ids:
+                for rule_id in comment.rule_ids:
                     if rule_id not in existing.rule_ids:
                         existing.rule_ids.append(rule_id)
-                        if existing.suggestion != violation.suggestion:
+                        if existing.suggestion != comment.suggestion:
                             # FIXME: Collect all suggestions and use the most popular??
-                            existing.suggestion = violation.suggestion
-                        existing.comment = existing.comment + " " + violation.comment
+                            existing.suggestion = comment.suggestion
+                        existing.comment = existing.comment + " " + comment.comment
             else:
-                combined_violations[line_no] = violation
+                combined_comments[line_no] = comment
 
-        # remove any violations that don't pass validation and then add them to the list
-        filtered_violations = [x for x in combined_violations.values() if self._validate(x)]
-        self.violations.extend(filtered_violations)
+        # remove any comments that don't pass validation and then add them to the list
+        filtered_comments = [x for x in combined_comments.values() if self._validate(x)]
+        self.comments.extend(filtered_comments)
 
-    def _find_line_number(self, chunk: Section, violation: Violation) -> Optional[int]:
+    def _find_line_number(self, chunk: Section, comment: Comment) -> Optional[int]:
         """
         Algorithm to correct line numbers that are slightly off.
         """
-        bad_code = violation.bad_code
-        target_idx = violation.line_no - chunk.start_line_no - 1
+        bad_code = comment.bad_code
+        target_idx = comment.line_no - chunk.start_line_no - 1
         try:
-            if chunk.lines[target_idx].strip() == bad_code.strip():
-                return violation.line_no
+            left = chunk.lines[target_idx].strip()
+            right = bad_code.strip()
+            if left == right:
+                return comment.line_no
+            elif left.startswith(right):
+                # If the left side starts with the right side, return the line number
+                return comment.line_no
+            elif right.startswith(left):
+                # If the right side starts with the left side, return the line number
+                return comment.line_no
         except IndexError:
             pass
         # Search up until the start of the chunk or an empty line is reached for a match
         for i in range(target_idx - 1, -1, -1):
-            if chunk.lines[i].strip().startswith(bad_code.strip()):
+            left = chunk.lines[i].strip()
+            if left.startswith(right) or right.startswith(left):
                 updated_idx = chunk.start_line_no + i + 1
                 return updated_idx
-            if not chunk.lines[i].strip():
+            if not left:
                 break
 
         # If that doesn't work, search down until the end of the chunk or an empty line is reached for a match
         for i in range(target_idx + 1, len(chunk.lines)):
-            if chunk.lines[i].strip().startswith(bad_code.strip()):
+            left = chunk.lines[i].strip()
+            if left.startswith(right) or right.startswith(left):
                 updated_idx = chunk.start_line_no + i + 1
                 return updated_idx
-            if not chunk.lines[i].strip():
+            if not left:
                 break
 
         # If no match is found, return None
-        print(f"WARNING: Could not find match for code '{violation.bad_code}' at or near line {violation.line_no}")
+        print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
         return None
 
     def sort(self):
         """
-        Sort the violations by line number.
+        Sort the comments by line number.
         """
-        self.violations.sort(key=lambda x: x.line_no)
+        self.comments.sort(key=lambda x: x.line_no)

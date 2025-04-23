@@ -9,6 +9,7 @@ openai==1.67.0
 prompty[azure]==0.1.49
 python-dotenv==1.0.1
 pydantic==2.10.6
+pyyaml==6.0.2
 
 # evals requirements
 azure-ai-evaluation==1.3.0

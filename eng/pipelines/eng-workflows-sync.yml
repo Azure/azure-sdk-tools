@@ -35,7 +35,6 @@ pr:
       - main
   paths:
     include:
-      - eng/pipelines/eng-workflows-sync.yml
       - .github/workflows/*event*
       - .github/workflows/post-apiview.yml
 

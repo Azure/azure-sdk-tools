@@ -102,7 +102,8 @@ export function processUse(
       moduleItems.forEach((childId) => {
         if (isModuleItem(apiJson.index[childId])) {
           annotatedReviewLines.siblingModule[childId] = processModule(
-            apiJson.index[childId] /* TODO: add parent info */,
+            apiJson.index[childId],
+            parentModule,
           );
           processedItems.add(childId);
         } else if (!isUseItem(apiJson.index[childId])) {

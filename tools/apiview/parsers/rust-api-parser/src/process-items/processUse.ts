@@ -92,7 +92,7 @@ export function processUse(
   const dereferencedId = item.inner.use.id;
   if (item.inner.use.is_glob) {
     if (processedItems.has(dereferencedId)) {
-      // This item has already been processed, so we only add a reference.
+      // case 0: This item has already been processed, so we only add a reference.
       annotatedReviewLines = processSimpleUseItem(item);
     }
     // case 1: [ glob = true; module = true; in index ] - collapse all the children on to the parent
@@ -150,8 +150,20 @@ export function processUse(
       parentModule,
     );
   }
-  // case 5: [ glob = false; module = false; in index or paths ] - simple use item
-  else if (dereferencedId in apiJson.index || dereferencedId in apiJson.paths) {
+  // case 5: [ glob = false; module = false; in index ]
+  else if (dereferencedId in apiJson.index) {
+    // case 5.1: Has not been processed yet, so we process it.
+    if (!processedItems.has(dereferencedId)) {
+      annotatedReviewLines.children[dereferencedId] = processItem(apiJson.index[dereferencedId]);
+      processedItems.add(dereferencedId);
+    } 
+    // case 5.2: Already expanded, so we just add a reference.
+    else {
+      annotatedReviewLines = processSimpleUseItem(item);
+    }
+  }
+  // case 6: [ glob = false; module = false; in paths ] - simple use item
+  else if (dereferencedId in apiJson.paths) {
     annotatedReviewLines = processSimpleUseItem(item);
   }
   addExternalReferencesIfNotExists(dereferencedId);

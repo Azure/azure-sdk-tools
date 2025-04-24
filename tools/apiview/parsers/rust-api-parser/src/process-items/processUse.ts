@@ -97,7 +97,7 @@ export function processUse(
     }
     // case 1: [ glob = true; module = true; in index ] - collapse all the children on to the parent
     else if (dereferencedId in apiJson.index && isModuleItem(apiJson.index[dereferencedId])) {
-      // isModuleItem check is not needed, being extra careful
+      // isModuleItem check is not needed, added for clarity
       const moduleItems = apiJson.index[dereferencedId].inner.module.items;
       moduleItems.forEach((childId) => {
         if (isModuleItem(apiJson.index[childId])) {
@@ -111,8 +111,12 @@ export function processUse(
           processedItems.add(childId);
         } else {
           const useReviewLines = processUse(apiJson.index[childId], parentModule);
-          annotatedReviewLines.siblingModule[childId] = useReviewLines.siblingModule[childId];
-          annotatedReviewLines.children[childId] = useReviewLines.children[childId];
+          for (const key in useReviewLines.siblingModule) {
+            annotatedReviewLines.siblingModule[key] = useReviewLines.siblingModule[key];
+          }
+          for (const key in useReviewLines.children) {
+            annotatedReviewLines.children[key] = useReviewLines.children[key];
+          }
         }
       });
     }

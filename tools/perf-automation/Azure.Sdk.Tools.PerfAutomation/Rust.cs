@@ -49,31 +49,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            if (IsTest)
-            {
-                outputBuilder.Append("output");
-                errorBuilder.Append("error");
-
-                UtilMethodCall(this, new UtilEventArgs(
-                    "RunAsync",
-                    new string[]
-                    {
-                        _cargoName,
-                        _buildCommand,
-                        WorkingDirectory,
-                        outputBuilder.ToString(),
-                        errorBuilder.ToString()
-                    }));
-                return (outputBuilder.ToString(), errorBuilder.ToString(), String.Empty);
-            }
-            else
-            {
-                var result = await Util.RunAsync(
-                    _cargoName, _buildCommand,
-                    WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
-
-                return (result.StandardOutput, result.StandardError, String.Empty);
-            }
+            return (String.Empty, String.Empty, String.Empty);
         }
         public override async Task<IterationResult> RunAsync(
             string project,
@@ -103,30 +79,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
             }
 
-            IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
             //time: [48.680 µs 48.913 µs 49.152 µs] 
             var opsPerSecond = ExtractOpsPerSecond(result);
-
-            foreach (var key in packageVersions.Keys)
-            {
-                var packageMatch = Regex.Match(result.StandardOutput, @$"{key.ToUpper()} VERSION ?.*");
-                if (packageMatch.Success)
-                {
-                    var version = packageMatch.Captures[0].Value.Split(' ');
-
-                    if (version.Length > 0)
-                    {
-                        reportedVersions.Add(key, version[version.Length - 1]);
-                    }
-                }
-            }
-
+            
             return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
                 StandardOutput = result.StandardOutput,
                 StandardError = result.StandardError,
-                PackageVersions = reportedVersions
+                PackageVersions = packageVersions
             };
         }
 

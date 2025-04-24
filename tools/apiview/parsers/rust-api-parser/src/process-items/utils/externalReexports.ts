@@ -5,10 +5,12 @@ import { ReviewLine, TokenKind } from "../../models/apiview-models";
 export const externalReferencesLines: ReviewLine[] = [];
 
 /**
- * Adds external references lines if the item exists in paths and is not already added.
+ * Registers external item references in the API view output.
+ * This function checks if an item exists in the external paths collection and 
+ * adds it to the references list if it hasn't been processed yet.
  * @param itemId The ID of the item being used/re-exported.
  */
-export function addExternalReferencesIfNotExists(itemId: Id): void {
+export function registerExternalItemReference(itemId: Id): void {
   const apiJson = getAPIJson();
   if (
     processedItems.has(itemId) ||

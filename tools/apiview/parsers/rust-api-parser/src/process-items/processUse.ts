@@ -3,7 +3,7 @@ import { Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import {
-  addExternalReferencesIfNotExists,
+  registerExternalItemReference,
   createItemLineFromPath,
   getModuleChildIdsByPath,
   processModuleReexport,
@@ -171,6 +171,6 @@ export function processUse(
   else if (dereferencedId in apiJson.paths) {
     annotatedReviewLines = processSimpleUseItem(item);
   }
-  addExternalReferencesIfNotExists(dereferencedId);
+  registerExternalItemReference(dereferencedId);
   return annotatedReviewLines;
 }

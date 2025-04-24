@@ -157,7 +157,7 @@ export function processUse(
     if (!processedItems.has(dereferencedId)) {
       annotatedReviewLines.children[dereferencedId] = processItem(apiJson.index[dereferencedId]);
       processedItems.add(dereferencedId);
-    } 
+    }
     // case 5.2: Already expanded, so we just add a reference.
     else {
       annotatedReviewLines = processSimpleUseItem(item);

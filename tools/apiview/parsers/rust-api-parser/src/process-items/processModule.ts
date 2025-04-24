@@ -3,7 +3,7 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
-import { getAPIJson } from "../main";
+import { getAPIJson, processedItems } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
 import { processUse } from "./processUse";
 import { AnnotatedReviewLines } from "./utils/models";
@@ -80,6 +80,7 @@ export function processModule(
         id: item.id,
         prefix: fullName,
       });
+      processedItems.add(childId);
     } else if (!isUseItem(apiJson.index[childId])) {
       regularChildIds.push(childId);
     } else if (isUseItem(apiJson.index[childId])) {
@@ -91,6 +92,7 @@ export function processModule(
     for (const childId of regularChildIds) {
       if (childId in apiJson.index) {
         annotatedReviewLines.children[childId] = processItem(apiJson.index[childId]) || [];
+        processedItems.add(childId);
       }
     }
   }
@@ -100,8 +102,13 @@ export function processModule(
     // Process the use items
     for (const childId of useChildIds) {
       const useResult = processUse(apiJson.index[childId], { id: item.id, prefix: fullName });
-      annotatedReviewLines.siblingModule[childId] = useResult.siblingModule[childId];
-      annotatedReviewLines.children[childId] = useResult.children[childId];
+      processedItems.add(childId);
+      for (const key in useResult.siblingModule) {
+        annotatedReviewLines.siblingModule[key] = useResult.siblingModule[key];
+      }
+      for (const key in useResult.children) {
+        annotatedReviewLines.children[key] = useResult.children[key];
+      }
     }
   }
 
@@ -112,7 +119,9 @@ export function processModule(
       Object.keys(annotatedReviewLines.children).map((key) => parseInt(key)),
     );
     for (const childId of sortedChildIds.nonModule) {
-      if (annotatedReviewLines.children[childId]) reviewLine.Children.push(...annotatedReviewLines.children[childId]);
+      if (annotatedReviewLines.children[childId]) {
+        reviewLine.Children.push(...annotatedReviewLines.children[childId]);
+      }
     }
   }
 

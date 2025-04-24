@@ -124,6 +124,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 Util.DeleteIfExists(resultsDirectory);
             }
+            await Task.Delay(0);
             // return the results directory so we can use it later on and avoid the discovery
             return resultsDirectory;
         }

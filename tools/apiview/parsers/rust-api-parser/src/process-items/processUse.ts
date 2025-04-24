@@ -55,7 +55,7 @@ export function processUse(item: Item, parentModule: { prefix: string; id: numbe
   // case 5: [ glob = false; module = false; in index or paths ] - simple use item
   else if (dereferencedId in apiJson.index) {
     let useValue = item.inner.use.source || "null";
-    annotatedReviewLines.children[dereferencedId] = [{
+    annotatedReviewLines.children[item.id] = [{
       Tokens: [{
         Kind: TokenKind.Keyword,
         Value: "pub use",

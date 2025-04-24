@@ -8,4 +8,4 @@ param (
 
 python -m pip freeze
 Write-Host "Generating API review token file: $($SourcePath)"
-python -m apistubgen --pkg-path $SourcePath --out-path $OutPath
+python -m apistub --pkg-path $SourcePath --out-path $OutPath

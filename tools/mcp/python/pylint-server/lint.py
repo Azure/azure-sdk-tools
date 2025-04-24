@@ -95,27 +95,6 @@ def get_pylint(path: str) -> str:
         logger.error(f"Error running pylint: {str(e)}")
         return json.dumps({"error": f"Error running pylint: {str(e)}"})
 
-@mcp.tool()
-def get_pylint_version() -> str:
-    """Get the installed pylint version.
-
-    Returns:
-        JSON string containing the pylint version information.
-    """
-    try:
-        # Using subprocess to get the pylint version
-        result = subprocess.run(['pylint', '--version'], 
-                                capture_output=True, 
-                                text=True, 
-                                check=True)
-        return json.dumps({"version": result.stdout.strip()})
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error getting pylint version: {str(e)}")
-        return json.dumps({"error": f"Failed to get pylint version: {str(e)}"})
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        return json.dumps({"error": f"Unexpected error: {str(e)}"})
-
 if __name__ == "__main__":
     # Path to analyze
     mcp.run(transport='stdio')

@@ -1,113 +1,12 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Crate, Id, Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
+import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
-import { processedItems, getAPIJson } from "../main";
+import { getAPIJson } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
-import {
-  createItemLineFromPath,
-  getModuleChildIdsByPath,
-  processModuleReexport,
-} from "./utils/externalReexports";
-
-function processNonModuleChildren(
-  apiJson: Crate,
-  parentModule: { prefix: string; id: number } | undefined,
-  nonModuleChildIds: number[],
-): { siblingModule: { [id: number]: ReviewLine[] }; children: { [id: number]: ReviewLine[] } } {
-  const resultLines: {
-    siblingModule: { [id: number]: ReviewLine[] };
-    children: { [id: number]: ReviewLine[] };
-  } = {
-    siblingModule: {},
-    children: {},
-  };
-  // Process each child ID in the provided list
-  const finalChildIds: number[] = [];
-  for (const childId of nonModuleChildIds) {
-    if (!isUseItem(apiJson.index[childId])) {
-      finalChildIds.push(childId);
-      processedItems.add(childId);
-      continue;
-    }
-    const dereferencedId = apiJson.index[childId].inner.use.id;
-    if (!processedItems.has(dereferencedId)) {
-      // it is a Use item, but not been dereferenced so far in any of the sub-modules
-      // so, dereference it here
-      // it could be a
-      //  single item in paths
-      //  single item in index
-      //  glob module
-      //  non-glob module
-      if (dereferencedId in apiJson.index) {
-        if (!isModuleItem(apiJson.index[dereferencedId])) {
-          finalChildIds.push(dereferencedId);
-          processedItems.add(dereferencedId);
-        } else {
-          if (apiJson.index[childId].inner.use.is_glob) {
-            // if it is a glob, collapse all the children on to the parent
-            console.log(apiJson.index[dereferencedId].inner.module.items)
-            apiJson.index[dereferencedId].inner.module.items.forEach((childId) => {
-              if (!processedItems.has(childId) && !isModuleItem(apiJson.index[childId])) {
-                // TODO: we need to check if the child item is a use item or not - recursive logic broke
-                finalChildIds.push(childId);
-                processedItems.add(childId);
-              } else if (!processedItems.has(childId) && isModuleItem(apiJson.index[childId])) {
-                resultLines.siblingModule[childId] = processModule(
-                  apiJson.index[childId],
-                  parentModule,
-                );
-                processedItems.add(childId);
-              }
-            });
-            processedItems.add(dereferencedId);
-          } else {
-            resultLines.siblingModule[dereferencedId] = processModule(
-              apiJson.index[dereferencedId],
-              parentModule,
-            );
-            processedItems.add(dereferencedId);
-          }
-        }
-      } else if (dereferencedId in apiJson.paths) {
-        // Handle external modules re-exported into this scope
-        if (apiJson.index[childId].inner.use.is_glob) {
-          getModuleChildIdsByPath(apiJson.paths[dereferencedId].path.join("::"), apiJson).forEach(
-            (childId) => {
-              if (!processedItems.has(childId)) {
-                finalChildIds.push(childId);
-                processedItems.add(childId);
-              }
-            },
-          );
-        } else if (apiJson.paths[dereferencedId].kind === ItemKind.Module) {
-          resultLines.siblingModule[dereferencedId] = processModuleReexport(
-            dereferencedId,
-            apiJson.paths[dereferencedId],
-            apiJson,
-            parentModule,
-          );
-        } else {
-          finalChildIds.push(childId);
-        }
-        processedItems.add(dereferencedId);
-      }
-    } else {
-      // treat it as a simple use item
-      finalChildIds.push(childId);
-      processedItems.add(dereferencedId);
-    }
-  }
-
-  for (const childId of finalChildIds) {
-    if (!(childId in apiJson.index) && childId in apiJson.paths) {
-      resultLines.children[childId] = [createItemLineFromPath(childId, apiJson.paths[childId])];
-    }
-    resultLines.children[childId] = processItem(apiJson.index[childId]) || [];
-  }
-  return resultLines;
-}
+import { processUse } from "./processUse";
+import { AnnotatedReviewLines } from "./utils/models";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -170,46 +69,50 @@ export function processModule(
 
   const apiJson = getAPIJson();
   const allChildIds = item.inner.module.items;
-  const nonModuleChildIds = [];
-  const siblingModuleLines: { [id: Id]: ReviewLine[] } = {};
+  const regularChildIds = [];
+  const useChildIds = [];
+
+  const annotatedReviewLines: AnnotatedReviewLines = { siblingModule: {}, children: {} };
+
   for (const childId of allChildIds) {
     if (isModuleItem(apiJson.index[childId])) {
-      siblingModuleLines[childId] = processModule(apiJson.index[childId], {
+      annotatedReviewLines.siblingModule[childId] = processModule(apiJson.index[childId], {
         id: item.id,
         prefix: fullName,
       });
-    } else {
-      nonModuleChildIds.push(childId);
+    } else if (!isUseItem(apiJson.index[childId])) {
+      regularChildIds.push(childId);
+    } else if (isUseItem(apiJson.index[childId])) {
+      useChildIds.push(childId);
     }
   }
 
-  let typicalChildren: {
-    siblingModule: {
-      [id: number]: ReviewLine[];
-    };
-    children: {
-      [id: number]: ReviewLine[];
-    };
-  } = { siblingModule: {}, children: {} };
-  if (nonModuleChildIds.length > 0) {
-    typicalChildren = processNonModuleChildren(
-      apiJson,
-      { id: item.id, prefix: fullName },
-      nonModuleChildIds,
-    );
-    // Take the keys from the children object, sort using getSortedChildren
-    // and then push to reviewLine.Children in that order
-    if (Object.keys(typicalChildren.children).length > 0) {
-      const sortedChildIds = getSortedChildIds(
-        Object.keys(typicalChildren.children).map((key) => parseInt(key)),
-      );
-      for (const childId of sortedChildIds.nonModule) {
-        reviewLine.Children.push(...typicalChildren.children[childId]);
+  if (regularChildIds.length > 0) {
+    for (const childId of regularChildIds) {
+      if (childId in apiJson.index) {
+        annotatedReviewLines.children[childId] = processItem(apiJson.index[childId]) || [];
       }
     }
-    // Append siblingModuleLines and typicalChildren.siblingModule
-    for (const childId of Object.keys(typicalChildren.siblingModule)) {
-      siblingModuleLines[childId] = typicalChildren.siblingModule[childId];
+  }
+
+  // Process the use items
+  if (useChildIds.length > 0) {
+    // Process the use items
+    for (const childId of useChildIds) {
+      const useResult = processUse(apiJson.index[childId], { id: item.id, prefix: fullName });
+      annotatedReviewLines.siblingModule[childId] = useResult.siblingModule[childId];
+      annotatedReviewLines.children[childId] = useResult.children[childId];
+    }
+  }
+
+  // Take the keys from the children object, sort using getSortedChildren
+  // and then push to reviewLine.Children in that order
+  if (Object.keys(annotatedReviewLines.children).length > 0) {
+    const sortedChildIds = getSortedChildIds(
+      Object.keys(annotatedReviewLines.children).map((key) => parseInt(key)),
+    );
+    for (const childId of sortedChildIds.nonModule) {
+      if (annotatedReviewLines.children[childId]) reviewLine.Children.push(...annotatedReviewLines.children[childId]);
     }
   }
 
@@ -233,10 +136,10 @@ export function processModule(
   // there will be sibling modules from the re-exported Use modules
   // add them to the allChildIds.module, sort them again
   const sortedSiblingModuleIds = getSortedChildIds(
-    Object.keys(siblingModuleLines).map((key) => parseInt(key)),
+    Object.keys(annotatedReviewLines.siblingModule).map((key) => parseInt(key)),
   );
   for (const childId of sortedSiblingModuleIds.module) {
-    reviewLines.push(...siblingModuleLines[childId]);
+    reviewLines.push(...annotatedReviewLines.siblingModule[childId]);
   }
 
   return reviewLines;

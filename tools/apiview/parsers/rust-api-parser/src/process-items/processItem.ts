@@ -35,8 +35,6 @@ export function processItem(
   if (typeof item.inner === "object") {
     if ("module" in item.inner) {
       return processModule(item, parentModule);
-    } else if ("use" in item.inner) {
-      return processUse(item);
     } else if ("union" in item.inner) {
       return processUnion(item);
     } else if ("struct" in item.inner) {

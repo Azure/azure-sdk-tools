@@ -1,11 +1,12 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile, TokenKind } from "./models/apiview-models";
-import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
+import { Crate, FORMAT_VERSION, Id } from "../rustdoc-types/output/rustdoc-types";
 import { externalReferencesLines } from "./process-items/utils/externalReexports";
 import { sortExternalItems } from "./process-items/utils/sorting";
 
 let apiJson: Crate;
+export const processedItems = new Set<number>();
 export let PACKAGE_NAME: string;
 export function getAPIJson(): Crate {
   return apiJson;

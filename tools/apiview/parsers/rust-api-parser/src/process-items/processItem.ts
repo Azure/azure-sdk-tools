@@ -29,6 +29,9 @@ export function processItem(
   item: Item,
   parentModule?: { prefix: string; id: number },
 ): ReviewLine[] | null {
+  if (!item) {
+    return null;
+  }
   if (typeof item.inner === "object") {
     if ("module" in item.inner) {
       return processModule(item, parentModule);

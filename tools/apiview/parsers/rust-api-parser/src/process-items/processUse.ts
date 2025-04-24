@@ -1,23 +1,13 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
+import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
-import { isModuleItem, isUseItem } from "./utils/typeGuards";
+import { isUseItem } from "./utils/typeGuards";
 import { addExternalReferencesIfNotExists } from "./utils/externalReexports";
-import { getAPIJson } from "../main";
 import { replaceCratePath } from "./utils/cratePathUtils";
 
 export function processUse(item: Item): ReviewLine[] | undefined {
   if (!isUseItem(item)) return;
-  const apiJson = getAPIJson();
-  // code path where use items are "modules" is handled in processModule
   const useItemId = item.inner.use.id;
-  if (
-    (useItemId in apiJson.index && isModuleItem(apiJson.index[useItemId])) ||
-    (useItemId in apiJson.paths && apiJson.paths[useItemId].kind == ItemKind.Module)
-  ) {
-    return;
-  }
-
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   const reviewLine: ReviewLine = {

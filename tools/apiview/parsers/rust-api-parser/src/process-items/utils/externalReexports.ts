@@ -18,7 +18,7 @@ export function addExternalReferencesIfNotExists(itemId: Id): void {
     return;
   }
 
-  externalReferencesLines.push(createItemLine(itemId, apiJson.paths[itemId]));
+  externalReferencesLines.push(createItemLineFromPath(itemId, apiJson.paths[itemId]));
 }
 
 /**
@@ -31,7 +31,7 @@ function hasValidPath(itemSummary: ItemSummary): boolean {
 /**
  * Creates a single ReviewLine representing a non-module item
  */
-function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
+export function createItemLineFromPath(itemId: Id, itemSummary: ItemSummary): ReviewLine {
   return {
     LineId: itemId.toString(),
     Tokens: [
@@ -63,7 +63,7 @@ export function processModuleReexport(
   parentModule?: { prefix: string; id: number },
 ): ReviewLine[] {
   const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary, parentModule);
-  const children = findModuleChildren(itemSummary.path.join("::"), apiJson);
+  const children = findModuleChildrenByPath(itemSummary.path.join("::"), apiJson);
 
   if (children.length === 0) {
     // Add closing brace to the header line for empty modules
@@ -153,13 +153,13 @@ export function getModuleChildIdsByPath(currentPath: string, apiJson: Crate): nu
 /**
  * Finds all child items of a module based on path and returns ReviewLines
  */
-function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
+function findModuleChildrenByPath(currentPath: string, apiJson: Crate): ReviewLine[] {
   const childIds = getModuleChildIdsByPath(currentPath, apiJson);
   const children: ReviewLine[] = [];
 
   for (const childId of childIds) {
     const childItemSummary = apiJson.paths[childId];
-    children.push(createItemLine(Number(childId), childItemSummary));
+    children.push(createItemLineFromPath(Number(childId), childItemSummary));
   }
 
   // Sort children by kind and then by path

@@ -180,7 +180,7 @@ namespace IssueLabelerService
                 .Select(label => label.Name)
                 .ToList();
 
-            return "'" + string.Join("';'", categoryLabels) + "';";
+            return "['" + string.Join("', '", categoryLabels) + "'']";
         }
 
         private bool ValidateLabels(IEnumerable<Label> labels, Dictionary<string, string> labelsToValidate)

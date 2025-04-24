@@ -9,7 +9,7 @@ $javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | Con
 
 # due to relative slowness of these tests, we're limiting them to linux only for now.
 Describe ".NET Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
-;    BeforeAll {
+    BeforeAll {
         $NET_REPO = "Azure/azure-sdk-for-net"
         $NET_REPO_REF = "5594fe195625e2816ed54d556d8948a8f60d862c"
 

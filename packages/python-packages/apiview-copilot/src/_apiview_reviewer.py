@@ -221,7 +221,7 @@ class ApiViewReview:
             filter_prompt_path,
             inputs={
                 "comments": combined_results,
-                "language": self.language,
+                "language": self._get_language_pretty_name(),
                 "sample": filter_metadata["sample"],
                 "exceptions": filter_metadata["exceptions"],
             },
@@ -241,6 +241,22 @@ class ApiViewReview:
             print(f"{RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{RESET_COLOR}")
 
         return final_results
+
+    def _get_language_pretty_name(self) -> str:
+        """
+        Returns a pretty name for the language.
+        """
+        language_pretty_names = {
+            "android": "Android",
+            "cpp": "C++",
+            "dotnet": "C#",
+            "golang": "Go",
+            "ios": "Swift",
+            "java": "Java",
+            "python": "Python",
+            "typescript": "JavaScript",
+        }
+        return language_pretty_names.get(self.language, self.language.capitalize())
 
     def _retrieve_and_resolve_guidelines(self, query: str) -> List[object] | None:
         try:
@@ -464,7 +480,7 @@ class ApiViewReview:
                     prompty.execute,
                     os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
                     inputs={
-                        "language": self.language,
+                        "language": self._get_language_pretty_name(),
                         "context": context_string,
                         "apiview": chunk.numbered(),
                     },
@@ -476,7 +492,7 @@ class ApiViewReview:
                 prompty.execute,
                 os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
                 inputs={
-                    "language": self.language,
+                    "language": self._get_language_pretty_name(),
                     "apiview": chunk.numbered(),
                     "custom_rules": generic_metadata["custom_rules"],
                 },

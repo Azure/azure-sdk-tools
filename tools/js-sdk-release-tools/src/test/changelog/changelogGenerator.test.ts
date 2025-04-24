@@ -9,25 +9,25 @@ import { getFirstReleaseContent } from "../../common/changelog/modifyChangelogFi
 
 describe("Breaking change detection", () => {
     test("ModularClient ->firstGA", async () => {
-        const root = path.join(__dirname, 'testCases/modular-firstGa/');
+        const root = path.join(__dirname, 'testCases/modular-firstRelease/');
         const content = getFirstReleaseContent(root,true);
         expect(content).toBe("This is the first stable version with the package of @azure/arm-test");
 
     });
     test("ModularClient ->firstBeta", async () => {
-        const root = path.join(__dirname, 'testCases/modular-firstBeta/');
+        const root = path.join(__dirname, 'testCases/modular-firstRelease/');
         const content = getFirstReleaseContent(root,false);
         expect(content).toBe("Initial release of the @azure/arm-test package");
 
     });
     test("HLC ->firstGA", async () => {
-        const root = path.join(__dirname, 'testCases/hlc-firstGa/');
+        const root = path.join(__dirname, 'testCases/hlc-firstRelease/');
         const content = getFirstReleaseContent(root,true);
         expect(content).toBe("The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).");
 
     });
     test("HLC ->firstBeta", async () => {
-        const root = path.join(__dirname, 'testCases/hlc-firstBeta/');
+        const root = path.join(__dirname, 'testCases/hlc-firstRelease/');
         const content = getFirstReleaseContent(root,false);
         expect(content).toBe("The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).");
 

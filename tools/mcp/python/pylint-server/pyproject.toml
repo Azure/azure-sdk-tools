@@ -1,7 +1,7 @@
 [project]
 name = "linting"
 version = "0.1.0"
-description = "Add your description here"
+description = "Pylint MCP server"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [

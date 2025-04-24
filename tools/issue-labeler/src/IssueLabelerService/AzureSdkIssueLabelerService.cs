@@ -75,7 +75,7 @@ namespace IssueLabelerService
             }
             else
             {
-                _logger.LogError($"Labeling is turned off for issue #{issue.IssueNumber} in repository {issue.RepositoryName}. Wihtout Labels answer service will not be called.");
+                _logger.LogError($"Labeling is turned off for issue #{issue.IssueNumber} in repository {issue.RepositoryName}. Without Labels, answers will not be suggested.");
                 return EmptyResult;
             }
 

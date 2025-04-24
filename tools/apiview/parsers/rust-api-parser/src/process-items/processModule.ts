@@ -21,6 +21,8 @@ export function processModule(
 ): ReviewLine[] {
   if (!isModuleItem(item)) return [];
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
+  const apiJson = getAPIJson();
+  const isRootModule = item.id === apiJson.root;
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
@@ -28,62 +30,70 @@ export function processModule(
     Tokens: [],
     Children: [],
   };
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "pub mod",
-  });
   let fullName = "";
-  // parent module
-  if (parentModule) {
-    fullName += parentModule.prefix + "::";
+
+  if (!isRootModule) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "pub mod",
+    });
+    // parent module
+    if (parentModule) {
+      fullName += parentModule.prefix + "::";
+      reviewLine.Tokens.push({
+        Kind: TokenKind.TypeName,
+        Value: parentModule.prefix,
+        RenderClasses: ["namespace"],
+        NavigateToId: parentModule.id.toString(),
+        HasSuffixSpace: false,
+      });
+      reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: `::`,
+        HasSuffixSpace: false,
+      });
+    }
+    fullName += item.name;
+    // current module
     reviewLine.Tokens.push({
       Kind: TokenKind.TypeName,
-      Value: parentModule.prefix,
+      Value: item.name || "null",
       RenderClasses: ["namespace"],
-      NavigateToId: parentModule.id.toString(),
-      HasSuffixSpace: false,
+      NavigateToId: item.id.toString(),
+      NavigationDisplayName: fullName,
     });
+
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
-      Value: `::`,
+      Value: "{",
       HasSuffixSpace: false,
     });
   }
 
-  fullName += item.name;
-  // current module
-  reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
-    Value: item.name || "null",
-    RenderClasses: ["namespace"],
-    NavigateToId: item.id.toString(),
-    NavigationDisplayName: fullName,
-  });
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: "{",
-    HasSuffixSpace: false,
-  });
-
-  const apiJson = getAPIJson();
   const allChildIds = item.inner.module.items;
   const regularChildIds = [];
   const useChildIds = [];
 
   const annotatedReviewLines: AnnotatedReviewLines = { siblingModule: {}, children: {} };
-
-  for (const childId of allChildIds) {
-    if (isModuleItem(apiJson.index[childId])) {
-      annotatedReviewLines.siblingModule[childId] = processModule(apiJson.index[childId], {
+  const passThroughParentInfo = isRootModule
+    ? parentModule
+    : {
         id: item.id,
         prefix: fullName,
-      });
+      };
+  for (const childId of allChildIds) {
+    if (isModuleItem(apiJson.index[childId])) {
+      // 1. Process child modules first so that any references in the parent modules can be shown as links than the fully dereferenced version
+      annotatedReviewLines.siblingModule[childId] = processModule(
+        apiJson.index[childId],
+        passThroughParentInfo,
+      );
       processedItems.add(childId);
     } else if (!isUseItem(apiJson.index[childId])) {
+      // 2. Non-use children should be processed before the use items and after the child modules
       regularChildIds.push(childId);
     } else if (isUseItem(apiJson.index[childId])) {
+      // 3. handle use items; with globs, non-globs, modules, items, etc; either as references or add as children to this module
       useChildIds.push(childId);
     }
   }
@@ -99,9 +109,8 @@ export function processModule(
 
   // Process the use items
   if (useChildIds.length > 0) {
-    // Process the use items
     for (const childId of useChildIds) {
-      const useResult = processUse(apiJson.index[childId], { id: item.id, prefix: fullName });
+      const useResult = processUse(apiJson.index[childId], passThroughParentInfo);
       processedItems.add(childId);
       for (const key in useResult.siblingModule) {
         annotatedReviewLines.siblingModule[key] = useResult.siblingModule[key];
@@ -120,26 +129,34 @@ export function processModule(
     );
     for (const childId of sortedChildIds.nonModule) {
       if (annotatedReviewLines.children[childId]) {
-        reviewLine.Children.push(...annotatedReviewLines.children[childId]);
+        if (!isRootModule) {
+          // If it is not rootModule, add items as children to the reviewLine
+          reviewLine.Children.push(...annotatedReviewLines.children[childId]);
+        } else {
+          // If it is rootModule, add items to the top-level
+          reviewLines.push(...annotatedReviewLines.children[childId]);
+        }
       }
     }
   }
 
-  if (reviewLine.Children.length > 0) {
-    // Add the closing brace for the module
-    reviewLines.push(reviewLine);
-    reviewLines.push({
-      Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-      IsContextEndLine: true,
-      RelatedToLine: reviewLine.LineId,
-    });
-  } else {
-    // Empty module case (no direct items or relevant re-exports)
-    reviewLine.Tokens.push({
-      Kind: TokenKind.Punctuation,
-      Value: "}",
-    });
-    reviewLines.push(reviewLine);
+  if (!isRootModule) {
+    if (reviewLine.Children.length > 0) {
+      // Add the closing brace for the module
+      reviewLines.push(reviewLine);
+      reviewLines.push({
+        Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+        IsContextEndLine: true,
+        RelatedToLine: reviewLine.LineId,
+      });
+    } else {
+      // Empty module case (no direct items or relevant re-exports)
+      reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: "}",
+      });
+      reviewLines.push(reviewLine);
+    }
   }
 
   // there will be sibling modules from the re-exported Use modules

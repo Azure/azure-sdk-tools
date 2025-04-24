@@ -1,12 +1,12 @@
 import { Crate, Id, ItemKind, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
 import { getAPIJson, processedItems } from "../../main";
-import { ReviewLine, TokenKind } from "../../models/apiview-models";
+import { ReviewLine, ReviewToken, TokenKind } from "../../models/apiview-models";
 
 export const externalReferencesLines: ReviewLine[] = [];
 
 /**
  * Registers external item references in the API view output.
- * This function checks if an item exists in the external paths collection and 
+ * This function checks if an item exists in the external paths collection and
  * adds it to the references list if it hasn't been processed yet.
  * @param itemId The ID of the item being used/re-exported.
  */
@@ -128,13 +128,15 @@ function createModuleHeaderLine(
   itemSummary: ItemSummary,
   parentModule?: { prefix: string; id: number },
 ): ReviewLine {
-  return {
-    LineId: itemId.toString(),
-    Tokens: [
-      {
-        Kind: TokenKind.Keyword,
-        Value: "pub mod",
-      },
+  const tokens: ReviewToken[] = [
+    {
+      Kind: TokenKind.Keyword,
+      Value: "pub mod",
+    },
+  ];
+
+  if (parentModule) {
+    tokens.push(
       {
         Kind: TokenKind.TypeName,
         Value: parentModule.prefix,
@@ -147,26 +149,35 @@ function createModuleHeaderLine(
         Value: `::`,
         HasSuffixSpace: false,
       },
-      {
-        Kind: TokenKind.TypeName,
-        Value: itemSummary.path[itemSummary.path.length - 1],
-        NavigateToId: itemId.toString(),
-        NavigationDisplayName:
-          parentModule.prefix + "::" + itemSummary.path[itemSummary.path.length - 1],
-        RenderClasses: ["namespace"],
-      },
-      {
-        Kind: TokenKind.Punctuation,
-        Value: "{",
-        HasSuffixSpace: false,
-      },
-      {
-        Kind: TokenKind.Comment,
-        Value: `/* re-export of ${itemSummary.path.join("::")} */`,
-        HasPrefixSpace: true,
-        HasSuffixSpace: true,
-      },
-    ],
+    );
+  }
+
+  tokens.push(
+    {
+      Kind: TokenKind.TypeName,
+      Value: itemSummary.path[itemSummary.path.length - 1],
+      NavigateToId: itemId.toString(),
+      NavigationDisplayName: parentModule
+        ? parentModule.prefix + "::" + itemSummary.path[itemSummary.path.length - 1]
+        : itemSummary.path[itemSummary.path.length - 1],
+      RenderClasses: ["namespace"],
+    },
+    {
+      Kind: TokenKind.Punctuation,
+      Value: "{",
+      HasSuffixSpace: false,
+    },
+    {
+      Kind: TokenKind.Comment,
+      Value: `/* re-export of ${itemSummary.path.join("::")} */`,
+      HasPrefixSpace: true,
+      HasSuffixSpace: true,
+    },
+  );
+
+  return {
+    LineId: itemId.toString(),
+    Tokens: tokens,
   };
 }
 

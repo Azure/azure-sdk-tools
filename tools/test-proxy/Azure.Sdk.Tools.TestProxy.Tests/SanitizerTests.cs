@@ -848,17 +848,31 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async Task MultipartRequestsCanRoundTrip()
         {
-            throw new NotImplementedException();
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
+
         }
 
         [Fact]
         public async Task MultipartRequestsCanSanitizeWithoutChangingBytes()
         {
-            throw new NotImplementedException();
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
+            var worklessSanitizer = new BodyRegexSanitizer(regex: "abc123");
+            var requestRef = session.Session.Entries[0].Request;
+            var responseRef = session.Session.Entries[0].Response;
+            var requestBodyBytesBefore = Convert.ToBase64String(requestRef.Body);
+            var responseBodyBytesBefore = Convert.ToBase64String(responseRef.Body);
+           
+            await session.Session.Sanitize(worklessSanitizer);
+
+            var requestBodyBytesAfter = Convert.ToBase64String(requestRef.Body);
+            var responseBodyBytesAfter = Convert.ToBase64String(responseRef.Body);
+
+            Assert.Equal(requestBodyBytesBefore, requestBodyBytesAfter);
+            Assert.Equal(responseBodyBytesBefore, responseBodyBytesAfter);
         }
 
         [Fact]
-        public async Task CanDeserializeFromOriginalMultipartMixedRecording()
+        public void CanDeserializeFromOriginalMultipartMixedRecording()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/old_multipart_request.json");
 
@@ -870,18 +884,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
         public async Task GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
         {
-            var session = TestHelpers.LoadRecordSession(targetFile);
+            //var session = TestHelpers.LoadRecordSession(targetFile);
 
-            var targetEntry = session.Session.Entries[0];
-            var matcher = new RecordMatcher();
+            //var targetEntry = session.Session.Entries[0];
+            //var matcher = new RecordMatcher();
 
-            var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
-            await session.Session.Sanitize(sanitizer);
+            //var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
+            //await session.Session.Sanitize(sanitizer);
 
-            var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
+            //var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
 
-            Assert.DoesNotContain(regex, bodyString);
-            Assert.Contains(replacementValue, bodyString);
+            //Assert.DoesNotContain(regex, bodyString);
+            //Assert.Contains(replacementValue, bodyString);
+            throw new NotImplementedException();
         }
     }
 }

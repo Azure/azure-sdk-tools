@@ -138,11 +138,11 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   if (language.toLowerCase() === 'go') {
     serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, ""); // go uses relative path as package name
   }
-  context.services?.push(serviceName);
+  pkg.serviceName = serviceName;
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
-  context.sdkArtifactFolder = stagedArtifactsFolder;
+  context.stagedArtifactsFolder = stagedArtifactsFolder;
 
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 

@@ -38,6 +38,7 @@ export const generateReport = (context: WorkflowContext) => {
       shouldLabelBreakingChange = true;
     }
     const packageReport: PackageReport = {
+      serviceName: pkg.serviceName,
       packageName: pkg.name,
       result: pkg.status,
       artifactPaths: pkg.artifactPaths,
@@ -85,10 +86,10 @@ export const generateReport = (context: WorkflowContext) => {
 
   executionReport = {
     packages: packageReports,
-    services: context.services,
     executionResult: context.status,
     fullLogPath: context.fullLogFileName,
     filteredLogPath: context.filteredLogFileName,
+    stagedArtifactsFolder: context.stagedArtifactsFolder,
     sdkArtifactFolder: context.sdkArtifactFolder,
     sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder,
     ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})

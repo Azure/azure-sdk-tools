@@ -1,5 +1,5 @@
-import { Crate, Id, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
-import { getAPIJson } from "../../main";
+import { Crate, Id, ItemKind, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
+import { getAPIJson, processedItems } from "../../main";
 import { ReviewLine, TokenKind } from "../../models/apiview-models";
 
 export const externalReferencesLines: ReviewLine[] = [];
@@ -11,6 +11,7 @@ export const externalReferencesLines: ReviewLine[] = [];
 export function addExternalReferencesIfNotExists(itemId: Id): void {
   const apiJson = getAPIJson();
   if (
+    processedItems.has(itemId) ||
     itemId in apiJson.index ||
     !(itemId in apiJson.paths) ||
     externalReferencesLines.some((line) => line.LineId === itemId.toString()) // Check if the item already exists
@@ -18,7 +19,26 @@ export function addExternalReferencesIfNotExists(itemId: Id): void {
     return;
   }
 
-  externalReferencesLines.push(createItemLineFromPath(itemId, apiJson.paths[itemId]));
+  const itemSummary = apiJson.paths[itemId];
+  externalReferencesLines.push({
+    LineId: itemId.toString(),
+    Tokens: [
+      {
+        Kind: TokenKind.Keyword,
+        Value: "pub",
+      },
+      {
+        Kind: TokenKind.Keyword,
+        Value: transformItemKind(itemSummary.kind),
+      },
+      {
+        Kind: TokenKind.TypeName,
+        Value: itemSummary.path.join("::"),
+        RenderClasses: ["dependencies"],
+        NavigateToId: itemId.toString(),
+      },
+    ],
+  });
 }
 
 /**
@@ -32,6 +52,7 @@ function hasValidPath(itemSummary: ItemSummary): boolean {
  * Creates a single ReviewLine representing a non-module item
  */
 export function createItemLineFromPath(itemId: Id, itemSummary: ItemSummary): ReviewLine {
+  const value = itemSummary.path[itemSummary.path.length - 1];
   return {
     LineId: itemId.toString(),
     Tokens: [
@@ -41,16 +62,29 @@ export function createItemLineFromPath(itemId: Id, itemSummary: ItemSummary): Re
       },
       {
         Kind: TokenKind.Keyword,
-        Value: itemSummary.kind,
+        Value: transformItemKind(itemSummary.kind),
       },
       {
         Kind: TokenKind.TypeName,
-        Value: itemSummary.path.join("::"),
+        Value: value,
         RenderClasses: ["dependencies"],
         NavigateToId: itemId.toString(),
+        NavigationDisplayName: value,
+        HasSuffixSpace: true,
+      },
+      {
+        Kind: TokenKind.Comment,
+        Value: `/* re-export of ${itemSummary.path.join("::")} */`,
       },
     ],
   };
+}
+
+export function transformItemKind(itemKind: ItemKind) {
+  if (itemKind === ItemKind.Module) return "mod";
+  if (itemKind === ItemKind.Function) return "fn";
+  if (itemKind === ItemKind.Constant) return "const";
+  return itemKind;
 }
 
 /**

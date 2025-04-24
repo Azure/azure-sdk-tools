@@ -699,7 +699,7 @@
       },
       {
         "Name": "Azure.Core.Experimental",
-        "Version": "0.1.0-preview.37",
+        "Version": "0.1.0-preview.38",
         "DevVersion": null,
         "DirectoryPath": "sdk/core/Azure.Core.Experimental",
         "ServiceDirectory": "core",

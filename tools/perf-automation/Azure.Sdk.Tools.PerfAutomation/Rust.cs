@@ -1,17 +1,26 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
 using Microsoft.Crank.Agent;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using System.Threading.Tasks;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Azure.Sdk.Tools.PerfAutomation
 {
+    namespace Models.Rust
+    {
+        //{ "sampling_mode":"Linear","iters":[216428.0, 432856.0, 649284.0, 865712.0, 1082140.0, 1298568.0, 1514996.0, 1731424.0, 1947852.0, 2164280.0],"times":[89284700.0, 182949300.0, 279225800.0, 370553800.0, 459758900.0, 544908000.0, 647300900.0, 757810300.0, 831844100.0, 926051100.0]}
+        struct Samples
+        {
+            public string SamplingMode { get; set; }
+            public double[] Iters { get; set; }
+            public double[] Times { get; set; }
+        }
+    }
+
     public class Rust : LanguageBase
     {
         public class UtilEventArgs : EventArgs
@@ -26,14 +35,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             public string[] Params { get; set; } = null;
         }
 
-        private const string _targetDirectory = "target";
         private const string _sdkDirectory = "sdk";
         private const string _cargoName = "cargo";
-        private const string _buildCommand = "build";
-        private const string _criterionDirectory = "criterion";
+        private string _resultsDirectory = Path.Combine("target", "criterion");
+        private string _targetResultsDirectory;
         public bool IsTest { get; set; } = false;
         public bool IsWindows { get; set; } = Util.IsWindows;
-        public int ProcessorCount { get; set; } = Environment.ProcessorCount;
         protected override Language Language => Language.Rust;
         public event EventHandler<UtilEventArgs> UtilMethodCall;
 
@@ -44,7 +51,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             bool debug)
         {
-            await CleanupAsync(project);
+            _targetResultsDirectory = await CleanupAsync(project);
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -62,7 +69,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string profilerOptions,
             object context)
         {
-            string finalParams = $"bench -- {testName}";
+            string finalParams = $"bench -- \"{testName}\"";
             ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
             if (IsTest)
             {
@@ -72,7 +79,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         _cargoName,
                         finalParams,
                         WorkingDirectory}));
-                result = new ProcessResult(0, "output (2.0 ops/s, 1.0 s/op)", "error");
+                result = new ProcessResult(0, "cargo bench result", "error");
             }
             else
             {
@@ -80,8 +87,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
 
             //time: [48.680 µs 48.913 µs 49.152 µs] 
-            var opsPerSecond = ExtractOpsPerSecond(result);
-            
+            var opsPerSecond = ExtractOpsPerSecond(testName);
+
             return new IterationResult
             {
                 OperationsPerSecond = opsPerSecond,
@@ -91,7 +98,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             };
         }
 
-        public override async Task CleanupAsync(string project)
+        public override async Task<string> CleanupAsync(string project)
         {
             var currentDirectory = WorkingDirectory;
             bool sdkFolderFound = false;
@@ -108,55 +115,42 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            var buildDirectory = Path.Combine(currentDirectory, _targetDirectory, _criterionDirectory);
+            var resultsDirectory = Path.Combine(currentDirectory, _resultsDirectory);
 
             if (IsTest)
             {
-                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { buildDirectory }));
+                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { resultsDirectory }));
             }
             else
             {
-                Util.DeleteIfExists(buildDirectory);
+                Util.DeleteIfExists(resultsDirectory);
             }
-            return;
+            return resultsDirectory;
         }
 
-        private double ExtractOpsPerSecond(ProcessResult result)
+        private double ExtractOpsPerSecond(string testName)
         {
-            //time: [48.680 µs 48.913 µs 49.152 µs] we want the middle one the average, the others are min and max, and i dislike regexes
-            var output = result.StandardOutput;
-            var lines = output.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            var timeLine = "";
-            foreach (var line in lines)
+            var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory,testName,"new\\sample.json"));
+            double nanos = 0.0;
+            for(int i =0; i< results.Iters.Length; i++)
             {
-                if (line.Contains("time"))
-                {
-                    timeLine = line;
-                    break;
-                }
+                nanos = (nanos*i + (results.Times[i] / results.Iters[i])) / (i + 1);
             }
-            var fragments = timeLine.Split(new[] { '[', ' ', ']' }, StringSplitOptions.RemoveEmptyEntries);
-            bool firstFragmentFound = false;
-            double timing = 1.0;
-            foreach (var fragment in fragments)
+            // once we have the timing of one operation( in nano seconds) divinde one sec in nanos by the time to get ops/sec
+            return Math.Pow(10,9)/nanos;
+        }
+        private Models.Rust.Samples ParseFromJsonFile(string filePath)
+        {
+            if (!File.Exists(filePath))
             {
-                // see if we can parse the values
-                if (Double.TryParse(fragment, out timing))
-                {
-                    // we found a number, we want the second one 
-                    if (firstFragmentFound)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        // we found the first number, so we need to look for the next one
-                        firstFragmentFound = true;
-                    }
-                }
+                throw new FileNotFoundException($"The file '{filePath}' does not exist.");
             }
-            //results are in micro seconds
-            return Math.Pow(10, 6) / timing;
+
+            var jsonContent = File.ReadAllText(filePath);
+            return JsonSerializer.Deserialize<Models.Rust.Samples>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true // Allows case-insensitive matching of JSON property names
+            });
         }
     }
 }

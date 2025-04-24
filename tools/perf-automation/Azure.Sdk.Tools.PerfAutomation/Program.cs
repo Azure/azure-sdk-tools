@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             });
 
             var parserResult = parser.ParseArguments<Options>(args);
-            
+
             await parserResult.MapResult(
                 (Options options) => Run(options),
                 errors => DisplayHelp(parserResult)

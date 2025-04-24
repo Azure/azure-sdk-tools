@@ -6,6 +6,6 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
     {
         public string Test { get; set; }
         public string Class { get; set; }
-        public IEnumerable<string> Arguments { get; set; } = new List<string>();
+        public IEnumerable<string> Arguments { get; set; }
     }
 }

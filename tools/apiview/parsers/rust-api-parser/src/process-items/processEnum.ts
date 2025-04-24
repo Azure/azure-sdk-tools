@@ -43,6 +43,7 @@ export function processEnum(item: Item): ReviewLine[] {
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     RenderClasses: ["enum"],
+    HasSuffixSpace: false,
   });
 
   const genericsTokens = processGenerics(item.inner.enum.generics);
@@ -59,6 +60,7 @@ export function processEnum(item: Item): ReviewLine[] {
   enumLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
+    HasPrefixSpace: true,
   });
 
   // Process enum variants

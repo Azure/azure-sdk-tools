@@ -1,6 +1,7 @@
 import { Type } from "../../../rustdoc-types/output/rustdoc-types";
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
 import { registerExternalItemReference } from "./externalReexports";
+import { replaceSuperPrefix } from "./pathUtils";
 import { processFunctionPointer } from "./processFunctionPointer";
 import { processGenericArgs } from "./processGenerics";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
@@ -16,7 +17,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
     // Create the base token for the type name
     const baseToken: ReviewToken = {
       Kind: TokenKind.TypeName,
-      Value: type.resolved_path.name || "unnamed",
+      Value: replaceSuperPrefix(type.resolved_path.name) || "unnamed",
       HasSuffixSpace: false,
       NavigateToId: type.resolved_path.id.toString(),
     };

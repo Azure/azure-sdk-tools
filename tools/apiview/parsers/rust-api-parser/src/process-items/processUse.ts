@@ -8,7 +8,7 @@ import {
   getModuleChildIdsByPath,
   processModuleReexport,
 } from "./utils/externalReexports";
-import { replaceCratePath } from "./utils/cratePathUtils";
+import { replaceCratePath } from "./utils/pathUtils";
 import { AnnotatedReviewLines } from "./utils/models";
 import { getAPIJson, processedItems } from "../main";
 import { processItem } from "./processItem";

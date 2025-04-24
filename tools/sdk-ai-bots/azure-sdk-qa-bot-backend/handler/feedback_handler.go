@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/copilot-extensions/rag-extension/model"
-	"github.com/copilot-extensions/rag-extension/service/feedback"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/feedback"
 	"github.com/gin-gonic/gin"
 )
 

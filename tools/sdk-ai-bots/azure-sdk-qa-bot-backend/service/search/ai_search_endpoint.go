@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/copilot-extensions/rag-extension/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/joho/godotenv"
 )
 
@@ -117,20 +117,49 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	if len(chunks) == 0 {
 		return chunk
 	}
+
 	var contents []string
+	// var tocEntries []string
 	totalLength := 0
-	for _, chunk := range chunks {
-		if totalLength+len(chunk.Chunk) > 10000 {
-			break
+
+	// Get the first chunk for header information
+	firstChunk := chunks[0]
+	chunk.Header1 = firstChunk.Header1
+
+	// Add document title at the beginning
+	contents = append(contents, fmt.Sprintf("# %s", chunk.Title))
+
+	// Set headers based on hierarchy and collect TOC entries in single pass
+	var currentHeader1, currentHeader2, currentHeader3 string
+	for _, c := range chunks {
+		// Add headers to content and TOC when they change
+		if c.Header1 != currentHeader1 {
+			currentHeader1 = c.Header1
+			currentHeader2 = "" // Reset lower level headers
+			currentHeader3 = ""
+			if currentHeader1 != "" {
+				contents = append(contents, fmt.Sprintf("# %s", currentHeader1))
+			}
 		}
-		totalLength += len(chunk.Chunk)
-		contents = append(contents, chunk.Chunk)
+		if c.Header2 != currentHeader2 {
+			currentHeader2 = c.Header2
+			currentHeader3 = "" // Reset lower level header
+			if currentHeader2 != "" {
+				contents = append(contents, fmt.Sprintf("## %s", currentHeader2))
+			}
+		}
+		if c.Header3 != currentHeader3 {
+			currentHeader3 = c.Header3
+			if currentHeader3 != "" {
+				contents = append(contents, fmt.Sprintf("### %s", currentHeader3))
+			}
+		}
+
+		totalLength += len(c.Chunk)
+		contents = append(contents, c.Chunk)
 	}
-	chunk.Chunk = strings.Join(contents, "\n")
-	chunk.Title = chunks[0].Title
-	chunk.Header1 = chunks[0].Header1
-	chunk.Header2 = ""
-	chunk.Header3 = ""
-	chunk.OrdinalPosition = 0
+
+	chunk.Chunk = strings.Join(contents, "\n\n") // Add extra newline between sections
+
 	return chunk
 }

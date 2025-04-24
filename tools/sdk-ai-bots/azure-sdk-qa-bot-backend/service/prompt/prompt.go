@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/copilot-extensions/rag-extension/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 )
 
 // read prompt_template/answer_question.md, replace {{context}} with question and context

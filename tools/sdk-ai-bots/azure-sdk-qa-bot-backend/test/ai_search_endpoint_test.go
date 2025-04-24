@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/copilot-extensions/rag-extension/model"
-	"github.com/copilot-extensions/rag-extension/service/search"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
 )
 
 func TestQueryIndex(t *testing.T) {

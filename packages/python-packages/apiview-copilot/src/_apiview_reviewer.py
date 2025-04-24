@@ -289,7 +289,7 @@ class ApiViewReview:
         Load the generic metadata from the YAML file, or returns defaults if the file doesn't exist.
         """
         # Construct the path to the YAML file
-        yaml_file = os.path.join(_PACKAGE_ROOT, "metadata", self.language, "generic.yaml")
+        yaml_file = os.path.join(_PACKAGE_ROOT, "metadata", self.language, "guidance.yaml")
 
         # Return defaults if the file doesn't exist
         if not os.path.exists(yaml_file):

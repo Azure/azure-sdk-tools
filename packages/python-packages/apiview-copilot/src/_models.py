@@ -256,24 +256,25 @@ class ReviewResult(BaseModel):
         # Search up until the start of the chunk or an empty line is reached for a match
         for i in range(target_idx - 1, -1, -1):
             left = chunk.lines[i].strip()
+            if not left:
+                break
             if left.startswith(right) or right.startswith(left):
                 updated_idx = chunk.start_line_no + i + 1
                 return updated_idx
-            if not left:
-                break
 
         # If that doesn't work, search down until the end of the chunk or an empty line is reached for a match
         for i in range(target_idx + 1, len(chunk.lines)):
             left = chunk.lines[i].strip()
+            if not left:
+                break
             if left.startswith(right) or right.startswith(left):
                 updated_idx = chunk.start_line_no + i + 1
                 return updated_idx
-            if not left:
-                break
 
-        # If no match is found, return None
+        # If no match is found, return the original line number
         print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
-        return None
+        comment.comment = f"${comment.comment} (general comment)"
+        return comment.line_no
 
     def sort(self):
         """

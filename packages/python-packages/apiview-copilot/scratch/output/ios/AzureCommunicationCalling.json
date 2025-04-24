@@ -1,0 +1,80 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 7,
+            "bad_code": "open func dealloc()",
+            "suggestion": "/* Remove explicit dealloc methods; rely on Swift’s automatic ARC and implement deinit if custom cleanup is needed. */",
+            "comment": "$Many classes include an explicit 'dealloc' method. In Swift, memory is managed automatically using ARC, so exposing dealloc is not idiomatic. Instead, use deinit for any necessary cleanup or remove these methods entirely. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 16,
+            "bad_code": "open func dealloc()",
+            "suggestion": "Remove the public dealloc() method and rely on Swift’s automatic reference counting (or implement deinit as needed, keeping such logic internal).",
+            "comment": "The API surface exposes numerous dealloc() methods (see line 16) which is not idiomatic in Swift 5. In Swift, resource cleanup is handled automatically through ARC and, if necessary, a deinit block. Exposing dealloc() as part of the public API violates the idiomatic Swift style expected in Azure SDKs.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-client-options-types"
+            ],
+            "line_no": 17,
+            "bad_code": "open var alternateCallerId: UnsafeMutablePointer<Int32>",
+            "suggestion": "Use a safe Swift type (e.g. an optional Int32) instead of an UnsafeMutablePointer.",
+            "comment": "The property 'alternateCallerId' is declared as an UnsafeMutablePointer<Int32> (line 17). For improved safety and to be more idiomatic, a Swift value type (such as Int32? if appropriate) should be used instead of a low-level, mutable pointer.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 152,
+            "bad_code": "open func mute() async throws",
+            "suggestion": "/* Maintain both async and callback variants if necessary, but consider unifying the API if possible. */",
+            "comment": "$Providing both completionHandler-based and async/await versions is useful for supporting different usage scenarios. However, it increases the surface area of the API. Consider if unification or clear guidance on which pattern to use can streamline the developer experience. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 157,
+            "bad_code": "open func add(participant: Any) throws -> RemoteParticipant?",
+            "suggestion": "open func add<T: CallParticipantProtocol>(participant: T) throws -> RemoteParticipant?",
+            "comment": "Accepting a parameter of type 'Any' reduces type safety and clarity. Replace 'Any' by defining a specific protocol or type (for example, CallParticipantProtocol) for participant objects so that developers get proper compile‐time checking and clearer intent.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 223,
+            "bad_code": "open func createCallAgent(userCredential: Any!, options: CallAgentOptions?) async throws -> CallAgent",
+            "suggestion": "open func createCallAgent(userCredential: UserCredential, options: CallAgentOptions?) async throws -> CallAgent",
+            "comment": "Using 'Any!' for user credentials is too vague. Defining a specific type like 'UserCredential' increases clarity, enforces type safety, and improves the developer experience.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 224,
+            "bad_code": "optional func callAgent(_: CallAgent, didRecieveIncomingCall: IncomingCall)",
+            "suggestion": "extension CallAgentDelegate {\n    func callAgent(_ callAgent: CallAgent, didReceiveIncomingCall call: IncomingCall) {}\n}",
+            "comment": "$Having optional protocol methods via @objc is acceptable for Objective-C interop, but in pure Swift it’s more idiomatic to provide default implementations via protocol extensions. This improves discoverability and leverages Swift’s type safety. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 234,
+            "bad_code": "open var debugInfo: CallDebugInfo { get }",
+            "suggestion": "/* Ensure computed properties follow standard Swift naming. If this property involves computation, document its behavior clearly. */",
+            "comment": "While the naming is descriptive, it is important to ensure that computed properties that represent immutable values or diagnostic information maintain consistency with Swift conventions. Providing clear documentation on any non‐trivial computation or side effects can further enhance clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 645,
+            "bad_code": "open func getServerCallId(completionHandler: @escaping (String?, Error?) -> Void)",
+            "suggestion": "Consider exposing the server call identifier as a read-only computed property if the operation is lightweight, e.g. 'var serverCallId: String { get }'.",
+            "comment": "Using a method prefixed with 'get' is less in line with Swift’s guidelines. If the value is available without side effects, consider using a computed read-only property.",
+            "source": "generic"
+        }
+    ]
+}

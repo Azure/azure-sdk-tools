@@ -25,15 +25,15 @@
               },
               "bad_code": {
                 "type": "string",
-                "description": "the original code that was bad, cited verbatim. Should contain a single line of code."
+                "description": "the original code that was bad, cited verbatim. MUST BE a single line of code."
               },
               "suggestion": {
                 "type": "string",
-                "description": "the suggested code which fixes the bad code. If code is not feasible, a description is fine."
+                "description": "a suggested fix for the bad code. MUST be code, or null."
               },
               "comment": {
                 "type": "string",
-                "description": "a comment about the violation."
+                "description": "description of the violation."
               }
             },
             "required": [

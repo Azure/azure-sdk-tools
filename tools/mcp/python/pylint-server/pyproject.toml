@@ -3,12 +3,10 @@ name = "linting"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.9"
 dependencies = [
     "azure-core>=1.33.0",
-    "httpx>=0.28.1",
     "logging>=0.4.9.6",
     "mcp[cli]>=1.6.0",
     "pylint==3.3.6",
-    "tox>=4.25.0",
 ]

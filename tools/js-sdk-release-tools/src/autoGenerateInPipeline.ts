@@ -79,7 +79,7 @@ async function automationGenerateInPipeline(
                 const repoUrl = repoHttpsUrl;
                 const options: ModularClientPackageOptions = {
                     sdkRepoRoot,
-                    specRepoRoot: specFolder,
+                    specRepoRoot: repoUrl.replace("https://github.com/", ""),
                     typeSpecDirectory,
                     gitCommitId,
                     skip,

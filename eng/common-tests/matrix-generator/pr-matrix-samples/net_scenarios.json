@@ -549,24 +549,24 @@
         "SdkType": "client",
         "IsNewSdk": true,
         "ArtifactName": "System.ClientModel",
-        "ReleaseStatus": "Unreleased",
+        "ReleaseStatus": "2025-04-23",
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
+          "safeName": "SystemClientModel",
+          "name": "System.ClientModel",
           "triggeringPaths": [
             "/sdk/core/ci.yml"
-          ],
-          "safeName": "SystemClientModel",
-          "name": "System.ClientModel"
+          ]
         },
         "CIParameters": {
-          "BuildSnippets": false,
-          "AOTTestInputs": {
-            "ArtifactName": "System.ClientModel",
-            "ExpectedWarningsFilepath": "None"
-          },
           "CIMatrixConfigs": [],
-          "CheckAOTCompat": true
+          "BuildSnippets": false,
+          "CheckAOTCompat": true,
+          "AOTTestInputs": {
+            "ExpectedWarningsFilepath": "None",
+            "ArtifactName": "System.ClientModel"
+          }
         }
       }
     ]
@@ -655,10 +655,10 @@
     ]
   },
   {
-    "name": "Core Change (should indirectly include all packages)",
+    "name": "Core Change",
     "diff": {
       "ChangedFiles": [
-        "sdk/core/Azure.Core/CHANGELOG.md"
+        "sdk/core/Azure.Core/src/Page.cs"
       ],
       "ChangedServices": [
         "core"
@@ -668,93 +668,6 @@
       "PRNumber": "48379"
     },
     "expected_package_output": [
-      {
-        "Name": "Azure.Core.Amqp",
-        "Version": "1.4.0-beta.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Azure.Core.Amqp",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Azure.Core.Amqp/README.md",
-        "ChangeLogPath": "sdk/core/Azure.Core.Amqp/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Azure.Core.Amqp",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Azure.Core.Amqp",
-          "safeName": "AzureCoreAmqp",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": null,
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
-      {
-        "Name": "Azure.Core.Experimental",
-        "Version": "0.1.0-preview.38",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Azure.Core.Experimental",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Azure.Core.Experimental/README.md",
-        "ChangeLogPath": "sdk/core/Azure.Core.Experimental/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Azure.Core.Experimental",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Azure.Core.Experimental",
-          "safeName": "AzureCoreExperimental",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": null,
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
-      {
-        "Name": "Azure.Core.Expressions.DataFactory",
-        "Version": "1.1.0-beta.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Azure.Core.Expressions.DataFactory",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Azure.Core.Expressions.DataFactory/README.md",
-        "ChangeLogPath": "sdk/core/Azure.Core.Expressions.DataFactory/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Azure.Core.Expressions.DataFactory",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Azure.Core.Expressions.DataFactory",
-          "safeName": "AzureCoreExpressionsDataFactory",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": null,
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
       {
         "Name": "Azure.Core",
         "Version": "1.46.0-beta.1",
@@ -788,125 +701,6 @@
           "AOTTestInputs": {
             "ExpectedWarningsFilepath": "/Azure.Core/tests/compatibility/ExpectedAotWarnings.txt",
             "ArtifactName": "Azure.Core"
-          },
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
-      {
-        "Name": "Microsoft.Azure.Core.NewtonsoftJson",
-        "Version": "2.1.0-beta.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Microsoft.Azure.Core.NewtonsoftJson",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Microsoft.Azure.Core.NewtonsoftJson/README.md",
-        "ChangeLogPath": "sdk/core/Microsoft.Azure.Core.NewtonsoftJson/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Microsoft.Azure.Core.NewtonsoftJson",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Microsoft.Azure.Core.NewtonsoftJson",
-          "safeName": "MicrosoftAzureCoreNewtonsoftJson",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": null,
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
-      {
-        "Name": "Microsoft.Azure.Core.Spatial",
-        "Version": "1.2.0-beta.2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Microsoft.Azure.Core.Spatial",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Microsoft.Azure.Core.Spatial/README.md",
-        "ChangeLogPath": "sdk/core/Microsoft.Azure.Core.Spatial/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Microsoft.Azure.Core.Spatial",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Microsoft.Azure.Core.Spatial",
-          "safeName": "MicrosoftAzureCoreSpatial",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": null,
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
-      {
-        "Name": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
-        "Version": "1.1.0-beta.2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/Microsoft.Azure.Core.Spatial.NewtonsoftJson",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/Microsoft.Azure.Core.Spatial.NewtonsoftJson/README.md",
-        "ChangeLogPath": "sdk/core/Microsoft.Azure.Core.Spatial.NewtonsoftJson/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "Microsoft.Azure.Core.Spatial.NewtonsoftJson",
-          "safeName": "MicrosoftAzureCoreSpatialNewtonsoftJson",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": null,
-          "CheckAOTCompat": true,
-          "BuildSnippets": false
-        }
-      },
-      {
-        "Name": "System.ClientModel",
-        "Version": "1.4.0-beta.2",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/System.ClientModel",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/System.ClientModel/README.md",
-        "ChangeLogPath": "sdk/core/System.ClientModel/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "System.ClientModel",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "name": "System.ClientModel",
-          "safeName": "SystemClientModel",
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "AOTTestInputs": {
-            "ExpectedWarningsFilepath": "None",
-            "ArtifactName": "System.ClientModel"
           },
           "CheckAOTCompat": true,
           "BuildSnippets": false

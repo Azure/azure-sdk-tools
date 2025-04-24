@@ -70,7 +70,7 @@ system: |
   # EXCEPTIONS
   
   You MUST remove any comments that:
-  {{exception}}
+  {{exceptions}}
 
   # OUTPUT REQUIREMENTS
   

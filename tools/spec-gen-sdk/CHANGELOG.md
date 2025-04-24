@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-24 - 0.5.1
+
+- Move service name variable into the package object
+
 ## 2025-04-22 - 0.5.0
 
 - Output service names and artifact staging folder in execution report.

@@ -13,8 +13,8 @@ jobs:
   timeoutInMinutes: 360
 
   pool:
-    name: azsdk-pool-mms-ubuntu-2004-general
-    image: azsdk-pool-mms-ubuntu-2004-1espt
+    name: $(LINUXPOOL)
+    image: $(LINUXVMIMAGE)
     os: linux
 
   steps:

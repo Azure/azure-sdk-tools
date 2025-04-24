@@ -5,6 +5,7 @@ using Azure.Core;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -98,8 +99,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private static readonly byte[] CrLf = new byte[] { (byte)'\r', (byte)'\n' };
 
+
         private byte[] SanitizeMultipartBody(string boundary, byte[] raw)
         {
+            // Boundary might have been sanitised to "REDACTED"
+            boundary = RecordEntry.ResolveFirstBoundary(boundary, raw);
+
+            // Only run the LF→CRLF fixer once at the outermost level
+            // the reason we still do this instead of just using the body as-is, is that we may be loading up
+            // a recording from before we started storing the corrected multipart/mixed body.
+            byte[] fixedRaw = RecordEntry.NormalizeBareLf(raw);
+
             var reader = new MultipartReader(boundary, new MemoryStream(raw));
             using var outStream = new MemoryStream();
 
@@ -114,7 +124,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 // 1) opening boundary
                 outStream.Write(boundaryStart);
 
-                // 2) headers
+                // 2) headers (by spec must be ASCII encoded)
                 foreach (var h in section.Headers)
                 {
                     var headerLine = $"{h.Key}: {h.Value}\r\n";
@@ -134,14 +144,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(original));
                     newBody = enc.GetBytes(sanitised);
+
+                    // todo: ensure content-length is updated!
                 }
                 else
                 {
-                    newBody = SanitizeBody(section.ContentType, original);
+                    newBody = original;
                 }
 
                 outStream.Write(newBody);
-                outStream.Write(CrLf); // body terminator
+                outStream.Write(CrLf); // todo: do we still need the body terminator here? body terminator
             }
 
             // 5) closing boundary
@@ -156,12 +168,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 message.TryGetContentType(out string contentType);
 
-                //if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
-                //{
-                //    message.Body = SanitizeMultipartBody(boundary, message.Body);
-                //}
-                //else 
-                if (message.TryGetBodyAsText(out string text))
+                if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
+                {
+                    message.Body = SanitizeMultipartBody(boundary, message.Body);
+                }
+                else if (message.TryGetBodyAsText(out string text))
                 {
                     message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
                 }

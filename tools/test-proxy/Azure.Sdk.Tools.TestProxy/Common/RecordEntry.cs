@@ -12,6 +12,8 @@ using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -250,18 +252,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         /// <summary>
         /// This function is necessary because while the MultipartReader REQUIRES a payload that follows the spec for multipart/mixed,
-        /// azure services don't actually return totally compliant mixed bodies. A lot of the time they merely include LF--<boundary> instead of the spec-required
-        /// CRLF--<boundary>
+        /// azure services don't actually return totally compliant mixed bodies. A lot of the time they merely include LF--boundaryabc123 instead of the spec-required
+        /// CRLF--boundaryabc123
         /// 
-        /// So what we do is 
-        /// </summary>
-        /// <param name="buf"></param>
-        /// <returns></returns>
-        /// Rewrites a complete multipart entity so that every header line
+        /// This function rewrites a complete multipart entity so that every header line
         /// (from the delimiter up to the first blank line) ends with CR LF,
         /// and every delimiter line starts with CR LF. The body region is
         /// left byte‑for‑byte intact.
-        private static byte[] NormalizeBareLf(byte[] src)
+        /// </summary>
+        /// <param name="src">The byte buffer we need to update.</param>
+        /// <returns></returns>
+        public static byte[] NormalizeBareLf(byte[] src)
         {
             const byte CR = 0x0D, LF = 0x0A, DASH = 0x2D;
 
@@ -306,7 +307,36 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     inHeaders = false;
             }
 
-            return w == src.Length ? src : dst.AsSpan(0, w).ToArray();
+            var fixedBytes = w == src.Length ? src : dst.AsSpan(0, w).ToArray();
+
+            if (src.Length != w)
+            {
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug))
+                {
+                    var beforeText = Convert.ToBase64String(src);
+                    var afterText = Convert.ToBase64String(fixedBytes);
+                    DebugLogger.LogDebug($"We updated the multipart body from length {src.Length} to length {w}");
+                    DebugLogger.LogDebug($"Base64 before: {beforeText}");
+                    DebugLogger.LogDebug($"Base64 after: {afterText}");
+                }
+            }
+
+            return fixedBytes;
+        }
+
+        public static string ResolveFirstBoundary(string boundary, byte[] raw)
+        {
+            // Boundary might have been sanitised to "REDACTED"
+            if (boundary == "REDACTED")
+            {
+                ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
+                int idx = raw.AsSpan().IndexOf(crlf);
+                if (idx == -1) throw new InvalidDataException("Multipart body missing CRLF.");
+
+                boundary = Encoding.ASCII.GetString(raw, 2, idx - 2); // skip leading "--"
+            }
+
+            return boundary;
         }
 
         private static void SerializeMultipartBody(
@@ -318,23 +348,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             jsonWriter.WriteStartArray(name);
 
             // Boundary might have been sanitised to "REDACTED"
-            if (boundary == "REDACTED")
-            {
-                ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
-                int idx = raw.AsSpan().IndexOf(crlf);
-                if (idx == -1) throw new InvalidDataException("Multipart body missing CRLF.");
-
-                boundary = Encoding.ASCII.GetString(raw, 2, idx - 2); // skip leading "--"
-            }
+            boundary = ResolveFirstBoundary(boundary, raw);
 
             // Only run the LF→CRLF fixer once at the outermost level
             byte[] fixedRaw = NormalizeBareLf(raw);
 
-            var lol = Encoding.UTF8.GetString(fixedRaw);
-            DebugLogger.LogInformation(lol);
-            DebugLogger.LogInformation(Convert.ToBase64String(fixedRaw));
-            DebugLogger.LogInformation(raw.Length == fixedRaw.Length ? "We didn't insert anything." : "We did insert a character.");
-            
             WriteMultipartLines(jsonWriter,
                                 new MemoryStream(fixedRaw, writable: false),
                                 boundary);

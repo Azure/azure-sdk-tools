@@ -845,6 +845,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(sanitizerCount, testDict.DefaultSanitizerList.Count);
         }
 
+        [Fact]
+        public async Task MultipartRequestsCanRoundTrip()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public async Task MultipartRequestsCanSanitizeWithoutChangingBytes()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public async Task CanDeserializeFromOriginalMultipartMixedRecording()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/old_multipart_request.json");
+
+            Assert.NotNull(session.Session.Entries.First().Request.Body);
+        }
+
         [Theory]
         [InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
         [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]

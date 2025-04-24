@@ -9,5 +9,6 @@ dependencies = [
     "httpx>=0.28.1",
     "logging>=0.4.9.6",
     "mcp[cli]>=1.6.0",
+    "pylint==3.3.6",
     "tox>=4.25.0",
 ]

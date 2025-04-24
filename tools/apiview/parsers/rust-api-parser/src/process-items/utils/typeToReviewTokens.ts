@@ -101,7 +101,8 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       ...type.impl_trait.flatMap((b, i) => {
         if ("trait_bound" in b) {
           return [
-            { Kind: TokenKind.TypeName, Value: b.trait_bound.trait.name },
+            { Kind: TokenKind.TypeName, Value: b.trait_bound.trait.name, HasSuffixSpace: false },
+            ...processGenericArgs(b.trait_bound.trait.args),
             i < type.impl_trait.length - 1
               ? { Kind: TokenKind.Punctuation, Value: "+", HasSuffixSpace: false }
               : { Kind: TokenKind.Text, Value: "", HasSuffixSpace: false },

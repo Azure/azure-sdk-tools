@@ -29,17 +29,5 @@ namespace Azure.Sdk.Tools.PerfAutomation
             bool profile,
             string profilerOptions,
             object context);
-
-        Task<IterationResult> RunAsync(
-            string project,
-            string languageVersion,
-            string primaryPackage,
-            IDictionary<string, string> packageVersions,
-            string testName,
-            string testFullName,
-            string arguments,
-            bool profile,
-            string profilerOptions,
-            object context);
     }
 }

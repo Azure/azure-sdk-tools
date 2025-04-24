@@ -272,18 +272,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 object context = null;
                 string setupException = null;
 
-                //try
-                //{
-                //    (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                //        project, languageVersion, primaryPackage, packageVersions, options.Debug);
-                //}
-                //catch (Exception e)
-                //{
-                //    setupException = e.ToString();
+                try
+                {
+                    (setupOutput, setupError, context) = await _languages[language].SetupAsync(
+                        project, languageVersion, primaryPackage, packageVersions, options.Debug);
+                }
+                catch (Exception e)
+                {
+                    setupException = e.ToString();
 
-                //    Console.WriteLine(e);
-                //    Console.WriteLine();
-                //}
+                    Console.WriteLine(e);
+                    Console.WriteLine();
+                }
 
                 foreach (var test in tests)
                 {
@@ -361,7 +361,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         primaryPackage,
                                         packageVersions,
                                         test.Class,
-                                        test.Test,
                                         allArguments,
                                         options.Profile,
                                         options.ProfilerOptions,

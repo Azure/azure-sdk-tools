@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private const string _sdkDirectory = "sdk";
         private const string _cargoName = "cargo";
         private const string _buildCommand = "build";
-        private const string _vcpkgFile = "vcpkg.json";
+        private const string _criterionDirectory = "criterion";
         public bool IsTest { get; set; } = false;
         public bool IsWindows { get; set; } = Util.IsWindows;
         public int ProcessorCount { get; set; } = Environment.ProcessorCount;
@@ -44,46 +44,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             bool debug)
         {
-            var currentDirectory = WorkingDirectory;
-            bool sdkFolderFound = false;
-            while(!sdkFolderFound)
-            {
-                DirectoryInfo directory = new DirectoryInfo(Path.Combine(currentDirectory, _sdkDirectory));
-                if (directory.Exists)
-                {
-                    sdkFolderFound = true;
-                }
-                else
-                {
-                    currentDirectory = (new DirectoryInfo(currentDirectory)).Parent.FullName;
-                }
-            }
-            var buildDirectory = Path.Combine(currentDirectory, _targetDirectory);
-            if (IsTest)
-            {
-                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { buildDirectory }));
-            }
-            else
-            {
-                Util.DeleteIfExists(buildDirectory);
-            }
+            await CleanupAsync(project);
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
-            
 
             if (IsTest)
             {
                 outputBuilder.Append("output");
                 errorBuilder.Append("error");
-                
+
                 UtilMethodCall(this, new UtilEventArgs(
-                    "RunAsync2",
+                    "RunAsync",
                     new string[]
                     {
                         _cargoName,
                         _buildCommand,
-                        buildDirectory,
+                        WorkingDirectory,
                         outputBuilder.ToString(),
                         errorBuilder.ToString()
                     }));
@@ -97,29 +74,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
                 return (result.StandardOutput, result.StandardError, String.Empty);
             }
-        }
-        public override async Task<IterationResult> RunAsync(
-            string project,
-            string languageVersion,
-            string primaryPackage,
-            IDictionary<string, string> packageVersions,
-            string testName,
-            string testFullName,
-            string arguments,
-            bool profile,
-            string profilerOptions,
-            object context)
-        {
-            return await RunAsync(
-                project,
-                languageVersion,
-                primaryPackage,
-                packageVersions,
-                testFullName,
-                arguments,
-                profile,
-                profilerOptions,
-                context);
         }
         public override async Task<IterationResult> RunAsync(
             string project,
@@ -151,7 +105,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
             //time: [48.680 µs 48.913 µs 49.152 µs] 
-            var opsPerSecond = CalculateOpsPerSecond(result);
+            var opsPerSecond = ExtractOpsPerSecond(result);
 
             foreach (var key in packageVersions.Keys)
             {
@@ -178,15 +132,35 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override async Task CleanupAsync(string project)
         {
-            var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
-           // var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
-            //Util.DeleteIfExists(buildDirectory);
-            //cleanup the vcpkg file by restoring from git
-            await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory);
+            var currentDirectory = WorkingDirectory;
+            bool sdkFolderFound = false;
+            while (!sdkFolderFound)
+            {
+                DirectoryInfo directory = new DirectoryInfo(Path.Combine(currentDirectory, _sdkDirectory));
+                if (directory.Exists)
+                {
+                    sdkFolderFound = true;
+                }
+                else
+                {
+                    currentDirectory = (new DirectoryInfo(currentDirectory)).Parent.FullName;
+                }
+            }
+
+            var buildDirectory = Path.Combine(currentDirectory, _targetDirectory, _criterionDirectory);
+
+            if (IsTest)
+            {
+                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { buildDirectory }));
+            }
+            else
+            {
+                Util.DeleteIfExists(buildDirectory);
+            }
             return;
         }
 
-        private double CalculateOpsPerSecond(ProcessResult result)
+        private double ExtractOpsPerSecond(ProcessResult result)
         {
             //time: [48.680 µs 48.913 µs 49.152 µs] we want the middle one the average, the others are min and max, and i dislike regexes
             var output = result.StandardOutput;
@@ -194,18 +168,19 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var timeLine = "";
             foreach (var line in lines)
             {
-                if (line.Contains("time")) {
+                if (line.Contains("time"))
+                {
                     timeLine = line;
                     break;
                 }
             }
-            var fragments = timeLine.Split(new[] { '[',' ',']' }, StringSplitOptions.RemoveEmptyEntries);
+            var fragments = timeLine.Split(new[] { '[', ' ', ']' }, StringSplitOptions.RemoveEmptyEntries);
             bool firstFragmentFound = false;
-            double timing=1.0;
-            foreach(var fragment in fragments)
+            double timing = 1.0;
+            foreach (var fragment in fragments)
             {
                 // see if we can parse the values
-                if(Double.TryParse(fragment, out timing) )
+                if (Double.TryParse(fragment, out timing))
                 {
                     // we found a number, we want the second one 
                     if (firstFragmentFound)
@@ -220,7 +195,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
             //results are in micro seconds
-            return Math.Pow(10,6)/timing;
+            return Math.Pow(10, 6) / timing;
         }
     }
 }

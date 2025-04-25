@@ -47,7 +47,7 @@
   {
     "id": "cpp_introduction.html#cpp-service-client-constructor-minimal",
     "category": "Service Client Constructors {#cpp-client-ctor}",
-    "text": "DO provide a minimal constructor that takes only the parameters required to connect to the service.\n\nTODO: Add service client factory pattern examples for connection strings."
+    "text": "DO provide a minimal constructor that takes only the parameters required to connect to the service."
   },
   {
     "id": "cpp_introduction.html#cpp-client-constructor-no-default-params",
@@ -57,7 +57,17 @@
   {
     "id": "cpp_introduction.html#cpp-client-constructor-overloads",
     "category": "Service Client Constructors {#cpp-client-ctor}",
-    "text": "DO provide constructor overloads that allow specifying additional options via  an options parameter. The type of the parameter is typically a subclass of ClientOptions type, shown below."
+    "text": "DO provide constructor overloads that allow specifying additional options via  an options parameter. The type of the parameter is typically a subclass of ClientOptions type, shown below.\n\n{% highlight cpp %}\nExampleClient ExampleClient(\nconst std::string& url,\nconst ExampleClientOptions& options)\n{\n...\n\n<code>return ExampleClient(......, options);\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_introduction.html#cpp-service-client-constructor-connectionstring",
+    "category": "Service Client Constructors {#cpp-client-ctor}",
+    "text": "YOU MAY provide a constructor that takes a connection if the service supports it.\n\n{% highlight cpp %}\nExampleClient ExampleClient::CreateFromConnectionString(\nconst std::string& connectionString,\nconst ExampleClientOptions& options)\n{\n...\n\n<code>return ExampleClient(......, options);\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_introduction.html#cpp-service-client-constructor-passwordless",
+    "category": "Service Client Constructors {#cpp-client-ctor}",
+    "text": "YOU SHOULD recommend customers use passwordless authentication methods to connect to the service."
   },
   {
     "id": "cpp_introduction.html#cpp-config-global-config",
@@ -97,7 +107,7 @@
   {
     "id": "cpp_introduction.html#cpp-config-noruntime",
     "category": "Client Configuration",
-    "text": "DO NOT use client library specific runtime\nconfiguration such as environment variables or a config file. Keep in mind that many IoT devices\nwon't have a filesystem or an \"environment block\" to read from.\n\nTODO: This section needs to be driven by code in the Core library.\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "DO NOT use client library specific runtime\nconfiguration such as environment variables or a config file. Keep in mind that many IoT devices\nwon't have a filesystem or an \"environment block\" to read from."
   },
   {
     "id": "cpp_introduction.html#cpp-versioning-highest-api",
@@ -107,7 +117,7 @@
   {
     "id": "cpp_introduction.html#cpp-versioning-select-api-version",
     "category": "Service Versions",
-    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client.\n\nUse a constructor parameter called version on the client options type.\nThe version parameter must be the first parameter to all constructor overloads.\nThe version parameter must be required, and default to the latest supported service version.\nThe type of the version parameter must be ServiceVersion; an enum nested in the options type.\nThe ServiceVersion enum must use explicit values starting from 1.\nServiceVersion enum value 0 is reserved. When 0 is passed into APIs, ArgumentException should be thrown.\n\nTODO: This section needs to be driven by code in the Core library.\n\nTODO: This section needs to be driven by code in the Core library.\n\nService methods are the methods on the client that invoke operations on the service.\n\nThe C++ SDK is designed for synchronous api calls."
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client.\n\nUse a constructor parameter called version on the client options type.\nThe version parameter must be the first parameter to all constructor overloads.\nThe version parameter must be required, and default to the latest supported service version.\nThe type of the version parameter must be ServiceVersion; an enum nested in the options type.\nThe ServiceVersion enum must use explicit values starting from 1.\nServiceVersion enum value 0 is reserved. When 0 is passed into APIs, ArgumentException should be thrown.\n\nService methods are the methods on the client that invoke operations on the service.\n\nThe C++ SDK is designed for synchronous api calls."
   },
   {
     "id": "cpp_introduction.html#cpp-design-client-sync-api",
@@ -115,9 +125,9 @@
     "text": "DO provide a synchronous programming model."
   },
   {
-    "id": "cpp_introduction.html#cpp-design-client-sync-api",
+    "id": "cpp_introduction.html#cpp-design-client-no-async-api",
     "category": "Sync and Async",
-    "text": "DO NOT provide an async programming model.\n\nTODO: This section needs to be driven by code in the Core library.\n\nPascalCase identifiers start with an uppercase letter and then use additional capital letters to divide words. Acronyms and initialisms are capitalized if they are 2 letters or shorter; otherwise only the first letter is capitalized. For example, PascalCase, HttpRequest, JsonParser, or IOContext.\n\n\ncamelCase identifiers start with a lowercase letter and then use additional capital letters to divide words. Acronyms and initialisms that start an identifier are all lowercase if they begin an identifier, otherwise they follow the same 2 letters rule as PascalCase. For example, camelCase, httpRequest, processHttp, ioContext, startIO.\n\n\nALL_CAPITAL_SNAKE_CASE identifiers are composed of entirely capital letters and divide words with underscores.\n\n\nPascalCase identifiers start with an uppercase letter and then use additional capital letters to divide words. Acronyms and initialisms are capitalized if they are 2 letters or shorter; otherwise only the first letter is capitalized. For example, PascalCase, HttpRequest, JsonParser, or IOContext.\n\ncamelCase identifiers start with a lowercase letter and then use additional capital letters to divide words. Acronyms and initialisms that start an identifier are all lowercase if they begin an identifier, otherwise they follow the same 2 letters rule as PascalCase. For example, camelCase, httpRequest, processHttp, ioContext, startIO.\n\nALL_CAPITAL_SNAKE_CASE identifiers are composed of entirely capital letters and divide words with underscores."
+    "text": "DO NOT provide an async programming model.\n\nPascalCase identifiers start with an uppercase letter and then use additional capital letters to divide words. Acronyms and initialisms are capitalized if they are 2 letters or shorter; otherwise only the first letter is capitalized. For example, PascalCase, HttpRequest, JsonParser, or IOContext.\n\n\ncamelCase identifiers start with a lowercase letter and then use additional capital letters to divide words. Acronyms and initialisms that start an identifier are all lowercase if they begin an identifier, otherwise they follow the same 2 letters rule as PascalCase. For example, camelCase, httpRequest, processHttp, ioContext, startIO.\n\n\nALL_CAPITAL_SNAKE_CASE identifiers are composed of entirely capital letters and divide words with underscores.\n\n\nPascalCase identifiers start with an uppercase letter and then use additional capital letters to divide words. Acronyms and initialisms are capitalized if they are 2 letters or shorter; otherwise only the first letter is capitalized. For example, PascalCase, HttpRequest, JsonParser, or IOContext.\n\ncamelCase identifiers start with a lowercase letter and then use additional capital letters to divide words. Acronyms and initialisms that start an identifier are all lowercase if they begin an identifier, otherwise they follow the same 2 letters rule as PascalCase. For example, camelCase, httpRequest, processHttp, ioContext, startIO.\n\nALL_CAPITAL_SNAKE_CASE identifiers are composed of entirely capital letters and divide words with underscores."
   },
   {
     "id": "cpp_introduction.html#cpp-design-naming-functions",
@@ -130,6 +140,11 @@
     "text": "YOU SHOULD declare all functions that can never throw exceptions noexcept."
   },
   {
+    "id": "cpp_introduction.html#cpp-design-naming-functions-const",
+    "category": "Naming",
+    "text": "DO declare all client functions as const since service clients are intended to be immutable."
+  },
+  {
     "id": "cpp_introduction.html#cpp-design-naming-variables-public-global",
     "category": "Naming",
     "text": "DO name namespace scope variables intended for user consumption with PascalCase."
@@ -140,9 +155,14 @@
     "text": "DO name namespace scope const or constexpr variables intended for user consumption with PascalCase."
   },
   {
-    "id": "cpp_introduction.html#cpp-design-naming-variables-public-global",
+    "id": "cpp_introduction.html#cpp-design-naming-variables-public-global-internal",
     "category": "Naming",
     "text": "DO name namespace scope non-constant variables intended only for internal consumption with a g_ prefix followed by camelCase. For example, g_applicationContext. Note that all such cases will be in a _detail namespace or an unnamed namespace."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-types-or-methods-in-global-namespace",
+    "category": "Naming",
+    "text": "DO NOT create types in the global namespace. All Azure SDK types MUST be in a namespace."
   },
   {
     "id": "cpp_introduction.html#cpp-design-naming-variables-local",
@@ -167,7 +187,7 @@
   {
     "id": "cpp_introduction.html#cpp-service-methods-cancellation",
     "category": "Cancellation",
-    "text": "DO ensure all service methods, both asynchronous and synchronous, take an optional Context parameter called context.\n\nThe context should be further passed to all calls that take a context. DO NOT check the context manually, except when running a significant amount of CPU-bound work within the library, e.g. a loop that can take more than a typical network call.\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "DO ensure all service methods, both asynchronous and synchronous, have a final parameter of type const Azure::Core::Context & initialized to = {}\n\nThe context should be further passed by reference (preferably as a const reference) to all calls that take a context. DO NOT check the context manually, except when running a significant amount of CPU-bound work within the library, e.g. a loop that can take more than a typical network call.\n\nNote that cancellation is a application developer construct, Azure SDK clients MUST NOT cancel the Context object provided by the client."
   },
   {
     "id": "cpp_introduction.html#cpp-design-client-return-types",
@@ -212,7 +232,7 @@
   {
     "id": "cpp_introduction.html#cpp-design-client-methods-thread-safety",
     "category": "Thread Safety",
-    "text": "DO be thread-safe. All public members of the client type must be safe to call from multiple threads concurrently.\n\nTODO: This section needs to be driven by code in the Core library.\n\nThe service client will have several methods that perform requests on the service.  Service parameters are directly passed across the wire to an Azure service.  Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
+    "text": "DO be thread-safe. All public members of the client type must be safe to call from multiple threads concurrently.\n\nThe service client will have several methods that perform requests on the service.  Service parameters are directly passed across the wire to an Azure service.  Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
   },
   {
     "id": "cpp_introduction.html#cpp-params-client-validation",
@@ -242,7 +262,7 @@
   {
     "id": "cpp_introduction.html#cpp-design-logical-client-pagination-size-of-page",
     "category": "Methods Returning Collections (Paging) {#cpp-paging}",
-    "text": "DO indicate in the return type how many items were returned by the service, and have a list of those items for the consumer to iterate over.\n\nSome service operations, known as Long Running Operations or LROs take a long time (up to hours or days). Such operations do not return their result immediately, but rather are started, their progress is polled, and finally the result of the operation is retrieved.\n\nAzure::Core library exposes an abstract type called Operation<T>, which represents such LROs and supports operations for polling and waiting for status changes, and retrieving the final operation result.  A service method invoking a long running operation will return a subclass of Operation<T>, as shown below.\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "DO indicate in the return type how many items were returned by the service, and have a list of those items for the consumer to iterate over.\n\nSome service operations, known as Long Running Operations or LROs take a long time (up to hours or days). Such operations do not return their result immediately, but rather are started, their progress is polled, and finally the result of the operation is retrieved.\n\nAzure::Core library exposes an abstract type called Operation<T>, which represents such LROs and supports operations for polling and waiting for status changes, and retrieving the final operation result.  A service method invoking a long running operation will return a subclass of Operation<T>, as shown below."
   },
   {
     "id": "cpp_introduction.html#cpp-lro-prefix",
@@ -257,12 +277,37 @@
   {
     "id": "cpp_introduction.html#cpp-lro-subclass",
     "category": "Methods Invoking Long Running Operations {#cpp-longrunning}",
-    "text": "YOU MAY add additional APIs to subclasses of Operation<T>.\nFor example, some subclasses add a constructor allowing to create an operation instance from a previously saved operation ID. Also, some subclasses are more granular states besides the IsDone and HasValue states that are present on the base class.\n\nTODO: This section needs to be driven by code in the Core library.\n\nTODO: This section needs to be driven by code in the Core library.\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nThis section describes guidelines for the design model types and all their transitive closure of public dependencies (i.e. the model graph).  A model type is a representation of a REST service's resource."
+    "text": "YOU MAY add additional APIs to subclasses of Operation<T>.\nFor example, some subclasses add a constructor allowing to create an operation instance from a previously saved operation ID. Also, some subclasses are more granular states besides the IsDone and HasValue states that are present on the base class."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-conditional-request-methods-etag-options",
+    "category": "Conditional Request Methods",
+    "text": "DO define ETag-related options e.g., IfMatch, IfNoneMatch, etc., in the service method options."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-hierarchical-clients-subclients-return",
+    "category": "Hierarchical Clients",
+    "text": "YOU MAY return clients from other clients e.g., a DatabaseClient from a CosmosClient.\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nThis section describes guidelines for the design model types and all their transitive closure of public dependencies (i.e. the model graph).  A model type is a representation of a REST service's resource."
   },
   {
     "id": "cpp_introduction.html#cpp-design-model-public-getters",
     "category": "Model Types {#cpp-model-types}",
-    "text": "DO ensure model public properties are const if they aren't intended to be changed by the user.\n\nMost output-only models can be fully read-only. Models that are used as both outputs and inputs (i.e. received from and sent to the service) typically have a mixture of read-only and read-write properties.\n\nTODO: This section needs to be driven by code in the Core library.\n\nTODO: This section needs to be driven by code in the Core library.\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "DO ensure model public properties are const if they aren't intended to be changed by the user.\n\nMost output-only models can be fully read-only. Models that are used as both outputs and inputs (i.e. received from and sent to the service) typically have a mixture of read-only and read-write properties."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-model-type-naming-collision",
+    "category": "Model Type Naming",
+    "text": "DO define models using the names from TypeSpec unless those names conflict with keywords or common types from std, Azure::Core, or other common dependencies.\n\nIf name collisions are likely and the TypeSpec cannot be changed, you can either use the @clientName TypeSpec decorator or update a client .tsp file."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-model-names-fields-casing",
+    "category": "Model Type Naming",
+    "text": "DO define model fields using \"PascalCase\"."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-naming-context",
+    "category": "Model Type Naming",
+    "text": "YOU SHOULD consider the context associated with structure fields when naming structure fields. Customers have expressed confusion when they encounter constructs like secret.Value.Value() or options.TransationcalContentHash.Value().Value."
   },
   {
     "id": "cpp_introduction.html#cpp-design-enums",
@@ -272,7 +317,7 @@
   {
     "id": "cpp_introduction.html#cpp-design-enums-exception",
     "category": "Enumerations",
-    "text": "YOU MAY use a struct in place of an enum class that declares well-known fields but can contain unknown values returned from the service, or user-defined values passed to the service.\n\nSee enumeration-like structure documentation for implementation details.\n\nThe azure-core package provides common functionality for client libraries.  Documentation and usage examples can be found in the azure/azure-sdk-for-cpp (https://github.com/Azure/azure-sdk-for-cpp/tree/main/sdk/core/azure-core) repository.\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "YOU MAY use a struct in place of an enum class that declares well-known fields but can contain unknown values returned from the service, or user-defined values passed to the service.\n\nSee enumeration-like structure documentation for implementation details.\n\nThe azure-core package provides common functionality for client libraries.  Documentation and usage examples can be found in the azure/azure-sdk-for-cpp (https://github.com/Azure/azure-sdk-for-cpp/tree/main/sdk/core/azure-core) repository."
   },
   {
     "id": "cpp_introduction.html#cpp-primitives-etag",
@@ -302,7 +347,7 @@
   {
     "id": "cpp_introduction.html#cpp-design-logical-errorhandling-prec-disablecheck",
     "category": "Exceptions {#cpp-errors}",
-    "text": "YOU MAY privide a means to disable precondition checks in release / optimized builds."
+    "text": "YOU MAY provide a means to disable precondition checks in release / optimized builds."
   },
   {
     "id": "cpp_introduction.html#cpp-design-logical-errorhandling-prec-crash",
@@ -352,7 +397,7 @@
   {
     "id": "cpp_introduction.html#cpp-design-logical-errorhandling-recov-reporting",
     "category": "Exceptions {#cpp-errors}",
-    "text": "DO report errors by throwing C++ exceptions defined in the Azure C++ Core Library.\n\nTODO: The Core library needs to provide exceptions for the common failure modes, e.g. the same values as az_result in the C SDK.\n\nFor example:\n\n{% highlight cpp %}\nclass Herd {\nbool m_hasShyCats;\nint m_numCats;\npublic:\nvoid CountCats(int* cats) {\nif(m_hasShyCats) {\nthrow std::runtime_error(\"shy cats are not allowed\");\n}\n*cats = m_numCats;\n}\n};\n{% endhighlight %}"
+    "text": "DO report errors by throwing C++ exceptions defined in the Azure C++ Core Library.\n\nFor example:\n\n{% highlight cpp %}\nclass Herd {\nbool m_hasShyCats;\nint m_numCats;\npublic:\nvoid CountCats(int* cats) {\nif(m_hasShyCats) {\nthrow std::runtime_error(\"shy cats are not allowed\");\n}\n*cats = m_numCats;\n}\n};\n{% endhighlight %}"
   },
   {
     "id": "cpp_introduction.html#cpp-design-logical-errorhandling-recov-error",
@@ -395,29 +440,39 @@
     "text": "DO provide service client constructors or factories that accept any supported authentication credentials."
   },
   {
+    "id": "cpp_introduction.html#cpp-design-no-connection-strings",
+    "category": "Service Clients Created after 1/1/2024",
+    "text": "DO NOT provide any authentication mechanism other than managed identity."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-no-custom-authentication",
+    "category": "Service Clients Created after 1/1/2024",
+    "text": "DO NOT provide any non-standard authentication mechanism."
+  },
+  {
     "id": "cpp_introduction.html#cpp-design-logical-client-surface-no-connection-strings",
-    "category": "Authentication {#cpp-authentication}",
+    "category": "Service Clients Created before 1/1/2024",
     "text": "YOU SHOULD NOT support providing credential data via a connection string. Connection string interfaces should be provided ONLY IF the service provides a connection string to users via the portal or other tooling."
   },
   {
     "id": "cpp_introduction.html#cpp-design-logical-client-surface-no-connection-string-ctors",
-    "category": "Authentication {#cpp-authentication}",
-    "text": "DO NOT support constructing a service client with a connection string unless such connection string. Provide a CreateFromConnectionString static member function which returns a client instead to encourage customers to choose non-connection-string-based authentication.\n\nWhen implementing authentication, don't open up the consumer to security holes like PII (personally identifiable information) leakage or credential leakage.  Credentials are generally issued with a time limit, and must be refreshed periodically to ensure that the service connection continues to function as expected.  Ensure your client library follows all current security recommendations and consider an independent security review of the client library to ensure you're not introducing potential security problems for the consumer."
+    "category": "Service Clients Created before 1/1/2024",
+    "text": "DO NOT support constructing a service client with a connection string unless such connection string. Provide a CreateFromConnectionString static member function which returns a client instead to encourage customers to choose non-connection-string-based authentication.\n\nWhen implementing authentication, don't open up the consumer to security holes like PII (personally identifiable information) leakage or credential leakage. Credentials are generally issued with a time limit, and must be refreshed periodically to ensure that the service connection continues to function as expected.  Ensure your client library follows all current security recommendations and consider an independent security review of the client library to ensure you're not introducing potential security problems for the consumer."
   },
   {
     "id": "cpp_introduction.html#cpp-implementing-no-persistence-auth",
-    "category": "Authentication {#cpp-authentication}",
-    "text": "DO NOT\npersist, cache, or reuse security credentials.  Security credentials should be considered short lived to cover both security concerns and credential refresh situations.\n\nIf your service implements a non-standard credential system (one that is not supported by Azure Core), then you need to produce an authentication policy for the HTTP pipeline that can authenticate requests given the alternative credential types provided by the client library."
+    "category": "Service Clients Created before 1/1/2024",
+    "text": "DO NOT\npersist, cache, or reuse security credentials. Security credentials should be considered short lived to cover both security concerns and credential refresh situations.\n\nIf your service implements a non-standard credential system (one that is not supported by Azure Core), then you need to produce an authentication policy for the HTTP pipeline that can authenticate requests given the alternative credential types provided by the client library."
   },
   {
     "id": "cpp_introduction.html#cpp-implementing-secure-auth-erase",
-    "category": "Authentication {#cpp-authentication}",
+    "category": "Service Clients Created before 1/1/2024",
     "text": "DO Use a \"secure\" function to zero authentication or authorization credentials as soon as possible once they are no longer needed. Examples of such functions\ninclude: SecureZeroMemory, memset_s, and explicit_bzero. Examples of insecure functions include memset. An optimizer may notice that the credentials are\nnever accessed again, and optimize away the call to memset, resulting in the credentials remaining in memory."
   },
   {
     "id": "cpp_introduction.html#cpp-implementing-auth-policy",
-    "category": "Authentication {#cpp-authentication}",
-    "text": "DO\nprovide a suitable authentication policy that authenticates the HTTP request in the HTTP pipeline when using non-standard credentials.  This includes custom connection strings, if supported.\n\nGrouping services within a cloud infrastructure is common since it aids discoverability and provides structure to the reference documentation."
+    "category": "Service Clients Created before 1/1/2024",
+    "text": "DO\nprovide a suitable authentication policy that authenticates the HTTP request in the HTTP pipeline when using non-standard credentials. This includes custom connection strings, if supported.\n\nGrouping services within a cloud infrastructure is common since it aids discoverability and provides structure to the reference documentation."
   },
   {
     "id": "cpp_introduction.html#cpp-design-naming-namespaces",
@@ -460,9 +515,74 @@
     "text": "DO register the chosen namespace with the [Architecture Board].  Open an issue to request the namespace.  See the registered namespace list for a list of the currently registered namespaces."
   },
   {
+    "id": "cpp_introduction.html#cpp-design-naming-namespaces-internal",
+    "category": "Namespaces {#cpp-namespace-naming}",
+    "text": "DO place types and functions intended for use in other Azure SDK Clients in a _internal namespace. Note that this only applies to types in the Azure::Core namespace."
+  },
+  {
     "id": "cpp_introduction.html#cpp-design-naming-namespaces-details",
     "category": "Namespaces {#cpp-namespace-naming}",
-    "text": "DO place private implementation details in a _detail namespace.\n\n{% highlight cpp %}\nnamespace Azure { namespace Group { namespace Service {\nnamespace _detail {\n// Part of the private API\nstruct HashComputation {\nint InternalBookkeeping;\n};\n\nconst int g_privateConstant = 1729;\n} // namespace _detail\n\n// Part of the public API\nstruct UploadBlobRequest {\nunsigned char* Data;\nsize_t DataLength;\n};\n\n// Bad - private API in public namespace.\nstruct HashComputation {\nint InternalBookkeeping;\n};\nconst int g_privateConstant = 1729;\n}}} // namespace Azure::Group::Service\n{% endhighlight %}\n\nExample Namespaces\n\nHere are some examples of namespaces that meet these guidelines:\nAzure::Data::Cosmos\nAzure::Identity::ActiveDirectory\nAzure::IoT::DeviceProvisioning\nAzure::Storage::Blobs\nAzure::Messaging::NotificationHubs (the client library for Notification Hubs)\nAzure::Management::Messaging::NotificationHubs (the management library for Notification Hubs)\n\nHere are some namespaces that do not meet the guidelines:\nmicrosoft::azure::CosmosDB (not in the Azure namespace and does not use grouping, uses lowercase letters)\nazure::mixed_reality::kinect (the grouping is not in the approved list and uses snake_case)\nAzure::IoT::IoTHub::DeviceProvisioning (too many levels in the group)\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "DO place private implementation details in a _detail namespace.\n\n{% highlight cpp %}\nnamespace Azure { namespace Group { namespace Service {\nnamespace _detail {\n// Part of the private API\nstruct HashComputation {\nint InternalBookkeeping;\n};\n\nconst int g_privateConstant = 1729;\n} // namespace _detail\n\n// Part of the public API\nstruct UploadBlobRequest {\nunsigned char* Data;\nsize_t DataLength;\n};\n\n// Bad - private API in public namespace.\nstruct HashComputation {\nint InternalBookkeeping;\n};\nconst int g_privateConstant = 1729;\n}}} // namespace Azure::Group::Service\n{% endhighlight %}\n\nTypes in the Public API surface (types not in an _internal or _detail namespace) form the public API surface of an Azure SDK package."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-public-types-semver",
+    "category": "Public types",
+    "text": "DO follow semantic versioning (https://semver.org/) rules.\n\nTypes in the Internal API surface (types in an _internal namespace) are not designed to be called from outside the Azure SDK repository."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-internal-types-no-public",
+    "category": "Internal types",
+    "text": "DO NOT define internal types in public Azure SDK headers."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-internal-types-header-location",
+    "category": "Internal types",
+    "text": "DO define internal types in headers located in an internal directory alongside existing public Azure SDK headers."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-internal-types-change",
+    "category": "Internal types",
+    "text": "YOU MAY introduce breaking changes to internal types as long as those breaking changes will not break existing Azure SDK clients."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-internal-types-public-exception1",
+    "category": "Internal types",
+    "text": "YOU MAY reference internal types in public headers."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-internal-types-public-exception2",
+    "category": "Internal types",
+    "text": "YOU MAY include template specializations for internal templates in public headers to simplify the implementation.\n\nNOTE: Since these types are typically located in the azure-core package, care must be made when introducing breaking changes to these types, and when adding new internal types. For changes to the types, the azure-core implementation typically has to be released before any Azure SDK packages can take dependencies on those types.\n\nIn addition, it is critical to realize that the only dependencies between Azure SDK packages is a >= dependency. That means that a particular version of an existing Azure SDK package is expected to work with any future versions of other Azure SDK packages, even of those packages on which it depends. That means that any breaking changes to internal types MUST be upward compatible.\n\nPrivate types  are types located in a _detail namespace. Private types are only intended to be called within a single package, and follow the following requirements:"
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-private-types-in-headers",
+    "category": "Private types",
+    "text": "DO NOT define private types in public Azure SDK headers."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-private-types-private",
+    "category": "Private types",
+    "text": "DO NOT consume internal types outside the package in which they are defined."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-private-types-private-location",
+    "category": "Private types",
+    "text": "YOU SHOULD declare and/or define private types under a private directory."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-private-types-private-no-guarantees",
+    "category": "Private types",
+    "text": "YOU MAY modify private types without fear of introducing breaking changes."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-private-types-public-exception1",
+    "category": "Private types",
+    "text": "YOU MAY reference private types in public headers."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-design-private-types-public-exception2",
+    "category": "Private types",
+    "text": "YOU MAY include template specializations for private templates in public headers to simplify the implementation.\n\nExample Namespaces\n\nHere are some examples of namespaces that meet these guidelines:\nAzure::Data::Cosmos\nAzure::Identity::ActiveDirectory\nAzure::IoT::DeviceProvisioning\nAzure::Storage::Blobs\nAzure::Messaging::NotificationHubs (the client library for Notification Hubs)\nAzure::Management::Messaging::NotificationHubs (the management library for Notification Hubs)\n\nHere are some namespaces that do not meet the guidelines:\nmicrosoft::azure::CosmosDB (not in the Azure namespace and does not use grouping, uses lowercase letters)\nazure::mixed_reality::kinect (the grouping is not in the approved list and uses snake_case)\nAzure::IoT::IoTHub::DeviceProvisioning (too many levels in the group)\n\nTODO: This section needs to be driven by code in the Core library."
   },
   {
     "id": "cpp_introduction.html#cpp-package-dynamic",
@@ -477,7 +597,7 @@
   {
     "id": "cpp_introduction.html#cpp-package-vcpkg",
     "category": "Packaging {#cpp-packaging}",
-    "text": "DO publish your package to vcpkg (https://github.com/Microsoft/vcpkg)  a C++ library manager supporting Windows, Linux, and MacOS.\n\nTODO: This section needs to be driven by code in the Core library."
+    "text": "DO publish your package to vcpkg (https://github.com/Microsoft/vcpkg)  a C++ library manager supporting Windows, Linux, and MacOS."
   },
   {
     "id": "cpp_introduction.html#cpp-versioning-backwards-compatibility",
@@ -525,7 +645,7 @@
     "text": "YOU SHOULD increment the major version when making large feature changes."
   },
   {
-    "id": "cpp_introduction.html#cpp-version-change-on-release",
+    "id": "cpp_introduction.html#cpp-version-change-from-track-1",
     "category": "Package Version Numbers {#cpp-versionnumbers}",
     "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other scope or language.\n\nDependencies bring in many considerations that are often easily avoided by avoiding the\ndependency.\nVersioning - Many programming languages do not allow a consumer to load multiple versions of the same package. So, if we have an client library that requires v3 of package Foo and the consumer wants to use v5 of package Foo, then the consumer cannot build their application. This means that client libraries should not have dependencies by default.\nSize - Consumer applications must be able to deploy as fast as possible into the cloud and move in various ways across networks. Removing additional code (like dependencies) improves deployment performance.\nLicensing - You must be conscious of the licensing restrictions of a dependency and often provide proper attribution and notices when using them.\nCompatibility - Often times you do not control a dependency and it may choose to evolve in a direction that is incompatible with your original use.\nSecurity - If a security vulnerability is discovered in a dependency, it may be difficult or time consuming to get the vulnerability corrected if Microsoft does not control the dependencies code base."
   },
@@ -562,7 +682,7 @@
   {
     "id": "cpp_introduction.html#cpp-docs-docstrings",
     "category": "Documentation Comments {#cpp-documentation}",
-    "text": "DO use doxygen (http://www.doxygen.nl/index.html) comments for reference documentation.\n\nSee the [documentation guidelines]({{ site.baseurl }}/general_documentation.html) for language-independent guidelines for how to provide good documentation."
+    "text": "DO use doxygen (https://www.doxygen.nl/index.html) comments for reference documentation.\n\nSee the [documentation guidelines]({{ site.baseurl }}/general_documentation.html) for language-independent guidelines for how to provide good documentation."
   },
   {
     "id": "cpp_introduction.html#cpp-general-repository",
@@ -572,7 +692,7 @@
   {
     "id": "cpp_introduction.html#cpp-general-engsys",
     "category": "Repository Guidelines {#cpp-repository}",
-    "text": "DO follow Azure SDK engineering systems guidelines for working in the [azure/azure-sdk-for-cpp] GitHub repository.\n\nTODO: Content in this section below here should be moved to a better location."
+    "text": "DO follow Azure SDK engineering systems guidelines for working in the [azure/azure-sdk-for-cpp] GitHub repository."
   },
   {
     "id": "cpp_introduction.html#cpp-style-clang-format",
@@ -612,7 +732,47 @@
   {
     "id": "cpp_introduction.html#cpp-style-change-headers",
     "category": "Repository Guidelines {#cpp-repository}",
-    "text": "DO NOT substantially change the names exposed by the header in response to macros or other controls. For example, NOMINMAX or WIN32_LEAN_AND_MEAN from <Windows.h>.\n\nThere are several documentation deliverables that must be included in or as a companion to your client library. Beyond complete and helpful API documentation within the code itself (docstrings), you need a great README and other supporting documentation.\nREADME.md - Resides in the root of your library's directory within the SDK repository; includes package installation and client library usage information. ([example][README-EXAMPLE])\nAPI reference - Generated from the docstrings in your code; published on docs.microsoft.com.\nCode snippets - Short code examples that demonstrate single (atomic) operations for the champion scenarios you've identified for your library; included in your README, docstrings, and Quickstart.\nQuickstart - Article on docs.microsoft.com that is similar to but expands on the README content; typically written by your service's content developer.\nConceptual - Long-form documentation like Quickstarts, Tutorials, How-to guides, and other content on docs.microsoft.com; typically written by your service's content developer."
+    "text": "DO NOT substantially change the names exposed by the header in response to macros or other controls. For example, NOMINMAX or WIN32_LEAN_AND_MEAN from <Windows.h>."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-style-define-non-azure-types",
+    "category": "Repository Guidelines {#cpp-repository}",
+    "text": "DO NOT declare types which are not a part of the Azure SDK. This requirement precludes Azure headers from including 3rd party headers like openssl.h or windows.h since all of these headers define types which are not a part of the Azure SDK."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-docs-source-layout",
+    "category": "Source code layout",
+    "text": "DO lay out package source code as follows:\n<repository root>/sdk/\n\n<package namespace group>/\n\n<package name>/ - component root folder.\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n\n\n\n\n\n\n<package namespace group>/\n\n<package name>/ - component root folder.\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n\n\n\n\n<package name>/ - component root folder.\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n<package namespace group>/\n\n<package name>/ - component root folder.\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n\n\n\n\n<package name>/ - component root folder.\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n<package name>/ - component root folder.\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\n\n\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component.\nCHANGELOG.md - Changelog for the component.\nREADME.md - Readme for the component.\ninc/ - include files for the component.\nsrc/ - source files for the component.\ntest/ - tests for the component.\nsamples/ - samples for the component.\nvcpkg/ - vcpkg package for the component."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-docs-source-layout-exception",
+    "category": "Source code layout",
+    "text": "YOU SHOULD align the <package namespace group> element in the hierarchy to roughly conform to the other Azure SDK. For instance, the \"eventhubs\" service lives under the messaging package namespace group, but in most Azure SDKs, the \"eventhubs\" service client implementation lives in the eventhubs directory under the source root."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-docs-source-layout-inc",
+    "category": "Source code layout",
+    "text": "DO lay out directories under the inc directory as follows:\ninc/\n\nazure/\n\n<package namespace group>/ - eg keyvault, messaging, etc.\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n\n\n\n\n\n\nazure/\n\n<package namespace group>/ - eg keyvault, messaging, etc.\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n\n\n\n\n<package namespace group>/ - eg keyvault, messaging, etc.\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n<package specific headers>\nazure/\n\n<package namespace group>/ - eg keyvault, messaging, etc.\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n\n\n\n\n<package namespace group>/ - eg keyvault, messaging, etc.\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n<package specific headers>\n<package namespace group>/ - eg keyvault, messaging, etc.\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n\n\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n<package specific headers>\n<package short name>/ - eg certificates, blobs, datalake, etc.\n\n<package specific headers>\n\n\n<package specific headers>\n<package specific headers>"
+  },
+  {
+    "id": "cpp_introduction.html#cpp-client-name",
+    "category": "Source code layout",
+    "text": "DO base the file name for the service client on the name of the service client.\n\nFor example, the class declaration for the AttestationClient class should be contained in a file named attestation_client.hpp."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-docs-file-contents-exception",
+    "category": "Source code layout",
+    "text": "YOU SHOULD have at most one service client declaration per include file."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-docs-source-layout-src",
+    "category": "Source code layout",
+    "text": "DO lay out directories under the src directory as follows:\nsrc/\n\nprivate/ - private headers and source files.\n<package specific source files and headers> - package implementation files.\n\n\nprivate/ - private headers and source files.\n<package specific source files and headers> - package implementation files.\nprivate/ - private headers and source files.\n<package specific source files and headers> - package implementation files."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-docs-source-layout-test",
+    "category": "Source code layout",
+    "text": "DO lay out directories under the test directory as follows:\ntest/\n\nut/ - unit tests for the package.\nperf/ - performance tests for the package.\nstress/ - stress/reliability tests for the package.\n\n\nut/ - unit tests for the package.\nperf/ - performance tests for the package.\nstress/ - stress/reliability tests for the package.\nut/ - unit tests for the package.\nperf/ - performance tests for the package.\nstress/ - stress/reliability tests for the package.\n\nThere are several documentation deliverables that must be included in or as a companion to your client library. Beyond complete and helpful API documentation within the code itself (docstrings), you need a great README and other supporting documentation.\nREADME.md - Resides in the root of your library's directory within the SDK repository; includes package installation and client library usage information. ([example][README-EXAMPLE])\nAPI reference - Generated from the docstrings in your code; published on docs.microsoft.com.\nCode snippets - Short code examples that demonstrate single (atomic) operations for the champion scenarios you've identified for your library; included in your README, docstrings, and Quickstart.\nQuickstart - Article on docs.microsoft.com that is similar to but expands on the README content; typically written by your service's content developer.\nConceptual - Long-form documentation like Quickstarts, Tutorials, How-to guides, and other content on docs.microsoft.com; typically written by your service's content developer."
   },
   {
     "id": "cpp_introduction.html#cpp-docs-contentdev",
@@ -637,7 +797,7 @@
   {
     "id": "cpp_introduction.html#cpp-docs-doxygen",
     "category": "Documentation Style",
-    "text": "DO include docstrings compatible with the doxygen (http://www.doxygen.nl/index.html) tool for generating reference documentation.\n\nFor example, a (very) simple docstring might look like:\n{% highlight cpp %}\n/**\n@class client\n@brief The client represents the resources required for a connection to an Azure AppcConfiguration resource.\n*/\n{% endhighlight %}"
+    "text": "DO include docstrings compatible with the doxygen (https://www.doxygen.nl/index.html) tool for generating reference documentation.\n\nFor example, a (very) simple docstring might look like:\n{% highlight cpp %}\n/**\n@class client\n@brief The client represents the resources required for a connection to an Azure AppcConfiguration resource.\n*/\n{% endhighlight %}"
   },
   {
     "id": "cpp_introduction.html#cpp-docs-doxygen-cmd",
@@ -737,7 +897,22 @@
   {
     "id": "cpp_introduction.html#cpp-docs-readme-consumer",
     "category": "README {#cpp-repository-readme}",
-    "text": "DO optimize the README.md for the consumer of the client library.\n\nThe contributor guide (CONTRIBUTING.md) should be a separate file linked to from the main component README.md.\n\nTODO: Provide sample guidelines.\n\nTODO: Provide C++ specific API design guidelines.  Example:"
+    "text": "DO optimize the README.md for the consumer of the client library.\n\nThe contributor guide (CONTRIBUTING.md) should be a separate file linked to from the main component README.md."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-repo-samples-examples",
+    "category": "Samples {#cpp-samples}",
+    "text": "DO include runnable examples using Azure::Identity::DefaultAzureCredential and library-specific environment variables e.g., AZURE_KEYVAULT_URL."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-repo-samples-unique",
+    "category": "Samples {#cpp-samples}",
+    "text": "DO use unique example file names within the samples folder."
+  },
+  {
+    "id": "cpp_introduction.html#cpp-repo-samples-in-samples",
+    "category": "Samples {#cpp-samples}",
+    "text": "DO locate the sample code within the samples folder."
   },
   {
     "id": "cpp_introduction.html#cpp-format-cpp-no-goto",

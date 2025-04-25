@@ -14,7 +14,6 @@ exceptions: |
   13. Comment about ivar being non-standard in docstrings
   14. Comment about use of distributed_trace/async decorators
   15. Comment about methods ending with :
-  16. Comment about the overuse of **kwargs
 sample: |
   - description: "Should filter out docstring suggestions"
     initial_results: |

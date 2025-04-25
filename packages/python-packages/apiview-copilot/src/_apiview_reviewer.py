@@ -62,7 +62,6 @@ supported_models = [x for x in model_map.keys()]
 
 DEFAULT_MODEL = "o3-mini"
 DEFAULT_USE_RAG = False
-DEFAULT_CHUNK_INPUT = False
 
 
 class ApiViewReview:
@@ -73,14 +72,12 @@ class ApiViewReview:
         language: str,
         model: str = DEFAULT_MODEL,
         use_rag: bool = DEFAULT_USE_RAG,
-        chunk_input: bool = DEFAULT_CHUNK_INPUT,
     ):
         if model not in supported_models:
             raise ValueError(f"Model {model} not supported. Supported models are: {', '.join(supported_models)}")
         self.language = language
         self.model = model
         self.use_rag = use_rag
-        self.chunk_input = chunk_input
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
 
@@ -109,15 +106,12 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
-        chunked_target = SectionedDocument(target.splitlines(), chunk=self.chunk_input)
+        chunked_target = SectionedDocument(lines=target.splitlines())
         combined_results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
 
         # Skip header if multiple sections
         chunks_to_process = []
         for i, chunk in enumerate(chunked_target):
-            if i == 0 and len(chunked_target.sections) > 1:
-                # the first chunk is the header, so skip it
-                continue
             chunks_to_process.append((i, chunk))
 
         # Define status characters with colors

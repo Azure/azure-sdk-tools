@@ -1,0 +1,146 @@
+{
+    "comments": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 6,
+            "bad_code": "ivar analyzers: AnalyzersOperations",
+            "suggestion": "Ensure that the synchronous client references a synchronous operations implementation (e.g. defined in the azure.ai.contentunderstanding.operations namespace) rather than an async one.",
+            "comment": "The synchronous ContentUnderstandingClient exposes an 'analyzers' property typed as AnalyzersOperations, yet the only provided definition for AnalyzersOperations is in the async namespace (azure.ai.contentunderstanding.aio.operations). This mixing of asynchronous types into the synchronous client violates the guideline to provide separate sync and async operations (python_design.html#python-client-sync-async-separate-clients).",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 109,
+            "bad_code": "input: bytes",
+            "suggestion": "data: bytes",
+            "comment": "The parameter name 'input' shadows Python's built-in function. Renaming it (for example, to 'data' or 'content') avoids potential conflicts and improves clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 170,
+            "bad_code": "-> ResourceOperationStatusContentAnalyzerContentAnalyzerError",
+            "suggestion": "-> ResourceOperationStatus",
+            "comment": "$The return type here is overly verbose and potentially confusing. Simplifying type names helps reduce cognitive load and makes error handling more intuitive. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 175,
+            "bad_code": "-> OperationStatusAnalyzeResultError",
+            "suggestion": "-> AnalyzeResult",
+            "comment": "$Similarly, the complex return type name could be simplified to better reflect its meaning and improve the overall developer experience. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 237,
+            "bad_code": "ivar contents: List[MediaContent]",
+            "suggestion": "Either use 'List[MediaContent]' throughout or 'list[MediaContent]' consistently (if targeting Python 3.9+), but not both.",
+            "comment": "The API inconsistently mixes built-in generic types with those from the typing module. Standardizing the type annotation style will enhance clarity and consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 267,
+            "bad_code": "ivar value_array: Optional[List[ForwardRef('ContentField')]]",
+            "suggestion": "ivar value_array: Optional[List['ContentField']]",
+            "comment": "Using string literals for forward references (or enabling 'from __future__ import annotations') improves readability compared to explicit ForwardRef calls.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 732,
+            "bad_code": "class azure.ai.contentunderstanding.models.DocumentFigure(MutableMapping[str, Any]):",
+            "suggestion": "class DocumentFigure(MutableMapping[str, Any]):",
+            "comment": "Defining classes with fully‐qualified names inside the module is uncommon in idiomatic Python. It’s clearer and more maintainable to use the simple class name, letting the module namespace provide context.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 735,
+            "bad_code": "ivar footnotes: Optional[List[ForwardRef('DocumentFootnote')]]",
+            "suggestion": "from __future__ import annotations\nivar footnotes: Optional[List[DocumentFootnote]]",
+            "comment": "The explicit use of ForwardRef for type annotations can be simplified. Using 'from __future__ import annotations' lets you reference types directly without wrapping them in ForwardRef, resulting in clearer type hints.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 736,
+            "bad_code": "ivar id: str",
+            "suggestion": "ivar document_id: str",
+            "comment": "Using 'id' as an attribute name can shadow Python's built‐in id() function. Renaming it (e.g. to 'document_id') improves clarity and avoids potential conflicts.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1208,
+            "bad_code": "class azure.ai.contentunderstanding.models.NumberField(MutableMapping[str, Any]):",
+            "suggestion": "class NumberField(MutableMapping[str, Any]):",
+            "comment": "Avoid prefixing the class name with the full module path. Since the module's location already provides the namespace context, using a simple class name improves readability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1211,
+            "bad_code": "ivar spans: list[ContentSpan]",
+            "suggestion": "ivar spans: List[ContentSpan]",
+            "comment": "Type hints should be consistent. Decide whether to use built‑in generics (available in Python 3.9+) or the typing generics uniformly to enhance code clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1229,
+            "bad_code": "def __init__(self, *, confidence: Optional[float] = ..., source: Optional[str] = ..., spans: Optional[List[ContentSpan]] = ..., type: str) -> None",
+            "suggestion": "def __init__(self, *, confidence: Optional[float] = ..., source: Optional[str] = ..., spans: Optional[List[ContentSpan]] = ..., field_type: str) -> None",
+            "comment": "Using 'type' as a parameter name shadows the built-in 'type'. Renaming this parameter (e.g. to 'field_type') will prevent potential confusion and bugs.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1332,
+            "bad_code": "class azure.ai.contentunderstanding.models.ResourceOperationStatusContentAnalyzerContentAnalyzerError(MutableMapping[str, Any]):",
+            "suggestion": "class ContentAnalyzerError(MutableMapping[str, Any]):",
+            "comment": "The class name is overly verbose and repetitive. A more concise name (if it suffices in context) will improve readability and ease of use.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-constructor-form"
+            ],
+            "line_no": 1509,
+            "bad_code": "def __init__(\n",
+            "suggestion": "def __init__(self, endpoint: str, credential: Any, **kwargs: Any): ...",
+            "comment": "The public constructor is defined with *args and **kwargs rather than explicitly declaring the positional binding parameters (e.g. an endpoint and credential). According to the guidelines this client constructor should clearly expose its required parameters.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1556,
+            "bad_code": "def begin_analyze_binary(self, analyzer_id: str, input: bytes, **kwargs: Any)",
+            "suggestion": "def begin_analyze_binary(self, analyzer_id: str, data: bytes, **kwargs: Any)",
+            "comment": "Avoid using 'input' as a parameter name since it shadows the built-in input() function. Renaming it to something like 'data' or 'binary_data' enhances clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1616,
+            "bad_code": "def get_operation_status(self, analyzer_id: str, operation_id: str, **kwargs: Any) -> ResourceOperationStatusContentAnalyzerContentAnalyzerError",
+            "suggestion": "def get_operation_status(self, analyzer_id: str, operation_id: str, **kwargs: Any) -> OperationStatus",
+            "comment": "The return type name 'ResourceOperationStatusContentAnalyzerContentAnalyzerError' is overly verbose and potentially confusing. Simplifying error/result type names can improve readability and developer experience.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 1641,
+            "bad_code": "def list(self, **kwargs: Any) -> Iterable[ContentAnalyzer]",
+            "suggestion": "def list_analyzers(self, **kwargs: Any) -> ItemPaged[ContentAnalyzer]",
+            "comment": "Using 'list' as a method name can shadow the built-in list type. Renaming the method (e.g. to list_analyzers) improves clarity and avoids potential conflicts. Methods that enumerate resources should be prefixed with 'list_' and return a paging object that implements the ItemPaged protocol. The name 'list' is too generic and does not follow the naming convention.",
+            "source": "generic"
+        }
+    ]
+}

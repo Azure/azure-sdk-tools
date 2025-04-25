@@ -114,10 +114,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 sanitizer.Sanitize(requestEntry);
 
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug))
-                {
-                    LogSanitizerModification(sanitizer.SanitizerId, reqEntryPreSanitize, requestEntry);
-                }
+                // if (DebugLogger.CheckLogLevel(LogLevel.Debug))
+                // {
+                //     LogSanitizerModification(sanitizer.SanitizerId, reqEntryPreSanitize, requestEntry);
+                // }
             }
 
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
@@ -170,26 +170,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 sanitizer.Sanitize(this);
 
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug))
-                {
-                    if (entriesPreSanitize.Length > this.Entries.Count)
-                    {
-                        DebugLogger.LogDebug(GetSanitizerInfoLogPrefix(sanitizer.SanitizerId) + " has removed some entries");
-                    }
-                    else if (entriesPreSanitize.Length < this.Entries.Count)
-                    {
-                        throw new Exception("Something went wrong. The number of entries increased after sanitization with " + GetSanitizerInfoLogPrefix(sanitizer.SanitizerId));
-                    }
-                    else
-                    {
-                        for (int i = 0; i < entriesPreSanitize.Length; i++)
-                        {
-
-                            LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
-
-                        }
-                    }
-                }
+                // if (DebugLogger.CheckLogLevel(LogLevel.Debug))
+                // {
+                //     if (entriesPreSanitize.Length > this.Entries.Count)
+                //     {
+                //         DebugLogger.LogDebug(GetSanitizerInfoLogPrefix(sanitizer.SanitizerId) + " has removed some entries");
+                //     }
+                //     else if (entriesPreSanitize.Length < this.Entries.Count)
+                //     {
+                //         throw new Exception("Something went wrong. The number of entries increased after sanitization with " + GetSanitizerInfoLogPrefix(sanitizer.SanitizerId));
+                //     }
+                //     else
+                //     {
+                //         for (int i = 0; i < entriesPreSanitize.Length; i++)
+                //         {
+                //             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                //         }
+                //     }
+                // }
             }
             finally
             {
@@ -219,24 +217,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                     sanitizer.Sanitize(this);
 
-                    if (DebugLogger.CheckLogLevel(LogLevel.Debug))
-                    {
-                        if (entriesPreSanitize.Length > this.Entries.Count)
-                        {
-                            DebugLogger.LogDebug(GetSanitizerInfoLogPrefix(sanitizer.SanitizerId) + " has removed some entries");
-                        }
-                        else if (entriesPreSanitize.Length < this.Entries.Count)
-                        {
-                            throw new Exception("Something went wrong. The number of entries increased after sanitization with " + GetSanitizerInfoLogPrefix(sanitizer.SanitizerId));
-                        }
-                        else
-                        {
-                            for (int i = 0; i < entriesPreSanitize.Length; i++)
-                            {
-                                LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
-                            }
-                        }
-                    }
+                    // if (DebugLogger.CheckLogLevel(LogLevel.Debug))
+                    // {
+                    //     if (entriesPreSanitize.Length > this.Entries.Count)
+                    //     {
+                    //         DebugLogger.LogDebug(GetSanitizerInfoLogPrefix(sanitizer.SanitizerId) + " has removed some entries");
+                    //     }
+                    //     else if (entriesPreSanitize.Length < this.Entries.Count)
+                    //     {
+                    //         throw new Exception("Something went wrong. The number of entries increased after sanitization with " + GetSanitizerInfoLogPrefix(sanitizer.SanitizerId));
+                    //     }
+                    //     else
+                    //     {
+                    //         for (int i = 0; i < entriesPreSanitize.Length; i++)
+                    //         {
+                    //             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                    //         }
+                    //     }
+                    // }
                 }
             }
             finally

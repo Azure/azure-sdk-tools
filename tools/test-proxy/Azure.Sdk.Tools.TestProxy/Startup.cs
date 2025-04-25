@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 newLine: true, statusThreadCts.Token);
 
             var host = Host.CreateDefaultBuilder((startOptions.AdditionalArgs??new string[] { }).ToArray());
-            
+
             host.ConfigureWebHostDefaults(
                 builder =>
                     builder.UseStartup<Startup>()
@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         kestrelServerOptions.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
                         // default minimum rate is 240 bytes per second with 5 second grace period. Bumping to 50bps with a graceperiod of 20 seconds.
-                        kestrelServerOptions.Limits.MinRequestBodyDataRate = new MinDataRate(bytesPerSecond: 50, gracePeriod: TimeSpan.FromSeconds(20));
+                        kestrelServerOptions.Limits.MinRequestBodyDataRate = new MinDataRate(bytesPerSecond: 25, gracePeriod: TimeSpan.FromSeconds(60));
                     })
                 );
 

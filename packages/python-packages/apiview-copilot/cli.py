@@ -63,7 +63,7 @@ def local_review(
     rg = ApiViewReview(language=language, model=model, chunk_input=chunk_input, use_rag=use_rag)
     filename = os.path.splitext(os.path.basename(path))[0]
 
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         apiview = f.read()
 
     review = rg.get_response(target=apiview)

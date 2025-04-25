@@ -18,7 +18,7 @@ from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvalu
 dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
-    # for best results, this should always be a different model from the one we are evaluating
+# for best results, this should always be a different model from the one we are evaluating
 MODEL_JUDGE = "gpt-4o"
 
 model_config: dict[str, str] = {
@@ -32,8 +32,7 @@ model_config: dict[str, str] = {
 class CustomAPIViewEvaluator:
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self):
-        self._client = openai.AzureOpenAI()
+    def __init__(self): ...
 
     def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
         """Compare comments based on both line numbers and rule IDs."""
@@ -59,9 +58,10 @@ class CustomAPIViewEvaluator:
                     if abs(e_line - a_line) <= 5:
                         # If the line numbers are close, consider it a match
                         rule_matches_wrong_line.add((tuple(sorted(e_rules)), e_line, a_line))
+                        comments_left.remove(actual_comment)
+                        break
 
         return exact_matches, rule_matches_wrong_line, comments_left
-
 
     def _evaluate_generic_comments(self, query: str, language: str, generic_comments: list[dict[str, Any]]) -> None:
         """Evaluate generic comments"""
@@ -72,13 +72,13 @@ class CustomAPIViewEvaluator:
             exceptions = filter_data["exceptions"].strip().split("\n")
             exceptions = [e.split(". ", 1)[1] for e in exceptions]
 
+        client = openai.AzureOpenAI()
         for comment in generic_comments:
             line_no = comment["line_no"]
-            context = query[line_no-10:line_no+10]
-            response = self._client.responses.create(
+            context = query[line_no - 10 : line_no + 10]
+            response = client.responses.create(
                 model=MODEL_JUDGE,
                 input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",
-                
             )
             comment["valid"] = "true" in response.output_text.lower()
 
@@ -95,11 +95,11 @@ class CustomAPIViewEvaluator:
             "comments_found": len(actual["comments"]),
             "true_positives": len(exact_matches),
             "valid_generic_comments": valid_generic_comments,
-            "false_positives": len(actual["comments"]) - (len(exact_matches) + len(rule_matches_wrong_line)) - valid_generic_comments,
+            "false_positives": len(actual["comments"])
+            - (len(exact_matches) + len(rule_matches_wrong_line))
+            - valid_generic_comments,
             "false_negatives": expected_comments - (len(exact_matches) + len(rule_matches_wrong_line)),
-            "percent_coverage": (
-                (len(exact_matches) / expected_comments * 100) if expected_comments else 0
-            ),
+            "percent_coverage": ((len(exact_matches) / expected_comments * 100) if expected_comments else 0),
             "rule_matches_wrong_line": len(rule_matches_wrong_line),
             "wrong_line_details": list(rule_matches_wrong_line),
         }
@@ -109,9 +109,7 @@ class CustomAPIViewEvaluator:
 class CustomSimilarityEvaluator:
 
     def __init__(self):
-        self._similarity_eval = SimilarityEvaluator(
-            model_config=model_config
-        )
+        self._similarity_eval = SimilarityEvaluator(model_config=model_config)
 
     def __call__(self, *, query: str, language: str, output: str, ground_truth: str, **kwargs):
         output = json.loads(output)
@@ -131,19 +129,14 @@ class CustomSimilarityEvaluator:
 class CustomGroundednessEvaluator:
 
     def __init__(self):
-        self._groundedness_eval = GroundednessEvaluator(
-            model_config=model_config
-        )
+        self._groundedness_eval = GroundednessEvaluator(model_config=model_config)
 
     def __call__(self, *, query: str, language: str, output: str, context: str, **kwargs):
         output = json.loads(output)
         actual = [c for c in output["comments"] if c["rule_ids"]]
         if not actual:
             return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
-        groundedness = self._groundedness_eval(
-            response=json.dumps(actual),
-            context=context
-        )
+        groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
         return groundedness
 
 
@@ -172,8 +165,14 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
     }
 
     if row["outputs.custom_eval.expected_comments"] == 0:
-        # tests with no comments are all or nothing
-        return 100.0 if row["outputs.custom_eval.comments_found"] == 0 else 0.0
+        # tests with no violations are all or nothing
+        # but still give credit if no violations found, but valid generic comments found
+        if (
+            row["outputs.custom_eval.comments_found"] == 0
+            or row["outputs.custom_eval.comments_found"] == row["outputs.custom_eval.valid_generic_comments"]
+        ):
+            return 100.0
+        return 0.0
 
     exact_match_score = row["outputs.custom_eval.true_positives"] / row["outputs.custom_eval.expected_comments"]
 
@@ -251,12 +250,12 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
     for result in eval_results[:-1]:  # Skip summary object
         testcase = result["testcase"]
         score = result["overall_score"]
-        exact = result["true_positives"]
+        exact = int(result["true_positives"])
         rule = result["rule_matches_wrong_line"]
         fp = result["false_positives"]
         ground = result["groundedness"]
         sim = result["similarity"]
-        valid_generic = result["valid_generic_comments"]
+        valid_generic = int(result["valid_generic_comments"])
         comments_found = f"{result['comments_found']} / {result['expected_comments']}"
 
         terminal_row = [testcase]

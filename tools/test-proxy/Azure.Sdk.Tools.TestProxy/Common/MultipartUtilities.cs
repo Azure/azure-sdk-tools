@@ -7,6 +7,9 @@ using System.Text;
 using System;
 using Microsoft.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Newtonsoft.Json.Linq;
+using System.Net;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -119,27 +122,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return boundary;
         }
 
-        public static void SerializeMultipartBody(
-            Utf8JsonWriter jsonWriter,
-            string name,
-            byte[] raw,
-            string boundary)
-        {
-            jsonWriter.WriteStartArray(name);
-
-            // Boundary might have been sanitised to "REDACTED"
-            boundary = ResolveFirstBoundary(boundary, raw);
-
-            // Only run the LF→CRLF fixer once at the outermost level
-            byte[] fixedRaw = NormalizeBareLf(raw);
-
-            WriteMultipartLines(jsonWriter,
-                                new MemoryStream(fixedRaw, writable: false),
-                                boundary);
-
-            jsonWriter.WriteEndArray();
-        }
-
         public static bool IsNestedMultipart(
             IDictionary<string, StringValues> headers,
             out string boundary)
@@ -186,6 +168,26 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             DebugLogger.LogInformation("‑‑‑‑‑‑‑‑‑‑ first " + n + " bytes ‑‑‑‑‑‑‑‑‑‑");
             DebugLogger.LogInformation(sb.ToString() + Environment.NewLine);
         }
+        public static void SerializeMultipartBody(
+            Utf8JsonWriter jsonWriter,
+            string name,
+            byte[] raw,
+            string boundary)
+        {
+            jsonWriter.WriteStartArray(name);
+
+            // Boundary might have been sanitised to "REDACTED"
+            boundary = ResolveFirstBoundary(boundary, raw);
+
+            // Only run the LF→CRLF fixer once at the outermost level
+            byte[] fixedRaw = NormalizeBareLf(raw);
+
+            WriteMultipartLines(jsonWriter,
+                                new MemoryStream(fixedRaw, writable: false),
+                                boundary);
+
+            jsonWriter.WriteEndArray();
+        }
 
         public static void WriteMultipartLines(
             Utf8JsonWriter jsonWriter,
@@ -197,39 +199,54 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             string open = $"--{boundary}\r\n";
             string close = $"--{boundary}--\r\n";
-
-            MultipartSection part;
-            while ((part = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+            try
             {
-                jsonWriter.WriteStringValue(open);
 
-                foreach (var h in part.Headers)
-                    jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
-                jsonWriter.WriteStringValue("\r\n");
+                MultipartSection part;
+                while ((part = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+                {
+                    jsonWriter.WriteStringValue(open);
 
-                if (IsNestedMultipart(part.Headers, out var childBoundary))
-                {
-                    WriteMultipartLines(jsonWriter, part.Body, childBoundary);
-                }
-                else if (ContentTypeUtilities.IsTextContentType(part.Headers, out var enc))
-                {
-                    WriteTextBody(jsonWriter, enc.GetString(ReadAllBytes(part.Body)));
-                }
-                else
-                {
-                    byte[] bytes = ReadAllBytes(part.Body);
-                    if (bytes.Length == 0)
+                    foreach (var h in part.Headers)
+                        jsonWriter.WriteStringValue($"{h.Key}: {h.Value}\r\n");
+                    jsonWriter.WriteStringValue("\r\n");
+
+                    if (IsNestedMultipart(part.Headers, out var childBoundary))
                     {
-                        jsonWriter.WriteStartArray(); jsonWriter.WriteEndArray();
+                        WriteMultipartLines(jsonWriter, part.Body, childBoundary);
+                    }
+                    else if (ContentTypeUtilities.IsTextContentType(part.Headers, out var enc))
+                    {
+                        WriteTextBody(jsonWriter, enc.GetString(ReadAllBytes(part.Body)));
+                        jsonWriter.WriteStringValue("\r\n");
                     }
                     else
                     {
-                        jsonWriter.WriteStringValue($"b64:{Convert.ToBase64String(bytes)}\r\n");
+                        byte[] bytes = ReadAllBytes(part.Body);
+                        if (bytes.Length == 0)
+                        {
+                            jsonWriter.WriteStartArray(); jsonWriter.WriteEndArray();
+                        }
+                        else
+                        {
+                            jsonWriter.WriteStringValue($"b64:{Convert.ToBase64String(bytes)}\r\n");
+                        }
                     }
                 }
             }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(buf);
+        string message = $$"""
+The test-proxy is unexpectedly unable to read this section of the config during serialization: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
 
-            jsonWriter.WriteStringValue(close);
+                throw new HttpException(HttpStatusCode.InternalServerError, message);
+    }
+
+    jsonWriter.WriteStringValue(close);
         }
 
         public static byte[] DeserializeMultipartBody(JsonElement property, string boundary)

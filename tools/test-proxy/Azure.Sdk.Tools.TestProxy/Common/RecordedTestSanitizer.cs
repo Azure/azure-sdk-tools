@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -97,9 +99,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
 
+        //protected internal static void UpdateSanitizedContentLength(RequestOrResponse requestOrResponse)
+        //{
+        //    var headers = requestOrResponse.Headers;
+        //    int sanitizedLength = requestOrResponse.Body?.Length ?? 0;
+        //    // Only update Content-Length if already present.
+        //    if (headers.ContainsKey("Content-Length"))
+        //    {
+        //        headers["Content-Length"] = new string[] { sanitizedLength.ToString(CultureInfo.InvariantCulture) };
+        //    }
+
         public byte[] SanitizeMultipartBody(string boundary, byte[] raw)
         {
-            // Boundary might have been sanitised to "REDACTED"
+            // Boundary might have been sanitised to "REDACTED", handle that.
             boundary = MultipartUtilities.ResolveFirstBoundary(boundary, raw);
 
             // Only run the LF→CRLF fixer once at the outermost level
@@ -113,47 +125,67 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
             byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{boundary}--\r\n");
 
-            MultipartSection section;
-            while ((section = reader.ReadNextSectionAsync()
-                                     .GetAwaiter()
-                                     .GetResult()) != null)
+            try
             {
-                // 1) opening boundary
-                outStream.Write(boundaryStart);
 
-                // 2) headers (by spec must be ASCII encoded)
-                foreach (var h in section.Headers)
+                MultipartSection section;
+                while ((section = reader.ReadNextSectionAsync()
+                                         .GetAwaiter()
+                                         .GetResult()) != null)
                 {
-                    var headerLine = $"{h.Key}: {h.Value}\r\n";
-                    outStream.Write(Encoding.ASCII.GetBytes(headerLine));
-                }
+                    // we actually need to figure out the sanitization length _before_ we look at the headers
+                    // as if there is a Content-Length header we need to update it to reflect the new reality
+                    byte[] original = MultipartUtilities.ReadAllBytes(section.Body);
+                    byte[] fixedBody = MultipartUtilities.NormalizeBareLf(original);
+                    byte[] newBody;
 
-                // 3) blank line between headers and body
-                outStream.Write(MultipartUtilities.CrLf);
+                    if (MultipartUtilities.IsNestedMultipart(section.Headers, out var childBoundary))
+                    {
+                        newBody = SanitizeMultipartBody(childBoundary, fixedBody);
+                    }
+                    else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
+                    {
+                        var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(fixedBody));
+                        newBody = enc.GetBytes(sanitised);
+                    }
+                    else
+                    {
+                        // binary or application/http part – no extra sanitising,
+                        // but keep CR/LF corrections we just applied
+                        newBody = fixedBody;
+                    }
 
-                // 4) body (sanitised)
-                byte[] original = MultipartUtilities.ReadAllBytes(section.Body);
-                byte[] newBody;
+                    // 1) opening boundary
+                    outStream.Write(boundaryStart);
+                    // 2) headers (by spec must be ASCII encoded)
+                    foreach (var h in section.Headers)
+                    {
+                        var headerLine = $"{h.Key}: {h.Value}\r\n";
+                        outStream.Write(Encoding.ASCII.GetBytes(headerLine));
 
-                if (MultipartUtilities.IsNestedMultipart(section.Headers, out var childBoundary))
-                {
-                    newBody = SanitizeMultipartBody(childBoundary, original);
+                        // todo: if there is a ContentLength update the content-length header before writing the header
+                        
+                    }
+                    // 3) blank line between headers and body
+                    outStream.Write(MultipartUtilities.CrLf);
+                    // 4) output the revised body (or nothing if there is nothing in the body)
+                    outStream.Write(newBody);
+                    outStream.Write(MultipartUtilities.CrLf);
                 }
-                else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
-                {
-                    var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(original));
-                    newBody = enc.GetBytes(sanitised);
-                }
-                else
-                {
-                    newBody = original;                // binary part unchanged
-                }
+            }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(fixedRaw);
+                string message = $$"""
+The test-proxy is unexpectedly unable to read this section of the config during sanitization: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
 
-                outStream.Write(newBody);
-                outStream.Write(MultipartUtilities.CrLf); // todo: do we still need the body terminator regardless of empty or not body?
+                throw new HttpException(HttpStatusCode.InternalServerError, message);
             }
 
-            // 5) closing boundary
+            // 5) finally write closing boundary
             outStream.Write(boundaryClose);
 
             return outStream.ToArray();

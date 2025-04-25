@@ -147,7 +147,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
             else if (options.Language == Language.Rust)
             {
-                // Cpp is sync-only
+                // Rust is sync-only
                 options.NoAsync = true;
             }
             var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);

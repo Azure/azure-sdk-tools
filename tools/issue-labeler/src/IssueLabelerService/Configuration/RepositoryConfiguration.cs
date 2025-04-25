@@ -21,6 +21,7 @@ namespace IssueLabelerService
         public string DocumentIndexName => GetItem("DocumentIndexName");
         public string DocumentSemanticName => GetItem("DocumentSemanticName");
         public string EnableAnswers => GetItem("EnableAnswers");
+        public string EnableLabels => GetItem("EnableLabels");
         public string IssueIndexName => GetItem("IssueIndexName");
         public string IssueSemanticName => GetItem("IssueSemanticName");
         public string LabelPredictor => GetItem("LabelPredictor");

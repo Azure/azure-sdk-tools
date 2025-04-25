@@ -136,7 +136,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	log.Println(fmt.Printf("message: %s, prompt:\n%s", userMessage, promptStr))
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
-	var temperature float32 = 0.0
+	var temperature float32 = 0.0001
 	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.

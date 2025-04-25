@@ -38,5 +38,4 @@ Your response must be formatted as a JSON object with the following structure, n
 - [ ] Answer is based solely on provided Context
 - [ ] All technical claims are supported by references
 - [ ] Response follows JSON structure exactly
-- [ ] Code examples (if any) are minimal and practical
 - [ ] No responses to questions outside TypeSpec domain

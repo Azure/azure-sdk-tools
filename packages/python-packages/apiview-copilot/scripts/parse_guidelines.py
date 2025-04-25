@@ -1,9 +1,14 @@
 import os
 import json
+import sys
+
+# Add the parent directory to sys.path so imports work correctly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts._markdown_parser import parse_markdown
 
-_PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 if __name__ == "__main__":

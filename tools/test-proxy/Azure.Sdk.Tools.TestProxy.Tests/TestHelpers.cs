@@ -36,10 +36,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     {
         public static readonly string DisableBranchCleanupEnvVar = "DISABLE_INTEGRATION_BRANCH_CLEANUP";
 
-        public static string WriteToDisk(RecordSession session, string recordingName) {
-            
-        }
-
         public static List<T> ExhaustQueue<T>(ConcurrentQueue<T> queue)
         {
             List<T> results = new List<T>();

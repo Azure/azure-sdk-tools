@@ -518,3 +518,6 @@ tools/apiview/emitters/typespec-apiview/temp/
 # Issue Labeler Deploy
 tools/issue-labeler/src/IssueLabeler/Properties/*Zip Deploy.json
 tools/issue-labeler/src/IssueLabeler/Properties/ServiceDependencies/
+
+# MCP tools
+.azure-sdk-mcp

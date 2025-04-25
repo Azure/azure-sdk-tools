@@ -42,10 +42,12 @@ type CompletionReq struct {
 	Sources                 []Source  `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
 	Message                 Message   `json:"message" jsonschema:"required,description=The message to send to the agent"`
 	History                 []Message `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
+	WithFullContext         *bool      `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
 }
 
 type CompletionResp struct {
-	Answer     string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
-	HasResult  bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
-	References []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
+	Answer      string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
+	HasResult   bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
+	References  []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
+	FullContext string      `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
 }

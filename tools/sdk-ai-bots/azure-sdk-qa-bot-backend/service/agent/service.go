@@ -136,7 +136,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	log.Println(fmt.Printf("message: %s, prompt:\n%s", userMessage, promptStr))
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
-	gotReply := false
 	var temperature float32 = 0.0
 	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
@@ -153,8 +152,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	}
 
 	for _, choice := range resp.Choices {
-		gotReply = true
-
 		if choice.Message != nil && choice.Message.Content != nil {
 			fmt.Fprintf(os.Stderr, "Content[%d]: %s\n", *choice.Index, *choice.Message.Content)
 		}
@@ -170,10 +167,8 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 		result = answer
 	}
-
-	if gotReply {
-		result.HasResult = true
-		log.Printf("Got chat completions reply\n")
+	if req.WithFullContext != nil && *req.WithFullContext {
+		result.FullContext = strings.Join(chunks, "-------------------------\n")
 	}
 	log.Printf("done")
 	return result, nil

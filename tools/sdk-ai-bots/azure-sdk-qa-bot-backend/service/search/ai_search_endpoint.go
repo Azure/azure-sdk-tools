@@ -80,6 +80,11 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 				Exhaustive: true,
 			},
 		},
+		QueryType:             "semantic",
+		SemanticConfiguration: "vector-1741167123942-semantic-configuration",
+		Captions:              "extractive",
+		Answers:               "extractive|count-3",
+		QueryLanguage:         "en-us",
 	}
 	if len(sources) > 0 {
 		filters := make([]string, 0)

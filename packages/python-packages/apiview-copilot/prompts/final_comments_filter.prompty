@@ -37,6 +37,7 @@ sample:
     13. Comment about ivar being non-standard use
     14. Comment about use of distributed_trace/async decorators
     15. Comment about methods ending with :
+    16. Comment about the use of **kwargs
   comments: |
     {
       "comments": [

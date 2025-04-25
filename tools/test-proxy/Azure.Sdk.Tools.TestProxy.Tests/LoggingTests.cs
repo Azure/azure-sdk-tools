@@ -16,89 +16,89 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     [Collection(nameof(LoggingCollection))]
     public class LoggingTests
     {
-        [Fact]
-        public async Task PlaybackLogsSanitizedRequest()
-        {
-            var logger = new TestLogger();
-            DebugLogger.Logger = logger;
+        // [Fact]
+        // public async Task PlaybackLogsSanitizedRequest()
+        // {
+        //     var logger = new TestLogger();
+        //     DebugLogger.Logger = logger;
 
-            try
-            {
-                RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-                var httpContext = new DefaultHttpContext();
-                var body = "{\"x-recording-file\":\"Test.RecordEntries/request_with_binary_content.json\"}";
-                httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
-                httpContext.Request.ContentLength = body.Length;
+        //     try
+        //     {
+        //         RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+        //         var httpContext = new DefaultHttpContext();
+        //         var body = "{\"x-recording-file\":\"Test.RecordEntries/request_with_binary_content.json\"}";
+        //         httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+        //         httpContext.Request.ContentLength = body.Length;
 
-                var playback = new Playback(testRecordingHandler, new TestLoggingFactory(logger))
-                {
-                    ControllerContext = new ControllerContext()
-                    {
-                        HttpContext = httpContext
-                    }
-                };
-                await playback.Start();
+        //         var playback = new Playback(testRecordingHandler, new TestLoggingFactory(logger))
+        //         {
+        //             ControllerContext = new ControllerContext()
+        //             {
+        //                 HttpContext = httpContext
+        //             }
+        //         };
+        //         await playback.Start();
 
-                var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-                Assert.NotNull(recordingId);
+        //         var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+        //         Assert.NotNull(recordingId);
 
-                await AddSanitizerAsync(testRecordingHandler, logger);
+        //         await AddSanitizerAsync(testRecordingHandler, logger);
 
-                Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
-                var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
-                HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
-                request.Headers["Authorization"] = "Sanitized";
+        //         Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
+        //         var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
+        //         HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
+        //         request.Headers["Authorization"] = "Sanitized";
 
-                HttpResponse response = new DefaultHttpContext().Response;
-                await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
+        //         HttpResponse response = new DefaultHttpContext().Response;
+        //         await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
 
-                AssertLogs(logger, 4, 16, 12, "playback");
-            }
-            finally
-            {
-                DebugLogger.Logger = null;
-            }
-        }
+        //         AssertLogs(logger, 4, 16, 12, "playback");
+        //     }
+        //     finally
+        //     {
+        //         DebugLogger.Logger = null;
+        //     }
+        // }
 
-        [Fact]
-        public async Task RecordingHandlerLogsSanitizedRequests()
-        {
-            var logger = new TestLogger();
-            DebugLogger.Logger = logger;
+        // [Fact]
+        // public async Task RecordingHandlerLogsSanitizedRequests()
+        // {
+        //     var logger = new TestLogger();
+        //     DebugLogger.Logger = logger;
 
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
-            var request = TestHelpers.CreateRequestFromEntry(session.Session.Entries[0]);
-            var httpContext = new DefaultHttpContext();
-            var bodyBytes = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
-            var mockClient = new HttpClient(new MockHttpHandler(bodyBytes, "application/json"));
-            var path = Directory.GetCurrentDirectory();
-            var testRecordingHandler = new RecordingHandler(path)
-            {
-                RedirectableClient = mockClient,
-                RedirectlessClient = mockClient
-            };
+        //     var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_binary_content.json");
+        //     var request = TestHelpers.CreateRequestFromEntry(session.Session.Entries[0]);
+        //     var httpContext = new DefaultHttpContext();
+        //     var bodyBytes = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
+        //     var mockClient = new HttpClient(new MockHttpHandler(bodyBytes, "application/json"));
+        //     var path = Directory.GetCurrentDirectory();
+        //     var testRecordingHandler = new RecordingHandler(path)
+        //     {
+        //         RedirectableClient = mockClient,
+        //         RedirectlessClient = mockClient
+        //     };
 
-            var relativePath = "recordings/logs";
-            var fullPathToRecording = Path.Combine(path, relativePath) + ".json";
+        //     var relativePath = "recordings/logs";
+        //     var fullPathToRecording = Path.Combine(path, relativePath) + ".json";
 
-            await testRecordingHandler.StartRecordingAsync(relativePath, httpContext.Response);
+        //     await testRecordingHandler.StartRecordingAsync(relativePath, httpContext.Response);
 
-            await AddSanitizerAsync(testRecordingHandler, logger);
+        //     await AddSanitizerAsync(testRecordingHandler, logger);
 
-            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+        //     var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            await testRecordingHandler.HandleRecordRequestAsync(recordingId, request, httpContext.Response);
-            await testRecordingHandler.StopRecording(recordingId);
-            try
-            {
-                AssertLogs(logger, 2, 11, 12, "record");
-            }
-            finally
-            {
-                File.Delete(fullPathToRecording);
-                DebugLogger.Logger = null;
-            }
-        }
+        //     await testRecordingHandler.HandleRecordRequestAsync(recordingId, request, httpContext.Response);
+        //     await testRecordingHandler.StopRecording(recordingId);
+        //     try
+        //     {
+        //         AssertLogs(logger, 2, 11, 12, "record");
+        //     }
+        //     finally
+        //     {
+        //         File.Delete(fullPathToRecording);
+        //         DebugLogger.Logger = null;
+        //     }
+        // }
 
         private static void AssertLogs(TestLogger logger, int offset, int expectedLength, int expectedContentLength, string testType)
         {

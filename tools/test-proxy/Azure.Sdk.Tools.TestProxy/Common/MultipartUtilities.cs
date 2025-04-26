@@ -218,7 +218,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     else if (ContentTypeUtilities.IsTextContentType(part.Headers, out var enc))
                     {
                         WriteTextBody(jsonWriter, enc.GetString(ReadAllBytes(part.Body)));
-                        jsonWriter.WriteStringValue("\r\n");
                     }
                     else
                     {
@@ -229,24 +228,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         }
                         else
                         {
-                            jsonWriter.WriteStringValue($"b64:{Convert.ToBase64String(bytes)}\r\n");
+                            jsonWriter.WriteStringValue($"b64:{Convert.ToBase64String(bytes)}");
                         }
                     }
+
+                    jsonWriter.WriteStringValue("\r\n");
                 }
             }
             catch (IOException ex)
             {
                 var byteContent = Convert.ToBase64String(buf);
-        string message = $$"""
+                string message = $$"""
 The test-proxy is unexpectedly unable to read this section of the config during serialization: \"{{ex.Message}}\"
 File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
 {{byteContent}}
 """;
 
                 throw new HttpException(HttpStatusCode.InternalServerError, message);
-    }
-
-    jsonWriter.WriteStringValue(close);
+            }
+            jsonWriter.WriteStringValue(close);
         }
 
         public static byte[] DeserializeMultipartBody(JsonElement property, string boundary)

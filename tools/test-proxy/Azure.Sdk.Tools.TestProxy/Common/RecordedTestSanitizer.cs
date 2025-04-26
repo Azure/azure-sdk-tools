@@ -4,10 +4,12 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.CommandLine.Parsing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -160,11 +162,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     // 2) headers (by spec must be ASCII encoded)
                     foreach (var h in section.Headers)
                     {
-                        var headerLine = $"{h.Key}: {h.Value}\r\n";
+                        var newValue = h.Value;
+                        if (h.Key == "Content-Length")
+                        {
+                            var parsed = int.TryParse(h.Value[0], out var contentLength);
+                            if (parsed && contentLength != newBody.Length)
+                            {
+                                newValue = new StringValues(newBody.Length.ToString());;
+                            }
+                        }
+                        var headerLine = $"{h.Key}: {newValue}\r\n";
                         outStream.Write(Encoding.ASCII.GetBytes(headerLine));
-
-                        // todo: if there is a ContentLength update the content-length header before writing the header
-                        
                     }
                     // 3) blank line between headers and body
                     outStream.Write(MultipartUtilities.CrLf);

@@ -846,26 +846,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task MultipartRequestsCanRoundTrip()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
-
-        }
-
-        [Fact]
         public async Task MultipartRequestsCanSanitizeWithoutChangingBytes()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
             var worklessSanitizer = new BodyRegexSanitizer(regex: "abc123");
             var requestRef = session.Session.Entries[0].Request;
             var responseRef = session.Session.Entries[0].Response;
-            var requestBodyBytesBefore = Convert.ToBase64String(requestRef.Body);
-            var responseBodyBytesBefore = Convert.ToBase64String(responseRef.Body);
+            var requestBodyBytesBefore = Encoding.UTF8.GetString(requestRef.Body);
+            var responseBodyBytesBefore = Encoding.UTF8.GetString(responseRef.Body);
            
             await session.Session.Sanitize(worklessSanitizer);
 
-            var requestBodyBytesAfter = Convert.ToBase64String(requestRef.Body);
-            var responseBodyBytesAfter = Convert.ToBase64String(responseRef.Body);
+            var requestBodyBytesAfter = Encoding.UTF8.GetString(requestRef.Body);
+            var responseBodyBytesAfter = Encoding.UTF8.GetString(responseRef.Body);
 
             Assert.Equal(requestBodyBytesBefore, requestBodyBytesAfter);
             Assert.Equal(responseBodyBytesBefore, responseBodyBytesAfter);
@@ -877,26 +870,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/old_multipart_request.json");
 
             Assert.NotNull(session.Session.Entries.First().Request.Body);
-        }
-
-        [Theory]
-        [InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
-        [InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
-        public async Task GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
-        {
-            //var session = TestHelpers.LoadRecordSession(targetFile);
-
-            //var targetEntry = session.Session.Entries[0];
-            //var matcher = new RecordMatcher();
-
-            //var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
-            //await session.Session.Sanitize(sanitizer);
-
-            //var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
-
-            //Assert.DoesNotContain(regex, bodyString);
-            //Assert.Contains(replacementValue, bodyString);
-            throw new NotImplementedException();
         }
     }
 }

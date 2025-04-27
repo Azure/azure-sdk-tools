@@ -52,20 +52,10 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		return nil, err
 	}
 	result := &model.CompletionResp{}
-	keyCredential := azcore.NewKeyCredential(s.apiKey)
-	// In Azure OpenAI you must deploy a model before you can use it in your client. For more information
-	// see here: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
-	client, err := azopenai.NewClientWithKeyCredential(s.endpoint, keyCredential, nil)
-
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
-	}
 
 	// This is a conversation in progress.
 	// NOTE: all messages, regardless of role, count against token usage for this API.
 	messages := []azopenai.ChatRequestMessageClassification{}
-
 	for _, message := range req.History {
 		if message.Role == model.Role_Assistant {
 			messages = append(messages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
@@ -73,7 +63,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(message.Content)})
 		}
 	}
-
 	userMessage := req.Message.Content
 	// lower case
 	userMessage = strings.ToLower(userMessage)
@@ -84,6 +73,19 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 
 	// The user asks a question
 	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content)})
+
+	intentResult, err := s.RecongnizeIntension(messages)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+	} else if intentResult != nil {
+		log.Printf("category: %v, question: %v", intentResult.Category, intentResult.Question)
+		if intentResult.Category == model.QuestionCategory_Unbranded {
+			req.Sources = []model.Source{model.Source_TypeSpec}
+		}
+		if len(intentResult.Question) > 0 {
+			userMessage = intentResult.Question
+		}
+	}
 
 	// Filter empty messages
 	if userMessage == "" {
@@ -114,12 +116,14 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
 	}
 	chunks := make([]string, 0)
+	printChunks := make([]string, 0)
 	chunkLength := 0
 	for _, result := range mergedChunks {
 		chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
 		chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
 		chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
 		chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
+		printChunks = append(printChunks, chunk)
 		chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
 
 		chunkLength += len(chunk)
@@ -128,14 +132,23 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 		chunks = append(chunks, chunk)
 	}
-	promptStr, error := prompt.BuildPrompt(strings.Join(chunks, "-------------------------\n"), *req.PromptTemplate)
+	promptParser := prompt.DefaultPromptParser{}
+	promptStr, error := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, *req.PromptTemplate)
 	if error != nil {
 		log.Printf("ERROR: %s", error)
 		return nil, error
 	}
-	log.Println(fmt.Printf("message: %s, prompt:\n%s", userMessage, promptStr))
+	log.Println(fmt.Printf("message: %s, related documents:\n%v", userMessage, printChunks))
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
+	keyCredential := azcore.NewKeyCredential(s.apiKey)
+	// In Azure OpenAI you must deploy a model before you can use it in your client. For more information
+	// see here: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
+	client, err := azopenai.NewClientWithKeyCredential(s.endpoint, keyCredential, nil)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
 	var temperature float32 = 0.0001
 	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
@@ -160,7 +173,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			// this choice's conversation is complete.
 			fmt.Fprintf(os.Stderr, "Finish reason[%d]: %s\n", *choice.Index, *choice.FinishReason)
 		}
-		answer, error := prompt.ParseAnswer(*choice.Message.Content, *req.PromptTemplate)
+		answer, error := promptParser.ParseResponse(*choice.Message.Content, *req.PromptTemplate)
 		if error != nil {
 			log.Printf("ERROR: %s", error)
 			return nil, error
@@ -172,4 +185,55 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	}
 	log.Printf("done")
 	return result, nil
+}
+
+func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
+	promptParser := prompt.IntensionPromptParser{}
+	promptStr, error := promptParser.ParsePrompt(nil, "intension.md")
+	if error != nil {
+		log.Printf("ERROR: %s", error)
+		return nil, error
+	}
+	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
+
+	keyCredential := azcore.NewKeyCredential(s.apiKey)
+	// In Azure OpenAI you must deploy a model before you can use it in your client. For more information
+	// see here: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
+	client, err := azopenai.NewClientWithKeyCredential(s.endpoint, keyCredential, nil)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
+	var temperature float32 = 0.0001
+	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+		// This is a conversation in progress.
+		// NOTE: all messages count against token usage for this API.
+		Messages:       messages,
+		DeploymentName: &s.model,
+		Temperature:    &temperature,
+	}, nil)
+
+	if err != nil {
+		// TODO: Update the following line with your application specific error handling logic
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
+
+	for _, choice := range resp.Choices {
+		if choice.Message != nil && choice.Message.Content != nil {
+			fmt.Fprintf(os.Stderr, "Content[%d]: %s\n", *choice.Index, *choice.Message.Content)
+		}
+
+		if choice.FinishReason != nil {
+			// this choice's conversation is complete.
+			fmt.Fprintf(os.Stderr, "Finish reason[%d]: %s\n", *choice.Index, *choice.FinishReason)
+		}
+		result, error := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
+		if error != nil {
+			log.Printf("ERROR: %s", error)
+			return nil, error
+		}
+		return result, nil
+	}
+	return nil, nil
 }

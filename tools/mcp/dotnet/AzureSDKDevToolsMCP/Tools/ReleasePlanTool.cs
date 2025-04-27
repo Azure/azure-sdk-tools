@@ -71,7 +71,7 @@ namespace AzureSDKDSpecTools.Tools
                     throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
                 }
 
-                var specType = typeSpecHelper.IsTypeSpecProjectPath(typeSpecProjectPath)? "TypeSpec" : "OpenAPI";
+                var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath)? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
 
                 var releasePlan = new ReleasePlan

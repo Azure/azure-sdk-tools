@@ -1,45 +1,39 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AzureSDKDSpecTools.Models;
+using Microsoft.Extensions.Logging;
+using YamlDotNet.Serialization;
 
 namespace AzureSDKDSpecTools.Helpers
 {
     public interface ITypeSpecHelper
     {
-        public bool IsTypeSpecProjectPath(string path);
+        public bool IsValidTypeSpecProjectPath(string path);
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
-        public bool GetAPIVersion(string path);
     }
     public class TypeSpecHelper : ITypeSpecHelper
-    {
-        static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
+    {        
 
-        public bool IsTypeSpecProjectPath(string path)
+        private ILogger<TypeSpecHelper> logger;
+
+        public TypeSpecHelper(ILogger<TypeSpecHelper> _logger)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new ArgumentException("TypeSpec project root path cannot be null or empty.", nameof(path));
-            }
-
-            // Check if the path is a valid TypeSpec project path
-            if (!Directory.Exists(path) || !File.Exists(Path.Combine(path, TSPCONFIG_FILENAME)))
-            {
-                return false;
-            }
-            return true;
+            logger = _logger;
         }
 
-        public bool GetAPIVersion(string path)
+        public bool IsValidTypeSpecProjectPath(string path)
         {
-            throw new NotImplementedException();
+            return TypeSpecProject.IsValidTypeSpecProjectPath(path);
         }
 
         public bool IsTypeSpecProjectForMgmtPlane(string Path)
         {
-            //Todo: Process TypeSpec project and find whether this is mgmt or dataplane.
-            return true;
+            var typeSpecObject = TypeSpecProject.ParseTypeSpecConfig(Path);
+            return typeSpecObject?.IsManagementPlane ?? false;
         }
     }
 }

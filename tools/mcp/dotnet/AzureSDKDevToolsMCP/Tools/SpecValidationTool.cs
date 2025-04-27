@@ -35,7 +35,7 @@ namespace AzureSDKDevToolsMCP.Tools
         public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
             var validationResults = new List<string>();
-            if (!typeSpecHelper.IsTypeSpecProjectPath(typeSpecProjectRootPath))
+            if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
             {
                 validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
                 return validationResults;

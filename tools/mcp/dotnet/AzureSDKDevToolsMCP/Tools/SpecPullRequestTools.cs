@@ -4,8 +4,10 @@
 using System;
 using System.ComponentModel;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AzureSDKDevToolsMCP.Helpers;
 using AzureSDKDevToolsMCP.Services;
+using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
@@ -13,15 +15,14 @@ using Octokit;
 
 namespace AzureSDKDevToolsMCP.Tools
 {
-    [Description("TypeSpec pull request tools")]
+    [Description("Pull request tools")]
     [McpServerToolType]
-    public class SpecPullRequestTool(IGitHubService _service, IGitHelper _helper, ILogger<SpecPullRequestTool> _logger)
+    public class SpecPullRequestTools(IGitHubService _service, IGitHelper _helper, ISpecPullRequestHelper _prHelper, ILogger<SpecPullRequestTools> _logger)
     {
         private readonly IGitHubService gitHubService = _service;
         private readonly IGitHelper gitHelper = _helper;
-        private readonly ILogger<SpecPullRequestTool> logger = _logger;
-        readonly string TEST_IGNORE_TAG = "[TEST-IGNORE]";
-
+        private readonly ILogger<SpecPullRequestTools> logger = _logger;
+        private readonly ISpecPullRequestHelper prHelper = _prHelper;
 
         [McpServerTool, Description("Connect to GitHub using personal access token.")]
         public async Task<string> GetGitHubUserDetails()
@@ -30,59 +31,6 @@ namespace AzureSDKDevToolsMCP.Tools
             return user != null
                 ? $"Connected to GitHub as {user.Login}"
                 : "Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.";
-        }
-
-        [McpServerTool, Description("Get Pull Request Status: Get TypeSpec pull request status for a given pull request number.")]
-        public async Task<string> GetPullRequestStatus(int pullRequestNumber, string typeSpecProjectPath, string repoOwner = "Azure")
-        {
-            try
-            {
-                logger.LogInformation($"Getting pull request details for {pullRequestNumber}...");
-                logger.LogInformation($"Repo owner: {repoOwner}");
-                var repoPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
-                logger.LogInformation($"Repo path: {repoPath}");
-                var repoName = gitHelper.GetRepoName(repoPath);
-                logger.LogInformation($"Repo name: {repoName}");
-                var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
-                var prStatus = pullRequest.State == ItemState.Open ? "Open" : "Closed";
-                var mergeStatus = pullRequest.Merged ? "Merged" : "Not Merged";
-                if (pullRequest.State == ItemState.Open)
-                {
-                    mergeStatus = pullRequest.Mergeable == true ? "Open (PR is Mergeable)" : "Open (PR is not ready to merge)";
-                }
-                return JsonSerializer.Serialize(pullRequest);
-            }
-            catch (Exception ex)
-            {
-                return $"Failed to get pull request details: {ex.Message}";
-            }
-        }
-
-        [McpServerTool, Description("Get TypeSpec pull request checks for a given pull request number and TypeSpec project path. This tool calls Get Pull Request tool.")]
-        public async Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string typeSpecProjectPath, string repoOwner = "Azure")
-        {
-            var repoPath = gitHelper.GetRepoRootPath(typeSpecProjectPath);
-            var repoName = gitHelper.GetRepoName(repoPath);
-            var checkResults = new List<string>();
-            var pullRequest = await GetPullRequestStatus(pullRequestNumber, repoPath);
-            if (pullRequest != null)
-            {
-                var checks = await gitHubService.GetPullRequestChecksAsync(repoOwner, repoName, pullRequestNumber);
-                foreach (var check in checks)
-                {
-                    checkResults.Add($"Name: {check.Name}, Ignore failure: {check.Name.Contains(TEST_IGNORE_TAG)}, Status: {check.Status}, Output: {check.Output}, Conclusion: {check.Conclusion}, Link: {check.HtmlUrl}");
-                }
-            }
-            if (checkResults.Count == 0)
-            {
-                checkResults.Add("No checks found for the pull request.");
-            }
-            else
-            {
-                checkResults.Add($"Total checks found: {checkResults.Count}");
-                checkResults.Add($"Total checks ignored: {checkResults.Count(check => check.Contains(TEST_IGNORE_TAG))}. Any failures for ignorable check can be ignored.");
-            }
-            return checkResults;
         }
 
         [McpServerTool, Description("Check if TypeSpec project is in public repo.")]
@@ -144,15 +92,57 @@ namespace AzureSDKDevToolsMCP.Tools
             return results;
         }
 
-        [McpServerTool, Description("Get pull request comments.")]
-        public async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner = "Azure")
+        private async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner)
         {
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
             if (comments == null || comments.Count == 0)
             {
-                return new List<string>() { "No comments found for the pull request." };
+                return ["No comments found for the pull request."];
             }
             return comments;
+        }
+
+
+        [McpServerTool, Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
+        public async Task<string> GetPullRequest(int pullRequestNumber, string repoName = "azure-rest-api-specs", string repoOwner = "Azure")
+        {
+            try
+            {
+                logger.LogInformation($"Getting pull request details for {pullRequestNumber} in repo {repoName}");
+                var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
+                PullRequestDetails prDetails = new()
+                {
+                    // Get PR basics and comments
+                    pullRequestNumber = pullRequest.Number,
+                    Url = pullRequest.HtmlUrl,
+                    Status = pullRequest.State.StringValue,
+                    IsMerged = pullRequest.Merged,
+                    IsMergeable = pullRequest.Mergeable ?? false,
+                    Author = pullRequest.User.Name,
+                    AssignedTo = pullRequest.Assignee?.Name ?? "",
+                    Labels = pullRequest.Labels?.Select(l => l.Name)?.ToList() ?? [],
+                    Comments = await GetPullRequestComments(pullRequestNumber, repoName, repoOwner)
+                };
+
+                // Get PR check statuses
+                logger.LogInformation("Getting pull request checks");
+                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecks(pullRequestNumber, repoName, repoOwner));
+
+                // Parse APi reviews and add the information
+                logger.LogInformation("Searching for API review links in comments");
+                var apiviewlinks = prHelper.FindApiReviewLinks(prDetails.Comments);
+                if (apiviewlinks != null &&  apiviewlinks.Count > 0)
+                {
+                    prDetails.ApiReviews.AddRange(apiviewlinks);
+                }
+                      
+                 return JsonSerializer.Serialize(prDetails);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+                return $"Failed to get pull request summary. Error {ex.Message}";
+            }            
         }
     }
 }

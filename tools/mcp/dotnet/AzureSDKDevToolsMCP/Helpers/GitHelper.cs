@@ -19,32 +19,28 @@ namespace AzureSDKDevToolsMCP.Helpers
         public string GetRepoRootPath(string path);
         public bool IsRepoPathForPublicSpecRepo(string path);
         public string GetBranchName(string path);
-        public IList<string> GetChangedFiles(string path);
+        public string GetMergeBaseCommitSha(string path, string targetBranch);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
         readonly ILogger<GitHelper> logger = logger;
         readonly IGitHubService gitHubService = gitHubService;
         readonly static string SPEC_REPO_NAME = "azure-rest-api-specs";
-        public IList<string> GetChangedFiles(string repoPath)
+
+        public string GetMergeBaseCommitSha(string path, string targetBranchName)
         {
-            var changedFiles = new List<string>();
-            using (var repo = new Repository(repoPath))
+            using (var repo = new Repository(path))
             {
                 // Get the current branch
                 Branch currentBranch = repo.Head;
-                logger.LogInformation($"Current branch: {currentBranch.FriendlyName}");
-                // Get the changes in the working directory
-                var changes = repo.Diff.Compare<TreeChanges>(currentBranch.Tip.Tree, DiffTargets.WorkingDirectory);
-                // List changed files
-                foreach (var change in changes)
-                {
-                    changedFiles.Add(change.Path);
-                    logger.LogInformation($"Changed file: {change.Path}");
-                }
+                var targetBranch = repo.Branches[targetBranchName];
+
+                // Find the merge base (common ancestor) (git merge-base main HEAD)
+                var mergeBaseCommit = repo.ObjectDatabase.FindMergeBase(currentBranch.Tip, targetBranch.Tip);
+                logger.LogInformation($"Current branch  :{currentBranch.FriendlyName}, Target branch SHA: {mergeBaseCommit?.Sha}");
+                return mergeBaseCommit?.Sha ?? "";
             }
-            return changedFiles;
-        }
+        }
 
         public string GetBranchName(string repoPath)
         {

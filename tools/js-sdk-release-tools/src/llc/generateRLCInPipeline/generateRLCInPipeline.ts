@@ -74,7 +74,7 @@ export async function generateRLCInPipeline(options: {
             } else {
                 logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepoUrl, '--commit', options.gitCommitId].join(" ");
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepoUrl.replace("https://github.com/", ""), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");

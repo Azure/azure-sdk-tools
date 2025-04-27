@@ -1,53 +1,64 @@
-import { MemoryStorage, MessageFactory, TurnContext } from "botbuilder";
+import { ActivityTypes, MemoryStorage, TurnContext } from "botbuilder";
 import * as path from "path";
 import config from "../config";
-import * as customSayCommand  from "./customSayCommand";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
-import { AI, Application, ActionPlanner, OpenAIModel, PromptManager, TurnState } from "@microsoft/teams-ai";
-import { MyDataSource } from "./myDataSource";
+import { Application, ActionPlanner, PromptManager } from "@microsoft/teams-ai";
+import { RAGModel } from "../models/RAGModel";
+import { FeedbackReaction, sendFeedback } from "../backend/feedback";
 
 // Create AI components
-const model = new OpenAIModel({
-  azureApiKey: config.azureOpenAIKey,
-  azureDefaultDeployment: config.azureOpenAIDeploymentName,
-  azureEndpoint: config.azureOpenAIEndpoint,
-    azureApiVersion: "2025-01-01-preview",
-  useSystemMessages: true,
-  logRequests: true,
+const model = new RAGModel({
+    apiKey: config.azureOpenAIKey,
+    tenantId: config.azureOpenAIDeploymentName,
+    // TODO: make /completion endpoint configurable
+    endpoint: config.azureOpenAIEndpoint + "/completion",
 });
 const prompts = new PromptManager({
-  promptsFolder: path.join(__dirname, "../prompts"),
+    promptsFolder: path.join(__dirname, "../prompts"),
 });
-console.log("??? prompts:"  , prompts);
-const planner = new ActionPlanner<TurnState>({
-  model,
-  prompts,
-  defaultPrompt: "chatx",
+const planner = new ActionPlanner({
+    model,
+    prompts,
+    defaultPrompt: "chat",
 });
-
-// Register your data source with planner
-const myDataSource = new MyDataSource("my-ai-search");
-myDataSource.init();
-planner.prompts.addDataSource(myDataSource);
 
 // Define storage and application
 const storage = new MemoryStorage();
-const app = new Application<TurnState>({
-  storage,
-  ai: {
-    planner,
-    enable_feedback_loop: true,
-  },
+const app = new Application({
+    storage,
+    ai: {
+        planner,
+        enable_feedback_loop: true,
+    },
 });
-console.log("🚀 ~ AI.SayCommandActionName: SAY", AI.SayCommandActionName)
-app.ai.action(AI.SayCommandActionName, customSayCommand.sayCommand(true));
-console.log("🚀 ~ AI.SayCommandActionName:", AI.SayCommandActionName)
 
 app.feedbackLoop(async (context, state, feedbackLoopData) => {
     //add custom feedback process logic here
     console.log("Your feedback is " + JSON.stringify(context.activity.value));
 });
-console.log("🚀 ~ app.feedbackLoop ~ app.feedbackLoop:", app.feedbackLoop)
 
+const isSubmitMessage = async (ctx: TurnContext) =>
+    ctx.activity.type === ActivityTypes.Message && !!ctx.activity.value?.action;
+
+app.activity(isSubmitMessage, async (context: TurnContext) => {
+    const action = context.activity.value?.action;
+    // const conversation = context.activity.value?.conversation;
+    switch (action) {
+        case "feedback-like":
+            await sendFeedback(["test good"], FeedbackReaction.good);
+            await context.sendActivity(
+                "You liked my service. Thanks for your feedback!"
+            );
+            break;
+        case "feedback-dislike":
+            await sendFeedback(["test bad"], FeedbackReaction.bad);
+            await context.sendActivity(
+                "You disliked my service. Thanks for your feedback!"
+            );
+            break;
+        default:
+            break;
+    }
+});
 export default app;

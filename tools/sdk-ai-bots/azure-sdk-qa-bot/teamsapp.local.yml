@@ -66,7 +66,6 @@ provision:
       # Relative path to this file. This is the path for built zip file.
       appPackagePath: ./appPackage/build/appPackage.${{TEAMSFX_ENV}}.zip
 
-
 deploy:
   # Run npm command
   - uses: cli/runNpmCommand
@@ -81,7 +80,10 @@ deploy:
       envs:
         BOT_ID: ${{BOT_ID}}
         BOT_PASSWORD: ${{SECRET_BOT_PASSWORD}}
-        BOT_TYPE: 'MultiTenant'
+        BOT_TYPE: "MultiTenant"
         AZURE_OPENAI_API_KEY: ${{SECRET_AZURE_OPENAI_API_KEY}}
         AZURE_OPENAI_ENDPOINT: ${{AZURE_OPENAI_ENDPOINT}}
         AZURE_OPENAI_DEPLOYMENT_NAME: ${{AZURE_OPENAI_DEPLOYMENT_NAME}}
+        FEEDBACK_ENDPOINT: ${{FEEDBACK_ENDPOINT}}
+        FEEDBACK_API_KEY: ${{SECRET_FEEDBACK_API_KEY}}
+        FEEDBACK_TENANT_ID: ${{FEEDBACK_TENANT_ID}}

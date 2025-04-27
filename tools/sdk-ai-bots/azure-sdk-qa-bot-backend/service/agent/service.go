@@ -181,8 +181,10 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		result = answer
 	}
 	if req.WithFullContext != nil && *req.WithFullContext {
-		result.FullContext = strings.Join(chunks, "-------------------------\n")
+		fullContext := strings.Join(chunks, "-------------------------\n")
+		result.FullContext = &fullContext
 	}
+	result.Intension = intentResult
 	log.Printf("done")
 	return result, nil
 }

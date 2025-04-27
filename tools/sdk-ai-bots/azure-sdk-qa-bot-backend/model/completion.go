@@ -46,10 +46,11 @@ type CompletionReq struct {
 }
 
 type CompletionResp struct {
-	Answer      string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
-	HasResult   bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
-	References  []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
-	FullContext string      `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
+	Answer      string           `json:"answer" jsonschema:"required,description=The answer from the agent"`
+	HasResult   bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
+	References  []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
+	FullContext *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
+	Intension   *IntensionResult `json:"intension" jsonschema:"omitempty,description=The intension of the question"`
 }
 
 type QuestionCategory string

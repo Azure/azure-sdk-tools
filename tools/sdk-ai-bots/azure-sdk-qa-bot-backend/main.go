@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/handler"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/auth"
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,9 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
+	// init resources
+	config.InitOpenAIClient()
+	
 	r := setupRouter()
 	r.Run(":8088")
 }

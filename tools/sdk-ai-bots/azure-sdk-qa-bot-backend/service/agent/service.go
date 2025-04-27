@@ -6,25 +6,23 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
 )
 
 type CompletionService struct {
-	apiKey   string
-	endpoint string
-	model    string
+	model string
 }
 
 func NewCompletionService() (*CompletionService, error) {
 	return &CompletionService{
-		apiKey:   os.Getenv("AOAI_CHAT_COMPLETIONS_API_KEY"),
-		endpoint: os.Getenv("AOAI_CHAT_COMPLETIONS_ENDPOINT"),
-		model:    os.Getenv("AOAI_CHAT_COMPLETIONS_MODEL"),
+		model: os.Getenv("AOAI_CHAT_COMPLETIONS_MODEL"),
 	}, nil
 }
 
@@ -47,6 +45,7 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 }
 
 func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.CompletionResp, error) {
+	startTime := time.Now()
 	if err := s.CheckArgs(req); err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -74,6 +73,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	// The user asks a question
 	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content)})
 
+	intentStart := time.Now()
 	intentResult, err := s.RecongnizeIntension(messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -86,17 +86,23 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			userMessage = intentResult.Question
 		}
 	}
+	log.Printf("Intent recognition took: %v", time.Since(intentStart))
 
 	// Filter empty messages
 	if userMessage == "" {
 		return result, nil
 	}
 	log.Println("msg:", userMessage)
+
+	searchStart := time.Now()
 	searchClient := search.NewSearchClient()
 	results, err := searchClient.SearchTopKRelatedDocuments(userMessage, *req.TopK, req.Sources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}
+	log.Printf("Search operation took: %v", time.Since(searchStart))
+
+	chunkProcessStart := time.Now()
 	files := make(map[string]bool)
 	mergedChunks := make([]model.Index, 0)
 	for _, result := range results {
@@ -112,9 +118,17 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			break
 		}
 	}
-	for i, _ := range mergedChunks {
-		mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
+	var wg sync.WaitGroup
+	wg.Add(len(mergedChunks))
+	for i := range mergedChunks {
+		i := i
+		go func() {
+			defer wg.Done()
+			mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
+		}()
 	}
+	wg.Wait()
+
 	chunks := make([]string, 0)
 	printChunks := make([]string, 0)
 	chunkLength := 0
@@ -132,25 +146,20 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 		chunks = append(chunks, chunk)
 	}
-	promptParser := prompt.DefaultPromptParser{}
-	promptStr, error := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, *req.PromptTemplate)
-	if error != nil {
-		log.Printf("ERROR: %s", error)
-		return nil, error
-	}
-	log.Println(fmt.Printf("message: %s, related documents:\n%v", userMessage, printChunks))
-	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
+	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
 
-	keyCredential := azcore.NewKeyCredential(s.apiKey)
-	// In Azure OpenAI you must deploy a model before you can use it in your client. For more information
-	// see here: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
-	client, err := azopenai.NewClientWithKeyCredential(s.endpoint, keyCredential, nil)
+	promptParser := prompt.DefaultPromptParser{}
+	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, *req.PromptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
+	log.Println(fmt.Printf("message: %s, related documents:\n%v", userMessage, printChunks))
+	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
+
+	completionStart := time.Now()
 	var temperature float32 = 0.0001
-	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
@@ -163,6 +172,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
+	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
 
 	for _, choice := range resp.Choices {
 		if choice.Message != nil && choice.Message.Content != nil {
@@ -173,10 +183,10 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			// this choice's conversation is complete.
 			fmt.Fprintf(os.Stderr, "Finish reason[%d]: %s\n", *choice.Index, *choice.FinishReason)
 		}
-		answer, error := promptParser.ParseResponse(*choice.Message.Content, *req.PromptTemplate)
-		if error != nil {
-			log.Printf("ERROR: %s", error)
-			return nil, error
+		answer, err := promptParser.ParseResponse(*choice.Message.Content, *req.PromptTemplate)
+		if err != nil {
+			log.Printf("ERROR: %s", err)
+			return nil, err
 		}
 		result = answer
 	}
@@ -185,7 +195,8 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		result.FullContext = &fullContext
 	}
 	result.Intension = intentResult
-	log.Printf("done")
+
+	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
 
@@ -197,17 +208,8 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 		return nil, error
 	}
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
-
-	keyCredential := azcore.NewKeyCredential(s.apiKey)
-	// In Azure OpenAI you must deploy a model before you can use it in your client. For more information
-	// see here: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
-	client, err := azopenai.NewClientWithKeyCredential(s.endpoint, keyCredential, nil)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
-	}
 	var temperature float32 = 0.0001
-	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,

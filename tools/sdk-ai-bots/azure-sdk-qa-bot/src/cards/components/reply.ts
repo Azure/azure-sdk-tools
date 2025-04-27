@@ -13,24 +13,14 @@ export function createReplyCard(reply: RAGReply) {
     const referenceListCard = createReferencesListCard(referenceDataList);
     return {
         type: "AdaptiveCard",
-        body: [
-            {
-                type: "TextBlock",
-                text: reply.answer,
-                wrap: true,
-            },
-            {
-                type: "ActionSet",
-                actions: [
-                    {
-                        type: "Action.ShowCard",
-                        title: "📑References📑",
-                        card: referenceListCard,
-                    },
-                ],
-            },
-        ],
+        // adaptive card does not support FULL markdown in attachment, use message instead
+        body: [],
         actions: [
+            {
+                type: "Action.ShowCard",
+                title: "📑References📑",
+                card: referenceListCard,
+            },
             {
                 type: "Action.ShowCard",
                 title: "👍Feedback👎",
@@ -38,7 +28,7 @@ export function createReplyCard(reply: RAGReply) {
             },
             {
                 type: "Action.ShowCard",
-                title: "🕵️‍♂️Human Help🕵️‍♀️",
+                title: "🕵️‍♂️Human Assistance🕵️‍♀️",
                 card: humanHelpCard,
             },
         ],

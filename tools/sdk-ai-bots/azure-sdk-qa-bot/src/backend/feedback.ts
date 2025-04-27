@@ -11,9 +11,10 @@ export async function sendFeedback(
     reaction: FeedbackReaction
 ) {
     const response = await axios.post(
-        config.feedbackEndpoint,
+        // TODO: make /feedback endpoint configurable
+        config.azureOpenAIEndpoint + "/feedback",
         {
-            tenant_id: config.feedbackTenantId,
+            tenant_id: config.azureOpenAIDeploymentName,
             messages: conversation.map((con) => ({
                 role: "user",
                 content: con,
@@ -22,7 +23,7 @@ export async function sendFeedback(
         },
         {
             headers: {
-                "X-API-Key": config.feedbackApiKey,
+                "X-API-Key": config.azureOpenAIKey,
                 "Content-Type": "application/json; charset=utf-8",
             },
         }

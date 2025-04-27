@@ -8,10 +8,6 @@ const config = {
     azureOpenAIDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
 
     icmUrl: process.env.ICM_URL,
-
-    feedbackEndpoint: process.env.FEEDBACK_ENDPOINT,
-    feedbackApiKey: process.env.FEEDBACK_API_KEY,
-    feedbackTenantId: process.env.FEEDBACK_TENANT_ID,
 };
 
 export default config;

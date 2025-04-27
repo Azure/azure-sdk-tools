@@ -6,6 +6,11 @@ export const supportChannelCard = {
     actions: [
         {
             type: "Action.OpenUrl",
+            title: "TypeSpec Discussion",
+            url: "https://teams.microsoft.com/l/channel/19%3A906c1efbbec54dc8949ac736633e6bdf%40thread.skype/TypeSpec%20Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47",
+        },
+        {
+            type: "Action.OpenUrl",
             title: "Engineering System",
             url: "https://teams.microsoft.com/l/channel/19%3A59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%20System%20%F0%9F%9B%A0%EF%B8%8F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47",
         },

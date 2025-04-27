@@ -24,9 +24,29 @@ export async function getRAGReply(
     question: string,
     options: RAGOptions
 ): Promise<RAGReply> {
+    // test format
+    const debugText = `
+    ???
+
+    # hello \`hi-123\` 11111 - 22222
+    
+    \`\`\` javascript
+    const code  = 2 * x;
+    function test() {
+        console.log("test");
+    }
+    \`\`\`
+
+- 1112dasd dasdasda
+- 1112dasd dasdasda
+
+1. dasdasdasda
+2. asdas dsdas
+*ffas aa*, **dasda asss**, _sdddas_, __dasdaaaaaa__
+    `;
     if (MY_DEBUG)
         return {
-            answer: `[DEBUG1] Echo: ${question}`,
+            answer: debugText,
             has_result: true,
             references: [],
         };
@@ -53,5 +73,6 @@ export async function getRAGReply(
             `Failed to fetch data from RAG backend. Status: ${response.status}`
         );
     }
+    console.log("🚀 ~ response.data:", response.data);
     return response.data;
 }

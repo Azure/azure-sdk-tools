@@ -3,6 +3,13 @@
 This app template is built on top of [Teams AI library](https://aka.ms/teams-ai-library).
 It showcases a bot app that responds to user questions like ChatGPT. This enables your users to talk with the AI bot in Teams.
 
+## TODO
+
+- [ ] Refactor code, messy for now, since I reuse the template or samples directly
+- [ ] Remove `Create IcM` button
+- [ ] Hide `reference` button when there's no reference
+- [ ] Still return true when `has_result` == false
+
 ## Get started with the template
 
 > **Prerequisites**
@@ -16,7 +23,7 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 > For local debugging using Teams Toolkit CLI, you need to do some extra steps described in [Set up your Teams Toolkit CLI for local debugging](https://aka.ms/teamsfx-cli-debugging).
 
 1. First, select the Teams Toolkit icon on the left in the VS Code toolbar.
-1. In file *env/.env.testtool.user*, fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY=<your-key>`, endpoint `AZURE_OPENAI_ENDPOINT=<your-endpoint>`, and deployment name `AZURE_OPENAI_DEPLOYMENT_NAME=<your-deployment>`.
+1. In file _env/.env.testtool.user_, fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY=<your-key>`, endpoint `AZURE_OPENAI_ENDPOINT=<your-endpoint>`, and deployment name `AZURE_OPENAI_DEPLOYMENT_NAME=<your-deployment>`.
 1. Press F5 to start debugging which launches your app in Teams App Test Tool using a web browser. Select `Debug in Test Tool`.
 1. You can send any message to get a response from the bot.
 
@@ -26,36 +33,37 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 
 ## What's included in the template
 
-| Folder       | Contents                                            |
-| - | - |
-| `.vscode`    | VSCode files for debugging                          |
-| `appPackage` | Templates for the Teams application manifest        |
-| `env`        | Environment files                                   |
-| `infra`      | Templates for provisioning Azure resources          |
-| `src`        | The source code for the application                 |
+| Folder       | Contents                                     |
+| ------------ | -------------------------------------------- |
+| `.vscode`    | VSCode files for debugging                   |
+| `appPackage` | Templates for the Teams application manifest |
+| `env`        | Environment files                            |
+| `infra`      | Templates for provisioning Azure resources   |
+| `src`        | The source code for the application          |
 
 The following files can be customized and demonstrate an example implementation to get you started.
 
-| File                                 | Contents                                           |
-| - | - |
-|`src/index.ts`| Sets up the bot app server.|
-|`src/adapter.ts`| Sets up the bot adapter.|
-|`src/config.ts`| Defines the environment variables.|
-|`src/prompts/chat/skprompt.txt`| Defines the prompt.|
-|`src/prompts/chat/config.json`| Configures the prompt.|
-|`src/app/app.ts`| Handles business logics for the Basic AI Chatbot.|
+| File                            | Contents                                          |
+| ------------------------------- | ------------------------------------------------- |
+| `src/index.ts`                  | Sets up the bot app server.                       |
+| `src/adapter.ts`                | Sets up the bot adapter.                          |
+| `src/config.ts`                 | Defines the environment variables.                |
+| `src/prompts/chat/skprompt.txt` | Defines the prompt.                               |
+| `src/prompts/chat/config.json`  | Configures the prompt.                            |
+| `src/app/app.ts`                | Handles business logics for the Basic AI Chatbot. |
 
 The following are Teams Toolkit specific project files. You can [visit a complete guide on Github](https://github.com/OfficeDev/TeamsFx/wiki/Teams-Toolkit-Visual-Studio-Code-v5-Guide#overview) to understand how Teams Toolkit works.
 
-| File                                 | Contents                                           |
-| - | - |
-|`teamsapp.yml`|This is the main Teams Toolkit project file. The project file defines two primary things:  Properties and configuration Stage definitions. |
-|`teamsapp.local.yml`|This overrides `teamsapp.yml` with actions that enable local execution and debugging.|
-|`teamsapp.testtool.yml`| This overrides `teamsapp.yml` with actions that enable local execution and debugging in Teams App Test Tool.|
+| File                    | Contents                                                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `teamsapp.yml`          | This is the main Teams Toolkit project file. The project file defines two primary things: Properties and configuration Stage definitions. |
+| `teamsapp.local.yml`    | This overrides `teamsapp.yml` with actions that enable local execution and debugging.                                                     |
+| `teamsapp.testtool.yml` | This overrides `teamsapp.yml` with actions that enable local execution and debugging in Teams App Test Tool.                              |
 
 ## Extend the template
 
 You can follow [Build a Basic AI Chatbot in Teams](https://aka.ms/teamsfx-basic-ai-chatbot) to extend the Basic AI Chatbot template with more AI capabilities, like:
+
 - [Customize prompt](https://aka.ms/teamsfx-basic-ai-chatbot#customize-prompt)
 - [Customize user input](https://aka.ms/teamsfx-basic-ai-chatbot#customize-user-input)
 - [Customize conversation history](https://aka.ms/teamsfx-basic-ai-chatbot#customize-conversation-history)

@@ -6,13 +6,23 @@ import {
     Tokenizer,
 } from "@microsoft/teams-ai";
 import { PromptResponse } from "@microsoft/teams-ai/lib/types";
-import { CardFactory, MessageFactory, TurnContext } from "botbuilder";
+import {
+    CardFactory,
+    MessageFactory,
+    TextFormatTypes,
+    TurnContext,
+} from "botbuilder";
 import { getRAGReply, RAGOptions } from "../backend/rag";
 import { createReplyCard } from "../cards/components/reply";
+
+interface MessageStatus {
+    gotReply: boolean;
+}
 
 export class RAGModel implements PromptCompletionModel {
     private options: RAGOptions;
     private thinkEmojis = ["⏳", "🤔", "💭", "🧠", "🤩", "🧐", "🚨", "🤭"];
+    private defaultThinkingMessage = "⏳Thinking";
     private thinkingMessage = "⏳Thinking";
 
     constructor(options: RAGOptions) {
@@ -26,7 +36,11 @@ export class RAGModel implements PromptCompletionModel {
         tokenizer: Tokenizer,
         template: PromptTemplate
     ): Promise<PromptResponse<string>> {
-        const [timerHandler, id] = await this.showThinkingMessage(context);
+        const messageStatus: MessageStatus = { gotReply: false };
+        const [timerHandler, id] = await this.showThinkingMessage(
+            context,
+            messageStatus
+        );
         const removedMentionText = TurnContext.removeRecipientMention(
             context.activity
         );
@@ -35,20 +49,35 @@ export class RAGModel implements PromptCompletionModel {
             .replace(/\n|\r/g, "")
             .trim();
         const ragReply = await getRAGReply(txt, this.options);
+        messageStatus.gotReply = true;
         const card = createReplyCard(ragReply);
+        console.log("🚀 ~ RAGModel ~ card:", card);
         const attachment = CardFactory.adaptiveCard(card);
         const replyCard = MessageFactory.attachment(attachment);
-        replyCard.id = id;
-        await context.updateActivity(replyCard);
-        this.thinkingMessage = "⏳Thinking";
-        if (timerHandler) clearTimeout(timerHandler);
+        if (timerHandler) {
+            clearInterval(timerHandler);
+        }
+        // TODO: refactor
+        const updated: Partial<TurnContext> = {
+            type: "message",
+            id,
+            text: "✅Thinking complete",
+            conversation: context.activity.conversation,
+        } as any;
+        await context.sendActivities([
+            MessageFactory.text(ragReply.answer),
+            replyCard,
+        ]);
+        await context.updateActivity(updated);
+        this.thinkingMessage = this.defaultThinkingMessage;
         return {
             status: ragReply.has_result ? "success" : "error",
         };
     }
 
     private async showThinkingMessage(
-        context: TurnContext
+        context: TurnContext,
+        messageStatus: MessageStatus
     ): Promise<[NodeJS.Timeout, string]> {
         const resource = await context.sendActivity(this.thinkingMessage);
         const timerHandler = setInterval(async () => {
@@ -58,8 +87,10 @@ export class RAGModel implements PromptCompletionModel {
                 text: this.updateThinkingMessage(),
                 conversation: context.activity.conversation,
             } as any;
-            await context.updateActivity(updated);
-        }, 500);
+            if (!messageStatus.gotReply) {
+                await context.updateActivity(updated);
+            }
+        }, 1000);
         return [timerHandler, resource.id];
     }
 

@@ -11,7 +11,8 @@ import { FeedbackReaction, sendFeedback } from "../backend/feedback";
 const model = new RAGModel({
     apiKey: config.azureOpenAIKey,
     tenantId: config.azureOpenAIDeploymentName,
-    endpoint: config.azureOpenAIEndpoint,
+    // TODO: make /completion endpoint configurable
+    endpoint: config.azureOpenAIEndpoint + "/completion",
 });
 const prompts = new PromptManager({
     promptsFolder: path.join(__dirname, "../prompts"),
@@ -42,7 +43,7 @@ const isSubmitMessage = async (ctx: TurnContext) =>
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
     const action = context.activity.value?.action;
-    const conversation = context.activity.value?.conversation;
+    // const conversation = context.activity.value?.conversation;
     switch (action) {
         case "feedback-like":
             await sendFeedback(["test good"], FeedbackReaction.good);

@@ -61,7 +61,7 @@ namespace AzureSDKDSpecTools.Models
             string tspConfigYaml = File.ReadAllText(Path.Combine(path, TSPCONFIG_FILENAME));
             if(string.IsNullOrEmpty(tspConfigYaml))
             {
-                new Exception($"Failed to load contents of tspconfig.yaml in the [{typeSpecProjectPath}]");
+                throw new Exception($"Failed to load contents of tspconfig.yaml in the [{typeSpecProjectPath}]");
             }
 
             typeSpecProject.TypeSpecConfigYaml = tspConfigYaml;

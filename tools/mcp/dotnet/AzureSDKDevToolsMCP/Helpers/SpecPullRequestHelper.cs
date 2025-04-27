@@ -22,7 +22,7 @@ namespace AzureSDKDSpecTools.Helpers
         {
             try
             {
-                var apiviewComments = comments.Where(c => c.Contains("API API Change Check") || c.Contains("APIView"));
+                var apiviewComments = comments.Where(c => c.Contains("## API Change Check") || c.Contains("APIView"));
                 if (apiviewComments == null || !apiviewComments.Any())
                 {
                     logger.LogWarning("No API reviews found in the comments");

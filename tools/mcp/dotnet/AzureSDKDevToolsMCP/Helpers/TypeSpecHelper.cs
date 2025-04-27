@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
-using YamlDotNet.Serialization;
 
 namespace AzureSDKDSpecTools.Helpers
 {

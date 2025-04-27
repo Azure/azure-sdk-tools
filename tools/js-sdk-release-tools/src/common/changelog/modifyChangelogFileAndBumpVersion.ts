@@ -4,6 +4,7 @@ import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 import fs from 'fs';
 import * as path from 'path';
 import { getSDKType} from "../utils.js";
+import { SDKType } from "../types.js";
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');
 const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -14,14 +15,14 @@ const date = yyyy + '-' + mm + '-' + dd;
 export function getFirstReleaseContent(packageFolderPath: string, isStableRelease: boolean) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const sdkType = getSDKType(packageFolderPath);
-    const isModularClient = (sdkType === 'ModularClient')? true : false;
+    const isModularClient = sdkType === SDKType.ModularClient;
     const firstBetaAndModularClientContent = `Initial release of the ${packageJsonData.name} package`;
     const firstStableAndModularClientContent = `This is the first stable version with the package of ${packageJsonData.name}`;
     const defaultContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
     return isModularClient? isStableRelease ? firstStableAndModularClientContent : firstBetaAndModularClientContent : defaultContent;
 }
 
-export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
     const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
     const content = `# Release History

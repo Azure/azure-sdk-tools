@@ -114,7 +114,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			Title:     result.Title,
 			ContextID: result.ContextID,
 		})
-		if len(files) == 5 {
+		if len(files) == 3 {
 			break
 		}
 	}

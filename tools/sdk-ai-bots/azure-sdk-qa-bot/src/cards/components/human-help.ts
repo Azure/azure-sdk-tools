@@ -10,11 +10,6 @@ export const humanHelpCard = {
             title: "Support Channels",
             card: supportChannelCard,
         },
-        {
-            type: "Action.OpenUrl",
-            title: "Create IcM",
-            url: config.icmUrl,
-        },
     ],
     $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
     version: "1.6",

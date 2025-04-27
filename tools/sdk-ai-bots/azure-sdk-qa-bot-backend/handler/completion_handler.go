@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/copilot-extensions/rag-extension/model"
-	"github.com/copilot-extensions/rag-extension/service/agent"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/agent"
 	"github.com/gin-gonic/gin"
 )
 

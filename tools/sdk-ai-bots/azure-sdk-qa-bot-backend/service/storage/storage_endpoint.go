@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	baseUrl       = "https://typespechelper4storage.blob.core.windows.net"
-	blobContainer = "knowledge"
+	BaseUrl                = "https://typespechelper4storage.blob.core.windows.net"
+	KnowledgeBlobContainer = "knowledge"
+	FeedbackBlobContainer  = "feedback"
 )
 
 type StorageService struct {
@@ -30,16 +31,16 @@ func NewStorageService() (*StorageService, error) {
 	}
 
 	// Create a blob client
-	blobClient, err := azblob.NewClient(baseUrl, credential, nil)
+	blobClient, err := azblob.NewClient(BaseUrl, credential, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create blob client: %v", err)
 	}
 	return &StorageService{credential: credential, blobClient: blobClient}, nil
 }
 
-func (s *StorageService) PutBlob(path string, content []byte) error {
+func (s *StorageService) PutBlob(container, path string, content []byte) error {
 	// Upload the blob
-	_, err := s.blobClient.UploadBuffer(context.Background(), blobContainer, path, content, &azblob.UploadBufferOptions{})
+	_, err := s.blobClient.UploadBuffer(context.Background(), container, path, content, &azblob.UploadBufferOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to upload blob: %v", err)
 	}
@@ -47,9 +48,9 @@ func (s *StorageService) PutBlob(path string, content []byte) error {
 	return nil
 }
 
-func (s *StorageService) GetBlobs() []string {
+func (s *StorageService) GetBlobs(container string) []string {
 	result := []string{}
-	pager := s.blobClient.NewListBlobsFlatPager(blobContainer, &azblob.ListBlobsFlatOptions{})
+	pager := s.blobClient.NewListBlobsFlatPager(container, &azblob.ListBlobsFlatOptions{})
 	for pager.More() {
 		resp, err := pager.NextPage(context.TODO())
 		if err != nil {
@@ -63,7 +64,7 @@ func (s *StorageService) GetBlobs() []string {
 }
 
 func (s *StorageService) DeleteBlob(path string) error {
-	blobUrl := fmt.Sprintf("%s/%s/%s", baseUrl, blobContainer, path)
+	blobUrl := fmt.Sprintf("%s/%s/%s", BaseUrl, KnowledgeBlobContainer, path)
 	blobUrl = strings.ReplaceAll(blobUrl, "#", "%23")
 	// Create a blockBlob client
 	blockBlobClient, err := blockblob.NewClient(blobUrl, s.credential, &blockblob.ClientOptions{})

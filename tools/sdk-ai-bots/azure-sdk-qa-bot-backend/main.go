@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/copilot-extensions/rag-extension/handler"
-	"github.com/copilot-extensions/rag-extension/service/auth"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/handler"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/auth"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,8 +16,9 @@ func setupRouter() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 
-	// Protected endpoint
+	// Protected endpoints
 	r.POST("/completion", auth.APIKeyAuth(), handler.CompletionHandler)
+	r.POST("/feedback", auth.APIKeyAuth(), handler.FeedBackHandler)
 
 	return r
 }

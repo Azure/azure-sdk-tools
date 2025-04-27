@@ -12,6 +12,11 @@ type QueryIndexRequest struct {
 	VectorQueries []VectorQuery `json:"vectorQueries,omitempty"`
 	OrderBy       string        `json:"orderby,omitempty"`
 	Filter        string        `json:"filter,omitempty"`
+	QueryType   string        `json:"queryType,omitempty"`
+	SemanticConfiguration string `json:"semanticConfiguration,omitempty"`
+	Captions      string        `json:"captions,omitempty"`
+	Answers       string        `json:"answers,omitempty"`
+	QueryLanguage  string        `json:"queryLanguage,omitempty"`
 }
 
 type VectorQuery struct {

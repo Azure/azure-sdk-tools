@@ -496,12 +496,27 @@ class ApiViewReview:
             results = {}
             for key, future in futures.items():
                 try:
-                    values = json.loads(future.result())
-                    # Tags each comment with the source prompt tag
+                    # Get the raw result text
+                    result_text = future.result()
+
+                    # Try to parse as JSON - if this fails, it will be caught and become a retryable error
+                    values = json.loads(result_text)
+
+                    # Only proceed if JSON parsing succeeded
+                    # Tag each comment with the source prompt tag
                     for item in values.get("comments", []):
                         item["source"] = key
                     results[key] = values
+                except json.JSONDecodeError as e:
+                    # Log the specific JSON error and re-raise it
+                    # This will be caught by the _process_chunk method's retry logic
+                    logger.error(
+                        f"JSON decode error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
+                    )
+                    # Re-raise to trigger retry in the parent method
+                    raise
                 except Exception as e:
+                    # For non-JSON errors, log but continue with empty results
                     logger.error(
                         f"Error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
                     )

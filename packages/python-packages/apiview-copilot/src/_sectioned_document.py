@@ -48,7 +48,8 @@ class SectionedDocument:
             line_data = []
             for i, line in enumerate(lines):
                 indent = len(line) - len(line.lstrip())
-                line_data.append(LineData(i, indent, line))
+                # ensure line numbers are 1-indexed, not 0-indexed
+                line_data.append(LineData(i + 1, indent, line))
 
         top_level_lines = [
             x

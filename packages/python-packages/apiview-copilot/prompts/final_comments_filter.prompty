@@ -81,7 +81,7 @@ system: |
   - Flag any comments' `status` field as "REMOVE" that violate the exceptions
   - Flag any comments' `status` field as "KEEP" that enhance API design
   - All comments MUST be flagged with a `status` field, and a `status_reason`.
-  - Maintain the same output schema as the proposed comments, except for the addition of `status` and `status_reason` fields.
+  - For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
 
 user: |
   Please validate the following review against the exceptions:
@@ -97,7 +97,7 @@ assistant: |
   1. Check if it violates any of the validation rules by focusing on the content in the `comment` field, not other fields.
   2. Flag any comments' `status` field as "REMOVE" that violate the exceptions
   3. Flag any comments' `status` field as "KEEP" that enhance API design
-  4. Return a filtered set of comments in the same schema, with the addition of `status` and `status_reason` fields.
+  4. For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
 
   For each comment I will:
   - Verify it doesn't comment on excluded aspects
@@ -107,7 +107,8 @@ assistant: |
 
   The response will maintain the schema structure with:
   - A list of comments
-  - Each comment containing line_no, bad_code, suggestion, and comment identical to the original
-  - Each comments will include new fields `status` and `status_reason` to indicate whether it was kept or removed and the reason for that decision.
+  - Each comment containing line_no, bad_code, and comment identical to the original
+  - Each comment will include new fields `status` and `status_reason` to indicate whether it was kept or removed and the reason for that decision.
+  - Each comment will include new fields `code_fix` and `general_suggestion` to ensure distinction between code and general suggestions.
 
 {{sample}}

@@ -27,9 +27,13 @@
                 "type": "string",
                 "description": "the original code that was bad. MUST be identical to the input."
               },
-              "suggestion": {
+              "code_fix": {
                 "type": "string",
-                "description": "the suggested code which fixes the bad code. MUST be identical to the input."
+                "description": "valid code which fixes the bad_code. MUST be code (but NOT just a code comment)."
+              },
+              "general_suggestion": {
+                "type": "string",
+                "description": "a natural language suggestion for fixing the bad_code. MUST NOT be code."
               },
               "comment": {
                 "type": "string",
@@ -52,7 +56,8 @@
               "rule_ids",
               "line_no",
               "bad_code",
-              "suggestion",
+              "code_fix",
+              "general_suggestion",
               "comment",
               "source",
               "status",

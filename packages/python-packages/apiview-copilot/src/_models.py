@@ -105,10 +105,17 @@ class ReviewResult(BaseModel):
         default_line_no = 0
         for comment in comments:
             raw_line_no = str(comment.get("line_no", "0")).replace(" ", "").strip()
+            bad_code = comment.get("bad_code", None)
+            code_fix = comment.get("code_fix", None)
+            if code_fix == bad_code:
+                code_fix = None
+            general_suggestion = comment.get("suggestion", None)
+            comment_val = comment.get("comment", None)
 
             # Ensure all required fields exist
-            if "suggestion" not in comment:
-                comment["suggestion"] = ""
+            comment["suggestion"] = code_fix or ""
+            if general_suggestion and general_suggestion != comment_val:
+                comment["comment"] = f"{comment_val}. Suggest: {general_suggestion}"
             if "rule_ids" not in comment:
                 comment["rule_ids"] = []
             if "source" not in comment:

@@ -70,9 +70,7 @@ export class RAGModel implements PromptCompletionModel {
         ]);
         await context.updateActivity(updated);
         this.thinkingMessage = this.defaultThinkingMessage;
-        return {
-            status: ragReply.has_result ? "success" : "error",
-        };
+        return { status: "success" };
     }
 
     private async showThinkingMessage(

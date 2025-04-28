@@ -120,7 +120,7 @@ namespace AzureSDKDevToolsMCP.Tools
                     IsMergeable = pullRequest.Mergeable ?? false,
                     Author = pullRequest.User.Name,
                     AssignedTo = pullRequest.Assignee?.Name ?? "",
-                    Labels = pullRequest.Labels?.Select(l => l.Name)?.ToList() ?? [],
+                    Labels = pullRequest.Labels?.ToList() ?? [],
                     Comments = await GetPullRequestComments(pullRequestNumber, repoName, repoOwner)
                 };
 
@@ -133,7 +133,7 @@ namespace AzureSDKDevToolsMCP.Tools
                 var apiviewlinks = prHelper.FindApiReviewLinks(prDetails.Comments);
                 if (apiviewlinks != null &&  apiviewlinks.Count > 0)
                 {
-                    prDetails.ApiReviews.AddRange(apiviewlinks);
+                    prDetails.ApiViews.AddRange(apiviewlinks);
                 }
                       
                  return JsonSerializer.Serialize(prDetails);

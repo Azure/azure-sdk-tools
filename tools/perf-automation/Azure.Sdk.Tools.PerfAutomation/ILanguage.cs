@@ -29,5 +29,5 @@ namespace Azure.Sdk.Tools.PerfAutomation
             bool profile,
             string profilerOptions,
             object context);
-    } 
+    }
 }

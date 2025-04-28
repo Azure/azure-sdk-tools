@@ -154,7 +154,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	log.Println(fmt.Printf("message: %s, related documents:\n%v", userMessage, printChunks))
+	log.Println(fmt.Printf("message: %s, prompt:\n%v", userMessage, promptStr[:1000]))
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
 	completionStart := time.Now()

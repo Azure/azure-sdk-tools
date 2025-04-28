@@ -13,9 +13,11 @@ from time import time
 from typing import Optional, List
 import yaml
 
-from ._sectioned_document import SectionedDocument
-from ._search_manager import SearchManager
 from ._models import ReviewResult
+from ._search_manager import SearchManager
+from ._sectioned_document import SectionedDocument
+from ._retry import retry_with_backoff
+
 
 # Set up paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -66,6 +68,14 @@ DEFAULT_USE_RAG = False
 
 class ApiViewReview:
 
+    # Define status characters with colors
+    PENDING = "░"
+    PROCESSING = "▒"
+    SUCCESS = "\033[32m█\033[0m"  # Green square
+    FAILURE = "\033[31m█\033[0m"  # Red square
+    RED_TEXT = "\033[31m"  # Red text
+    RESET_COLOR = "\033[0m"  # Reset to default text color
+
     def __init__(
         self,
         *,
@@ -114,17 +124,9 @@ class ApiViewReview:
         for i, chunk in enumerate(chunked_target):
             chunks_to_process.append((i, chunk))
 
-        # Define status characters with colors
-        PENDING = "░"
-        PROCESSING = "▒"
-        SUCCESS = "\033[32m█\033[0m"  # Green square
-        FAILURE = "\033[31m█\033[0m"  # Red square
-        RED_TEXT = "\033[31m"  # Red text
-        RESET_COLOR = "\033[0m"  # Reset to default text color
-
         # Print initial progress bar
         print("Processing chunks: ", end="", flush=True)
-        chunk_status = [PENDING] * len(chunks_to_process)
+        chunk_status = [self.PENDING] * len(chunks_to_process)
 
         prompty_type = model_map[self.model]
 
@@ -153,7 +155,7 @@ class ApiViewReview:
                 # Submit all tasks
                 future_to_chunk = {
                     executor.submit(
-                        self._process_chunk,
+                        self._process_chunk_with_retry,
                         chunk_info,
                         static_guidelines,
                         cancel_event,
@@ -175,7 +177,7 @@ class ApiViewReview:
                         except Exception as e:
                             i, chunk = chunk_info
                             chunk_idx = chunks_to_process.index((i, chunk))
-                            chunk_status[chunk_idx] = FAILURE
+                            chunk_status[chunk_idx] = self.FAILURE
                             print(
                                 "\r" + "Processing chunks: " + "".join(chunk_status),
                                 end="",
@@ -205,34 +207,37 @@ class ApiViewReview:
                 chunk_result = ReviewResult(**chunk_response)
                 combined_results.merge(chunk_result, section=chunk)
 
-        # Pass combined results through the filter function
+        # Pass combined results through the filter function with retry logic
         filter_prompt_file = "final_comments_filter.prompty"
         filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
 
         # load the language-specific yaml file for the filter
         filter_metadata = self._load_filter_metadata()
-        response = prompty.execute(
-            filter_prompt_path,
-            inputs={
-                "comments": combined_results,
-                "language": self._get_language_pretty_name(),
-                "sample": filter_metadata["sample"],
-                "exceptions": filter_metadata["exceptions"],
-            },
+        print(f"Filtering results...")
+
+        response_json, filter_success = self._execute_filter_prompt(
+            combined_results, filter_prompt_path, filter_metadata
         )
-        response_json = json.loads(response)
-        keep_json = [x for x in response_json["comments"] if x["status"] == "KEEP"]
-        discard_json = [x for x in response_json["comments"] if x["status"] == "REMOVE"]
+
+        # If filter succeeded, extract the "KEEP" comments, otherwise use all comments
+        if filter_success:
+            keep_json = [x for x in response_json["comments"] if x["status"] == "KEEP"]
+            discard_json = [x for x in response_json["comments"] if x["status"] == "REMOVE"]
+        else:
+            # Just include all comments if filtering failed
+            keep_json = [c.model_dump() for c in combined_results.comments]
+            discard_json = []
+
         final_results = ReviewResult(**{"comments": keep_json})
 
         end_time = time()
         print(f"Review generated in {end_time - start_time:.2f} seconds.")
         if bad_chunks:
             print(
-                f"{RED_TEXT}WARN: {len(bad_chunks)}/{len(chunks_to_process)} chunks had errors (see error.log){RESET_COLOR}"
+                f"{self.RED_TEXT}WARN: {len(bad_chunks)}/{len(chunks_to_process)} chunks had errors (see error.log){self.RESET_COLOR}"
             )
         if self.semantic_search_failed:
-            print(f"{RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{RESET_COLOR}")
+            print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
 
         return final_results
 
@@ -334,114 +339,67 @@ class ApiViewReview:
     def unescape(self, text: str) -> str:
         return str(bytes(text, "utf-8").decode("unicode_escape"))
 
-    def _process_chunk(
-        self,
-        chunk_info,
-        static_guidelines,
-        cancel_event,
-        guideline_prompt_file,
-        generic_prompt_file,
-        chunk_status,
+    def _process_chunk_with_retry(
+        self, chunk_info, static_guidelines, cancel_event, guideline_prompt_file, generic_prompt_file, chunk_status
     ):
-        """
-        Process a single chunk of the API view document.
-        """
+        """Process a chunk with retry logic."""
+        i, chunk = chunk_info
+        chunk_idx = i
+
         # Check for cancellation
         if cancel_event.is_set():
-            return chunk_info[1], None
+            return chunk, None
 
-        i, chunk = chunk_info
-        # Find the index of this chunk in the original chunks_to_process list
-        chunk_idx = i  # Just use the index directly
-        max_retries = 5
+        # Update progress indicator
+        chunk_status[chunk_idx] = self.PROCESSING
+        print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
 
-        # Status characters with colors for progress display
-        PENDING = "░"
-        PROCESSING = "▒"
-        SUCCESS = "\033[32m█\033[0m"  # Green square
-        FAILURE = "\033[31m█\033[0m"  # Red square
+        def execute_chunk():
+            # Build the context string
+            if self.use_rag:
+                context = self._retrieve_and_resolve_guidelines(str(chunk))
+                if context:
+                    context_string = context.to_markdown()
+                else:
+                    logger.warning(f"Failed to retrieve guidelines for chunk {i}, using static guidelines instead.")
+                    self.semantic_search_failed = True
+                    context_string = json.dumps(static_guidelines)
+            else:
+                context_string = json.dumps(static_guidelines)
 
-        for j in range(max_retries):
-            # Check for cancellation again
-            if cancel_event.is_set():
-                return chunk, None
-
-            # Update progress indicator
-            chunk_status[chunk_idx] = PROCESSING
-            print(
-                "\r" + "Processing chunks: " + "".join(chunk_status),
-                end="",
-                flush=True,
+            # Execute prompts in parallel and merge results
+            return self._run_parallel_prompts(
+                chunk, context_string, guideline_prompt_file, generic_prompt_file, i, 0, max_retries
             )
 
-            try:
-                # Build the context string
-                if self.use_rag:
-                    context = self._retrieve_and_resolve_guidelines(str(chunk))
-                    if context:
-                        context_string = context.to_markdown()
-                    else:
-                        # Use static guidelines as fallback if semantic search fails
-                        logger.warning(f"Failed to retrieve guidelines for chunk {i}, using static guidelines instead.")
-                        self.semantic_search_failed = True
-                        context_string = json.dumps(static_guidelines)
-                else:
-                    context_string = json.dumps(static_guidelines)
+        def on_retry(exception, attempt, max_attempts):
+            # Keep status as PROCESSING during retries
+            chunk_status[chunk_idx] = self.PROCESSING
+            print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
 
-                # Execute prompts in parallel and merge results
-                json_response = self._run_parallel_prompts(
-                    chunk,
-                    context_string,
-                    guideline_prompt_file,
-                    generic_prompt_file,
-                    i,
-                    j,
-                    max_retries,
-                )
+        def on_failure(exception, attempt):
+            # Mark as failed on final failure
+            chunk_status[chunk_idx] = self.FAILURE
+            print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
+            return None
 
-                # Update progress indicator on success
-                chunk_status[chunk_idx] = SUCCESS
-                print(
-                    "\r" + "Processing chunks: " + "".join(chunk_status),
-                    end="",
-                    flush=True,
-                )
-                return chunk, json_response
-
-            except json.JSONDecodeError as e:
-                error_msg = f"JSON decode error in chunk {i}, attempt {j+1}/{max_retries}: {str(e)}"
-                logger.error(error_msg)
-                if j == max_retries - 1:
-                    chunk_status[chunk_idx] = FAILURE
-                    print(
-                        "\r" + "Processing chunks: " + "".join(chunk_status),
-                        end="",
-                        flush=True,
-                    )
-                    return chunk, None
-            except Exception as e:
-                # Catch all other exceptions
-                error_msg = f"Error processing chunk {i}, attempt {j+1}/{max_retries}: {str(e)}"
-                logger.error(error_msg)
-
-                if j == max_retries - 1:
-                    chunk_status[chunk_idx] = FAILURE
-                    print(
-                        "\r" + "Processing chunks: " + "".join(chunk_status),
-                        end="",
-                        flush=True,
-                    )
-                    return chunk, None
-
-        # If we get here, we've exhausted all retries
-        logger.error(f"Failed to process chunk {i} after {max_retries} attempts")
-        chunk_status[chunk_idx] = FAILURE
-        print(
-            "\r" + "Processing chunks: " + "".join(chunk_status),
-            end="",
-            flush=True,
+        max_retries = 5
+        result = retry_with_backoff(
+            func=execute_chunk,
+            max_retries=max_retries,
+            retry_exceptions=(json.JSONDecodeError, Exception),
+            on_retry=on_retry,
+            on_failure=on_failure,
+            logger=logger,
+            description=f"chunk {i}",
         )
-        return chunk, None
+
+        # Update progress indicator on success if we got a result
+        if result is not None:
+            chunk_status[chunk_idx] = self.SUCCESS
+            print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
+
+        return chunk, result
 
     def _run_parallel_prompts(
         self,
@@ -527,3 +485,40 @@ class ApiViewReview:
         json_response["comments"].extend(results.get(generic_tag, {}).get("comments", []))
 
         return json_response
+
+    def _execute_filter_prompt(self, combined_results, filter_prompt_path, filter_metadata):
+        """Execute the filter prompt with retry logic."""
+
+        def run_filter():
+            return json.loads(
+                prompty.execute(
+                    filter_prompt_path,
+                    inputs={
+                        "comments": combined_results,
+                        "language": self._get_language_pretty_name(),
+                        "sample": filter_metadata["sample"],
+                        "exceptions": filter_metadata["exceptions"],
+                    },
+                )
+            )
+
+        def on_final_failure(exception, attempt):
+            print(
+                f"{self.RED_TEXT}WARN: Filter prompt failed after {max_filter_retries} attempts, using unfiltered results.{self.RESET_COLOR}"
+            )
+            return {
+                "comments": [{"original_comment": c.model_dump(), "status": "KEEP"} for c in combined_results.comments]
+            }
+
+        max_filter_retries = 5
+        return (
+            retry_with_backoff(
+                func=run_filter,
+                max_retries=max_filter_retries,
+                retry_exceptions=(json.JSONDecodeError, Exception),
+                on_failure=on_final_failure,
+                logger=logger,
+                description="filter prompt",
+            ),
+            True,
+        )

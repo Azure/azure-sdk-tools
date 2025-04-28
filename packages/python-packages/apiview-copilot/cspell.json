@@ -22,7 +22,8 @@
     "prompty",
     "appsetting",
     "apiview",
-    "popleft"
+    "popleft",
+    "retryable"
   ],
   "dictionaries": ["python", "softwareTerms"]
 }

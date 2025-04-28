@@ -1,103 +1,91 @@
 {
     "comments": [
         {
-            "rule_ids": [
-                "python_design.html#python-client-sync-async-separate-clients"
-            ],
-            "line_no": 7,
-            "bad_code": "ivar analyzers: AnalyzersOperations",
-            "suggestion": "Ensure that the synchronous ContentUnderstandingClient references a synchronous operations client (e.g. defined in azure.ai.contentunderstanding.operations) rather than an async one.",
-            "comment": "The synchronous client exposes an 'analyzers' property of type AnalyzersOperations, but the only visible definition of AnalyzersOperations is in the async (.aio) namespace. This appears to mix synchronous and asynchronous surfaces, which violates the guideline requiring separate client types for sync and async operations ('python_design.html#python-client-sync-async-separate-clients').",
-            "source": "guideline"
-        },
-        {
             "rule_ids": [],
             "line_no": 110,
-            "bad_code": "input: bytes",
-            "suggestion": "Rename the parameter to avoid shadowing the built-in, for example: 'data: bytes' or 'binary_data: bytes'.",
-            "comment": "Using 'input' as a parameter name shadows a built-in function in Python, which can lead to confusion.",
+            "bad_code": "input: bytes,",
+            "suggestion": "data: bytes,",
+            "comment": "Avoid using 'input' as a parameter name since it shadows Python's built-in function. A more descriptive name such as 'data' or 'binary_data' is recommended.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 167,
-            "bad_code": "async def get_operation_status(",
-            "suggestion": "Review and possibly simplify the composite return type names (e.g. ResourceOperationStatusContentAnalyzerContentAnalyzerError) for better readability.",
-            "comment": "Overly verbose or repetitive type names reduce clarity; consider simplifying them if possible without compromising functionality.",
+            "line_no": 266,
+            "bad_code": "ivar spans: list[ContentSpan]",
+            "suggestion": "ivar spans: List[ContentSpan]",
+            "comment": "There is an inconsistency in generic type annotation style. Standardize on either the built-in generics (e.g. 'list[...]' if targeting Python 3.9+) or on the typing counterparts (e.g. 'List[...]') to maintain consistency throughout the API.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 238,
-            "bad_code": "ivar contents: List[MediaContent]",
-            "suggestion": "ivar contents: list[MediaContent]",
-            "comment": "There is an inconsistency in using generic types (List vs. list). Consistently using one style improves readability and aligns with modern Python type hinting practices.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 267,
-            "bad_code": "ivar type: Literal[ARRAY]",
-            "suggestion": "ivar field_type: Literal[ARRAY]",
-            "comment": "Using 'type' as an attribute name shadows the built-in Python function. Renaming it (e.g., to 'field_type') avoids potential conflicts and confusion.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 736,
-            "bad_code": "ivar footnotes: Optional[List[ForwardRef('DocumentFootnote')]]",
-            "suggestion": "from __future__ import annotations  # then use Optional[List[DocumentFootnote]]",
-            "comment": "Using ForwardRef makes type annotations verbose. Enabling postponed evaluation of annotations allows you to reference classes directly in type hints, making them easier to read.",
+            "line_no": 1041,
+            "bad_code": "ivar type: Optional[Union[str, FieldType]]",
+            "suggestion": "ivar field_type: Optional[Union[str, FieldType]]",
+            "comment": "Avoid shadowing Python built-ins such as 'type'. Renaming this attribute (for example, to 'field_type') makes the intent clearer and prevents potential conflicts.",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 1138,
             "bad_code": "ivar spans: list[ContentSpan]",
-            "suggestion": "ivar spans: Optional[List[ContentSpan]]",
-            "comment": "There is an inconsistency in type annotation styles – sometimes the built-in generic (list) and sometimes the typing.List are used. Using a consistent style will improve readability and maintainability.",
+            "suggestion": "ivar spans: List[ContentSpan]",
+            "comment": "For consistency and clarity, use the standard generic type from the typing module (List) rather than the built-in list when annotating types.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1236,
-            "bad_code": "type: str",
-            "suggestion": "Rename the parameter from 'type' to 'field_type' (or a similar alternative) to avoid conflicting with Python's built-in name.",
-            "comment": "Using 'type' as a parameter name can obscure the built‐in type() function and potentially cause confusion.",
+            "line_no": 1213,
+            "bad_code": "ivar type: Literal[NUMBER]",
+            "suggestion": "ivar field_type: Literal[NUMBER]",
+            "comment": "Naming an attribute 'type' shadows Python’s built-in. Renaming it (for example, to 'field_type') prevents potential conflicts and clarifies intent.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1299,
-            "bad_code": "ivar id: str",
-            "suggestion": "Consider renaming 'id' to something more descriptive (e.g., 'operation_id') to avoid shadowing Python’s built-in id() function.",
-            "comment": "Using built-in names as attribute identifiers can lead to confusion during debugging and maintenance.",
+            "line_no": 1254,
+            "bad_code": "ivar value_object: Optional[Dict[str, ForwardRef('ContentField')]]",
+            "suggestion": "from __future__ import annotations  // then use: value_object: Optional[Dict[str, ContentField]]",
+            "comment": "Leveraging 'from __future__ import annotations' can simplify forward references, making the type hints clearer and more maintainable.",
             "source": "generic"
         },
         {
-            "rule_ids": [
-                "python_design.html#python-client-constructor-form"
-            ],
+            "rule_ids": [],
             "line_no": 1510,
-            "bad_code": "def __init__(\n",
-            "suggestion": "def __init__(self, endpoint: str, credential: Any, **kwargs):",
-            "comment": "The constructor is defined using *args and **kwargs without explicit positional binding parameters (e.g. an endpoint or credential). Public client types should expose a clear signature per the client constructor form guidelines.",
-            "source": "guideline"
+            "bad_code": "def __init__(\n\t    self, \n\t    *args, \n\t    **kwargs\n\t)",
+            "suggestion": "def __init__(self, client: HttpClient, config: Config) -> None:",
+            "comment": "Using *args and **kwargs in the public constructor reduces discoverability of required parameters. Consider defining them explicitly to make the API more self‐documenting.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1517,
+            "bad_code": "def begin_analyze(",
+            "suggestion": "def begin_analyze_from_url(self, analyzer_id: str, url: str, *, content_type: str = 'application/json', **kwargs: Any) -> LROPoller[AnalyzeResult]:",
+            "comment": "The multiple overloads for begin_analyze (handling URL, JSON body, and binary IO) may be confusing. Splitting these into clearly named methods (e.g. begin_analyze_from_url) can improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1550,
+            "bad_code": "body: Union[JSON, IO[bytes]] = _Unset,",
+            "suggestion": "body: Optional[Union[JSON, IO[bytes]]] = None,",
+            "comment": "Relying on an internal sentinel (_Unset) can be confusing. Using None as the default (or ensuring the sentinel is clearly documented) improves clarity.",
+            "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 1560,
             "bad_code": "input: bytes,",
             "suggestion": "data: bytes,",
-            "comment": "Using the name 'input' shadows the built-in input() function. Renaming it (e.g., to 'data' or 'binary_data') can prevent potential confusion.",
+            "comment": "The parameter name 'input' shadows the built-in input() function. Renaming it to something like 'data' avoids this conflict and follows best practices.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1617,
-            "bad_code": "def get_operation_status(self, analyzer_id: str, operation_id: str, **kwargs: Any) -> ResourceOperationStatusContentAnalyzerContentAnalyzerError",
-            "suggestion": "Consider aliasing or simplifying the return type name for clarity.",
-            "comment": "The return type 'ResourceOperationStatusContentAnalyzerContentAnalyzerError' is overly verbose, which can hinder quick comprehension. Simplifying or aliasing complex type names can improve the API’s overall readability.",
+            "line_no": 1645,
+            "bad_code": "def update(",
+            "suggestion": "def update_from_json(self, analyzer_id: str, resource: JSON, *, content_type: str = 'application/merge-patch+json', **kwargs: Any) -> ContentAnalyzer:",
+            "comment": "Similar to begin_analyze, the update method has several overloads for different resource types. Consider splitting these into separate methods to reduce complexity and help users understand the API.",
             "source": "generic"
         }
     ]

@@ -5,10 +5,10 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 
 ## TODO
 
-- [ ] Refactor code, messy for now, since I reuse the template or samples directly
-- [ ] Remove `Create IcM` button
-- [ ] Hide `reference` button when there's no reference
-- [ ] Still return true when `has_result` == false
+- [x] Refactor code, messy for now, since I reuse the template or samples directly
+- [x] Remove `Create IcM` button
+- [x] Hide `reference` button when there's no reference
+- [x] Still return true when `has_result` == false
 
 ## Get started with the template
 

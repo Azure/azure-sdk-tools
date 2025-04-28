@@ -1,7 +1,7 @@
 import { feedbackCard } from "./feedback";
-import { humanHelpCard } from "./human-help";
 import { RAGReply } from "../../backend/rag";
 import { createReferencesListCard } from "./reference-list";
+import { supportChannelCard } from "./support-channel";
 
 export function createReplyCard(reply: RAGReply) {
     const referenceDataList = reply.references.map((ref) => ({
@@ -11,28 +11,32 @@ export function createReplyCard(reply: RAGReply) {
         excerpt: ref.content,
     }));
     const referenceListCard = createReferencesListCard(referenceDataList);
-    return {
+    const referenceAction = {
+        type: "Action.ShowCard",
+        title: "📑References📑",
+        card: referenceListCard,
+    };
+    const feedbackAction = {
+        type: "Action.ShowCard",
+        title: "👍Feedback👎",
+        card: feedbackCard,
+    };
+    const supportChannelAction = {
+        type: "Action.ShowCard",
+        title: "🕵️‍♂️Support Channels🕵️‍♀️",
+        card: supportChannelCard,
+    };
+    const actions =
+        referenceDataList.length > 0
+            ? [referenceAction, feedbackAction, supportChannelAction]
+            : [feedbackAction, supportChannelAction];
+    const card = {
         type: "AdaptiveCard",
         // adaptive card does not support FULL markdown in attachment, use message instead
         body: [],
-        actions: [
-            {
-                type: "Action.ShowCard",
-                title: "📑References📑",
-                card: referenceListCard,
-            },
-            {
-                type: "Action.ShowCard",
-                title: "👍Feedback👎",
-                card: feedbackCard,
-            },
-            {
-                type: "Action.ShowCard",
-                title: "🕵️‍♂️Human Assistance🕵️‍♀️",
-                card: humanHelpCard,
-            },
-        ],
+        actions,
         $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
         version: "1.6",
     };
+    return card;
 }

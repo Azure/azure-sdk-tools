@@ -205,7 +205,7 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
 def format_terminal_diff(new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
     """Format difference with ANSI colors for terminal output."""
 
-    diff = new - old
+    diff = int(new - old)
     if diff > 0:
         if reverse:
             return f" (\033[31m+{diff:{format_str}}\033[0m)"  # Red
@@ -250,12 +250,12 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
     for result in eval_results[:-1]:  # Skip summary object
         testcase = result["testcase"]
         score = result["overall_score"]
-        exact = int(result["true_positives"])
+        exact = result["true_positives"]
         rule = result["rule_matches_wrong_line"]
         fp = result["false_positives"]
         ground = result["groundedness"]
         sim = result["similarity"]
-        valid_generic = int(result["valid_generic_comments"])
+        valid_generic = result["valid_generic_comments"]
         comments_found = f"{result['comments_found']} / {result['expected_comments']}"
 
         terminal_row = [testcase]
@@ -266,8 +266,7 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
                     f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
                     comments_found,
                     f"{exact}{format_terminal_diff(exact, base['true_positives'], 'd')}",
-                    # f"{valid_generic}{format_terminal_diff(valid_generic, base['valid_generic_comments'], 'd')}",
-                    f"{valid_generic}{format_terminal_diff(valid_generic, 0, 'd')}",
+                    f"{valid_generic}{format_terminal_diff(valid_generic, base['valid_generic_comments'], 'd')}",
                     f"{rule}{format_terminal_diff(rule, base['rule_matches_wrong_line'], 'd')}",
                     f"{fp}{format_terminal_diff(fp, base['false_positives'], 'd', reverse=True)}",
                     f"{ground:.1f}{format_terminal_diff(ground, base['groundedness'])}",
@@ -407,15 +406,6 @@ if __name__ == "__main__":
         help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()
-
-    # needed for AI-assisted evaluation
-    model_config: dict[str, str] = {
-        "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-        "api_key": os.environ["AZURE_OPENAI_API_KEY"],
-        # for best results, this should always be a different model from the one we are evaluating
-        "azure_deployment": "gpt-4o",
-        "api_version": "2025-01-01-preview",
-    }
 
     custom_eval = CustomAPIViewEvaluator()
     groundedness = CustomGroundednessEvaluator()

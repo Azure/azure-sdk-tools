@@ -1,5 +1,5 @@
 import { NpmPackageInfo, VersionPolicyName } from './types.js';
-import { dirname, posix, } from 'path';
+import { dirname, posix } from 'path';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils.js';
 import { parse, stringify } from 'yaml';
 import { readFile, writeFile } from 'fs/promises';

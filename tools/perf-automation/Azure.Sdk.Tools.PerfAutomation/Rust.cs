@@ -139,7 +139,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 nanos += results.Times[i] / results.Iters[i];
             }
-            nanos /= results.Iters.Length + 1;
+            nanos /= results.Iters.Length;
             // once we have the timing of one operation( in nano seconds) divinde one sec in nanos by the time to get ops/sec
             var opsPerSecond = Math.Pow(10, 9) / nanos;
 

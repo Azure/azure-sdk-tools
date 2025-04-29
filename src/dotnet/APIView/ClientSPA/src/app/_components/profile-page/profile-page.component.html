@@ -4,28 +4,31 @@
         <div class="col-md-3"></div>
         <div class="col-md-6">
             <div class="text-center my-3">
-                <img class="rounded-circle my-1" src="https://github.com/{{userName}}.png?size=300">
+                <img class="rounded-circle my-1" src="https://github.com/{{userName}}.png?size=200">
                 <h2>{{userName}}</h2>
             </div>
             <ul class="list-group list-group">
                 <li class="list-group-item">
-                    <div class="mb-3">
-                        <label for="emailInput" class="form-label">Notification Email</label>
+                    <div class="mb-1">
+                        <label for="emailInput" class="form-label">Notification email</label>
                         <input type="email" class="form-control" id="emailInput" aria-describedby="emailHelp">
                         <div id="emaiInputlHelp" class="form-text">Leave empty to not receive notifications</div>
                     </div>
                 </li>
                 <li class="list-group-item">
-                    <div class="mb-3">
-                        <label for="emailInput" class="form-label">Review Languages</label>
+                    <div class="mb-1">
+                        <label for="reviewLanguagesMultiSelect" class="form-label">Review languages</label>
                         <div class="card flex justify-content-center">
-                            <p-multiSelect 
+                            <p-multiSelect
+                                id="reviewLanguagesMultiSelect"
                                 [options]="languages" 
                                 [filter]="false" 
                                 [(ngModel)]="selectedLanguages" 
                                 optionLabel="label"
                                 placeholder="Select languages you want to be able to approve."
                                 [showClear]="true"
+                                [maxSelectedLabels]="12"
+                                selectedItemsLabel="{0} items selected"
                                 [style]="{'width':'100%'}">
                                 <ng-template let-option pTemplate="item">
                                     <div class="inline-block vertical-align-middle">
@@ -38,19 +41,35 @@
                     </div>
                 </li>
                 <li class="list-group-item">
-                    <div class="mb-3">
-                        <label for="emailInput" class="form-label">Theme</label>
+                    <div class="mb-1">
+                        <label for="themeDropdown" class="form-label">Theme</label>
                         <div class="card flex justify-content-center">
-                            <p-dropdown 
+                            <p-dropdown
+                                id="themeDropdown"
                                 [options]="themes" 
                                 [style]="{'width':'100%'}">
                             </p-dropdown>
                         </div>
                     </div>
                 </li>
+                <li class="list-group-item">
+                    <div class="mb-1">
+                        <label for="scrollBarDropdown" class="form-label">Scrollbar size</label>
+                        <div class="card flex justify-content-center">
+                            <p-dropdown
+                                id="scrollBarDropdown"
+                                [options]="scrollBarSizes" 
+                                [style]="{'width':'100%'}">
+                            </p-dropdown>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item">
+                    <p-inputSwitch [(ngModel)]="splitIndexPage" (onChange)="onSplitIndexPageChange($event)" />
+                    <label class="ms-2">Use split index page</label>
+                </li>
             </ul>
         </div>
-        <div class="col-md-3"></div>
     </div>
 </div>
 <app-footer></app-footer>

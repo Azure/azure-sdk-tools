@@ -18,7 +18,9 @@ export class ProfilePageComponent {
   userProfile : UserProfile | undefined;
   languages: SelectItemModel[] = [];
   selectedLanguages: SelectItemModel[] = [];
-  themes : string[] = ["light-theme", "dark-theme", "dark-solarized-theme"]; 
+  themes : string[] = ["light", "dark", "dark-solarized"];
+  scrollBarSizes : string[] = ["small", "medium", "large"];
+  splitIndexPage : boolean = false;
 
   constructor(private route: ActivatedRoute, private userProfileService: UserProfileService) {}
 
@@ -30,5 +32,7 @@ export class ProfilePageComponent {
         this.userProfile = userProfile;
     });
   }
+
+  onSplitIndexPageChange(event: any) {}
 
 }

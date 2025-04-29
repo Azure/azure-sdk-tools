@@ -26,6 +26,7 @@ import { BadgeModule } from 'primeng/badge';
 import { SimplemdeModule } from 'ngx-simplemde';
 import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
 import { environment } from 'src/environments/environment';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
   baseUrl: environment.assetsPath 
@@ -59,6 +60,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     FormsModule,
     IconFieldModule,
     InputIconModule,
+    InputSwitchModule,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,
@@ -82,6 +84,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     FormsModule,
     IconFieldModule,
     InputIconModule,
+    InputSwitchModule,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,

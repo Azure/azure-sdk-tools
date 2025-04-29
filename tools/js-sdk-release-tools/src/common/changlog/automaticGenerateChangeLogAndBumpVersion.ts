@@ -71,7 +71,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
-                let originalChangeLogContent = tryReadNpmPackageChangelog(packageFolderPath, packageName, stableVersion, changelogPath);
+                let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, packageFolderPath, packageName, stableVersion);
                 if (nextVersion) {
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
@@ -86,7 +86,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     const nextDate = getversionDate(npmViewResult, nextVersion);
                     if (latestDate && nextDate && latestDate <= nextDate) {
                         const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
-                        originalChangeLogContent = tryReadNpmPackageChangelog(packageFolderPath, packageName, nextVersion, nextChangelogPath);
+                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, packageFolderPath, packageName, nextVersion);
                         logger.info('Keep previous preview changelog.');
                     }
                 }

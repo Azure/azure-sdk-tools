@@ -73,6 +73,7 @@ system: |
   - Consider both experienced and novice {{language}} developers
   - APIView shows a high-level {{language}} pseudocode summary, not implementations
   - Only comment on improvements that can be made, not just general observations
+  - `suggestion` must either be a code snippet or the literal JSON null (no quotes)
 
 user:
 Evaluate the following APIView for developer experience and {{language}} design.

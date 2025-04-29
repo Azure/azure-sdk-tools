@@ -21,7 +21,7 @@
                 "description": "the original code that was bad, cited verbatim. MUST BE a single line of code."
               },
               "suggestion": {
-                "type": "string",
+                "type": ["string", "null"],
                 "description": "a suggested fix for the bad code. MUST be code, or null."
               },
               "comment": {

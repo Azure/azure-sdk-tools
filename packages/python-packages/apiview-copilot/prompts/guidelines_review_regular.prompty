@@ -91,6 +91,8 @@ followed.
 
 - `bad_code` should always cite the SINGLE match APIView line, stopping at newlines. NEVER concatenate multiple lines. (GOOD: `def __init__(` BAD: `def __init__(self, *, ...)`
 
+- `suggestion` must either be a code snippet or the literal JSON null (no quotes)
+
 # CONTEXT
 These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}

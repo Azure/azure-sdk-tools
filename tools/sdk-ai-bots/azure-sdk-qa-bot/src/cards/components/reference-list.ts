@@ -1,4 +1,4 @@
-import { createReferenceCard, ReferenceData } from "./reference";
+import { createReferenceCard, ReferenceData } from "./reference.js";
 
 function createReferenceWraper(title: string, referenceData: ReferenceData) {
     return {

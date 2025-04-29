@@ -2,7 +2,8 @@
   "compilerOptions": {
     "declaration": true,
     "target": "es2017",
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "outDir": "./lib",
     "rootDir": "./",
     "sourceMap": true,

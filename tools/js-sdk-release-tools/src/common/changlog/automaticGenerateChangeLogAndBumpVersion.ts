@@ -22,7 +22,7 @@ import { getversionDate } from "../../utils/version.js";
 import { ApiVersionType, SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
-import { tryGetNpmView } from '../npmUtils.js';
+import { tryCreateLastStableNpmView, tryGetNpmView } from '../npmUtils.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -36,9 +36,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
     const nextVersion = getVersion(npmViewResult, "next");
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
-        logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ': ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ': ' stable'} release.`);
+        logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
         makeChangesForFirstRelease(packageFolderPath, isStableRelease);
-        logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ': ' stable'} release successfully`);
+        logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ' : ' stable'} release successfully`);
     } else {
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);
@@ -50,13 +50,13 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
         try {
             shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
             shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-            shell.exec(`npm pack ${packageName}@${stableVersion}`, { silent: true});
+            shell.exec(`npm pack ${packageName}@${stableVersion}`, { silent: true });
             const files = shell.ls('*.tgz');
             shell.exec(`tar -xzf ${files[0]}`);
             shell.cd(packageFolderPath);
 
             // only track2 sdk includes sdk-type with value mgmt
-            const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
+            const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), { encoding: 'utf-8' }))['sdk-type'];
             const clientType = getSDKType(packageFolderPath);
             if (sdkType && sdkType === 'mgmt' || clientType === SDKType.RestLevelClient) {
                 logger.info(`Package ${packageName} released before is track2 sdk.`);
@@ -64,48 +64,51 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packageFolderPath);
+                if (!fs.existsSync(apiMdFileNPM)) {
+                    tryCreateLastStableNpmView(stableVersion, packageName, packageFolderPath);
+                }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
-                let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath);
-                if(nextVersion){
+                let originalChangeLogContent = tryReadNpmPackageChangelog(packageFolderPath, packageName, stableVersion, changelogPath);
+                if (nextVersion) {
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
-                    shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));
-                    shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true});
+                    shell.cd(path.join(packageFolderPath, 'changelog-temp', 'next'));
+                    shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true });
                     const files = shell.ls('*.tgz');
                     shell.exec(`tar -xzf ${files[0]}`);
                     shell.cd(packageFolderPath);
                     logger.info("Created next folder successfully.")
-    
+
                     const latestDate = getversionDate(npmViewResult, stableVersion);
-                    const nextDate = getversionDate(npmViewResult,nextVersion);
-                    if (latestDate && nextDate && latestDate <= nextDate){
-                        const nextChangelogPath = path.join(packageFolderPath,'changelog-temp', 'next', 'package', 'CHANGELOG.md');
-                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath);
+                    const nextDate = getversionDate(npmViewResult, nextVersion);
+                    if (latestDate && nextDate && latestDate <= nextDate) {
+                        const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
+                        originalChangeLogContent = tryReadNpmPackageChangelog(packageFolderPath, packageName, nextVersion, nextChangelogPath);
                         logger.info('Keep previous preview changelog.');
                     }
                 }
-                if(originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")){
-                    originalChangeLogContent=originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart","https://aka.ms/azsdk/js/mgmt/quickstart");
+                if (originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")) {
+                    originalChangeLogContent = originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart", "https://aka.ms/azsdk/js/mgmt/quickstart");
                 }
                 originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.warn('Failed to generate changelog because the codes of local and npm may be the same.');
                     logger.info('Start to bump a fix version.');
-                    const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, {encoding: 'utf-8'});
+                    const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, { encoding: 'utf-8' });
                     const oriVersion = JSON.parse(oriPackageJson).version;
-                    const oriVersionReleased = !usedVersions? false : usedVersions.includes(oriVersion);
+                    const oriVersionReleased = !usedVersions ? false : usedVersions.includes(oriVersion);
                     let newVersion = oriVersion;
                     if (oriVersionReleased) {
-                        newVersion = isBetaVersion(oriVersion)? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
+                        newVersion = isBetaVersion(oriVersion) ? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
                     }
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent,stableVersion);
+                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
                     return changelog;
                 }

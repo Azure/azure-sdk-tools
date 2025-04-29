@@ -112,18 +112,18 @@ export function getNpmPackageName(packageRoot: string): string {
 
 export function getApiReviewPath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
-    const reviewDir = path.join(packageRoot, 'review');
+    const npmPackageName = getNpmPackageName(packageRoot);
     switch (sdkType) {
         case SDKType.ModularClient:
-            const npmPackageName = getNpmPackageName(packageRoot);
-            const packageName = npmPackageName.substring('@azure/'.length);
-            const apiViewFileName = `${packageName}.api.md`;
+            const modularPackageName = npmPackageName.substring('@azure/'.length);
+            const apiViewFileName = `${modularPackageName}.api.md`;
             return path.join(packageRoot, 'review', apiViewFileName);
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
-            return path.join(packageRoot, 'review', fs.readdirSync(reviewDir)[0]);
+            const packageName = npmPackageName.substring('/'.length);
+            return path.join(packageRoot, 'review', packageName);
     }
 }
 

@@ -8,6 +8,7 @@ import { writeFile } from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger.js';
 import { error } from 'console';
+import fs from 'fs';
 
 export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInfo> {
     const packageJson = await load(packageDirectory);
@@ -58,13 +59,8 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
         const lastStableApiViewContext = lastStableApiView.stdout;
 
         const lastStableApiViewPath = getApiReviewPath(path.join(packageFolderPath, 'changelog-temp', 'package'));
-        writeFile(lastStableApiViewPath, lastStableApiViewContext, (err) => {
-            if (err) {
-                logger.error(`Failed to write Api View file in ${lastStableApiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
-            } else {
-                logger.info(`Create Api View file from last stable package successfully`);
-            }
-        });
+        fs.writeFileSync(lastStableApiViewPath, lastStableApiViewContext,{encoding: 'utf-8'});
+        logger.info(`Create Api View file from last stable package successfully`);
     } catch (error) {
         logger.error(error);
         logger.error(`Failed to read Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
@@ -80,13 +76,8 @@ export function tryCreateLastChangeLog(packageFolderPath: string, packageName: s
         const latestChangeLog = shell.exec(gitCommand, { silent: true });
         const latestChangeLogContext = latestChangeLog.stdout;
 
-        writeFile(targetChangelogPath, latestChangeLogContext, (err) => {
-            if (err) {
-                logger.error(`Failed to write CHANGELOG.md in ${targetChangelogPath} from the tag ${packageName}_${version}.`);
-            } else {
-                logger.info(`Create CHANGELOG.md from the latest npm package successfully`);
-            }
-        });
+        fs.writeFileSync(targetChangelogPath, latestChangeLogContext,{encoding: 'utf-8'});
+        logger.info(`Create CHANGELOG.md from the latest npm package successfully`);
     } catch (error) {
         logger.error(error);
         logger.error(`Failed to read CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.`)

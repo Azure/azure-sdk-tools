@@ -65,6 +65,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packageFolderPath);
                 if (!fs.existsSync(apiMdFileNPM)) {
+                    fs.mkdirSync(path.join(npmPackageRoot,"review"));
                     await tryCreateLastStableNpmView(stableVersion, packageName, packageFolderPath);
                 }
                 const oldSDKType = getSDKType(npmPackageRoot);

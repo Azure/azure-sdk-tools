@@ -64,7 +64,7 @@ class CustomAPIViewEvaluator:
         return exact_matches, rule_matches_wrong_line, comments_left
 
     def _evaluate_generic_comments(self, query: str, language: str, generic_comments: list[dict[str, Any]]) -> None:
-        """Evaluate generic comments"""
+        """Evaluate generic comments. If they are invalid, they count as false positives and receive penalty."""
 
         filter_path = pathlib.Path(__file__).parent.parent / "metadata" / language / "filter.yaml"
         with open(filter_path, "r") as f:
@@ -107,6 +107,7 @@ class CustomAPIViewEvaluator:
 
 
 class CustomSimilarityEvaluator:
+    """Wraps the SimilarityEvaluator to make sure we only check similarity for comments with rule IDs."""
 
     def __init__(self):
         self._similarity_eval = SimilarityEvaluator(model_config=model_config)
@@ -127,6 +128,7 @@ class CustomSimilarityEvaluator:
 
 
 class CustomGroundednessEvaluator:
+    """Wraps the GroundednessEvaluator to make sure we only check groundedness for comments with rule IDs."""
 
     def __init__(self):
         self._groundedness_eval = GroundednessEvaluator(model_config=model_config)
@@ -205,7 +207,7 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
 def format_terminal_diff(new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
     """Format difference with ANSI colors for terminal output."""
 
-    diff = int(new - old)
+    diff = new - old
     if diff > 0:
         if reverse:
             return f" (\033[31m+{diff:{format_str}}\033[0m)"  # Red

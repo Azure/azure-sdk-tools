@@ -39,6 +39,7 @@ sample:
     15. Comment about methods ending with :
     16. Comment on namespaces unless they are violating guidelines
     17. Comment on the overuse of **kwargs
+    18. Comment on class names being prefixed by the full module name
   comments: |
     {
       "comments": [

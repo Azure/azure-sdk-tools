@@ -9,6 +9,8 @@ import { ConfigService } from './_services/config/config.service';
 })
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
+  scrollBarHeight: string = '20px';
+  scrollBarWidth: string = '20px';
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService) { }
 

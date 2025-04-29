@@ -30,13 +30,16 @@ sample:
     6. Suggest adding docstrings
     7. Suggest using pydantic or dataclasses for models
     8. Comment on async list method naming
-    9. Comment on indentation or namespace declaration
+    9. Comment on indentation
     10. Suggest consolidating multiple overloads
     11. Suggest providing convenience methods directly on the client
     12. Comment on non-standard use of TypedDict syntax
-    13. Comment about ivar being non-standard use
+    13. Comment about ivar being non-standard in docstrings
     14. Comment about use of distributed_trace/async decorators
     15. Comment about methods ending with :
+    16. Comment on namespaces unless they are violating guidelines
+    17. Comment on the overuse of **kwargs
+    18. Comment on class names being prefixed by the full module name
   comments: |
     {
       "comments": [

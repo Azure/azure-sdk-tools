@@ -75,7 +75,9 @@ class CustomAPIViewEvaluator:
         client = openai.AzureOpenAI()
         for comment in generic_comments:
             line_no = comment["line_no"]
-            context = query[line_no - 10 : line_no + 10]
+            start_idx = max(0, line_no - 10)
+            end_idx = min(len(query), line_no + 10)
+            context = query[start_idx:end_idx]
             response = client.responses.create(
                 model=MODEL_JUDGE,
                 input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",

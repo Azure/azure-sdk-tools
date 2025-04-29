@@ -45,7 +45,7 @@ export async function tryGetNpmView(packageName: string): Promise<{ [id: string]
     }
 }
 
-export async function tryCreateLastStableNpmView(lastStableVersion: string, packageName: string, packageFolderPath: string) {
+export function tryCreateLastStableNpmView(lastStableVersion: string, packageName: string, packageFolderPath: string) {
     logger.info(`Start to get and clone Api View file from last ${packageName} stable release tag.`);
     const targentApiViewPath = getApiReviewPath(packageFolderPath).split("sdk");
     const apiViewPath = path.join("sdk", targentApiViewPath[targentApiViewPath.length - 1])

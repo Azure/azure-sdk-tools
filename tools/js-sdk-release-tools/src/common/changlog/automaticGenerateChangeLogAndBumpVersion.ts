@@ -62,11 +62,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 logger.info(`Package ${packageName} released before is track2 sdk.`);
                 logger.info('Start to generate changelog by comparing api.md.');
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
-                const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
+                const apiMdFileNPM = getApiReviewPath(npmPackageRoot, stableVersion, packageName, packageFolderPath);
                 const apiMdFileLocal = getApiReviewPath(packageFolderPath);
-                if (!fs.existsSync(apiMdFileNPM)) {
-                    await tryCreateLastStableNpmView(stableVersion, packageName, packageFolderPath);
-                }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);

@@ -9,7 +9,7 @@ import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
-import { tryCreateLastChangeLog } from './npmUtils.js';
+import { tryCreateLastChangeLog, tryCreateLastStableNpmView } from './npmUtils.js';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -110,19 +110,22 @@ export function getNpmPackageName(packageRoot: string): string {
     return packageName;
 }
 
-export function getApiReviewPath(packageRoot: string): string {
+export function getApiReviewPath(packageRoot: string, version?: string, packageName?: string, packageFolderPath?: string): string {
     const sdkType = getSDKType(packageRoot);
     const reviewDir = path.join(packageRoot, 'review');
     switch (sdkType) {
         case SDKType.ModularClient:
             const npmPackageName = getNpmPackageName(packageRoot);
-            const packageName = npmPackageName.substring('@azure/'.length);
+            packageName = npmPackageName.substring('@azure/'.length);
             const apiViewFileName = `${packageName}.api.md`;
             return path.join(packageRoot, 'review', apiViewFileName);
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
+            if (!fs.readdirSync(reviewDir) && packageFolderPath && packageName && version) {
+                tryCreateLastStableNpmView(version, packageName, packageFolderPath);
+            }
             return path.join(packageRoot, 'review', fs.readdirSync(reviewDir)[0]);
     }
 }

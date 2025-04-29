@@ -7,6 +7,7 @@ import shell from 'shelljs';
 import { writeFile } from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger.js';
+import { error } from 'console';
 
 export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInfo> {
     const packageJson = await load(packageDirectory);
@@ -52,21 +53,24 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
 
     const gitCommand = `git --no-pager show ${packageName}_${lastStableVersion}:${apiViewPath}`;
 
-    const lastStableApiView = shell.exec(gitCommand, { silent: true });
 
-    if (lastStableApiView.code !== 0) {
-        logger.error(`Failed to read Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`)
+
+    try {
+        const lastStableApiView = shell.exec(gitCommand, { silent: true });
+        const lastStableApiViewContext = lastStableApiView.stdout;
+
+        const lastStableApiViewPath = getApiReviewPath(path.join(packageFolderPath, 'changelog-temp', 'package'));
+        writeFile(lastStableApiViewPath, lastStableApiViewContext, (err) => {
+            if (err) {
+                logger.error(`Failed to write Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
+            } else {
+                logger.info(`Create Api View file from last stable package successfully`);
+            }
+        });
+    } catch (error) {
+        logger.error(error);
+        logger.error(`Failed to read Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
     }
-    const lastStableApiViewContext = lastStableApiView.stdout;
-
-    const lastStableApiViewPath = getApiReviewPath(path.join(packageFolderPath, 'changelog-temp', 'package'));
-    writeFile(lastStableApiViewPath, lastStableApiViewContext, (err) => {
-        if (err) {
-            logger.error(`Failed to write Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
-        } else {
-            logger.info(`Create Api View file from last stable package successfully`);
-        }
-    });
 }
 
 export function tryCreateLastChangeLog(packageFolderPath: string, packageName: string, version: string, targetChangelogPath: string) {
@@ -74,18 +78,19 @@ export function tryCreateLastChangeLog(packageFolderPath: string, packageName: s
     const changelogPathInRepo = path.join(packageFolderPath, "CHANGELOG.md")
     const gitCommand = `git --no-pager show ${packageName}_${version}:${changelogPathInRepo}`;
 
-    const latestChangeLog = shell.exec(gitCommand, { silent: true });
+    try {
+        const latestChangeLog = shell.exec(gitCommand, { silent: true });
+        const latestChangeLogContext = latestChangeLog.stdout;
 
-    if (latestChangeLog.code !== 0) {
+        writeFile(targetChangelogPath, latestChangeLogContext, (err) => {
+            if (err) {
+                logger.error(`Failed to write CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.`);
+            } else {
+                logger.info(`Create CHANGELOG.md from the latest npm package successfully`);
+            }
+        });
+    } catch (error) {
+        logger.error(error);
         logger.error(`Failed to read CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.`)
     }
-    const latestChangeLogContext = latestChangeLog.stdout;
-
-    writeFile(targetChangelogPath, latestChangeLogContext, (err) => {
-        if (err) {
-            logger.error(`Failed to write CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.`);
-        } else {
-            logger.info(`Create CHANGELOG.md from the latest npm package successfully`);
-        }
-    });
 }

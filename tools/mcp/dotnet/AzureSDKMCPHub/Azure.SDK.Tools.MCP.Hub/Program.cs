@@ -1,4 +1,7 @@
 
+using System.Reflection;
+using Azure.SDK.Tools.MCP.Contract;
+
 namespace Azure.SDK.Tools.MCP.Hub
 {
     public class Program
@@ -31,6 +34,27 @@ namespace Azure.SDK.Tools.MCP.Hub
             app.MapControllers();
 
             app.Run();
+        }
+
+        public void ConfigureServices(IServiceCollection services)
+        {
+            var toolTypes = Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => typeof(MCPHubTool).IsAssignableFrom(t) && !t.IsAbstract);
+
+            foreach (var type in toolTypes)
+            {
+                var toolInstance = Activator.CreateInstance(type);
+
+                if (toolInstance != null)
+                {
+                    services.AddSingleton(toolInstance.GetType(), toolInstance);
+                }
+                else
+                {
+                    System.Console.WriteLine($"Unable to get tool instance for {type.FullName}. Aborting adding as service.");
+                }
+            }
         }
     }
 }

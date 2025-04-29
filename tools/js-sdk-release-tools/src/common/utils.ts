@@ -123,7 +123,7 @@ export function getApiReviewPath(packageRoot: string): string {
         default:
             // only one xxx.api.md
             const packageName = npmPackageName.substring('/'.length);
-            return path.join(packageRoot, 'review', packageName);
+            return path.join(packageRoot, 'review', `${packageName}.api.md`);
     }
 }
 

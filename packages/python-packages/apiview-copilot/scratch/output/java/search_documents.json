@@ -1,0 +1,66 @@
+{
+    "comments": [
+        {
+            "rule_ids": [
+                "java_introduction.html#java-service-client-namespace"
+            ],
+            "line_no": 18,
+            "bad_code": "package com.azure.search.documents.search {",
+            "suggestion": "Move the service client types to the root package (e.g. 'com.azure.search.documents') so that consumers find them immediately, as required by the guideline.",
+            "comment": "Service client types are expected to live in the client library’s root package for easier discoverability. Placing them in a nested subpackage (here, 'search') may cause confusion and does not follow the guideline.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 25,
+            "bad_code": "public Mono<AutocompleteResult> autocompleteGet(String searchText, String suggesterName, String indexName)",
+            "suggestion": "public Mono<AutocompleteResult> autocomplete(String searchText, String suggesterName, String indexName)",
+            "comment": "$Exposing the HTTP verb in the method name leaks implementation details. Renaming to simply 'autocomplete' focuses on the operation rather than the underlying protocol. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "java_introduction.html#java-params-complex"
+            ],
+            "line_no": 35,
+            "bad_code": "Generated public Mono<SearchDocumentsResult> searchGet(String indexName, String searchText, Boolean includeTotalResultCount, List<String> facets, String filter, List<String> highlightFields, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, QueryType queryType, List<String> scoringParameters, String scoringProfile, List<String> searchFields, SearchMode searchMode, ScoringStatistics scoringStatistics, String sessionId, List<String> select, Integer skip, Integer top, String semanticConfiguration, SemanticErrorMode semanticErrorHandling, Integer semanticMaxWaitInMilliseconds, QueryAnswerType answers, QueryCaptionType captions, String semanticQuery)",
+            "suggestion": "Consider creating an options parameter (for example, a SearchOptions type) to encapsulate these many parameters and then provide an overload that takes this options object instead.",
+            "comment": "$This searchGet method has an excessively long parameter list. For complex service operations, the options parameter pattern should be used to simplify the API surface and improve clarity. (general comment)",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 79,
+            "bad_code": "public SearchClientBuilder credential(TokenCredential tokenCredential)",
+            "suggestion": "public SearchClientBuilder withTokenCredential(TokenCredential tokenCredential)",
+            "comment": "$Overloaded credential methods can be ambiguous. Renaming the method to indicate the credential type (e.g. 'withTokenCredential') can improve clarity for developers. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 110,
+            "bad_code": "@Deprecated @Generated public AutocompleteMode()",
+            "suggestion": "/* Consider removing or restricting access to the no-arg constructor */",
+            "comment": "The presence of a deprecated no-arg constructor in the ExpandableStringEnum (and similar enums) may confuse developers. Making it private or removing it (if not required) would create a cleaner API.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 128,
+            "bad_code": "public String getSearchFields()",
+            "suggestion": "public List<String> getSearchFields()",
+            "comment": "$There is an inconsistency in the type used for search fields. While some methods expect a List<String>, this accessor returns a String. Using a consistent type will avoid confusion. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "java_introduction.html#java-models-fluent-api"
+            ],
+            "line_no": 418,
+            "bad_code": "public class VectorQuery implements JsonSerializable<VectorQuery> {",
+            "suggestion": "Annotate VectorQuery with @Fluent to clearly indicate that this model supports a fluent API.",
+            "comment": "Model types that are intended to expose fluent setter methods should be annotated with @Fluent. The omission in VectorQuery may lead to inconsistent developer experience.",
+            "source": "guideline"
+        }
+    ]
+}

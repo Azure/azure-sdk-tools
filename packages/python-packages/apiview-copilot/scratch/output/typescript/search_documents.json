@@ -1,0 +1,52 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": "Augment the API with comprehensive JSDoc comments and inline examples to demonstrate common workflows and configurations.",
+            "comment": "Enhanced documentation would further boost discoverability and ease-of-use, particularly given the API’s complexity and the advanced TypeScript patterns it employs.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2136,
+            "bad_code": "export interface SearchIndexer { ... }",
+            "suggestion": "Consider providing a higher‑level fluent interface or facade that abstracts away the most common configurations and operations, reducing the need for end‑users to directly manipulate lower‑level types.",
+            "comment": "While the API’s flexibility is impressive, a simplified set of wrapper methods for common tasks can improve the developer experience by reducing boilerplate and potential misconfiguration.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2667,
+            "bad_code": "export enum KnownPIIDetectionSkillMaskingMode { ... }",
+            "suggestion": "Rename enums to remove the 'Known' prefix (for example, use 'PIIDetectionSkillMaskingMode' instead of 'KnownPIIDetectionSkillMaskingMode') so that the purpose of the enum is immediately clear.",
+            "comment": "While the prefix may have been chosen to distinguish constant sets, it can be confusing. More natural names would align with common JavaScript and TypeScript conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2680,
+            "bad_code": "export type BlobIndexerDataToExtract = `${KnownBlobIndexerDataToExtract}`;",
+            "suggestion": "Consider grouping similar string literal union types into well-named interfaces or type aliases to reduce repetition and complexity, possibly wrapping them in a configuration object.",
+            "comment": "Using template literal types increases type safety, but the proliferation of these types can clutter the API, making it harder to learn. Grouping related types can streamline the interface.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2890,
+            "bad_code": "export type NarrowedModel<TModel extends object, TFields extends SelectFields<TModel> = SelectFields<TModel>> = ...",
+            "suggestion": "Provide simplified helper types or wrapper functions for common use cases instead of requiring end‐users to directly interact with complex generics like NarrowedModel and SearchPick.",
+            "comment": "$The use of advanced generic constructs greatly enhances type safety but may intimidate less experienced developers. A simplified facade for typical scenarios could improve the developer experience. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2892,
+            "bad_code": "",
+            "suggestion": "",
+            "comment": "The API’s use of asynchronous iterators (PagedAsyncIterableIterator) for paged results is both modern and idiomatic, making it delightful for developers accustomed to asynchronous workflows in JavaScript.",
+            "source": "generic"
+        }
+    ]
+}

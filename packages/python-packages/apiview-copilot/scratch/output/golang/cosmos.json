@@ -1,0 +1,66 @@
+{
+    "comments": [
+        {
+            "rule_ids": [
+                "golang_introduction.html#golang-document-everything"
+            ],
+            "line_no": 3,
+            "bad_code": "func NewClient(endpoint string, cred azcore.TokenCredential, o *ClientOptions) (*Client, error)",
+            "suggestion": "// NewClient creates a new instance of Client using the specified endpoint, credential and options.\nfunc NewClient(endpoint string, cred azcore.TokenCredential, o *ClientOptions) (*Client, error)",
+            "comment": "Exported functions must be documented. This constructor lacks a descriptive comment that explains its parameters and behavior.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "golang_introduction.html#golang-pagination"
+            ],
+            "line_no": 10,
+            "bad_code": "func (*Client) NewQueryDatabasesPager(query string, o *QueryDatabasesOptions) *azruntime.Pager[QueryDatabasesResponse]",
+            "suggestion": "func (*Client) NewQueryDatabasesPager(query string, o *QueryDatabasesOptions) *runtime.Pager[QueryDatabasesResponse]",
+            "comment": "Paged operations should return *runtime.Pager[T]. The use of *azruntime.Pager here is inconsistent with the guideline and with other pager methods in the package.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 57,
+            "bad_code": "func (ContainerProperties) MarshalJSON() ([]byte, error)",
+            "suggestion": "func (*ContainerProperties) MarshalJSON() ([]byte, error)",
+            "comment": "Use pointer receivers consistently for JSON marshaling methods to avoid accidental copying and ensure consistency with UnmarshalJSON.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 136,
+            "bad_code": "func NewPartitionKey() PartitionKey",
+            "suggestion": "/* Consider introducing a unified constructor, e.g., func NewPartitionKey(value interface{}) PartitionKey */",
+            "comment": "There are several PartitionKey constructors (for bool, number, string). Consolidating these into a single generic function (or clearly documenting their differences) may reduce surface complexity and make the API easier to use.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 235,
+            "bad_code": "func NewAutoscaleThroughputPropertiesWithIncrement(startingMaxThroughput int32, incrementPercentage int32) ThroughputProperties",
+            "suggestion": "/* Consider an alternative design using an options struct, for example: func NewAutoscaleThroughputProperties(startingMaxThroughput int32, opts *AutoscaleOptions) ThroughputProperties */",
+            "comment": "The current function name and signature are quite verbose. An options-based approach can streamline the API and offer better extensibility for autoscale configuration.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "golang_introduction.html#golang-pkgpath-leaf"
+            ],
+            "line_no": 357,
+            "bad_code": "package azcosmos/unstable/queryengine",
+            "suggestion": "package queryengine",
+            "comment": "The package declaration should match the leaf directory name. In a subdirectory like 'azcosmos/unstable/queryengine', the file should declare 'package queryengine'.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 359,
+            "bad_code": "func CreateQueryPipeline(query string, plan string, pkranges string) (QueryPipeline, error)",
+            "suggestion": "func NewQueryPipeline(query string, plan string, pkranges string) (QueryPipeline, error)",
+            "comment": "$Constructor functions in Go typically use the 'New' prefix. Renaming to 'NewQueryPipeline' would be more idiomatic and improve discoverability. (general comment)",
+            "source": "generic"
+        }
+    ]
+}

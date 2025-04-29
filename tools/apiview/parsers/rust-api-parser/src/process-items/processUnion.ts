@@ -50,6 +50,7 @@ export function processUnion(item: Item): ReviewLine[] {
     RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
+    HasSuffixSpace: false,
   });
 
   const genericsTokens = processGenerics(item.inner.union.generics);
@@ -66,6 +67,7 @@ export function processUnion(item: Item): ReviewLine[] {
   unionLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
+    HasPrefixSpace: true,
   });
 
   // Process fields

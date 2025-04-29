@@ -1,0 +1,66 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 54,
+            "bad_code": "pub mod crate::clients { ... } // repeated in lines 54, 73, and 86",
+            "suggestion": "Consolidate the multiple definitions of the 'crate::clients' module into a single module that exports BlobClient, BlobContainerClient, and BlobServiceClient.",
+            "comment": "Defining the same module in multiple places can lead to confusion and potential conflicts. A single, well-organized clients module improves clarity and discoverability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "rust_introduction.html#rust-documentation-api"
+            ],
+            "line_no": 57,
+            "bad_code": "pub fn new(endpoint: &str, container_name: String, blob_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobClientOptions>) -> Result<Self> {}",
+            "suggestion": "/// Creates a new BlobClient.\n///\n/// # Arguments\n///\n/// * `endpoint` - The service endpoint URL.\n/// * `container_name` - The name of the blob container.\n/// * `blob_name` - The name of the blob.\n/// * `credential` - The token credential to authenticate requests.\n/// * `options` - Optional client configuration options.\npub fn new(endpoint: &str, container_name: String, blob_name: String, credential: Arc<dyn TokenCredential>, options: Option<BlobClientOptions>) -> Result<Self> {}",
+            "comment": "Public APIs must be documented. Add doc comments for functions to detail the purpose, parameters, and return type as required by the guidelines.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 63,
+            "bad_code": "pub async fn download(&self, options: Option<BlobClientDownloadOptions>) -> Result<Response<BlobClientDownloadResult>> {}",
+            "suggestion": "Consider providing a builder method (e.g. download_builder()) that allows configuration of the various optional settings before executing the operation.",
+            "comment": "When a method accepts many optional parameters, a builder pattern helps group related options and makes the API more self-explanatory and easier to use, especially for novice users.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 64,
+            "bad_code": "pub async fn upload(&self, data: RequestContent<Bytes>, overwrite: bool, content_length: u64, options: Option<BlockBlobClientUploadOptions>) -> Result<Response<BlockBlobClientUploadResult>> {}",
+            "suggestion": "Review the signature to determine if parameters like 'overwrite' and 'content_length' can be grouped into a custom upload configuration type or provided via a builder API.",
+            "comment": "Reducing the number of standalone parameters in method signatures by encapsulating related values can simplify the API and lower the cognitive load on developers.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 76,
+            "bad_code": "pub fn new(endpoint: &str, container_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobContainerClientOptions>) -> Result<Self> {}",
+            "suggestion": "pub fn new(endpoint: &str, container_name: impl Into<String>, credential: Arc<dyn TokenCredential>, options: Option<BlobContainerClientOptions>) -> Result<Self> {}",
+            "comment": "Similarly, for BlobContainerClient, accepting a parameter that implements Into<String> will let users pass string literals or owned strings without extra conversion, enhancing API ergonomics.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "rust_introduction.html#rust-client-configuration-debug"
+            ],
+            "line_no": 98,
+            "bad_code": "pub struct BlobClientOptions {",
+            "suggestion": "#[derive(Clone, azure_core::fmt::SafeDebug)]\npub struct BlobClientOptions {",
+            "comment": "Client options structs must not derive Debug as this may leak PII. Instead of Debug, derive SafeDebug as per the guideline.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "rust_introduction.html#rust-enums-debug"
+            ],
+            "line_no": 437,
+            "bad_code": "pub enum AccessTier {",
+            "suggestion": "#[derive(azure_core::fmt::SafeDebug, StructuralPartialEq, PartialEq, Eq, Clone)]\npub enum AccessTier {",
+            "comment": "$Enums should not derive Debug directly because it might leak sensitive information. Use azure_core::fmt::SafeDebug instead. (general comment)",
+            "source": "guideline"
+        }
+    ]
+}

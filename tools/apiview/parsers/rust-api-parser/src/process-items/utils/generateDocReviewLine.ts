@@ -11,10 +11,10 @@ export function createDocsReviewLines(item: Item): ReviewLine[] {
   if (!item.docs) {
     return [];
   }
-  
+
   // Split the docs by newline character
-  const docLines = item.docs.split('\n');
-  
+  const docLines = item.docs.split("\n");
+
   // Create a ReviewLine for each doc line
   const reviewLines: ReviewLine[] = docLines.map((line, index) => ({
     Tokens: [

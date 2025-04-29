@@ -10,7 +10,6 @@ from src._search_manager import SearchManager
 from src._apiview_reviewer import (
     supported_models,
     DEFAULT_MODEL,
-    DEFAULT_CHUNK_INPUT,
     DEFAULT_USE_RAG,
 )
 
@@ -52,7 +51,6 @@ def local_review(
     language: str,
     path: str,
     model: str = DEFAULT_MODEL,
-    chunk_input: bool = DEFAULT_CHUNK_INPUT,
     use_rag: bool = DEFAULT_USE_RAG,
 ):
     """
@@ -60,10 +58,10 @@ def local_review(
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(language=language, model=model, chunk_input=chunk_input, use_rag=use_rag)
+    rg = ApiViewReview(language=language, model=model, use_rag=use_rag)
     filename = os.path.splitext(os.path.basename(path))[0]
 
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         apiview = f.read()
 
     review = rg.get_response(target=apiview)
@@ -295,11 +293,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The model to use for the review",
                 options_list=("--model", "-m"),
                 choices=supported_models,
-            )
-            ac.argument(
-                "chunk_input",
-                action="store_true",
-                help="Chunk the input into smaller sections (currently, by class).",
             )
             ac.argument(
                 "use_rag",

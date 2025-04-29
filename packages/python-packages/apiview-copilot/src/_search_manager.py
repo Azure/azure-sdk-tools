@@ -236,10 +236,14 @@ class SearchManager:
 
         language_guidelines = []
         language_guidelines_path = os.path.join(_GUIDELINES_FOLDER, language)
-        for filename in os.listdir(language_guidelines_path):
-            with open(os.path.join(language_guidelines_path, filename), "r") as f:
-                items = json.loads(f.read())
-                language_guidelines.extend(items)
+        try:
+            for filename in os.listdir(language_guidelines_path):
+                with open(os.path.join(language_guidelines_path, filename), "r") as f:
+                    items = json.loads(f.read())
+                    language_guidelines.extend(items)
+        except FileNotFoundError:
+            print(f"WARNING: No guidelines found for language {language}.")
+            return []
         return general_guidelines + language_guidelines
 
     def search_guidelines(self, query: str) -> SearchResult:

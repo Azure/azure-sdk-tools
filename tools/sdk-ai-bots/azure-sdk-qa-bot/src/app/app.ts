@@ -1,11 +1,11 @@
 import { ActivityTypes, MemoryStorage, TurnContext } from "botbuilder";
 import * as path from "path";
-import config from "../config";
+import config from "../config.js";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from "@microsoft/teams-ai";
-import { RAGModel } from "../models/RAGModel";
-import { FeedbackReaction, sendFeedback } from "../backend/feedback";
+import { RAGModel } from "../models/RAGModel.js";
+import { FeedbackReaction, sendFeedback } from "../backend/feedback.js";
 
 // Create AI components
 const model = new RAGModel({
@@ -14,8 +14,9 @@ const model = new RAGModel({
     // TODO: make /completion endpoint configurable
     endpoint: config.azureOpenAIEndpoint + "/completion",
 });
+const dir = import.meta.dirname;
 const prompts = new PromptManager({
-    promptsFolder: path.join(__dirname, "../prompts"),
+    promptsFolder: path.join(dir, "../prompts"),
 });
 const planner = new ActionPlanner({
     model,

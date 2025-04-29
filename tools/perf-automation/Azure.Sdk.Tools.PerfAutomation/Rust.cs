@@ -132,16 +132,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private double ExtractOpsPerSecond(string testName)
         {
             // the results are in the target directory under target/criterion/<testName>/new
-            var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory, testName, "new\\sample.json"));
+            var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory, testName, "new", "sample.json"));
             double nanos = 0.0;
             // the timings are in nanos, also we have to divide the time by the number of iterations to get the time for one operation
             for (int i = 0; i < results.Iters.Length; i++)
             {
-                nanos = (nanos * i + (results.Times[i] / results.Iters[i])) / (i + 1);
+                nanos += results.Times[i] / results.Iters[i];
             }
-            // once we have the timing of one operation( in nano seconds) divinde one sec in nanos by the time to get ops/sec
-            return Math.Pow(10, 9) / nanos;
+            nanos /= results.Iters.Length;
+            // once we have the timing of one operation( in nano seconds) divide one sec in nanos by the time to get ops/sec
+            var opsPerSecond = Math.Pow(10, 9) / nanos;
+
+            return opsPerSecond;
         }
+
         private Models.Rust.Samples ParseFromJsonFile(string filePath)
         {
             // open the file 

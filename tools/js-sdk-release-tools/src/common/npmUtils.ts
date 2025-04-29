@@ -53,8 +53,6 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
 
     const gitCommand = `git --no-pager show ${packageName}_${lastStableVersion}:${apiViewPath}`;
 
-
-
     try {
         const lastStableApiView = shell.exec(gitCommand, { silent: true });
         const lastStableApiViewContext = lastStableApiView.stdout;

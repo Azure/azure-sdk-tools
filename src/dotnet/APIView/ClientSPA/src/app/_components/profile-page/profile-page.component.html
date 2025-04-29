@@ -1,0 +1,56 @@
+<app-nav-bar></app-nav-bar>
+<div class="container">
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col-md-6">
+            <div class="text-center my-3">
+                <img class="rounded-circle my-1" src="https://github.com/{{userName}}.png?size=300">
+                <h2>{{userName}}</h2>
+            </div>
+            <ul class="list-group list-group">
+                <li class="list-group-item">
+                    <div class="mb-3">
+                        <label for="emailInput" class="form-label">Notification Email</label>
+                        <input type="email" class="form-control" id="emailInput" aria-describedby="emailHelp">
+                        <div id="emaiInputlHelp" class="form-text">Leave empty to not receive notifications</div>
+                    </div>
+                </li>
+                <li class="list-group-item">
+                    <div class="mb-3">
+                        <label for="emailInput" class="form-label">Review Languages</label>
+                        <div class="card flex justify-content-center">
+                            <p-multiSelect 
+                                [options]="languages" 
+                                [filter]="false" 
+                                [(ngModel)]="selectedLanguages" 
+                                optionLabel="label"
+                                placeholder="Select languages you want to be able to approve."
+                                [showClear]="true"
+                                [style]="{'width':'100%'}">
+                                <ng-template let-option pTemplate="item">
+                                    <div class="inline-block vertical-align-middle">
+                                        <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames: userProfile?.preferences?.theme }}-original.svg" width="24" class="vertical-align-middle" />
+                                        <span class="mx-2 mt-1">{{ option.label }}</span>
+                                    </div>
+                                </ng-template>
+                            </p-multiSelect>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item">
+                    <div class="mb-3">
+                        <label for="emailInput" class="form-label">Theme</label>
+                        <div class="card flex justify-content-center">
+                            <p-dropdown 
+                                [options]="themes" 
+                                [style]="{'width':'100%'}">
+                            </p-dropdown>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-3"></div>
+    </div>
+</div>
+<app-footer></app-footer>

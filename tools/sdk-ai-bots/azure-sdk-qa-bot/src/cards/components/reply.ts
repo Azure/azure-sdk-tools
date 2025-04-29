@@ -1,7 +1,7 @@
-import { feedbackCard } from "./feedback";
-import { RAGReply } from "../../backend/rag";
-import { createReferencesListCard } from "./reference-list";
-import { supportChannelCard } from "./support-channel";
+import { feedbackCard } from "./feedback.js";
+import { RAGReply } from "../../backend/rag.js";
+import { createReferencesListCard } from "./reference-list.js";
+import { supportChannelCard } from "./support-channel.js";
 
 export function createReplyCard(reply: RAGReply) {
     const referenceDataList = reply.references.map((ref) => ({

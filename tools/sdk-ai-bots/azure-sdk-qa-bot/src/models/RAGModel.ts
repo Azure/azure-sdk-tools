@@ -5,15 +5,10 @@ import {
     PromptTemplate,
     Tokenizer,
 } from "@microsoft/teams-ai";
-import { PromptResponse } from "@microsoft/teams-ai/lib/types";
-import {
-    CardFactory,
-    MessageFactory,
-    TextFormatTypes,
-    TurnContext,
-} from "botbuilder";
-import { getRAGReply, RAGOptions } from "../backend/rag";
-import { createReplyCard } from "../cards/components/reply";
+import { CardFactory, MessageFactory, TurnContext } from "botbuilder";
+import { getRAGReply, RAGOptions } from "../backend/rag.js";
+import { createReplyCard } from "../cards/components/reply.js";
+import { PromptResponse } from "@microsoft/teams-ai/lib/types/PromptResponse.js";
 
 interface MessageStatus {
     gotReply: boolean;

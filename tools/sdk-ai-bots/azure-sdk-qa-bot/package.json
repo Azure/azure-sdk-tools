@@ -11,11 +11,12 @@
   "author": "Microsoft",
   "license": "MIT",
   "main": "./lib/src/index.js",
+  "type": "module",
   "scripts": {
     "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
     "dev:teamsfx:testtool": "env-cmd --silent -f .localConfigs.testTool npm run dev",
     "dev:teamsfx:launch-testtool": "env-cmd --silent -f env/.env.testtool teamsapptester start",
-    "dev": "nodemon --exec node --inspect=9239 --signal SIGINT -r ts-node/register ./src/index.ts",
+    "dev": "tsx watch --inspect=9239 ./src/index.ts",
     "build": "tsc --build && shx cp -r ./src/prompts ./lib/src",
     "start": "node ./lib/src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@microsoft/teams-ai": "^1.5.3",
+    "@octokit/rest": "^21.1.1",
     "axios": "^1.8.4",
     "botbuilder": "^4.23.1",
     "express": "^5.0.1"
@@ -38,6 +40,9 @@
     "nodemon": "^3.1.7",
     "shx": "^0.3.3",
     "ts-node": "^10.4.0",
-    "typescript": "^5.5.4"
+    "tsx": "^4.19.3",
+    "typescript": "^5.5.4",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.2"
   }
 }

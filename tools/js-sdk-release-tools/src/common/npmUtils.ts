@@ -49,7 +49,7 @@ export async function tryGetNpmView(packageName: string): Promise<{ [id: string]
 export async function tryCreateLastStableNpmView(lastStableVersion: string, packageName: string, packageFolderPath: string) {
     logger.info(`Start to get and clone Api View file from last ${packageName} stable release tag.`);
     const targentApiViewPath = getApiReviewPath(packageFolderPath).split("sdk");
-    const apiViewPath = path.join("sdk", targentApiViewPath[targentApiViewPath.length - 1])
+    const apiViewPath = path.join("sdk", targentApiViewPath[targentApiViewPath.length - 1]).replace(/\\\\/g, "/");
 
     const gitCommand = `git --no-pager show ${packageName}_${lastStableVersion}:${apiViewPath}`;
 
@@ -60,7 +60,7 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
         const lastStableApiViewPath = getApiReviewPath(path.join(packageFolderPath, 'changelog-temp', 'package'));
         writeFile(lastStableApiViewPath, lastStableApiViewContext, (err) => {
             if (err) {
-                logger.error(`Failed to write Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
+                logger.error(`Failed to write Api View file in ${lastStableApiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
             } else {
                 logger.info(`Create Api View file from last stable package successfully`);
             }
@@ -73,7 +73,7 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
 
 export function tryCreateLastChangeLog(packageFolderPath: string, packageName: string, version: string, targetChangelogPath: string) {
     logger.info(`Start to get and clone CHANGELOG.md from latest ${packageName} release tag.`);
-    const changelogPathInRepo = path.join(packageFolderPath, "CHANGELOG.md")
+    const changelogPathInRepo = path.join(packageFolderPath, "CHANGELOG.md").replace(/\\\\/g, "/")
     const gitCommand = `git --no-pager show ${packageName}_${version}:${changelogPathInRepo}`;
 
     try {
@@ -82,7 +82,7 @@ export function tryCreateLastChangeLog(packageFolderPath: string, packageName: s
 
         writeFile(targetChangelogPath, latestChangeLogContext, (err) => {
             if (err) {
-                logger.error(`Failed to write CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.`);
+                logger.error(`Failed to write CHANGELOG.md in ${targetChangelogPath} from the tag ${packageName}_${version}.`);
             } else {
                 logger.info(`Create CHANGELOG.md from the latest npm package successfully`);
             }

@@ -46,20 +46,23 @@ sample:
         {
           "line_no": 2,
           "bad_code": "def method1(self, arg1: str) -> None",
-          "suggestion": "Add docstring explaining method purpose",
-          "comment": "Methods should have descriptive docstrings"
+          "suggestion": "",
+          "comment": "Methods should have descriptive docstrings",
+          "source": "generic"
         },
         {
           "line_no": 2,
           "bad_code": "def method1(self, arg1: str) -> None",
           "suggestion": "`def method1(self, arg1: str) -> None:`",
-          "comment": "Methods should end with a colon"
+          "comment": "Methods should end with a colon",
+          "source": "generic"
         },
         {
           "line_no": 2,
           "bad_code": "def method1(self, arg1: str) -> None",
           "suggestion": "def get_something(self, name: str) -> None",
           "comment": "Method name should be more descriptive"
+          "source": "generic"
         }
       ]
     }

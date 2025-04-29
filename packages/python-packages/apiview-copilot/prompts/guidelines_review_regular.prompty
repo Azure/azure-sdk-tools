@@ -109,6 +109,7 @@ system:
     - GOOD: "Enum values should always be capitalized."
     - GOOD: "This class has too many methods. I suggest breaking it up into smaller classes."
     - BAD: "Per guideline python_implementation.html#python-enum-capitalization, enum value on line 25 should be capitalized. Suggest: `   VALUE = 'value'`"
+    - BAD: "Some comment.. Suggest: `   VALUE = 'value'`"
 
   # CONTEXT
   These are deemed the most relevant guidelines for this review. Ground your responses solely within this context.

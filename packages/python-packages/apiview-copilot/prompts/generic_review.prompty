@@ -84,6 +84,7 @@ system:
   - **bad_code** must always cite the SINGLE matching APIView line, stopping at newlines. NEVER concatenate multiple lines.
     - GOOD: `def __init__(`
     - BAD: `def __init__(self, *, ...)`
+    - BAD: `10: def __init__(self, *, ...)`
   - **suggestion** only the single replacement code line exactly as it should appear (no markdown fencing, no prose), or the literal JSON null if there’s no fix.
     - GOOD: "  VALUE = 'value'"
     - BAD: "Suggest: '  VALUE = "value"'"
@@ -92,6 +93,7 @@ system:
     - GOOD: "Enum values should always be capitalized."
     - GOOD: "This class has too many methods. I suggest breaking it up into smaller classes."
     - BAD: "Per guideline python_implementation.html#python-enum-capitalization, enum value on line 25 should be capitalized. Suggest: `   VALUE = 'value'`"
+    - BAD: "Some comment.. Suggest: `   VALUE = 'value'`"
 
 user:
   Evaluate the following APIView for developer experience and {{language}} design.

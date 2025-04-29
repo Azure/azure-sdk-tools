@@ -5,37 +5,25 @@
                 "python_design.html#python-client-connection-string"
             ],
             "line_no": 10,
-            "bad_code": "         connection_string: Optional[str] = None,",
-            "suggestion": "",
-            "comment": "The constructor must not accept a connection string. Instead, implement a separate from_connection_string factory method.",
+            "bad_code": "connection_string: Optional[str] = None,",
+            "suggestion": "null",
+            "comment": "The constructor should not accept a connection string; instead provide a from_connection_string factory method.",
             "source": "guideline"
         },
         {
-            "rule_ids": [
-                "python_design.html#python-client-optional-arguments-keyword-only"
-            ],
-            "line_no": 30,
-            "bad_code": "def analyze_from_url(",
-            "suggestion": "def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
-            "comment": "Optional parameters must be keyword-only; add '*' after the required positional parameters.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-client-optional-arguments-keyword-only"
-            ],
-            "line_no": 74,
-            "bad_code": "async def analyze_from_url(",
-            "suggestion": "async def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
-            "comment": "Optional parameters must be keyword-only; insert '*' to separate them from required positional arguments.",
-            "source": "guideline"
+            "rule_ids": [],
+            "line_no": 33,
+            "bad_code": "    visual_features: List[VisualFeatures],",
+            "suggestion": "    visual_features: List[VisualFeatures], *,",
+            "comment": "Insert '*' after required parameters to enforce keyword-only optional arguments, ensuring consistency with the 'analyze' method.",
+            "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 168,
             "bad_code": "    ivar list: List[DenseCaption]",
             "suggestion": "    ivar captions: List[DenseCaption]",
-            "comment": "Avoid using built-in names like 'list' for attributes; use a more descriptive name such as 'captions'.",
+            "comment": "Avoid using the built-in name 'list' as an attribute; use a more descriptive name like 'captions'.",
             "source": "generic"
         },
         {
@@ -45,35 +33,69 @@
             "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
             "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedPerson(MutableMapping[str, Any]):",
-            "comment": "Type names must be in PascalCase. Rename 'detectedPerson' to 'DetectedPerson' to adhere to naming conventions.",
+            "comment": "Type names must use PascalCase. Rename 'detectedPerson' to 'DetectedPerson' for consistency.",
             "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 409,
+            "bad_code": "    ivar list: List[DetectedObject]",
+            "suggestion": "    ivar objects: List[DetectedObject]",
+            "comment": "Avoid shadowing the built-in 'list'; rename the attribute to something more descriptive such as 'objects'.",
+            "source": "generic"
         },
         {
             "rule_ids": [
                 "python_implementation.html#python-codestyle-properties"
             ],
             "line_no": 411,
-            "bad_code": "    def get_result(self) -> ObjectsResult",
-            "suggestion": null,
-            "comment": "Avoid using simple getter methods; implement a property instead.",
-            "source": "guideline"
+            "bad_code": "def get_result(self) -> ObjectsResult",
+            "suggestion": "null",
+            "comment": "Simple getter methods should be implemented as properties to follow Pythonic conventions and provide a more idiomatic API.",
+            "source": "merged"
         },
         {
             "rule_ids": [
                 "python_implementation.html#python-codestyle-properties"
             ],
-            "line_no": 412,
-            "bad_code": "    def set_result(self, obj) -> None",
-            "suggestion": null,
-            "comment": "Avoid using simple setter methods; implement a property with a setter instead.",
+            "line_no": 413,
+            "bad_code": "def set_result(self, obj) -> None",
+            "suggestion": "null",
+            "comment": "The set_result method should be replaced with a property setter to adhere to Pythonic design principles and avoid simple setter methods.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-async"
+            ],
+            "line_no": 432,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
+            "suggestion": "null",
+            "comment": "Models should not be duplicated in the aio namespace; shared models must exist in a single location.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
-            "line_no": 498,
-            "bad_code": "list: List[DetectedTag]",
-            "suggestion": "detected_tags: List[DetectedTag]",
-            "comment": "Avoid using a built‐in name as a parameter; rename 'list' to something more descriptive like 'detected_tags'.",
+            "line_no": 433,
+            "bad_code": "    ivar list: List[detectedPerson]",
+            "suggestion": "    ivar people: List[DetectedPerson]",
+            "comment": "Avoid using built-in names for attributes and ensure type names use PascalCase; consider 'people' instead of 'list' with 'DetectedPerson'.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 473,
+            "bad_code": "    ivar list: List[CropRegion]",
+            "suggestion": "    ivar crop_regions: List[CropRegion]",
+            "comment": "Avoid using the built-in 'list' as an attribute name; choose a descriptive name such as 'crop_regions'.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 492,
+            "bad_code": "ivar list: List[DetectedTag]",
+            "suggestion": "ivar tags: List[DetectedTag]",
+            "comment": "Using a built‐in name like 'list' can be confusing. Rename it (e.g. to 'tags') for clarity and consistency.",
             "source": "generic"
         },
         {
@@ -83,7 +105,7 @@
             "line_no": 517,
             "bad_code": "tags = 'tags'",
             "suggestion": "TAGS = 'tags'",
-            "comment": "Enum member names must be uppercase to conform to Python conventions. Change 'tags' to 'TAGS' for consistency.",
+            "comment": "Enum member names should be uppercase for consistency. Change 'tags' to 'TAGS' to adhere to the guideline.",
             "source": "merged"
         }
     ]

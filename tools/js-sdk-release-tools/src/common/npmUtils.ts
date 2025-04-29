@@ -49,7 +49,7 @@ export async function tryGetNpmView(packageName: string): Promise<{ [id: string]
 export async function tryCreateLastStableNpmView(lastStableVersion: string, packageName: string, packageFolderPath: string) {
     logger.info(`Start to get and clone Api View file from last ${packageName} stable release tag.`);
     const targentApiViewPath = getApiReviewPath(packageFolderPath).split("sdk");
-    const apiViewPath = path.join("sdk", targentApiViewPath[targentApiViewPath.length - 1]).replace(/\\\\/g, "/");
+    const apiViewPath = path.join("sdk", targentApiViewPath[targentApiViewPath.length - 1]).replace(/\\/g, "/");
 
     const gitCommand = `git --no-pager show ${packageName}_${lastStableVersion}:${apiViewPath}`;
 
@@ -73,7 +73,7 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
 
 export function tryCreateLastChangeLog(packageFolderPath: string, packageName: string, version: string, targetChangelogPath: string) {
     logger.info(`Start to get and clone CHANGELOG.md from latest ${packageName} release tag.`);
-    const changelogPathInRepo = path.join(packageFolderPath, "CHANGELOG.md").replace(/\\\\/g, "/")
+    const changelogPathInRepo = path.join(packageFolderPath, "CHANGELOG.md").replace(/\\/g, "/");
     const gitCommand = `git --no-pager show ${packageName}_${version}:${changelogPathInRepo}`;
 
     try {

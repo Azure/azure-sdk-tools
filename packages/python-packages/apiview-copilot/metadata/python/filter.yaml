@@ -42,8 +42,7 @@ sample: |
           {
             "line_no": 2,
             "bad_code": "def method1(self, arg1: str) -> None",
-            "code_fix": "",
-            "general_suggestion": "Add docstring explaining method purpose",
+            "suggestion": "Add docstring explaining method purpose",
             "comment": "Methods should have descriptive docstrings"
             "status": "REMOVE",
             "status_reason": "Comment on docstring suggestion violates exceptions"
@@ -51,8 +50,7 @@ sample: |
           {
             "line_no": 2,
             "bad_code": "def method1(self, arg1: str) -> None",
-            "code_fix": "def get_something(self, name: str) -> None",
-            "general_suggestion": "Improve the method name",
+            "suggestion": "def get_something(self, name: str) -> None",
             "comment": "Method name should be more descriptive"
             "status": "KEEP",
             "status_reason": "Comment enhances API design"

@@ -15,7 +15,7 @@ class Comment(BaseModel):
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
-    suggestion: str = Field(
+    suggestion: Optional[str] = Field(
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
     comment: str = Field(description="the contents of the comment.")
@@ -105,17 +105,8 @@ class ReviewResult(BaseModel):
         default_line_no = 0
         for comment in comments:
             raw_line_no = str(comment.get("line_no", "0")).replace(" ", "").strip()
-            bad_code = comment.get("bad_code", None)
-            code_fix = comment.get("code_fix", None)
-            if code_fix == bad_code:
-                code_fix = None
-            general_suggestion = comment.get("suggestion", None)
-            comment_val = comment.get("comment", None)
 
             # Ensure all required fields exist
-            comment["suggestion"] = code_fix or ""
-            if general_suggestion and general_suggestion != comment_val:
-                comment["comment"] = f"{comment_val}. Suggest: {general_suggestion}"
             if "rule_ids" not in comment:
                 comment["rule_ids"] = []
             if "source" not in comment:
@@ -144,13 +135,6 @@ class ReviewResult(BaseModel):
                     result_comments.append(Comment(**comment_copy))
         self.comments.extend(result_comments)
 
-    def deduplicate_comments(self):
-        """
-        Deduplicate comments based on line number and rule IDs.
-        """
-        raise NotImplementedError("Deduplication is not implemented yet.")
-        # FIXME: This will collect all comments on the same line and send them to a lightweight prompt to combine.
-
     def merge(self, other: "ReviewResult", *, section: Section):
         """
         Merge two ReviewResult objects.
@@ -167,9 +151,19 @@ class ReviewResult(BaseModel):
 
     def _validate(self, *, item: Comment, section: Section) -> bool:
         """
-        Validates the Comment object.
-        If the result of validation is that the comment is invalid, return False.
-        Even if the comment is changed during validation, if it is still valid, return True.
+        Validate a comment against a section of code.
+
+        This method:
+        1. Corrects line numbers by finding the actual line in the section
+        2. Validates rule IDs against known guidelines
+        3. Handles general comments that don't have specific rule IDs
+
+        Args:
+            item: The comment to validate
+            section: The section of code the comment applies to
+
+        Returns:
+            bool: True if the comment is valid, False otherwise
         """
         # Cure minor deviations in line numbers. If the line number can't be resolved, it is invalid
         item.line_no = self._find_line_number(section, item)
@@ -254,5 +248,5 @@ class ReviewResult(BaseModel):
 
         # If no match is found, return the original line number
         print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
-        comment.comment = f"${comment.comment} (general comment)"
+        comment.comment = f"{comment.comment} (general comment)"
         return comment.line_no

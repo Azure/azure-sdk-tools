@@ -13,7 +13,7 @@ from time import time
 from typing import Optional, List
 import yaml
 
-from ._models import ReviewResult
+from ._models import ReviewResult, Comment
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
@@ -112,7 +112,7 @@ class ApiViewReview:
 
         start_time = time()
         target = self.unescape(target)
-        static_guidelines = self.search.retrieve_static_guidelines(self.language, include_general_guidelines=False)
+        static_guidelines = self.search.static_guidelines
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
@@ -206,6 +206,9 @@ class ApiViewReview:
             if chunk_response is not None:
                 chunk_result = ReviewResult(**chunk_response)
                 combined_results.merge(chunk_result, section=chunk)
+
+        combined_results = self._deduplicate_comments(combined_results)
+        combined_results.sort()
 
         # Pass combined results through the filter function with retry logic
         filter_prompt_file = "final_comments_filter.prompty"
@@ -522,3 +525,49 @@ class ApiViewReview:
             ),
             True,
         )
+
+    def _deduplicate_comments(self, results: ReviewResult) -> ReviewResult:
+        """
+        Deduplicate comments based on line number and rule IDs.
+        """
+        comments = results.comments
+        unique_comments = []
+        batches = {}
+
+        # first collect all duplicate comments into batches to send to the LLM and
+        # add any unique comments to the unique_comments list
+        line_ids = set([x.line_no for x in comments])
+        for line_id in line_ids:
+            matches = [x for x in comments if x.line_no == line_id]
+            if len(matches) == 1:
+                unique_comments.append(matches[0])
+                continue
+            batches[line_id] = matches
+
+        prompt_path = os.path.join(_PROMPTS_FOLDER, "merge_comments.prompty")
+
+        print(f"Deduplicating comments...")
+        # now send the batches to the LLM
+        # TODO: These should be processed in parallel
+        for line_no, batch in batches.items():
+            # need to get all the rule_ids for the comments in this batch
+            all_rule_ids = set()
+            for comment in batch:
+                all_rule_ids.update(comment.rule_ids)
+
+            context = self.search.guidelines_for_ids(all_rule_ids)
+
+            response = prompty.execute(prompt_path, inputs={"comments": batch, "context": context})
+            merge_results = json.loads(response)
+            result_comments = merge_results.get("comments", [])
+            if len(result_comments) != 1:
+                logger.error(f"Error merging comments for line {line_no}: {merge_results}")
+                continue
+            merged_comment = result_comments[0]
+            merged_comment["source"] = "merged"
+            merged_comment_obj = Comment(**merged_comment)
+            unique_comments.append(merged_comment_obj)
+
+        # update the comments list with the unique comments
+        results.comments = unique_comments
+        return results

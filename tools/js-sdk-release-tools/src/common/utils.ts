@@ -122,7 +122,7 @@ export function getApiReviewPath(packageRoot: string): string {
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
-            const packageName = npmPackageName.substring('/'.length);
+            const packageName = npmPackageName.split('/')[-1];
             return path.join(packageRoot, 'review', `${packageName}.api.md`);
     }
 }

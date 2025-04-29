@@ -10,6 +10,8 @@ using Azure.Identity;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Common;
+using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.Work.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
@@ -18,58 +20,94 @@ using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.WebApi.Patch;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
-using Newtonsoft.Json.Linq;
 
 
 namespace AzureSDKDSpecTools.Services
-{
+{   
+    public interface IDevOpsConnection
+    {
+        public BuildHttpClient GetBuildClient();
+        public WorkItemTrackingHttpClient GetWorkItemClient();
+        public ProjectHttpClient GetProjectClient();
+    }
+
+    public class DevOpsConnection: IDevOpsConnection
+    {
+        private BuildHttpClient _buildClient;
+        private WorkItemTrackingHttpClient _workItemClient;
+        private ProjectHttpClient _projectClient;
+        private AccessToken _token;
+        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
+
+        public DevOpsConnection()
+        {
+            _token = GetToken();
+            var connection = new VssConnection(new Uri(DevOpsService.DEVOPS_URL), new VssOAuthAccessTokenCredential(_token.Token));
+            _buildClient = connection.GetClient<BuildHttpClient>();
+            _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
+            _projectClient = connection.GetClient<ProjectHttpClient>();
+        }
+
+        private static AccessToken GetToken()
+        {
+            return (new DefaultAzureCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
+        }
+
+        private void RefreshConnection()
+        {
+            if (_token.ExpiresOn < DateTimeOffset.Now.AddMinutes(5))
+            {
+                _token = GetToken();
+                var connection = new VssConnection(new Uri(DevOpsService.DEVOPS_URL), new VssOAuthAccessTokenCredential(_token.Token));
+                _buildClient = connection.GetClient<BuildHttpClient>();
+                _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
+                _projectClient = connection.GetClient<ProjectHttpClient>();
+            }
+        }
+
+        public BuildHttpClient GetBuildClient()
+        {
+            RefreshConnection();
+            return _buildClient;
+        }
+
+        public WorkItemTrackingHttpClient GetWorkItemClient()
+        {
+            RefreshConnection();
+            return _workItemClient;
+        }
+
+        public ProjectHttpClient GetProjectClient()
+        {
+            RefreshConnection();
+            return _projectClient;
+        }
+    }
+
     public interface IDevOpsService
     {
         public Task<ReleasePlan> GetReleasePlan(int workItemId);
         public Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid productTreeId, string pullRequest);
         public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
+        public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language);
+        public Task<List<Build>> GetBuildsTriggeredByUserAsync(string userId, string language);
+        public Task<Build> GetPipelineRun(int buildId);
+        public Task<string> GetSDKPullRequestFromPipelineRun(int buildId);
     }
-    public class DevOpsService : IDevOpsService
+
+    public class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
-        private static readonly string devOpsUrl = "https://dev.azure.com/azure-sdk";
-        private static readonly string releaseProject = "release";
+        public static readonly string DEVOPS_URL = "https://dev.azure.com/azure-sdk";
+        public static readonly string RELEASE_PROJECT = "release";
+        public static readonly string INTERNAL_PROJECT = "internal";
+        private ILogger<DevOpsService> _logger = logger;
+        private IDevOpsConnection _connection = connection;
 
-        private BuildHttpClient buildClient;
-        private WorkItemTrackingHttpClient workItemClient;
-        private AccessToken token;
-        private ILogger<DevOpsService> logger;
-
-        public DevOpsService(ILogger<DevOpsService> _logger)
-        {
-            logger = _logger;
-            // Connect to Azure DevOps using managed identity
-            token = GetToken();
-            var connection = new VssConnection(new Uri(devOpsUrl), new VssOAuthAccessTokenCredential(token.Token));
-            buildClient = connection.GetClient<BuildHttpClient>();
-            workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
-        }
-
-        private static AccessToken GetToken()
-        {
-            return (new DefaultAzureCredential()).GetToken(new TokenRequestContext(["499b84ac-1321-427f-aa17-267ca6975798/.default"]));
-        }
-
-        private void RefreshConnection()
-        {
-            if (token.ExpiresOn < DateTimeOffset.Now.AddMinutes(5))
-            {
-                token = GetToken();
-                var connection = new VssConnection(new Uri(devOpsUrl), new VssOAuthAccessTokenCredential(token.Token));
-                buildClient = connection.GetClient<BuildHttpClient>();
-                workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
-            }
-        }
 
         public async Task<ReleasePlan> GetReleasePlan(int workItemId)
         {
-            RefreshConnection();
-            logger.LogInformation($"Fetching release plan work with id {workItemId}");
-            var workItem = await workItemClient.GetWorkItemAsync(workItemId);
+            _logger.LogInformation($"Fetching release plan work with id {workItemId}");
+            var workItem = await _connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
             if (workItem?.Id == null)
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
             var releasePlan = MapWorkItemToReleasePlan(workItem);
@@ -97,11 +135,10 @@ namespace AzureSDKDSpecTools.Services
 
         public async Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid productTreeId, string pullRequest)
         {
-            RefreshConnection();
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{releaseProject}' AND [System.WorkItemType] = 'Release Plan' AND [Custom.ServiceTreeID] = '{serviceTreeId}' AND [Custom.ProductServiceTreeID] = '{productTreeId}' AND [System.State] NOT IN ('Abandoned', 'Duplicate', 'Finished')";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [System.WorkItemType] = 'Release Plan' AND [Custom.ServiceTreeID] = '{serviceTreeId}' AND [Custom.ProductServiceTreeID] = '{productTreeId}' AND [System.State] NOT IN ('Abandoned', 'Duplicate', 'Finished')";
             var workItems = await FetchWorkItems(query);
             List<ReleasePlan> releasePlans = new ();
-            logger.LogInformation($"Fetched {workItems.Count} release plans for service and product.");
+            _logger.LogInformation($"Fetched {workItems.Count} release plans for service and product.");
             foreach (var workItem in workItems)
             {
                 if (workItem.Relations == null)
@@ -111,7 +148,7 @@ namespace AzureSDKDSpecTools.Services
                 foreach(var apiSpecRelation in apiSpecRelations)
                 {
                     var apiSpecWorkItemId = int.Parse(apiSpecRelation.Url.Split('/').Last());
-                    var apiSpecWorkItem = await workItemClient.GetWorkItemAsync(apiSpecWorkItemId);
+                    var apiSpecWorkItem = await _connection.GetWorkItemClient().GetWorkItemAsync(apiSpecWorkItemId);
                     if (apiSpecWorkItem != null)
                     {
                         // Find all spec pull requests added in API spec work item.
@@ -149,10 +186,9 @@ namespace AzureSDKDSpecTools.Services
         {
             int releasePlanWorkItemId = 0;
             int apiSpecWorkItemId = 0;
-
+            var workItemClient = _connection.GetWorkItemClient();
             try
             {
-                RefreshConnection();
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 WorkItem releasePlanWorkItem = await CreateWorkItem(releasePlan, "Release Plan", releasePlanTitle);
@@ -180,7 +216,7 @@ namespace AzureSDKDSpecTools.Services
             }
             catch (Exception ex) {
                 var errorMesage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
-                logger.LogError(errorMesage);
+                _logger.LogError(errorMesage);                
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
@@ -210,7 +246,7 @@ namespace AzureSDKDSpecTools.Services
                     sb.Append($"<a href=\"{pr}\">{pr}</a>");
                 }
                 var prLinks = sb.ToString();
-                logger.LogInformation($"Adding pull request {prLinks} to API spec work item.");
+                _logger.LogInformation($"Adding pull request {prLinks} to API spec work item.");
                 specDocument.Add(new JsonPatchOperation
                 {
                     Operation = Operation.Add,
@@ -219,8 +255,8 @@ namespace AzureSDKDSpecTools.Services
                 });
             }
 
-            logger.LogInformation($"Creating {workItemType} work item");
-            var workItem = await workItemClient.CreateWorkItemAsync(specDocument, releaseProject, workItemType);
+            _logger.LogInformation($"Creating {workItemType} work item");
+            var workItem = await _connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, RELEASE_PROJECT, workItemType);
             if (workItem == null)
             {
                 throw new Exception("Failed to create Work Item");
@@ -246,7 +282,7 @@ namespace AzureSDKDSpecTools.Services
                           }
                       }
                 };
-                await workItemClient.UpdateWorkItemAsync(jsonLinkDocument, parentId);
+                await _connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, parentId);
             }
             catch (Exception ex)
             {
@@ -257,16 +293,95 @@ namespace AzureSDKDSpecTools.Services
 
         private async Task<List<WorkItem>> FetchWorkItems(string query)
         {
-            var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query });
+            var workItemclient = _connection.GetWorkItemClient();
+            var result = await workItemclient.QueryByWiqlAsync(new Wiql { Query = query });
             if (result != null && result.WorkItems != null)
             {
-                return await workItemClient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
+                return await workItemclient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
             }
             else
             {
-                logger.LogWarning("No work items found.");
+                _logger.LogWarning("No work items found.");
                 return [];
             }
+        }
+
+        private static int GetPipelineDefinitionId(string language)
+        {
+            return language switch
+            {
+                "Python" => 7423,
+                "JavaScript" => 7422,
+                "Go" => 7426,
+                "Java" => 7421,
+                ".NET" => 7412,
+                _ => 0,
+            };
+        }
+
+        public async Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language)
+        {
+            int pipelineDefinitionId = GetPipelineDefinitionId(language);
+            if (pipelineDefinitionId == 0)
+            {
+                throw new Exception($"Failed to get SDK generation pipeline for {language}.");
+            }
+
+            var buildClient = _connection.GetBuildClient();
+            var projectClient = _connection.GetProjectClient();
+            // Run pipeline
+            var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
+            var project = await projectClient.GetProject(INTERNAL_PROJECT);
+            var pipelineParam = new SdkGenPipelineParameters()
+            {
+                ApiSpecificationPath = typespecProjectRoot,
+                ApiVersion = apiVersion,
+                SdkReleaseType = sdkReleaseType
+            };
+
+            // Queue SDK generation pipeline
+            _logger.LogInformation($"Queueing pipeline [{definition.Name}] to generate SDK for {language}.");
+            var pipelineParamString = JsonSerializer.Serialize(pipelineParam);
+            _logger.LogInformation($"Pipeline parameters: [{pipelineParamString}]");
+            var build = await buildClient.QueueBuildAsync(new Build()
+                        {
+                            Definition = definition,
+                            Project = project,                
+                            Parameters = pipelineParamString
+                        });
+            _logger.LogInformation($"Started pipeline run {build.Id} to generate SDK.");
+            return build;
+        }
+
+        public async Task<List<Build>> GetBuildsTriggeredByUserAsync(string userId, string language)
+        {
+            var buildClient = _connection.GetBuildClient();
+            var builds = await buildClient.GetBuildsAsync(project: INTERNAL_PROJECT);
+
+            var userBuilds = builds.Where(b => b.Definition.Id == GetPipelineDefinitionId(language) && b.RequestedBy.Id.Equals(userId, StringComparison.OrdinalIgnoreCase)).ToList();
+            _logger.LogInformation($"Found {userBuilds.Count} builds triggered by user to generate SDK for {language}");
+            return userBuilds;
+        }
+
+        public async Task<Build> GetPipelineRun(int buildId)
+        {
+            var buildClient = _connection.GetBuildClient();
+            return await buildClient.GetBuildAsync(INTERNAL_PROJECT, buildId);
+        }
+
+        public async Task<string> GetSDKPullRequestFromPipelineRun(int buildId)
+        {
+            var buildClient = _connection.GetBuildClient();
+            var timeLine = await buildClient.GetBuildTimelineAsync(INTERNAL_PROJECT, buildId);
+            var record = timeLine.Records.FirstOrDefault(r => r.Name == "Create pull request") ?? null;
+            if (record == null)
+            {
+                throw new Exception($"SDK pull request dlink is not available for pipeline run, Pipeline link {timeLine.Url}");
+            }
+
+            var contentStream = await buildClient.GetAttachmentAsync(INTERNAL_PROJECT, buildId, timeLine.Id, record.Id , "Distributedtask.Core.Summary", "Pull Request Created");
+            var content = new StreamReader(contentStream);
+            return content.ReadToEnd();
         }
     }
 }

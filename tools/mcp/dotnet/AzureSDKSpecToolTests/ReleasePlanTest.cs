@@ -16,7 +16,7 @@ namespace AzureSDKSpecToolTests
              .AddLogging(configure => configure.AddConsole())
              .BuildServiceProvider();
             var logger = serviceProvider.GetService<ILogger<DevOpsService>>();
-            devOpsService = new DevOpsService(logger);
+            devOpsService = new DevOpsService(logger, new DevOpsConnection());
         }
 
         [Fact]

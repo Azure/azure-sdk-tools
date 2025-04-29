@@ -17,9 +17,11 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddLogging(configure => configure.AddConsole());
 builder.Services.AddSingleton<IGitHubService, GitHubService>();
 builder.Services.AddSingleton<IGitHelper, GitHelper>();
+builder.Services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
 builder.Services.AddSingleton<IDevOpsService, DevOpsService>();
 builder.Services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
 builder.Services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
+builder.Services.AddSingleton<ICommonHelper, CommonHelper>();
 
 #pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 builder.Services

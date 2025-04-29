@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,39 +14,33 @@ using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using AzureSDKDSpecTools.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Server;
-using Octokit;
 
 namespace AzureSDKDSpecTools.Tools
 {
-    public interface ISpecWorkflowTool
-    {
-        public Task<string> IsSpecReadyForSDKGeneration(string typeSpecProject, int pullrequestNumber);
-    }
-
     [Description("This Type contains a set of tools to help with TypeSpec to SDK generation work flow.")]
     [McpServerToolType]
-    public class SpecWorkflowTool(IMcpClient mcpClient, IGitHubService githubService, IDevOpsService devopsService, IGitHelper gitHelper, ITypeSpecHelper typespecHelper, ILogger<SpecWorkflowTool> logger)
+    public class SpecWorkflowTool(IGitHubService githubService, IDevOpsService devopsService, IGitHelper gitHelper, ITypeSpecHelper typespecHelper, ILogger<SpecWorkflowTool> logger)
     {
-        private readonly IMcpClient _mcpClient = mcpClient;
         private readonly IGitHubService _githubService = githubService;
         private readonly IDevOpsService _devopsService = devopsService;
         private readonly IGitHelper _gitHelper = gitHelper;
         private readonly ITypeSpecHelper _typespecHelper = typespecHelper;
         private readonly ILogger<SpecWorkflowTool> _logger = logger;
-        private readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
-        private readonly string REPO_OWNER = "Azure";
-        private readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
-        private readonly string DEFAULT_BRANCH = "main";
+        private readonly static string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
+        private readonly static string REPO_OWNER = "Azure";
+        private readonly static string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
+        private readonly static string DEFAULT_BRANCH = "main";
 
 
         [McpServerTool, Description("Checks whether a TypeSpec API is ready to generate SDK. Provide a pull request number and path to TypeSpec project toot as params.")]
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
         {
             var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);
-            return JsonSerializer.Serialize(response);
+            return response.ToString();
         }
 
         private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullrequestNumber)
@@ -75,19 +71,19 @@ namespace AzureSDKDSpecTools.Tools
                         ]);
                     return response;
                 }
-                await _mcpClient.SendNotificationAsync($"{repoRootPath} is a clone of azure-rest-api-specs");
+
                 if (!_typespecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRoot))
                 {
                     response.Details.Add($"TypeSpec project path '{typeSpecProjectRoot}' is invalid. Provide a TypeSpec project path that contains tspconfig.yaml");
                     return response;
                 }
-                await _mcpClient.SendNotificationAsync($"Found a TypeSpec project in {typeSpecProjectRoot}");
+
                 if (!_typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot))
                 {
                     response.Details.Add($"The TypeSpec project path '{typeSpecProjectRoot}' is not associated with the management plane. Currently, the Copilot agent supports SDK generation exclusively for the management plane.");
                     return response;
                 }
-                await _mcpClient.SendNotificationAsync($"TypeSpec project [{typeSpecProjectRoot}] is for management plane.");
+
                 // if current branch name is main then ask user to provide pull request number if they have or switch to the branch they have created for TypeSpec changes.
                 if (branchName.Equals(DEFAULT_BRANCH))
                 {
@@ -97,7 +93,7 @@ namespace AzureSDKDSpecTools.Tools
                 }
 
                 // Get pull request details
-                PullRequest? pullRequest = pullrequestNumber != 0 ? await _githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber) :
+                Octokit.PullRequest? pullRequest = pullrequestNumber != 0 ? await _githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber) :
                     await _githubService.GetPullRequestForBranchAsync(REPO_OWNER, PUBLIC_SPECS_REPO, branchName);
                 if (pullRequest == null)
                 {
@@ -119,7 +115,7 @@ namespace AzureSDKDSpecTools.Tools
                 }
 
                 // PR closed without merging changes
-                if (pullRequest.State == ItemState.Closed && !pullRequest.Merged)
+                if (pullRequest.State == Octokit.ItemState.Closed && !pullRequest.Merged)
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} is in closed status without merging changes to main branch. SDK can not be generated from closed PR. Create a pull request for your changes with '{DEFAULT_BRANCH}' branch as target.");
                     _logger.LogWarning(response.Details.ToString());
@@ -149,35 +145,134 @@ namespace AzureSDKDSpecTools.Tools
         }
 
 
-        /*[McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
+        [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
         public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullrequestNumber)
         {
             var response = new GenericResponse()
             {
-                Status = "Failed"
+                Status = "Success"
             };
 
-            if (!IsSDKGenerationSupported(language))
+            try
             {
-                response.Details.Add($"SDK generation is currently not supported by agent for {language}");
-                return JsonSerializer.Serialize(response);
+                if (!IsSDKGenerationSupported(language))
+                {
+                    response.Details.Add($"SDK generation is currently not supported by agent for {language}");
+                    response.Status = "Failed";
+                }
+
+                // Verify input
+                if (!TypeSpecProject.IsValidTypeSpecProjectPath(typespecProjectRoot))
+                {
+                    response.Details.Add($"Invalid TypeSpec project root path [{typespecProjectRoot}].");
+                    response.Status = "Failed";
+                }
+
+                if (string.IsNullOrEmpty(apiVersion))
+                {
+                    response.Details.Add("API version is required to generate SDK.");
+                    response.Status = "Failed";
+                }
+
+                List<string> validReleaseTypes = ["beta", "stable"];
+                sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
+                if (string.IsNullOrEmpty(sdkReleaseType) || !validReleaseTypes.Contains(sdkReleaseType))
+                {
+                    response.Details.Add("SDK release type must be set as either beta or stable to generate SDK.");
+                    response.Status = "Failed";
+                }
+
+                // Verify if spec is read yto generate SDK
+                var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullrequestNumber);
+                if (!readiness.Status.Equals("Success"))
+                {
+                    response.Details.AddRange(readiness.Details);
+                    response.Status = "Failed";
+                }
+
+                // Get Pull request details and check if pr is merged or not. if merged then run the pipeline against the target branch or against pr merge ref
+                var pullRequest = await _githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber);
+                if (pullRequest == null)
+                {
+                    response.Details.Add($"Failed to get pull request details for {pullrequestNumber} in {REPO_OWNER}/{PUBLIC_SPECS_REPO}");
+                    response.Status = "Failed";
+                }
+
+                // Return failure details in case of any failure
+                if (response.Status.Equals("Failed"))
+                    return response.ToString();
+
+                string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
+                var pipelineRun = await _devopsService.RunSDKGenerationPipeline(branchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language);
+
+                response = new GenericResponse()
+                {
+                    Status = "Success",
+                    Details = [$"Azure DevOps pipeline {pipelineRun.Url} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
+                };
+                return response.ToString();
             }
-
-
+            catch(Exception ex)
+            {
+                response.Details.Add($"Failed to run pipeline to generate SDK, Details: {ex.Message}");
+                response.Status = "Failed";
+                return response.ToString();
+            }            
         }
 
-        private bool IsSDKGenerationSupported(string language)
+        private static bool IsSDKGenerationSupported(string language)
         {
-            switch (language)
+            return language switch
             {
-                case "Python": return true;
-                default: return false;
-            }
+                "Python" => true,
+                _ => false,
+            };
         }
 
-        private async Task RunSDKGenerationPipeline(string branchRef, string language)
+        [McpServerTool, Description("Get SDK generation pipeline run details and status for a given pipeline build ID")]
+        public async Task<string> GetPipelineRunStatus(int buildId)
         {
+            var response = new GenericResponse();
+            try
+            {
+                var pipeline = await _devopsService.GetPipelineRun(buildId);
+                if (pipeline != null)
+                {
+                    response.Status = pipeline.Status?.ToString() ?? "Not available";
+                    response.Details.Add($"Pipeline run link: {pipeline.Url}");
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = "Failed";
+                response.Details.Add($"Failed to get pipeline run with id {buildId}. Error: {ex.Message}");
+            }
+            return response.ToString();
+        }
 
-        }*/
+        [McpServerTool, Description("Get generated SDK pull request link from SDK generation pipeline run, Build ID of pipeline run is required to query pull request link.")]
+        public async Task<string> GetSDKPullRequestDetails(string language, int buildId)
+        {
+            try
+            {
+                //Todo: If buildId is given as 0 then we should find all build triggered by current user and check for the latest build triggered for the language.
+                var pipeline = await _devopsService.GetPipelineRun(buildId);
+                if (pipeline == null)
+                {
+                    return $"Failed to get SDK generation pipeline run wiht build ID {buildId}";
+                }
+
+                if(pipeline.Status != BuildStatus.Completed)
+                {
+                    return $"SDK generation pipeline is not in completed status to get generated SDK pull request details, Status: {pipeline.Status.ToString()}";
+                }
+
+                return await _devopsService.GetSDKPullRequestFromPipelineRun(buildId);
+            }
+            catch (Exception ex)
+            {
+                return $"Failed to get pull request details from SDK generation pipeline, Error: {ex.Message}";
+            }
+        }
     }
 }

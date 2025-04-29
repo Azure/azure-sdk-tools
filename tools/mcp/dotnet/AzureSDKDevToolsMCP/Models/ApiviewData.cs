@@ -13,7 +13,7 @@ namespace AzureSDKDSpecTools.Models
         public string Language { get; set; } = string.Empty;
         [JsonPropertyName("Package Name")]
         public string PackageName { get; set; } = string.Empty;
-        [JsonPropertyName("APIView review link")]
-        public string ApiReviewUrl {  get; set; } = string.Empty;
+        [JsonPropertyName("SDK API view link")]
+        public string ApiviewLink {  get; set; } = string.Empty;
     }
 }

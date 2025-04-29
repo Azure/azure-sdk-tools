@@ -52,7 +52,7 @@ namespace AzureSDKDSpecTools.Helpers
                                     {
                                         Language = match.Groups[1].Value,
                                         PackageName = match.Groups[2].Value,
-                                        ApiReviewUrl = match.Groups[3].Value
+                                        ApiviewLink = match.Groups[3].Value
                                     });
                             }                            
                         }

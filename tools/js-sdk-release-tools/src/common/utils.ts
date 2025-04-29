@@ -28,7 +28,7 @@ function removeLastNewline(line: string): string {
     return line.replace(/\n$/, '')
 }
 
-function replaceAll(original: string, from: string, to: string) { 
+function replaceAll(original: string, from: string, to: string) {
     return original.split(from).join(to);
 }
 
@@ -75,7 +75,7 @@ function getDistClassicClientParametersPath(packageRoot: string): string {
 
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['pipe', 'pipe', 'pipe'] };
 
-function logError(errorAsWarning:boolean){
+function logError(errorAsWarning: boolean) {
     return errorAsWarning ? logger.warn : logger.error;
 }
 
@@ -91,13 +91,13 @@ export function getSDKType(packageRoot: string): SDKType {
     if (packageName.startsWith('@azure-rest/')) {
         return SDKType.RestLevelClient;
     }
-    
+
     const srcParaPath = getClassicClientParametersPath(packageRoot);
     const distParaPath = getDistClassicClientParametersPath(packageRoot);
 
     const srcParameterExist = shell.test('-e', srcParaPath);
     const distParameterExist = shell.test('-e', distParaPath);
-    
+
     const type = srcParameterExist || distParameterExist ? SDKType.HighLevelClient : SDKType.ModularClient;
     logger.info(`SDK type '${type}' is detected in '${packageRoot}'.`);
     return type;
@@ -144,12 +144,12 @@ export function fixChangelogFormat(content: string) {
     return content;
 }
 
-export function tryReadNpmPackageChangelog(changelogPath: string,packageFolderPath?: string, packageName?: string, version?:string): string {
+export function tryReadNpmPackageChangelog(changelogPath: string, packageFolderPath?: string, packageName?: string, version?: string): string {
     try {
-        if (!fs.existsSync(changelogPath) ) {
+        if (!fs.existsSync(changelogPath)) {
             logger.warn(`NPM package's changelog '${changelogPath}' does not exist.`);
-            if (packageFolderPath && packageName && version){
-                tryCreateLastChangeLog(packageFolderPath,packageName,version,changelogPath);
+            if (packageFolderPath && packageName && version) {
+                tryCreateLastChangeLog(packageFolderPath, packageName, version, changelogPath);
             }
             else {
                 return ""
@@ -190,12 +190,12 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
     const emitterOptions = tspConfig.options?.[emitterName];
     const serviceDirFromEmitter = emitterOptions?.['service-dir'];
-    if(serviceDirFromEmitter) {
+    if (serviceDirFromEmitter) {
         serviceDir = serviceDirFromEmitter;
     }
     const packageDirFromEmitter = emitterOptions?.['package-dir'];
-    if(packageDirFromEmitter) {
-        packageDir = packageDirFromEmitter; 
+    if (packageDirFromEmitter) {
+        packageDir = packageDirFromEmitter;
     }
     if (!serviceDir) {
         throw new Error(`Miss service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
@@ -233,7 +233,7 @@ export async function runCommand(
 
     child.stdout?.setEncoding('utf8');
     child.stderr?.setEncoding('utf8');
-    
+
     child.stdout?.on('data', (data) => {
         const str = data.toString();
         stdout += str;
@@ -253,7 +253,7 @@ export async function runCommand(
         reject = rej;
     });
     let code: number | null = 0;
-    
+
     child.on('exit', (exitCode, signal) => {
         if (timer) clearTimeout(timer);
         if (timedOut || !signal) { return; }
@@ -272,7 +272,7 @@ export async function runCommand(
         reject(Error(`Command closed with code '${exitCode}'.`));
 
     });
-    
+
     child.on('error', (err) => {
         logError(errorAsWarning)((err as Error)?.stack ?? err);
         printErrorDetails({ stdout, stderr, code: null }, !realtimeOutput, errorAsWarning);
@@ -280,7 +280,7 @@ export async function runCommand(
     });
 
     await promise;
-    return {stdout, stderr, code};
+    return { stdout, stderr, code };
 }
 
 export async function existsAsync(path: string): Promise<boolean> {
@@ -297,7 +297,7 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
     const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
-            cwd:process.cwd(),
+            cwd: process.cwd(),
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
         });

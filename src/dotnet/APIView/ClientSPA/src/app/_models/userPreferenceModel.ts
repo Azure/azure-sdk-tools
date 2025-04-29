@@ -1,3 +1,9 @@
+export enum ScrollBarSize {
+    Small = 'Small',
+    Medium = 'Medium',
+    Large = 'Large'
+}
+
 export class UserPreferenceModel {
     userName : string
     language : string []
@@ -12,6 +18,7 @@ export class UserPreferenceModel {
     showSystemComments: boolean
     useBetaIndexPage: boolean
     disableCodeLinesLazyLoading: boolean
+    scrollBarSize: ScrollBarSize | null
 
 
     constructor() {
@@ -28,6 +35,6 @@ export class UserPreferenceModel {
         this.showSystemComments = true;
         this.useBetaIndexPage = false;
         this.disableCodeLinesLazyLoading = false;
-
+        this.scrollBarSize = ScrollBarSize.Small;
     }
 }

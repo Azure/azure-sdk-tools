@@ -3,9 +3,20 @@
 using System.Collections.Generic;
 using APIViewWeb.LeanModels;
 using CsvHelper.Configuration.Attributes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.Models
 {
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ScrollBarSizes
+    {
+        Small = 0,
+        Medium,
+        Large
+    }
+
     public class UserPreferenceModel
     {
         internal IEnumerable<string> _language;
@@ -26,6 +37,7 @@ namespace APIViewWeb.Models
         internal bool? _disableCodeLinesLazyLoading;
         internal bool? _useBetaIndexPage;
         internal string _theme;
+        internal ScrollBarSizes? _scrollBarSize;
 
         public string UserName { get; set; }
 
@@ -145,6 +157,13 @@ namespace APIViewWeb.Models
         {
             get => _useBetaIndexPage ?? false;
             set => _useBetaIndexPage = value;
+        }
+
+        [Name("ScrollBarSize")]
+        public ScrollBarSizes? ScrollBarSize
+        {
+            get => _scrollBarSize ?? ScrollBarSizes.Small;
+            set => _scrollBarSize = value;
         }
     }
 }

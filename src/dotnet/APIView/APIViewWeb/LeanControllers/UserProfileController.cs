@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -30,14 +32,20 @@ namespace APIViewWeb.LeanControllers
             {
                 userProfile.Preferences = preference;
             }
-            return userProfile;
+            return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
         }
 
-        [Route("preference")]
-        [HttpPut]
+        [HttpPut("preference", Name = "UpdateUserPreference")]
         public ActionResult UpdateUserPreference([FromBody] UserPreferenceModel userPreference)
         {
             _userPreferenceCache.UpdateUserPreference(userPreference, User);
+            return Ok();
+        }
+
+        [HttpPut(Name = "UpdateUserProfile")]
+        public ActionResult UpdateUserProfile([FromBody] UserProfileModel userProfile)
+        {
+            _userProfileManager.UpdateUserProfile(User, userProfile.Email, userProfile.Languages, userProfile.Preferences);
             return Ok();
         }
     }

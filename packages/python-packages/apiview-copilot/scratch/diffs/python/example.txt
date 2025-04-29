@@ -1,0 +1,26 @@
+208:     async def close(self)
+209:
+210:     async def get_account_information(self, **kwargs: Any) -> Dict[str, str]
+211:
+212: +   @distributed_trace_async
+213: +   async def query_blob(
+214: +       self,
+215: +       query_expression: str,
+216: +       *,
+217: +       blob_format: Optional[Union[DelimitedTextDialect, DelimitedJsonDialect]] = ...,
+218: +       cpk: Optional[CustomerProvidedEncryptionKey] = ...,
+219: +       etag: Optional[str] = ...,
+220: +       if_modified_since: Optional[datetime] = ...,
+221: +       if_tags_match_condition: Optional[str] = ...,
+222: +       if_unmodified_since: Optional[datetime] = ...,
+223: +       lease: Optional[Union[BlobLeaseClient, str]] = ...,
+224: +       match_condition: Optional[MatchConditions] = ...,
+225: +       on_error: Optional[Callable[[BlobQueryError], None]] = ...,
+226: +       output_format: Optional[Union[DelimitedTextDialect, DelimitedJsonDialect]] = ...,
+227: +       timeout: Optional[int] = ...,
+228: +       **kwargs: Any
+229: +   ) -> BlobQueryReader
+230:
+231:     async def stage_block_from_url(
+232:         self,
+233:         block_id: str,

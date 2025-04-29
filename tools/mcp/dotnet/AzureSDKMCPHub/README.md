@@ -35,13 +35,17 @@ My vision here is that these individual tools should be:
 
 This way, users can add local `mcp`
 
-
 |Pro/Con|Description|
 |---|---|
 |✅|Tools will work standalone for easy development and testing.|
 |✅|Much more granular control over what versions of which tools are present in the hub.|
 |🟥|Users will have to match a server convention at the very least, and implement an inteface that makes their actual workload pluggable into the `hub`.|
 |🟥|EngSys will need to add good integration testing of the contract, so that local development -> deployment in `everything server` will never surprise them.|
+
+## Additional features
+
+Concept of `chaining` of various MCP servers. Can this hub support taking the output of one spoke and shoving it to another? We probably should right?
+
 
 ## Some random DOs and DON'Ts of this server
 

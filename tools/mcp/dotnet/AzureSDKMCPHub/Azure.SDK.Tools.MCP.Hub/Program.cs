@@ -8,18 +8,16 @@ namespace Azure.SDK.Tools.MCP.Hub
     {
         public static void Main(string[] args)
         {
-            // parse CLI args to figure out workload
-
-            // then collect unmapped args to pass on to ASP.NET?
-
-            // create the hostbuilder and run if necessary
+            // todo: parse a command bundle here. pass it to CreateHostBuilder once we have an actual type
+            // todo: can we have a "start" verb and a <tool> verb? EG if someone calls <server.exe> HelloWorld
+            //   "This is a hello world input" -> we invoke just that tool
+            //   "<server.exe> start" -> runs server responding to vscode copilot chat 
             CreateHostBuilder(args).Build().Run();
         }
 
         public static HostApplicationBuilder CreateHostBuilder(string[] args)
         {
-
-            // call discoverModules, iterate across them and add to builder.Services
+            // todo: implement our own module discovery that takes the `--tools` or `--tools-exclude` when booting
             var builder = Host.CreateApplicationBuilder(args);
             builder.Logging.AddConsole(consoleLogOptions =>
             {
@@ -28,14 +26,12 @@ namespace Azure.SDK.Tools.MCP.Hub
             builder.Services
                 .AddMcpServer()
                 .WithStdioServerTransport()
-                // we can definitely honor the --tools param here to filter down the provided tools
+                // todo: we can definitely honor the --tools param here to filter down the provided tools
                 // for now, lets just use WithtoolsFromAssembly to actually run this thing
-                // after we grep through the modules 
                 .WithToolsFromAssembly();
 
             return builder;
         }
 
-        // todo: implement our own module discovery that takes parameters into account
     }
 }

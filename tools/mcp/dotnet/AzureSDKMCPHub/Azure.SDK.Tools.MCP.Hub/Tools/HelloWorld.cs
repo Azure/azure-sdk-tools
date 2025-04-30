@@ -6,8 +6,7 @@ using ModelContextProtocol.Server;
 namespace Azure.SDK.Tools.MCP.Hub.Tools
 {
 
-    [McpServerToolType]
-    [Description("Test service that mirrors input back at the user.")]
+    [McpServerToolType, Description("Echoes the message back to the client.")]
     public class HelloWorld : MCPHubTool
     {
         [McpServerTool, Description("Echoes the message back to the client.")]

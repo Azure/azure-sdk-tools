@@ -105,7 +105,7 @@ class ApiViewReview:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def get_response(self, *, target: str, base: Optional[str] = None, diff: Optional[str] = None) -> ReviewResult:
+    def create_full_review(self, *, target: str) -> ReviewResult:
         print(f"Generating review...")
 
         logger.info(f"Starting review with model: {self.model}, language: {self.language}")
@@ -244,6 +244,151 @@ class ApiViewReview:
 
         return final_results
 
+    def create_diff_review(self, *, target: str, base: str) -> ReviewResult:
+        print(f"Generating review...")
+
+        logger.info(f"Starting review with model: {self.model}, language: {self.language}")
+
+        start_time = time()
+        target = self.unescape(target)
+        static_guidelines = self.search.static_guidelines
+        static_guideline_ids = [x["id"] for x in static_guidelines]
+
+        # Prepare the document
+        chunked_target = SectionedDocument(lines=target.splitlines())
+        combined_results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
+
+        # Skip header if multiple sections
+        chunks_to_process = []
+        for i, chunk in enumerate(chunked_target):
+            chunks_to_process.append((i, chunk))
+
+        # Print initial progress bar
+        print("Processing chunks: ", end="", flush=True)
+        chunk_status = [self.PENDING] * len(chunks_to_process)
+
+        prompty_type = model_map[self.model]
+
+        guideline_prompt_file = f"guidelines_review_{prompty_type}.prompty".replace("-", "_")
+        generic_prompt_file = f"generic_review.prompty"
+
+        # set the model name in the env var so we don't need a prompty file per model
+        os.environ["PROMPTY_MODEL_DEPLOYMENT"] = self.model
+
+        # Flag to indicate cancellation
+        cancel_event = threading.Event()
+
+        # Set up keyboard interrupt handler for more responsive cancellation
+        def keyboard_interrupt_handler(signal, frame):
+            print("\n\nCancellation requested! Terminating process...")
+            cancel_event.set()
+            # Exit immediately without further processing
+            os._exit(1)  # Force immediate exit
+
+        original_handler = signal.getsignal(signal.SIGINT)
+        signal.signal(signal.SIGINT, keyboard_interrupt_handler)
+
+        try:
+            # Process chunks in parallel using ThreadPoolExecutor
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                # Submit all tasks
+                future_to_chunk = {
+                    executor.submit(
+                        self._process_chunk_with_retry,
+                        chunk_info,
+                        static_guidelines,
+                        cancel_event,
+                        guideline_prompt_file,
+                        generic_prompt_file,
+                        chunk_status,
+                    ): chunk_info
+                    for chunk_info in chunks_to_process
+                }
+
+                # Process results as they complete - silently log errors without terminal output
+                results = []
+                try:
+                    for future in concurrent.futures.as_completed(future_to_chunk):
+                        chunk_info = future_to_chunk[future]
+                        try:
+                            result = future.result()
+                            results.append(result)
+                        except Exception as e:
+                            i, chunk = chunk_info
+                            chunk_idx = chunks_to_process.index((i, chunk))
+                            chunk_status[chunk_idx] = self.FAILURE
+                            print(
+                                "\r" + "Processing chunks: " + "".join(chunk_status),
+                                end="",
+                                flush=True,
+                            )
+                            logger.error(f"Error processing chunk {i}: {str(e)}")
+                            results.append((chunk, None))
+                except KeyboardInterrupt:
+                    # This should not be reached as our signal handler will catch it,
+                    # but just in case the signal handler isn't active
+                    print("\n\nCancellation requested! Terminating process...")
+                    sys.exit(1)  # Force exit without further processing
+
+                print()  # Add newline after progress bar is complete
+
+        except KeyboardInterrupt:
+            # This should not be reached as our signal handler will catch it,
+            # but just in case the signal handler isn't active
+            print("\n\nCancellation requested! Terminating process...")
+            os._exit(1)  # Force exit without further processing
+
+        bad_chunks = [chunk for chunk, chunk_result in results if chunk_result is None]
+
+        # Merge results from completed chunks
+        for chunk, chunk_response in results:
+            if chunk_response is not None:
+                chunk_result = ReviewResult(**chunk_response)
+                combined_results.merge(chunk_result, section=chunk)
+
+        combined_results = self._deduplicate_comments(combined_results)
+        combined_results.sort()
+
+        # Pass combined results through the filter function with retry logic
+        filter_prompt_file = "final_comments_filter.prompty"
+        filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
+
+        # load the language-specific yaml file for the filter
+        filter_metadata = self._load_filter_metadata()
+        print(f"Filtering results...")
+
+        response_json, filter_success = self._execute_filter_prompt(
+            combined_results, filter_prompt_path, filter_metadata
+        )
+
+        # If filter succeeded, extract the "KEEP" comments, otherwise use all comments
+        if filter_success:
+            keep_json = [x for x in response_json["comments"] if x["status"] == "KEEP"]
+            discard_json = [x for x in response_json["comments"] if x["status"] == "REMOVE"]
+        else:
+            # Just include all comments if filtering failed
+            keep_json = [c.model_dump() for c in combined_results.comments]
+            discard_json = []
+
+        final_results = ReviewResult(**{"comments": keep_json})
+
+        end_time = time()
+        print(f"Review generated in {end_time - start_time:.2f} seconds.")
+        if bad_chunks:
+            print(
+                f"{self.RED_TEXT}WARN: {len(bad_chunks)}/{len(chunks_to_process)} chunks had errors (see error.log){self.RESET_COLOR}"
+            )
+        if self.semantic_search_failed:
+            print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
+
+        return final_results
+
+    def get_response(self, *, target: str, base: Optional[str] = None) -> ReviewResult:
+        if target and base is not None:
+            return self.create_diff_review(target=target, base=base)
+        elif target:
+            return self.create_full_review(target=target)
+
     def _get_language_pretty_name(self) -> str:
         """
         Returns a pretty name for the language.
@@ -264,7 +409,7 @@ class ApiViewReview:
         try:
             """
             Given a code query, searches the examples index for relevant examples
-            and the guidelines index for relevant guidelines based on a structual
+            and the guidelines index for relevant guidelines based on a structural
             description of the code. Then, it resolves the two sets of results.
             """
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])

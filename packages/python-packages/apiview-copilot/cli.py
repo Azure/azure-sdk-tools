@@ -49,7 +49,8 @@ helps[
 
 def local_review(
     language: str,
-    path: str,
+    target: str,
+    base: str = None,
     model: str = DEFAULT_MODEL,
     use_rag: bool = DEFAULT_USE_RAG,
 ):
@@ -59,12 +60,17 @@ def local_review(
     from src._apiview_reviewer import ApiViewReview
 
     rg = ApiViewReview(language=language, model=model, use_rag=use_rag)
-    filename = os.path.splitext(os.path.basename(path))[0]
+    filename = os.path.splitext(os.path.basename(base))[0]
 
-    with open(path, "r", encoding="utf-8") as f:
-        apiview = f.read()
+    with open(target, "r", encoding="utf-8") as f:
+        target_apiview = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base_apiview = f.read()
+    else:
+        base_apiview = None
 
-    review = rg.get_response(target=apiview)
+    review = rg.get_response(target=target_apiview, base=base_apiview)
     output_path = os.path.join("scratch", "output", language)
     os.makedirs(output_path, exist_ok=True)
     output_file = os.path.join(output_path, f"{filename}.json")
@@ -178,16 +184,20 @@ def deploy_flask_app(
     deploy_app_to_azure(app_name, resource_group, subscription_id)
 
 
-def generate_review_from_app(language: str, path: str):
+def generate_review_from_app(language: str, target: str, base: Optional[str] = None):
     """Generates a review using the deployed Flask app."""
     from scripts.remote_review import generate_remote_review
 
     # Read the file content
-    with open(path, "r", encoding="utf-8") as f:
-        query = f.read()
+    with open(target, "r", encoding="utf-8") as f:
+        target = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base = f.read()
+    else:
+        base = None
 
-    print(f"Generating review for {path}...")
-    response = asyncio.run(generate_remote_review(query, language))
+    response = asyncio.run(generate_remote_review(target, language))
 
     # response is already a dict, no need to parse it
     if isinstance(response, dict):
@@ -298,6 +308,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 "use_rag",
                 action="store_true",
                 help="Use RAG pattern to generate the review.",
+            )
+            ac.argument(
+                "target",
+                type=str,
+                help="The path to the APIView file to review.",
+                options_list=("--target", "-t"),
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file to compare against. If omitted, copilot will review the entire target APIView.",
+                options_list=("--base", "-b"),
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

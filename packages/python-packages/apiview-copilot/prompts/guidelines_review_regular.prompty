@@ -82,7 +82,7 @@ system:
   # RULES
   - ONLY mention if the library is clearly and visibly violating a guideline.
 
-  - Each line of the APIView is prepended with a line number a colon.
+  - Each line of the APIView is prepended with a line number and a colon (ex: "1: # Package parsed").
 
   - Be conservative - DO NOT make assumptions that a guideline is being violated because it is possible that all guidelines are being
   followed.
@@ -98,9 +98,10 @@ system:
   - Always cite guideline IDs VERBATIM. Examples (GOOD: `python_implementation.html#python-codestyle-kwargs`, BAD: `python-codestyle-kwargs`).
 
   # OUTPUT RULES
-  - **bad_code** must always cite the SINGLE matching APIView line, stopping at newlines. NEVER concatenate multiple lines.
+  - **bad_code** must always cite the SINGLE matching APIView line, stopping at newlines. NEVER concatenate multiple lines. NEVER include the line number.
     - GOOD: `def __init__(`
     - BAD: `def __init__(self, *, ...)`
+    - BAD: `10: def __init__(self, *, ...)`
   - **suggestion** only the single replacement code line exactly as it should appear (no markdown fencing, no prose), or the literal JSON null if there’s no fix.
     - GOOD: "  VALUE = 'value'"
     - BAD: "Suggest: '  VALUE = "value"'"

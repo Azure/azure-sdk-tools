@@ -21,6 +21,11 @@ class Comment(BaseModel):
     comment: str = Field(description="the contents of the comment.")
     source: str = Field(description="unique tag for the prompt that produced the comment.")
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.suggestion == "" or self.suggestion == "null":
+            self.suggestion = None
+
 
 class Guideline(BaseModel):
     """

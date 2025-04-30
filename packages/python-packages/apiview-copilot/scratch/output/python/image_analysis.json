@@ -6,24 +6,16 @@
             ],
             "line_no": 10,
             "bad_code": "connection_string: Optional[str] = None,",
-            "suggestion": "null",
-            "comment": "The constructor should not accept a connection string; instead provide a from_connection_string factory method.",
+            "suggestion": null,
+            "comment": "The constructor should not accept a connection_string parameter; use a separate factory method (from_connection_string) instead.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
-            "line_no": 33,
-            "bad_code": "    visual_features: List[VisualFeatures],",
-            "suggestion": "    visual_features: List[VisualFeatures], *,",
-            "comment": "Insert '*' after required parameters to enforce keyword-only optional arguments, ensuring consistency with the 'analyze' method.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
             "line_no": 168,
-            "bad_code": "    ivar list: List[DenseCaption]",
-            "suggestion": "    ivar captions: List[DenseCaption]",
-            "comment": "Avoid using the built-in name 'list' as an attribute; use a more descriptive name like 'captions'.",
+            "bad_code": "ivar list: List[DenseCaption]",
+            "suggestion": "ivar captions: List[DenseCaption]",
+            "comment": "Avoid using 'list' as an attribute name since it shadows the built-in; use a more descriptive name.",
             "source": "generic"
         },
         {
@@ -33,15 +25,15 @@
             "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
             "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedPerson(MutableMapping[str, Any]):",
-            "comment": "Type names must use PascalCase. Rename 'detectedPerson' to 'DetectedPerson' for consistency.",
+            "comment": "Class names should use PascalCase according to naming conventions.",
             "source": "merged"
         },
         {
             "rule_ids": [],
             "line_no": 409,
-            "bad_code": "    ivar list: List[DetectedObject]",
-            "suggestion": "    ivar objects: List[DetectedObject]",
-            "comment": "Avoid shadowing the built-in 'list'; rename the attribute to something more descriptive such as 'objects'.",
+            "bad_code": "ivar list: List[DetectedObject]",
+            "suggestion": "ivar objects: List[DetectedObject]",
+            "comment": "Rename the 'list' attribute to avoid shadowing the built-in type and to better reflect its contents.",
             "source": "generic"
         },
         {
@@ -50,8 +42,8 @@
             ],
             "line_no": 411,
             "bad_code": "def get_result(self) -> ObjectsResult",
-            "suggestion": "null",
-            "comment": "Simple getter methods should be implemented as properties to follow Pythonic conventions and provide a more idiomatic API.",
+            "suggestion": null,
+            "comment": "Replace simple getter methods with properties to adhere to Python's codestyle guidelines. Additionally, since accessor methods like get_result may be redundant with existing interfaces such as MutableMapping, consider removing them to streamline the API.",
             "source": "merged"
         },
         {
@@ -60,9 +52,9 @@
             ],
             "line_no": 413,
             "bad_code": "def set_result(self, obj) -> None",
-            "suggestion": "null",
-            "comment": "The set_result method should be replaced with a property setter to adhere to Pythonic design principles and avoid simple setter methods.",
-            "source": "merged"
+            "suggestion": null,
+            "comment": "Avoid simple setter methods; use a property with a setter instead.",
+            "source": "guideline"
         },
         {
             "rule_ids": [
@@ -70,24 +62,16 @@
             ],
             "line_no": 432,
             "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
-            "suggestion": "null",
-            "comment": "Models should not be duplicated in the aio namespace; shared models must exist in a single location.",
+            "suggestion": null,
+            "comment": "Models should not be duplicated in the aio namespace; reuse the model from the root namespace.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
             "line_no": 433,
-            "bad_code": "    ivar list: List[detectedPerson]",
-            "suggestion": "    ivar people: List[DetectedPerson]",
-            "comment": "Avoid using built-in names for attributes and ensure type names use PascalCase; consider 'people' instead of 'list' with 'DetectedPerson'.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 473,
-            "bad_code": "    ivar list: List[CropRegion]",
-            "suggestion": "    ivar crop_regions: List[CropRegion]",
-            "comment": "Avoid using the built-in 'list' as an attribute name; choose a descriptive name such as 'crop_regions'.",
+            "bad_code": "ivar list: List[detectedPerson]",
+            "suggestion": "ivar people: List[DetectedPerson]",
+            "comment": "Avoid using 'list' as an attribute name and ensure that type names follow CamelCase.",
             "source": "generic"
         },
         {
@@ -95,7 +79,15 @@
             "line_no": 492,
             "bad_code": "ivar list: List[DetectedTag]",
             "suggestion": "ivar tags: List[DetectedTag]",
-            "comment": "Using a built‐in name like 'list' can be confusing. Rename it (e.g. to 'tags') for clarity and consistency.",
+            "comment": "Avoid using the built-in name 'list' for an instance variable; renaming it to 'tags' clarifies intent and prevents shadowing.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 498,
+            "bad_code": "list: List[DetectedTag]",
+            "suggestion": "tags: List[DetectedTag]",
+            "comment": "Rename the parameter 'list' to 'tags' to avoid conflict with Python's built-in and to clearly convey its purpose.",
             "source": "generic"
         },
         {
@@ -105,7 +97,7 @@
             "line_no": 517,
             "bad_code": "tags = 'tags'",
             "suggestion": "TAGS = 'tags'",
-            "comment": "Enum member names should be uppercase for consistency. Change 'tags' to 'TAGS' to adhere to the guideline.",
+            "comment": "Enum member names should be uppercase for consistency. Rename 'tags' to 'TAGS'.",
             "source": "merged"
         }
     ]

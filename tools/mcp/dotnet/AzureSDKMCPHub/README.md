@@ -39,7 +39,7 @@ This way, users can add local `mcp`
 |---|---|
 |✅|Tools will work standalone for easy development and testing.|
 |✅|Much more granular control over what versions of which tools are present in the hub.|
-|🟥|Users will have to match a server convention at the very least, and implement an inteface that makes their actual workload pluggable into the `hub`.|
+|🟥|Users will have to match a server convention at the very least, and implement an interface that makes their actual workload pluggable into the `hub`.|
 |🟥|EngSys will need to add good integration testing of the contract, so that local development -> deployment in `everything server` will never surprise them.|
 
 ## Additional features
@@ -52,5 +52,5 @@ Concept of `chaining` of various MCP servers. Can this hub support taking the ou
 - [x] DO build with the idea that authentication WILL be coming. Right now the sole protection we have is that these tools will be running in context of the "current user." This means access to `DefaultAzureCredential` should be enough to allow it to function. Users will be adding other external servers to their `mcp.json` at their own risk.
   - What does this actually look like in practice?
 - [x] DO Provide `--tools` startup parameter:
-  - Provide `--tools <name>,<name>,<name>` to _enable_ specific functionalties of the `hub` server?
+  - Provide `--tools <name>,<name>,<name>` to _enable_ specific functionalities of the `hub` server?
   - Provide `--tools-exclude <name>,<name>,<name>` to _disable_ specific functionalities of the `hub` server?

@@ -871,5 +871,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.NotNull(session.Session.Entries.First().Request.Body);
         }
+
+        [Fact]
+        public async Task CanSanitizeComplexRequest()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/failing_multipart_body.json");
+            var breakingSanitizer = new GeneralRegexSanitizer(value: "00000000-0000-0000-0000-000000000000", regex: "batch[a-z]*_([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b)", groupForReplace: "1");
+            await session.Session.Sanitize(breakingSanitizer);
+        }
     }
 }

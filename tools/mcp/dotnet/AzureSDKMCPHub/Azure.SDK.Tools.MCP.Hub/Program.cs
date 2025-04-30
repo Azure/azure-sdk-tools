@@ -11,7 +11,9 @@ public sealed class Program
         //   "This is a hello world input" -> we invoke just that tool
         //   "<server.exe> start" -> runs server responding to vscode copilot chat
         var host = CreateAppBuilder(args).Build();
-        host.MapMcp();
+        // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
+        // behind a command line flag or we could try to run in both modes at once if possible.
+        //host.MapMcp();
         host.Run();
     }
 
@@ -28,8 +30,10 @@ public sealed class Program
 
         builder.Services
             .AddMcpServer()
-            //.WithStdioServerTransport()
-            .WithHttpTransport()
+            .WithStdioServerTransport()
+            // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
+            // behind a command line flag or we could try to run in both modes at once if possible.
+            //.WithHttpTransport()
             // todo: we can definitely honor the --tools param here to filter down the provided tools
             // for now, lets just use WithtoolsFromAssembly to actually run this thing
             .WithToolsFromAssembly();

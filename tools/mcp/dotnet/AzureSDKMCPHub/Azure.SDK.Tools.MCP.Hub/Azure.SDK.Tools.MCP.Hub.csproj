@@ -7,7 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="0.1.0-preview.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Azure.SDK.Tools.MCP.Contract\Azure.SDK.Tools.MCP.Contract.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="CLI\" />
   </ItemGroup>
 
 </Project>

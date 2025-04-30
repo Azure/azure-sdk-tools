@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Azure.SDK.Tools.MCP.Contract
 {
     public interface MCToolInterface
     {
-        void RegisterServices(IServiceCollection services, IConfiguration config);
-        void MapEndpoints(IEndpointRouteBuilder endpoints);
+        // nothing yet
     }
 }

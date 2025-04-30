@@ -4,57 +4,38 @@ using Azure.SDK.Tools.MCP.Contract;
 
 namespace Azure.SDK.Tools.MCP.Hub
 {
-    public class Program
+    public sealed class Program
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            // parse CLI args to figure out workload
 
-            // Add services to the container.
+            // then collect unmapped args to pass on to ASP.NET?
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+            // create the hostbuilder and run if necessary
+            CreateHostBuilder(args).Build().Run();
         }
 
-        public void ConfigureServices(IServiceCollection services)
+        public static HostApplicationBuilder CreateHostBuilder(string[] args)
         {
-            var toolTypes = Assembly.GetExecutingAssembly()
-            .GetTypes()
-            .Where(t => typeof(MCPHubTool).IsAssignableFrom(t) && !t.IsAbstract);
 
-            foreach (var type in toolTypes)
+            // call discoverModules, iterate across them and add to builder.Services
+            var builder = Host.CreateApplicationBuilder(args);
+            builder.Logging.AddConsole(consoleLogOptions =>
             {
-                var toolInstance = Activator.CreateInstance(type);
+                consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
+            });
+            builder.Services
+                .AddMcpServer()
+                .WithStdioServerTransport()
+                // we can definitely honor the --tools param here to filter down the provided tools
+                // for now, lets just use WithtoolsFromAssembly to actually run this thing
+                // after we grep through the modules 
+                .WithToolsFromAssembly();
 
-                if (toolInstance != null)
-                {
-                    services.AddSingleton(toolInstance.GetType(), toolInstance);
-                }
-                else
-                {
-                    System.Console.WriteLine($"Unable to get tool instance for {type.FullName}. Aborting adding as service.");
-                }
-            }
+            return builder;
         }
+
+        // todo: implement our own module discovery that takes parameters into account
     }
 }

@@ -1,17 +1,20 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using ModelContextProtocol.Server;
 
 namespace Azure.SDK.Tools.MCP.Contract
 {
     /// <summary>
-    /// This is the primary entrypoint for whatever your LLM tool is
+    /// This is the base class defining how an MCP enabled tool will interface with the server.
+    /// 
+    /// This covers: 
+    ///     - route registration/disambiguation
+    ///     - compilation trim avoidance for reflection-included MCP tools
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     public abstract class MCPHubTool : MCToolInterface
     {
+        // does McpServerToolType take care of everything here? do we even need anything?
     }
 }

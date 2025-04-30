@@ -3,7 +3,9 @@
 ## How to create your tool code
 
 - Inherit from `Azure.SDK.Tools.MCP.Contract::MCPHubTool`
-- Implement the necessary functions
+- Ensure your class has the `[McpServerToolType]` attribute added to it
+  - Eventual goal is to automatically recognize any classes that have this type as `[McpServerToolType]`.
+  - For now you need to add the attribute yourself.
 
 ## To quickly dev loop on just your class.
 

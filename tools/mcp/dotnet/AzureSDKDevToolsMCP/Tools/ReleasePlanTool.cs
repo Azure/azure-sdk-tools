@@ -24,7 +24,13 @@ namespace AzureSDKDSpecTools.Tools
             List<string> releasePlanList = [];
             try
             {
-                var releasePlans = await devOpsService.GetReleasePlans(Guid.Parse(serviceTreeId), Guid.Parse(productTreeId), pullRequestLink);
+                if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(pullRequestLink))
+                {
+                    releasePlanList.Add("Faield to get release plan. Service tree ID and pull request link are required to check if a release plan already exists.");
+                    return releasePlanList;
+                }
+                Guid? productId = !string.IsNullOrEmpty(productTreeId) ? Guid.Parse(productTreeId) : null;
+                var releasePlans = await devOpsService.GetReleasePlans(Guid.Parse(serviceTreeId), productId, pullRequestLink);
                 if (releasePlans == null || releasePlans.Count == 0)
                 {
                     releasePlanList.Add("Failed to get release plan details.");

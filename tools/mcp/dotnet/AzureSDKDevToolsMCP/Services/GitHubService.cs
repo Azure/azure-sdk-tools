@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Octokit;
-using Octokit.Models;
-using Octokit.Clients;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Runtime.InteropServices;
 using AzureSDKDSpecTools.Services;
+using Microsoft.Extensions.Logging;
+using Octokit;
+using Octokit.Clients;
+using Octokit.Models;
 
 namespace AzureSDKDevToolsMCP.Services
 {
@@ -25,7 +26,6 @@ namespace AzureSDKDevToolsMCP.Services
     {
         private GitHubClient gitHubClient;
         private ILogger<GitHubService> logger;
-        readonly string TEST_IGNORE_TAG = "[TEST-IGNORE]";
 
         public GitHubService(ILogger<GitHubService> _logger)
         {
@@ -199,23 +199,30 @@ namespace AzureSDKDevToolsMCP.Services
             {
                 var pr = await GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
                 if (pr == null)
+                {
+                    logger.LogError($"Pull request {pullRequestNumber} not found");
                     throw new NotFoundException($"Pull request {pullRequestNumber} not found.", System.Net.HttpStatusCode.NotFound);
+                }
 
                 var checkResponse = await gitHubClient.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha);
                 if (checkResponse == null || checkResponse.TotalCount == 0)
-                    return ["No checks found for the pull request."];
-
-                foreach (var check in checkResponse.CheckRuns)
                 {
-                    checkResults.Add($"Name: {check.Name}, Ignore failure: {check.Name.Contains(TEST_IGNORE_TAG)}, Status: {check.Status}, Output: {check.Output}, Conclusion: {check.Conclusion}, Link: {check.HtmlUrl}");
+                    logger.LogError("No checkruns found for pull request.");
+                    return ["No checks found for the pull request."];
+                }
+
+                var checkRuns = checkResponse.CheckRuns.Where(c => !c.Name.StartsWith("[TEST-IGNORE]"));
+                foreach (var check in checkRuns)
+                {
+                    checkResults.Add($"Name: {check.Name}, Status: {check.Status}, Output: {check.Output.Summary}, Conclusion: {check.Conclusion}, Link: {check.HtmlUrl}");
                 }
                 checkResults.Add($"Total checks found: {checkResults.Count}");
-                checkResults.Add($"Total checks ignored: {checkResults.Count(check => check.Contains(TEST_IGNORE_TAG))}. Any failures for ignorable check can be ignored.");
-
+                int pendingRequiedChecks = checkRuns.Count(check => check.Status != CheckStatus.Completed);
+                checkResults.Add($"Pending required checks to merge the PR: {pendingRequiedChecks}.");
             }
             catch (Exception ex)
             {
-                checkResults.Add($"Failed to get Github pullrequest checks, Error: {ex.Message}");
+                checkResults.Add($"Failed to get Github pull request checks, Error: {ex.Message}");
             }
             return checkResults;
         }

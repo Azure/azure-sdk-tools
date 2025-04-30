@@ -87,7 +87,7 @@ namespace AzureSDKDSpecTools.Services
     public interface IDevOpsService
     {
         public Task<ReleasePlan> GetReleasePlan(int workItemId);
-        public Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid productTreeId, string pullRequest);
+        public Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid? productTreeId, string pullRequest);
         public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
         public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language);
         public Task<List<Build>> GetBuildsTriggeredByUserAsync(string userId, string language);
@@ -133,9 +133,10 @@ namespace AzureSDKDSpecTools.Services
             return releasePlan;
         }
 
-        public async Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid productTreeId, string pullRequest)
+        public async Task<List<ReleasePlan>> GetReleasePlans(Guid serviceTreeId, Guid? productTreeId, string pullRequest)
         {
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [System.WorkItemType] = 'Release Plan' AND [Custom.ServiceTreeID] = '{serviceTreeId}' AND [Custom.ProductServiceTreeID] = '{productTreeId}' AND [System.State] NOT IN ('Abandoned', 'Duplicate', 'Finished')";
+            var query = productTreeId == null? $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [System.WorkItemType] = 'Release Plan' AND [Custom.ServiceTreeID] = '{serviceTreeId}' AND [Custom.ProductServiceTreeID] = '{productTreeId}' AND [System.State] NOT IN ('Abandoned', 'Duplicate', 'Finished')" :
+                 $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [System.WorkItemType] = 'Release Plan' AND [Custom.ServiceTreeID] = '{serviceTreeId}' AND [System.State] NOT IN ('Abandoned', 'Duplicate', 'Finished')";
             var workItems = await FetchWorkItems(query);
             List<ReleasePlan> releasePlans = new ();
             _logger.LogInformation($"Fetched {workItems.Count} release plans for service and product.");

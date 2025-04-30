@@ -10,6 +10,7 @@ using AzureSDKDevToolsMCP.Services;
 using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation;
 using ModelContextProtocol.Server;
 using Octokit;
 
@@ -104,12 +105,12 @@ namespace AzureSDKDevToolsMCP.Tools
 
 
         [McpServerTool, Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
-        public async Task<string> GetPullRequest(int pullRequestNumber)
+        public async Task<string> GetPullRequest(int pullRequestNumber, string repoOwner = "Azure", string repoName = "azure-rest-api-specs")
         {
             try
             {
-                logger.LogInformation($"Getting pull request details for {pullRequestNumber} in repo {REPO_NAME}");
-                var pullRequest = await gitHubService.GetPullRequestAsync(REPO_OWNER, REPO_NAME, pullRequestNumber);
+                logger.LogInformation($"Getting pull request details for {pullRequestNumber} in repo {repoName}");
+                var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
                 PullRequestDetails prDetails = new()
                 {
                     // Get PR basics and comments
@@ -121,12 +122,12 @@ namespace AzureSDKDevToolsMCP.Tools
                     Author = pullRequest.User.Name,
                     AssignedTo = pullRequest.Assignee?.Name ?? "",
                     Labels = pullRequest.Labels?.ToList() ?? [],
-                    Comments = await GetPullRequestComments(pullRequestNumber, REPO_NAME, REPO_OWNER)
+                    Comments = await GetPullRequestComments(pullRequestNumber, repoName, repoOwner)
                 };
 
                 // Get PR check statuses
                 logger.LogInformation("Getting pull request checks");
-                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecks(pullRequestNumber, REPO_NAME, REPO_OWNER));
+                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecks(pullRequestNumber, repoName, repoOwner));
 
                 // Parse APi reviews and add the information
                 logger.LogInformation("Searching for API review links in comments");

@@ -36,7 +36,7 @@ namespace AzureSDKDSpecTools.Tools
         private readonly static string DEFAULT_BRANCH = "main";
 
 
-        [McpServerTool, Description("Checks whether a TypeSpec API is ready to generate SDK. Provide a pull request number and path to TypeSpec project toot as params.")]
+        [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project toot as params.")]
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
         {
             var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);
@@ -122,7 +122,7 @@ namespace AzureSDKDSpecTools.Tools
                     return response;
                 }
 
-                if (pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)) && (pullRequest.Merged || pullRequest.Mergeable == false))
+                if (pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} has ARM approval or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
                     response.Status = "Success";
@@ -204,11 +204,11 @@ namespace AzureSDKDSpecTools.Tools
 
                 string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
                 var pipelineRun = await _devopsService.RunSDKGenerationPipeline(branchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language);
-
+                var pipelineRunurl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={pipelineRun.Id}&view=results";
                 response = new GenericResponse()
                 {
                     Status = "Success",
-                    Details = [$"Azure DevOps pipeline {pipelineRun.Url} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
+                    Details = [$"Azure DevOps pipeline {pipelineRunurl} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
                 };
                 return response.ToString();
             }
@@ -238,8 +238,9 @@ namespace AzureSDKDSpecTools.Tools
                 var pipeline = await _devopsService.GetPipelineRun(buildId);
                 if (pipeline != null)
                 {
+                    var pipelineRunurl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={pipeline.Id}&view=results";
                     response.Status = pipeline.Status?.ToString() ?? "Not available";
-                    response.Details.Add($"Pipeline run link: {pipeline.Url}");
+                    response.Details.Add($"Pipeline run link: {pipelineRunurl}");
                 }
             }
             catch (Exception ex)

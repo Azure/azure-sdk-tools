@@ -1,5 +1,5 @@
 ---
-name: Generate APIView Comments
+name: Guidelines-based APIView Review
 description: A prompt that generated comments for APIView.
 authors:
   - tjprescott

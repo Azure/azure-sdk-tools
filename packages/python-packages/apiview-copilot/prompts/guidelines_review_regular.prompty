@@ -1,5 +1,5 @@
 ---
-name: Generate APIView Comments
+name: Guidelines-based APIView Review
 description: A prompt that generated comments for APIView.
 authors:
   - tjprescott
@@ -70,7 +70,7 @@ sample:
     501:     CAPTION = 'caption'
     502:     DENSE_CAPTIONS = 'denseCaptions'
     503:     OBJECTS = 'objects'
-    504:     PEOPLE = 'people'
+    504:     PEOP = 'people'
     505:     READ = 'read'
     506:     SMART_CROPS = 'smartCrops'
     507:     tags = 'tags'

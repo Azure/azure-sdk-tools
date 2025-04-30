@@ -1,5 +1,5 @@
 ---
-name: Generic Python Review
+name: Generic APIView Review
 description: A no-guidelines prompt that evaluates API design qualities for better developer experience.
 authors:
   - kristapratico

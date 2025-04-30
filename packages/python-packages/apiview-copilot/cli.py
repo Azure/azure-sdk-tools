@@ -60,7 +60,17 @@ def local_review(
     from src._apiview_reviewer import ApiViewReview
 
     rg = ApiViewReview(language=language, model=model, use_rag=use_rag)
-    filename = os.path.splitext(os.path.basename(base))[0]
+    if base is None:
+        filename = os.path.splitext(os.path.basename(target))[0]
+    else:
+        target_name = os.path.splitext(os.path.basename(target))[0]
+        base_name = os.path.splitext(os.path.basename(base))[0]
+        # find the common prefix
+        common_prefix = os.path.commonprefix([target_name, base_name])
+        # strip the common prefix from both names
+        target_name = target_name[len(common_prefix) :]
+        base_name = base_name[len(common_prefix) :]
+        filename = f"{common_prefix}_{base_name}_{target_name}"
 
     with open(target, "r", encoding="utf-8") as f:
         target_apiview = f.read()

@@ -13,6 +13,7 @@ from time import time
 from typing import Optional, List
 import yaml
 
+from ._diff import create_diff_with_line_numbers
 from ._models import ReviewResult, Comment
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
@@ -116,7 +117,10 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
-        chunked_target = SectionedDocument(lines=target.splitlines())
+        numbered_lines = []
+        for i, line in enumerate(target.splitlines()):
+            numbered_lines.append(f"{i + 1}: {line}")
+        chunked_target = SectionedDocument(lines=numbered_lines)
         combined_results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
 
         # Skip header if multiple sections
@@ -246,31 +250,31 @@ class ApiViewReview:
 
     def create_diff_review(self, *, target: str, base: str) -> ReviewResult:
         print(f"Generating review...")
-
         logger.info(f"Starting review with model: {self.model}, language: {self.language}")
 
         start_time = time()
         target = self.unescape(target)
+        base = self.unescape(base)
+        diff = create_diff_with_line_numbers(left=base, right=target)
+
         static_guidelines = self.search.static_guidelines
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
         # Prepare the document
-        chunked_target = SectionedDocument(lines=target.splitlines())
+        chunked_diff = SectionedDocument(lines=diff.splitlines())
         combined_results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
 
         # Skip header if multiple sections
         chunks_to_process = []
-        for i, chunk in enumerate(chunked_target):
+        for i, chunk in enumerate(chunked_diff):
             chunks_to_process.append((i, chunk))
 
         # Print initial progress bar
         print("Processing chunks: ", end="", flush=True)
         chunk_status = [self.PENDING] * len(chunks_to_process)
 
-        prompty_type = model_map[self.model]
-
-        guideline_prompt_file = f"guidelines_review_{prompty_type}.prompty".replace("-", "_")
-        generic_prompt_file = f"generic_review.prompty"
+        guideline_prompt_file = f"guidelines_diff_review.prompty".replace("-", "_")
+        generic_prompt_file = f"generic_diff_review.prompty"
 
         # set the model name in the env var so we don't need a prompty file per model
         os.environ["PROMPTY_MODEL_DEPLOYMENT"] = self.model
@@ -583,6 +587,7 @@ class ApiViewReview:
                         "language": self._get_language_pretty_name(),
                         "context": context_string,
                         "apiview": chunk.numbered(),
+                        "diff": chunk.numbered(),
                     },
                 )
             }
@@ -593,8 +598,9 @@ class ApiViewReview:
                 os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
                 inputs={
                     "language": self._get_language_pretty_name(),
-                    "apiview": chunk.numbered(),
                     "custom_rules": generic_metadata["custom_rules"],
+                    "apiview": chunk.numbered(),
+                    "diff": chunk.numbered(),
                 },
             )
 

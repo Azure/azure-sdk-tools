@@ -1,11 +1,29 @@
 {
     "comments": [
         {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 7,
+            "bad_code": "ivar analyzers: AnalyzersOperations",
+            "suggestion": "Use a synchronous operations type (for example, azure.ai.contentunderstanding.operations.AnalyzersOperations)",
+            "comment": "The synchronous ContentUnderstandingClient exposes an 'analyzers' property typed as AnalyzersOperations, but the only provided definition of AnalyzersOperations (in namespace azure.ai.contentunderstanding.aio.operations) defines asynchronous methods. Synchronous clients should use a corresponding synchronous operations type so that sync and async APIs remain clearly separated.. Suggest: Use a synchronous operations type (for example, azure.ai.contentunderstanding.operations.AnalyzersOperations) that provides synchronous method signatures in the synchronous client.",
+            "source": "guideline"
+        },
+        {
             "rule_ids": [],
             "line_no": 110,
-            "bad_code": "input: bytes,",
-            "suggestion": "data: bytes,",
-            "comment": "Avoid using 'input' as a parameter name since it shadows Python's built-in function. A more descriptive name such as 'data' or 'binary_data' is recommended.",
+            "bad_code": "input: bytes",
+            "suggestion": "binary_data: bytes",
+            "comment": "The parameter name 'input' shadows the built-in function. Renaming it to something like 'binary_data' avoids this shadowing and improves clarity.. Suggest: binary_data: bytes",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 167,
+            "bad_code": "def get_operation_status(...): -> ResourceOperationStatusContentAnalyzerContentAnalyzerError",
+            "suggestion": "/* Consider defining a type alias (e.g., OperationStatusError) to simplify the long return type name */ (general comment)",
+            "comment": "$The verbose return type name reduces readability. Using a type alias to encapsulate 'ResourceOperationStatusContentAnalyzerContentAnalyzerError' would make the signature cleaner and more approachable.. Suggest: /* Consider defining a type alias (e.g., OperationStatusError) to simplify the long return type name */ (general comment)",
             "source": "generic"
         },
         {
@@ -13,23 +31,39 @@
             "line_no": 266,
             "bad_code": "ivar spans: list[ContentSpan]",
             "suggestion": "ivar spans: List[ContentSpan]",
-            "comment": "There is an inconsistency in generic type annotation style. Standardize on either the built-in generics (e.g. 'list[...]' if targeting Python 3.9+) or on the typing counterparts (e.g. 'List[...]') to maintain consistency throughout the API.",
+            "comment": "The API inconsistently uses built-in generics (list[...]) and typing generics (List[...]). For consistency and clarity, choose one style across the API.. Suggest: ivar spans: List[ContentSpan]",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1041,
-            "bad_code": "ivar type: Optional[Union[str, FieldType]]",
-            "suggestion": "ivar field_type: Optional[Union[str, FieldType]]",
-            "comment": "Avoid shadowing Python built-ins such as 'type'. Renaming this attribute (for example, to 'field_type') makes the intent clearer and prevents potential conflicts.",
+            "line_no": 284,
+            "bad_code": "def __init__(self, *, confidence: Optional[float] = ..., source: Optional[str] = ..., spans: Optional[List[ContentSpan]] = ..., type: str) -> None",
+            "suggestion": "def __init__(self, *, confidence: Optional[float] = None, source: Optional[str] = None, spans: Optional[List[ContentSpan]] = None, field_type: str) -> None",
+            "comment": "Using 'type' as a parameter name can overshadow the built-in type() function. Renaming it to 'field_type' (or similar) avoids this conflict and improves code clarity.. Suggest: def __init__(self, *, confidence: Optional[float] = None, source: Optional[str] = None, spans: Optional[List[ContentSpan]] = None, field_type: str) -> None",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1138,
+            "line_no": 736,
+            "bad_code": "ivar footnotes: Optional[List[ForwardRef('DocumentFootnote')]]",
+            "suggestion": "ivar footnotes: Optional[List['DocumentFootnote']]",
+            "comment": "Prefer using string literals for forward references in type annotations. This approach is more idiomatic and improves readability.. Suggest: ivar footnotes: Optional[List['DocumentFootnote']]",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1139,
+            "bad_code": "ivar type: Literal[INTEGER]",
+            "suggestion": "ivar type: Literal['INTEGER']",
+            "comment": "When using Literal with string values, enclose the literal value in quotes to correctly indicate it is a string.. Suggest: ivar type: Literal['INTEGER']",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1212,
             "bad_code": "ivar spans: list[ContentSpan]",
             "suggestion": "ivar spans: List[ContentSpan]",
-            "comment": "For consistency and clarity, use the standard generic type from the typing module (List) rather than the built-in list when annotating types.",
+            "comment": "There is an inconsistency in type annotations for list types (using both 'list' and 'List'). Choose one style (preferably using the typing import for broader compatibility) to maintain consistency.. Suggest: ivar spans: List[ContentSpan]",
             "source": "generic"
         },
         {
@@ -37,55 +71,59 @@
             "line_no": 1213,
             "bad_code": "ivar type: Literal[NUMBER]",
             "suggestion": "ivar field_type: Literal[NUMBER]",
-            "comment": "Naming an attribute 'type' shadows Python’s built-in. Renaming it (for example, to 'field_type') prevents potential conflicts and clarifies intent.",
+            "comment": "Using the attribute name 'type' shadows the built-in type() function. Renaming it to something like 'field_type' will prevent potential confusion and improve clarity.. Suggest: ivar field_type: Literal[NUMBER]",
             "source": "generic"
         },
         {
-            "rule_ids": [],
-            "line_no": 1254,
-            "bad_code": "ivar value_object: Optional[Dict[str, ForwardRef('ContentField')]]",
-            "suggestion": "from __future__ import annotations  // then use: value_object: Optional[Dict[str, ContentField]]",
-            "comment": "Leveraging 'from __future__ import annotations' can simplify forward references, making the type hints clearer and more maintainable.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
+            "rule_ids": [
+                "python_design.html#python-client-constructor-form"
+            ],
             "line_no": 1510,
-            "bad_code": "def __init__(\n\t    self, \n\t    *args, \n\t    **kwargs\n\t)",
-            "suggestion": "def __init__(self, client: HttpClient, config: Config) -> None:",
-            "comment": "Using *args and **kwargs in the public constructor reduces discoverability of required parameters. Consider defining them explicitly to make the API more self‐documenting.",
+            "bad_code": "def __init__(",
+            "suggestion": "def __init__(self, client: Any, endpoint: str, **kwargs) -> None:",
+            "comment": "The constructor is defined using generic *args and **kwargs rather than explicitly declaring the required binding parameters (for example, a service client or endpoint). For a public operations class, the constructor should clearly list its required positional parameters per python_design.html#python-client-constructor-form.. Suggest: def __init__(self, client: Any, endpoint: str, **kwargs) -> None:",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1547,
+            "bad_code": "def begin_analyze(self, analyzer_id: str, body: Union[JSON, IO[bytes]] = _Unset, *, url: Optional[str] = ..., **kwargs: Any) -> LROPoller[AnalyzeResult]",
+            "suggestion": "def begin_analyze(self, analyzer_id: str, *, body: Optional[Union[JSON, IO[bytes]]] = None, url: Optional[str] = None, **kwargs: Any) -> LROPoller[AnalyzeResult]:",
+            "comment": "The begin_analyze method accepts both 'body' and 'url', which may confuse developers about their mutual exclusivity. Making them keyword-only with a default of None clarifies usage and improves the API's intuitiveness.. Suggest: def begin_analyze(self, analyzer_id: str, *, body: Optional[Union[JSON, IO[bytes]]] = None, url: Optional[str] = None, **kwargs: Any) -> LROPoller[AnalyzeResult]:",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1517,
-            "bad_code": "def begin_analyze(",
-            "suggestion": "def begin_analyze_from_url(self, analyzer_id: str, url: str, *, content_type: str = 'application/json', **kwargs: Any) -> LROPoller[AnalyzeResult]:",
-            "comment": "The multiple overloads for begin_analyze (handling URL, JSON body, and binary IO) may be confusing. Splitting these into clearly named methods (e.g. begin_analyze_from_url) can improve clarity.",
+            "line_no": 1557,
+            "bad_code": "def begin_analyze_binary(self, analyzer_id: str, input: bytes, **kwargs: Any) -> LROPoller[AnalyzeResult]",
+            "suggestion": "def begin_analyze_binary(self, analyzer_id: str, data: bytes, **kwargs: Any) -> LROPoller[AnalyzeResult]",
+            "comment": "Avoid using 'input' as a parameter name since it shadows the built-in Python function. Renaming it to 'data' (or 'content') will prevent potential confusion.. Suggest: def begin_analyze_binary(self, analyzer_id: str, data: bytes, **kwargs: Any) -> LROPoller[AnalyzeResult]",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1550,
-            "bad_code": "body: Union[JSON, IO[bytes]] = _Unset,",
-            "suggestion": "body: Optional[Union[JSON, IO[bytes]]] = None,",
-            "comment": "Relying on an internal sentinel (_Unset) can be confusing. Using None as the default (or ensuring the sentinel is clearly documented) improves clarity.",
+            "line_no": 1617,
+            "bad_code": "def get_operation_status(self, analyzer_id: str, operation_id: str, **kwargs: Any) -> ResourceOperationStatusContentAnalyzerContentAnalyzerError",
+            "suggestion": "/* Consider using a type alias or simplifying the return type name if possible */",
+            "comment": "The return type is very verbose. Simplifying or aliasing complex type names can make the API more approachable and reduce friction for developers.. Suggest: /* Consider using a type alias or simplifying the return type name if possible */",
             "source": "generic"
         },
         {
-            "rule_ids": [],
-            "line_no": 1560,
-            "bad_code": "input: bytes,",
-            "suggestion": "data: bytes,",
-            "comment": "The parameter name 'input' shadows the built-in input() function. Renaming it to something like 'data' avoids this conflict and follows best practices.",
-            "source": "generic"
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 1642,
+            "bad_code": "def list(self, **kwargs: Any) -> Iterable[ContentAnalyzer]",
+            "suggestion": "def list_analyzers(self, **kwargs: Any) -> Iterable[ContentAnalyzer]",
+            "comment": "Methods that enumerate resources should be prefixed with 'list_'. Renaming the 'list' method to something like 'list_analyzers' would better align with python_design.html#python-paged-prefix.. Suggest: def list_analyzers(self, **kwargs: Any) -> Iterable[ContentAnalyzer]",
+            "source": "guideline"
         },
         {
             "rule_ids": [],
-            "line_no": 1645,
-            "bad_code": "def update(",
-            "suggestion": "def update_from_json(self, analyzer_id: str, resource: JSON, *, content_type: str = 'application/merge-patch+json', **kwargs: Any) -> ContentAnalyzer:",
-            "comment": "Similar to begin_analyze, the update method has several overloads for different resource types. Consider splitting these into separate methods to reduce complexity and help users understand the API.",
+            "line_no": 1675,
+            "bad_code": "def update(self, analyzer_id: str, resource: Union[ContentAnalyzer, JSON, IO[bytes]], **kwargs: Any) -> ContentAnalyzer",
+            "suggestion": "def update(self, analyzer_id: str, resource: Union[ContentAnalyzer, JSON, IO[bytes]], *, content_type: str = 'application/merge-patch+json', **kwargs: Any) -> ContentAnalyzer",
+            "comment": "The overloads for update include an explicit content_type parameter, but the final implementation defers it into **kwargs. Including it explicitly aligns the implementation with its overloads and improves clarity for users.. Suggest: def update(self, analyzer_id: str, resource: Union[ContentAnalyzer, JSON, IO[bytes]], *, content_type: str = 'application/merge-patch+json', **kwargs: Any) -> ContentAnalyzer",
             "source": "generic"
         }
     ]

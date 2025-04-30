@@ -59,8 +59,8 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
         const lastStableApiViewContext = lastStableApiView.stdout;
 
         const lastStableApiViewPath = getApiReviewPath(path.join(packageFolderPath, 'changelog-temp', 'package'));
-        fs.writeFileSync(lastStableApiViewPath, lastStableApiViewContext,{encoding: 'utf-8'});
-        logger.info(`Create Api View file from last stable package successfully`);
+        fs.writeFileSync(lastStableApiViewPath, lastStableApiViewContext, { encoding: 'utf-8' });
+        logger.info(`Create Api View file from the tag ${packageName}_${lastStableVersion} package successfully`);
     } catch (error) {
         logger.error(error);
         logger.error(`Failed to read Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.`);
@@ -69,15 +69,16 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
 
 export function tryCreateLastChangeLog(packageFolderPath: string, packageName: string, version: string, targetChangelogPath: string) {
     logger.info(`Start to get and clone CHANGELOG.md from latest ${packageName} release tag.`);
-    const changelogPathInRepo = path.join(packageFolderPath, "CHANGELOG.md").replace(/\\/g, "/");
+    const targentchangelogPath = packageFolderPath.split("sdk");
+    const changelogPathInRepo = path.join("sdk", targentchangelogPath[targentchangelogPath.length - 1], "CHANGELOG.md").replace(/\\/g, "/");
     const gitCommand = `git --no-pager show ${packageName}_${version}:${changelogPathInRepo}`;
 
     try {
         const latestChangeLog = shell.exec(gitCommand, { silent: true });
         const latestChangeLogContext = latestChangeLog.stdout;
 
-        fs.writeFileSync(targetChangelogPath, latestChangeLogContext,{encoding: 'utf-8'});
-        logger.info(`Create CHANGELOG.md from the latest npm package successfully`);
+        fs.writeFileSync(targetChangelogPath, latestChangeLogContext, { encoding: 'utf-8' });
+        logger.info(`Create CHANGELOG.md from the tag ${packageName}_${version} successfully`);
     } catch (error) {
         logger.error(error);
         logger.error(`Failed to read CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.`)

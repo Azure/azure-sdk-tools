@@ -50,8 +50,8 @@ public sealed class Program
     public static async Task TestAzp()
     {
         var azureService = new AzureService();
-        var searchService = new SearchService(azureService);
-        var azpTool = new AzurePipelinesTool(azureService, searchService)
+        var aiAgentService = new AIAgentService(azureService);
+        var azpTool = new AzurePipelinesTool(azureService, aiAgentService)
         {
             project = "public"
         };
@@ -67,6 +67,10 @@ public sealed class Program
         var ai = new AIAgentService(azureService);
 
         Console.WriteLine("Testing AI Agents Service...");
-        await ai.UploadFileAsync(new MemoryStream(Encoding.UTF8.GetBytes("Test file content")), "test.txt");
+        var filename = "public-4817839-187.txt";
+        var contents = await File.ReadAllTextAsync(filename);
+        var file = await ai.UploadFileAsync(new MemoryStream(Encoding.UTF8.GetBytes(contents)), filename);
+        var response = await ai.QueryFileAsync(filename, "Why did this pipeline fail?");
+        Console.WriteLine(response);
     }
 }

@@ -7,6 +7,7 @@ public interface IAIAgentService
 {
     AgentsClient GetClient();
     Task<VectorStoreFileBatch> UploadFileAsync(Stream contents, string filename);
+    Task<string> QueryFileAsync(string filename, string query);
 }
 
 public class AIAgentService : IAIAgentService
@@ -14,6 +15,7 @@ public class AIAgentService : IAIAgentService
     private readonly string vectorStoreName;
     private string vectorStoreId;
     private readonly AgentsClient client;
+    private readonly string agentId;
 
     public AIAgentService(IAzureService azureService)
     {
@@ -22,6 +24,12 @@ public class AIAgentService : IAIAgentService
         {
             throw new InvalidOperationException("AZURE_AI_PROJECT_CONNECTION_STRING environment variable is not set.");
         }
+        var agentId = System.Environment.GetEnvironmentVariable("AZURE_AI_AGENT_ID");
+        if (string.IsNullOrEmpty(agentId))
+        {
+            throw new InvalidOperationException("AZURE_AI_AGENT_ID environment variable is not set.");
+        }
+        this.agentId = agentId;
         var modelDeploymentName = System.Environment.GetEnvironmentVariable("AZURE_AI_MODEL_DEPLOYMENT_NAME");
         if (string.IsNullOrEmpty(modelDeploymentName))
         {
@@ -52,11 +60,9 @@ public class AIAgentService : IAIAgentService
             throw new ArgumentException($"Filename '{filename}' must have a file extension (*.txt, *.md, ...)", nameof(filename));
         }
 
-        var client = GetClient();
-
         if (string.IsNullOrEmpty(this.vectorStoreId))
         {
-            AgentPageableListOfVectorStore vectors = await client.GetVectorStoresAsync();
+            AgentPageableListOfVectorStore vectors = await this.client.GetVectorStoresAsync();
             var vectorStore = vectors.Data.FirstOrDefault(v => v.Name == this.vectorStoreName);
             if (vectorStore == null)
             {
@@ -65,11 +71,67 @@ public class AIAgentService : IAIAgentService
             this.vectorStoreId = vectorStore.Id;
         }
 
-        AgentFile file = await client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
+        // TODO: handle duplicates/repeats
+        AgentFile file = await this.client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
 
-        return await client.CreateVectorStoreFileBatchAsync(
+        VectorStoreFileBatch batch = await this.client.CreateVectorStoreFileBatchAsync(
             vectorStoreId: this.vectorStoreId,
             fileIds: [file.Id]
         );
+
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
+            batch = await this.client.GetVectorStoreFileBatchAsync(this.vectorStoreId, batch.Id);
+            if (batch.Status == VectorStoreFileBatchStatus.Completed)
+            {
+                break;
+            }
+            else if (batch.Status == VectorStoreFileBatchStatus.Failed)
+            {
+                throw new Exception($"File processing failed for {filename} uploading to vector store {this.vectorStoreId}.");
+            }
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
+
+        return batch;
+    }
+
+    public async Task<string> QueryFileAsync(string filename, string query)
+    {
+        var prompt = $"Looking only in file '{filename}' answer the following: " + query;
+        AgentThread thread = await this.client.CreateThreadAsync();
+
+        Agent agent = await this.client.GetAgentAsync(this.agentId);
+        ThreadRun runResponse = await this.client.CreateRunAsync(thread, agent);
+
+        do
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500));
+            runResponse = await this.client.GetRunAsync(thread.Id, runResponse.Id);
+        }
+        while (runResponse.Status == RunStatus.Queued || runResponse.Status == RunStatus.InProgress);
+
+        PageableList<ThreadMessage> afterRunMessagesResponse = await this.client.GetMessagesAsync(thread.Id);
+        var messages = afterRunMessagesResponse.Data;
+        var response = new List<string>();
+
+        // Note: messages iterate from newest to oldest, with the messages[0] being the most recent
+        foreach (ThreadMessage threadMessage in messages)
+        {
+            foreach (MessageContent contentItem in threadMessage.ContentItems)
+            {
+                if (contentItem is MessageTextContent textItem)
+                {
+                    response.Add(textItem.Text);
+                }
+                else if (contentItem is MessageImageFileContent imageFileItem)
+                {
+                    throw new NotImplementedException("Image file content is not supported yet.");
+                }
+            }
+        }
+
+        return string.Join("\n", response);
     }
 }

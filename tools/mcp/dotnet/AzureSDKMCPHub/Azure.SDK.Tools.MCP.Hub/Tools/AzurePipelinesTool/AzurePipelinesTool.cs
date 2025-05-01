@@ -1,6 +1,4 @@
-﻿#pragma warning disable OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-
-using ModelContextProtocol.Server;
+﻿using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text.Json;
 using Azure.Core;
@@ -11,10 +9,7 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Azure.SDK.Tools.MCP.Hub.Services.Azure;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.SDK.Tools.MCP.Contract;
-using OpenAI;
-using OpenAI.Assistants;
-using OpenAI.Files;
-using System.ClientModel;
+using Azure.AI.Projects;
 
 namespace Azure.SDK.Tools.MCP.Hub.Tools.AzurePipelinesTool;
 
@@ -23,16 +18,11 @@ public class AzurePipelinesTool : MCPHubTool
 {
     public string? project;
 
-    private readonly string model = "gpt-4o";
-
     private readonly BuildHttpClient buildClient;
     private readonly TestResultsHttpClient testClient;
-    private readonly ISearchService searchService;
-    private readonly OpenAIClient oaiClient;
-    private readonly OpenAIFileClient oaiFileClient;
-    private readonly AssistantClient oaiAssistantClient;
+    private readonly IAIAgentService aiAgentService;
 
-    public AzurePipelinesTool(IAzureService azureService, ISearchService searchService)
+    public AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAgentService)
     {
         var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
         var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
@@ -40,27 +30,7 @@ public class AzurePipelinesTool : MCPHubTool
         var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
         this.buildClient = connection.GetClient<BuildHttpClient>();
         this.testClient = connection.GetClient<TestResultsHttpClient>();
-        this.searchService = searchService;
-
-        var apiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_KEY");
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            throw new Exception("AZURE_OPENAI_KEY environment variable is not set.");
-        }
-        var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-        if (string.IsNullOrEmpty(endpoint))
-        {
-            throw new Exception("AZURE_OPENAI_ENDPOINT environment variable is not set.");
-        }
-        this.oaiClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
-        {
-            Endpoint = new Uri(endpoint)
-        });
-
-        this.oaiFileClient = this.oaiClient.GetOpenAIFileClient();
-        this.oaiAssistantClient = this.oaiClient.GetAssistantClient();
-
-        this.model = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_ID") ?? this.model;
+        this.aiAgentService = aiAgentService;
     }
 
     [McpServerTool, Description("Gets details for a pipeline run")]
@@ -172,11 +142,11 @@ public class AzurePipelinesTool : MCPHubTool
         var logContent = await this.buildClient.GetBuildLogLinesAsync(this.project, buildId, logId);
         var logText = string.Join("\n", logContent);
         var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);
+        var filename = $"{this.project}-{buildId}-{logId}.txt";
 
         using var stream = new MemoryStream(logBytes);
 
-        var connectionString = System.Environment.GetEnvironmentVariable("PROJECT_CONNECTION_STRING");
-        var modelDeploymentName = System.Environment.GetEnvironmentVariable("MODEL_DEPLOYMENT_NAME");
+        var file = await this.aiAgentService.UploadFileAsync(stream, filename);
 
         var response = "";
         return string.Join("\n", response);

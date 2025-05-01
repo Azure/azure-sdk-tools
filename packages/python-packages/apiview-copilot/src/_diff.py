@@ -5,7 +5,7 @@ import tempfile
 from typing import Optional
 
 
-def create_diff_with_line_numbers(left: str, right: str) -> str:
+def create_diff_with_line_numbers(*, old: str, new: str) -> str:
     """
     Create a Git-style diff between two files using git diff command, with line numbers prepended.
 
@@ -13,14 +13,14 @@ def create_diff_with_line_numbers(left: str, right: str) -> str:
     For removed (-) lines, prepends the line number in the "old" file.
 
     Args:
-        left: Text of the first file (old version)
-        right: Text of the second file (new version)
+        old: Text of the first file (old version)
+        new: Text of the second file (new version)
 
     Returns:
         The diff as a string with line numbers prepended
     """
     # First, get the regular diff
-    diff_text = create_diff(left, right)
+    diff_text = create_diff(old, new)
     if not diff_text:
         return ""
 
@@ -72,13 +72,13 @@ def create_diff_with_line_numbers(left: str, right: str) -> str:
     return result
 
 
-def create_diff(left_content: str, right_content: str) -> str:
+def create_diff(old_content: str, new_content: str) -> str:
     """
     Create a Git-style diff between two text contents using git diff command.
 
     Args:
-        left_content: Text of the first file (old version)
-        right_content: Text of the second file (new version)
+        old_content: Text of the first file (old version)
+        new_content: Text of the second file (new version)
 
     Returns:
         The diff as a string
@@ -86,11 +86,11 @@ def create_diff(left_content: str, right_content: str) -> str:
     try:
         # Create temporary files
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", delete=False) as left_file:
-            left_file.write(left_content)
+            left_file.write(old_content)
             left_path = left_file.name
 
         with tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", delete=False) as right_file:
-            right_file.write(right_content)
+            right_file.write(new_content)
             right_path = right_file.name
 
         # Run git diff with the desired options

@@ -76,8 +76,9 @@ def local_review(
     else:
         base_apiview = None
 
-    rg = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
-    review = rg.run()
+    reviewer = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
+    review = reviewer.run()
+    reviewer.close()
     output_path = os.path.join("scratch", "output", language)
     os.makedirs(output_path, exist_ok=True)
     output_file = os.path.join(output_path, f"{filename}.json")

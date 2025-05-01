@@ -88,6 +88,12 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
+        self.executor = concurrent.futures.ThreadPoolExecutor()
+
+    def __del__(self):
+        # Ensure the executor is properly shut down
+        if hasattr(self, "executor"):
+            self.executor.shutdown(wait=False)
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
@@ -119,128 +125,198 @@ class ApiViewReview:
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
-    def _generate_summary(self):
-        """
-        Generate a summary of the API view.
-        """
-        print(f"Generating summary...")
+    def _execute_prompt_task(self, *, prompt_path, inputs, task_name, status_idx, status_array):
+        """Execute a single prompt task with status tracking"""
+        status_array[status_idx] = self.PROCESSING
+        print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
 
-        if self.mode == ApiViewReviewMode.FULL:
-            prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_api.prompty")
-            content = self.target
-        elif self.mode == ApiViewReviewMode.DIFF:
-            prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_diff.prompty")
-            content = create_diff_with_line_numbers(old=self.base, new=self.target)
-        else:
-            raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
+        try:
+            # Run the prompt
+            response = self._run_prompt(prompt_path, inputs)
 
-        response = prompty.execute(
-            prompt_path,
-            inputs={
-                "language": self._get_language_pretty_name(),
-                "content": content,
-            },
-        )
-        self.summary = Comment(rule_ids=[], line_no=1, bad_code="", suggestion=None, comment=response, source="summary")
+            # Process result based on task type
+            if task_name == "summary":
+                result = response  # Just return the text
+            else:
+                # Parse JSON for guideline/generic tasks
+                result = json.loads(response)
 
-    def _generate_comment_candidates(self):
+            # Update status and return result
+            status_array[status_idx] = self.SUCCESS
+            print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+            return result
+
+        except Exception as e:
+            status_array[status_idx] = self.FAILURE
+            print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+            logger.error(f"Error executing {task_name}: {str(e)}")
+            return None
+
+    def _generate_comments(self):
         """
-        Generate comments candidates for each section of the document by running sections and prompts in parallel.
+        Generate comments for the API view but submitting jobs in parallel.
         """
+        summary_tag = "summary"
+        guideline_tag = "guideline"
+        generic_tag = "generic"
+
         sectioned_doc = self._create_sectioned_document()
 
-        # Generate comments for each section of the document
-        sections_to_process = []
-        for i, section in enumerate(sectioned_doc):
-            sections_to_process.append((i, section))
+        sections_to_process = [(i, section) for i, section in enumerate(sectioned_doc)]
 
-        print("Evaluating sections: ", end="", flush=True)
-        section_status = [self.PENDING] * len(sections_to_process)
-
-        # Select the appropriate prompty files for the review mode
+        # Select appropriate prompts based on mode
         if self.mode == ApiViewReviewMode.FULL:
-            guideline_prompt_file = f"guidelines_review.prompty"
-            generic_prompt_file = f"generic_review.prompty"
+            guideline_prompt_file = "guidelines_review.prompty"
+            generic_prompt_file = "generic_review.prompty"
+            summary_prompt_file = "summarize_api.prompty"
+            summary_content = self.target
         elif self.mode == ApiViewReviewMode.DIFF:
-            guideline_prompt_file = f"guidelines_diff_review.prompty"
-            generic_prompt_file = f"generic_diff_review.prompty"
+            guideline_prompt_file = "guidelines_diff_review.prompty"
+            generic_prompt_file = "generic_diff_review.prompty"
+            summary_prompt_file = "summarize_diff.prompty"
+            summary_content = create_diff_with_line_numbers(old=self.base, new=self.target)
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
-        # TODO: Refactor this?
+        # Set up progress tracking
+        print("Processing sections: ", end="", flush=True)
+        total_prompts = 1 + (len(sections_to_process) * 2)  # 1 for summary + 2 for each section
+        prompt_status = [self.PENDING] * total_prompts
+
         # Set up keyboard interrupt handler for more responsive cancellation
+        cancel_event = threading.Event()
+        original_handler = signal.getsignal(signal.SIGINT)
+
         def keyboard_interrupt_handler(signal, frame):
             print("\n\nCancellation requested! Terminating process...")
             cancel_event.set()
-            # Exit immediately without further processing
-            os._exit(1)  # Force immediate exit
+            os._exit(1)
 
-        # Flag to indicate cancellation
-        cancel_event = threading.Event()
-        original_handler = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, keyboard_interrupt_handler)
 
-        try:
-            # Process sections in parallel using ThreadPoolExecutor
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Submit all tasks
-                future_to_section = {
-                    executor.submit(
-                        self._process_section_with_retry,
-                        section_info,
-                        self.search.static_guidelines,
-                        cancel_event,
-                        guideline_prompt_file,
-                        generic_prompt_file,
-                        section_status,
-                    ): section_info
-                    for section_info in sections_to_process
-                }
+        # Submit all jobs to the executor
+        all_futures = {}
 
-                # Process results as they complete - silently log errors without terminal output
-                section_results = []
-                try:
-                    for future in concurrent.futures.as_completed(future_to_section):
-                        section_info = future_to_section[future]
-                        try:
-                            result = future.result()
-                            section_results.append(result)
-                        except Exception as e:
-                            i, section = section_info
-                            section_idx = sections_to_process.index((i, section))
-                            section_status[section_idx] = self.FAILURE
-                            print(
-                                "\r" + "Evaluating sections: " + "".join(section_status),
-                                end="",
-                                flush=True,
-                            )
-                            logger.error(f"Error processing section {i}: {str(e)}")
-                            section_results.append((section, None))
-                except KeyboardInterrupt:
-                    # This should not be reached as our signal handler will catch it,
-                    # but just in case the signal handler isn't active
-                    print("\n\nCancellation requested! Terminating process...")
-                    sys.exit(1)  # Force exit without further processing
+        # 1. Summary task
+        all_futures[summary_tag] = self.executor.submit(
+            self._execute_prompt_task,
+            prompt_path=os.path.join(_PROMPTS_FOLDER, summary_prompt_file),
+            inputs={
+                "language": self._get_language_pretty_name(),
+                "content": summary_content,
+            },
+            task_name=summary_tag,
+            status_idx=0,
+            status_array=prompt_status,
+        )
 
-                print()  # Add newline after progress bar is complete
+        # 2. Guideline and generic tasks for each section
+        for idx, (section_idx, section) in enumerate(sections_to_process):
+            # First check if cancellation is requested
+            if cancel_event.is_set():
+                break
 
-        except KeyboardInterrupt:
-            # This should not be reached as our signal handler will catch it,
-            # but just in case the signal handler isn't active
-            print("\n\nCancellation requested! Terminating process...")
-            os._exit(1)  # Force exit without further processing
+            # Prepare context for guideline tasks
+            if self.use_rag:
+                context = self._retrieve_and_resolve_guidelines(str(section))
+                if context:
+                    context_string = context.to_markdown()
+                else:
+                    logger.warning(
+                        f"Failed to retrieve guidelines for section {section_idx}, using static guidelines instead."
+                    )
+                    self.semantic_search_failed = True
+                    context_string = json.dumps(self.search.static_guidelines)
+            else:
+                context_string = json.dumps(self.search.static_guidelines)
 
-        bad_sections = [section for section, section_result in section_results if section_result is None]
-        if len(bad_sections) > 0:
-            print(
-                f"{self.RED_TEXT}WARN: {len(bad_sections)}/{len(sections_to_process)} chunks had errors (see error.log){self.RESET_COLOR}"
+            # Guideline prompt
+            guideline_key = f"{guideline_tag}_{section_idx}"
+            all_futures[guideline_key] = self.executor.submit(
+                self._execute_prompt_task,
+                prompt_path=os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
+                inputs={
+                    "language": self._get_language_pretty_name(),
+                    "context": context_string,
+                    "apiview": section.numbered(),
+                    "diff": section.numbered(),
+                },
+                task_name=guideline_key,
+                status_idx=(idx * 2) + 1,
+                status_array=prompt_status,
             )
 
-        # Merge results from completed sections
-        for section, section_response in section_results:
-            if section_response is not None:
-                section_result = ReviewResult(**section_response)
-                self.results.merge(section_result, section=section)
+            # Generic prompt
+            generic_metadata = self._load_generic_metadata()
+            generic_key = f"{generic_tag}_{section_idx}"
+            all_futures[generic_key] = self.executor.submit(
+                self._execute_prompt_task,
+                prompt_path=os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
+                inputs={
+                    "language": self._get_language_pretty_name(),
+                    "custom_rules": generic_metadata["custom_rules"],
+                    "apiview": section.numbered(),
+                    "diff": section.numbered(),
+                },
+                task_name=generic_key,
+                status_idx=(idx * 2) + 2,
+                status_array=prompt_status,
+            )
+
+        # Process results as they complete
+        try:
+            # Process summary result
+            summary_response = all_futures[summary_tag].result()
+            if summary_response:
+                self.summary = Comment(
+                    rule_ids=[],
+                    line_no=1,
+                    bad_code="",
+                    suggestion=None,
+                    comment=summary_response,
+                    source="summary",
+                )
+
+            # Process each section's results
+            section_results = {}
+
+            for key, future in all_futures.items():
+                if key == summary_tag:
+                    continue  # Already processed
+                try:
+                    result = future.result()
+                    if result:
+                        section_type, section_idx = key.split("_")
+                        section_idx = int(section_idx)
+
+                        # Initialize section result if needed
+                        if section_idx not in section_results:
+                            section_results[section_idx] = {"comments": []}
+
+                        # Add comments from this prompt
+                        if "comments" in result:
+                            # Tag comments with their source
+                            for comment in result["comments"]:
+                                comment["source"] = section_type
+                            section_results[section_idx]["comments"].extend(result["comments"])
+                except Exception as e:
+                    logger.error(f"Error processing {key}: {str(e)}")
+
+            print()  # Add newline after progress indicator
+
+            # Merge results from all sections
+            for section_idx, section_result in section_results.items():
+                if section_result and section_result["comments"]:
+                    section = sections_to_process[section_idx][1]
+                    section_result = ReviewResult(**section_result)
+                    self.results.merge(section_result, section=section)
+        except KeyboardInterrupt:
+            print("\n\nCancellation requested! Terminating process...")
+            cancel_event.set()
+            os._exit(1)
+        finally:
+            # Restore original signal handler
+            signal.signal(signal.SIGINT, original_handler)
 
     def _deduplicate_comments(self):
         """
@@ -273,7 +349,7 @@ class ApiViewReview:
 
             context = self.search.guidelines_for_ids(all_rule_ids)
 
-            response = prompty.execute(prompt_path, inputs={"comments": batch, "context": context})
+            response = self._run_prompt(prompt_path, inputs={"comments": batch, "context": context})
             merge_results = json.loads(response)
             result_comments = merge_results.get("comments", [])
             if len(result_comments) != 1:
@@ -298,40 +374,88 @@ class ApiViewReview:
         # load the language-specific yaml file for the filter
         filter_metadata = self._load_filter_metadata()
         print(f"Filtering results...")
-
-        response_json, filter_success = self._execute_filter_prompt(self.results, filter_prompt_path, filter_metadata)
-
-        # If filter succeeded, extract the "KEEP" comments, otherwise use all comments
-        if filter_success:
-            keep_json = [x for x in response_json["comments"] if x["status"] == "KEEP"]
-            discard_json = [x for x in response_json["comments"] if x["status"] == "REMOVE"]
-        else:
-            # Just include all comments if filtering failed
-            keep_json = [c.model_dump() for c in self.results.comments]
-            discard_json = []
-
+        response = self._run_prompt(
+            filter_prompt_path,
+            inputs={
+                "comments": self.results.comments,
+                "language": self._get_language_pretty_name(),
+                "sample": filter_metadata["sample"],
+                "exceptions": filter_metadata["exceptions"],
+            },
+        )
+        response_json = json.loads(response)
+        keep_json = [x for x in response_json["comments"] if x["status"] == "KEEP"]
+        discard_json = [x for x in response_json["comments"] if x["status"] == "REMOVE"]
+        logger.info(f"Kept {len(keep_json)} comments and discarded {len(discard_json)} comments.")
         self.results = ReviewResult(**{"comments": keep_json})
 
+    def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
+        """
+        Run a prompt with retry logic.
+
+        Args:
+            prompt_path: Path to the prompt file
+            inputs: Dictionary of inputs for the prompt
+            max_retries: Maximum number of retry attempts (default: 5)
+
+        Returns:
+            String result of the prompt execution
+
+        Raises:
+            Exception: If all retry attempts fail
+        """
+
+        def execute_prompt() -> str:
+            return prompty.execute(prompt_path, inputs=inputs)
+
+        def on_retry(exception, attempt, max_attempts):
+            logger.warning(
+                f"Error executing prompt {os.path.basename(prompt_path)}, "
+                f"attempt {attempt+1}/{max_attempts}: {str(exception)}"
+            )
+
+        def on_failure(exception, attempt):
+            logger.error(
+                f"Failed to execute prompt {os.path.basename(prompt_path)} "
+                f"after {attempt} attempts: {str(exception)}"
+            )
+            raise exception
+
+        return retry_with_backoff(
+            func=execute_prompt,
+            max_retries=max_retries,
+            retry_exceptions=(json.JSONDecodeError, Exception),
+            on_retry=on_retry,
+            on_failure=on_failure,
+            logger=logger,
+            description=f"prompt {os.path.basename(prompt_path)}",
+        )
+
     def run(self) -> ReviewResult:
-        print(f"Generating {self._get_language_pretty_name()} review...")
-        start_time = time()
+        try:
+            print(f"Generating {self._get_language_pretty_name()} review...")
+            start_time = time()
 
-        self._generate_summary()
-        self._generate_comment_candidates()
-        self._deduplicate_comments()
-        self._filter_comments()
+            self._generate_comments()
 
-        # Add the summary to the results
-        if self.summary:
-            self.results.comments.append(self.summary)
-        results = self.results.sorted()
-        end_time = time()
+            # 4. Post-processing
+            self._deduplicate_comments()
+            self._filter_comments()
 
-        print(f"Review generated in {end_time - start_time:.2f} seconds.")
-        if self.semantic_search_failed:
-            print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
+            # Add the summary to the results
+            if self.summary:
+                self.results.comments.append(self.summary)
+            results = self.results.sorted()
+            end_time = time()
 
-        return results
+            print(f"Review generated in {end_time - start_time:.2f} seconds.")
+            if self.semantic_search_failed:
+                print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
+
+            return results
+        finally:
+            # Don't close the executor here as it might be needed for future operations
+            pass
 
     def _get_language_pretty_name(self) -> str:
         """
@@ -364,7 +488,7 @@ class ApiViewReview:
             # use a prompt to convert the code snippet to text
             # then do a hybrid search of the guidelines index against this description
             prompt = os.path.join(_PROMPTS_FOLDER, "code_to_text.prompty")
-            response = prompty.execute(prompt, inputs={"question": query})
+            response = self._run_prompt(prompt, inputs={"question": query})
             guideline_results = self.search.search_guidelines(response)
 
             context = self.search.build_context(guideline_results, example_results)
@@ -516,63 +640,61 @@ class ApiViewReview:
         guideline_tag = "guideline"
         generic_tag = "generic"
 
-        # Run both prompts in parallel for this chunk
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as sub_executor:
-            # Set up futures for both prompts
-            futures = {
-                guideline_tag: sub_executor.submit(
-                    prompty.execute,
-                    os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
-                    inputs={
-                        "language": self._get_language_pretty_name(),
-                        "context": context_string,
-                        "apiview": chunk.numbered(),
-                        "diff": chunk.numbered(),
-                    },
-                )
-            }
-
-            generic_metadata = self._load_generic_metadata()
-            futures[generic_tag] = sub_executor.submit(
+        # Set up futures for both prompts
+        futures = {
+            guideline_tag: self.executor.submit(
                 prompty.execute,
-                os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
+                os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
                 inputs={
                     "language": self._get_language_pretty_name(),
-                    "custom_rules": generic_metadata["custom_rules"],
+                    "context": context_string,
                     "apiview": chunk.numbered(),
                     "diff": chunk.numbered(),
                 },
             )
+        }
 
-            # Collect results from all prompts
-            results = {}
-            for key, future in futures.items():
-                try:
-                    # Get the raw result text
-                    result_text = future.result()
+        generic_metadata = self._load_generic_metadata()
+        futures[generic_tag] = self.executor.submit(
+            prompty.execute,
+            os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
+            inputs={
+                "language": self._get_language_pretty_name(),
+                "custom_rules": generic_metadata["custom_rules"],
+                "apiview": chunk.numbered(),
+                "diff": chunk.numbered(),
+            },
+        )
 
-                    # Try to parse as JSON - if this fails, it will be caught and become a retryable error
-                    values = json.loads(result_text)
+        # Collect results from all prompts
+        results = {}
+        for key, future in futures.items():
+            try:
+                # Get the raw result text
+                result_text = future.result()
 
-                    # Only proceed if JSON parsing succeeded
-                    # Tag each comment with the source prompt tag
-                    for item in values.get("comments", []):
-                        item["source"] = key
-                    results[key] = values
-                except json.JSONDecodeError as e:
-                    # Log the specific JSON error and re-raise it
-                    # This will be caught by the _process_chunk method's retry logic
-                    logger.error(
-                        f"JSON decode error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
-                    )
-                    # Re-raise to trigger retry in the parent method
-                    raise
-                except Exception as e:
-                    # For non-JSON errors, log but continue with empty results
-                    logger.error(
-                        f"Error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
-                    )
-                    results[key] = {"comments": []}
+                # Try to parse as JSON - if this fails, it will be caught and become a retryable error
+                values = json.loads(result_text)
+
+                # Only proceed if JSON parsing succeeded
+                # Tag each comment with the source prompt tag
+                for item in values.get("comments", []):
+                    item["source"] = key
+                results[key] = values
+            except json.JSONDecodeError as e:
+                # Log the specific JSON error and re-raise it
+                # This will be caught by the _process_chunk method's retry logic
+                logger.error(
+                    f"JSON decode error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
+                )
+                # Re-raise to trigger retry in the parent method
+                raise
+            except Exception as e:
+                # For non-JSON errors, log but continue with empty results
+                logger.error(
+                    f"Error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
+                )
+                results[key] = {"comments": []}
 
         # Merge the guideline_response and general_response into a single result
         json_response = results.get(guideline_tag, {"comments": []})
@@ -580,39 +702,7 @@ class ApiViewReview:
 
         return json_response
 
-    def _execute_filter_prompt(self, combined_results, filter_prompt_path, filter_metadata):
-        """Execute the filter prompt with retry logic."""
-
-        def run_filter():
-            return json.loads(
-                prompty.execute(
-                    filter_prompt_path,
-                    inputs={
-                        "comments": combined_results,
-                        "language": self._get_language_pretty_name(),
-                        "sample": filter_metadata["sample"],
-                        "exceptions": filter_metadata["exceptions"],
-                    },
-                )
-            )
-
-        def on_final_failure(exception, attempt):
-            print(
-                f"{self.RED_TEXT}WARN: Filter prompt failed after {max_filter_retries} attempts, using unfiltered results.{self.RESET_COLOR}"
-            )
-            return {
-                "comments": [{"original_comment": c.model_dump(), "status": "KEEP"} for c in combined_results.comments]
-            }
-
-        max_filter_retries = 5
-        return (
-            retry_with_backoff(
-                func=run_filter,
-                max_retries=max_filter_retries,
-                retry_exceptions=(json.JSONDecodeError, Exception),
-                on_failure=on_final_failure,
-                logger=logger,
-                description="filter prompt",
-            ),
-            True,
-        )
+    def close(self):
+        """Close resources used by this ApiViewReview instance."""
+        if hasattr(self, "executor"):
+            self.executor.shutdown(wait=True)

@@ -152,8 +152,9 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    ai_review = ApiViewReview(target=query, language=language)
-    review = ai_review.run()
+    reviewer = ApiViewReview(target=query, language=language)
+    review = reviewer.run()
+    reviewer.close()
     return {"response": review.model_dump_json()}
 
 

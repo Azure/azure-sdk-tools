@@ -42,6 +42,7 @@ def api_reviewer(language: str):
         # Create reviewer and get response
         reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview)
         result = reviewer.run()
+        reviewer.close()
 
         # check if "error.log" file exists and is not empty
         if os.path.exists(log_file) and os.path.getsize(log_file) > 0:

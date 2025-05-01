@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             const byte CR = 0x0D, LF = 0x0A, DASH = 0x2D;
 
-            var dst = new byte[src.Length + 64];
+            var dst = new byte[src.Length + 1000];
             int w = 0;
             bool atLineStart = true;
             bool inHeaders = false;

@@ -1,4 +1,5 @@
 using Azure.SDK.Tools.MCP.Hub.Services.Azure;
+using Azure.SDK.Tools.MCP.Hub.Tools.AzurePipelinesTool;
 
 namespace Azure.SDK.Tools.MCP.Hub;
 
@@ -6,6 +7,9 @@ public sealed class Program
 {
     public static void Main(string[] args)
     {
+        var task = TestAzp();
+        task.Wait();
+        return;
         // todo: parse a command bundle here. pass it to CreateHostBuilder once we have an actual type
         // todo: can we have a "start" verb and a <tool> verb? EG if someone calls <server.exe> HelloWorld
         //   "This is a hello world input" -> we invoke just that tool
@@ -13,7 +17,7 @@ public sealed class Program
         var host = CreateAppBuilder(args).Build();
         // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
         // behind a command line flag or we could try to run in both modes at once if possible.
-        //host.MapMcp();
+        host.MapMcp();
         host.Run();
     }
 
@@ -30,10 +34,10 @@ public sealed class Program
 
         builder.Services
             .AddMcpServer()
-            .WithStdioServerTransport()
+            //.WithStdioServerTransport()
             // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
             // behind a command line flag or we could try to run in both modes at once if possible.
-            //.WithHttpTransport()
+            .WithHttpTransport()
             // todo: we can definitely honor the --tools param here to filter down the provided tools
             // for now, lets just use WithtoolsFromAssembly to actually run this thing
             .WithToolsFromAssembly();
@@ -41,4 +45,14 @@ public sealed class Program
         return builder;
     }
 
+    public static async Task TestAzp()
+    {
+        var azureService = new AzureService();
+        var azpTool = new AzurePipelinesTool(azureService);
+        azpTool.project = "public";
+
+        Console.WriteLine("Testing Azure Pipelines Tool...");
+        var output = await azpTool.AnalyzePipelineFailureLog(4815910, 174);
+        Console.WriteLine(output);
+    }
 }

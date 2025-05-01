@@ -1,4 +1,6 @@
-﻿using ModelContextProtocol.Server;
+﻿#pragma warning disable OPENAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+
+using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text.Json;
 using Azure.Core;
@@ -9,18 +11,28 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Azure.SDK.Tools.MCP.Hub.Services.Azure;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.SDK.Tools.MCP.Contract;
+using OpenAI;
+using OpenAI.Assistants;
+using OpenAI.Files;
+using System.ClientModel;
 
 namespace Azure.SDK.Tools.MCP.Hub.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
 public class AzurePipelinesTool : MCPHubTool
 {
-    private string? project;
+    public string? project;
+
+    private readonly string model = "gpt-4o";
 
     private readonly BuildHttpClient buildClient;
     private readonly TestResultsHttpClient testClient;
+    private readonly ISearchService searchService;
+    private readonly OpenAIClient oaiClient;
+    private readonly OpenAIFileClient oaiFileClient;
+    private readonly AssistantClient oaiAssistantClient;
 
-    public AzurePipelinesTool(IAzureService azureService)
+    public AzurePipelinesTool(IAzureService azureService, ISearchService searchService)
     {
         var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
         var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
@@ -28,6 +40,27 @@ public class AzurePipelinesTool : MCPHubTool
         var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
         this.buildClient = connection.GetClient<BuildHttpClient>();
         this.testClient = connection.GetClient<TestResultsHttpClient>();
+        this.searchService = searchService;
+
+        var apiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_KEY");
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            throw new Exception("AZURE_OPENAI_KEY environment variable is not set.");
+        }
+        var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+        if (string.IsNullOrEmpty(endpoint))
+        {
+            throw new Exception("AZURE_OPENAI_ENDPOINT environment variable is not set.");
+        }
+        this.oaiClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
+        {
+            Endpoint = new Uri(endpoint)
+        });
+
+        this.oaiFileClient = this.oaiClient.GetOpenAIFileClient();
+        this.oaiAssistantClient = this.oaiClient.GetAssistantClient();
+
+        this.model = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_ID") ?? this.model;
     }
 
     [McpServerTool, Description("Gets details for a pipeline run")]
@@ -35,7 +68,6 @@ public class AzurePipelinesTool : MCPHubTool
     {
         // _project state changes to the last successful GET to the build api
         var project = this.project ?? "public";
-        Console.WriteLine("BEBRODER IN PIPELINE RUN");
 
         try
         {
@@ -126,13 +158,107 @@ public class AzurePipelinesTool : MCPHubTool
     ")]
     public async Task<string> GetPipelineFailureLog(int buildId, int logId)
     {
-        var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
+        var logContent = await this.buildClient.GetBuildLogLinesAsync(project, buildId, logId);
         var output = new List<string>();
         foreach (var line in logContent)
         {
             output.Add(line);
         }
         return JsonSerializer.Serialize(string.Join("\n", output));
+    }
+
+    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId)
+    {
+        var logContent = await this.buildClient.GetBuildLogLinesAsync(this.project, buildId, logId);
+        var logText = string.Join("\n", logContent);
+        var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);
+
+        using var stream = new MemoryStream(logBytes);
+
+        OpenAIFile logFile = await this.oaiFileClient.UploadFileAsync(
+            stream,
+            $"azure-pipelines-failure-log-{buildId}-{logId}.txt",
+            FileUploadPurpose.Assistants
+        );
+
+        var instructions = "You are an assistant that analyzes Azure Pipelines failure logs." +
+            "You will be provided with a log file from an Azure Pipelines build." +
+            "Your task is to analyze the log and provide a summary of the failure." +
+            "Include relevant data like error type, error messages, functions and error lines." +
+            "Find other log lines in addition to the final error that may be descriptive of the problem." +
+            "Errors like 'Powershell exited with code 1' are not error messages, but the error message may be in the logs above it." +
+            "Provide suggested next steps." +
+            "Respond only in valid JSON, in the following format:" +
+            "{" +
+            "  \"summary\": \"...\"," +
+            "  \"errors\": [" +
+            "    { \"file\": \"...\", \"line\": ..., \"message\": \"...\" }" +
+            "  ]," +
+            "  \"suggested_fix\": \"...\"" +
+            "}" +
+            "";
+
+        AssistantCreationOptions assistantOptions = new()
+        {
+            Name = "Azure Pipelines Log Failure Analyzer",
+            Instructions = instructions,
+            Tools =
+            {
+                new FileSearchToolDefinition(),
+                new CodeInterpreterToolDefinition(),
+            },
+            ToolResources = new()
+            {
+                FileSearch = new()
+                {
+                    NewVectorStores =
+                    {
+                        new VectorStoreCreationHelper([logFile.Id]),
+                    }
+                }
+            },
+        };
+
+        Assistant assistant = await this.oaiAssistantClient.CreateAssistantAsync(this.model, assistantOptions);
+
+        ThreadCreationOptions threadOptions = new()
+        {
+            InitialMessages = { "Analyze the pipeline log for failures and attempt to diagnose them" }
+        };
+
+        ThreadRun threadRun = await this.oaiAssistantClient.CreateThreadAndRunAsync(assistant.Id, threadOptions);
+
+        do
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            threadRun = this.oaiAssistantClient.GetRun(threadRun.ThreadId, threadRun.Id);
+        } while (!threadRun.Status.IsTerminal);
+
+        AsyncCollectionResult<ThreadMessage> messages
+            = this.oaiAssistantClient.GetMessagesAsync(threadRun.ThreadId, new MessageCollectionOptions() { Order = MessageCollectionOrder.Ascending });
+
+        var response = new List<string>();
+
+        await foreach (ThreadMessage message in messages)
+        {
+            response.Add($"[{message.Role.ToString().ToUpper()}]: ");
+            foreach (MessageContent contentItem in message.Content)
+            {
+                if (!string.IsNullOrEmpty(contentItem.Text))
+                {
+                    response.Add($"{contentItem.Text}");
+                    // TODO: handle annotations with multi-file
+                    // TODO: warn on image, etc. content
+                }
+            }
+            response.Add("\n");
+        }
+
+        _ = await this.oaiAssistantClient.DeleteThreadAsync(threadRun.ThreadId);
+        _ = await this.oaiAssistantClient.DeleteAssistantAsync(assistant.Id);
+        _ = await this.oaiFileClient.DeleteFileAsync(logFile.Id);
+
+        return string.Join("\n", response);
     }
 
     public bool IsTestStep(string stepName)

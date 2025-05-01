@@ -8,8 +8,6 @@ import pathlib
 
 from src._search_manager import SearchManager
 from src._apiview_reviewer import (
-    supported_models,
-    DEFAULT_MODEL,
     DEFAULT_USE_RAG,
 )
 
@@ -51,7 +49,6 @@ def local_review(
     language: str,
     target: str,
     base: str = None,
-    model: str = DEFAULT_MODEL,
     use_rag: bool = DEFAULT_USE_RAG,
 ):
     """
@@ -59,7 +56,6 @@ def local_review(
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(language=language, model=model, use_rag=use_rag)
     if base is None:
         filename = os.path.splitext(os.path.basename(target))[0]
     else:
@@ -80,7 +76,8 @@ def local_review(
     else:
         base_apiview = None
 
-    review = rg.get_response(target=target_apiview, base=base_apiview)
+    rg = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
+    review = rg.run()
     output_path = os.path.join("scratch", "output", language)
     os.makedirs(output_path, exist_ok=True)
     output_file = os.path.join(output_path, f"{filename}.json")
@@ -307,13 +304,6 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
-            ac.argument(
-                "model",
-                type=str,
-                help="The model to use for the review",
-                options_list=("--model", "-m"),
-                choices=supported_models,
-            )
             ac.argument(
                 "use_rag",
                 action="store_true",

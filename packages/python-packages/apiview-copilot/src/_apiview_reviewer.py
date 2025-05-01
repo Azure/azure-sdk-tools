@@ -51,20 +51,13 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 
 CREDENTIAL = DefaultAzureCredential()
 
-model_map = {
-    "gpt-4o-mini": "regular",
-    "gpt-4.1-nano": "regular",
-    "gpt-4o": "regular",
-    "gpt-4.1": "regular",
-    "o3": "reasoning",
-    "o3-mini": "reasoning",
-    "o4-mini": "reasoning",
-}
-
-supported_models = [x for x in model_map.keys()]
-
-DEFAULT_MODEL = "o3-mini"
 DEFAULT_USE_RAG = False
+
+
+# create enum for the ReviewMode
+class ApiViewReviewMode:
+    FULL = "full"
+    DIFF = "diff"
 
 
 class ApiViewReview:
@@ -79,15 +72,16 @@ class ApiViewReview:
 
     def __init__(
         self,
+        target: str,
+        base: Optional[str],
         *,
         language: str,
-        model: str = DEFAULT_MODEL,
         use_rag: bool = DEFAULT_USE_RAG,
     ):
-        if model not in supported_models:
-            raise ValueError(f"Model {model} not supported. Supported models are: {', '.join(supported_models)}")
+        self.target = target
+        self.base = base
+        self.mode = ApiViewReviewMode.FULL if base is None else ApiViewReviewMode.DIFF
         self.language = language
-        self.model = model
         self.use_rag = use_rag
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
@@ -106,13 +100,13 @@ class ApiViewReview:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def create_full_review(self, *, target: str) -> ReviewResult:
+    def create_full_review(self) -> ReviewResult:
         print(f"Generating review...")
 
-        logger.info(f"Starting review with model: {self.model}, language: {self.language}")
+        logger.info(f"Starting {self._get_language_pretty_name()} review")
 
         start_time = time()
-        target = self.unescape(target)
+        target = self._unescape(self.target)
         static_guidelines = self.search.static_guidelines
         static_guideline_ids = [x["id"] for x in static_guidelines]
 
@@ -132,13 +126,8 @@ class ApiViewReview:
         print("Processing chunks: ", end="", flush=True)
         chunk_status = [self.PENDING] * len(chunks_to_process)
 
-        prompty_type = model_map[self.model]
-
-        guideline_prompt_file = f"guidelines_review_{prompty_type}.prompty".replace("-", "_")
+        guideline_prompt_file = f"guidelines_review.prompty".replace("-", "_")
         generic_prompt_file = f"generic_review.prompty"
-
-        # set the model name in the env var so we don't need a prompty file per model
-        os.environ["PROMPTY_MODEL_DEPLOYMENT"] = self.model
 
         # Flag to indicate cancellation
         cancel_event = threading.Event()
@@ -248,13 +237,13 @@ class ApiViewReview:
 
         return final_results
 
-    def create_diff_review(self, *, target: str, base: str) -> ReviewResult:
+    def create_diff_review(self) -> ReviewResult:
         print(f"Generating review...")
-        logger.info(f"Starting review with model: {self.model}, language: {self.language}")
+        logger.info(f"Starting {self._get_language_pretty_name()} review")
 
         start_time = time()
-        target = self.unescape(target)
-        base = self.unescape(base)
+        target = self._unescape(self.target)
+        base = self._unescape(self.base)
         diff = create_diff_with_line_numbers(left=base, right=target)
 
         static_guidelines = self.search.static_guidelines
@@ -276,9 +265,6 @@ class ApiViewReview:
         guideline_prompt_file = f"guidelines_diff_review.prompty".replace("-", "_")
         generic_prompt_file = f"generic_diff_review.prompty"
 
-        # set the model name in the env var so we don't need a prompty file per model
-        os.environ["PROMPTY_MODEL_DEPLOYMENT"] = self.model
-
         # Flag to indicate cancellation
         cancel_event = threading.Event()
 
@@ -387,11 +373,11 @@ class ApiViewReview:
 
         return final_results
 
-    def get_response(self, *, target: str, base: Optional[str] = None) -> ReviewResult:
-        if target and base is not None:
-            return self.create_diff_review(target=target, base=base)
-        elif target:
-            return self.create_full_review(target=target)
+    def run(self) -> ReviewResult:
+        if self.mode == ApiViewReviewMode.DIFF:
+            return self.create_diff_review()
+        else:
+            return self.create_full_review()
 
     def _get_language_pretty_name(self) -> str:
         """
@@ -488,7 +474,7 @@ class ApiViewReview:
             """
         return metadata
 
-    def unescape(self, text: str) -> str:
+    def _unescape(self, text: str) -> str:
         return str(bytes(text, "utf-8").decode("unicode_escape"))
 
     def _process_chunk_with_retry(

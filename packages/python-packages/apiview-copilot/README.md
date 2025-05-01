@@ -14,7 +14,7 @@ AZURE_OPENAI_ENDPOINT="..." # The Azure OpenAI endpoint URL
 ```
 
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
-4. Generate a review using `python cli.py review generate --language <lang> --path <path_to_test_file> --model <model> [--chunk-input]`.
+4. Generate a review using `python cli.py review generate --language <lang> --target <path_to_target_file> [--base <path_to_base_file>].
 5. Examine the output under `scratch/output/<lang>/<test_file>.json`.
 
 ## Generating Reviews with RAG
@@ -32,7 +32,7 @@ AZURE_COSMOS_DB_NAME="..."  # The name of the CosmosDB database. Required only f
 ```
 
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
-4. Generate a review using `python cli.py review generate --language <lang> --path <path_to_test_file> --model <model> --use-rag [--chunk-input]`.
+4. Generate a review using `python cli.py review generate --language <lang> --use-rag --target <path_to_target_file> [--base <path_to_base_file>] `.
 5. Examine the output under `scratch/output/<lang>/<test_file>.json`.
 
 ## Creating Reviews with Development Code
@@ -66,4 +66,4 @@ This will dump the results to context.md which you can then view in VSCode with 
 
 ## Documentation
 
-https://apiviewuat.azurewebsites.net/swagger/index.html
+For more information, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).

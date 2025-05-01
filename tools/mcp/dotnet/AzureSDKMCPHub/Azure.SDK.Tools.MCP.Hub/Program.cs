@@ -1,3 +1,4 @@
+using System.Text;
 using Azure.SDK.Tools.MCP.Hub.Services.Azure;
 using Azure.SDK.Tools.MCP.Hub.Tools.AzurePipelinesTool;
 
@@ -7,7 +8,8 @@ public sealed class Program
 {
     public static void Main(string[] args)
     {
-        var task = TestAzp();
+        // var task = TestAzp();
+        var task = TestAI();
         task.Wait();
         return;
         // todo: parse a command bundle here. pass it to CreateHostBuilder once we have an actual type
@@ -48,11 +50,23 @@ public sealed class Program
     public static async Task TestAzp()
     {
         var azureService = new AzureService();
-        var azpTool = new AzurePipelinesTool(azureService);
-        azpTool.project = "public";
+        var searchService = new SearchService(azureService);
+        var azpTool = new AzurePipelinesTool(azureService, searchService)
+        {
+            project = "public"
+        };
 
         Console.WriteLine("Testing Azure Pipelines Tool...");
         var output = await azpTool.AnalyzePipelineFailureLog(4815910, 174);
         Console.WriteLine(output);
+    }
+
+    public static async Task TestAI()
+    {
+        var azureService = new AzureService();
+        var ai = new AIAgentService(azureService);
+
+        Console.WriteLine("Testing AI Agents Service...");
+        await ai.UploadFileAsync(new MemoryStream(Encoding.UTF8.GetBytes("Test file content")), "test.txt");
     }
 }

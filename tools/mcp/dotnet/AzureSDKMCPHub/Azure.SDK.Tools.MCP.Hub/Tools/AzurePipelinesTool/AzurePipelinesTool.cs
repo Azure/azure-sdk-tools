@@ -175,89 +175,10 @@ public class AzurePipelinesTool : MCPHubTool
 
         using var stream = new MemoryStream(logBytes);
 
-        OpenAIFile logFile = await this.oaiFileClient.UploadFileAsync(
-            stream,
-            $"azure-pipelines-failure-log-{buildId}-{logId}.txt",
-            FileUploadPurpose.Assistants
-        );
+        var connectionString = System.Environment.GetEnvironmentVariable("PROJECT_CONNECTION_STRING");
+        var modelDeploymentName = System.Environment.GetEnvironmentVariable("MODEL_DEPLOYMENT_NAME");
 
-        var instructions = "You are an assistant that analyzes Azure Pipelines failure logs." +
-            "You will be provided with a log file from an Azure Pipelines build." +
-            "Your task is to analyze the log and provide a summary of the failure." +
-            "Include relevant data like error type, error messages, functions and error lines." +
-            "Find other log lines in addition to the final error that may be descriptive of the problem." +
-            "Errors like 'Powershell exited with code 1' are not error messages, but the error message may be in the logs above it." +
-            "Provide suggested next steps." +
-            "Respond only in valid JSON, in the following format:" +
-            "{" +
-            "  \"summary\": \"...\"," +
-            "  \"errors\": [" +
-            "    { \"file\": \"...\", \"line\": ..., \"message\": \"...\" }" +
-            "  ]," +
-            "  \"suggested_fix\": \"...\"" +
-            "}" +
-            "";
-
-        AssistantCreationOptions assistantOptions = new()
-        {
-            Name = "Azure Pipelines Log Failure Analyzer",
-            Instructions = instructions,
-            Tools =
-            {
-                new FileSearchToolDefinition(),
-                new CodeInterpreterToolDefinition(),
-            },
-            ToolResources = new()
-            {
-                FileSearch = new()
-                {
-                    NewVectorStores =
-                    {
-                        new VectorStoreCreationHelper([logFile.Id]),
-                    }
-                }
-            },
-        };
-
-        Assistant assistant = await this.oaiAssistantClient.CreateAssistantAsync(this.model, assistantOptions);
-
-        ThreadCreationOptions threadOptions = new()
-        {
-            InitialMessages = { "Analyze the pipeline log for failures and attempt to diagnose them" }
-        };
-
-        ThreadRun threadRun = await this.oaiAssistantClient.CreateThreadAndRunAsync(assistant.Id, threadOptions);
-
-        do
-        {
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            threadRun = this.oaiAssistantClient.GetRun(threadRun.ThreadId, threadRun.Id);
-        } while (!threadRun.Status.IsTerminal);
-
-        AsyncCollectionResult<ThreadMessage> messages
-            = this.oaiAssistantClient.GetMessagesAsync(threadRun.ThreadId, new MessageCollectionOptions() { Order = MessageCollectionOrder.Ascending });
-
-        var response = new List<string>();
-
-        await foreach (ThreadMessage message in messages)
-        {
-            response.Add($"[{message.Role.ToString().ToUpper()}]: ");
-            foreach (MessageContent contentItem in message.Content)
-            {
-                if (!string.IsNullOrEmpty(contentItem.Text))
-                {
-                    response.Add($"{contentItem.Text}");
-                    // TODO: handle annotations with multi-file
-                    // TODO: warn on image, etc. content
-                }
-            }
-            response.Add("\n");
-        }
-
-        _ = await this.oaiAssistantClient.DeleteThreadAsync(threadRun.ThreadId);
-        _ = await this.oaiAssistantClient.DeleteAssistantAsync(assistant.Id);
-        _ = await this.oaiFileClient.DeleteFileAsync(logFile.Id);
-
+        var response = "";
         return string.Join("\n", response);
     }
 

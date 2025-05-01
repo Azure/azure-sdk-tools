@@ -16,5 +16,6 @@ namespace Azure.SDK.Tools.MCP.Contract
     public abstract class MCPHubTool : MCToolInterface
     {
         // does McpServerToolType take care of everything here? do we even need anything?
+
     }
 }

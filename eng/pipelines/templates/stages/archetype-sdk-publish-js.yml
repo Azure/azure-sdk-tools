@@ -58,10 +58,6 @@ extends:
                     echo "##vso[task.setvariable variable=Tag;isOutput=true]$(Tag)"
                   name: SetTag
                   displayName: Move artifact to $(Build.ArtifactStagingDirectory)
-                - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
-                  parameters:
-                    ArtifactName: ${{ parameters.ArtifactName }}
-                    ArtifactPath: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
 
             - template: /eng/common/pipelines/templates/jobs/npm-release-task.yml
               parameters:

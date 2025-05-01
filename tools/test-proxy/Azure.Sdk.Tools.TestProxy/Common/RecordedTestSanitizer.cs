@@ -168,7 +168,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             var parsed = int.TryParse(h.Value[0], out var contentLength);
                             if (parsed && contentLength != newBody.Length)
                             {
-                                newValue = new StringValues(newBody.Length.ToString());;
+                                newValue = new StringValues(newBody.Length.ToString());
                             }
                         }
                         var headerLine = $"{h.Key}: {newValue}\r\n";

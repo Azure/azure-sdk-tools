@@ -87,6 +87,7 @@ class ApiViewReview:
         self.semantic_search_failed = False
         static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
+        self.summary = None
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
@@ -117,6 +118,30 @@ class ApiViewReview:
             return SectionedDocument(lines=create_diff_with_line_numbers(old=self.base, new=self.target).splitlines())
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
+
+    def _generate_summary(self):
+        """
+        Generate a summary of the API view.
+        """
+        print(f"Generating summary...")
+
+        if self.mode == ApiViewReviewMode.FULL:
+            prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_api.prompty")
+            content = self.target
+        elif self.mode == ApiViewReviewMode.DIFF:
+            prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_diff.prompty")
+            content = create_diff_with_line_numbers(old=self.base, new=self.target)
+        else:
+            raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
+
+        response = prompty.execute(
+            prompt_path,
+            inputs={
+                "language": self._get_language_pretty_name(),
+                "content": content,
+            },
+        )
+        self.summary = Comment(rule_ids=[], line_no=1, bad_code="", suggestion=None, comment=response, source="summary")
 
     def _generate_comment_candidates(self):
         """
@@ -291,9 +316,14 @@ class ApiViewReview:
         print(f"Generating {self._get_language_pretty_name()} review...")
         start_time = time()
 
+        self._generate_summary()
         self._generate_comment_candidates()
         self._deduplicate_comments()
         self._filter_comments()
+
+        # Add the summary to the results
+        if self.summary:
+            self.results.comments.append(self.summary)
         results = self.results.sorted()
         end_time = time()
 

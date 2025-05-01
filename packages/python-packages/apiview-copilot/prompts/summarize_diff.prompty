@@ -1,6 +1,6 @@
 ---
 name: Summarize APIView Diff
-description: A prompt that summarized the changes in an APIView diff to create a general comment.
+description: A prompt that summarizes the changes in an APIView diff to create a general comment.
 authors:
   - tjprescott
 version: 1.0.0
@@ -17,7 +17,7 @@ model:
     max_completion_tokens: 80000
     reasoning_effort: "high"
 sample:
-  diff: |
+  content: |
     ```python
     4:  namespace azure.keyvault.secrets
     5:  	
@@ -74,5 +74,5 @@ system:
 user:
   Summarize the following APIView diff for the {{language}} architects.
   ```{{language}}
-  {{diff}}
+  {{content}}
   ```

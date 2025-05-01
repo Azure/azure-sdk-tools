@@ -66,6 +66,7 @@ extends:
                   path: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
                 PathToArtifacts: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
                 Registry: 'https://registry.npmjs.org/'
+                TopLevelArtifactName: ${{ parameters.ArtifactName }}
                 VarDependencies:
                   Tag: "$[dependencies.PrePublish.outputs['SetTag.Tag']]"
                 DependsOn:

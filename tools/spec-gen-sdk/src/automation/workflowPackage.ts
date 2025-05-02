@@ -11,6 +11,7 @@ import {
 } from './workflow';
 import { getLanguageByRepoName } from './entrypoint';
 import { CommentCaptureTransport } from './logging';
+import { toolWarning } from '../utils/messageUtils';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
@@ -43,7 +44,6 @@ const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: Package
   }
 
   context.logger.log('section', 'Call BuildScript');
-
   await runSdkAutoCustomScript(context, runOptions, {
     cwd: context.config.localSdkRepoPath,
     fallbackName: 'Build',
@@ -77,7 +77,6 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
       statusContext: pkg
     });
     context.logger.remove(changeLogCaptureTransport);
-
     setSdkAutoStatus(pkg, result);
     if (result !== 'failed') {
       for (const changelog of pkg.changelogs) {
@@ -105,7 +104,7 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
     if (fs.existsSync(path.join(context.config.localSdkRepoPath, searchOption.searchFolder))) {
       folders.push(searchOption.searchFolder);
     } else {
-      context.logger.warn(`Skip artifact folder because it doesn't exist: ${searchOption.searchFolder}`);
+      context.logger.warn(toolWarning(`Skip artifact folder because it doesn't exist: ${searchOption.searchFolder}`));
     }
   }
 

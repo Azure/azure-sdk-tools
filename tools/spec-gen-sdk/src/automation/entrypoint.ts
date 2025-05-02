@@ -21,6 +21,7 @@ import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog, saveVsoLo
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 import { extractPathFromSpecConfig } from '../utils/utils';
+import { toolError } from '../utils/messageUtils';
 
 interface SdkAutoOptions {
   specRepo: RepoKey;
@@ -29,7 +30,7 @@ interface SdkAutoOptions {
   localSpecRepoPath: string;
   localSdkRepoPath: string;
   tspConfigPath?: string;
-  readmePath?: string;  
+  readmePath?: string;
   pullNumber?: string;
   apiVersion?: string;
   runMode: string;
@@ -100,7 +101,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     rmSync(vsoLogFileName);
   }
   logger.add(loggerFileTransport(fullLogFileName));
-  logger.info(`Log to ${fullLogFileName}`);
+  logger.info(`Log to ${fullLogFileName}, spec-gen-sdk version: ${options.version}`);
   const localSpecConfigPath = path.join(options.localSpecRepoPath, specConfigPath);
   const specConfigContent = loadConfigContent(localSpecConfigPath, logger);  
   const specRepoConfig = getSpecConfig(specConfigContent, options.specRepo);
@@ -133,10 +134,10 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     await workflowMain(workflowContext);
   } catch (e) {
     if (workflowContext) {
-      const message = `Refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
+      const message = "Refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.";
       sdkContext.logger.error(message);
       workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
-      setFailureType(workflowContext, FailureType.PipelineFrameworkFailed);
+      setFailureType(workflowContext, FailureType.SpecGenSdkFailed);
       workflowContext.messages.push(e.message);
       vsoLogError(workflowContext, message);
       if (e.stack) {
@@ -183,7 +184,7 @@ export const loadConfigContent = (fileName: string, logger: winston.Logger) => {
     return result;
   }
   catch (error) {
-    logger.error(`IOError: Fails to read config [${fileName}]'. Please ensure the spec config exists with the correct path and the content is valid. Error: ${error.message}`);
+    logger.error(toolError(`Fails to read config [${fileName}]'. Please ensure the spec config exists with the correct path and the content is valid. Error: ${error.message}`));
     throw error;
   }
 };
@@ -206,11 +207,11 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
     sdkRepositoryMappings = specRepoConfig.overrides[`${specRepo.owner}/${specRepo.name}`]?.sdkRepositoryMappings ?? specRepoConfig.overrides[`Azure/${specRepo.name}`]?.sdkRepositoryMappings;
   }
   if (!sdkRepositoryMappings) {
-    throw new Error(`ConfigError: SDK repository mappings cannot be found in SpecConfig for ${specRepo.owner}/${specRepo.name}. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
+    throw new Error(toolError(`SDK repository mappings cannot be found in SpecConfig for ${specRepo.owner}/${specRepo.name}. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`));
   }
   let sdkRepoConfig = sdkRepositoryMappings[sdkName];
   if (sdkRepoConfig === undefined) {
-    throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
+    throw new Error(toolError(`SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`));
   }
 
   if (typeof sdkRepoConfig === 'string') {

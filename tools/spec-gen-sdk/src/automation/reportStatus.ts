@@ -13,6 +13,7 @@ import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { marked } from "marked";
 import { vsoLogError, vsoLogWarning } from './entrypoint';
+import { toolError, toolWarning } from '../utils/messageUtils';
 
 const commentLimit = 60;
 
@@ -27,6 +28,8 @@ export const generateReport = (context: WorkflowContext) => {
   let areBreakingChangeSuppressed = false;
   let shouldLabelBreakingChange = false;
   let markdownContent = '';
+  let message = "";
+  let isTypeSpec = false;
   for (const pkg of context.handledPackages) {
     setSdkAutoStatus(context, pkg.status);
     hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
@@ -64,7 +67,18 @@ export const generateReport = (context: WorkflowContext) => {
     markdownContent += `## Is Beta Management SDK\n${pkg.isBetaMgmtSdk}\n`;
     markdownContent += `## Has Suppressions\n${hasSuppressions}\n`;
     markdownContent += `## Has Absent Suppressions\n${hasAbsentSuppressions}\n\n`;
-    context.logger.info(`package [${pkg.name}] hasBreakingChange [${pkg.hasBreakingChange}] isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
+    isTypeSpec = pkg.typespecProject !== undefined;
+    context.logger.info(
+      `package [${pkg.name}] ` +
+      `result [${pkg.status}] ` +
+      `language [${pkg.language}] ` +
+      `isTypeSpec [${isTypeSpec}] ` +
+      `hasBreakingChange [${pkg.hasBreakingChange}] ` +
+      `isDataPlane [${pkg.isDataPlane}] ` +
+      `isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] ` +
+      `hasSuppressions [${hasSuppressions}] ` +
+      `hasAbsentSuppressions [${hasAbsentSuppressions}]`
+    );
   }
 
   if (context.config.pullNumber && markdownContent) {
@@ -79,8 +93,9 @@ export const generateReport = (context: WorkflowContext) => {
       writeFileSync(markdownFilePath, markdownContent);
       vsoAddAttachment(`Generation Summary for ${specConfigPath}`, markdownFilePath);
     } catch (e) {
-      context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
-      vsoLogError(context, `IOError: Fails to write markdown file. Details: ${e}`);
+      message = toolError(`Fails to write markdown file. Details: ${e}`);
+      context.logger.error(message);
+      vsoLogError(context, message);
     }
   }
 
@@ -95,7 +110,6 @@ export const generateReport = (context: WorkflowContext) => {
     ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})
   };
 
-  let message = "";
   deleteTmpJsonFile(context, 'execution-report.json');
   writeTmpJsonFile(context, 'execution-report.json', executionReport);
   if (context.status === 'failed') {
@@ -104,7 +118,7 @@ export const generateReport = (context: WorkflowContext) => {
     vsoLogError(context, message);
   } 
   else if (context.status === 'notEnabled') {
-    message = `SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`;
+    message = toolWarning(`SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`);
     context.logger.warn(message);
     vsoLogWarning(context, message);
   } else {
@@ -121,7 +135,8 @@ export const saveVsoLog = (context: WorkflowContext) => {
     const content = JSON.stringify(mapToObject(context.vsoLogs), null, 2);
     writeFileSync(context.vsoLogFileName, content);
   } catch (error) {
-    context.logger.error(`IOError: Fails to write log to ${vsoLogFileName}. Details: ${error}`);
+    const message = toolError(`Fails to write log to ${vsoLogFileName}. Details: ${error}`);
+    context.logger.error(message);
     return
   }
   context.logger.log('endsection', `Save log to ${vsoLogFileName}`);
@@ -135,10 +150,12 @@ export const saveFilteredLog = (context: WorkflowContext) => {
   let showLiteInstallInstruction = false;
   let hasSuppressions = false
   let hasAbsentSuppressions = false;
+  let message = "";
   if (context.pendingPackages.length > 0) {
     setSdkAutoStatus(context, 'failed');
-    setFailureType(context, FailureType.PipelineFrameworkFailed);
-    context.logger.error(`GenerationError: The following packages are still pending.`);
+    setFailureType(context, FailureType.SpecGenSdkFailed);
+    message = toolError(`The following packages are still pending in code generation.`);
+    context.logger.error(message);
     for (const pkg of context.pendingPackages) {
       context.logger.error(`\t${pkg.name}`);
       context.handledPackages.push(pkg);
@@ -180,8 +197,9 @@ export const saveFilteredLog = (context: WorkflowContext) => {
     const content = JSON.stringify(filteredResultData);
     writeFileSync(context.filteredLogFileName, content);
   } catch (error) {
-    context.logger.error(`IOError: Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
-    vsoLogError(context, `IOError: Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
+    message = toolError(`Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
+    context.logger.error(message);
+    vsoLogError(context, message);
   }
 
   context.logger.log('endsection', 'Save filtered log status');
@@ -219,8 +237,9 @@ export const generateHtmlFromFilteredLog = (context: WorkflowContext) => {
       context.logger.info(`Writing html to ${context.htmlLogFileName}`);
       writeFileSync(context.htmlLogFileName, generatedHtml , "utf-8");
     } catch (error) {
-        context.logger.error(`Error: failed to generate html log'${context.htmlLogFileName}', Details: ${error}`)
-        vsoLogError(context, `Error: failed to generate html log'${context.htmlLogFileName}', Details: ${error}`);
+      const message = toolError(`Fails to generate html log '${context.htmlLogFileName}'. Details: ${error}`);
+      context.logger.error(message);
+      vsoLogError(context, message);
     }
 
     context.logger.log('endsection', 'Generate HTML from filtered log');

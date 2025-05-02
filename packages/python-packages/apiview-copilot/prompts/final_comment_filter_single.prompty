@@ -10,17 +10,18 @@ model:
   configuration:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
-    azure_deployment: o3-mini
+    azure_deployment: gpt-4.1
     api_version: 2025-01-01-preview
   parameters:
+    temperature: 0.7
+    top_p: 0.95
     stop: []
     frequency_penalty: 0
     presence_penalty: 0
-    max_completion_tokens: 80000
-    reasoning_effort: "high"
-    response_format: ${file:filtered_result_schema.json}
+    max_tokens: 16384
+    response_format: ${file:filtered_result_schema_single.json}
 sample:
-  language: python
+  language: Python
   exceptions: |
     1. Comment on the `send_request` method
     2. Suggest changes to class inheritance patterns
@@ -40,42 +41,23 @@ sample:
     16. Comments about not using the non-standard namespace declaration
     17. Comment on the overuse of **kwargs
     18. Comment on class names being prefixed by the full module name
-  comments: |
+  content: |
     {
-      "comments": [
-        {
-          "line_no": 2,
-          "bad_code": "def method1(self, arg1: str) -> None",
-          "suggestion": "",
-          "comment": "Methods should have descriptive docstrings",
-          "source": "generic"
-        },
-        {
-          "line_no": 2,
-          "bad_code": "def method1(self, arg1: str) -> None",
-          "suggestion": "`def method1(self, arg1: str) -> None:`",
-          "comment": "Methods should end with a colon",
-          "source": "generic"
-        },
-        {
-          "line_no": 2,
-          "bad_code": "def method1(self, arg1: str) -> None",
-          "suggestion": "def get_something(self, name: str) -> None",
-          "comment": "Method name should be more descriptive"
-          "source": "generic"
-        }
-      ]
+      "line_no": 2,
+      "bad_code": "def method1(self, arg1: str) -> None",
+      "suggestion": "",
+      "comment": "Methods should have descriptive docstrings",
+      "source": "generic"
     }
-  sample: ""
 ---
 system:
   You are a helpful AI that reviews {{language}} API design comments from another AI. Your role is to filter out any comments that violate a set of known exceptions. You will receive:
-  1. The proposed comments to review
+  1. A proposed comment to review
   2. The exceptions that must be followed
 
   # EXCEPTIONS
   
-  You MUST remove any comments that:
+  You MUST remove any comment that:
   {{exceptions}}
 
   # OUTPUT REQUIREMENTS
@@ -87,30 +69,27 @@ system:
   - For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
 
 user:
-  Please validate the following review against the exceptions:
+  Please validate the following comment against the exceptions:
 
-  Proposed Review Comments:
+  Proposed Comment:
   ```json
-  {{comments}}
+  {{content}}
   ```
 
 assistant: |
-  I will analyze each comment in the review results and:
+  I will analyze this comment and:
 
   1. Check if it violates any of the validation rules by focusing on the content in the `comment` field, not other fields.
-  2. Flag any comments' `status` field as "REMOVE" that violate the exceptions
-  3. Flag any comments' `status` field as "KEEP" that enhance API design
+  2. Flag the comment's `status` field as "REMOVE" if it violates the exceptions
+  3. Flag the comment's `status` field as "KEEP" if it enhances API design
   4. For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
 
-  For each comment I will:
+  For this comment I will:
   - Verify it doesn't comment on excluded aspects
   - Ensure it focuses on API design quality
   - Validate it improves developer experience
   - Confirm it aligns with {{language}} best practices
 
   The response will maintain the schema structure with:
-  - A list of comments
-  - Each comment containing line_no, bad_code, suggestion, and comment identical to the original
-  - Each comment will include new fields `status` and `status_reason` to indicate whether it was kept or removed and the reason for that decision.
-
-{{sample}}
+  - The comment will contain `line_no`, `bad_code`, `suggestion`, and `comment` identical to the original
+  - The comment will include new fields `status` and `status_reason` to indicate whether it was kept or removed and the reason for that decision.

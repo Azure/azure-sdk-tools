@@ -1,104 +1,22 @@
 {
     "comments": [
         {
-            "rule_ids": [
-                "python_design.html#python-client-connection-string"
-            ],
-            "line_no": 10,
-            "bad_code": "connection_string: Optional[str] = None,",
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
             "suggestion": null,
-            "comment": "The constructor should not accept a connection_string parameter; use a separate factory method (from_connection_string) instead.",
+            "comment": "Here is a summary of the service described by this APIView:\n\nOverview  \nThis API provides image analysis capabilities that enable the extraction and interpretation of various visual features from images provided as byte streams or via URLs. The service supports a range of analysis types including caption generation, dense captioning, object and person detection, optical character recognition, smart cropping, and tagging. It is designed with distributed tracing support and leverages context management for resource handling.\n\nAPI Version  \nThe API clients accept an `api_version` parameter during initialization. Although no dedicated API version object is defined in this view, the version is configurable through the client.\n\nPrimary Client Classes  \nThe API exposes a synchronous client class, `ImageAnalysisClient`, and an asynchronous client class, `AsyncImageAnalysisClient`. The `ImageAnalysisClient` offers the following methods: `__init__`, `analyze`, `analyze_from_url`, `close`, and `send_request`. The `AsyncImageAnalysisClient` provides analogous methods: `__init__`, `analyze`, `analyze_from_url`, `close`, and a static `send_request`.\n\nOther Classes and Models  \nSupporting models are organized under the `models` namespace and represent the structure of analysis results and image components. These include classes such as `CaptionResult`, `CropRegion`, `DenseCaption`, `DenseCaptionsResult`, `DetectedObject`, `detectedPerson`, `DetectedTag`, `DetectedTextBlock`, `DetectedTextLine`, `DetectedTextWord`, `ImageAnalysisResult`, `ImageBoundingBox`, `ImageMetadata`, `ImagePoint`, `ObjectsResult`, `PeopleResult`, `ReadResult`, `SmartCropsResult`, and `TagsResult`. Additionally, the `VisualFeatures` enumeration lists available visual feature types including `CAPTION`, `DENSE_CAPTIONS`, `OBJECTS`, `PEOPLE`, `READ`, `SMART_CROPS`, and `tags`.\n\nAdditional Details  \nThe clients implement context management protocols (with `ImageAnalysisClient` as a `ContextManager` and `AsyncImageAnalysisClient` as an `AsyncContextManager`) to manage resource lifecycles. Decorators for distributed tracing (`@distributed_trace` and `@distributed_trace_async`) are used to support observability within distributed environments. The model classes inherit from `MutableMapping`, offering flexible access to their properties, and support multiple construction patterns either via explicit parameters or mappings.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-kwargs"
+            ],
+            "line_no": 34,
+            "bad_code": "         gender_neutral_caption: Optional[bool] = ...,",
+            "suggestion": "         *, gender_neutral_caption: Optional[bool] = ...,",
+            "comment": "Optional parameters should be keyword-only; insert a '*' to separate positional from keyword-only arguments.",
             "source": "guideline"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 168,
-            "bad_code": "ivar list: List[DenseCaption]",
-            "suggestion": "ivar captions: List[DenseCaption]",
-            "comment": "Avoid using 'list' as an attribute name since it shadows the built-in; use a more descriptive name.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-type-naming"
-            ],
-            "line_no": 209,
-            "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
-            "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedPerson(MutableMapping[str, Any]):",
-            "comment": "Class names should use PascalCase according to naming conventions.",
-            "source": "merged"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 409,
-            "bad_code": "ivar list: List[DetectedObject]",
-            "suggestion": "ivar objects: List[DetectedObject]",
-            "comment": "Rename the 'list' attribute to avoid shadowing the built-in type and to better reflect its contents.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-properties"
-            ],
-            "line_no": 411,
-            "bad_code": "def get_result(self) -> ObjectsResult",
-            "suggestion": null,
-            "comment": "Replace simple getter methods with properties to adhere to Python's codestyle guidelines. Additionally, since accessor methods like get_result may be redundant with existing interfaces such as MutableMapping, consider removing them to streamline the API.",
-            "source": "merged"
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-properties"
-            ],
-            "line_no": 413,
-            "bad_code": "def set_result(self, obj) -> None",
-            "suggestion": null,
-            "comment": "Avoid simple setter methods; use a property with a setter instead.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-models-async"
-            ],
-            "line_no": 432,
-            "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
-            "suggestion": null,
-            "comment": "Models should not be duplicated in the aio namespace; reuse the model from the root namespace.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 433,
-            "bad_code": "ivar list: List[detectedPerson]",
-            "suggestion": "ivar people: List[DetectedPerson]",
-            "comment": "Avoid using 'list' as an attribute name and ensure that type names follow CamelCase.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 492,
-            "bad_code": "ivar list: List[DetectedTag]",
-            "suggestion": "ivar tags: List[DetectedTag]",
-            "comment": "Avoid using the built-in name 'list' for an instance variable; renaming it to 'tags' clarifies intent and prevents shadowing.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 498,
-            "bad_code": "list: List[DetectedTag]",
-            "suggestion": "tags: List[DetectedTag]",
-            "comment": "Rename the parameter 'list' to 'tags' to avoid conflict with Python's built-in and to clearly convey its purpose.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-models-enum-name-uppercase"
-            ],
-            "line_no": 517,
-            "bad_code": "tags = 'tags'",
-            "suggestion": "TAGS = 'tags'",
-            "comment": "Enum member names should be uppercase for consistency. Rename 'tags' to 'TAGS'.",
-            "source": "merged"
         }
     ]
 }

@@ -154,6 +154,13 @@ class ReviewResult(BaseModel):
         """
         self.comments.sort(key=lambda x: x.line_no)
 
+    def sorted(self) -> "ReviewResult":
+        """
+        Return a sorted list of comments.
+        """
+        self.sort()
+        return self
+
     def _validate(self, *, item: Comment, section: Section) -> bool:
         """
         Validate a comment against a section of code.

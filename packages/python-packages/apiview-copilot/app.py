@@ -32,7 +32,6 @@ def api_reviewer(language: str):
         # check for the new key "target"; otherwise fall back to the old value "content"
         target_apiview = data.get("target", data.get("content", None))
         base_apiview = data.get("base", None)
-        apiview_diff = data.get("diff", None)
 
         if not target_apiview:
             return jsonify({"error": "No API content provided"}), 400
@@ -41,8 +40,9 @@ def api_reviewer(language: str):
         print(f"Processing {language} API review, content length: {len(target_apiview)}")
 
         # Create reviewer and get response
-        reviewer = ApiViewReview(language=language)
-        result = reviewer.get_response(target=target_apiview, base=base_apiview, diff=apiview_diff)
+        reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview)
+        result = reviewer.run()
+        reviewer.close()
 
         # check if "error.log" file exists and is not empty
         if os.path.exists(log_file) and os.path.getsize(log_file) > 0:

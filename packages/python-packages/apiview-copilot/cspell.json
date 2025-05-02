@@ -9,21 +9,35 @@
     "**/__pycache__/**"
   ],
   "words": [
+    "apiview",
+    "apiviewcopilot",
+    "apiviews",
+    "appsetting",
     "archagent",
-    "guidelines",
-    "vectorizable",
-    "textvector",
-    "pyenv",
     "asyncio",
+    "contoso",
+    "docstrings",
+    "dotenv",
+    "evals",
+    "guidelines",
+    "imageanalysis",
+    "ivar",
     "jsonable",
     "jsonify",
+    "kristapratico",
+    "levelname",
     "loadenv",
-    "dotenv",
-    "prompty",
-    "appsetting",
-    "apiview",
     "popleft",
-    "retryable"
+    "prompty",
+    "pyenv",
+    "reranker",
+    "retryable",
+    "textvector",
+    "tjprescott",
+    "vectorizable"
   ],
-  "dictionaries": ["python", "softwareTerms"]
+  "dictionaries": [
+    "python",
+    "softwareTerms"
+  ]
 }

@@ -3,11 +3,12 @@ import os
 from pprint import pprint
 import sys
 import aiohttp
+from typing import Optional
 
 BASE_API_ENDPOINT = "https://apiview-gpt.azurewebsites.net"
 
 
-async def generate_remote_review(query: str, language: str) -> str:
+async def generate_remote_review(*, target: str, base: Optional[str], language: str) -> str:
     """
     Sends the query to the API endpoint with the language as a path parameter and awaits the response.
     """
@@ -19,7 +20,7 @@ async def generate_remote_review(query: str, language: str) -> str:
     async with aiohttp.ClientSession(timeout=timeout) as session:
         try:
             print(f"Sending request to {api_endpoint}...")
-            async with session.post(api_endpoint, json={"target": query}) as response:
+            async with session.post(api_endpoint, json={"target": target, "base": base}) as response:
                 if response.status == 200:
                     print("Request successful, waiting for response...")
                     # Already parsed as JSON by response.json()

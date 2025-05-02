@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.7.1 (05-02-2025)
+Display Namespace name in APIView when present in tspconfig.yaml.
+
 ## Version 0.7.0 (04-03-2025)
 Support new TypeSpec compiler.
 

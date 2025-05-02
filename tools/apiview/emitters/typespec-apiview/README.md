@@ -98,6 +98,10 @@ is not required for single-version specs. For multi-versioned specs, the unproje
 be rendered if this is not supplied. For multi-service specs, this option cannot be supplied
 unless the `service` option is also set.
 
+## Developing the Emitter
+
+If you are developing or debugging the emitter, see the [CONTRIBUTING.md](./CONTRIBUTING.md) file for detailed instructions.
+
 ## See also
 
 - [TypeSpec Getting Started](https://github.com/microsoft/typespec#getting-started)

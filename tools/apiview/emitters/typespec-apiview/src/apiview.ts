@@ -75,7 +75,7 @@ export class ApiView {
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, includeGlobalNamespace?: boolean) {
+  constructor(name: string, packageName: string, includeGlobalNamespace?: boolean, packageData?: Map<string, string>) {
     this.name = name;
     this.packageName = packageName;
     this.packageVersion = "ALL";

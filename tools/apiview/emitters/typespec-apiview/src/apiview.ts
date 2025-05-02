@@ -75,7 +75,7 @@ export class ApiView {
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, includeGlobalNamespace?: boolean, packageData?: Map<string, string>) {
+  constructor(name: string, packageName: string, packageData: Map<string, string>, includeGlobalNamespace?: boolean) {
     this.name = name;
     this.packageName = packageName;
     this.packageVersion = "ALL";
@@ -89,7 +89,7 @@ export class ApiView {
     }
     this.parentStack = []
     this.currentParent = undefined;
-    this.emitHeader();
+    this.emitHeader(packageData);
   }
 
   /** Compiles the APIView model for output.  */
@@ -510,7 +510,7 @@ export class ApiView {
     return suffix.startsWith(".");
   }
 
-  private emitHeader() {
+  private emitHeader(packageData: Map<string, string>) {
     const toolVersion = LIB_VERSION;
     const headerText = `// Package parsed using @azure-tools/typespec-apiview (version:${toolVersion})`;
     this.literal(headerText, {SkipDiff: true});
@@ -518,6 +518,33 @@ export class ApiView {
     this.lineMarker();
     this.namespaceStack.pop();
     // TODO: Source URL?
+    this.blankLines(1);
+    // Render package data
+    this.literal("// Package names:");
+    this.blankLines(0)
+    let dotNetName = packageData.get("@azure-tools/typespec-csharp");
+    let javaName = packageData.get("@azure-tools/typespec-java");
+    let pythonName = packageData.get("@azure-tools/typespec-python");
+    let tsName = packageData.get("@azure-tools/typespec-ts");
+    this.namespaceStack.push("PACKAGE_NAME_DOTNET");
+    this.literal(`// .NET:       ${dotNetName}`);
+    this.lineMarker();
+    this.blankLines(0)
+    this.namespaceStack.pop()
+    this.namespaceStack.push("PACKAGE_NAME_JAVA");
+    this.literal(`// Java:       ${javaName}`);
+    this.lineMarker();
+    this.blankLines(0)
+    this.namespaceStack.pop();
+    this.namespaceStack.push("PACKAGE_NAME_PYTHON");
+    this.literal(`// Python:     ${pythonName}`);
+    this.lineMarker();
+    this.blankLines(0)
+    this.namespaceStack.pop()
+    this.namespaceStack.push("PACKAGE_NAME_TS");
+    this.literal(`// TypeScript: ${tsName}`);
+    this.lineMarker();
+    this.namespaceStack.pop()
     this.blankLines(2)
   }
 

@@ -91,14 +91,20 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     if (program.compilerOptions.options) {
       const options = program.compilerOptions.options;
 
-      const packagesToCheck = ["@azure-tools/typespec-azure-core", "@typespec/http", "@typespec/rest"];
-      for (const pkg of packagesToCheck) {
-        if (options[pkg]) {
-          packageData.set(pkg, "Unknown");
+      const packagesToCheck = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-python", "@azure-tools/typespec-ts"];
+      for (const packageName of packagesToCheck) {
+        let packageOptions = options[packageName];
+        var namespace: string | undefined = undefined;
+        if (packageOptions) {
+          namespace = packageOptions["namespace"] as string;
+          if (namespace == undefined && packageOptions["package-details"]) {
+            let packageDetails = packageOptions["package-details"] as any;
+            namespace = packageDetails["name"] as string;  
+          }
+          packageData.set(packageName, namespace ?? "unspecified");
         }
       }
     }
-
     return packageData;
   }
 
@@ -121,10 +127,8 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     for (const service of services) {
       const namespaceString = resolveNamespaceString(service.type) ?? "Unknown"
       const serviceTitle = service.title ? service.title : namespaceString;
-
-      const packageData = getPackageData();
       
-      const apiview = new ApiView(serviceTitle, namespaceString, options.includeGlobalNamespace, packageData);
+      const apiview = new ApiView(serviceTitle, namespaceString, getPackageData(), options.includeGlobalNamespace, );
       apiview.compile(program);
       apiview.resolveMissingTypeReferences();
 

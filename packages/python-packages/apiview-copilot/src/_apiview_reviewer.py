@@ -339,8 +339,8 @@ class ApiViewReview:
         unique_comments = []
         batches = {}
 
-        # first collect all duplicate comments into batches to send to the LLM and
-        # add any unique comments to the unique_comments list
+        # First, collect all duplicate comments into batches to send to the LLM
+        # and add any unique comments to the unique_comments list
         line_ids = set([x.line_no for x in comments])
         for line_id in line_ids:
             matches = [x for x in comments if x.line_no == line_id]
@@ -352,28 +352,42 @@ class ApiViewReview:
         prompt_path = os.path.join(_PROMPTS_FOLDER, "merge_comments.prompty")
 
         print(f"Deduplicating comments...")
-        # now send the batches to the LLM
-        # TODO: These should be processed in parallel
+
+        # Submit all batches to the executor for parallel processing
+        futures = {}
         for line_no, batch in batches.items():
-            # need to get all the rule_ids for the comments in this batch
+            # Collect all rule IDs for the batch
             all_rule_ids = set()
             for comment in batch:
                 all_rule_ids.update(comment.rule_ids)
 
+            # Prepare the context for the prompt
             context = self.search.guidelines_for_ids(all_rule_ids)
 
-            response = self._run_prompt(prompt_path, inputs={"comments": batch, "context": context})
-            merge_results = json.loads(response)
-            result_comments = merge_results.get("comments", [])
-            if len(result_comments) != 1:
-                logger.error(f"Error merging comments for line {line_no}: {merge_results}")
-                continue
-            merged_comment = result_comments[0]
-            merged_comment["source"] = "merged"
-            merged_comment_obj = Comment(**merged_comment)
-            unique_comments.append(merged_comment_obj)
+            # Submit the task to the executor
+            futures[line_no] = self.executor.submit(
+                self._run_prompt,
+                prompt_path,
+                {"comments": batch, "context": context},
+            )
 
-        # update the comments list with the unique comments
+        # Process the results as they complete
+        for line_no, future in futures.items():
+            try:
+                response = future.result()
+                merge_results = json.loads(response)
+                result_comments = merge_results.get("comments", [])
+                if len(result_comments) != 1:
+                    logger.error(f"Error merging comments for line {line_no}: {merge_results}")
+                    continue
+                merged_comment = result_comments[0]
+                merged_comment["source"] = "merged"
+                merged_comment_obj = Comment(**merged_comment)
+                unique_comments.append(merged_comment_obj)
+            except Exception as e:
+                logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
+
+        # Update the comments list with the unique comments
         self.results.comments = unique_comments
 
     def _filter_comments(self):

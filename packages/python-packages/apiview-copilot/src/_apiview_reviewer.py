@@ -80,7 +80,9 @@ class ApiViewReview:
     ):
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
-        self.mode = ApiViewReviewMode.FULL if base is None else ApiViewReviewMode.DIFF
+        if self.base == "":
+            self.base = None
+        self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
         self.use_rag = use_rag
         self.search = SearchManager(language=language)

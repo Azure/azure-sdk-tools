@@ -1,3 +1,5 @@
+using System.CommandLine;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +17,10 @@ namespace Azure.Sdk.Tools.Cli.Contract
     /// </summary>
     public abstract class MCPHubTool : MCToolInterface
     {
-        // does McpServerToolType take care of everything here? do we even need anything?
+        // we need some way to surface the command object here so we can use it to respond to the command invocation
+
+        public RootCommand RootCommand { get; private set; } = null;
+
 
     }
 }

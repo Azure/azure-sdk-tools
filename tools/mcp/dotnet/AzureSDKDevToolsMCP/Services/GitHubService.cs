@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using AzureSDKDSpecTools.Services;
 using Microsoft.Extensions.Logging;
 using Octokit;

@@ -4,6 +4,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AzureSDKDevToolsMCP.Helpers;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
 
@@ -13,15 +14,16 @@ namespace AzureSDKDSpecTools.Helpers
     {
         public bool IsValidTypeSpecProjectPath(string path);
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
+        public bool IsRepoPathForPublicSpecRepo(string path);
     }
     public class TypeSpecHelper : ITypeSpecHelper
-    {        
+    {
+        private IGitHelper _gitHelper;
+        private static readonly string SPEC_REPO_NAME = "azure-rest-api-specs";
 
-        private ILogger<TypeSpecHelper> logger;
-
-        public TypeSpecHelper(ILogger<TypeSpecHelper> _logger)
+        public TypeSpecHelper(IGitHelper gitHelper)
         {
-            logger = _logger;
+            _gitHelper = gitHelper;
         }
 
         public bool IsValidTypeSpecProjectPath(string path)
@@ -33,6 +35,34 @@ namespace AzureSDKDSpecTools.Helpers
         {
             var typeSpecObject = TypeSpecProject.ParseTypeSpecConfig(Path);
             return typeSpecObject?.IsManagementPlane ?? false;
+        }
+
+        public bool IsRepoPathForPublicSpecRepo(string path)
+        {
+            var uri = _gitHelper.GetRepoRemoteUri(path);
+            return uri.ToString().Contains(SPEC_REPO_NAME);
+        }
+
+        public static string GetSpecRepoRootPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("path cannot be null or empty.", nameof(path));
+            }
+
+            if (Directory.Exists(Path.Combine(path, "specification")))
+            {
+                return path;
+            }
+
+            // Get absolute path for repo root from given path.
+            // Repo root is the parent of "specification" folder.
+            var currentDirectory = new DirectoryInfo(path);
+            while (currentDirectory != null && !currentDirectory.Name.Equals("specification"))
+            {
+                currentDirectory = currentDirectory.Parent;
+            }
+            return currentDirectory?.Parent?.FullName ?? string.Empty;
         }
     }
 }

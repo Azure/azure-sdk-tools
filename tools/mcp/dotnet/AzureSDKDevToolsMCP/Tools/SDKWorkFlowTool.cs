@@ -23,13 +23,19 @@ namespace AzureSDKDSpecTools.Tools
 {
     [Description("This Type contains a set of tools to help with TypeSpec to SDK generation work flow.")]
     [McpServerToolType]
-    public class SpecWorkflowTool(IGitHubService githubService, IDevOpsService devopsService, IGitHelper gitHelper, ITypeSpecHelper typespecHelper, ILogger<SpecWorkflowTool> logger)
+    public class SpecWorkflowTool(IGitHubService githubService,
+        IDevOpsService devopsService, 
+        IGitHelper gitHelper, 
+        ITypeSpecHelper typespecHelper, 
+        ILogger<SpecWorkflowTool> logger,
+        ISpecPullRequestHelper specHelper)
     {
         private readonly IGitHubService _githubService = githubService;
         private readonly IDevOpsService _devopsService = devopsService;
         private readonly IGitHelper _gitHelper = gitHelper;
         private readonly ITypeSpecHelper _typespecHelper = typespecHelper;
         private readonly ILogger<SpecWorkflowTool> _logger = logger;
+        private readonly ISpecPullRequestHelper _specHelper = specHelper;
         private readonly static string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private readonly static string REPO_OWNER = "Azure";
         private readonly static string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
@@ -59,11 +65,11 @@ namespace AzureSDKDSpecTools.Tools
                 }
 
                 // Get current branch name
-                var repoRootPath = _gitHelper.GetRepoRootPath(typeSpecProjectRoot);
+                var repoRootPath = TypeSpecHelper.GetSpecRepoRootPath(typeSpecProjectRoot);
                 var branchName = _gitHelper.GetBranchName(repoRootPath);
                 
                 // Check if current repo is private or public repo
-                if (!_gitHelper.IsRepoPathForPublicSpecRepo(repoRootPath))
+                if (!_typespecHelper.IsRepoPathForPublicSpecRepo(repoRootPath))
                 {
                     response.Details.AddRange([
                         $"Current repo root path '{repoRootPath}' is not a GitHub clone of 'Azure/azure-rest-api-specs' repo. SDK can be generated only if your TypeSpec changes are in public Azure/azure-rest-api-specs repo. ",
@@ -146,7 +152,7 @@ namespace AzureSDKDSpecTools.Tools
 
 
         [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
-        public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullrequestNumber)
+        public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullrequestNumber, int workItemId)
         {
             var response = new GenericResponse()
             {
@@ -203,12 +209,11 @@ namespace AzureSDKDSpecTools.Tools
                     return response.ToString();
 
                 string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
-                var pipelineRun = await _devopsService.RunSDKGenerationPipeline(branchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language);
-                var pipelineRunurl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={pipelineRun.Id}&view=results";
+                var pipelineRun = await _devopsService.RunSDKGenerationPipeline(branchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language, workItemId);
                 response = new GenericResponse()
                 {
                     Status = "Success",
-                    Details = [$"Azure DevOps pipeline {pipelineRunurl} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
+                    Details = [$"Azure DevOps pipeline {pipelineRun.Url} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
                 };
                 return response.ToString();
             }
@@ -220,15 +225,11 @@ namespace AzureSDKDSpecTools.Tools
             }            
         }
 
-        private static bool IsSDKGenerationSupported(string language)
-        {
-            return language switch
-            {
-                "Python" => true,
-                _ => false,
-            };
-        }
-
+        /// <summary>
+        /// Get SDK generation pipeline run details and status for a given pipeline build ID
+        /// </summary>
+        /// <param name="buildId">Build ID for the pipeline run</param>
+        /// <returns></returns>
         [McpServerTool, Description("Get SDK generation pipeline run details and status for a given pipeline build ID")]
         public async Task<string> GetPipelineRunStatus(int buildId)
         {
@@ -238,9 +239,8 @@ namespace AzureSDKDSpecTools.Tools
                 var pipeline = await _devopsService.GetPipelineRun(buildId);
                 if (pipeline != null)
                 {
-                    var pipelineRunurl = $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={pipeline.Id}&view=results";
                     response.Status = pipeline.Status?.ToString() ?? "Not available";
-                    response.Details.Add($"Pipeline run link: {pipelineRunurl}");
+                    response.Details.Add($"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}");
                 }
             }
             catch (Exception ex)
@@ -251,8 +251,15 @@ namespace AzureSDKDSpecTools.Tools
             return response.ToString();
         }
 
+        /// <summary>
+        /// Get SDK pull request link from SDK generation pipeline.
+        /// </summary>
+        /// <param name="language">SDK Language</param>
+        /// <param name="buildId">Build ID for the pipeline run</param>
+        /// <param name="workItemId">Work item ID for the release plan</param>
+        /// <returns></returns>
         [McpServerTool, Description("Get generated SDK pull request link from SDK generation pipeline run, Build ID of pipeline run is required to query pull request link.")]
-        public async Task<string> GetSDKPullRequestDetails(string language, int buildId)
+        public async Task<string> GetSDKPullRequestDetails(string language, int buildId, int workItemId)
         {
             try
             {
@@ -268,12 +275,22 @@ namespace AzureSDKDSpecTools.Tools
                     return $"SDK generation pipeline is not in completed status to get generated SDK pull request details, Status: {pipeline.Status.ToString()}";
                 }
 
-                return await _devopsService.GetSDKPullRequestFromPipelineRun(buildId);
+                return await _devopsService.GetSDKPullRequestFromPipelineRun(buildId, language, workItemId);
             }
             catch (Exception ex)
             {
                 return $"Failed to get pull request details from SDK generation pipeline, Error: {ex.Message}";
             }
+        }
+
+        private static bool IsSDKGenerationSupported(string language)
+        {
+            return language switch
+            {
+                "Python" => true,
+                ".NET" => true,
+                _ => false,
+            };
         }
     }
 }

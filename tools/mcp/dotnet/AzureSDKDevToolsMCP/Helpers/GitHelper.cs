@@ -15,17 +15,15 @@ namespace AzureSDKDevToolsMCP.Helpers
     {
         // Get the owner 
         public Task<string> GetRepoOwnerName(string path, bool findForkParent = true);
-        public string GetRepoName(string path);
-        public string GetRepoRootPath(string path);
-        public bool IsRepoPathForPublicSpecRepo(string path);
+        public Uri GetRepoRemoteUri(string path);
         public string GetBranchName(string path);
         public string GetMergeBaseCommitSha(string path, string targetBranch);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
-        readonly ILogger<GitHelper> logger = logger;
-        readonly IGitHubService gitHubService = gitHubService;
-        readonly static string SPEC_REPO_NAME = "azure-rest-api-specs";
+        private readonly ILogger<GitHelper> logger = logger;
+        private readonly IGitHubService gitHubService = gitHubService;
+
 
         public string GetMergeBaseCommitSha(string path, string targetBranchName)
         {
@@ -49,7 +47,7 @@ namespace AzureSDKDevToolsMCP.Helpers
             return branchName;
         }
 
-        private static Uri GetRepoRemoteUri(string path)
+        public Uri GetRepoRemoteUri(string path)
         {
             using var repo = new Repository(path);
             var remote = repo.Network?.Remotes["origin"];
@@ -58,17 +56,6 @@ namespace AzureSDKDevToolsMCP.Helpers
                 return new Uri(remote.Url);
             }
             throw new InvalidOperationException("Unable to determine remote URL.");
-        }
-
-        public string GetRepoName(string path)
-        {
-            var uri = GetRepoRemoteUri(path);
-            var segments = uri.Segments;
-            if (segments.Length > 1)
-            {
-                return segments[^1].TrimEnd(".git".ToCharArray());
-            }
-            throw new InvalidOperationException("Unable to determine repository name.");
         }
 
         public async Task<string> GetRepoOwnerName(string path, bool findForkParent = true)
@@ -103,34 +90,6 @@ namespace AzureSDKDevToolsMCP.Helpers
             }
 
             throw new InvalidOperationException("Unable to determine repository owner.");
-        }
-
-        public bool IsRepoPathForPublicSpecRepo(string path)
-        {
-            // Check if GitHub repo name of cloned path is "azure-rest-api-specs"
-            var uri = GetRepoRemoteUri(path);
-            return uri.ToString().Contains(SPEC_REPO_NAME);            
-        }
-        public string GetRepoRootPath(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new ArgumentException("path cannot be null or empty.", nameof(path));
-            }
-
-            if (Directory.Exists(Path.Combine(path, "specification")))
-            {
-                return path;
-            }
-
-            // Get absolute path for repo root from given path.
-            // Repo root is the parent of "specification" folder.
-            var currentDirectory = new DirectoryInfo(path);
-            while (currentDirectory != null && !currentDirectory.Name.Equals("specification"))
-            {
-                currentDirectory = currentDirectory.Parent;
-            }
-            return currentDirectory?.Parent?.FullName ?? string.Empty;
-        }
+        }        
     }
 }

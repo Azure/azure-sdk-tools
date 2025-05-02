@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AzureSDKDevToolsMCP.Helpers;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
 
@@ -11,12 +12,13 @@ namespace AzureSDKDSpecTools.Helpers
 {
     public interface ISpecPullRequestHelper
     {
-        public List<ApiviewData> FindApiReviewLinks(List<string> comments);
+        public List<ApiviewData> FindApiReviewLinks(List<string> comments);        
     }
-    public class SpecPullRequestHelper(ILogger<SpecPullRequestHelper> _logger): ISpecPullRequestHelper
+    public class SpecPullRequestHelper(ILogger<SpecPullRequestHelper> logger, IGitHelper gitHelper) : ISpecPullRequestHelper
     {
-        private ILogger<SpecPullRequestHelper> logger = _logger;
-        readonly string apiReviewRegex = "\\|\\s([\\w]+)\\s\\|\\s\\[(.+)\\]\\((.+)\\)";
+        private ILogger<SpecPullRequestHelper> _logger = logger;
+        private IGitHelper _gitHelper = gitHelper;
+        private readonly string apiReviewRegex = "\\|\\s([\\w]+)\\s\\|\\s\\[(.+)\\]\\((.+)\\)";
 
         public List<ApiviewData> FindApiReviewLinks(List<string> comments)
         {
@@ -25,7 +27,7 @@ namespace AzureSDKDSpecTools.Helpers
                 var apiviewComments = comments.Where(c => c.Contains("## API Change Check") || c.Contains("APIView"));
                 if (apiviewComments == null || !apiviewComments.Any())
                 {
-                    logger.LogWarning("No API reviews found in the comments");
+                    _logger.LogWarning("No API reviews found in the comments");
                     return [];
                 }
 
@@ -36,7 +38,7 @@ namespace AzureSDKDSpecTools.Helpers
                     var matches = regex.Matches(comment);
                     if (matches == null)
                     {
-                        logger.LogInformation("No matching found");
+                        _logger.LogInformation("No matching found");
                         continue;
                     }
 
@@ -44,7 +46,7 @@ namespace AzureSDKDSpecTools.Helpers
                     {
                         if (m is Match match)
                         {
-                            logger.LogInformation($"API view match {match.Value}");
+                            _logger.LogInformation($"API view match {match.Value}");
                             if(match.Groups.Count == 4)
                             {
                                 apiviewLinks.Add(
@@ -62,7 +64,7 @@ namespace AzureSDKDSpecTools.Helpers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Failed to get API review links from comments, Error: {ex.Message}");
+                _logger.LogError($"Failed to get API review links from comments, Error: {ex.Message}");
                 return [];
             }            
         }

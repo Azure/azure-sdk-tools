@@ -22,9 +22,10 @@ namespace AzureSDKSpecToolTests
         [Fact]
         public async Task GetReleasePlanTest()
         {
-            var releasePlan = await devOpsService.GetReleasePlan(26648);
+            var releasePlan = await devOpsService.GetReleasePlan(26960);
+            await devOpsService.GetPipelineRun(4813417);
             Assert.NotNull(releasePlan);
-            Assert.Equal(26648, releasePlan.WorkItemId);
+            Assert.Equal(26960, releasePlan.WorkItemId);
             Assert.True(!string.IsNullOrEmpty(releasePlan.Title));
         }
 

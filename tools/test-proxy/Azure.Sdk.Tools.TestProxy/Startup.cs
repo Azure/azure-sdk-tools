@@ -25,6 +25,8 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Azure.Sdk.Tools.TestProxy.Common.AutoShutdown;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using System.Net;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -254,40 +256,32 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.ConfigureLogger(loggerFactory);
 
-            MapRecording(app);
             app.UseRouting();
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
-        }
 
-        // Route requests with header x-recording-mode = X to X.HandleRequest
-        // These are requests to be recorded or played back.
-        private void MapRecording(IApplicationBuilder app)
-        {
-            foreach (var controller in new[] { "playback", "record" })
+            app.UseEndpoints(endpoints =>
             {
-                app.MapWhen(
-                    context =>
-                        controller.Equals(
-                            GetRecordingMode(context),
-                            StringComparison.OrdinalIgnoreCase),
-                    app =>
-                    {
-                        app.UseRouting();
-                        app.UseEndpoints(
-                            endpoints => endpoints.MapFallbackToController(
-                                "{*path}", "HandleRequest", controller));
-                    });
-            }
-        }
+                // map our control plane controllers (Admin, Info, etc.)
+                endpoints.MapControllers();
 
-        private static string GetRecordingMode(HttpContext context)
-        {
-            if (!context.Request.Headers.TryGetValue("x-recording-mode", out var values) || values.Count != 1)
-            {
-                return null;
-            }
+                // fallback to Record.HandleRequest only when the header says  record
+                endpoints.MapFallbackToController("{*path}", "HandleRequest", "Record")
+                         .Add(ep => ep.Metadata.Add(
+                             new HeaderMatchMetadata("x-recording-mode", "record")));
 
-            return values[0];
+                // fallback to Playback.HandleRequest only when the header says playback
+                endpoints.MapFallbackToController("{*path}", "HandleRequest", "Playback")
+                         .Add(ep => ep.Metadata.Add(
+                             new HeaderMatchMetadata("x-recording-mode", "playback")));
+
+                // An unmapped path **without** the header responds with 404, but is more explicit about the possible causes
+                endpoints.MapFallback(async ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                    await ctx.Response.WriteAsync(
+                        "This request was not matched to a controller. If the user intends to have a playback or record request handled as pass-through" +
+                        ", the user must set the 'x-recording-mode' header to 'record' or 'playback'.");
+                });
+            });
         }
 
         // Run in dedicated thread instead of using async/await in ThreadPool, to ensure this thread has priority

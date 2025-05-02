@@ -8,7 +8,7 @@ extends:
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'apiview-copilot'
     PackageName: 'ApiviewCopilot'
-    EnvVars:
+    env:
       AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
       AZURE_OPENAI_API_KEY: $(python-openai-key)
     TestSteps:

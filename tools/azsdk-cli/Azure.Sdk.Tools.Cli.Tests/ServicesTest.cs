@@ -1,4 +1,4 @@
-namespace Azure.SDK.Tools.MCP.Hub.Tests
+namespace Azure.Sdk.Tools.Cli.Tests
 {
     public class Tests
     {

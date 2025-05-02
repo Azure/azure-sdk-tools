@@ -1,7 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Binding;
 
-namespace Azure.SDK.Tools.MCP.Hub.CLI
+namespace Azure.Sdk.Tools.Cli.CLI
 {
     // todo: populate the option tree for the server run defaults
     // todo: figure out direct tool invocation if not running server

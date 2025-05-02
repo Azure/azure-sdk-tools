@@ -1,6 +1,0 @@
-@Azure.SDK.Tools.MCP.Hub_HostAddress = http://localhost:5178
-
-GET {{Azure.SDK.Tools.MCP.Hub_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

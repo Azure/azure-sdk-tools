@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Azure.SDK.Tools.MCP.Hub.Controllers
+namespace Azure.Sdk.Tools.Cli.Controllers
 {
     [ApiController]
     [Route("[controller]")]

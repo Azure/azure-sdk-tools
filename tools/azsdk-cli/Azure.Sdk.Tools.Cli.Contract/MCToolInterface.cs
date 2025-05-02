@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Azure.SDK.Tools.MCP.Contract
+namespace Azure.Sdk.Tools.Cli.Contract
 {
     public interface MCToolInterface
     {

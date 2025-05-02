@@ -4,12 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
 
-namespace Azure.SDK.Tools.MCP.Contract
+namespace Azure.Sdk.Tools.Cli.Contract
 {
     /// <summary>
     /// This is the base class defining how an MCP enabled tool will interface with the server.
-    /// 
-    /// This covers: 
+    ///
+    /// This covers:
     ///     - route registration/disambiguation
     ///     - compilation trim avoidance for reflection-included MCP tools
     /// </summary>

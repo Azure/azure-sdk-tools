@@ -6,11 +6,11 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.TestResults.WebApi;
-using Azure.SDK.Tools.MCP.Hub.Services.Azure;
+using Azure.Sdk.Tools.Cli.Services.Azure;
 using Microsoft.VisualStudio.Services.OAuth;
-using Azure.SDK.Tools.MCP.Contract;
+using Azure.Sdk.Tools.Cli.Contract;
 
-namespace Azure.SDK.Tools.MCP.Hub.Tools.AzurePipelinesTool;
+namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
 public class AzurePipelinesTool : MCPHubTool

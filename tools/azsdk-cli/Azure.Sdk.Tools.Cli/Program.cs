@@ -1,6 +1,6 @@
-using Azure.SDK.Tools.MCP.Hub.Services.Azure;
+using Azure.Sdk.Tools.Cli.Services.Azure;
 
-namespace Azure.SDK.Tools.MCP.Hub;
+namespace Azure.Sdk.Tools.Cli;
 
 public sealed class Program
 {

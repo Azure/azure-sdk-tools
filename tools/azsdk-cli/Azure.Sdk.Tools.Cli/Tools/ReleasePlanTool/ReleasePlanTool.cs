@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Azure.SDK.Tools.MCP.Contract;
+using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 
-namespace Azure.SDK.Tools.MCP.Hub.Tools.ReleasePlanTool
+namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
 {
 
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]

@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using Azure.SDK.Tools.MCP.Contract;
+using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 
-namespace Azure.SDK.Tools.MCP.Hub.Tools.HelloWorldTool
+namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 {
 
     [McpServerToolType, Description("Echoes the message back to the client.")]

@@ -1,7 +1,7 @@
 // Adapted from https://github.com/Azure/azure-mcp/blob/main/src/Services/Azure/BaseAzureService.cs
 using Azure.Identity;
 
-namespace Azure.SDK.Tools.MCP.Hub.Services.Azure;
+namespace Azure.Sdk.Tools.Cli.Services.Azure;
 
 public interface IAzureService
 {

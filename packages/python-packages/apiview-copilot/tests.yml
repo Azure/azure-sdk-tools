@@ -19,3 +19,6 @@ extends:
         python evals/run.py
       displayName: 'Run Evals'
       workingDirectory: $(Build.SourcesDirectory)/packages/python-packages/apiview-copilot
+    EnvVars:
+      AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
+      AZURE_OPENAI_API_KEY: $(python-openai-key)

@@ -1,4 +1,4 @@
-﻿using ModelContextProtocol.Server;
+using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text.Json;
 using Azure.Core;
@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool : MCPHubTool
+public class AzurePipelinesTool : MCPTool
 {
     private string? project;
 

@@ -15,13 +15,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
+            _rootCommand = CreateRootCommand();
         }
 
         public RootCommand CreateRootCommand()
         {
-            // walk the various assembly items
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
 
+            // walk the various assembly items, adding their subcommands to the root command
             return rootCommand;
         }
     }

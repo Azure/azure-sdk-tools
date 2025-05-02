@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.Sdk.Tools.Cli.Contract
 {
-    public interface MCToolInterface
+    public interface MCPToolInterface
     {
         // nothing yet
     }

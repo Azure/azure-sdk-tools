@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
 
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public class ReleasePlanTool : MCPHubTool
+    public class ReleasePlanTool : MCPTool
     {
         [McpServerTool, Description("Get release plan for a service, product and API spec pull request")]
         public async Task<List<string>> GetReleasePlan(string serviceTreeId, string productTreeId, string pullRequestLink)

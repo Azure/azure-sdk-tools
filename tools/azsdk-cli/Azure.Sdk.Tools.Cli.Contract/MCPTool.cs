@@ -15,11 +15,11 @@ namespace Azure.Sdk.Tools.Cli.Contract
     ///     - route registration/disambiguation
     ///     - compilation trim avoidance for reflection-included MCP tools
     /// </summary>
-    public abstract class MCPHubTool : MCToolInterface
+    public abstract class MCPTool : MCPToolInterface
     {
         // we need some way to surface the command object here so we can use it to respond to the command invocation
 
-        public RootCommand RootCommand { get; private set; } = null;
+        public abstract Command GetCommand { get; set; }
 
 
     }

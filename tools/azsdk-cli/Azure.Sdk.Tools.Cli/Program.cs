@@ -16,7 +16,7 @@ public sealed class Program
         host.Run();
     }
 
-    public static void ConfigureServices(IServiceCollection services, List<MCPHubTool> targetedTools)
+    public static void ConfigureServices(IServiceCollection services, List<MCPTool> targetedTools)
     {
         if (targetedTools == null)
         {

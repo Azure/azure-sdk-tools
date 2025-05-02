@@ -39,8 +39,14 @@ class CustomAPIViewEvaluator:
         exact_matches = set()
         rule_matches_wrong_line = set()
 
-        comments_left = copy.deepcopy(actual["comments"])
-        for expected_comment in expected["comments"]:
+        # Filter out summary comments
+        filtered_actual_comments = [c for c in actual["comments"] if c.get("source") != "summary"]
+        filtered_expected_comments = [c for c in expected["comments"] if c.get("source") != "summary"]
+
+        # Create a copy to work with
+        comments_left = copy.deepcopy(filtered_actual_comments)
+
+        for expected_comment in filtered_expected_comments:
             e_line = expected_comment["line_no"]
             e_rules = frozenset(expected_comment["rule_ids"])
 

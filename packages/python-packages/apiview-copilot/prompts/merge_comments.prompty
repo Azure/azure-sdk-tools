@@ -9,7 +9,7 @@ model:
   configuration:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
-    azure_deployment: gpt-4o
+    azure_deployment: gpt-4.1
     api_version: 2025-01-01-preview
   parameters:
     temperature: 0.7

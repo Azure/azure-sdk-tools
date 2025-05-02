@@ -80,7 +80,9 @@ class ApiViewReview:
     ):
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
-        self.mode = ApiViewReviewMode.FULL if base is None else ApiViewReviewMode.DIFF
+        if self.base == "":
+            self.base = None
+        self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
         self.use_rag = use_rag
         self.search = SearchManager(language=language)
@@ -337,8 +339,8 @@ class ApiViewReview:
         unique_comments = []
         batches = {}
 
-        # first collect all duplicate comments into batches to send to the LLM and
-        # add any unique comments to the unique_comments list
+        # First, collect all duplicate comments into batches to send to the LLM
+        # and add any unique comments to the unique_comments list
         line_ids = set([x.line_no for x in comments])
         for line_id in line_ids:
             matches = [x for x in comments if x.line_no == line_id]
@@ -350,55 +352,82 @@ class ApiViewReview:
         prompt_path = os.path.join(_PROMPTS_FOLDER, "merge_comments.prompty")
 
         print(f"Deduplicating comments...")
-        # now send the batches to the LLM
-        # TODO: These should be processed in parallel
+
+        # Submit all batches to the executor for parallel processing
+        futures = {}
         for line_no, batch in batches.items():
-            # need to get all the rule_ids for the comments in this batch
+            # Collect all rule IDs for the batch
             all_rule_ids = set()
             for comment in batch:
                 all_rule_ids.update(comment.rule_ids)
 
+            # Prepare the context for the prompt
             context = self.search.guidelines_for_ids(all_rule_ids)
 
-            response = self._run_prompt(prompt_path, inputs={"comments": batch, "context": context})
-            merge_results = json.loads(response)
-            result_comments = merge_results.get("comments", [])
-            if len(result_comments) != 1:
-                logger.error(f"Error merging comments for line {line_no}: {merge_results}")
-                continue
-            merged_comment = result_comments[0]
-            merged_comment["source"] = "merged"
-            merged_comment_obj = Comment(**merged_comment)
-            unique_comments.append(merged_comment_obj)
+            # Submit the task to the executor
+            futures[line_no] = self.executor.submit(
+                self._run_prompt,
+                prompt_path,
+                {"comments": batch, "context": context},
+            )
 
-        # update the comments list with the unique comments
+        # Process the results as they complete
+        for line_no, future in futures.items():
+            try:
+                response = future.result()
+                merge_results = json.loads(response)
+                result_comments = merge_results.get("comments", [])
+                if len(result_comments) != 1:
+                    logger.error(f"Error merging comments for line {line_no}: {merge_results}")
+                    continue
+                merged_comment = result_comments[0]
+                merged_comment["source"] = "merged"
+                merged_comment_obj = Comment(**merged_comment)
+                unique_comments.append(merged_comment_obj)
+            except Exception as e:
+                logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
+
+        # Update the comments list with the unique comments
         self.results.comments = unique_comments
 
     def _filter_comments(self):
         """
-        Run the filter prompt on the comments.
+        Run the filter prompt on the comments, processing each comment in parallel.
         """
-        # Pass combined results through the filter function with retry logic
-        filter_prompt_file = "final_comments_filter.prompty"
+        filter_prompt_file = "final_comment_filter_single.prompty"
         filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
 
-        # load the language-specific yaml file for the filter
-        filter_metadata = self._load_filter_metadata()
-        print(f"Filtering results...")
-        response = self._run_prompt(
-            filter_prompt_path,
-            inputs={
-                "comments": self.results.comments,
-                "language": self._get_language_pretty_name(),
-                "sample": filter_metadata["sample"],
-                "exceptions": filter_metadata["exceptions"],
-            },
-        )
-        response_json = json.loads(response)
-        keep_json = [x for x in response_json["comments"] if x["status"] == "KEEP"]
-        discard_json = [x for x in response_json["comments"] if x["status"] == "REMOVE"]
-        logger.info(f"Kept {len(keep_json)} comments and discarded {len(discard_json)} comments.")
-        self.results = ReviewResult(**{"comments": keep_json})
+        print(f"Filtering comments...")
+
+        # Submit each comment to the executor for parallel processing
+        futures = {}
+        for idx, comment in enumerate(self.results.comments):
+            futures[idx] = self.executor.submit(
+                self._run_prompt,
+                filter_prompt_path,
+                inputs={
+                    "content": comment.model_dump(),
+                    "language": self._get_language_pretty_name(),
+                },
+            )
+
+        # Collect results as they complete
+        keep_comments = []
+        discard_comments = []
+        for idx, future in futures.items():
+            try:
+                response = future.result()
+                response_json = json.loads(response)
+                if response_json.get("status") == "KEEP":
+                    keep_comments.append(response_json)
+                else:
+                    discard_comments.append(response_json)
+            except Exception as e:
+                logger.error(f"Error filtering comment at index {idx}: {str(e)}")
+
+        # Update the results with the filtered comments
+        print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
+        self.results.comments = [Comment(**comment) for comment in keep_comments]
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
@@ -445,21 +474,34 @@ class ApiViewReview:
     def run(self) -> ReviewResult:
         try:
             print(f"Generating {self._get_language_pretty_name()} review...")
-            start_time = time()
+            overall_start_time = time()
 
+            # Track time for _generate_comments
+            generate_start_time = time()
             self._generate_comments()
+            generate_end_time = time()
+            print(f"  Generated comments in {generate_end_time - generate_start_time:.2f} seconds.")
 
-            # 4. Post-processing
+            # Track time for _deduplicate_comments
+            deduplicate_start_time = time()
             self._deduplicate_comments()
+            deduplicate_end_time = time()
+            print(f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds.")
+
+            # Track time for _filter_comments
+            filter_start_time = time()
             self._filter_comments()
+            filter_end_time = time()
+            print(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
 
             # Add the summary to the results
             if self.summary:
                 self.results.comments.append(self.summary)
             results = self.results.sorted()
-            end_time = time()
 
-            print(f"Review generated in {end_time - start_time:.2f} seconds.")
+            overall_end_time = time()
+            print(f"Review generated in {overall_end_time - overall_start_time:.2f} seconds.")
+
             if self.semantic_search_failed:
                 print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
 

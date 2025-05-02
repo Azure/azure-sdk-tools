@@ -94,6 +94,10 @@ class CustomAPIViewEvaluator:
         expected = json.loads(response)
         actual = json.loads(output)
 
+        # Filter out summary comments
+        expected["comments"] = [c for c in expected["comments"] if c.get("source") != "summary"]
+        actual["comments"] = [c for c in actual["comments"] if c.get("source") != "summary"]
+
         exact_matches, rule_matches_wrong_line, generic_comments = self._get_comment_matches(expected, actual)
         self._evaluate_generic_comments(query, language, generic_comments)
         expected_comments = len([c for c in expected["comments"] if c["rule_ids"]])
@@ -124,6 +128,10 @@ class CustomSimilarityEvaluator:
         output = json.loads(output)
         ground_truth = json.loads(ground_truth)
 
+        # Filter out summary comments
+        output["comments"] = [c for c in output["comments"] if c.get("source") != "summary"]
+        ground_truth["comments"] = [c for c in ground_truth["comments"] if c.get("source") != "summary"]
+
         actual = [c for c in output["comments"] if c["rule_ids"]]
         if not actual:
             return {"similarity": 0.0}
@@ -143,6 +151,10 @@ class CustomGroundednessEvaluator:
 
     def __call__(self, *, query: str, language: str, output: str, context: str, **kwargs):
         output = json.loads(output)
+
+        # Filter out summary comments
+        output["comments"] = [c for c in output["comments"] if c.get("source") != "summary"]
+
         actual = [c for c in output["comments"] if c["rule_ids"]]
         if not actual:
             return {"groundedness": 0.0, "groundedness_reason": "No comments found."}

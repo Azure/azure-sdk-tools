@@ -125,8 +125,21 @@ class ApiViewReview:
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
-    def _execute_prompt_task(self, *, prompt_path, inputs, task_name, status_idx, status_array):
-        """Execute a single prompt task with status tracking"""
+    def _execute_prompt_task(
+        self, *, prompt_path: str, inputs: dict, task_name: str, status_idx: int, status_array: List[str]
+    ) -> Optional[dict]:
+        """Execute a single prompt task with status tracking.
+
+        Args:
+            prompt_path (str): Path to the prompt file.
+            inputs (dict): Dictionary of inputs for the prompt.
+            task_name (str): Name of the task (e.g., "summary", "guideline").
+            status_idx (int): Index in the status array to update.
+            status_array (List[str]): Array tracking the status of all tasks.
+
+        Returns:
+            Optional[dict]: The result of the prompt execution, or None if an error occurred.
+        """
         status_array[status_idx] = self.PROCESSING
         print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
 
@@ -238,8 +251,7 @@ class ApiViewReview:
                 inputs={
                     "language": self._get_language_pretty_name(),
                     "context": context_string,
-                    "apiview": section.numbered(),
-                    "diff": section.numbered(),
+                    "content": section.numbered(),
                 },
                 task_name=guideline_key,
                 status_idx=(idx * 2) + 1,
@@ -255,8 +267,7 @@ class ApiViewReview:
                 inputs={
                     "language": self._get_language_pretty_name(),
                     "custom_rules": generic_metadata["custom_rules"],
-                    "apiview": section.numbered(),
-                    "diff": section.numbered(),
+                    "content": section.numbered(),
                 },
                 task_name=generic_key,
                 status_idx=(idx * 2) + 2,
@@ -554,151 +565,6 @@ class ApiViewReview:
 
     def _unescape(self, text: str) -> str:
         return str(bytes(text, "utf-8").decode("unicode_escape"))
-
-    def _process_section_with_retry(
-        self, chunk_info, static_guidelines, cancel_event, guideline_prompt_file, generic_prompt_file, chunk_status
-    ):
-        """Process a chunk with retry logic."""
-        i, chunk = chunk_info
-        chunk_idx = i
-
-        # Check for cancellation
-        if cancel_event.is_set():
-            return chunk, None
-
-        # Update progress indicator
-        chunk_status[chunk_idx] = self.PROCESSING
-        print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
-
-        def execute_chunk():
-            # Build the context string
-            if self.use_rag:
-                context = self._retrieve_and_resolve_guidelines(str(chunk))
-                if context:
-                    context_string = context.to_markdown()
-                else:
-                    logger.warning(f"Failed to retrieve guidelines for chunk {i}, using static guidelines instead.")
-                    self.semantic_search_failed = True
-                    context_string = json.dumps(static_guidelines)
-            else:
-                context_string = json.dumps(static_guidelines)
-
-            # Execute prompts in parallel and merge results
-            return self._run_parallel_prompts(
-                chunk, context_string, guideline_prompt_file, generic_prompt_file, i, 0, max_retries
-            )
-
-        def on_retry(exception, attempt, max_attempts):
-            # Keep status as PROCESSING during retries
-            chunk_status[chunk_idx] = self.PROCESSING
-            print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
-
-        def on_failure(exception, attempt):
-            # Mark as failed on final failure
-            chunk_status[chunk_idx] = self.FAILURE
-            print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
-            return None
-
-        max_retries = 5
-        result = retry_with_backoff(
-            func=execute_chunk,
-            max_retries=max_retries,
-            retry_exceptions=(json.JSONDecodeError, Exception),
-            on_retry=on_retry,
-            on_failure=on_failure,
-            logger=logger,
-            description=f"chunk {i}",
-        )
-
-        # Update progress indicator on success if we got a result
-        if result is not None:
-            chunk_status[chunk_idx] = self.SUCCESS
-            print("\r" + "Processing chunks: " + "".join(chunk_status), end="", flush=True)
-
-        return chunk, result
-
-    def _run_parallel_prompts(
-        self,
-        chunk,
-        context_string,
-        guideline_prompt_file,
-        generic_prompt_file,
-        chunk_idx,
-        attempt,
-        max_retries,
-    ):
-        """
-        Run both guideline and general prompts in parallel for a chunk.
-
-        This method:
-        1. Executes both prompts concurrently
-        2. Combines their results
-        3. Handles errors per prompt
-
-        Returns a merged JSON response with comments from both prompts.
-        """
-        guideline_tag = "guideline"
-        generic_tag = "generic"
-
-        # Set up futures for both prompts
-        futures = {
-            guideline_tag: self.executor.submit(
-                prompty.execute,
-                os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
-                inputs={
-                    "language": self._get_language_pretty_name(),
-                    "context": context_string,
-                    "content": chunk.numbered(),
-                },
-            )
-        }
-
-        generic_metadata = self._load_generic_metadata()
-        futures[generic_tag] = self.executor.submit(
-            prompty.execute,
-            os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
-            inputs={
-                "language": self._get_language_pretty_name(),
-                "custom_rules": generic_metadata["custom_rules"],
-                "content": chunk.numbered(),
-            },
-        )
-
-        # Collect results from all prompts
-        results = {}
-        for key, future in futures.items():
-            try:
-                # Get the raw result text
-                result_text = future.result()
-
-                # Try to parse as JSON - if this fails, it will be caught and become a retryable error
-                values = json.loads(result_text)
-
-                # Only proceed if JSON parsing succeeded
-                # Tag each comment with the source prompt tag
-                for item in values.get("comments", []):
-                    item["source"] = key
-                results[key] = values
-            except json.JSONDecodeError as e:
-                # Log the specific JSON error and re-raise it
-                # This will be caught by the _process_chunk method's retry logic
-                logger.error(
-                    f"JSON decode error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
-                )
-                # Re-raise to trigger retry in the parent method
-                raise
-            except Exception as e:
-                # For non-JSON errors, log but continue with empty results
-                logger.error(
-                    f"Error in {key} prompt for chunk {chunk_idx}, attempt {attempt+1}/{max_retries}: {str(e)}"
-                )
-                results[key] = {"comments": []}
-
-        # Merge the guideline_response and general_response into a single result
-        json_response = results.get(guideline_tag, {"comments": []})
-        json_response["comments"].extend(results.get(generic_tag, {}).get("comments", []))
-
-        return json_response
 
     def close(self):
         """Close resources used by this ApiViewReview instance."""

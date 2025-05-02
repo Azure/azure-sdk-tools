@@ -33,10 +33,8 @@ namespace AzureSDKSpecToolTests
         public async Task GetReleasePlansForServicePrductTest()
         {
             var pr = "https://github.com/Azure/azure-rest-api-specs/pull/32282";
-            var releasePlans = await devOpsService.GetReleasePlans(Guid.Parse("42815c77-2fba-4eb9-b052-5f0c545cedf3"), Guid.Parse("8218fbb5-917d-4cd7-8498-9f21b189e231"), pr);
-            Assert.NotNull(releasePlans);
-            Assert.NotEmpty(releasePlans);
-            Assert.Contains(pr.ToLower(), releasePlans.First().SpecPullRequests);
+            var releasePlan = await devOpsService.GetReleasePlan(pr);
+            Assert.NotNull(releasePlan);
         }
 
         [Fact (Skip = "Disabled for default run test since this creates a work item")]

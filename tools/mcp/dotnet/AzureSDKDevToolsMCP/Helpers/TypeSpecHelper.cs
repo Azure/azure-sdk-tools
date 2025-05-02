@@ -15,6 +15,7 @@ namespace AzureSDKDSpecTools.Helpers
         public bool IsValidTypeSpecProjectPath(string path);
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
         public bool IsRepoPathForPublicSpecRepo(string path);
+        public string GetSpecRepoRootPath(string path);
     }
     public class TypeSpecHelper : ITypeSpecHelper
     {
@@ -43,7 +44,7 @@ namespace AzureSDKDSpecTools.Helpers
             return uri.ToString().Contains(SPEC_REPO_NAME);
         }
 
-        public static string GetSpecRepoRootPath(string path)
+        public string GetSpecRepoRootPath(string path)
         {
             if (string.IsNullOrEmpty(path))
             {

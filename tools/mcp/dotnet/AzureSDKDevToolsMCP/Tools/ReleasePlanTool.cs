@@ -20,31 +20,20 @@ namespace AzureSDKDSpecTools.Tools
         private readonly ILogger<ReleasePlanTool> logger = _logger;
 
         [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
-        public async Task<List<string>> GetReleasePlan(string pullRequestLink)
+        public async Task<string> GetReleasePlan(string pullRequestLink)
         {
             List<string> releasePlanList = [];
             try
             {
-                var releasePlans = await devOpsService.GetReleasePlans(pullRequestLink);
-                if (releasePlans == null || releasePlans.Count == 0)
-                {
-                    releasePlanList.Add("Failed to get release plan details.");
-                }
-                else
-                {
-                    releasePlanList.Add($"Release Plan details pull request: {pullRequestLink}");
-                    foreach (var releasePlan in releasePlans)
-                    {
-                        releasePlanList.Add($"Release Plan: {JsonSerializer.Serialize(releasePlan)}");
-                    }
-                }
+                var releasePlan = await devOpsService.GetReleasePlan(pullRequestLink);
+                return releasePlan == null ? "Failed to get release plan details." :
+                    $"Release Plan: {JsonSerializer.Serialize(releasePlan)}";
             }
             catch (Exception ex)
             {
                 logger.LogError($"Failed to get release plan details: {ex.Message}");
-                releasePlanList.Add($"Failed to get release plan details: {ex.Message}");
+                return $"Failed to get release plan details: {ex.Message}";
             }
-            return releasePlanList;
         }
 
         [McpServerTool, Description("Get Release Plan: Get release plan work item details for a given work item id.")]

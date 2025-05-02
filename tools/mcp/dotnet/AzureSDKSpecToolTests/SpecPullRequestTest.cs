@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AzureSDKDevToolsMCP.Helpers;
+using AzureSDKDevToolsMCP.Services;
 using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,14 +15,20 @@ namespace AzureSDKSpecToolTests
     public class SpecPullRequestTest
     {
         private ISpecPullRequestHelper specHelper;
+        private IGitHelper gitHelper;
+        private IGitHubService githubService;
         public SpecPullRequestTest()
         {
 
             var serviceProvider = new ServiceCollection()
              .AddLogging(configure => configure.AddConsole())
              .BuildServiceProvider();
-            var logger = serviceProvider.GetService<ILogger<SpecPullRequestHelper>>();
-            specHelper = new SpecPullRequestHelper(logger);
+            var specLogger = serviceProvider.GetService<ILogger<SpecPullRequestHelper>>();
+            var gitLogger = serviceProvider.GetService<ILogger<GitHelper>>();
+            var githubServiceLogger = serviceProvider.GetService<ILogger<GitHubService>>();
+            githubService = new GitHubService(githubServiceLogger);
+            var gitHelper = new GitHelper(githubService, gitLogger);
+            specHelper = new SpecPullRequestHelper(specLogger, gitHelper);
         }
 
         [Fact]

@@ -65,7 +65,7 @@ namespace AzureSDKDSpecTools.Tools
                 }
 
                 // Get current branch name
-                var repoRootPath = TypeSpecHelper.GetSpecRepoRootPath(typeSpecProjectRoot);
+                var repoRootPath = _typespecHelper.GetSpecRepoRootPath(typeSpecProjectRoot);
                 var branchName = _gitHelper.GetBranchName(repoRootPath);
                 
                 // Check if current repo is private or public repo

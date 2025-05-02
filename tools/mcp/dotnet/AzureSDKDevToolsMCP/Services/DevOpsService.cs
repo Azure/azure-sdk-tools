@@ -87,7 +87,7 @@ namespace AzureSDKDSpecTools.Services
     public interface IDevOpsService
     {
         public Task<ReleasePlan> GetReleasePlan(int workItemId);
-        public Task<List<ReleasePlan>> GetReleasePlans(string pullRequest);
+        public Task<ReleasePlan> GetReleasePlan(string pullRequestUrl);
         public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
         public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
         public Task<Build> GetPipelineRun(int buildId);
@@ -168,53 +168,33 @@ namespace AzureSDKDSpecTools.Services
             return releasePlan;
         }
 
-        public async Task<List<ReleasePlan>> GetReleasePlans(string pullRequest)
+        public async Task<ReleasePlan> GetReleasePlan(string pullRequestUrl)
         {
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [System.WorkItemType] = 'Release Plan' AND [System.State]  IN ('New', 'In Progress')";
-            var workItems = await FetchWorkItems(query);
-            List<ReleasePlan> releasePlans = new ();
-            _logger.LogInformation($"Fetched {workItems.Count} release plans for service and product.");
-            foreach (var workItem in workItems)
+            // First find the API sepc work item
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.RESTAPIReviews] CONTAINS WORDS '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var apiSpecWorkItems = await FetchWorkItems(query);
+            if (apiSpecWorkItems.Count == 0)
             {
-                if (workItem.Relations == null)
-                    continue;
-                // Find API spec work item
-                var apiSpecRelations = workItem.Relations.Where(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Forward"));
-                foreach(var apiSpecRelation in apiSpecRelations)
+                throw new Exception($"Failed to find API sepc work item for pull request URL {pullRequestUrl}");
+            }
+
+            foreach(var workItem in apiSpecWorkItems)
+            {
+                if (workItem.Relations.Any())
                 {
-                    var apiSpecWorkItemId = int.Parse(apiSpecRelation.Url.Split('/').Last());
-                    var apiSpecWorkItem = await _connection.GetWorkItemClient().GetWorkItemAsync(apiSpecWorkItemId);
-                    if (apiSpecWorkItem != null)
-                    {
-                        // Find all spec pull requests added in API spec work item.
-                        if (apiSpecWorkItem.Fields.TryGetValue("Custom.RESTAPIReviews", out Object? value))
-                        {
-                            var restApiReviews = value?.ToString();
-                            if (restApiReviews != null)
-                            {
-                                var pullRequests = ParsePullRequestLinks(restApiReviews);
-                                if (pullRequests.Contains(pullRequest.ToLower()))
-                                {
-                                    var releasePlan = MapWorkItemToReleasePlan(workItem);
-                                    releasePlan.SpecPullRequests.AddRange(pullRequests);
-                                    releasePlans.Add(releasePlan);
-                                }
-                            }
-                        }
-                    }
+                    var parent = workItem.Relations.FirstOrDefault(w => w.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
+                    if (parent == null)
+                        continue;
+                    // Get parent work item and make sure it is release plan work item
+                    var parentWorkItemId = int.Parse(parent.Url.Split('/').Last());
+                    var parentWorkItem = await _connection.GetWorkItemClient().GetWorkItemAsync(parentWorkItemId);
+                    if (parentWorkItem == null || !parentWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? parentType))
+                        continue;
+                    if (parentType.Equals("Release Plan"))
+                        return MapWorkItemToReleasePlan(parentWorkItem);
                 }
             }
-            return releasePlans;
-        }
-
-        private static HashSet<string> ParsePullRequestLinks(string htmlText)
-        {
-            // This method parses pull requiest links from html text like
-            // "<a href=\"https://github.com/Azure/azure-rest-api-specs/pull/33459\">https://github.com/Azure/azure-rest-api-specs/pull/33459</a><br><a href=\"https://github.com/Azure/azure-rest-api-specs/pull/32282\">https://github.com/Azure/azure-rest-api-specs/pull/32282</a><br"
-            HashSet<string> links = new HashSet<string>();
-            var regex = new Regex("https:\\/\\/github\\.com\\/[\\w-]+\\/[\\w-]+\\/pull\\/\\d+");
-            links.AddRange(regex.Matches(htmlText).Select(m => m.Value.ToLower()));
-            return links;
+            throw new Exception($"Failed to find a release plan with {pullRequestUrl} as spec pull request.");
         }
 
         public async Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan)
@@ -386,17 +366,25 @@ namespace AzureSDKDSpecTools.Services
 
         private async Task<List<WorkItem>> FetchWorkItems(string query)
         {
-            var workItemclient = _connection.GetWorkItemClient();
-            var result = await workItemclient.QueryByWiqlAsync(new Wiql { Query = query });
-            if (result != null && result.WorkItems != null)
+            try
             {
-                return await workItemclient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
+                var workItemclient = _connection.GetWorkItemClient();
+                var result = await workItemclient.QueryByWiqlAsync(new Wiql { Query = query });
+                if (result != null && result.WorkItems != null)
+                {
+                    return await workItemclient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
+                }
+                else
+                {
+                    _logger.LogWarning("No work items found.");
+                    return [];
+                }
             }
-            else
+            catch(Exception ex)
             {
-                _logger.LogWarning("No work items found.");
-                return [];
+                throw new Exception($"Failed to get release plan. Error: {ex.Message}");
             }
+            
         }
 
         private static int GetPipelineDefinitionId(string language)

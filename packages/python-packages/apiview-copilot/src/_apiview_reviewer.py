@@ -648,8 +648,7 @@ class ApiViewReview:
                 inputs={
                     "language": self._get_language_pretty_name(),
                     "context": context_string,
-                    "apiview": chunk.numbered(),
-                    "diff": chunk.numbered(),
+                    "content": chunk.numbered(),
                 },
             )
         }
@@ -661,8 +660,7 @@ class ApiViewReview:
             inputs={
                 "language": self._get_language_pretty_name(),
                 "custom_rules": generic_metadata["custom_rules"],
-                "apiview": chunk.numbered(),
-                "diff": chunk.numbered(),
+                "content": chunk.numbered(),
             },
         )
 

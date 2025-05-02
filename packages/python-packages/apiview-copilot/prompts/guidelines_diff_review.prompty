@@ -58,7 +58,7 @@ sample:
       "category": "Enumerations",
       "text": "DO use UPPERCASE for enum member names.\n\n```python\n\n# Yes\nclass MyGoodEnum(str, Enum):\n    ONE = 'one'\n    TWO = 'two'\n\n# No\nclass MyBadEnum(str, Enum):\n    One = 'one' # No - using PascalCased name.\n    two = 'two' # No - using all lower case name.\n\n```"
     }]
-  diff: |
+  content: |
     ```python
     4:  namespace azure.keyvault.secrets
     5:  	
@@ -146,5 +146,5 @@ system:
 user:
   Evaluate the following APIView diff and make comments.
   ```{{language}}
-  {{diff}}
+  {{content}}
   ```

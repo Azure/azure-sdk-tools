@@ -28,7 +28,7 @@ sample:
     - Does it avoid un-Pythonic patterns from other languages?
     - Is it consistent with the Python standard library style?
     - Does the API use proper type hints and follow best static typing practices for Python?
-  apiview: |
+  content: |
     ```python
     500: class azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):
     501:     CAPTION = 'caption'
@@ -98,7 +98,7 @@ system:
 user:
   Evaluate the following APIView for developer experience and {{language}} design.
   ```{{language}}
-  {{apiview}}
+  {{content}}
   ```
 assistant: |
   Based on the evaluation criteria, analyze how delightful this API is and how well it adheres to {{language}} best practices. Consider:

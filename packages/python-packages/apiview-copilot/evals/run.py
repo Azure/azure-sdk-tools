@@ -25,7 +25,7 @@ model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
     "api_key": os.environ["AZURE_OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
-    "api_version": "2025-01-01-preview",
+    "api_version": os.environ["OPENAI_API_VERSION"],
 }
 
 weights: dict[str, float] = {
@@ -368,12 +368,12 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
 def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Establish the current results as the new baseline."""
 
-    establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-    if establish_baseline.lower() == "y":
-        for name, result in all_results.items():
-            output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-            with open(str(output_path), "w") as f:
-                json.dump(result, indent=4, fp=f)
+    # establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+    # if establish_baseline.lower() == "y":
+    for name, result in all_results.items():
+        output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
+        with open(str(output_path), "w") as f:
+            json.dump(result, indent=4, fp=f)
 
     # whether or not we establish a baseline, we want to write results to a temp dir
     log_path = pathlib.Path(__file__).parent / "results" / args.language / ".log"

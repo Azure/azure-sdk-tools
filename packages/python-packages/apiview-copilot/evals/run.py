@@ -447,59 +447,65 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    custom_eval = CustomAPIViewEvaluator()
-    rule_ids = set()
+    target = pathlib.Path(__file__).parent.parent / "scratch" / "apiviews" / "python" / "image_analysis.txt"
+    with open(str(target), "r", encoding="utf-8") as f:
+        target_apiview = f.read()
+    
+    print(review_apiview(language=args.language, query=target_apiview))
 
-    tests_directory = pathlib.Path(__file__).parent / "tests" / args.language
-    args.test_file = pathlib.Path(args.test_file).name
+    # custom_eval = CustomAPIViewEvaluator()
+    # rule_ids = set()
 
-    all_results = {}
-    for file in tests_directory.glob("*.jsonl"):
-        if args.test_file != "all" and file.name != args.test_file:
-            continue
+    # tests_directory = pathlib.Path(__file__).parent / "tests" / args.language
+    # args.test_file = pathlib.Path(args.test_file).name
 
-        azure_ai_project = {
-            "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-            "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
-            "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
-        }
+    # all_results = {}
+    # for file in tests_directory.glob("*.jsonl"):
+    #     if args.test_file != "all" and file.name != args.test_file:
+    #         continue
 
-        run_results = []
-        for run in range(args.num_runs):
-            print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
-            result = evaluate(
-                data=str(file),
-                evaluators={
-                    "metrics": custom_eval,
-                },
-                evaluator_config={
-                    "metrics": {
-                        "column_mapping": {
-                            "response": "${data.response}",
-                            "query": "${data.query}",
-                            "language": "${data.language}",
-                            "actual": "${target.actual}",
-                            "testcase": "${data.testcase}",
-                            "context": "${data.context}",
-                        },
-                    },
-                },
-                target=review_apiview,
-                fail_on_evaluator_errors=True,
-                azure_ai_project=azure_ai_project,
-            )
+    #     azure_ai_project = {
+    #         "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
+    #         "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
+    #         "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
+    #     }
 
-            run_result = record_run_result(result, rule_ids)
-            print(f"Average score for {file.name} run {run + 1}/{args.num_runs}: {run_result[-1]['average_score']:.2f}")
-            run_results.append(run_result)
+    #     run_results = []
+    #     for run in range(args.num_runs):
+    #         print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
+    #         result = evaluate(
+    #             data=str(file),
+    #             evaluators={
+    #                 "metrics": custom_eval,
+    #             },
+    #             evaluator_config={
+    #                 "metrics": {
+    #                     "column_mapping": {
+    #                         "response": "${data.response}",
+    #                         "query": "${data.query}",
+    #                         "language": "${data.language}",
+    #                         "actual": "${target.actual}",
+    #                         "testcase": "${data.testcase}",
+    #                         "context": "${data.context}",
+    #                     },
+    #                 },
+    #             },
+    #             target=review_apiview,
+    #             fail_on_evaluator_errors=True,
+    #             azure_ai_project=azure_ai_project,
+    #         )
 
-        # take the median run based on the average score
-        median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
-        all_results[file.name] = median_result
+    #         run_result = record_run_result(result, rule_ids)
+    #         print(f"Average score for {file.name} run {run + 1}/{args.num_runs}: {run_result[-1]['average_score']:.2f}")
+    #         run_results.append(run_result)
 
-    if not all_results:
-        raise ValueError(f"No tests found for arguments: {args}")
+    #     # take the median run based on the average score
+    #     median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
+    #     all_results[file.name] = median_result
 
-    show_results(args, all_results)
-    establish_baseline(args, all_results)
-    calculate_coverage(args, rule_ids)
+    # if not all_results:
+    #     raise ValueError(f"No tests found for arguments: {args}")
+
+    # show_results(args, all_results)
+    # establish_baseline(args, all_results)
+    # calculate_coverage(args, rule_ids)

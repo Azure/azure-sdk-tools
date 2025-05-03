@@ -9,8 +9,8 @@ extends:
     ArtifactName: 'apiview-copilot'
     PackageName: 'ApiviewCopilot'
     CloudConfig:
-    Public:
-      ServiceConnection: azure-sdk-tests-playground
+      Public:
+        ServiceConnection: azure-sdk-tests-playground
     TestSteps:
     - script: |
         python -m pip install -r dev_requirements.txt

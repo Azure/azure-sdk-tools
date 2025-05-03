@@ -8,9 +8,6 @@ extends:
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'apiview-copilot'
     PackageName: 'ApiviewCopilot'
-    CloudConfig:
-      Public:
-        ServiceConnection: azure-sdk-tests-playground
     TestSteps:
     - script: |
         python -m pip install -r dev_requirements.txt

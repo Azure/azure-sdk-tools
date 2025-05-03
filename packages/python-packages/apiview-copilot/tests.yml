@@ -4,34 +4,35 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
   parameters:
     PythonVersion: '3.10.9'
-    PackagePath: 'packages/python-packages/apiview-copilot'
-    FeedName: 'public/azure-sdk-for-python'
-    ArtifactName: 'apiview-copilot'
-    PackageName: 'ApiviewCopilot'
     TestSteps:
-
-    - task: AzureCLI@2
-      inputs:
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az login --tenant 72f988bf-86f1-41af-91ab-2d7cd011db47 --allow-no-subscriptions
-          az account set --subscription "Azure SDK Developer Playground"
-
     - script: |
         python -m pip install -r dev_requirements.txt
         python -m pip install -e .
       displayName: 'Install Test Requirements'
       workingDirectory: $(Build.SourcesDirectory)/packages/python-packages/apiview-copilot
 
-    - script: |
-        python evals/run.py
-      displayName: 'Run Evals'
+    - task: AzurePowerShell@5
+      displayName: Run Evals (AzurePowerShell@5)
       workingDirectory: $(Build.SourcesDirectory)/packages/python-packages/apiview-copilot
       env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)
         AZURE_SUBSCRIPTION_ID: faa080af-c1d8-40ad-9cce-e1a450ca5b57
         AZURE_FOUNDRY_RESOURCE_GROUP: openai-shared
         AZURE_FOUNDRY_PROJECT_NAME: apiview-ai
         OPENAI_API_VERSION: 2025-01-01-preview
+      inputs:
+        azureSubscription: Azure SDK Developer Playground
+        azurePowerShellVersion: LatestVersion
+        pwsh: true
+        ScriptType: InlineScript
+        Inline: >-
+          $account = (Get-AzContext).Account;
+          $env:AZURESUBSCRIPTION_CLIENT_ID = $account.Id;
+          $env:AZURESUBSCRIPTION_TENANT_ID = $account.Tenants;
+          Write-Host (Get-Command python).Source
+
+          python evals/run.py
+          Write-Host "Last exit code: $LASTEXITCODE";
+          exit $LASTEXITCODE;

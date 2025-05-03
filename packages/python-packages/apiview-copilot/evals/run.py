@@ -19,7 +19,7 @@ dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4o"
+MODEL_JUDGE = "gpt-4.1"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
@@ -39,14 +39,10 @@ class CustomAPIViewEvaluator:
         exact_matches = set()
         rule_matches_wrong_line = set()
 
-        # Filter out summary comments
-        filtered_actual_comments = [c for c in actual["comments"] if c.get("source") != "summary"]
-        filtered_expected_comments = [c for c in expected["comments"] if c.get("source") != "summary"]
-
         # Create a copy to work with
-        comments_left = copy.deepcopy(filtered_actual_comments)
+        comments_left = copy.deepcopy(actual["comments"])
 
-        for expected_comment in filtered_expected_comments:
+        for expected_comment in expected["comments"]:
             e_line = expected_comment["line_no"]
             e_rules = frozenset(expected_comment["rule_ids"])
 
@@ -444,6 +440,15 @@ if __name__ == "__main__":
         if args.test_file != "all" and file.name != args.test_file:
             continue
 
+        if args.test_file == "all":
+            kwargs = {
+                "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
+                "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
+                "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
+            }
+        else:
+            kwargs = {}
+
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
@@ -481,12 +486,8 @@ if __name__ == "__main__":
                     },
                 },
                 target=review_apiview,
-                # TODO we can send data to our foundry project for history / more graphical insights
-                # azure_ai_project={
-                #     "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-                #     "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
-                #     "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
-                # }
+                fail_on_evaluator_errors=True,
+                **kwargs,
             )
 
             run_result = record_run_result(result, rule_ids)

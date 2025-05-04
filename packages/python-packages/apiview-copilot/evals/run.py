@@ -122,6 +122,8 @@ class CustomAPIViewEvaluator:
 
         client = openai.AzureOpenAI()
         for comment in generic_comments:
+            if comment.get("source") != "generic":
+                continue
             line_no = comment["line_no"]
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
@@ -164,12 +166,14 @@ class CustomAPIViewEvaluator:
         exact_matches, rule_matches_wrong_line, generic_comments = self._get_comment_matches(expected, actual)
         self._evaluate_generic_comments(query, language, generic_comments)
         expected_comments = len([c for c in expected["comments"] if c["rule_ids"]])
-        valid_generic_comments = len([c for c in generic_comments if c["valid"]])
+        valid_generic_comments = len([c for c in generic_comments if c.get("valid") is True])
+        invalid_generic_comments = [c for c in generic_comments if c.get("valid") is False]
         review_eval = {
             "expected_comments": expected_comments,
             "comments_found": len(actual["comments"]),
             "true_positives": len(exact_matches),
             "valid_generic_comments": valid_generic_comments,
+            "invalid_generic_comments": invalid_generic_comments,
             "false_positives": len(actual["comments"])
             - (len(exact_matches) + len(rule_matches_wrong_line))
             - valid_generic_comments,
@@ -368,12 +372,15 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
 def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Establish the current results as the new baseline."""
 
-    # establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-    # if establish_baseline.lower() == "y":
-    for name, result in all_results.items():
-        output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-        with open(str(output_path), "w") as f:
-            json.dump(result, indent=4, fp=f)
+    # only ask if we're not in CI
+    in_ci = os.getenv('TF_BUILD', False)
+    if in_ci is False:
+        establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+        if establish_baseline.lower() == "y":
+            for name, result in all_results.items():
+                output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
+                with open(str(output_path), "w") as f:
+                    json.dump(result, indent=4, fp=f)
 
     # whether or not we establish a baseline, we want to write results to a temp dir
     log_path = pathlib.Path(__file__).parent / "results" / args.language / ".log"
@@ -404,12 +411,14 @@ def record_run_result(result: dict[str, Any], rule_ids: Set[str]) -> list[dict[s
                 "expected_comments": row["outputs.metrics.expected_comments"],
                 "comments_found": row["outputs.metrics.comments_found"],
                 "valid_generic_comments": row["outputs.metrics.valid_generic_comments"],
+                "invalid_generic_comments": row["outputs.metrics.invalid_generic_comments"],
                 "true_positives": row["outputs.metrics.true_positives"],
                 "false_positives": row["outputs.metrics.false_positives"],
                 "false_negatives": row["outputs.metrics.false_negatives"],
                 "percent_coverage": row["outputs.metrics.percent_coverage"],
                 "rule_matches_wrong_line": row["outputs.metrics.rule_matches_wrong_line"],
                 "wrong_line_details": row["outputs.metrics.wrong_line_details"],
+                "fuzzy_matches": row["outputs.metrics.fuzzy_matches"],
                 "similarity": row["outputs.metrics.similarity"],
                 "groundedness": row["outputs.metrics.groundedness"],
                 "groundedness_reason": row["outputs.metrics.groundedness_reason"],

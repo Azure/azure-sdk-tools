@@ -9,6 +9,8 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Azure.Sdk.Tools.Cli.Services.Azure;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.Sdk.Tools.Cli.Contract;
+using System.CommandLine.Invocation;
+using System.CommandLine;
 
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
@@ -28,6 +30,17 @@ public class AzurePipelinesTool : MCPTool
         var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
         this.buildClient = connection.GetClient<BuildHttpClient>();
         this.testClient = connection.GetClient<TestResultsHttpClient>();
+    }
+
+    public override Command GetCommand()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
+    {
+
+        return 0;
     }
 
     [McpServerTool, Description("Gets details for a pipeline run")]

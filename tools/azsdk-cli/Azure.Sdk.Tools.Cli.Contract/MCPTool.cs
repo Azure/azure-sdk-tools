@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Routing;
@@ -17,10 +18,14 @@ namespace Azure.Sdk.Tools.Cli.Contract
     /// </summary>
     public abstract class MCPTool : MCPToolInterface
     {
-        // we need some way to surface the command object here so we can use it to respond to the command invocation
+        public MCPTool() {
+            Command = GetCommand();
+        }
 
-        public abstract Command GetCommand { get; set; }
+        public Command Command;
 
+        public abstract Command GetCommand();
 
+        public abstract Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct);
     }
 }

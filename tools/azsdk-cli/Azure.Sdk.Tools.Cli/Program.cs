@@ -1,22 +1,34 @@
+using System.CommandLine;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Services.Azure;
+using ModelContextProtocol.Protocol.Types;
 
 namespace Azure.Sdk.Tools.Cli;
 
 public sealed class Program
 {
-    public static void Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
-
         // todo: parse a command bundle here. pass it to CreateHostBuilder once we have an actual type
         // todo: can we have a "start" verb and a <tool> verb? EG if someone calls <server.exe> HelloWorld
         //   "This is a hello world input" -> we invoke just that tool
         //   "<server.exe> start" -> runs server responding to vscode copilot chat
-        var host = CreateAppBuilder(args).Build();
-        host.Run();
+        ServiceCollection services = new();
+        ConfigureServices(services, targetedTools: null);
+        var serviceProvider = services.BuildServiceProvider();
+
+        var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
+        var rootCommand = commandFactory.CreateRootCommand();
+
+        // should probably swap over to returning a CommandResponse object similar to 
+        // azure-mcp...but at the same time we could just structured log the result in the
+        // HandleCommand function of each tool, then maybe a ConsoleFormatter to turn the structured
+        // log into something easy to read?
+        return await rootCommand.InvokeAsync(args);
     }
 
-    public static void ConfigureServices(IServiceCollection services, List<MCPTool> targetedTools)
+    public static void ConfigureServices(IServiceCollection services, List<MCPTool>? targetedTools)
     {
         if (targetedTools == null)
         {
@@ -24,30 +36,6 @@ public sealed class Program
                 .WithStdioServerTransport()
                 .WithToolsFromAssembly();
         }
-    }
-
-    public static WebApplicationBuilder CreateAppBuilder(string[] args)
-    {
-        // todo: implement our own module discovery that takes the `--tools` or `--tools-exclude` when booting
-        var builder = WebApplication.CreateBuilder(args);
-        builder.Logging.AddConsole(consoleLogOptions =>
-        {
-            consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
-        });
-
-        builder.Services.AddSingleton<IAzureService, AzureService>();
-
-        builder.Services
-            .AddMcpServer()
-            .WithStdioServerTransport()
-            // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
-            // behind a command line flag or we could try to run in both modes at once if possible.
-            //.WithHttpTransport()
-            // todo: we can definitely honor the --tools param here to filter down the provided tools
-            // for now, lets just use WithtoolsFromAssembly to actually run this thing
-            .WithToolsFromAssembly();
-
-        return builder;
     }
 
 }

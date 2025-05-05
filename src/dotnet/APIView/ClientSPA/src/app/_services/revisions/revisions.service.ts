@@ -170,13 +170,20 @@ export class APIRevisionsService {
     });
   }
 
-  generateAIReview(reviewId: string, apiRevisionId: string): Observable<number> {
+  generateAIReview(reviewId: string, activeApiRevisionId: string, diffApiRevisionId: string | undefined = undefined): Observable<number> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<number>(this.baseUrl + `/${reviewId}/${apiRevisionId}/generateReview`, {},
+    let params = new HttpParams();
+    params = params.append('activeApiRevisionId', activeApiRevisionId);
+    if (diffApiRevisionId) {
+      params = params.append('diffApiRevisionId', diffApiRevisionId);
+    }
+
+    return this.http.post<number>(this.baseUrl + `/${reviewId}/generateReview`, {},
     { 
       headers: headers,
+      params: params,
       withCredentials: true,
     });
   }

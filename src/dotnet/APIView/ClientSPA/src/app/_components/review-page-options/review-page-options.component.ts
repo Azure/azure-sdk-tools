@@ -363,8 +363,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   generateAIReview(event: Event) {
     this.aiReviewGenerationState = 'InProgress';
     this.generateAIReviewButtonText = 'Generating review...';
+    const diffApiRevisionId = this.diffAPIRevision ? this.diffAPIRevision.id : undefined;
 
-    this.apiRevisionsService.generateAIReview(this.activeAPIRevision!.reviewId, this.activeAPIRevision!.id).pipe(take(1)).subscribe({
+    this.apiRevisionsService.generateAIReview(this.activeAPIRevision!.reviewId, this.activeAPIRevision!.id, diffApiRevisionId).pipe(take(1)).subscribe({
       next: (response: number) => {
         this.aiReviewGenerationState = 'Completed';
         this.generateAIReviewButtonText = `Generated ${response} comments!`;

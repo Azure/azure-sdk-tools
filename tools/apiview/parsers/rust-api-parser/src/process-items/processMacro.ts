@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isMacroItem } from "./utils/typeGuards";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a macro item and returns ReviewLine objects.
@@ -17,10 +18,12 @@ export function processMacro(item: Item): ReviewLine[] | null {
   // Split the macro value by newlines
   const macroLines = item.inner.macro.split("\n");
 
+  const linedId = item.id.toString();
+  lineIdMap.set(linedId, macroLines[0]);
   // Create ReviewLines for each macro line
   macroLines.forEach((line, index) => {
     const reviewLine: ReviewLine = {
-      LineId: index === 0 ? item.id.toString() : `${item.id.toString()}_macro_${index}`,
+      LineId: index === 0 ? linedId : undefined,
       Tokens: [
         {
           Kind: TokenKind.Text,
@@ -28,7 +31,7 @@ export function processMacro(item: Item): ReviewLine[] | null {
         },
       ],
       // Only additional lines are related to the first line
-      RelatedToLine: index === 0 ? undefined : item.id.toString(),
+      RelatedToLine: index === 0 ? undefined : linedId,
     };
     reviewLines.push(reviewLine);
   });

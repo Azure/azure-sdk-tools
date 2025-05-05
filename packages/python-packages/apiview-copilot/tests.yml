@@ -35,12 +35,6 @@ extends:
           $env:AZURESUBSCRIPTION_CLIENT_ID = $account.Id;
           $env:AZURESUBSCRIPTION_TENANT_ID = $account.Tenants;
 
-          if ($IsWindows) {
-            . $(VENV_LOCATION)/Scripts/Activate.ps1
-          }
-          else {
-            . $(VENV_LOCATION)/bin/activate.ps1
-          }
           Write-Host (Get-Command python).Source
 
           python evals/run.py

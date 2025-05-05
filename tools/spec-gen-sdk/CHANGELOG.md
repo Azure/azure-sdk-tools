@@ -1,5 +1,11 @@
 # Release
 
+## 2025-05-02 - 0.6.0
+
+- Normalize the log message with prefixes
+- Report more info in the summary line of log for telemetry purpose
+- Removed unused codes
+
 ## 2025-04-24 - 0.5.1
 
 - Move service name variable into the package object

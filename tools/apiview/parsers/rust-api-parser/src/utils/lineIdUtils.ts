@@ -21,7 +21,7 @@ function postProcessLineIdMap(reviewLines: ReviewLine[], updatedLineIdMap: Map<s
   }
 }
 
-export function updateReviewLinesWithStableLinedIds(reviewLines: ReviewLine[]) {
+export function updateReviewLinesWithStableLineIds(reviewLines: ReviewLine[]) {
   const updatedLineIdMap = new Map<string, string>();
   postProcessLineIdMap(reviewLines, updatedLineIdMap);
   function updateLineIdReferences(reviewLines: ReviewLine[]) {

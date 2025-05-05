@@ -4,6 +4,7 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isTypeAliasItem } from "./utils/typeGuards";
 import { processGenerics } from "./utils/processGenerics";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a type alias item and returns ReviewLine objects.
@@ -15,6 +16,7 @@ export function processTypeAlias(item: Item): ReviewLine[] {
   if (!isTypeAliasItem(item)) return [];
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `type_alias_${item.name}`);
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),

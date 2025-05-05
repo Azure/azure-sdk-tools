@@ -5,6 +5,7 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isTraitItem } from "./utils/typeGuards";
 import { createGenericBoundTokens, processGenerics } from "./utils/processGenerics";
 import { getAPIJson } from "../main";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a trait item and adds its documentation to the ReviewLine.
@@ -18,6 +19,7 @@ export function processTrait(item: Item): ReviewLine[] {
   const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `trait_${item.name}`);
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -43,7 +45,7 @@ export function processTrait(item: Item): ReviewLine[] {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_trait",
     RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,

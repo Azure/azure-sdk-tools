@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isProcMacroItem } from "./utils/typeGuards";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a procedural macro item and returns ReviewLine objects.
@@ -14,6 +15,7 @@ export function processProcMacro(item: Item): ReviewLine[] | null {
 
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), item.name || "unknown_proc_macro");
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -57,8 +59,7 @@ export function processProcMacro(item: Item): ReviewLine[] | null {
   });
 
   // Add pub and fn keywords
-  const functionLine = {
-    LineId: `${item.id}_fn`,
+  const functionLine: ReviewLine = {
     Tokens: [
       {
         Kind: TokenKind.Keyword,
@@ -75,6 +76,7 @@ export function processProcMacro(item: Item): ReviewLine[] | null {
       },
     ],
     Children: [],
+    RelatedToLine: reviewLine.LineId,
   };
 
   reviewLines.push(reviewLine);

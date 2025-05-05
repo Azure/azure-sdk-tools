@@ -25,7 +25,6 @@ export function createDocsReviewLines(item: Item): ReviewLine[] {
       },
     ],
     RelatedToLine: item.id.toString(),
-    LineId: `${item.id.toString()}_docs_${index}`, // Add _docs_index to make each line unique
   }));
 
   return reviewLines;

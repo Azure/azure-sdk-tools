@@ -99,6 +99,5 @@ export function processEnum(item: Item): ReviewLine[] {
   if (implResult.traitImpls.length > 0) {
     reviewLines.push(...implResult.traitImpls);
   }
-  lineIdMap.set(item.id.toString(), `enum_${item.name}`);
   return reviewLines;
 }

@@ -152,12 +152,12 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
 
-        [HttpPost("{reviewId}/{apiRevisionId}/generateReview", Name = "GenerateAIReview")]
-        public async Task<ActionResult<int>> GenerateAIReview(string reviewId, string apiRevisionId = null)
+        [HttpPost("{reviewId}/generateReview", Name = "GenerateAIReview")]
+        public async Task<ActionResult<int>> GenerateAIReview(string reviewId, [FromQuery]string activeApiRevisionId, [FromQuery]string diffApiRevisionId = null)
         {
             try
             {
-                var violations = await _reviewManager.GenerateAIReview(reviewId, apiRevisionId);
+                var violations = await _reviewManager.GenerateAIReview(reviewId, activeApiRevisionId);
                 return new LeanJsonResult(violations, StatusCodes.Status200OK);
             }
             catch (Exception ex)

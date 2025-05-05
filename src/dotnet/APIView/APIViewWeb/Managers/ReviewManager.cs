@@ -331,21 +331,27 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task<int> GenerateAIReview(string reviewId, string apiRevisionId)
+        public async Task<int> GenerateAIReview(string reviewId, string activeApiRevisionId, string diffApiRevisionId)
         {
-            var revision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
-            var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeApiRevisionId);
+            var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+            var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
 
-            var codeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
-            var url = $"https://apiview-gpt.azurewebsites.net/{LanguageServiceHelpers.GetLanguageAliasForCopilotService(revision.Language)}";
+            var url = $"https://apiview-gpt.azurewebsites.net/{LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language)}";
             var client = new HttpClient();
             client.Timeout = TimeSpan.FromMinutes(20);
             var payload = new Dictionary<string, object>
             {
-                { "target", String.Join("\\n", codeLines.Select(item => item.lineText.Trim())) },
-                { "base", string.Empty },
-                { "diff", string.Empty }
+                { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
             };
+
+            if (!String.IsNullOrEmpty(diffApiRevisionId))
+            {
+                var diffApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: diffApiRevisionId);
+                var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(diffApiRevision, false);
+                var diffCodeLines = diffCodeFile.CodeFile.GetApiLines(skipDocs: true);
+                payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+            }
 
             var result = new AIReviewModel();
             try {
@@ -361,11 +367,11 @@ namespace APIViewWeb.Managers
             // Write back result as comments to APIView
             foreach (var comment in result.Comments)
             {
-                var codeLine = codeLines[comment.LineNo - 1];
+                var codeLine = activeCodeLines[comment.LineNo - 1];
                 var commentModel = new CommentItemModel();
                 commentModel.CreatedOn = DateTime.UtcNow;
                 commentModel.ReviewId = reviewId;
-                commentModel.APIRevisionId = apiRevisionId;
+                commentModel.APIRevisionId = activeApiRevisionId;
                 commentModel.ElementId = codeLine.lineId;
                 //comment.SectionClass = sectionClass; // This will be needed for swagger
             

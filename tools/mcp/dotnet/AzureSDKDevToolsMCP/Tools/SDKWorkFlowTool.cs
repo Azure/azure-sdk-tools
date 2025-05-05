@@ -84,17 +84,11 @@ namespace AzureSDKDSpecTools.Tools
                     return response;
                 }
 
-                if (!_typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot))
-                {
-                    response.Details.Add($"The TypeSpec project path '{typeSpecProjectRoot}' is not associated with the management plane. Currently, the Copilot agent supports SDK generation exclusively for the management plane.");
-                    return response;
-                }
 
                 // if current branch name is main then ask user to provide pull request number if they have or switch to the branch they have created for TypeSpec changes.
                 if (branchName.Equals(DEFAULT_BRANCH))
                 {
                     response.Details.Add($"The current branch is '{DEFAULT_BRANCH}', which is not recommended for development. Please switch to a branch containing your TypeSpec project changes or create a new branch if none exists.");
-                    _logger.LogWarning(response.Details.ToString());
                     return response;
                 }
 
@@ -108,7 +102,6 @@ namespace AzureSDKDSpecTools.Tools
                         response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
                     else
                         response.Details.Add($"Pull request {pullrequestNumber} is not valid. Please provide a valid pull requet number to check the status.");
-                    _logger.LogWarning(response.Details.ToString());
                     return response;
                 }
 
@@ -116,7 +109,6 @@ namespace AzureSDKDSpecTools.Tools
                 if (pullRequest.Base?.Ref?.Equals(DEFAULT_BRANCH) == false)
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} merges changes to '{pullRequest.Base?.Ref}' branch. SDK can be generated only from a pull request with {DEFAULT_BRANCH} branch as target. Create a pull request for your changes with '{DEFAULT_BRANCH}' branch as target.");
-                    _logger.LogWarning(response.Details.ToString());
                     return response;
                 }
 
@@ -124,7 +116,6 @@ namespace AzureSDKDSpecTools.Tools
                 if (pullRequest.State == Octokit.ItemState.Closed && !pullRequest.Merged)
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} is in closed status without merging changes to main branch. SDK can not be generated from closed PR. Create a pull request for your changes with '{DEFAULT_BRANCH}' branch as target.");
-                    _logger.LogWarning(response.Details.ToString());
                     return response;
                 }
 
@@ -132,13 +123,11 @@ namespace AzureSDKDSpecTools.Tools
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} has ARM approval or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
                     response.Status = "Success";
-                    _logger.LogWarning(response.Details.ToString());
                     return response;
                 }
                 else
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
-                    _logger.LogWarning(response.Details.ToString());
                     return response;
                 }
             }
@@ -161,7 +150,7 @@ namespace AzureSDKDSpecTools.Tools
 
             try
             {
-                if (!IsSDKGenerationSupported(language))
+                if (!DevOpsService.IsSDKGenerationSupported(language))
                 {
                     response.Details.Add($"SDK generation is currently not supported by agent for {language}");
                     response.Status = "Failed";
@@ -208,8 +197,9 @@ namespace AzureSDKDSpecTools.Tools
                 if (response.Status.Equals("Failed"))
                     return response.ToString();
 
+                string typeSpecProjectPath = _typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
                 string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
-                var pipelineRun = await _devopsService.RunSDKGenerationPipeline(branchRef, typespecProjectRoot, apiVersion, sdkReleaseType, language, workItemId);
+                var pipelineRun = await _devopsService.RunSDKGenerationPipeline(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId);
                 response = new GenericResponse()
                 {
                     Status = "Success",
@@ -239,7 +229,7 @@ namespace AzureSDKDSpecTools.Tools
                 var pipeline = await _devopsService.GetPipelineRun(buildId);
                 if (pipeline != null)
                 {
-                    response.Status = pipeline.Status?.ToString() ?? "Not available";
+                    response.Status = pipeline.Result?.ToString() ?? "Not available";
                     response.Details.Add($"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}");
                 }
             }
@@ -272,7 +262,12 @@ namespace AzureSDKDSpecTools.Tools
 
                 if(pipeline.Status != BuildStatus.Completed)
                 {
-                    return $"SDK generation pipeline is not in completed status to get generated SDK pull request details, Status: {pipeline.Status.ToString()}";
+                    return $"SDK generation pipeline is not in completed status to get generated SDK pull request details, Status: {pipeline.Status.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
+                }
+
+                if (pipeline.Result != BuildResult.Succeeded && pipeline.Result != BuildResult.PartiallySucceeded)
+                {
+                    return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
                 return await _devopsService.GetSDKPullRequestFromPipelineRun(buildId, language, workItemId);
@@ -281,16 +276,6 @@ namespace AzureSDKDSpecTools.Tools
             {
                 return $"Failed to get pull request details from SDK generation pipeline, Error: {ex.Message}";
             }
-        }
-
-        private static bool IsSDKGenerationSupported(string language)
-        {
-            return language switch
-            {
-                "Python" => true,
-                ".NET" => true,
-                _ => false,
-            };
         }
     }
 }

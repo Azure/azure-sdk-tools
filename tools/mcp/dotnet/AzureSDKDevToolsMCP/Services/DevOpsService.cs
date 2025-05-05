@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -23,7 +25,7 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 
 namespace AzureSDKDSpecTools.Services
-{   
+{
     public interface IDevOpsConnection
     {
         public BuildHttpClient GetBuildClient();
@@ -31,7 +33,7 @@ namespace AzureSDKDSpecTools.Services
         public ProjectHttpClient GetProjectClient();
     }
 
-    public class DevOpsConnection: IDevOpsConnection
+    public class DevOpsConnection : IDevOpsConnection
     {
         private BuildHttpClient _buildClient;
         private WorkItemTrackingHttpClient _workItemClient;
@@ -84,6 +86,7 @@ namespace AzureSDKDSpecTools.Services
         }
     }
 
+
     public interface IDevOpsService
     {
         public Task<ReleasePlan> GetReleasePlan(int workItemId);
@@ -101,7 +104,6 @@ namespace AzureSDKDSpecTools.Services
         public static readonly string INTERNAL_PROJECT = "internal";
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
-
 
         public async Task<ReleasePlan> GetReleasePlan(int workItemId)
         {
@@ -178,7 +180,7 @@ namespace AzureSDKDSpecTools.Services
                 throw new Exception($"Failed to find API sepc work item for pull request URL {pullRequestUrl}");
             }
 
-            foreach(var workItem in apiSpecWorkItems)
+            foreach (var workItem in apiSpecWorkItems)
             {
                 if (workItem.Relations.Any())
                 {
@@ -219,7 +221,7 @@ namespace AzureSDKDSpecTools.Services
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
-                    throw new Exception("Failed to create API spec work item");                    
+                    throw new Exception("Failed to create API spec work item");
                 }
 
                 // Link API spec as child of release plan
@@ -231,13 +233,13 @@ namespace AzureSDKDSpecTools.Services
             }
             catch (Exception ex) {
                 var errorMesage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
-                _logger.LogError(errorMesage);                
+                _logger.LogError(errorMesage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
                 if (apiSpecWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(apiSpecWorkItemId);
-                throw new Exception (errorMesage);
+                throw new Exception(errorMesage);
             }
         }
 
@@ -254,7 +256,7 @@ namespace AzureSDKDSpecTools.Services
             if (workItemType == "API Spec" && releasePlan.SpecPullRequests.Count > 0)
             {
                 StringBuilder sb = new StringBuilder();
-                foreach(var pr in releasePlan.SpecPullRequests)
+                foreach (var pr in releasePlan.SpecPullRequests)
                 {
                     if (sb.Length > 0)
                         sb.Append("<br>");
@@ -302,8 +304,8 @@ namespace AzureSDKDSpecTools.Services
             catch (Exception ex)
             {
                 var errorMesage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
-                throw new Exception (errorMesage);
-            }            
+                throw new Exception(errorMesage);
+            }
         }
 
         private static string MapLanguageToId(string language)
@@ -358,7 +360,7 @@ namespace AzureSDKDSpecTools.Services
                 await _connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception($"Failed to update SDK generation details to work item [{workItemId}]. Error: {ex.Message}");
             }
@@ -380,23 +382,35 @@ namespace AzureSDKDSpecTools.Services
                     return [];
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception($"Failed to get release plan. Error: {ex.Message}");
             }
-            
+
         }
 
         private static int GetPipelineDefinitionId(string language)
         {
-            return language switch
+            language = MapLanguageToId(language);
+            return language.ToLower() switch
             {
-                "Python" => 7423,
-                "JavaScript" => 7422,
-                "Go" => 7426,
-                "Java" => 7421,
-                ".NET" => 7412,
+                "python" => 7423,
+                "javascript" => 7422,
+                "go" => 7426,
+                "java" => 7421,
+                "dotnet" => 7412,
                 _ => 0,
+            };
+        }
+
+        public static bool IsSDKGenerationSupported(string language)
+        {
+            language = MapLanguageToId(language);
+            return language.ToLower() switch
+            {
+                "python" => true,
+                "dotnet" => true,
+                _ => false,
             };
         }
 
@@ -413,23 +427,23 @@ namespace AzureSDKDSpecTools.Services
             // Run pipeline
             var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
             var project = await projectClient.GetProject(INTERNAL_PROJECT);
-            var pipelineParam = new SdkGenPipelineParameters()
-            {
-                ApiSpecificationPath = typespecProjectRoot,
-                ApiVersion = apiVersion,
-                SdkReleaseType = sdkReleaseType
-            };
 
             // Queue SDK generation pipeline
             _logger.LogInformation($"Queueing pipeline [{definition.Name}] to generate SDK for {language}.");
-            var pipelineParamString = JsonSerializer.Serialize(pipelineParam);
-            _logger.LogInformation($"Pipeline parameters: [{pipelineParamString}]");
             var build = await buildClient.QueueBuildAsync(new Build()
                         {
                             Definition = definition,
-                            Project = project,                
-                            Parameters = pipelineParamString
-                        });
+                            Project = project,
+                            SourceBranch = branchRef,
+                            TemplateParameters = new Dictionary<string, string>
+                            {
+                                { "ConfigType", "TypeSpec"},
+                                { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
+                                { "ApiVersion", apiVersion },
+                                { "sdkReleaseType", sdkReleaseType },
+                                { "SkipPullRequestCreation", "false" }
+                            }
+            });
 
             _logger.LogInformation($"Started pipeline run {build.Url} to generate SDK.");
             if (workItemId != 0)

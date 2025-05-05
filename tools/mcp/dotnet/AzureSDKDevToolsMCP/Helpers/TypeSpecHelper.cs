@@ -16,6 +16,7 @@ namespace AzureSDKDSpecTools.Helpers
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
         public bool IsRepoPathForPublicSpecRepo(string path);
         public string GetSpecRepoRootPath(string path);
+        public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath);
     }
     public class TypeSpecHelper : ITypeSpecHelper
     {
@@ -64,6 +65,17 @@ namespace AzureSDKDSpecTools.Helpers
                 currentDirectory = currentDirectory.Parent;
             }
             return currentDirectory?.Parent?.FullName ?? string.Empty;
+        }
+
+        public string GetTypeSpecProjectRelativePath(string  typeSpecProjectPath)
+        {
+            if (string.IsNullOrEmpty(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            {
+                return string.Empty;
+            }
+
+            int specIndex = typeSpecProjectPath.IndexOf("specification");
+            return specIndex >= 0? typeSpecProjectPath[specIndex..].Replace("\\", "/") : string.Empty;
         }
     }
 }

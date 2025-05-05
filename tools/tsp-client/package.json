@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -65,6 +65,6 @@
     "yargs": "^17.2.1"
   },
   "peerDependencies": {
-    "@typespec/compiler": "^1.0.0-0"
+    "@typespec/compiler": "1.0.0-rc.1 || >=1.0.0 <2.0.0"
   }
 }

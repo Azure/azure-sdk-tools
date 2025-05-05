@@ -1,0 +1,62 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 8,
+            "bad_code": "namespace Azure.AI.Projects.OneDP {",
+            "suggestion": "namespace Azure.AI.Projects.[DescriptiveName] {",
+            "comment": "$The 'OneDP' suffix in the namespace is ambiguous from a client perspective. Renaming it to something that clearly indicates its domain or purpose would help users understand its context and scope. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 12,
+            "bad_code": "public virtual Response<Agent> CreateAgent(string displayName, string modelId, string instructions, CancellationToken cancellationToken = default);",
+            "suggestion": "public virtual Response<Agent> CreateAgent(AgentCreationOptions options, CancellationToken cancellationToken = default);",
+            "comment": "The AgentsClient exposes multiple overloads for CreateAgent (including ones with individual string parameters and ones accepting a RequestContent), which can overwhelm the user. Consolidating these overloads—preferably by emphasizing an options‐based pattern—can reduce ambiguity and improve discoverability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 20,
+            "bad_code": "public virtual Response<Agent> GetAgent(string agentId, CancellationToken cancellationToken = default);",
+            "suggestion": "/* Consider unifying the API by using a single pattern for conveying operation context (using either CancellationToken or a unified RequestContext) */",
+            "comment": "There are parallel overloads for GetAgent that use CancellationToken in one and RequestContext in another. This inconsistency forces users to wonder when to use one over the other. A more unified approach or detailed documentation distinguishing the two would improve the developer experience.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-lro-return"
+            ],
+            "line_no": 36,
+            "bad_code": "public virtual Response<Run> Run(string modelId, string instructions, string message, CancellationToken cancellationToken = default);",
+            "suggestion": "public virtual Operation<Run> Run(WaitUntil wait, string modelId, string instructions, string message, CancellationToken cancellationToken = default);",
+            "comment": "If the 'Run' methods are intended to represent long-running operations, they should follow the LRO guidelines – that is, they should return a subclass of Operation<T> and take WaitUntil as the first parameter. Without this, the operation shape does not clearly signal the asynchronous polling behavior expected for LROs.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 77,
+            "bad_code": "BinaryData IPersistableModel<Agent>.Write(ModelReaderWriterOptions options);",
+            "suggestion": "/* Consider refactoring common serialization logic into a shared base or helper to eliminate repetitive interface member implementations */",
+            "comment": "Many types in the API repetitively implement similar methods for JSON and binary serialization. Abstracting the shared logic can reduce boilerplate, lower the chance of inconsistencies, and simplify maintenance.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 204,
+            "bad_code": "public static class AIProjectsOneDPModelFactory {",
+            "suggestion": "public static class AIProjectsModelFactory {",
+            "comment": "The model factory exposes many static methods with numerous optional parameters. This overload explosion can make discoverability difficult. Consider grouping related parameters into option objects or adopting a builder pattern for more fluent configuration.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1271,
+            "bad_code": "public static class AIProjectsOneDPClientBuilderExtensions {",
+            "suggestion": "public static class AIProjectsClientBuilderExtensions {",
+            "comment": "The client builder extension name also includes 'OneDP', which may not be self‐explanatory. Renaming it to align with the overall client naming conventions would improve clarity and consistency.",
+            "source": "generic"
+        }
+    ]
+}

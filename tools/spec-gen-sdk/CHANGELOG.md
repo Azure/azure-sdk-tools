@@ -1,5 +1,23 @@
 # Release
 
+## 2025-04-24 - 0.5.1
+
+- Move service name variable into the package object
+
+## 2025-04-22 - 0.5.0
+
+- Output service names and artifact staging folder in execution report.
+
+## 2025-04-17 - 0.4.2
+
+- Refactor sdk-suppressions.yaml link
+- Remove render template's sdk-suppressions link only
+
+## 2025-04-17 - 0.4.1
+
+- Added pull request link to the generated html report
+- Added captureTransport to each script log
+
 ## 2025-04-10 - 0.4.0
 
 - Added run-mode input parameter

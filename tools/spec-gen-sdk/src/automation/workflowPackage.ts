@@ -10,10 +10,18 @@ import {
   WorkflowContext
 } from './workflow';
 import { getLanguageByRepoName } from './entrypoint';
+import { CommentCaptureTransport } from './logging';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
   context.logger.info(`Package log to a new logFile`);
+  
+  const pkgCaptureTransport = new CommentCaptureTransport({
+    extraLevelFilter: ['error', 'warn'],
+    level: 'debug',
+    output: pkg.messages
+  });
+  context.logger.add(pkgCaptureTransport);
 
   await workflowPkgCallBuildScript(context, pkg);
   await workflowPkgCallChangelogScript(context, pkg);
@@ -23,6 +31,7 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
   await workflowPkgCallInstallInstructionScript(context, pkg);
 
   setSdkAutoStatus(pkg, 'succeeded');
+  context.logger.remove(pkgCaptureTransport);
   context.logger.log('endsection', `Handle package ${pkg.name}`);
 };
 
@@ -56,12 +65,18 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
     }
   } else {
     context.logger.log('section', 'Call ChangelogScript');
+    const changeLogCaptureTransport = new CommentCaptureTransport({
+      extraLevelFilter: ['cmdout', 'cmderr'],
+      output: pkg.changelogs
+    });
+    context.logger.add(changeLogCaptureTransport);
     const result = await runSdkAutoCustomScript(context, runOptions, {
       cwd: context.config.localSdkRepoPath,
       fallbackName: 'Changelog',
       argList: [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths],
       statusContext: pkg
     });
+    context.logger.remove(changeLogCaptureTransport);
 
     setSdkAutoStatus(pkg, result);
     if (result !== 'failed') {
@@ -123,11 +138,11 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   if (language.toLowerCase() === 'go') {
     serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, ""); // go uses relative path as package name
   }
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
+  pkg.serviceName = serviceName;
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
+  context.stagedArtifactsFolder = stagedArtifactsFolder;
 
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 
@@ -139,7 +154,6 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkArtifactFolder = destination;
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.HasSDKArtifact]true`);
   for (const artifactPath of pkg.artifactPaths) {
     const fileName = path.basename(artifactPath);
     if (context.config.runEnv !== 'test') {
@@ -162,7 +176,6 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkApiViewArtifactFolder = destination;
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.HasApiViewArtifact]true`);
   const fileName = path.basename(pkg.apiViewArtifactPath);
   context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
   copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), path.join(destination, fileName));

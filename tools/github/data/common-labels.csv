@@ -26,6 +26,7 @@ Authentication,,e99695
 Authorization,,e99695
 Automation,,e99695
 Azure Arc Enabled Servers,,e99695
+Azure Projects,,e99695
 Azure Stack,,e99695
 Azure.Core,,e99695
 Azure.Identity,,e99695
@@ -198,6 +199,7 @@ Policy,,e99695
 Policy Insights,,e99695
 PostgreSQL,,e99695
 PowerBI,,e99695
+PureStorage,,e99695
 Purview,,e99695
 Quantum,,e99695
 Quota,Quota Service,e99695

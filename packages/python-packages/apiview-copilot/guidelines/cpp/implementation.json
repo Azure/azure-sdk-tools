@@ -1,5 +1,35 @@
 [
   {
+    "id": "cpp_implementation.html#cpp-api-service-http-pipeline",
+    "category": "Service Methods",
+    "text": "DO use the HTTP pipeline component within Azure::Core namespace for communicating to service REST endpoints.\n\nThe following example shows a typical way of using HttpPipeline to implement a service call method. The HttpPipeline will handle common HTTP requirements such as the user agent, logging, distributed tracing, retries, and proxy configuration.\n\nThe HTTP pipeline includes a number of policies that all requests pass through.  Examples of policies include setting required headers, authentication, generating a request ID, and implementing proxy authentication.  HttpPipelinePolicy is the base type of all policies (plugins) of the HttpPipeline. This section describes guidelines for designing custom policies.\n\nSome services may require custom policies to be implemented. For example, custom policies may implement fall back to secondary endpoints during retry, request signing, or other specialized authentication techniques."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-pipeline-core-policies",
+    "category": "HttpPipelinePolicy/Custom Policies",
+    "text": "DO use the policy implementations in Azure::Core whenever possible."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-custom-policy-review",
+    "category": "HttpPipelinePolicy/Custom Policies",
+    "text": "DO review the proposed policy with the Azure SDK [Architecture Board]. There may already be an existing policy that can be modified/parameterized to satisfy your need."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-custom-policy-thread-safe",
+    "category": "HttpPipelinePolicy/Custom Policies",
+    "text": "DO ensure thread-safety for custom policies. A practical consequence of this is that you should keep any per-request or connection bookkeeping data in the context rather than in the policy instance itself."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-pipeline-document-policies",
+    "category": "HttpPipelinePolicy/Custom Policies",
+    "text": "DO document any custom policies in your package. The documentation should make it clear how a user of your library is supposed to use the policy.\n\nSee general parameter validation guidelines."
+  },
+  {
+    "id": "cpp_implementation.html#general-parameter-validation-service",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters.\n\nAs described in general enumeration guidelines, you should use enum types whenever passing or deserializing a fixed well-known set of values to or from the service.\nThere may be times, however, where a struct is necessary to capture an extensible value from the service even if well-known values are defined,\nor to pass back to the service those same or other user-supplied values:\nThe value is retrieved and deserialized from service, and may contain a value not supported by the client library.\nThe value is roundtripped: the value is retrieved and deserialized from the service, and may later be serialized and sent back to the server."
+  },
+  {
     "id": "cpp_implementation.html#cpp-design-naming-enum",
     "category": "Enumeration-like Structs",
     "text": "DO name enum classes and enumerators using PascalCase."
@@ -7,22 +37,77 @@
   {
     "id": "cpp_implementation.html#cpp-design-naming-enum-class",
     "category": "Enumeration-like Structs",
-    "text": "DO use enum class for enumerations. For example:\n\n{% highlight cpp %}\nenum class PinState {\nOff,\nOn\n};\n{% endhighlight %}\n\nSubtypes of Operation<T> are returned from service client methods invoking long running operations."
+    "text": "DO use enum class for enumerations. For example:\n\n{% highlight cpp %}\nenum class PinState {\nOff,\nOn\n};\n{% endhighlight %}\n\nNote that modifying the enumerators in an enumeration is considered a breaking change, if the enumerators in an enumeration may change over time, use an Extendable Enumeration instead.\n\nWhen the set of values in an enumeration is not fixed, the Azure::Core::_internal::ExtendableEnumeration template should be used.\n\n{% highlight cpp %}\nclass MyEnumeration final : public ExtendableEnumeration {\npublic:\nexplicit MyEnumeration(std::string value) :\nExtendableEnumeration(std::move(value)) {}\nMyEnumeration() = default;\nstatic const MyEnumeration Enumerator1;\nstatic const MyEnumeration Enumerator2;\nstatic const MyEnumeration Enumerator3;\n};\n\n{% endhighlight %}\n\nThe ExtendableEnumeration type contains the methods for comparison, copying, and conversion to and from string values.\n\nSubtypes of Operation<T> are returned from service client methods invoking long running operations."
   },
   {
     "id": "cpp_implementation.html#cpp-lro-return",
     "category": "Implementing Subtypes of Operation<T> {#cpp-implement-operation}",
-    "text": "DO check the value of IsDone in subclass implementations of PollInternal and PollUntilDoneInternal and immediately return the result of GetRawResponse if it is true.\n\nTODO: Show an example implementation for Operation."
+    "text": "DO check the value of IsDone in subclass implementations of PollInternal and PollUntilDoneInternal and immediately return the result of GetRawResponse if it is true."
   },
   {
-    "id": "cpp_implementation.html#cpp-lro-return",
+    "id": "cpp_implementation.html#cpp-lro-exceptions",
     "category": "Implementing Subtypes of Operation<T> {#cpp-implement-operation}",
-    "text": "DO throw from methods on Operation<T> subclasses in the following scenarios.\nIf an underlying service operation call from Poll or PollUntilDone throws, re-throw RequestFailedException or its subtype.\nIf the operation completes with a non-success result, throw RequestFailedException or its subtype from Poll or PollUntilDone.\n\nInclude any relevant error state information in the exception message.\n\n\nInclude any relevant error state information in the exception message.\nInclude any relevant error state information in the exception message.\n\nTODO: Show an example of how to handle errors.\nIf the Value property is evaluated after the operation failed (HasValue is false and IsDone is true) throw the same exception as the one thrown when the operation failed.\n\nTODO: Show an example of how to throw in this case.\nIf the Value property is evaluated before the operation is complete (IsDone is false) throw TODO: What to throw.\n\nThe exception message should be: \"The operation has not yet completed.\"\n\n\nThe exception message should be: \"The operation has not yet completed.\"\nThe exception message should be: \"The operation has not yet completed.\"\n\nTODO: DO we want this behavior.\nTODO: Show an example of how to throw in this case.\n\nTODO: This section needs to be driven by code in the Core library.\n\nRequest logging will be done automatically by the HttpPipeline.  If a client library needs to add custom logging, follow the same guidelines and mechanisms as the pipeline logging mechanism.  If a client library wants to do custom logging, the designer of the library must ensure that the logging mechanism is pluggable in the same way as the HttpPipeline logging policy."
+    "text": "DO throw from methods on Operation<T> subclasses in the following scenarios.\n\nIf an underlying service operation call from Poll or PollUntilDone throws, re-throw RequestFailedException or its subtype.\n\n\nIf the operation completes with a non-success result, throw RequestFailedException or its subtype from Poll or PollUntilDone.\n\nInclude any relevant error state information in the exception message.\n\n\nInclude any relevant error state information in the exception message.\n\nIf the Value property is evaluated after the operation failed (HasValue is false and IsDone is true) throw the same exception as the one thrown when the operation failed.\n\n\nIf the Value property is evaluated before the operation is complete (IsDone is false) throw TODO: What to throw.\n\nThe exception message should be: \"The operation has not yet completed.\"\n\n\nThe exception message should be: \"The operation has not yet completed.\"\n\nIf an underlying service operation call from Poll or PollUntilDone throws, re-throw RequestFailedException or its subtype.\n\nIf the operation completes with a non-success result, throw RequestFailedException or its subtype from Poll or PollUntilDone.\nInclude any relevant error state information in the exception message.\n\nIf the Value property is evaluated after the operation failed (HasValue is false and IsDone is true) throw the same exception as the one thrown when the operation failed.\n\nIf the Value property is evaluated before the operation is complete (IsDone is false) throw TODO: What to throw.\nThe exception message should be: \"The operation has not yet completed.\""
+  },
+  {
+    "id": "cpp_implementation.html#cpp-always-pass-context-by-reference",
+    "category": "Azure::Core::Context",
+    "text": "DO always pass Azure::Core::Context types by reference, preferably by const reference.\nDO NOT cancel the input Context parameter.\n\nThe cancellation requirement stems from the nature of an Azure::Core::Context object - there may be multiple Azure::Core::Context objects which share the same cancellation context - cancelling one cancels all of the shared contexts. To avoid this, a service client should instead create a new Azure::Core::Context from the original context using either Context::WithValue, Context::WithDeadline and cancel that new context."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-config-global",
+    "category": "Configuration",
+    "text": "DO use relevant global configuration settings either by default or when explicitly requested to by the user, for example by passing in a configuration object to a client constructor."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-config-client",
+    "category": "Configuration",
+    "text": "DO allow different clients of the same type to use different configurations."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-config-optout",
+    "category": "Configuration",
+    "text": "DO allow consumers of your service clients to opt out of all global configuration settings at once."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-config-global-override",
+    "category": "Configuration",
+    "text": "DO allow all global configuration settings to be overridden by client-provided options. The names of these options should align with any user-facing global configuration keys."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-config-behavior-changes",
+    "category": "Configuration",
+    "text": "DO NOT change behavior based on configuration changes that occur after the client is constructed. Hierarchies of clients inherit parent client configuration unless explicitly changed or overridden. Exceptions to this requirement are as follows:\nLog level, which must take effect immediately across the Azure SDK.\nTracing on/off, which must take effect immediately across the Azure SDK."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-envvars-prefix",
+    "category": "Configuration via Environment Variables",
+    "text": "DO prefix Azure-specific environment variables with AZURE_."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-envvars-client-prefix",
+    "category": "Configuration via Environment Variables",
+    "text": "YOU MAY use client library-specific environment variables for portal-configured settings which are provided as parameters to your client library. This generally includes credentials and connection details. For example, Service Bus could support the following environment variables:\nAZURE_SERVICEBUS_CONNECTION_STRING\nAZURE_SERVICEBUS_NAMESPACE\nAZURE_SERVICEBUS_ISSUER\nAZURE_SERVICEBUS_ACCESS_KEY\n\nStorage could support:\nAZURE_STORAGE_ACCOUNT\nAZURE_STORAGE_ACCESS_KEY\nAZURE_STORAGE_DNS_SUFFIX\nAZURE_STORAGE_CONNECTION_STRING"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-envvars-approval",
+    "category": "Configuration via Environment Variables",
+    "text": "DO get approval from the [Architecture Board] for every new environment variable."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-envvars-syntax",
+    "category": "Configuration via Environment Variables",
+    "text": "DO use this syntax for environment variables specific to a particular Azure service:\nAZURE_<ServiceName>_<ConfigurationKey>\n\nWhere ServiceName is the canonical shortname without spaces, and ConfigurationKey refers to an unnested configuration key for that client library."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-envvars-posix-compliance",
+    "category": "Configuration via Environment Variables",
+    "text": "DO NOT use non-alpha-numeric characters in your environment variable names with the exception of underscore. This ensures broad interoperability.\n\nRequest logging will be done automatically by the HttpPipeline.  If a client library needs to add custom logging, follow the same guidelines and mechanisms as the pipeline logging mechanism.  If a client library wants to do custom logging, the designer of the library must ensure that the logging mechanism is pluggable in the same way as the HttpPipeline logging policy."
   },
   {
     "id": "cpp_implementation.html#dotnet-logging-follow-guidelines",
     "category": "Logging",
-    "text": "DO follow the logging section of the Azure SDK General Guidelines if logging directly (as opposed to through the HttpPipeline).\n\nTODO: This additional logging info may need a new home.\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues with the method calls and quickly determine whether the issue is in the consumer code, client library code, or service.\n\nIn general, our advice to consumers of these libraries is to establish logging in their preferred manner at the WARNING level or above in production to capture problems with the application, and this level should be enough for customer support situations.  Informational or verbose logging can be enabled on a case-by-case basis to assist with issue resolution."
+    "text": "DO follow the logging section of the Azure SDK General Guidelines if logging directly (as opposed to through the HttpPipeline).\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues with the method calls and quickly determine whether the issue is in the consumer code, client library code, or service.\n\nIn general, our advice to consumers of these libraries is to establish logging in their preferred manner at the WARNING level or above in production to capture problems with the application, and this level should be enough for customer support situations.  Informational or verbose logging can be enabled on a case-by-case basis to assist with issue resolution."
   },
   {
     "id": "cpp_implementation.html#cpp-logging-use-azurecore",
@@ -92,12 +177,32 @@
   {
     "id": "cpp_implementation.html#cpp-logging-exceptions",
     "category": "C++ Logging specific details",
-    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message.\n\n**DRAFT:** Guidance coming soon ...\n\nTODO: Add guidance for distributed tracing implementation\n\nTODO: Add guidance regarding user agent strings\n\nWe believe testing is a part of the development process, so we expect unit and integration tests to be a part of the source code.  All components must be covered by automated testing, and developers should strive to test corner cases and main flows for every use case.\n\nAll code should contain, at least, requirements, unit tests, end-to-end tests, and samples.\n\nTests should be written using the [Google Test][] library.\n\nUnlike many other programming languages, which have large runtimes, the C++ standard runtime is limited in functionality and scope. The standard library covers areas such as memory and string manipulation, standard input/output, floating point and others. However, many of the features required for modern applications and services; e.g. those required for networking and advanced memory management are not part of the standard library. Instead, many of those features are included in open source C++ libraries that are also cross-platform with good support for Windows, OSX and most Linux platforms. Because of that support and because Azure SDK implementations will need such functionality, it is expected that client libraries will take dependencies on these libraries.  Ensure the version matches to allow for compatibility when an application integrates multiple client libraries."
+    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tracing-abstraction",
+    "category": "Distributed Tracing {#cpp-distributedtracing}",
+    "text": "DO abstract the underlying tracing facility, allowing consumers to use the tracing implementation of their choice."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tracing-span-per-call",
+    "category": "Distributed Tracing {#cpp-distributedtracing}",
+    "text": "DO create a new trace span for each API call.  New spans must be children of the span that was passed in.\n\nClient library usage telemetry is used by service teams (not consumers) to monitor what SDK language, client library version, and language/platform info a client is using to call into their service. Clients can prepend additional information indicating the name and version of the client application."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-http-telemetry-useragent",
+    "category": "Telemetry",
+    "text": "DO send telemetry information in the [User-Agent header] using the following format:\n\n<code>[&lt;application_id&gt; ]azsdk-cpp-&lt;package_name&gt;/&lt;package_version&gt; &lt;platform_info&gt;\n</code>\n<application_id>: optional application-specific string. May contain a slash, but must not contain a space. The string is supplied by the user of the client library, e.g. \"XCopy/10.0.4-Preview\"\n<package_name>: client library (distribution) package name as it appears to the developer, replacing slashes with dashes and removing the Azure and cpp indicator.  For example, \"azure-security-keyvault-secrets-cpp\" would specify \"azsdk-cpp-security-keyvault-secrets\".\n<package_version>: the version of the package. Note: this is not the version of the service\n<platform_info>: information about the currently executing language runtime and OS, e.g. \"MSVC/14.10.0(Windows-10-10.0.19041-SP0)\""
+  },
+  {
+    "id": "cpp_implementation.html#cpp-http-telemetry-dynamic",
+    "category": "Telemetry",
+    "text": "YOU SHOULD send additional (dynamic) telemetry information as a semi-colon separated set of key-value types in the X-MS-AZSDK-Telemetry header.  For example:\n\n```http\nX-MS-AZSDK-Telemetry: class=BlobClient;method=DownloadFile;blobType=Block\n\n```\n\nThe content of the header is a semi-colon key=value list.  The following keys have specific meaning:\nclass is the name of the type within the client library that the consumer called to trigger the network operation.\nmethod is the name of the method within the client library type that the consumer called to trigger the network operation.\n\nAny other keys that are used should be common across all client libraries for a specific service.  DO NOT include personally identifiable information (even encoded) in this header.  Services need to configure log gathering to capture the X-MS-SDK-Telemetry header in such a way that it can be queried through normal analytics systems.\n\nWe believe testing is a part of the development process, so we expect unit and integration tests to be a part of the source code.  All components must be covered by automated testing, and developers should strive to test corner cases and main flows for every use case.\n\nAll code should contain, at least, requirements, unit tests, end-to-end tests, and samples.\n\nTests should be written using the [Google Test][https://google.github.io/googletest/] library.\n\nUnlike many other programming languages, which have large runtimes, the C++ standard runtime is limited in functionality and scope. The standard library covers areas such as memory and string manipulation, standard input/output, floating point and others. However, many of the features required for modern applications and services; e.g. those required for networking and advanced memory management are not part of the standard library. Instead, many of those features are included in open source C++ libraries that are also cross-platform with good support for Windows, OSX and most Linux platforms. Because of that support and because Azure SDK implementations will need such functionality, it is expected that client libraries will take dependencies on these libraries.  Ensure the version matches to allow for compatibility when an application integrates multiple client libraries."
   },
   {
     "id": "cpp_implementation.html#cpp-approved-dependencies",
     "category": "Language-specific other",
-    "text": "DO utilize the following libraries as needed for commonly required operations:\n\n| Library    | Version | Usage                                               |\n|------------|---------|-----------------------------------------------------|\n| libxml2    | 2.7.6   | XML parser - http://www.xmlsoft.org/                |\n| gtest      | 1.10.0  | Google Test - https://github.com/google/googletest/ |\n\n> Note: None of the libraries in this list currently throw C++ exceptions; policy for propagation\n> of C++ exceptions from dependencies needs to be evaluated on a dependency-by-dependency basis.\n"
+    "text": "DO utilize the following libraries as needed for commonly required operations:\n\n| Library    | Version | Usage                                               |\n|------------|---------|-----------------------------------------------------|\n| libxml2    | 2.7.6   | XML parser - https://www.xmlsoft.org/                |\n| gtest      | 1.10.0  | Google Test - https://github.com/google/googletest/ |\n\n> Note: None of the libraries in this list currently throw C++ exceptions; policy for propagation\n> of C++ exceptions from dependencies needs to be evaluated on a dependency-by-dependency basis.\n"
   },
   {
     "id": "cpp_implementation.html#cpp-test-implicit-assign",
@@ -145,6 +250,11 @@
     "text": "DO include the system error text when reporting system error messages."
   },
   {
+    "id": "cpp_implementation.html#cpp-use-cpp-core-guidelines",
+    "category": "Language-specific other",
+    "text": "YOU SHOULD follow the CPP Core Guidelines (https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md) whenever possible, with the following exceptions:\nList TBD."
+  },
+  {
     "id": "cpp_implementation.html#cpp-init-all-vars",
     "category": "Complexity Management",
     "text": "YOU SHOULD Initialize all variables. Only leave them\nuninitialized if there is a real performance reason to do so. Use static and dynamic analysis tools to\ncheck for uninitialized access. You may leave \"result\" variables uninitialized so long as they clearly do\nnot escape from the innermost lexical scope."
@@ -162,12 +272,17 @@
   {
     "id": "cpp_implementation.html#cpp-use-explicit-compares",
     "category": "Complexity Management",
-    "text": "DO use explicit comparisons when testing for failure.  Use if (FAIL != f()) rather than if (f()), even though FAIL may have the value 0 which C considers to be false.  An explicit test will help you out later when somebody decides that a failure return should be -1 instead of 0.\n\nExplicit comparison should be used even if the comparison value will never change.  e.g. if (!(bufsize % sizeof(int))) should be written as if (0 == (bufsize % sizeof(int)) to reflect the numeric (not boolean) nature of the test.\n\nA frequent trouble spot is using strcmp to test for string equality.  You should never use a default action.  The preferred approach is to use an inline function:\n\n{% highlight cpp %}\ninline bool StringEqual(char *a, char *b) {\nreturn (0 == strcmp(a, b));\n}\n{% endhighlight %}"
+    "text": "DO use explicit comparisons when testing for failure.  Use if (FAIL != f()) rather than if (f()), even though FAIL may have the value 0 which C considers to be false.  An explicit test will help you out later when somebody decides that a failure return should be -1 instead of 0."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-do-not-compare-booleans-against-true",
+    "category": "Complexity Management",
+    "text": "DO NOT compare boolean values with explicit comparisons. Rather than writing if (f() == true), write if (f()) - the result is clearer and more succinct. The same applies to objects that implement operator bool()\n\nExplicit comparison should be used even if the comparison value will never change.  e.g. if (!(bufsize % sizeof(int))) should be written as if (0 == (bufsize % sizeof(int)) to reflect the numeric (not boolean) nature of the test.\n\nA frequent trouble spot is using strcmp to test for string equality.  You should never use a default action.  The preferred approach is to use an inline function:\n\n{% highlight cpp %}\ninline bool StringEqual(char *a, char *b) {\nreturn (0 == strcmp(a, b));\n}\n{% endhighlight %}\n\n~ Should"
   },
   {
     "id": "cpp_implementation.html#cpp-embedded-assign",
     "category": "Complexity Management",
-    "text": "~ Should\nYOU SHOULD NOT use embedded assignments.  There is a time and a place for embedded assignment statements.  In some constructs, there is no better way to accomplish the results without making the code bulkier and less readable.\n\n{% highlight cpp %}\nwhile (EOF != (c = getchar())) {\n/* process the character */\n}\n{% endhighlight %}\n\nHowever, one should consider the tradeoff between increased speed and decreased maintainability that results when embedded assignments are used in artificial places."
+    "text": "YOU SHOULD NOT use embedded assignments.  There is a time and a place for embedded assignment statements.  In some constructs, there is no better way to accomplish the results without making the code bulkier and less readable.\n\n{% highlight cpp %}\nwhile (EOF != (c = getchar())) {\n/* process the character */\n}\n{% endhighlight %}\n\nHowever, one should consider the tradeoff between increased speed and decreased maintainability that results when embedded assignments are used in artificial places."
   },
   {
     "id": "cpp_implementation.html#cpp-design-naming-templates",
@@ -182,7 +297,7 @@
   {
     "id": "cpp_implementation.html#cpp-design-naming-macros-avoid",
     "category": "Macros",
-    "text": "YOU SHOULD avoid use of macros. It is acceptable to use macros in the following situations. Use outside of these situations should contact the Azure Review Board.\nPlatform, compiler, or other environment detection (for example, _WIN32 or _MSC_VER).\nEmission or suppression of diagnostics.\nEmission or supression of debugging asserts.\nImport declarations. (__declspec(dllimport), __declspec(dllexport))\n\nTODO: Need to involve Charlie in how we want to talk about import declarations"
+    "text": "YOU SHOULD avoid use of macros. It is acceptable to use macros in the following situations. Use outside of these situations should contact the Azure Review Board.\nPlatform, compiler, or other environment detection (for example, _WIN32 or _MSC_VER).\nEmission or suppression of diagnostics.\nEmission or supression of debugging asserts.\nImport declarations. (__declspec(dllimport), __declspec(dllexport))"
   },
   {
     "id": "cpp_implementation.html#cpp-design-naming-macros-caps",
@@ -222,7 +337,7 @@
   {
     "id": "cpp_implementation.html#cpp-design-logical-optimize-position",
     "category": "Type Safety Recommendations",
-    "text": "DO declare variables in structures organized by use in a manner that minimizes memory wastage because of compiler alignment issues and size.  All things being equal, use alphabetical ordering.\n\n{% highlight cpp %}\n// Bad\nstruct Foo {\nint A; // the compiler will insert 4 bytes of padding after A to align B\nchar *B;\nint C;\nchar *D;\n};\n\n// Good\nstruct Foo {\nint A; // C is now stored in that padding\nint C;\nchar *B;\nchar *D;\n};\n{% endhighlight %}"
+    "text": "DO declare variables in structures organized by use in a manner that minimizes memory wastage because of compiler alignment issues and size.  All things being equal, use alphabetical ordering.\n\n{% highlight cpp %}\n// Bad\nstruct Foo {\nint A; // the compiler will insert up to 4 bytes of padding after A to align B\nchar *B;\nint C;\nchar *D;\n};\n\n// Good\nstruct Foo {\nint A; // C is now stored in that padding\nint C;\nchar *B;\nchar *D;\n};\n{% endhighlight %}"
   },
   {
     "id": "cpp_implementation.html#cpp-design-logical-enumsareinternal",
@@ -232,22 +347,22 @@
   {
     "id": "cpp_implementation.html#cpp-design-logical-no-const-or-reference-members",
     "category": "Const and Reference members",
-    "text": "DO NOT declare types with const or reference members. Const and reference members artificially make your types non-Regular as they aren't assignable, and have surprising interactions with C++ Core language rules. For example, many accesses to const or reference members would need to involve use of std::launder to avoid undefined behavior, but std::launder was added in C++17, a later version than the SDKs currently target. See C++ Core Working Group CWG1116 \"Aliasing of union members\" (http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1116)  CWG1776 \"Replacement of class objects containing reference members\" (http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1776)  and P0137R1 \"Replacement of class objects containing reference members\" (http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0137r1.html) for additional details.\n\nIf you want a type to provide effectively const data except assignment, declare all your member functions const. Const member functions only get a const view of the class' data.\n\n{% highlight cpp %}\n// Bad\nclass RetrySettings {\nconst int m_maxRetryCount;\npublic:\nint GetMaxRetryCount() {\n// intent: disallow m_maxRetryCount = aDifferentValue;\nreturn m_maxRetryCount;\n}\n};\n\n// Good\nclass RetrySettings {\nint m_maxRetryCount;\npublic:\nint GetMaxRetryCount() const {\n// still prohibits m_maxRetryCount = aDifferentValue; without making RetrySettings un-assignable\nreturn m_maxRetryCount;\n}\n};\n{% endhighlight %}\n\nThe following integer rules are listed in rough priority order. Integer size selections are primarily driven by service future compatibility. For example, just because today a service might have a 2 GiB file size limit does not mean that it will have such a limit forever. We believe 64 bit length limits will be sufficient for sizes an individual program works with for the foreseeable future."
+    "text": "DO NOT declare types with const or reference members. Const and reference members artificially make your types non-Regular as they aren't assignable, and have surprising interactions with C++ Core language rules. For example, many accesses to const or reference members would need to involve use of std::launder to avoid undefined behavior, but std::launder was added in C++17, a later version than the SDKs currently target. See C++ Core Working Group CWG1116 \"Aliasing of union members\" (https://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1116)  CWG1776 \"Replacement of class objects containing reference members\" (https://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1776)  and P0137R1 \"Replacement of class objects containing reference members\" (https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0137r1.html) for additional details.\n\nIf you want a type to provide effectively const data except assignment, declare all your member functions const. Const member functions only get a const view of the class' data.\n\n{% highlight cpp %}\n// Bad\nclass RetrySettings {\nconst int m_maxRetryCount;\npublic:\nint GetMaxRetryCount() {\n// intent: disallow m_maxRetryCount = aDifferentValue;\nreturn m_maxRetryCount;\n}\n};\n\n// Good\nclass RetrySettings {\nint m_maxRetryCount;\npublic:\nint GetMaxRetryCount() const {\n// still prohibits m_maxRetryCount = aDifferentValue; without making RetrySettings un-assignable\nreturn m_maxRetryCount;\n}\n};\n{% endhighlight %}\n\nIn general, all method parameters that are not POD should be passed by const reference.\n\nThe following integer rules are listed in rough priority order. Integer size selections are primarily driven by service future compatibility. For example, just because today a service might have a 2 GiB file size limit does not mean that it will have such a limit forever. We believe 64 bit length limits will be sufficient for sizes an individual program works with for the foreseeable future."
   },
   {
     "id": "cpp_implementation.html#cpp-design-logical-integer-files",
     "category": "Integer sizes",
-    "text": "DO Represent file sizes with int64_t, even on 32 bit platforms."
+    "text": "DO Represent file sizes with std::int64_t, even on 32 bit platforms."
   },
   {
     "id": "cpp_implementation.html#cpp-design-logical-integer-memory-buffers",
     "category": "Integer sizes",
-    "text": "DO Represent memory buffer sizes with size_t or ptrdiff_t as appropriate for the environment. Between the two, choose the type likely to need the fewest conversions in application. For example, we would prefer signed ptrdiff_t in most cases because signed integers behave like programmers expect more consistently, but the SDK will need to transact with malloc, std::vector, and/or std::string which all speak unsigned size_t."
+    "text": "DO Represent memory buffer sizes with std::size_t or std::ptrdiff_t as appropriate for the environment. Between the two, choose the type likely to need the fewest conversions in application. For example, we would prefer signed std::ptrdiff_t in most cases because signed integers behave like programmers expect more consistently, but the SDK will need to transact with malloc, std::vector, and/or std::string which all speak unsigned std::size_t."
   },
   {
     "id": "cpp_implementation.html#cpp-design-logical-integer-service-values",
     "category": "Integer sizes",
-    "text": "DO Represent any other integral quantity passed over the wire to a service using int64_t, even if the service uses a 32 bit constant internally today."
+    "text": "DO Represent any other integral quantity passed over the wire to a service using std::int64_t, even if the service uses a 32 bit constant internally today."
   },
   {
     "id": "cpp_implementation.html#cpp-design-logical-integer-not-int",
@@ -262,7 +377,7 @@
   {
     "id": "cpp_implementation.html#cpp-design-logical-no-ms-secure-functions",
     "category": "Secure functions",
-    "text": "YOU SHOULD NOT use Microsoft security enhanced versions of CRT functions (https://docs.microsoft.com/cpp/c-runtime-library/security-enhanced-versions-of-crt-functions) to implement APIs that need to be portable across many platforms. Such code is not portable and is not compatible with either the C or C++ Standards. See arguments against (http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1967.htm) \n\nTODO: Verify with the security team, and what are the alternatives?"
+    "text": "YOU SHOULD NOT use Microsoft security enhanced versions of CRT functions (https://docs.microsoft.com/cpp/c-runtime-library/security-enhanced-versions-of-crt-functions) to implement APIs that need to be portable across many platforms. Such code is not portable and is not compatible with either the C or C++ Standards. See arguments against (https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1967.htm) "
   },
   {
     "id": "cpp_implementation.html#cpp-design-logical-client-enumerations-no-enums",
@@ -272,7 +387,7 @@
   {
     "id": "cpp_implementation.html#cpp-design-logical-client-enumerations-enumish-pattern",
     "category": "Enumerations",
-    "text": "YOU MAY provide an 'extensible enum' pattern for storing service enumerations which provides reasonable constant values. This pattern stores the value as a string but provides public static member fields with the individual values for customer consumption. For example:\n\n{% highlight cpp %}\n#include <azure/core/strings.hpp> // for Azure::Core::Strings::LocaleInvariantCaseInsensitiveEqual\n#include  // for std::move\nnamespace Azure { namespace Group { namespace Service {\n\n// an \"Extensible Enum\" type\nclass KeyType {\nstd::string m_value;\npublic:\n// Provide explicit conversion from string or types convertible to string:\nexplicit KeyType(const std::string& value) : m_value(value) { }\nexplicit KeyType(std::string&& value) : m_value(std::move(value)) { }\nexplicit KeyType(const char* value) : m_value(value) { }\n\n<code>// Provide an equality comparison. If the service treats the enumeration case insensitively,\n// use LocaleInvariantCaseInsensitiveEqual to prevent differing locale settings from affecting\n// the SDK's behavior:\nbool operator==(const KeyType&amp; other) const noexcept {\n    return Azure::Core::Strings::LocaleInvariantCaseInsensitiveEqual(m_value, other.m_value);\n}\n\nbool operator!=(const KeyType&amp; other) const noexcept { return !(*this == other); }\n\n// Provide a \"Get\" accessor\nconst std::string&amp; Get() const noexcept { return m_value; }\n\n// Provide your example values as static const members\nconst static KeyType Ec;\nconst static KeyType EcHsm;\nconst static KeyType Rsa;\nconst static KeyType RsaHsm;\nconst static KeyType Oct;\n</code>\n\n};\n}}} // namespace Azure::Group::Service\n\n// in a .cpp file:\nnamespace Azure { namespace Group { namespace Service {\nconst KeyType KeyType::Ec{\"EC\"};\nconst KeyType KeyType::EcHsm{\"EC-HSM\"};\nconst KeyType KeyType::Rsa{\"RSA\"};\nconst KeyType KeyType::RsaHsm{\"RSA-HSM\"};\nconst KeyType KeyType::Oct{\"OCT\"};\n}}} // namespace Azure::Group::Service\n{% endhighlight %}\n\nTODO: Move this to implementation or move the headers discussion from implementation here"
+    "text": "YOU MAY provide an 'extensible enum' pattern for storing service enumerations which provides reasonable constant values. This pattern stores the value as a string but provides public static member fields with the individual values for customer consumption. For example:\n\n{% highlight cpp %}\n#include <azure/core/strings.hpp> // for Azure::Core::Strings::LocaleInvariantCaseInsensitiveEqual\n#include  // for std::move\nnamespace Azure { namespace Group { namespace Service {\n\n// an \"Extensible Enum\" type\nclass KeyType {\nstd::string m_value;\npublic:\n// Provide explicit conversion from string or types convertible to string:\nexplicit KeyType(const std::string& value) : m_value(value) { }\nexplicit KeyType(std::string&& value) : m_value(std::move(value)) { }\nexplicit KeyType(const char* value) : m_value(value) { }\n\n<code>// Provide an equality comparison. If the service treats the enumeration case insensitively,\n// use LocaleInvariantCaseInsensitiveEqual to prevent differing locale settings from affecting\n// the SDK's behavior:\nbool operator==(const KeyType&amp; other) const noexcept {\n    return Azure::Core::Strings::LocaleInvariantCaseInsensitiveEqual(m_value, other.m_value);\n}\n\nbool operator!=(const KeyType&amp; other) const noexcept { return !(*this == other); }\n\n// Provide a \"Get\" accessor\nconst std::string&amp; Get() const noexcept { return m_value; }\n\n// Provide your example values as static const members\nconst static KeyType Ec;\nconst static KeyType EcHsm;\nconst static KeyType Rsa;\nconst static KeyType RsaHsm;\nconst static KeyType Oct;\n</code>\n\n};\n}}} // namespace Azure::Group::Service\n\n// in a .cpp file:\nnamespace Azure { namespace Group { namespace Service {\nconst KeyType KeyType::Ec{\"EC\"};\nconst KeyType KeyType::EcHsm{\"EC-HSM\"};\nconst KeyType KeyType::Rsa{\"RSA\"};\nconst KeyType KeyType::RsaHsm{\"RSA-HSM\"};\nconst KeyType KeyType::Oct{\"OCT\"};\n}}} // namespace Azure::Group::Service\n{% endhighlight %}"
   },
   {
     "id": "cpp_implementation.html#cpp-design-physical-include-quotes",
@@ -282,7 +397,7 @@
   {
     "id": "cpp_implementation.html#cpp-design-physical-unnamed-namespace",
     "category": "Physical Design",
-    "text": "YOU SHOULD declare all types that are only used within the same .cpp file in an unnamed namespace. For example:\n\n{% highlight cpp %}\nnamespace {\nstruct HashComputation {\nint InternalBookkeeping;\n};\n} // unnamed namespace\n{% endhighlight %}\n\nThroughout this section, class types includes types with class-key struct or class-key union, consistent with the C++ Standard (http://eel.is/c++draft/class#pre-4) "
+    "text": "YOU SHOULD declare all types that are only used within the same .cpp file in an unnamed namespace. For example:\n\n{% highlight cpp %}\nnamespace {\nstruct HashComputation {\nint InternalBookkeeping;\n};\n} // unnamed namespace\n{% endhighlight %}\n\nThroughout this section, class types includes types with class-key struct or class-key union, consistent with the C++ Standard (https://eel.is/c++draft/class#pre-4) "
   },
   {
     "id": "cpp_implementation.html#cpp-design-naming-classes",
@@ -312,7 +427,12 @@
   {
     "id": "cpp_implementation.html#cpp-design-naming-classes-typedefs",
     "category": "Class Types (including unions and structs)",
-    "text": "YOU SHOULD define class types without using typedefs. For example:\n\n{% highlight cpp %}\n// Good: Uses C++ style class declaration:\nstruct IotClient {\nchar* ApiVersion;\nIotClientCredentials* Credentials;\nint RetryTimeout;\n};\n\n// Bad: Uses C-style typedef:\ntypedef struct IotClient {\nchar* ApiVersion;\nIotClientCredentials* Credentials;\nint RetryTimeout;\n} AzIotClient;\n{% endhighlight %}\n\nWe use a common build and test pipeline to provide for automatic distribution of client libraries.  To support this, we need common tooling."
+    "text": "YOU SHOULD define class types without using typedefs. For example:\n\n{% highlight cpp %}\n// Good: Uses C++ style class declaration:\nstruct IotClient {\nchar* ApiVersion;\nIotClientCredentials* Credentials;\nint RetryTimeout;\n};\n\n// Bad: Uses C-style typedef:\ntypedef struct IotClient {\nchar* ApiVersion;\nIotClientCredentials* Credentials;\nint RetryTimeout;\n} AzIotClient;\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-structs-no-methods",
+    "category": "Class Types (including unions and structs)",
+    "text": "By convention, C++ Structs YOU SHOULD NOT define any methods. If a C++ object needs methods, it should be declared as a class.\n\nWe use a common build and test pipeline to provide for automatic distribution of client libraries.  To support this, we need common tooling."
   },
   {
     "id": "cpp_implementation.html#cpp-tooling-cmake",
@@ -352,21 +472,21 @@
   {
     "id": "cpp_implementation.html#cpp-platform-min",
     "category": "Supported platforms",
-    "text": "DO support the following platforms and associated compilers when implementing your client library.\n\n| Operating System     | Version       | Architectures | Compiler Version                        | Notes\n|----------------------|---------------|---------------|-----------------------------------------|------\n| Windows Client       | 7 SP1+, 8.1   | x64, x86      | MSVC 14.16.x, MSVC 14.20x               |\n| Windows 10 Client    | Version 1607+ | x64, x86, ARM | MSVC 14.16.x, MSVC 14.20x               |\n| Windows 10 Client    | Version 1909+ | ARM64         | MSVC 14.20x                             |\n| Nano Server          | Version 1803+ | x64, ARM32    | MSVC 14.16.x, MSVC 14.20x               |\n| Windows Server       | 2012 R2+      | x64, x86      | MSVC 14.16.x, MSVC 14.20x               |\n\n| Operating System                | Version       | Architectures | Compiler Version                        | Notes\n|---------------------------------|---------------|---------------|-----------------------------------------|------\n| macOS                           | 10.13+        | x64           | XCode 9.4.1                             |\n\n| Operating System                | Version       | Architectures | Compiler Version                        | Notes\n|---------------------------------|---------------|---------------|-----------------------------------------|------\n| Red Hat Enterprise Linux  CentOS  Oracle Linux        | 7+            | x64           | gcc-4.8                                 | Red Hat lifecycle (https://access.redhat.com/support/policy/updates/errata/)  CentOS lifecycle (https://wiki.centos.org/FAQ/General#head-fe8a0be91ee3e7dea812e8694491e1dde5b75e6d)  Oracle Linux lifecycle (http://www.oracle.com/us/support/library/elsp-lifetime-069338.pdf) | Debian                          | 9+            | x64           | gcc-6.3                                 | Debian lifecycle (https://wiki.debian.org/DebianReleases) | Ubuntu                          | 18.04, 16.04  | x64           | gcc-7.3                                 | Ubuntu lifecycle (https://wiki.ubuntu.com/Releases) | Linux Mint                      | 18+           | x64           | gcc-7.3                                 | Linux Mint lifecycle (https://www.linuxmint.com/download_all.php) | openSUSE                        | 15+           | x64           | gcc-7.5                                 | OpenSUSE lifecycle (https://www.suse.com/lifecycle/) (https://en.opensuse.org/Lifetime) | SUSE Enterprise Linux (SLES)    | 12 SP2+       | x64           | gcc-4.8                                 | SUSE lifecycle"
+    "text": "DO support at least the following platforms and associated compilers when implementing your client library:\nWindows\nUnix-like operating systems (Linux, Unix, etc)\nOSX/iOS\n\nAs of 10/2024, the Azure SDK for C++ is currently tested against the following platforms:\n\n| Operating System | Versions   | Architectures| Compiler | Compiler Version | Notes |\n|------------------|------------|--------------|----------|-------------------|-------|\n| Windows          | 2019, 2022 | x32, x64     | MSVC     | MSVC 16, MSVC 17  |       |\n| OSX              | 14         | x64          | XCODE    | 15.4              |       |\n| Linux - Ubuntu   | 2020.04, 2022.04 | x64    | GCC      | 8, 9              |       |\n| Linux - Ubuntu   | 2020.04, 2022.04 | x64    | clang    | 11, 13, 15        |       |\n\nFor a current list of supported platforms, see the platform matrix (https://github.com/Azure/azure-sdk-for-cpp/blob/main/eng/pipelines/templates/stages/platform-matrix.json) "
   },
   {
     "id": "cpp_implementation.html#cpp-platform",
-    "category": "Linux",
+    "category": "Supported platforms",
     "text": "YOU SHOULD support the following additional platforms and associated compilers when implementing your client library."
   },
   {
     "id": "cpp_implementation.html#cpp-cpp-extensions",
-    "category": "Linux",
-    "text": "YOU SHOULD NOT use compiler extensions.  Examples of extensions to avoid include:\nMSVC compiler extensions (https://docs.microsoft.com/cpp/build/reference/microsoft-extensions-to-c-and-cpp) \nclang language extensions (https://clang.llvm.org/docs/LanguageExtensions.html) \nGNU C compiler extensions (https://gcc.gnu.org/extensions.html) \n\nUse the appropriate options for each compiler to prevent the use of such extensions."
+    "category": "Supported platforms",
+    "text": "YOU SHOULD NOT use compiler extensions. Examples of extensions to avoid include:\nMSVC compiler extensions (https://docs.microsoft.com/cpp/build/reference/microsoft-extensions-to-c-and-cpp) \nclang language extensions (https://clang.llvm.org/docs/LanguageExtensions.html) \nGNU C compiler extensions (https://gcc.gnu.org/extensions.html) \n\nUse the appropriate options for each compiler to prevent the use of such extensions."
   },
   {
     "id": "cpp_implementation.html#cpp-cpp-options",
-    "category": "Linux",
-    "text": "DO use compiler flags to identify warnings:\n\n| Compiler                 | Compiler Flags   |\n|:-------------------------|------------------|\n| gcc                      | -Wall -Wextra  |\n| cpp and XCode            | -Wall -Wextra  |\n| MSVC                     | /W4            |"
+    "category": "Supported platforms",
+    "text": "DO use compiler flags to identify warnings:\n\n| Compiler      | Compiler Flags  |\n| :------------ | --------------- |\n| gcc           | -Wall -Wextra |\n| cpp and XCode | -Wall -Wextra |\n| MSVC          | /W4           |"
   }
 ]

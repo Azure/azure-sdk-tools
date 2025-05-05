@@ -79,9 +79,7 @@ def parse_markdown(file, root_path) -> List[dict]:
         elif item.name in ["pre"]:
             raw_html = "".join(str(tag) for tag in item.contents)
             markdown_text = _convert_code_tag_to_markdown(raw_html)
-            markdown_text = _expand_include_tags(
-                markdown_text, root_path, os.path.dirname(file)
-            )
+            markdown_text = _expand_include_tags(markdown_text, root_path, os.path.dirname(file))
             try:
                 entries[-1]["text"] += "\n\n" + markdown_text
             except IndexError:
@@ -91,9 +89,7 @@ def parse_markdown(file, root_path) -> List[dict]:
             for item in items:
                 item_text, id = _split_tags(item, file)
                 item_text = _add_links(item_text, item)
-                item_text = _expand_include_tags(
-                    item_text, root_path, os.path.dirname(file)
-                )
+                item_text = _expand_include_tags(item_text, root_path, os.path.dirname(file))
                 if id:
                     entries.append(
                         {
@@ -114,9 +110,7 @@ def parse_markdown(file, root_path) -> List[dict]:
 
 def _add_links(text, item):
     """Find any links associated with the text and add them in format: text (link)"""
-    links = [
-        link for link in item.find_all("a") if link.get("href", "").startswith("http")
-    ]
+    links = [link for link in item.find_all("a") if link.get("href", "").startswith("http")]
     if not links:
         return text
 

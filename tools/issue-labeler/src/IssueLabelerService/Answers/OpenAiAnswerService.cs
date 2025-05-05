@@ -19,10 +19,10 @@ namespace IssueLabelerService
             _ragService = ragService;
             _logger = logger;
         }
-        public async Task<AnswerOutput> AnswerQuery(IssuePayload issue)
+        public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels)
         {
             // Configuration for Azure services
-            var modelName = _config.OpenAIModelName;
+            var modelName = _config.AnswerModelName;
             var issueIndexName = _config.IssueIndexName;
             var documentIndexName = _config.DocumentIndexName;
 
@@ -40,63 +40,51 @@ namespace IssueLabelerService
             double scoreThreshold = double.Parse(_config.ScoreThreshold);
             double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
-            var relevantIssues = await _ragService.AzureSearchQueryAsync<Issue>(issueIndexName, issueSemanticName, issueFieldName, query, top);
-            var relevantDocuments = await _ragService.AzureSearchQueryAsync<Document>(documentIndexName, documentSemanticName, documentFieldName, query, top);
-
-            // Filter sources under threshold
-            var docs = relevantDocuments
-                .Where(r => r.Item2 >= scoreThreshold)
-                .Select(rd => new
-                {
-                    rd.Item1.chunk,
-                    rd.Item1.Url,
-                    Score = rd.Item2
-                })
-                .ToList();
-
-            var issues = relevantIssues
-                .Where(r => r.Item2 >= scoreThreshold)
-                .Select(rd => new
-                {
-                    rd.Item1.Title,
-                    rd.Item1.chunk,
-                    rd.Item1.Service,
-                    rd.Item1.Category,
-                    rd.Item1.Url,
-                    Score = rd.Item2
-                })
-                .ToList();
-
-            // Filtered out all sources for either one then not enough information to answer the issue. 
-            if (docs.Count == 0 || issues.Count == 0)
+            var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
+            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
+ 
+            if (docs.Count == 0 && issues.Count == 0)
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {docs.Count}, Issues: {issues.Count}.");
             }
 
-            double highestScore = Math.Max(docs.Max(d => d.Score), issues.Max(d => d.Score));
+            double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
             bool solution = highestScore >= solutionThreshold;
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            // Makes it nicer for the model to read (Can probably be made more readable but oh well)
-            var printableIssues = issues.Select(r => JsonConvert.SerializeObject(r)).ToList();
-            var printableDocs = docs.Select(r => JsonConvert.SerializeObject(r)).ToList();
+            // Format issues 
+            var printableIssues = string.Join("\n\n", issues.Select(issue =>
+                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
 
-            string instructions = _config.Instructions;
-            string message;
+            // Format documents 
+            var printableDocs = string.Join("\n\n", docs.Select(doc =>
+                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
+
+            var replacementsUserPrompt = new Dictionary<string, string>
+            {
+                { "Title", issue.Title },
+                { "Description", issue.Body },
+                { "PrintableDocs", printableDocs },
+                { "PrintableIssues", printableIssues }
+            };
+
+            string instructions, userPrompt;
             if (solution)
             {
-                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nThe user needs a solution to their GitHub Issue:\n{query}";
+                instructions = _config.SolutionInstructions;
+                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacementsUserPrompt, _logger);
             }
             else
             {
-                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nThe user needs suggestions for their GitHub Issue:\n{query}";
+                instructions = _config.SuggestionInstructions;
+                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionUserPrompt, replacementsUserPrompt, _logger);
             }
 
-            var response = await _ragService.SendMessageQnaAsync(instructions, message);
+            var response = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName);
 
             string intro, outro;
-            var replacements = new Dictionary<string, string>
+            var replacementsIntro = new Dictionary<string, string>
             {
                 { "IssueUserLogin", issue.IssueUserLogin },
                 { "RepositoryName", issue.RepositoryName }
@@ -104,12 +92,12 @@ namespace IssueLabelerService
 
             if (solution)
             {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacements, _logger);
+                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacementsIntro, _logger);
                 outro = _config.SolutionResponseConclusion;
             }
             else
             {
-                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacements, _logger);
+                intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionResponseIntroduction, replacementsIntro, _logger);
                 outro = _config.SuggestionResponseConclusion;
             }
 

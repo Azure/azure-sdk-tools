@@ -14,7 +14,7 @@ AZURE_OPENAI_ENDPOINT="..." # The Azure OpenAI endpoint URL
 ```
 
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
-4. Generate a review using `python cli.py review generate --language <lang> --path <path_to_test_file> --model <model> [--chunk-input]`.
+4. Generate a review using `python cli.py review generate --language <lang> --target <path_to_target_file> [--base <path_to_base_file>].
 5. Examine the output under `scratch/output/<lang>/<test_file>.json`.
 
 ## Generating Reviews with RAG
@@ -32,7 +32,7 @@ AZURE_COSMOS_DB_NAME="..."  # The name of the CosmosDB database. Required only f
 ```
 
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
-4. Generate a review using `python cli.py review generate --language <lang> --path <path_to_test_file> --model <model> --use-rag [--chunk-input]`.
+4. Generate a review using `python cli.py review generate --language <lang> --use-rag --target <path_to_target_file> [--base <path_to_base_file>] `.
 5. Examine the output under `scratch/output/<lang>/<test_file>.json`.
 
 ## Creating Reviews with Development Code
@@ -50,6 +50,20 @@ Commands available for working with the Flask app:
 
 To run evaluations, see: [evals/README.md](./evals/README.md)
 
+## Search Commands
+
+Commands available for querying the search indexes:
+
+- `cli.bat search guidelines`: Search the guidelines for a query.
+- `cli.bat search examples`: Search the examples index for a query.
+- `cli.bat search kb`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
+
+If you would like to search the knowledge base and see the output the way the LLM will see it, you can do the following:
+
+`cli.bat search kb --text "query" -l <lang> --markdown > context.md`
+
+This will dump the results to context.md which you can then view in VSCode with the preview editor.
+
 ## Documentation
 
-https://apiviewuat.azurewebsites.net/swagger/index.html
+For more information, visit the [API Documentation](https://apiviewuat.azurewebsites.net/swagger/index.html).

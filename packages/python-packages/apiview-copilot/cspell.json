@@ -1,0 +1,43 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.venv/**",
+    "**/__pycache__/**"
+  ],
+  "words": [
+    "apiview",
+    "apiviewcopilot",
+    "apiviews",
+    "appsetting",
+    "archagent",
+    "asyncio",
+    "contoso",
+    "docstrings",
+    "dotenv",
+    "evals",
+    "guidelines",
+    "imageanalysis",
+    "ivar",
+    "jsonable",
+    "jsonify",
+    "kristapratico",
+    "levelname",
+    "loadenv",
+    "popleft",
+    "prompty",
+    "pyenv",
+    "reranker",
+    "retryable",
+    "textvector",
+    "tjprescott",
+    "vectorizable"
+  ],
+  "dictionaries": [
+    "python",
+    "softwareTerms"
+  ]
+}

@@ -6,9 +6,12 @@ parameters:
 - name: DirectoryToSync
   type: string
   default: .github/workflows
-- name: FilePattern
-  type: string
-  default: '/*event*'
+  # Remember to update the path includes below as well as the eng-common-workflow-enforcer.yml file if you update this list
+- name: FilePatterns
+  type: object
+  default: 
+    - '*event*'
+    - post-apiview.yml
 - name: Repos
   type: object
   default:
@@ -33,10 +36,11 @@ pr:
   paths:
     include:
       - .github/workflows/*event*
+      - .github/workflows/post-apiview.yml
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml
   parameters:
     DirectoryToSync: ${{ parameters.DirectoryToSync }}
-    FilePattern: ${{ parameters.FilePattern }}
+    FilePatterns: ${{ parameters.FilePatterns }}
     Repos: ${{ parameters.Repos }}

@@ -6,7 +6,7 @@ import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaDa
 import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
 
-const shell = require('shelljs');
+import shell from 'shelljs';
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');
 const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!

@@ -17,21 +17,13 @@ namespace APIViewWeb
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .ConfigureLogging(logging => {
-                    logging.ClearProviders();
-                    logging.AddConsole();
-                    logging.AddDebug();
-                    logging.AddApplicationInsights();
-                    logging.SetMinimumLevel(LogLevel.Information);
-                })
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    config.AddEnvironmentVariables(prefix: "APIVIEW_");                  
                     IConfiguration settings = config.Build();
                     string appConfigUrl = settings.GetValue<string>("APPCONFIG_URL");
                     if(string.IsNullOrEmpty(appConfigUrl))
                     {
-                        throw new InvalidOperationException("App Configuration URL is not set in APIView environment variable. This should be set using environment name APIVIEW_APPCONFIG_URL and value 'https://<your-app-config-name>.azconfig.io'");
+                        throw new InvalidOperationException("App Configuration URL is not set in APIView environment variable. This should be set using environment name APPCONFIG_URL and value 'https://<your-app-config-name>.azconfig.io'");
                     }
                     // Load configuration from Azure App Configuration
                     config.AddAzureAppConfiguration(options =>
@@ -42,6 +34,13 @@ namespace APIViewWeb
                         });
                     });
                     config.AddUserSecrets(typeof(Program).Assembly);
+                })
+                .ConfigureLogging(logging => {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.AddDebug();
+                    logging.AddApplicationInsights();
+                    logging.SetMinimumLevel(LogLevel.Information);
                 })
                 .ConfigureKestrel(options =>
                 {

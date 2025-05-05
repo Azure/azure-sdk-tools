@@ -1,0 +1,84 @@
+{
+    "comments": [
+        {
+            "rule_ids": [
+                "android_design.html#android-library-java-lang"
+            ],
+            "line_no": 10,
+            "bad_code": "org.jetbrains.kotlin:kotlin-stdlib-jdk8 1.7.20",
+            "suggestion": "Remove the Kotlin dependency and implement the library in Java.",
+            "comment": "Azure SDK guidelines dictate that client libraries be written in Java to avoid forcing customers to depend on the Kotlin runtime. Including the Kotlin stdlib violates these guidelines.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "android_design.html#android-service-client-annotation"
+            ],
+            "line_no": 31,
+            "bad_code": "public final class ChatAdapter {",
+            "suggestion": "@ServiceClient\npublic final class ChatAdapter {",
+            "comment": "Service client types must be annotated with @ServiceClient. This helps document the client as the main entry point for calling Azure services.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "android_design.html#android-async-framework"
+            ],
+            "line_no": 34,
+            "bad_code": "public CompletableFuture<Void> connect(Context context)",
+            "suggestion": "public com.azure.core.android.util.CompletableFuture<Void> connect(Context context)",
+            "comment": "The async API method returns a CompletableFuture. According to the guidelines, you should use Android retrofuture's CompletableFuture rather than the JDK version to ensure compatibility across Android devices.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 35,
+            "bad_code": "public void disconnect()",
+            "suggestion": "public CompletableFuture<Void> disconnect()",
+            "comment": "There is an asymmetry between the asynchronous connect() and the synchronous disconnect(). For consistency, either make disconnect asynchronous as well or document clearly why disconnect operates synchronously.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "android_design.html#android-service-client-builder-annotation"
+            ],
+            "line_no": 38,
+            "bad_code": "public final class ChatAdapterBuilder {",
+            "suggestion": "@ServiceClientBuilder(serviceClients = { ChatAdapter.class })\npublic final class ChatAdapterBuilder {",
+            "comment": "Fluent builders constructing service clients should be annotated with @ServiceClientBuilder. This annotation ensures the builder is recognized as the instantiation mechanism for the service client.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 44,
+            "bad_code": "public ChatAdapterBuilder threadId(String threadId)",
+            "suggestion": "public ChatAdapterBuilder chatThreadId(String chatThreadId)",
+            "comment": "Renaming the parameter to something more descriptive (e.g. chatThreadId) improves clarity regarding its purpose.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 47,
+            "bad_code": "public interface ChatCompositeEventHandler<T> {",
+            "suggestion": "public interface ChatErrorEventHandler { void handle(ChatCompositeErrorEvent eventArgs); }",
+            "comment": "If the event handler is intended only for error events, consider removing the generic type and renaming the interface to ChatErrorEventHandler to improve specificity and clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 52,
+            "bad_code": "public final class ChatCompositeErrorCode extends ExpandableStringEnum<ChatCompositeErrorCode> {",
+            "suggestion": "public final class ChatErrorCode extends ExpandableStringEnum<ChatErrorCode> {",
+            "comment": "The term 'ChatCompositeErrorCode' is somewhat verbose. If the 'Composite' prefix is not essential to distinguish behavior, consider renaming to 'ChatErrorCode' for simplicity and clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 76,
+            "bad_code": "public ChatThreadView(Context context, ChatAdapter chatAdapter)",
+            "suggestion": "public ChatThreadView(Context context) { ... } // and add public void setChatAdapter(ChatAdapter adapter)",
+            "comment": "Custom views in Android typically follow standard constructor patterns to support XML inflation. Instead of including non-standard parameters (like ChatAdapter) in constructors, provide a setter method to attach the adapter after inflation.",
+            "source": "generic"
+        }
+    ]
+}

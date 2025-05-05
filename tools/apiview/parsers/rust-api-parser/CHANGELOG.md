@@ -4,7 +4,7 @@
     - Improved handling of `use` items and module re-exports with better tracking to prevent duplication
     - Refactored module processing with enhanced sorting and organization of child items
     - Fixed bugs and improved utility functions for better code maintainability
-2. Updated IDs to stable, meaningful identifiers rather than relying on the dynamic rustdoc ids.
+2. Updated `ReviewLine#LineId`s to stable, meaningful identifiers rather than relying on the dynamic rustdoc ids.
 
 # 1.0.1
 

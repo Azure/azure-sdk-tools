@@ -4,6 +4,7 @@ import { CodeFile, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION, Id } from "../rustdoc-types/output/rustdoc-types";
 import { externalReferencesLines } from "./process-items/utils/externalReexports";
 import { sortExternalItems } from "./process-items/utils/sorting";
+import { updateReviewLinesWithStableLinedIds } from "./utils/lineIdUtils";
 
 let apiJson: Crate;
 export const processedItems = new Set<number>();
@@ -77,6 +78,8 @@ function buildCodeFile(): CodeFile {
 
   processRootItem(codeFile);
   processExternalReferences(codeFile);
+
+  updateReviewLinesWithStableLinedIds(codeFile.ReviewLines);
   return codeFile;
 }
 

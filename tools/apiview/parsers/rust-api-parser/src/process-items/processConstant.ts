@@ -3,6 +3,7 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isConstantItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 export function processConstant(item: Item) {
   if (!isConstantItem(item)) return;
@@ -56,5 +57,6 @@ export function processConstant(item: Item) {
     });
   }
   reviewLines.push(reviewLine);
+  lineIdMap.set(item.id.toString(), `const_${item.name}`);
   return reviewLines;
 }

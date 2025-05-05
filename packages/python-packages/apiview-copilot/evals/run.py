@@ -19,13 +19,13 @@ dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4o"
+MODEL_JUDGE = "gpt-4.1"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
     "api_key": os.environ["AZURE_OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
-    "api_version": "2025-01-01-preview",
+    "api_version": "2025-03-01-preview",
 }
 
 
@@ -85,7 +85,7 @@ class CustomAPIViewEvaluator:
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
             response = client.responses.create(
-                model=MODEL_JUDGE,
+                **model_config,
                 input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",
             )
             comment["valid"] = "true" in response.output_text.lower()

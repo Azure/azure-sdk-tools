@@ -23,7 +23,7 @@ export function processStructField(fieldItem: Item): ReviewLine {
       },
       {
         Kind: TokenKind.MemberName,
-        Value: fieldItem.name || "null",
+        Value: fieldItem.name || "unknown_field_item",
         HasSuffixSpace: false,
         RenderClasses: ["interface"],
         NavigateToId: fieldItem.id.toString(),

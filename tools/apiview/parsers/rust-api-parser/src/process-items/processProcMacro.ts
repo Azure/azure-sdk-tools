@@ -15,7 +15,7 @@ export function processProcMacro(item: Item): ReviewLine[] | null {
 
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  lineIdMap.set(item.id.toString(), item.name || "unknown");
+  lineIdMap.set(item.id.toString(), item.name || "unknown_proc_macro");
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),

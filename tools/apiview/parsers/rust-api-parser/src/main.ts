@@ -68,8 +68,8 @@ function processExternalReferences(codeFile: CodeFile): void {
  */
 function buildCodeFile(): CodeFile {
   const codeFile: CodeFile = {
-    PackageName: apiJson.index[apiJson.root].name || "unknown",
-    PackageVersion: apiJson["crate_version"] || "unknown",
+    PackageName: apiJson.index[apiJson.root].name || "unknown_root_package_name",
+    PackageVersion: apiJson["crate_version"] || "unknown_crate_version",
     ParserVersion: "1.1.0",
     Language: "Rust",
     ReviewLines: [],

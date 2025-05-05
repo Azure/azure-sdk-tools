@@ -33,7 +33,7 @@ export function processAssocType(item: Item): ReviewLine[] | null {
   // Add name
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "unknown",
+    Value: item.name || "unknown_assoc_const",
     HasSuffixSpace: false,
     RenderClasses: ["interface"],
   });

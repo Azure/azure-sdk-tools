@@ -29,7 +29,7 @@ export function processStatic(item: Item) {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_static",
     RenderClasses: ["interface"],
     NavigateToId: reviewLine.LineId,
     NavigationDisplayName: item.name || undefined,

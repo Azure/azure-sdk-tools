@@ -22,7 +22,7 @@ export function processConstant(item: Item) {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_const",
     HasSuffixSpace: false,
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name,
@@ -39,7 +39,7 @@ export function processConstant(item: Item) {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Text,
-    Value: item.inner.constant.const.expr || "null",
+    Value: item.inner.constant.const.expr || "unknown_const_expr",
     HasSuffixSpace: false,
   });
   reviewLine.Tokens.push({

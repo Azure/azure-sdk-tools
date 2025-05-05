@@ -48,7 +48,7 @@ export function processStruct(item: Item): ReviewLine[] {
 
   structLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_struct",
     RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,

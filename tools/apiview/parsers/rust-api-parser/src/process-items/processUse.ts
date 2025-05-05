@@ -47,7 +47,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       },
     );
   } else {
-    const useValue = item.inner.use.source || "null";
+    const useValue = item.inner.use.source || "unknown_use_source";
     tokens.push(
       {
         Kind: TokenKind.Text,

@@ -25,7 +25,7 @@ export function processModule(
   const apiJson = getAPIJson();
   const isRootModule = item.id === apiJson.root;
 
-  lineIdMap.set(item.id.toString(), item.name || "null");
+  lineIdMap.set(item.id.toString(), item.name || "unknown_mod");
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -60,7 +60,7 @@ export function processModule(
     // current module
     reviewLine.Tokens.push({
       Kind: TokenKind.TypeName,
-      Value: item.name || "null",
+      Value: item.name || "unknown_mod",
       RenderClasses: ["namespace"],
       NavigateToId: item.id.toString(),
       NavigationDisplayName: fullName,

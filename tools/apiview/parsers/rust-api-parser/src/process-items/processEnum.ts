@@ -40,7 +40,7 @@ export function processEnum(item: Item): ReviewLine[] {
 
   enumLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_enum",
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     RenderClasses: ["enum"],
@@ -74,7 +74,7 @@ export function processEnum(item: Item): ReviewLine[] {
         Tokens: [
           {
             Kind: TokenKind.Text,
-            Value: variantItem.name || "null",
+            Value: variantItem.name || "unknown_variant",
             HasSuffixSpace: false,
           },
           {

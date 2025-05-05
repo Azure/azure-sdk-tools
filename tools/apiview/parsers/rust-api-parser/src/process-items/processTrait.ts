@@ -45,7 +45,7 @@ export function processTrait(item: Item): ReviewLine[] {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_trait",
     RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,

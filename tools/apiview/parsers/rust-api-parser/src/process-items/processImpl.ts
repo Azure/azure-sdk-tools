@@ -200,7 +200,7 @@ export function processImpl(
           { Kind: TokenKind.Keyword, Value: "impl" },
           {
             Kind: TokenKind.MemberName,
-            Value: item.name || "null",
+            Value: item.name || "unknown_impl",
             RenderClasses: ["interface"],
             NavigateToId: linedId,
             NavigationDisplayName: item.name || undefined,

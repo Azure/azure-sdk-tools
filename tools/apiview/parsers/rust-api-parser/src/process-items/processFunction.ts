@@ -84,7 +84,7 @@ export function processFunction(item: Item): ReviewLine[] {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_fn",
     HasSuffixSpace: false,
     RenderClasses: ["method"],
     NavigateToId: item.id.toString(),

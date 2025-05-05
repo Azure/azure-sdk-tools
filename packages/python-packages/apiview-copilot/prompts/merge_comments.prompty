@@ -12,8 +12,8 @@ model:
     azure_deployment: gpt-4.1
     api_version: 2025-01-01-preview
   parameters:
-    temperature: 0.7
-    top_p: 0.95
+    temperature: 0
+    top_p: 1
     stop: []
     frequency_penalty: 0
     presence_penalty: 0
@@ -56,10 +56,10 @@ system:
   Regardless of the number of input comments, the output should always be an array of one comment.
 
 user:
-  Given this context:
+  # CONTEXT
   {{context}}
 
-  And these comments:
+  # COMMENTS
   {{comments}}
 
   Generate a single merged comment that summarizes the key points from all the comments.

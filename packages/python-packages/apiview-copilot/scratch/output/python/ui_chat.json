@@ -1,0 +1,76 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nAPI Purpose  \nThis API provides UI components and chat functionality for Azure Communication Chat on Android. It offers mechanisms to manage chat sessions, handle errors during chat interactions, and present chat threads via a dedicated view.\n\nAPI Version  \nThe Maven artifact is specified with version 1.0.0-beta.3, which represents the current version of this service.\n\nClient Classes  \nNo classes matching the *Client naming pattern are defined in this API.\n\nOther Key Classes and Their Methods  \nThe API exposes a `ChatAdapter` class that offers methods including `addOnErrorEventHandler`, `connect`, `disconnect`, and `removeOnErrorEventHandler`. Complementing this is the `ChatAdapterBuilder` class, which provides methods such as `credential`, `displayName`, `endpoint`, `identity`, `threadId`, and `build` to configure and instantiate the adapter. The `ChatCompositeEventHandler` interface declares a single method named `handle` to process events.\n\nAdditional supporting classes include models for error handling: `ChatCompositeErrorCode` (defining constants like JOIN_FAILED and SEND_MESSAGE_FAILED), `ChatCompositeErrorEvent` (with methods `getCause`, `getErrorCode`, and `getThreadId`), and `ChatCompositeException` for encapsulating chat-related errors. The presentation layer is represented by the `ChatThreadView` class, which offers several constructors to integrate the chat UI component into Android layouts.\n\nDependencies and Structure  \nThe API is packaged as a Maven artifact with compile-time dependencies on Azure Communication Chat, Azure Communication Common, and Kotlin libraries, and runtime dependencies on AndroidX components, Microsoft Fluent UI, and Jetpack Compose libraries. The design separates chat connectivity, error management, and UI presentation to facilitate integration into Android applications.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 30,
+            "bad_code": "package com.azure.android.communication.ui.chat {",
+            "suggestion": "package azure_communication_ui_chat {",
+            "comment": "Adopt Python package naming conventions by using lowercase letters and underscores.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 33,
+            "bad_code": "public void addOnErrorEventHandler(ChatCompositeEventHandler<ChatCompositeErrorEvent> errorHandler)",
+            "suggestion": "def add_on_error_event_handler(self, error_handler: ChatCompositeEventHandler) -> None:",
+            "comment": "Convert camelCase method names to snake_case to align with Python naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 34,
+            "bad_code": "public CompletableFuture<Void> connect(Context context)",
+            "suggestion": "async def connect(self, context: Context) -> None:",
+            "comment": "Replace Java's CompletableFuture with async/await by defining the method as an async function.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 36,
+            "bad_code": "public void removeOnErrorEventHandler(ChatCompositeEventHandler<ChatCompositeErrorEvent> errorHandler)",
+            "suggestion": "def remove_on_error_event_handler(self, error_handler: ChatCompositeEventHandler) -> None:",
+            "comment": "Use snake_case for method names to ensure consistency with Python standards.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 38,
+            "bad_code": "public final class ChatAdapterBuilder {",
+            "suggestion": "def __init__(self, *, credential: CommunicationTokenCredential, display_name: str, endpoint: str, identity: CommunicationIdentifier, thread_id: str) -> ChatAdapter:",
+            "comment": "Replace the builder pattern with an initializer that uses keyword arguments for a more natural Python API.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 41,
+            "bad_code": "public ChatAdapterBuilder displayName(String displayName)",
+            "suggestion": "def with_display_name(self, display_name: str) -> ChatAdapterBuilder:",
+            "comment": "Rename the method and parameter to snake_case and use a clear 'with_' prefix to improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 47,
+            "bad_code": "public interface ChatCompositeEventHandler<T> {",
+            "suggestion": "ChatCompositeEventHandler = Callable[[Any], None]",
+            "comment": "Replace the generic interface with a callable type alias to better leverage Python's dynamic typing.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 52,
+            "bad_code": "public final class ChatCompositeErrorCode extends ExpandableStringEnum<ChatCompositeErrorCode> {",
+            "suggestion": "class ChatCompositeErrorCode(Enum):",
+            "comment": "Use Python's built-in Enum class instead of a Java-specific expandable string enum.",
+            "source": "generic"
+        }
+    ]
+}

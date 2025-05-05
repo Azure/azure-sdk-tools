@@ -1,14 +1,22 @@
 {
     "comments": [
         {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nOverview\nThis API provides a client library for interacting with a Cosmos-like database service. It enables management of databases, containers, and individual items along with support for executing queries and performing transactional operations.\n\nAPI Version\nThere is no explicit API version object included in this APIView description.\n\nPrimary *Client Classes\nThe service exposes a `Client` type with methods `CreateDatabase`, `Endpoint`, `NewContainer`, `NewDatabase`, and `NewQueryDatabasesPager`. The `ContainerClient` type offers methods `CreateItem`, `Delete`, `DeleteItem`, `ExecuteTransactionalBatch`, `ID`, `NewQueryItemsPager`, `NewTransactionalBatch`, `PatchItem`, `Read`, `ReadItem`, `ReadThroughput`, `Replace`, `ReplaceItem`, `ReplaceThroughput`, and `UpsertItem`. The `DatabaseClient` type provides methods `NewQueryContainersPager`, `CreateContainer`, `Delete`, `ID`, `NewContainer`, `Read`, `ReadThroughput`, and `ReplaceThroughput`.\n\nSupporting Types and Functionality\nIn addition to the main client types, the API includes a variety of supporting models and option types such as `ClientOptions`, `CompositeIndex`, `ConflictResolutionPolicy`, `ContainerProperties`, `DatabaseProperties`, and related response types. It also defines types for handling throughput configurations, partition key management via `PartitionKey` and `PartitionKeyDefinition`, and patch operations through `PatchOperations`. These types support scenarios that require consistency handling, indexing configuration, and resource tuning.\n\nUnstable Query Engine\nAn additional component in the API is found in the unstable `azcosmos/unstable/queryengine` package. This component defines a `QueryEngine` interface with methods `CreateQueryPipeline` and `SupportedFeatures`, along with a `QueryPipeline` interface that provides methods `Close`, `IsComplete`, `ProvideData`, `Query`, and `Run`. Supporting models like `PipelineResult`, `QueryRequest`, and `QueryResult` facilitate query execution and management in this experimental query processing feature.",
+            "source": "summary"
+        },
+        {
             "rule_ids": [
                 "golang_introduction.html#golang-document-everything"
             ],
             "line_no": 3,
             "bad_code": "func NewClient(endpoint string, cred azcore.TokenCredential, o *ClientOptions) (*Client, error)",
-            "suggestion": "// NewClient creates a new instance of Client using the specified endpoint, credential and options.\nfunc NewClient(endpoint string, cred azcore.TokenCredential, o *ClientOptions) (*Client, error)",
-            "comment": "Exported functions must be documented. This constructor lacks a descriptive comment that explains its parameters and behavior.",
-            "source": "guideline"
+            "suggestion": "// NewClient creates a new instance of Client with the specified endpoint, credential, and options\nfunc NewClient(endpoint string, cred azcore.TokenCredential, opts *ClientOptions) (*Client, error)",
+            "comment": "Add a preceding comment to document the exported function, and rename the option parameter to 'opts' for clarity and to follow Go naming conventions.",
+            "source": "merged"
         },
         {
             "rule_ids": [
@@ -17,49 +25,61 @@
             "line_no": 10,
             "bad_code": "func (*Client) NewQueryDatabasesPager(query string, o *QueryDatabasesOptions) *azruntime.Pager[QueryDatabasesResponse]",
             "suggestion": "func (*Client) NewQueryDatabasesPager(query string, o *QueryDatabasesOptions) *runtime.Pager[QueryDatabasesResponse]",
-            "comment": "Paged operations should return *runtime.Pager[T]. The use of *azruntime.Pager here is inconsistent with the guideline and with other pager methods in the package.",
+            "comment": "Pager-returning methods should consistently use *runtime.Pager; replace azruntime.Pager with runtime.Pager.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
-            "line_no": 57,
-            "bad_code": "func (ContainerProperties) MarshalJSON() ([]byte, error)",
-            "suggestion": "func (*ContainerProperties) MarshalJSON() ([]byte, error)",
-            "comment": "Use pointer receivers consistently for JSON marshaling methods to avoid accidental copying and ensure consistency with UnmarshalJSON.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 136,
-            "bad_code": "func NewPartitionKey() PartitionKey",
-            "suggestion": "/* Consider introducing a unified constructor, e.g., func NewPartitionKey(value interface{}) PartitionKey */",
-            "comment": "There are several PartitionKey constructors (for bool, number, string). Consolidating these into a single generic function (or clearly documenting their differences) may reduce surface complexity and make the API easier to use.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 235,
-            "bad_code": "func NewAutoscaleThroughputPropertiesWithIncrement(startingMaxThroughput int32, incrementPercentage int32) ThroughputProperties",
-            "suggestion": "/* Consider an alternative design using an options struct, for example: func NewAutoscaleThroughputProperties(startingMaxThroughput int32, opts *AutoscaleOptions) ThroughputProperties */",
-            "comment": "The current function name and signature are quite verbose. An options-based approach can streamline the API and offer better extensibility for autoscale configuration.",
+            "line_no": 32,
+            "bad_code": "func (*ContainerClient) NewQueryItemsPager(query string, partitionKey PartitionKey, o *QueryOptions) *runtime.Pager[QueryItemsResponse]",
+            "suggestion": "func (*ContainerClient) NewQueryItemsPager(query string, partitionKey PartitionKey, opts *QueryOptions) *azruntime.Pager[QueryItemsResponse]",
+            "comment": "Use 'opts' instead of 'o' and standardize on the pager type (azruntime.Pager) for consistency across the API.",
             "source": "generic"
         },
         {
             "rule_ids": [
-                "golang_introduction.html#golang-pkgpath-leaf"
+                "golang_introduction.html#golang-api-options-struct"
             ],
-            "line_no": 357,
-            "bad_code": "package azcosmos/unstable/queryengine",
-            "suggestion": "package queryengine",
-            "comment": "The package declaration should match the leaf directory name. In a subdirectory like 'azcosmos/unstable/queryengine', the file should declare 'package queryengine'.",
+            "line_no": 96,
+            "bad_code": "type DeleteContainerOptions struct",
+            "suggestion": "type DeleteContainerOptions struct { // placeholder for future optional parameters }",
+            "comment": "Empty options structs should include a placeholder comment to indicate future optional parameters.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "golang_introduction.html#golang-api-options-struct"
+            ],
+            "line_no": 214,
+            "bad_code": "type ReplaceContainerOptions struct",
+            "suggestion": "type ReplaceContainerOptions struct { // placeholder for future optional parameters }",
+            "comment": "Empty options structs must contain a placeholder comment for future optional parameters.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "golang_implementation.html#golang-enum-type-values"
+            ],
+            "line_no": 353,
+            "bad_code": "func IndexingDirectives() []IndexingDirective",
+            "suggestion": "func IndexingDirectiveValues() []IndexingDirective",
+            "comment": "Enumeration value helper functions should follow the pattern <EnumTypeName>Values(); rename to IndexingDirectiveValues.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
             "line_no": 359,
-            "bad_code": "func CreateQueryPipeline(query string, plan string, pkranges string) (QueryPipeline, error)",
-            "suggestion": "func NewQueryPipeline(query string, plan string, pkranges string) (QueryPipeline, error)",
-            "comment": "$Constructor functions in Go typically use the 'New' prefix. Renaming to 'NewQueryPipeline' would be more idiomatic and improve discoverability. (general comment)",
+            "bad_code": "CreateQueryPipeline(query string, plan string, pkranges string) (QueryPipeline, error)",
+            "suggestion": "CreateQueryPipeline(query string, plan string, partitionKeyRanges string) (QueryPipeline, error)",
+            "comment": "Rename the 'pkranges' parameter to 'partitionKeyRanges' to better reflect its purpose.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 367,
+            "bad_code": "Run() (*PipelineResult, error)",
+            "suggestion": "Run(ctx context.Context) (*PipelineResult, error)",
+            "comment": "Include a context parameter in Run to support cancellation and deadlines, aligning with Go best practices.",
             "source": "generic"
         }
     ]

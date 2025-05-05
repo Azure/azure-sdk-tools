@@ -18,7 +18,6 @@ extends:
       displayName: Run Evals (AzurePowerShell@5)
       env:
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-        # Enable samples tests that use DefaultAzureCredential to load the federated pipeline credential
         AZURE_POD_IDENTITY_AUTHORITY_HOST: 'https://FakeAuthorityHost'
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)
@@ -27,7 +26,7 @@ extends:
         AZURE_FOUNDRY_PROJECT_NAME: apiview-ai
         OPENAI_API_VERSION: 2025-01-01-preview
       inputs:
-        azureSubscription: azure-sdk-tests-public
+        azureSubscription: Azure SDK Developer Playground
         azurePowerShellVersion: LatestVersion
         pwsh: true
         ScriptType: InlineScript

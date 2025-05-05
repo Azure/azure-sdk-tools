@@ -522,7 +522,7 @@ class ApiViewReview:
             "ios": "Swift",
             "java": "Java",
             "python": "Python",
-            "typescript": "JavaScript",
+            "typescript": "TypeScript",
         }
         return language_pretty_names.get(self.language, self.language.capitalize())
 

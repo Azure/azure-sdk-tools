@@ -1,66 +1,92 @@
 {
     "comments": [
         {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nThe API provides the Microsoft Azure Search client library, enabling users to perform various search operations such as retrieving documents by key, executing autocomplete queries, counting documents, indexing document batches, running full search queries, and obtaining suggestion results. It supports both synchronous and asynchronous interaction patterns.\n\nThe API defines its version information through the enumeration `SearchServiceVersion`, with the latest version being 2024-07-01.\n\nThe primary service client classes are `SearchAsyncClient` and `SearchClient`. The `SearchAsyncClient` exposes the following method names: get, autocompleteGet, autocompleteGetWithResponse, autocompletePost, autocompletePostWithResponse, count, countWithResponse, index, indexWithResponse, searchGet, searchGetWithResponse, searchPost, searchPostWithResponse, suggestGet, suggestGetWithResponse, suggestPost, suggestPostWithResponse, and getWithResponse. Similarly, the `SearchClient` provides the same set of method names.\n\nAdditional classes include the `SearchClientBuilder`, which offers fluent methods such as addPolicy, clientOptions, configuration, credential, endpoint, httpClient, httpLogOptions, pipeline, retryOptions, retryPolicy, and serviceVersion. This builder supports the construction of both asynchronous and synchronous client instances.\n\nThe API further encompasses a comprehensive set of model classes and enumerations under the `com.azure.search.documents.search.models` package. These classes define the request and response structures for autocomplete operations, indexing actions (including the index action types and batches), search requests and results, as well as various vector query configurations. Enums such as `AutocompleteMode`, `IndexActionType`, `QueryType`, `SearchMode`, and several others are provided to facilitate detailed configuration of search behavior and result processing.",
+            "source": "summary"
+        },
+        {
             "rule_ids": [
-                "java_introduction.html#java-service-client-namespace"
+                "java_introduction.html#java-maven-artifactid"
             ],
-            "line_no": 18,
-            "bad_code": "package com.azure.search.documents.search {",
-            "suggestion": "Move the service client types to the root package (e.g. 'com.azure.search.documents') so that consumers find them immediately, as required by the guideline.",
-            "comment": "Service client types are expected to live in the client library’s root package for easier discoverability. Placing them in a nested subpackage (here, 'search') may cause confusion and does not follow the guideline.",
+            "line_no": 3,
+            "bad_code": "properties : com.azure:azure-search-documents-search:1.0.0-beta.1",
+            "suggestion": "properties : com.azure:azure-search-documents:1.0.0-beta.1",
+            "comment": "ArtifactId should follow the pattern azure-<group>-<service>; the current id appears redundant and should be simplified.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "java_introduction.html#java-dependencies-versions"
+            ],
+            "line_no": 8,
+            "bad_code": "com.azure:azure-core 1.55.3",
+            "suggestion": "com.azure:azure-core",
+            "comment": "Dependency versions should be managed centrally (via the parent POM or BOM) rather than being hard-coded in the client library POM.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "java_introduction.html#java-dependencies-versions"
+            ],
+            "line_no": 9,
+            "bad_code": "com.azure:azure-core-http-netty 1.15.11",
+            "suggestion": "com.azure:azure-core-http-netty",
+            "comment": "Do not specify dependency versions directly; they must be derived from centralized version management to ensure consistency across the SDK.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
             "line_no": 25,
-            "bad_code": "public Mono<AutocompleteResult> autocompleteGet(String searchText, String suggesterName, String indexName)",
-            "suggestion": "public Mono<AutocompleteResult> autocomplete(String searchText, String suggesterName, String indexName)",
-            "comment": "$Exposing the HTTP verb in the method name leaks implementation details. Renaming to simply 'autocomplete' focuses on the operation rather than the underlying protocol. (general comment)",
+            "bad_code": "        @Generated public Mono<AutocompleteResult> autocompleteGet(String searchText, String suggesterName, String indexName)",
+            "suggestion": "        @Generated public Mono<AutocompleteResult> autocomplete(String searchText, String suggesterName, String indexName)",
+            "comment": "Rename the method to remove the HTTP verb and highlight the domain intent.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 35,
+            "bad_code": "        @Generated public Mono<SearchDocumentsResult> searchGet(String indexName, String searchText, Boolean includeTotalResultCount, List<String> facets, String filter, List<String> highlightFields, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, QueryType queryType, List<String> scoringParameters, String scoringProfile, String searchFields, SearchMode searchMode, ScoringStatistics scoringStatistics, String sessionId, List<String> select, Integer skip, Integer top, String semanticConfiguration, SemanticErrorMode semanticErrorHandling, Integer semanticMaxWaitInMilliseconds, QueryAnswerType answers, QueryCaptionType captions, String semanticQuery)",
+            "suggestion": "        @Generated public Mono<SearchDocumentsResult> search(String indexName, SearchRequest searchRequest)",
+            "comment": "Reduce method complexity by consolidating many parameters into a single request object. (general comment)",
             "source": "generic"
         },
         {
             "rule_ids": [
-                "java_introduction.html#java-params-complex"
+                "java_introduction.html#java-service-client-context"
             ],
-            "line_no": 35,
-            "bad_code": "Generated public Mono<SearchDocumentsResult> searchGet(String indexName, String searchText, Boolean includeTotalResultCount, List<String> facets, String filter, List<String> highlightFields, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, QueryType queryType, List<String> scoringParameters, String scoringProfile, List<String> searchFields, SearchMode searchMode, ScoringStatistics scoringStatistics, String sessionId, List<String> select, Integer skip, Integer top, String semanticConfiguration, SemanticErrorMode semanticErrorHandling, Integer semanticMaxWaitInMilliseconds, QueryAnswerType answers, QueryCaptionType captions, String semanticQuery)",
-            "suggestion": "Consider creating an options parameter (for example, a SearchOptions type) to encapsulate these many parameters and then provide an overload that takes this options object instead.",
-            "comment": "$This searchGet method has an excessively long parameter list. For complex service operations, the options parameter pattern should be used to simplify the API surface and improve clarity. (general comment)",
+            "line_no": 54,
+            "bad_code": "public Response<BinaryData> autocompleteGetWithResponse(String searchText, String suggesterName, String indexName, RequestOptions requestOptions)",
+            "suggestion": "public Response<BinaryData> autocompleteGetWithResponse(String searchText, String suggesterName, String indexName, RequestOptions requestOptions, Context context)",
+            "comment": "Synchronous service client methods must include a maximal overload that accepts a Context parameter to support additional runtime configurations such as distributed tracing. (general comment)",
             "source": "guideline"
         },
         {
             "rule_ids": [],
-            "line_no": 79,
-            "bad_code": "public SearchClientBuilder credential(TokenCredential tokenCredential)",
-            "suggestion": "public SearchClientBuilder withTokenCredential(TokenCredential tokenCredential)",
-            "comment": "$Overloaded credential methods can be ambiguous. Renaming the method to indicate the credential type (e.g. 'withTokenCredential') can improve clarity for developers. (general comment)",
+            "line_no": 62,
+            "bad_code": "        @Generated public SearchDocumentsResult searchGet(String indexName, String searchText, Boolean includeTotalResultCount, List<String> facets, String filter, List<String> highlightFields, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, QueryType queryType, List<String> scoringParameters, String scoringProfile, String searchFields, SearchMode searchMode, ScoringStatistics scoringStatistics, String sessionId, List<String> select, Integer skip, Integer top, String semanticConfiguration, SemanticErrorMode semanticErrorHandling, Integer semanticMaxWaitInMilliseconds, QueryAnswerType answers, QueryCaptionType captions, String semanticQuery)",
+            "suggestion": "        @Generated public SearchDocumentsResult search(String indexName, SearchRequest searchRequest)",
+            "comment": "Simplify the synchronous search method by using a SearchRequest to encapsulate parameters. (general comment)",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 110,
-            "bad_code": "@Deprecated @Generated public AutocompleteMode()",
-            "suggestion": "/* Consider removing or restricting access to the no-arg constructor */",
-            "comment": "The presence of a deprecated no-arg constructor in the ExpandableStringEnum (and similar enums) may confuse developers. Making it private or removing it (if not required) would create a cleaner API.",
+            "bad_code": "        @Deprecated @Generated public AutocompleteMode()",
+            "suggestion": "        @Deprecated @Generated private AutocompleteMode()",
+            "comment": "Restrict the default constructor in expandable enums to prevent unintended instantiation.",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 128,
-            "bad_code": "public String getSearchFields()",
-            "suggestion": "public List<String> getSearchFields()",
-            "comment": "$There is an inconsistency in the type used for search fields. While some methods expect a List<String>, this accessor returns a String. Using a consistent type will avoid confusion. (general comment)",
+            "bad_code": "        @Generated public String getSearchFields()",
+            "suggestion": "        @Generated public List<String> getSearchFields()",
+            "comment": "Ensure consistency in parameter types by using a List for search fields as seen in other methods.",
             "source": "generic"
-        },
-        {
-            "rule_ids": [
-                "java_introduction.html#java-models-fluent-api"
-            ],
-            "line_no": 418,
-            "bad_code": "public class VectorQuery implements JsonSerializable<VectorQuery> {",
-            "suggestion": "Annotate VectorQuery with @Fluent to clearly indicate that this model supports a fluent API.",
-            "comment": "Model types that are intended to expose fluent setter methods should be annotated with @Fluent. The omission in VectorQuery may lead to inconsistent developer experience.",
-            "source": "guideline"
         }
     ]
 }

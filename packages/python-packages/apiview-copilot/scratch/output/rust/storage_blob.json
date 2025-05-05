@@ -1,66 +1,130 @@
 {
     "comments": [
         {
-            "rule_ids": [],
-            "line_no": 54,
-            "bad_code": "pub mod crate::clients { ... } // repeated in lines 54, 73, and 86",
-            "suggestion": "Consolidate the multiple definitions of the 'crate::clients' module into a single module that exports BlobClient, BlobContainerClient, and BlobServiceClient.",
-            "comment": "Defining the same module in multiple places can lead to confusion and potential conflicts. A single, well-organized clients module improves clarity and discoverability.",
-            "source": "generic"
-        },
-        {
             "rule_ids": [
                 "rust_introduction.html#rust-documentation-api"
             ],
-            "line_no": 57,
-            "bad_code": "pub fn new(endpoint: &str, container_name: String, blob_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobClientOptions>) -> Result<Self> {}",
-            "suggestion": "/// Creates a new BlobClient.\n///\n/// # Arguments\n///\n/// * `endpoint` - The service endpoint URL.\n/// * `container_name` - The name of the blob container.\n/// * `blob_name` - The name of the blob.\n/// * `credential` - The token credential to authenticate requests.\n/// * `options` - Optional client configuration options.\npub fn new(endpoint: &str, container_name: String, blob_name: String, credential: Arc<dyn TokenCredential>, options: Option<BlobClientOptions>) -> Result<Self> {}",
-            "comment": "Public APIs must be documented. Add doc comments for functions to detail the purpose, parameters, and return type as required by the guidelines.",
+            "line_no": 1,
+            "bad_code": "pub mod azure_storage_blob {",
+            "suggestion": null,
+            "comment": "Public APIs should include documentation comments. None are present for this module and its public items.",
             "source": "guideline"
         },
         {
             "rule_ids": [],
-            "line_no": 63,
-            "bad_code": "pub async fn download(&self, options: Option<BlobClientDownloadOptions>) -> Result<Response<BlobClientDownloadResult>> {}",
-            "suggestion": "Consider providing a builder method (e.g. download_builder()) that allows configuration of the various optional settings before executing the operation.",
-            "comment": "When a method accepts many optional parameters, a builder pattern helps group related options and makes the API more self-explanatory and easier to use, especially for novice users.",
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nService Purpose:\nThis API provides a client library for interacting with Azure Storage Blob. It offers functionality to manage individual blobs, blob containers, and overall storage service properties. The service covers operations such as creating and obtaining client instances, performing asynchronous network calls for actions like downloading, uploading, setting properties and metadata, committing block lists, staging blocks, and deleting entities.\n\nAPI Version:\nThe client options structures—such as those in `BlobClientOptions`, `BlobContainerClientOptions`, and `BlobServiceClientOptions`—include a `version` property. This property is used to specify the API version when interacting with the service; however, the excerpt does not clearly designate a specific latest version value.\n\nPrimary Client Classes:\nThe API exposes a `BlobClient` class with methods: new, endpoint, container_name, blob_name, get_properties, set_properties, download, upload, set_metadata, delete, commit_block_list, stage_block, get_block_list, and set_tier. The `BlobContainerClient` class has methods: new, blob_client, endpoint, container_name, create_container, set_metadata, delete_container, and get_properties. The `BlobServiceClient` class provides methods: new, blob_container_client, endpoint, and get_properties.\n\nOther Classes and Models:\nA wide range of option and result models support the various operations. These include options types for delete, download, get properties, set metadata, and more. Enumerations such as `AccessTier`, `ArchiveStatus`, `BlobImmutabilityPolicyMode`, `BlobType`, `BlockListType`, `CopyStatus`, `LeaseState`, `LeaseStatus`, `PublicAccessType`, and `RehydratePriority` capture configuration and state details. Additional traits for result header extraction further refine access to response details.\n\nFunctionality and Structure:\nThe API is organized into modules for clients, generated client options, and models. It employs asynchronous methods for network operations and leverages HTTP request and response abstractions to integrate with Azure Storage Blob. The design supports granular control over blob operations including block management and data integrity, making it suitable for diverse storage use cases within an Azure context.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 73,
+            "bad_code": "pub mod crate::clients {",
+            "suggestion": "pub mod clients { // merge BlobContainerClient definition with BlobClient",
+            "comment": "Avoid re-declaring the same module path; consolidate client definitions into a single module to reduce duplication and potential namespace conflicts.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 64,
-            "bad_code": "pub async fn upload(&self, data: RequestContent<Bytes>, overwrite: bool, content_length: u64, options: Option<BlockBlobClientUploadOptions>) -> Result<Response<BlockBlobClientUploadResult>> {}",
-            "suggestion": "Review the signature to determine if parameters like 'overwrite' and 'content_length' can be grouped into a custom upload configuration type or provided via a builder API.",
-            "comment": "Reducing the number of standalone parameters in method signatures by encapsulating related values can simplify the API and lower the cognitive load on developers.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 76,
-            "bad_code": "pub fn new(endpoint: &str, container_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobContainerClientOptions>) -> Result<Self> {}",
-            "suggestion": "pub fn new(endpoint: &str, container_name: impl Into<String>, credential: Arc<dyn TokenCredential>, options: Option<BlobContainerClientOptions>) -> Result<Self> {}",
-            "comment": "Similarly, for BlobContainerClient, accepting a parameter that implements Into<String> will let users pass string literals or owned strings without extra conversion, enhancing API ergonomics.",
+            "line_no": 86,
+            "bad_code": "pub mod crate::clients {",
+            "suggestion": "pub mod clients { // merge BlobServiceClient definition with existing clients",
+            "comment": "Combine client implementations under one unified module to simplify the API structure and reduce confusion.",
             "source": "generic"
         },
         {
             "rule_ids": [
                 "rust_introduction.html#rust-client-configuration-debug"
             ],
-            "line_no": 98,
-            "bad_code": "pub struct BlobClientOptions {",
-            "suggestion": "#[derive(Clone, azure_core::fmt::SafeDebug)]\npub struct BlobClientOptions {",
-            "comment": "Client options structs must not derive Debug as this may leak PII. Instead of Debug, derive SafeDebug as per the guideline.",
+            "line_no": 96,
+            "bad_code": "#[derive(Clone, Debug)]",
+            "suggestion": "#[derive(Clone, azure_core::fmt::SafeDebug)]",
+            "comment": "Client option types are deriving Debug, which risks leaking sensitive data. Use SafeDebug instead.",
             "source": "guideline"
         },
         {
+            "rule_ids": [],
+            "line_no": 131,
+            "bad_code": "pub struct BlobClientDeleteOptions <'a>{",
+            "suggestion": "pub struct BlobClientDeleteOptions {",
+            "comment": "Remove the lifetime parameter if it isn’t needed (i.e. no borrowed data is stored) to simplify using these option types.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 479,
+            "bad_code": "pub mod crate::generated::models {",
+            "suggestion": null,
+            "comment": "Avoid using 'crate::' in the module declaration; consider nesting modules or using a simpler name (e.g. 'pub mod generated_models') to improve clarity.",
+            "source": "generic"
+        },
+        {
             "rule_ids": [
-                "rust_introduction.html#rust-enums-debug"
+                "rust_introduction.html#rust-documentation-api"
             ],
-            "line_no": 437,
-            "bad_code": "pub enum AccessTier {",
-            "suggestion": "#[derive(azure_core::fmt::SafeDebug, StructuralPartialEq, PartialEq, Eq, Clone)]\npub enum AccessTier {",
-            "comment": "$Enums should not derive Debug directly because it might leak sensitive information. Use azure_core::fmt::SafeDebug instead. (general comment)",
+            "line_no": 482,
+            "bad_code": "pub enum ArchiveStatus {",
+            "suggestion": "/// Represents the archive rehydration status.\npub enum ArchiveStatus {",
+            "comment": "Public types must include documentation comments.",
             "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 493,
+            "bad_code": "pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}",
+            "suggestion": "pub fn from_str(s: &str) -> ::core::result::Result<Self, Infallible> {}",
+            "comment": "Explicitly use 'Infallible' as the error type in FromStr implementations instead of a self-referential error type.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 503,
+            "bad_code": "pub fn deserialize_in_place; // provided trait method",
+            "suggestion": "pub fn deserialize_in_place<D>(&mut self, deserializer: D) -> ::core::result::Result<(), D::Error> where D: serde::Deserializer { unimplemented!() }",
+            "comment": "The 'deserialize_in_place' method is declared without a signature or body; provide a complete function signature or remove it if a default implementation is available.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 509,
+            "bad_code": "pub mod crate::generated::models {",
+            "suggestion": null,
+            "comment": "Do not redeclare the same module multiple times; merge all contents into a single 'crate::generated::models' block to reduce fragmentation.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 709,
+            "bad_code": "pub committed_blocks: Vec<Block>",
+            "suggestion": "pub committed_blocks: Vec<Block>,",
+            "comment": "Struct fields must be separated by commas to adhere to Rust syntax.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 921,
+            "bad_code": "pub struct alloc::string::String",
+            "suggestion": "pub use alloc::string::String;",
+            "comment": "Re-export external types using 'pub use' rather than redefining them as structs.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 937,
+            "bad_code": "pub type_alias core::fmt::Result",
+            "suggestion": "pub type Result = core::fmt::Result;",
+            "comment": "Use the correct syntax for type aliases ('pub type ... = ...;') instead of 'pub type_alias'.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 938,
+            "bad_code": "pub type_alias typespec::error::Result",
+            "suggestion": "pub type Result = typespec::error::Result;",
+            "comment": "Ensure type aliases follow Rust syntax; replace 'pub type_alias' with 'pub type'.",
+            "source": "generic"
         }
     ]
 }

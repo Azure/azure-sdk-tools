@@ -37,7 +37,7 @@ extends:
 
           Write-Host (Get-Command python).Source
 
-          python evals/run.py
+          python packages/python-packages/apiview-copilot/evals/run.py
 
           Write-Host "Last exit code: $LASTEXITCODE";
           exit $LASTEXITCODE;

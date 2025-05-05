@@ -1,0 +1,50 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-optional-arguments-keyword-only"
+            ],
+            "line_no": 16,
+            "bad_code": "def analyze(",
+            "suggestion": "Insert a '*' after the required positional parameters so that the optional parameters become keyword‐only. For example:\n\n def analyze(self, image_data: bytes, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
+            "comment": "Optional operation-specific arguments should be keyword-only (python_design.html#python-client-optional-arguments-keyword-only)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-optional-arguments-keyword-only"
+            ],
+            "line_no": 28,
+            "bad_code": "def analyze_from_url(",
+            "suggestion": "Insert a '*' after the required positional parameters so that the optional parameters become keyword‐only. For example:\n\n def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
+            "comment": "Optional operation-specific arguments should be keyword-only (python_design.html#python-client-optional-arguments-keyword-only)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-optional-arguments-keyword-only"
+            ],
+            "line_no": 62,
+            "bad_code": "async def analyze(",
+            "suggestion": "Insert a '*' after the required positional parameters so that the optional parameters become keyword‐only. For example:\n\n async def analyze(self, image_data: bytes, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
+            "comment": "Optional operation-specific arguments should be keyword-only (python_design.html#python-client-optional-arguments-keyword-only)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-optional-arguments-keyword-only"
+            ],
+            "line_no": 74,
+            "bad_code": "async def analyze_from_url(",
+            "suggestion": "Insert a '*' after the required positional parameters so that the optional parameters become keyword‐only. For example:\n\n async def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
+            "comment": "Optional operation-specific arguments should be keyword-only (python_design.html#python-client-optional-arguments-keyword-only)."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-async-keywords"
+            ],
+            "line_no": 87,
+            "bad_code": "def send_request(",
+            "suggestion": "Change the method declaration to use async/await. For example:\n\n async def send_request(self, request: HttpRequest, *, stream: bool = False, **kwargs: Any) -> Awaitable[AsyncHttpResponse]",
+            "comment": "Asynchronous client methods should be defined using async/await (python_design.html#python-client-async-keywords)."
+        }
+    ]
+}

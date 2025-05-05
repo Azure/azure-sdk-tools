@@ -38,6 +38,7 @@ export const generateReport = (context: WorkflowContext) => {
       shouldLabelBreakingChange = true;
     }
     const packageReport: PackageReport = {
+      serviceName: pkg.serviceName,
       packageName: pkg.name,
       result: pkg.status,
       artifactPaths: pkg.artifactPaths,
@@ -88,6 +89,7 @@ export const generateReport = (context: WorkflowContext) => {
     executionResult: context.status,
     fullLogPath: context.fullLogFileName,
     filteredLogPath: context.filteredLogFileName,
+    stagedArtifactsFolder: context.stagedArtifactsFolder,
     sdkArtifactFolder: context.sdkArtifactFolder,
     sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder,
     ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})
@@ -360,6 +362,15 @@ const handleBarHelpers = {
   },
   renderParseSuppressionLinesErrors: (parseSuppressionLinesErrors: string[]) => {
     return `<pre><strong>Parse Suppression File Errors</strong><BR>${parseSuppressionLinesErrors.map(trimNewLine).join('<BR>')}</pre>`;
+  },
+  renderPullRequestLink: (specRepoHttpsUrl: string, prNumber: string) => {
+    const url = `${specRepoHttpsUrl}/pull/${prNumber}`;
+    return `<a target="_blank" class="issue-link js-issue-link" href="${url}" data-hovercard-type="pull_request" data-hovercard-url="${url}/hovercard">#${prNumber}</a>`
+  },
+  renderCommitLink: (specRepoHttpsUrl: string, commitSha: string) => {
+    const shortSha = commitSha.substring(0, 7);
+    const url = `${specRepoHttpsUrl}/commit/${commitSha}`;
+    return `<a target="_blank" class="commit-link" href="${url}" data-hovercard-type="commit" data-hovercard-url="${url}/hovercard"><tt>${shortSha}</tt></a>`;
   },
   shouldRender: (messages: boolean | string[] | undefined,
     isBetaMgmtSdk: boolean | undefined,

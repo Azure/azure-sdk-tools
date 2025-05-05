@@ -125,7 +125,7 @@
     "text": "YOU MAY place operations on collections of resources a separate subclient to avoid cluttering the parent client with too many methods.\n\nWhile API usability is the primary reason for subclients, another motivating factor is resource efficiency.  Clients need to be cached (https://devblogs.microsoft.com/azure-sdk/lifetime-management-and-thread-safety-guarantees-of-azure-sdk-net-clients/)  so if the set of client instances is large or unlimited (in case the client takes a scoping parameter, like a hub, or a container), using subclients allows an application to cache the top level client and create instances of subclients on demand.  In addition, if there is an expensive shared resource (e.g. an AMQP connection), subclients are preferred, as they naturally lead to resource sharing."
   },
   {
-    "id": "dotnet_introduction.html#dotnet-service-client-entry-point",
+    "id": "dotnet_introduction.html#dotnet-service-client-",
     "category": "Subclients {#dotnet-subclients}",
     "text": "YOU SHOULD use the HttpPipeline that belongs to the type providing the factory method to make network calls to the service from the subclient.  An exception to this might be if subclient needs different pipeline policies than the parent client."
   },
@@ -210,17 +210,17 @@
     "text": "DO be thread-safe. All public members of the client type must be safe to call from multiple threads concurrently.\n\nService methods fall into two main groups when it comes to the number and complexity of parameters they accept:\nService Methods with Simple Inputs, simple methods for short\nService Methods with Complex Inputs, complex methods for short\n\nSimple methods are methods that take up to six parameters, with most of the parameters being simple BCL primitives. Complex methods are methods that take large number of parameters and typically correspond to REST APIs with complex request payloads.\n\nSimple methods should follow standard .NET Framework Design Guidelines (https://aka.ms/fxdg3) for parameter list and overload design.\n\nComplex methods should use option parameter to represent the request payload, and consider providing convenience simple overloads for most common scenarios.\n\n```csharp\npublic class BlobContainerClient {\n\n    // simple service method\n    public virtual Response&lt;BlobInfo&gt; UploadBlob(string blobName, Stream content, CancellationToken cancellationToken = default);\n\n    // complex service method\n    public virtual Response&lt;BlobInfo&gt; CreateBlob(BlobCreateOptions options = null, CancellationToken cancellationToken = default);\n\n    // convinience overload[s]\n    public virtual Response&lt;BlobContainerInfo&gt; CreateBlob(string blobName, CancellationToken cancellationToken = default);\n}\n\npublic class BlobCreateOptions {\n    public PublicAccessType Access { get; set; }\n    public IDictionary&lt;string, string&gt; Metadata { get; }\n    public BlobContainerEncryptionScopeOptions Encryption { get; set; }\n    ...\n}\n\n```\n\nThe Options class is designed similarly to .NET custom attributes, where required service method parameters are modeled as Options class constructor parameters and get-only properties, and optional parameters are get-set properties."
   },
   {
-    "id": "dotnet_introduction.html#dotnet-params-complex",
+    "id": "dotnet_introduction.html#dotnet-params-complex-methods",
     "category": "Service Method Parameters {#dotnet-parameters}",
     "text": "DO use the options parameter pattern for complex service methods."
   },
   {
-    "id": "dotnet_introduction.html#dotnet-params-complex",
+    "id": "dotnet_introduction.html#dotnet-params-growing-methods",
     "category": "Service Method Parameters {#dotnet-parameters}",
     "text": "YOU MAY use the options parameter pattern for simple service methods that you expect to grow in the future."
   },
   {
-    "id": "dotnet_introduction.html#dotnet-params-complex",
+    "id": "dotnet_introduction.html#dotnet-params-simple-overloads",
     "category": "Service Method Parameters {#dotnet-parameters}",
     "text": "YOU MAY add simple overloads of methods using the options parameter pattern.\n\nIf in common scenarios, users are likely to pass just a small subset of what the options parameter represents, consider adding an overload with a parameter list representing just this subset.\n\n```csharp\n    // main overload taking the options property bag\n    public virtual Response&lt;BlobInfo&gt; CreateBlob(BlobCreateOptions options = null, CancellationToken cancellationToken = default);\n\n    // simple overload with a subset of parameters of the options bag\n    public virtual Response&lt;BlobContainerInfo&gt; CreateBlob(string blobName, CancellationToken cancellationToken = default);\n}\n\n```"
   },
@@ -260,9 +260,14 @@
     "text": "DO take WaitUntil as the first parameter to LRO methods."
   },
   {
+    "id": "dotnet_introduction.html#dotnet-lro-subclass-operations",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "DO put methods that cannot be called until after the long-running operation has started on the subclass of Operation<T>.  For example, if a service provides an API to cancel an operation, the Cancel method should appear on the subclass of Operation."
+  },
+  {
     "id": "dotnet_introduction.html#dotnet-lro-subclass",
     "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
-    "text": "YOU MAY add additional APIs to subclasses of Operation<T>.\nFor example, some subclasses add a constructor allowing to create an operation instance from a previously saved operation ID. Also, some subclasses are more granular states besides the IsCompleted and HasValue states that are present on the base class."
+    "text": "YOU MAY add additional APIs to subclasses of Operation<T>.\nFor example, some subclasses add a constructor allowing to create an operation instance from a previously saved operation ID.  Some service operations have intermediate states they pass through prior to completion.  These can be represented with an added Status property to augment the HasCompleted property on the base Operation type."
   },
   {
     "id": "dotnet_introduction.html#dotnet-lro-constructor",
@@ -277,7 +282,7 @@
   {
     "id": "dotnet_introduction.html#dotnet-lro-mocking-properties",
     "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
-    "text": "DO make all properties virtual to allow mocking.\n\n```csharp\npublic class CopyFromUriOperation {\n    public virtual Uri SourceUri { get; }\n}\n\n```\n\nSome services support conditional requests that are used to implement optimistic concurrency control. In Azure, optimistic concurency is typically implemented using If-Match headers and ETags. See Managing Concurrency in Blob Storage (https://docs.microsoft.com/en-us/azure/storage/blobs/concurrency-manage?tabs=dotnet) as a good example."
+    "text": "DO make all properties virtual to allow mocking.\n\n```csharp\npublic class CopyFromUriOperation {\n    public virtual Uri SourceUri { get; }\n}\n\n```\n\nSome services support conditional requests that are used to implement optimistic concurrency control. In Azure, optimistic concurency is typically implemented using If-Match headers and ETags. See Managing Concurrency in Blob Storage (https://learn.microsoft.com/azure/storage/blobs/concurrency-manage?tabs=dotnet) as a good example."
   },
   {
     "id": "dotnet_introduction.html#dotnet-conditional-etag",
@@ -287,7 +292,7 @@
   {
     "id": "dotnet_introduction.html#dotnet-conditional-matchcondition",
     "category": "Conditional Request Methods",
-    "text": "YOU MAY take MatchConditions (https://docs.microsoft.com/en-us/dotnet/api/azure.matchconditions?view=azure-dotnet)  RequestConditions (https://docs.microsoft.com/en-us/dotnet/api/azure.requestconditions?view=azure-dotnet)  (or a custom subclass) as a parameter to conditional service call methods.\n\nTODO: more guidelines comming. see https://github.com/Azure/azure-sdk/issues/2154\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nThis section describes guidelines for the design model types and all their transitive closure of public dependencies (i.e. the model graph).  A model type is a representation of a REST service's resource.\n\nFor example, review the configuration service model type below:\n\n```csharp\npublic sealed class ConfigurationSetting : IEquatable&lt;ConfigurationSetting&gt; {\n\n    public ConfigurationSetting(string key, string value, string label = default);\n\n    public string ContentType { get; set; }\n    public string ETag { get; internal set; }\n    public string Key { get; set; }\n    public string Label { get; set; }\n    public DateTimeOffset LastModified { get; internal set; }\n    public bool Locked { get; internal set; }\n    public IDictionary&lt;string, string&gt; Tags { get; }\n    public string Value { get; set; }\n\n    public bool Equals(ConfigurationSetting other);\n\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override bool Equals(object obj);\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override int GetHashCode();\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override string ToString();\n}\n\n```\n\nThis model is returned from service methods as follows:\n\n```csharp\npublic class ConfigurationClient {\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; GetAsync(...);\n    public virtual Response&lt;ConfigurationSetting&gt; Get(...);\n    ...\n}\n\n```"
+    "text": "YOU MAY take MatchConditions (https://learn.microsoft.com/dotnet/api/azure.matchconditions?view=azure-dotnet)  RequestConditions (https://learn.microsoft.com/dotnet/api/azure.requestconditions?view=azure-dotnet)  (or a custom subclass) as a parameter to conditional service call methods.\n\nTODO: more guidelines comming. see https://github.com/Azure/azure-sdk/issues/2154\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nThis section describes guidelines for the design model types and all their transitive closure of public dependencies (i.e. the model graph).  A model type is a representation of a REST service's resource.\n\nFor example, review the configuration service model type below:\n\n```csharp\npublic sealed class ConfigurationSetting : IEquatable&lt;ConfigurationSetting&gt; {\n\n    public ConfigurationSetting(string key, string value, string label = default);\n\n    public string ContentType { get; set; }\n    public string ETag { get; internal set; }\n    public string Key { get; set; }\n    public string Label { get; set; }\n    public DateTimeOffset LastModified { get; internal set; }\n    public bool Locked { get; internal set; }\n    public IDictionary&lt;string, string&gt; Tags { get; }\n    public string Value { get; set; }\n\n    public bool Equals(ConfigurationSetting other);\n\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override bool Equals(object obj);\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override int GetHashCode();\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override string ToString();\n}\n\n```\n\nThis model is returned from service methods as follows:\n\n```csharp\npublic class ConfigurationClient {\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; GetAsync(...);\n    public virtual Response&lt;ConfigurationSetting&gt; Get(...);\n    ...\n}\n\n```"
   },
   {
     "id": "dotnet_introduction.html#dotnet-service-return-model-public-getters",
@@ -387,7 +392,7 @@
   {
     "id": "dotnet_introduction.html#dotnet-namespaces-approved-list",
     "category": "Namespaces {#dotnet-namespace-naming}",
-    "text": "DO use one of the following pre-approved namespace groups:\nAzure.AI for artificial intelligence, including machine learning\nAzure.Analytics for client libraries that gather or process analytics data\nAzure.Communication communication services\nAzure.Core for libraries that aren't service specific\nAzure.Cosmos for object database technologies\nAzure.Data for client libraries that handle databases or structured data stores\nAzure.DigitalTwins for DigitalTwins related technologies\nAzure.Identity for authentication and authorization client libraries\nAzure.IoT for client libraries dealing with the Internet of Things.\n\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\n\n\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\nAzure.Media for client libraries that deal with audio, video, or mixed reality\nAzure.Messaging for client libraries that provide messaging services, such as push notifications or pub-sub.\nAzure.Monitor for observability and Azure Monitor client libraries.\nAzure.ResourceManager.[ResourceProvider] for management plane client libraries for a given resource provider.\n\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\n\n\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\nAzure.Search for search technologies\nAzure.Security for client libraries dealing with security\nAzure.Storage for client libraries that handle unstructured data\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\n\nIf you think a new group should be added to the list, contact [adparch]."
+    "text": "DO use one of the following pre-approved namespace groups:\nAzure.AI for artificial intelligence, including machine learning\nAzure.Analytics for client libraries that gather or process analytics data\nAzure.Communication communication services\nAzure.Core for libraries that aren't service specific\nAzure.Cosmos for object database technologies\nAzure.Data for client libraries that handle databases or structured data stores\nAzure.DigitalTwins for DigitalTwins related technologies\nAzure.Identity for authentication and authorization client libraries\nAzure.IoT for client libraries dealing with the Internet of Things.\n\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\n\n\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\nAzure.Media for client libraries that deal with audio, video, or mixed reality\nAzure.Messaging for client libraries that provide messaging services, such as push notifications or pub/sub.\nAzure.Monitor for observability and Azure Monitor client libraries.\nAzure.ResourceManager.[ResourceProvider] for management plane client libraries for a given resource provider.\n\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\n\n\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\nAzure.Search for search technologies\nAzure.Security for client libraries dealing with security\nAzure.Storage for client libraries that handle unstructured data\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\n\nIf you think a new group should be added to the list, contact [adparch]."
   },
   {
     "id": "dotnet_introduction.html#dotnet-namespaces-registration",
@@ -402,7 +407,7 @@
   {
     "id": "dotnet_introduction.html#dotnet-namespaces-models",
     "category": "Namespaces {#dotnet-namespace-naming}",
-    "text": "YOU SHOULD consider placing model types in a .Models namespace if number of model types is or might become large.\n\nSee model type guidelines for details.\n\nAll client libraries must support mocking to enable non-live testing of service clients by customers.\n\nHere is an example of how the ConfigurationClient can be mocked using [Moq] (a popular .NET mocking library):\n\n```csharp\n// Create a mock response\nvar mockResponse = new Mock&lt;Response&gt;();\n// Create a client mock\nvar mock = new Mock&lt;ConfigurationClient&gt;();\n// Setup client method\nmock.Setup(c =&gt; c.Get(\"Key\", It.IsAny&lt;string&gt;(), It.IsAny&lt;DateTimeOffset&gt;(), It.IsAny&lt;CancellationToken&gt;()))\n    .Returns(new Response&lt;ConfigurationSetting&gt;(mockResponse.Object, ConfigurationModelFactory.ConfigurationSetting(\"Key\", \"Value\")));\n\n// Use the client mock\nConfigurationClient client = mock.Object;\nConfigurationSetting setting = client.Get(\"Key\");\nAssert.AreEqual(\"Value\", setting.Value);\n\n```\n\nReview the full sample (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/appconfiguration/Azure.Data.AppConfiguration/samples/Sample7_MockClient.md) in the GitHub repository."
+    "text": "YOU SHOULD consider placing model types in a .Models namespace if number of model types is or might become large.\n\nSee model type guidelines for details.\n\nAll client libraries must support mocking to enable non-live testing of service clients by customers.\n\nHere is an example of how the ConfigurationClient can be mocked using [Moq] (a popular .NET mocking library):\n\n```csharp\n// Create a mock response\nvar mockResponse = new Mock&lt;Response&gt;();\n// Create a client mock\nvar mock = new Mock&lt;ConfigurationClient&gt;();\n// Setup client method\nmock.Setup(c =&gt; c.Get(\"Key\", It.IsAny&lt;string&gt;(), It.IsAny&lt;DateTimeOffset&gt;(), It.IsAny&lt;CancellationToken&gt;()))\n    .Returns(new Response&lt;ConfigurationSetting&gt;(mockResponse.Object, ConfigurationModelFactory.ConfigurationSetting(\"Key\", \"Value\")));\n\n// Use the client mock\nConfigurationClient client = mock.Object;\nConfigurationSetting setting = client.Get(\"Key\");\nAssert.AreEqual(\"Value\", setting.Value);\n\n```\n\nFor more details on mocking, see Unit testing and mocking with the Azure SDK for .NET (https://learn.microsoft.com/dotnet/azure/sdk/unit-testing-mocking) "
   },
   {
     "id": "dotnet_introduction.html#dotnet-mocking-constructor",
@@ -442,32 +447,17 @@
   {
     "id": "dotnet_introduction.html#dotnet-packaging-nuget",
     "category": "Packaging {#dotnet-packaging}",
-    "text": "DO package all components as NuGet packages.\n\nIf your client library is built by the Azure SDK engineering systems, all packaging requirements will be met automatically. Follow the .NET packaging guidelines (https://docs.microsoft.com/dotnet/standard/library-guidance/nuget) if you're self-publishing. For Microsoft owned packages we need to support both windows (for windows dump diagnostics) and portable (for x-platform debugging) pdb formats which means you need to publish them to the Microsoft symbol server and not the Nuget symbol server which only supports portable pdbs."
+    "text": "DO package all components as NuGet packages.\n\nIf your client library is built by the Azure SDK engineering systems, all packaging requirements will be met automatically. Follow the .NET packaging guidelines (https://learn.microsoft.com/dotnet/standard/library-guidance/nuget) if you're self-publishing. For Microsoft-owned packages, we need to support both Windows (for Windows dump diagnostics) and portable (for cross-platform debugging) pdb formats. This means you need to publish them to the Microsoft symbol server and not the NuGet symbol server which only supports portable pdbs."
   },
   {
     "id": "dotnet_introduction.html#dotnet-packaging-naming",
     "category": "Packaging {#dotnet-packaging}",
-    "text": "DO name the package based on the name of the main namespace of the component.\n\nFor example, if the component is in the Azure.Storage.Blobs namespace, the component DLL will be Azure.Storage.Blobs.dll and the NuGet package will b`Azure.Storage.Blobs```."
+    "text": "DO name the package based on the name of the main namespace of the component.\n\nFor example, if the component is in the Azure.Storage.Blobs namespace, the component DLL will be Azure.Storage.Blobs.dll and the NuGet package will be Azure.Storage.Blobs."
   },
   {
     "id": "dotnet_introduction.html#dotnet-packaging-granularity",
     "category": "Packaging {#dotnet-packaging}",
     "text": "YOU SHOULD place small related components that evolve together in a single NuGet package."
-  },
-  {
-    "id": "dotnet_introduction.html#dotnet-build-net-standard",
-    "category": "Packaging {#dotnet-packaging}",
-    "text": "DO build all libraries for [.NET Standard 2.0].\n\nUse the following target setting in the .csproj file:\n\n```xml\n&lt;TargetFramework&gt;netstandard2.0&lt;/TargetFramework&gt;\n\n```"
-  },
-  {
-    "id": "dotnet_introduction.html#dotnet-build-multi-targeting-api",
-    "category": "Packaging {#dotnet-packaging}",
-    "text": "DO define the same APIs for all [target framework monikers (TFMs)][.NET Target Framework Monikers].\n\nYou may multi-target client libraries to different [TFMs][.NET Target Framework Monikers] but the public API must be the same for all targets including class, interface, parameter, and return types.\n\nThere are occasions when common code needs to be shared between several client libraries. For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
-  },
-  {
-    "id": "dotnet_introduction.html#dotnet-commonlib-approval",
-    "category": "Common Libraries",
-    "text": "DO gain [Architecture Board] discuss how to design such common library."
   },
   {
     "id": "dotnet_introduction.html#dotnet-versioning-backwards-compatibility",
@@ -482,7 +472,7 @@
   {
     "id": "dotnet_introduction.html#dotnet-version-semver",
     "category": "Package Version Numbers {#dotnet-versionnumbers}",
-    "text": "DO use MAJOR.MINOR.PATCH format for the version of the library dll and the NuGet package.\n\nUse _-beta.N suffix for beta package versions. For example, 1.0.0-beta.2."
+    "text": "DO use MAJOR.MINOR.PATCH format for the version of the library .dll and the NuGet package.\n\nUse _-beta.N suffix for beta package versions. For example, 1.0.0-beta.2."
   },
   {
     "id": "dotnet_introduction.html#dotnet-version-change-on-release",
@@ -515,9 +505,29 @@
     "text": "YOU SHOULD increment the major version when making large feature changes."
   },
   {
-    "id": "dotnet_introduction.html#dotnet-version-change-on-release",
+    "id": "dotnet_introduction.html#dotnet-version-change-from-track-1",
     "category": "Package Version Numbers {#dotnet-versionnumbers}",
-    "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other scope or language."
+    "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other scope or language.\n\nAll Azure SDK libraries must include a target for [.NET Standard 2.0]. This ensures that they are compatible with all supported versions of .NET, covering both modern .NET and the .NET Framework.\n\nLibraries built by the Azure SDK engineering system will also target the oldest supported [long term support (LTS)] version of .NET. This enables them to take advantage of modern runtime features, allows applications to fully benefit from modern runtimes, and obviates the need for applications to download polyfill shim packages for functionality already built-into modern runtimes. It is strongly encouraged that self-published libraries also include this target framework.\n\nFor projects built by the Azure SDK engineering system, use the following target setting in the .csproj file:\n\n```xml\n&lt;TargetFrameworks&gt;$(RequiredTargetFrameworks)&lt;/TargetFrameworks&gt;\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-build-net-standard",
+    "category": "Target Frameworks",
+    "text": "DO build all libraries for [.NET Standard 2.0].\n\nIf not building with the Azure SDK engineering system, use the following target setting in the .csproj file:\n\n```xml\n&lt;TargetFrameworks&gt;netstandard2.0&lt;/TargetFrameworks&gt;\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-build-net-oldest-lts",
+    "category": "Target Frameworks",
+    "text": "YOU SHOULD build libraries for the oldest supported LTS version of .NET.\n\nFor example, if the oldest supported LTS version of .NET is 8.0, use the following target setting in the .csproj file if not building with the Azure SDK engineering system:\n\n```xml\n&lt;TargetFrameworks&gt;netstandard2.0;net8.0&lt;/TargetFrameworks&gt;\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-build-multi-targeting-api",
+    "category": "Target Frameworks",
+    "text": "DO define the same APIs for all [target framework monikers (TFMs)][.NET Target Framework Monikers].\n\nThe public API of client libraries must be the same for all targets including class, interface, parameter, and return types."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-specialtfm-approval",
+    "category": "Target Frameworks",
+    "text": "DO engage the [Architecture Board] if your client library has special needs for targeting additional frameworks or is unable to target the required set.\n\nWhen a new [long term support (LTS)] version of .NET is released and the previous version retired, Azure SDK libraries will add the new LTS target. Libraries will continue to target the previous LTS package for 6 months after it has reached end-of-life to minimize the impact to developers and allow time for migration. After that transition period, Azure SDK libraries will no longer target the retired LTS.\n\nAfter 6 months, the retired LTS will be removed from the target frameworks. Because the netstandard2.0 target will always be present, removal of the target should not break applications still using an unsupported runtime as they will fall back to the standard target. They will, however, gain a dependency on polyfill packages and lose performance improvements specific to modern runtimes. It is possible that the fallback will introduce an unintended break, but this risk is implicitly assumed by the application as they have chosen to rely on a runtime no longer supported by Microsoft."
   },
   {
     "id": "dotnet_introduction.html#dotnet-dependencies-minimize",
@@ -527,17 +537,42 @@
   {
     "id": "dotnet_introduction.html#dotnet-dependencies-list",
     "category": "Dependencies {#dotnet-dependencies}",
-    "text": "DO NOT depend on any NuGet package except the following packages:\nAzure.* packages from the [azure/azure-sdk-for-net] repository.\nSystem.Text.Json.\nMicrosoft.BCL.AsyncInterfaces.\npackages produced by your own team.\n\nIn the past, JSON.NET (https://www.newtonsoft.com/json)  aka Newtonsoft.Json, was commonly used for serialization and deserialization. Use the System.Text.Json (https://www.nuget.org/packages/System.Text.Json/) package that is now a part of the .NET platform instead."
+    "text": "DO NOT depend on any NuGet package except the following:\nAzure.* packages from the [azure/azure-sdk-for-net] repository.\nSystem.* packages published by the Microsoft .NET team.\nMicrosoft.* packages approved by the [Architecture Board].\nThird-party packages explicitly approved by the [Architecture Board] for specific scenarios with special needs.\nPackages produced by your own team.\n\nIn the past, JSON.NET (https://www.newtonsoft.com/json)  aka Newtonsoft.Json, was commonly used for serialization and deserialization. Use the System.Text.Json (https://www.nuget.org/packages/System.Text.Json/) package that is now a part of the .NET platform instead. If you are using Azure.Core, there is no need for a direct reference to the System.Text.Json package. Your client library will have access to it automatically."
   },
   {
     "id": "dotnet_introduction.html#dotnet-dependencies-exposing",
     "category": "Dependencies {#dotnet-dependencies}",
-    "text": "DO NOT publicly expose types from dependencies unless the types follow these guidelines as well.\n\nNative dependencies introduce lots of complexities to .NET libraries and so they should be avoided."
+    "text": "DO NOT publicly expose types from dependencies unless the types follow these guidelines as well.\n\nFor libraries using the Azure SDK for .NET repository, dependency versions are managed centrally (https://github.com/Azure/azure-sdk-for-net/blob/main/eng/Packages.Data.props) and will automatically be applied to your library as part of the Azure SDK engineering system builds."
   },
   {
-    "id": "dotnet_introduction.html#dotnet-problems-too-many-types",
+    "id": "dotnet_introduction.html#dotnet-runtime-package-versions",
+    "category": "Package Dependency Versions",
+    "text": "DO align versions of Microsoft [.NET runtime libraries] with the oldest supported [long term support (LTS)] version of .NET. For example, if the oldest supported LTS version of .NET is 8.0, references to runtime libraries such as System.Text.Json should target the minor and patch version with a major version of 8."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-dependency-supported-versions",
+    "category": "Package Dependency Versions",
+    "text": "DO ensure all dependencies reference a version supported by the publisher that is not marked as deprecated or flagged by NuGet for vulnerabilities."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-dependency-compatibile-versions",
+    "category": "Package Dependency Versions",
+    "text": "DO consider all platforms that your library will run on and ensure dependencies/versions are compatible. For example, the Azure Functions host and Azure PowerShell have explicit version requirements for dependencies shared between the host and applications.  (see: Packages.Data.props (https://github.com/Azure/azure-sdk-for-net/blob/main/eng/Packages.Data.props#L57-L83) for more information.)\n\nThere are occasions when common code needs to be shared between several client libraries. For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-commonlib-approval",
+    "category": "Common Libraries",
+    "text": "DO engage the [Architecture Board] to discuss how to design such common library.\n\nTo ensure consistency across runtimes, the Microsoft .NET team publishes polyfill packages on NuGet for some features built into modern .NET runtimes. On runtimes where these features are missing, such as .NET Framework, the polyfill packages provide them. On runtimes where the features are natively available, the polyfill packages pass through the calls and do nothing."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-trim-polyfills",
+    "category": ".NET Runtime Polyfill Packages",
+    "text": "YOU SHOULD reference the .NET runtime polyfill packages only for netstandard2.0 and legacy target frameworks. For libraries using the Azure SDK for .NET repository, these dependencies are automatically trimmed from your library for modern target frameworks as part of the Azure SDK engineering system builds.\n\nSome commonly used examples of .NET runtime polyfill packages are:\nMicrosoft.Bcl.AsyncInterfaces\nSystem.Buffers\nSystem.Diagnostics.DiagnosticSource\nSystem.Net.Http\nSystem.Numerics.Vectors\nSystem.Text.Encodings.Web\nSystem.Text.Json\nSystem.Threading.Channels\nSystem.Threading.Tasks.Extensions\n\nNative dependencies introduce lots of complexities to .NET libraries and so they should be avoided."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-native-dependencies",
     "category": "Native Code",
-    "text": "YOU SHOULD NOT native dependencies."
+    "text": "YOU SHOULD NOT have native dependencies."
   },
   {
     "id": "dotnet_introduction.html#dotnet-docs-document-everything",
@@ -547,7 +582,7 @@
   {
     "id": "dotnet_introduction.html#dotnet-docs-docstrings",
     "category": "Documentation Comments {#dotnet-documentation}",
-    "text": "DO use C# documentation comments (https://docs.microsoft.com/dotnet/csharp/language-reference/language-specification/documentation-comments) for reference documentation.\n\nSee the [documentation guidelines]({{ site.baseurl }}/general_documentation.html) for language-independent guidelines for how to provide good documentation."
+    "text": "DO use C# documentation comments (https://learn.microsoft.com/dotnet/csharp/language-reference/language-specification/documentation-comments) for reference documentation.\n\nSee the [documentation guidelines]({{ site.baseurl }}/general_documentation.html) for language-independent guidelines for how to provide good documentation."
   },
   {
     "id": "dotnet_introduction.html#dotnet-general-repository",
@@ -607,7 +642,17 @@
   {
     "id": "dotnet_introduction.html#dotnet-samples-build",
     "category": "Samples {#dotnet-samples}",
-    "text": "DO make sure all the samples build and run as part of the CI process.\n\nTODO: Update guidance on samples to reflect what we do in most places.\n\nSome .NET Framework Design Guidelines (https://aka.ms/fxdg3) have been notoriously overlooked in earlier Azure SDKs. This section serves as a way to highlight these guidelines."
+    "text": "DO make sure all the samples build and run as part of the CI process."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-empty-release",
+    "category": "Package Publishing",
+    "text": "YOU SHOULD NOT publish new package releases just to keep to a regular cadence. Generally, it is recommended that packages only be published when bugs are fixed or new features are added."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-dependency-release",
+    "category": "Package Publishing",
+    "text": "YOU SHOULD publish dependency-only releases when no active work is taking place on the library, but a dependency addressed a vulnerability or the .NET runtime package dependencies have been updated to a new major version.\n\nSome .NET Framework Design Guidelines (https://aka.ms/fxdg3) have been notoriously overlooked in earlier Azure SDKs. This section serves as a way to highlight these guidelines."
   },
   {
     "id": "dotnet_introduction.html#dotnet-problems-too-many-types",
@@ -637,6 +682,6 @@
   {
     "id": "dotnet_introduction.html#dotnet-problems-empty-types",
     "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
-    "text": "DO NOT have empty types (types with no members).\n\n[.NET Framework Design Guidelines]: https://docs.microsoft.com/dotnet/standard/design-guidelines/\n[.NET Framework Constructor Design]: https://docs.microsoft.com/dotnet/standard/design-guidelines/constructor\n[Azure Application Configuration service]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration\n[Azure.Core]: https://www.nuget.org/packages/Azure.Core/\n[Moq]: https://github.com/moq/moq4\n[adparch]: https://github.com/azure/azure-sdk/issues\n[.NET Standard 2.0]: https://docs.microsoft.com/dotnet/standard/net-standard\n[azure/azure-sdk-for-net]: https://github.com/azure/azure-sdk-for-net\n[.NET Target Framework Monikers]: https://learn.microsoft.com/dotnet/standard/frameworks"
+    "text": "DO NOT have empty types (types with no members).\n\n[.NET Framework Design Guidelines]: https://learn.microsoft.com/dotnet/standard/design-guidelines/\n[.NET Framework Constructor Design]: https://learn.microsoft.com/dotnet/standard/design-guidelines/constructor\n[Azure Application Configuration service]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration\n[Azure.Core]: https://www.nuget.org/packages/Azure.Core/\n[Moq]: https://github.com/moq/moq4\n[adparch]: https://github.com/azure/azure-sdk/issues\n[.NET Standard 2.0]: https://learn.microsoft.com/dotnet/standard/net-standard\n[azure/azure-sdk-for-net]: https://github.com/azure/azure-sdk-for-net\n[.NET Target Framework Monikers]: https://learn.microsoft.com/dotnet/standard/frameworks\n[long term support (LTS)]: https://dotnet.microsoft.com/platform/support/policy/dotnet-core#release-types\n[.NET runtime libraries]: https://learn.microsoft.com/dotnet/standard/runtime-libraries-overview"
   }
 ]

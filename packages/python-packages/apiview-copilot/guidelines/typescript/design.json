@@ -17,12 +17,12 @@
   {
     "id": "typescript_design.html#ts-support-ts",
     "category": "Platform Support {#ts-platform-support}",
-    "text": "DO compile without errors on all versions of TypeScript greater than 3.1.\n\nWhile consumers are fast at adopting new versions of TypeScript, version 3.1 is used by Angular 7, which is still commonly used.  Supporting older versions of TypeScript can be a challenge. There are two general approaches:\nDon't use new features.\nUse typesVersions (https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-1.html#version-selection-with-typesversions)  which might require manual effort to produce typings compatible with older versions based on the new typings."
+    "text": "DO compile without errors on all versions of TypeScript that are less than 2 years old. This aligns with the support window of Definitely Typed (https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master#support-window)  a popular repository of type definitions."
   },
   {
     "id": "typescript_design.html#ts-register-dropped-platforms",
     "category": "Platform Support {#ts-platform-support}",
-    "text": "DO get approval from the [Architecture Board] to drop support for any platform (except IE11 and Node 6) even if support isn't required."
+    "text": "DO get approval from the [Architecture Board] to drop support for any platform (except IE11) even if support isn't required."
   },
   {
     "id": "typescript_design.html#ts-azure-scope",
@@ -102,7 +102,7 @@
   {
     "id": "typescript_design.html#ts-naming-options",
     "category": "Options {#ts-options}",
-    "text": "DO name the type of the options bag as <class name>Options and <method name>Options for constructors and methods respectively."
+    "text": "DO name the type of the options bag as <class name>Options and <method name>Options for constructors and methods respectively. The only exception is when a method does not have any operation-specific options, in which case, the type OperationOptions from Azure Core can be used."
   },
   {
     "id": "typescript_design.html#ts-options-abortSignal",
@@ -327,32 +327,22 @@
   {
     "id": "typescript_design.html#ts-pagination-provide-list",
     "category": "Pagination {#ts-pagination}",
-    "text": "DO provide a list method that returns a PagedAsyncIterableIterator from the module @azure/core-paging."
-  },
-  {
-    "id": "typescript_design.html#ts-pagination-provide-bypage-settings",
-    "category": "Pagination {#ts-pagination}",
-    "text": "DO provide page-related settings to the byPage() iterator and not the per-item iterator."
+    "text": "DO provide a list method that returns a PagedAsyncIterableIterator."
   },
   {
     "id": "typescript_design.html#ts-pagination-take-continuationToken",
     "category": "Pagination {#ts-pagination}",
-    "text": "DO take a continuationToken option in the byPage() method. You must rename other parameters that perform a similar function (for example, nextMarker).  If your page type has a continuation token, it must be named continuationToken."
-  },
-  {
-    "id": "typescript_design.html#ts-pagination-take-maxpagesize",
-    "category": "Pagination {#ts-pagination}",
-    "text": "DO take a maxPageSize option in the byPage() method.\n\nAn example of a paginating client:\n\n\n```javascript\n// usage\nconst client = new ServiceClient()\nfor await (const item of client.listItems()) {\n    console.log(item);\n}\n\nfor await (const page of client.listItems().byPage({ maxPageSize: 50 })) {\n    console.log(page);\n}\n\n// implementation\ninterface Item {\n    name: string;\n}\n\ninterface Page {\n    continuationToken: string;\n    items: Item[];\n}\n\nclass ServiceClient {\n    /* ... */\n    listItems(): PagedAsyncIterableIterator&lt;Item, Page&gt; {\n        async function* pages () { /* ... */ }\n        async function* items () {\n            for (const page of pages()) {\n                for (const item of page.items) {\n                    yield item;\n                }\n            }\n        }\n\n        const itemIter = items();\n\n        return {\n            next() {\n                return itemIter.next();\n                /* ... */\n            },\n            byPage() {\n                return pages();\n            },\n            [Symbol.asyncIterator]() { return this }\n        }\n    }\n}\n\n```"
-  },
-  {
-    "id": "typescript_design.html#general-pagination-paginate-lists",
-    "category": "Pagination {#ts-pagination}",
-    "text": "DO expose non-paginated list endpoints identically to paginated list endpoints. Users shouldn't need to appreciate the difference."
+    "text": "DO take a continuationToken option in the byPage() method. You must rename other parameters that perform a similar function (for example, nextMarker).  If your page type has a continuation token, it must be named continuationToken.\n\nAn example of a paginating client:\n\n\n```javascript\n// usage\nconst client = new ServiceClient()\nfor await (const item of client.listItems()) {\n    console.log(item);\n}\n\n// usage of continuationToken with byPage\nconst previousPage = await client.listItems().byPage().next();\nconst continuationToken = previousPage.value.continuationToken\nfor await (const page of client.listItems().byPage({ continuationToken })) {\n    console.log(page);\n}\n\n// interface \ninterface Item {\n    name: string;\n}\n\ntype ContinuablePage&lt;TElement, TPage = TElement[]&gt; = TPage &amp; {\n  /**\n   * A token that identifies a certain page.\n   */\n  continuationToken?: string;\n};\n/**\n * An iterator that enables iteration over both items and pages of items.\n */\ninterface PagedAsyncIterableIterator&lt;\n  TElement,\n  TPage = TElement[],\n  TPageSettings extends PageSettings = PageSettings,\n&gt; {\n  /**\n   * The next method, part of the iteration protocol\n   */\n  next(): Promise&lt;IteratorResult&lt;TElement&gt;&gt;;\n  /**\n   * The connection to the async iterator, part of the iteration protocol\n   */\n  [Symbol.asyncIterator](): PagedAsyncIterableIterator&lt;TElement, TPage, TPageSettings&gt;;\n  /**\n   * Return an iterator over pages of items.\n   */\n  byPage: (settings?: TPageSettings) =&gt; AsyncIterableIterator&lt;ContinuablePage&lt;TElement, TPage&gt;&gt;;\n}\n\n```"
   },
   {
     "id": "typescript_design.html#general-pagination-distinct-types",
     "category": "Pagination {#ts-pagination}",
     "text": "DO use different types for entities returned from a list endpoint and a get endpoint if the returned entities have a different shape.  If both entities are the same form, use the same type.\n\n**NOTE:** Services should return the same shape for entities from a list endpoint vs. a get endpoint unless there's a good reason for the difference.  Using the same type for both operations will make the API surface in the client library simpler."
+  },
+  {
+    "id": "typescript_design.html#ts-pagination-provide-bypage-settings",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO NOT provide page-related settings other than the continuationToken to the byPage() method."
   },
   {
     "id": "typescript_design.html#general-pagination-no-item-iterators",
@@ -427,7 +417,7 @@
   {
     "id": "typescript_design.html#ts-core-types-must",
     "category": "Using Azure Core {#ts-core-types}",
-    "text": "DO make use of packages in Azure Core to provide behavior consistent across all Azure SDK libraries. This includes, but is not limited to:\ncore-http for http client, pipeline and related functionality\nlogger for logging\ncore-tracing for distributed tracing\ncore-auth for common auth interfaces\ncore-lro for long running operations\n\nSee the Azure Core readme (https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/core) for more details.\n\nTODO: Please add a section on extensible enums, if this is relevant to JS/TS.\n\nMost Azure services expose a RESTful API over HTTPS.  However, a few services use other protocols, such as AMQP (https://www.amqp.org/)  MQTT (http://mqtt.org/)  or WebRTC (https://webrtc.org/)  In these cases, the operation of the protocol can be split into two phases:\nPer-connection (surrounding when the connection is initiated and terminated)\nPer-operation (surrounding when an operation is sent through the open connection)\n\nThe policies that are added to a HTTP request/response (authentication, unique request ID, telemetry, distributed tracing, and logging) are still valid on both a per-connection and per-operation basis.  However, the methods by which these policies are implemented are protocol dependent."
+    "text": "DO make use of packages in Azure Core to provide behavior consistent across all Azure SDK libraries. This includes, but is not limited to:\ncore-http for http client, pipeline and related functionality\nlogger for logging\ncore-tracing for distributed tracing\ncore-auth for common auth interfaces\ncore-lro for long running operations\n\nSee the Azure Core readme (https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/core) for more details.\n\nTODO: Please add a section on extensible enums, if this is relevant to JS/TS.\n\nMost Azure services expose a RESTful API over HTTPS.  However, a few services use other protocols, such as AMQP (https://www.amqp.org/)  MQTT (https://mqtt.org/)  or WebRTC (https://webrtc.org/)  In these cases, the operation of the protocol can be split into two phases:\nPer-connection (surrounding when the connection is initiated and terminated)\nPer-operation (surrounding when an operation is sent through the open connection)\n\nThe policies that are added to a HTTP request/response (authentication, unique request ID, telemetry, distributed tracing, and logging) are still valid on both a per-connection and per-operation basis.  However, the methods by which these policies are implemented are protocol dependent."
   },
   {
     "id": "typescript_design.html#general-other-protocols-pipeline-policies",

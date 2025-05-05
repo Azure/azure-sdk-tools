@@ -1,3 +1,7 @@
+# 2.0.6
+
+- support `@deprecated` tag
+
 # 2.0.5
 
 - skip diff for @azure\* and tslib dependencies

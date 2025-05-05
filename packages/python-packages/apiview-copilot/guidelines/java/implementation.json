@@ -97,6 +97,6 @@
   {
     "id": "java_implementation.html#java-testing-params",
     "category": "Testing",
-    "text": "DO parameterize all applicable unit tests to make use of all available HTTP clients and service versions. Parameterized runs of all tests must occur as part of live tests. Shorter runs, consisting of just Netty and the latest service version, can be run whenever PR validation occurs.\n\nTODO refer to cases where this is done in Java today\n\n<!-- Project Links -->\n<!-- Example Links -->\n<!-- Intra-document references -->\n"
+    "text": "DO parameterize all applicable unit tests to make use of all available HTTP clients and service versions. Parameterized runs of all tests must occur as part of live tests. Shorter runs, consisting of just Netty and the latest service version, can be run whenever PR validation occurs.\n\nTODO refer to cases where this is done in Java today\n\n<!-- Project Links -->\n<!-- https://projectreactor.io/docs/core/release/reference/#context direct link is 404'ing currently -->\n<!-- Example Links -->\n<!-- Intra-document references -->\n"
   }
 ]

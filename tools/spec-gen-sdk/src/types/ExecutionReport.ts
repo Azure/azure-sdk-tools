@@ -10,11 +10,13 @@ export type ExecutionReport = {
   fullLogPath: string;
   filteredLogPath?: string;
   vsoLogPath?: string;
+  stagedArtifactsFolder?: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
 };
 
 export type PackageReport = {
+  serviceName?: string;
   packageName?: string;
   result: SDKAutomationState;
   artifactPaths?: string[];

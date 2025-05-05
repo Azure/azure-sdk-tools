@@ -1,0 +1,1277 @@
+Dependencies: 
+Azure.Core-1.44.1 
+Azure.Identity-1.13.1 
+Azure.Storage.Blobs-12.23.0 
+System.ClientModel-1.4.0-beta.1 
+System.Text.Json-6.0.11 
+
+namespace Azure.AI.Projects { 
+	public class AgentsClient { 
+		protected AgentsClient(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response<Agent> CreateAgent(string displayName, string modelId, string instructions, CancellationToken cancellationToken = default); 
+		public virtual Response<Agent> CreateAgent(AgentCreationOptions options, CancellationToken cancellationToken = default); 
+		public virtual Response CreateAgent(RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Agent>> CreateAgentAsync(string displayName, string modelId, string instructions, CancellationToken cancellationToken = default); 
+		public virtual Task<Response<Agent>> CreateAgentAsync(AgentCreationOptions options, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateAgentAsync(RequestContent content, RequestContext context = null); 
+		public virtual Response DeleteAgent(string agentId, RequestContext context = null); 
+		public virtual Task<Response> DeleteAgentAsync(string agentId, RequestContext context = null); 
+		public virtual Response<Agent> GetAgent(string agentId, CancellationToken cancellationToken = default); 
+		public virtual Response GetAgent(string agentId, RequestContext context); 
+		public virtual Task<Response<Agent>> GetAgentAsync(string agentId, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetAgentAsync(string agentId, RequestContext context); 
+		public virtual Response<IReadOnlyList<Agent>> GetAgents(CancellationToken cancellationToken = default); 
+		public virtual Response GetAgents(RequestContext context); 
+		public virtual Task<Response<IReadOnlyList<Agent>>> GetAgentsAsync(CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetAgentsAsync(RequestContext context); 
+		public virtual Response<Run> GetRun(string runId, CancellationToken cancellationToken = default); 
+		public virtual Response GetRun(string runId, RequestContext context); 
+		public virtual Task<Response<Run>> GetRunAsync(string runId, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetRunAsync(string runId, RequestContext context); 
+		public virtual Pageable<Run> GetRuns(CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetRuns(RequestContext context); 
+		public virtual AsyncPageable<Run> GetRunsAsync(CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetRunsAsync(RequestContext context); 
+		public virtual Response<Run> Run(string modelId, string instructions, string message, CancellationToken cancellationToken = default); 
+		public virtual Response<Run> Run(string agentId, string message, CancellationToken cancellationToken = default); 
+		public virtual Response<Run> Run(AgentConfigurationOptions options, RunInputs inputs, CancellationToken cancellationToken = default); 
+		public virtual Response Run(RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Run>> RunAsync(string modelId, string instructions, string message, CancellationToken cancellationToken = default); 
+		public virtual Task<Response<Run>> RunAsync(string agentId, string message, CancellationToken cancellationToken = default); 
+		public virtual Task<Response<Run>> RunAsync(AgentConfigurationOptions options, RunInputs inputs, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> RunAsync(RequestContent content, RequestContext context = null); 
+		public virtual Response Stream(AgentConfigurationOptions options, RunInputs inputs, CancellationToken cancellationToken = default); 
+		public virtual Response Stream(RequestContent content, RequestContext context = null); 
+		public virtual Task<Response> StreamAsync(AgentConfigurationOptions options, RunInputs inputs, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> StreamAsync(RequestContent content, RequestContext context = null); 
+		public virtual Response<Agent> UpdateAgent(string agentId, Agent body, CancellationToken cancellationToken = default); 
+		public virtual Response UpdateAgent(string agentId, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Agent>> UpdateAgentAsync(string agentId, Agent body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> UpdateAgentAsync(string agentId, RequestContent content, RequestContext context = null); 
+	} 
+	
+} 
+
+namespace Azure.AI.Projects.OneDP { 
+	public class AadCredential : BaseCredential, IJsonModel<AadCredential>, IPersistableModel<AadCredential> { 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AadCredential IJsonModel<AadCredential>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AadCredential>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AadCredential IPersistableModel<AadCredential>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AadCredential>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AadCredential>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Agent : IJsonModel<Agent>, IPersistableModel<Agent> { 
+		public Agent(AgentCreationOptions creationOptions); 
+		public string AgentId { get; }
+		public AgentCreationOptions CreationOptions { get; set; }
+		public string Description { get; set; }
+		public IDictionary<string, string> Metadata { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Agent IJsonModel<Agent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Agent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Agent IPersistableModel<Agent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Agent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Agent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AgentConfigurationOptions : IJsonModel<AgentConfigurationOptions>, IPersistableModel<AgentConfigurationOptions> { 
+		public AgentConfigurationOptions(); 
+		public AgentModel AgentModel { get; set; }
+		public string Instructions { get; set; }
+		public ToolChoiceBehavior ToolChoice { get; set; }
+		public IList<AgentToolDefinition> Tools { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentConfigurationOptions IJsonModel<AgentConfigurationOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentConfigurationOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentConfigurationOptions IPersistableModel<AgentConfigurationOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentConfigurationOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentConfigurationOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AgentCreationOptions : IJsonModel<AgentCreationOptions>, IPersistableModel<AgentCreationOptions> { 
+		public AgentCreationOptions(string displayName, AgentConfigurationOptions configurationOptions); 
+		public AgentConfigurationOptions ConfigurationOptions { get; set; }
+		public string DisplayName { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentCreationOptions IJsonModel<AgentCreationOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentCreationOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentCreationOptions IPersistableModel<AgentCreationOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentCreationOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentCreationOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AgentMessage : ChatMessage, IJsonModel<AgentMessage>, IPersistableModel<AgentMessage> { 
+		public AgentMessage(IEnumerable<AIContent> content); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentMessage IJsonModel<AgentMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentMessage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentMessage IPersistableModel<AgentMessage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentMessage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentMessage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownAgentModel))] 
+	public abstract class AgentModel : IJsonModel<AgentModel>, IPersistableModel<AgentModel> { 
+		protected AgentModel(string id); 
+		public string Endpoint { get; set; }
+		public string Id { get; set; }
+		public JSONAny Options { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentModel IJsonModel<AgentModel>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentModel>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentModel IPersistableModel<AgentModel>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentModel>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentModel>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownAgentToolDefinition))] 
+	public abstract class AgentToolDefinition : IJsonModel<AgentToolDefinition>, IPersistableModel<AgentToolDefinition> { 
+		protected AgentToolDefinition(); 
+		public AgentToolOptions Options { get; set; }
+		public AgentToolDefinitionOverride Override { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentToolDefinition IJsonModel<AgentToolDefinition>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentToolDefinition>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentToolDefinition IPersistableModel<AgentToolDefinition>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentToolDefinition>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentToolDefinition>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AgentToolDefinitionOverride : IJsonModel<AgentToolDefinitionOverride>, IPersistableModel<AgentToolDefinitionOverride> { 
+		public AgentToolDefinitionOverride(); 
+		public string Description { get; set; }
+		public string Name { get; set; }
+		public JSONSchema Parameters { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentToolDefinitionOverride IJsonModel<AgentToolDefinitionOverride>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentToolDefinitionOverride>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentToolDefinitionOverride IPersistableModel<AgentToolDefinitionOverride>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentToolDefinitionOverride>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentToolDefinitionOverride>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownAgentToolOptions))] 
+	public abstract class AgentToolOptions : IJsonModel<AgentToolOptions>, IPersistableModel<AgentToolOptions> { 
+		protected AgentToolOptions(); 
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentToolOptions IJsonModel<AgentToolOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AgentToolOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AgentToolOptions IPersistableModel<AgentToolOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AgentToolOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AgentToolOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownAIContent))] 
+	public abstract class AIContent : IJsonModel<AIContent>, IPersistableModel<AIContent> { 
+		protected AIContent(); 
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AIContent IJsonModel<AIContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AIContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AIContent IPersistableModel<AIContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AIContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AIContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AIProjectClient { 
+		public AIProjectClient(Uri endpoint, AzureKeyCredential credential); 
+		public AIProjectClient(Uri endpoint, TokenCredential credential); 
+		public AIProjectClient(Uri endpoint, AzureKeyCredential credential, AIProjectClientOptions options); 
+		public AIProjectClient(Uri endpoint, TokenCredential credential, AIProjectClientOptions options); 
+		protected AIProjectClient(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual AgentsClient GetAgentsClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual Connections GetConnectionsClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual Datasets GetDatasetsClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual Deployments GetDeploymentsClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual Evaluations GetEvaluationsClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual Indexes GetIndexesClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual Messages GetMessagesClient(string apiVersion = "2025-05-01-preview"); 
+		public virtual ServicePatterns GetServicePatternsClient(); 
+		public virtual Threads GetThreadsClient(string apiVersion = "2025-05-01-preview"); 
+	} 
+	
+	public class AIProjectClientOptions : ClientOptions { 
+		public enum ServiceVersion { 
+			V2025_05_01_Preview = 1, 
+		} 
+		
+		public AIProjectClientOptions(ServiceVersion version = V2025_05_01_Preview); 
+	} 
+	
+	public static class AIProjectsOneDPModelFactory { 
+		public static Agent Agent(string agentId = null, string description = null, IDictionary<string, string> metadata = null, AgentCreationOptions creationOptions = null); 
+		public static AgentMessage AgentMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null); 
+		public static ApiKeyCredential ApiKeyCredential(string apiKey = null); 
+		public static AzureAISearchIndex AzureAISearchIndex(string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null, string connectionName = null, string indexName = null); 
+		public static BlobReferenceForConsumption BlobReferenceForConsumption(string blobUri = null, string storageAccountArmId = null, SasCredential credential = null); 
+		public static ChatMessage ChatMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, string role = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null); 
+		public static CompletionUsage CompletionUsage(long outputTokens = 0, long inputTokens = 0, long totalTokens = 0, CompletionUsageInputTokenDetails inputTokenDetails = null, CompletionUsageOutputTokenDetails outputTokenDetails = null); 
+		public static CompletionUsageInputTokenDetails CompletionUsageInputTokenDetails(int? cachedTokens = null); 
+		public static CompletionUsageOutputTokenDetails CompletionUsageOutputTokenDetails(int? reasoningTokens = null); 
+		public static Connection Connection(string name = null, ConnectionType type = default, string target = null, IReadOnlyDictionary<string, string> metadata = null); 
+		public static CosmosDBIndex CosmosDBIndex(string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null, string connectionName = null, string databaseName = null, string containerName = null, EmbeddingConfiguration embeddingConfiguration = null); 
+		public static DatasetVersion DatasetVersion(string datasetUri = null, string type = null, bool? isReference = null, string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null); 
+		public static Deployment Deployment(string type = null, string name = null); 
+		public static DeveloperMessage DeveloperMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null); 
+		public static Evaluation Evaluation(string id = null, InputData data = null, string displayName = null, string description = null, string status = null, IDictionary<string, string> tags = null, IDictionary<string, string> properties = null, IDictionary<string, EvaluatorConfiguration> evaluators = null); 
+		public static FileDatasetVersion FileDatasetVersion(string datasetUri = null, bool? isReference = null, string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null, string openAIPurpose = null); 
+		public static FolderDatasetVersion FolderDatasetVersion(string datasetUri = null, bool? isReference = null, string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null); 
+		public static Index Index(string type = null, string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null); 
+		public static ManagedAzureAISearchIndex ManagedAzureAISearchIndex(string stage = null, string id = null, string name = null, string version = null, string description = null, IDictionary<string, string> tags = null, string vectorStoreId = null); 
+		public static ModelDeployment ModelDeployment(string name = null, string modelName = null, string modelVersion = null, string modelPublisher = null, IReadOnlyDictionary<string, string> capabilities = null, Sku sku = null, string connectionName = null); 
+		public static PendingUploadRequest PendingUploadRequest(string pendingUploadId = null, string connectionName = null, PendingUploadType pendingUploadType = default); 
+		public static PendingUploadResponse PendingUploadResponse(BlobReferenceForConsumption blobReferenceForConsumption = null, string pendingUploadId = null, string datasetVersion = null, PendingUploadType pendingUploadType = default); 
+		public static Run Run(string runId = null, long createdAt = 0, long completedAt = 0, RunInputs runInputs = null, RunOutputs runOutputs = null, string userId = null, bool? store = null); 
+		public static RunOutputs RunOutputs(RunOutputsStatus status = default, IEnumerable<ChatMessage> messages = null, CompletionUsage usage = null, RunOutputsIncompleteDetails incompleteDetails = null); 
+		public static RunOutputsIncompleteDetails RunOutputsIncompleteDetails(string reason = null); 
+		public static SasCredential SasCredential(string sasToken = null); 
+		public static Sku Sku(long capacity = 0, string family = null, string name = null, string size = null, string tier = null); 
+		public static SystemMessage SystemMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null); 
+		public static Thread Thread(string threadId = null, IEnumerable<ChatMessage> messages = null); 
+		public static ToolMessage ToolMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null); 
+		public static UserMessage UserMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null); 
+	} 
+	
+	public class Annotations : IJsonModel<Annotations>, IPersistableModel<Annotations> { 
+		public Annotations(string type); 
+		public int? End { get; set; }
+		public string JsonPath { get; set; }
+		public int? Start { get; set; }
+		public string ToolCallId { get; set; }
+		public string Type { get; set; }
+		public string Url { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Annotations IJsonModel<Annotations>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Annotations>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Annotations IPersistableModel<Annotations>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Annotations>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Annotations>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class ApiKeyCredential : BaseCredential, IJsonModel<ApiKeyCredential>, IPersistableModel<ApiKeyCredential> { 
+		public string ApiKey { get; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ApiKeyCredential IJsonModel<ApiKeyCredential>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ApiKeyCredential>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ApiKeyCredential IPersistableModel<ApiKeyCredential>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ApiKeyCredential>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ApiKeyCredential>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AudioContent : AIContent, IJsonModel<AudioContent>, IPersistableModel<AudioContent> { 
+		public AudioContent(); 
+		public BinaryData Data { get; set; }
+		public Uri DataUri { get; set; }
+		public object Duration { get; set; }
+		public string FileName { get; set; }
+		public string MimeType { get; set; }
+		public Uri Uri { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AudioContent IJsonModel<AudioContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AudioContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AudioContent IPersistableModel<AudioContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AudioContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AudioContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AutoToolChoiceBehavior : ToolChoiceBehavior, IJsonModel<AutoToolChoiceBehavior>, IPersistableModel<AutoToolChoiceBehavior> { 
+		public AutoToolChoiceBehavior(IEnumerable<string> toolNames); 
+		public IList<string> ToolNames { get; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AutoToolChoiceBehavior IJsonModel<AutoToolChoiceBehavior>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AutoToolChoiceBehavior>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AutoToolChoiceBehavior IPersistableModel<AutoToolChoiceBehavior>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AutoToolChoiceBehavior>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AutoToolChoiceBehavior>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AzureAgentModel : AgentModel, IJsonModel<AzureAgentModel>, IPersistableModel<AzureAgentModel> { 
+		public AzureAgentModel(string id); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AzureAgentModel IJsonModel<AzureAgentModel>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AzureAgentModel>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AzureAgentModel IPersistableModel<AzureAgentModel>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AzureAgentModel>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AzureAgentModel>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class AzureAISearchIndex : Index, IJsonModel<AzureAISearchIndex>, IPersistableModel<AzureAISearchIndex> { 
+		public AzureAISearchIndex(string connectionName, string indexName); 
+		public string ConnectionName { get; set; }
+		public string IndexName { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AzureAISearchIndex IJsonModel<AzureAISearchIndex>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<AzureAISearchIndex>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		AzureAISearchIndex IPersistableModel<AzureAISearchIndex>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<AzureAISearchIndex>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<AzureAISearchIndex>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownBaseCredential))] 
+	public abstract class BaseCredential : IJsonModel<BaseCredential>, IPersistableModel<BaseCredential> { 
+		protected BaseCredential(); 
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		BaseCredential IJsonModel<BaseCredential>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<BaseCredential>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		BaseCredential IPersistableModel<BaseCredential>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<BaseCredential>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<BaseCredential>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class BingGroundingToolDefinition : AgentToolDefinition, IJsonModel<BingGroundingToolDefinition>, IPersistableModel<BingGroundingToolDefinition> { 
+		public BingGroundingToolDefinition(string connectionName); 
+		public string ConnectionName { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		BingGroundingToolDefinition IJsonModel<BingGroundingToolDefinition>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<BingGroundingToolDefinition>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		BingGroundingToolDefinition IPersistableModel<BingGroundingToolDefinition>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<BingGroundingToolDefinition>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<BingGroundingToolDefinition>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class BlobReferenceForConsumption : IJsonModel<BlobReferenceForConsumption>, IPersistableModel<BlobReferenceForConsumption> { 
+		public string BlobUri { get; }
+		public SasCredential Credential { get; }
+		public string StorageAccountArmId { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		BlobReferenceForConsumption IJsonModel<BlobReferenceForConsumption>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<BlobReferenceForConsumption>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		BlobReferenceForConsumption IPersistableModel<BlobReferenceForConsumption>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<BlobReferenceForConsumption>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<BlobReferenceForConsumption>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownChatMessage))] 
+	public abstract class ChatMessage : IJsonModel<ChatMessage>, IPersistableModel<ChatMessage> { 
+		protected ChatMessage(IEnumerable<AIContent> content); 
+		public string AgentId { get; set; }
+		public string AgentRunId { get; set; }
+		public string AuthorName { get; set; }
+		public long? CompletedAt { get; set; }
+		public IList<AIContent> Content { get; }
+		public long? CreatedAt { get; set; }
+		public string MessageId { get; }
+		public string ThreadId { get; }
+		public string UserId { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ChatMessage IJsonModel<ChatMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ChatMessage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ChatMessage IPersistableModel<ChatMessage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ChatMessage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ChatMessage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class CodeInterpreterToolDefinition : AgentToolDefinition, IJsonModel<CodeInterpreterToolDefinition>, IPersistableModel<CodeInterpreterToolDefinition> { 
+		public CodeInterpreterToolDefinition(IEnumerable<string> fileIds); 
+		public IList<string> FileIds { get; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CodeInterpreterToolDefinition IJsonModel<CodeInterpreterToolDefinition>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<CodeInterpreterToolDefinition>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CodeInterpreterToolDefinition IPersistableModel<CodeInterpreterToolDefinition>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<CodeInterpreterToolDefinition>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<CodeInterpreterToolDefinition>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class CompletionUsage : IJsonModel<CompletionUsage>, IPersistableModel<CompletionUsage> { 
+		public CompletionUsageInputTokenDetails InputTokenDetails { get; }
+		public long InputTokens { get; }
+		public CompletionUsageOutputTokenDetails OutputTokenDetails { get; }
+		public long OutputTokens { get; }
+		public long TotalTokens { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CompletionUsage IJsonModel<CompletionUsage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<CompletionUsage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CompletionUsage IPersistableModel<CompletionUsage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<CompletionUsage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<CompletionUsage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class CompletionUsageInputTokenDetails : IJsonModel<CompletionUsageInputTokenDetails>, IPersistableModel<CompletionUsageInputTokenDetails> { 
+		public int? CachedTokens { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CompletionUsageInputTokenDetails IJsonModel<CompletionUsageInputTokenDetails>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<CompletionUsageInputTokenDetails>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CompletionUsageInputTokenDetails IPersistableModel<CompletionUsageInputTokenDetails>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<CompletionUsageInputTokenDetails>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<CompletionUsageInputTokenDetails>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class CompletionUsageOutputTokenDetails : IJsonModel<CompletionUsageOutputTokenDetails>, IPersistableModel<CompletionUsageOutputTokenDetails> { 
+		public int? ReasoningTokens { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CompletionUsageOutputTokenDetails IJsonModel<CompletionUsageOutputTokenDetails>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<CompletionUsageOutputTokenDetails>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CompletionUsageOutputTokenDetails IPersistableModel<CompletionUsageOutputTokenDetails>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<CompletionUsageOutputTokenDetails>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<CompletionUsageOutputTokenDetails>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Connection : IJsonModel<Connection>, IPersistableModel<Connection> { 
+		public IReadOnlyDictionary<string, string> Metadata { get; }
+		public string Name { get; }
+		public string Target { get; }
+		public ConnectionType Type { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Connection IJsonModel<Connection>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Connection>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Connection IPersistableModel<Connection>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Connection>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Connection>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Connections { 
+		protected Connections(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response<Connection> GetConnection(string connectionName, CancellationToken cancellationToken = default); 
+		public virtual Response GetConnection(string connectionName, RequestContext context); 
+		public virtual Task<Response<Connection>> GetConnectionAsync(string connectionName, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetConnectionAsync(string connectionName, RequestContext context); 
+		public virtual Pageable<Connection> GetConnections(ConnectionType? connectionType = null, int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetConnections(string connectionType, int? maxCount, int? skip, int? maxpagesize, RequestContext context); 
+		public virtual AsyncPageable<Connection> GetConnectionsAsync(ConnectionType? connectionType = null, int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetConnectionsAsync(string connectionType, int? maxCount, int? skip, int? maxpagesize, RequestContext context); 
+	} 
+	
+	public readonly struct ConnectionType : IEquatable<ConnectionType> { 
+		public ConnectionType(string value); 
+		public static ConnectionType APIKey { get; }
+		public static ConnectionType ApplicationInsights { get; }
+		public static ConnectionType AzureAISearch { get; }
+		public static ConnectionType AzureBlobStorage { get; }
+		public static ConnectionType AzureOpenAI { get; }
+		public static ConnectionType CosmosDB { get; }
+		public static ConnectionType Custom { get; }
+		public static bool operator ==(ConnectionType left, ConnectionType right); 
+		public static implicit operator ConnectionType(string value); 
+		public static bool operator !=(ConnectionType left, ConnectionType right); 
+		public bool Equals(ConnectionType other); 
+		public override bool Equals(object obj); 
+		public override int GetHashCode(); 
+		public override string ToString(); 
+	} 
+	
+	public class ContentFilterContent : AIContent, IJsonModel<ContentFilterContent>, IPersistableModel<ContentFilterContent> { 
+		public ContentFilterContent(string contentFilter, bool detected); 
+		public string ContentFilter { get; set; }
+		public bool Detected { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ContentFilterContent IJsonModel<ContentFilterContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ContentFilterContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ContentFilterContent IPersistableModel<ContentFilterContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ContentFilterContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ContentFilterContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class CosmosDBIndex : Index, IJsonModel<CosmosDBIndex>, IPersistableModel<CosmosDBIndex> { 
+		public CosmosDBIndex(string connectionName, string databaseName, string containerName, EmbeddingConfiguration embeddingConfiguration); 
+		public string ConnectionName { get; set; }
+		public string ContainerName { get; set; }
+		public string DatabaseName { get; set; }
+		public EmbeddingConfiguration EmbeddingConfiguration { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CosmosDBIndex IJsonModel<CosmosDBIndex>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<CosmosDBIndex>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		CosmosDBIndex IPersistableModel<CosmosDBIndex>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<CosmosDBIndex>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<CosmosDBIndex>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Datasets { 
+		protected Datasets(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public static string GetRelativePath(string folderPath, string filePath); 
+		public virtual Response<DatasetVersion> Create(string name, DatasetVersion body, CancellationToken cancellationToken = default); 
+		public virtual Response Create(string name, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<DatasetVersion>> CreateAsync(string name, DatasetVersion body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateAsync(string name, RequestContent content, RequestContext context = null); 
+		public virtual Response<DatasetVersion> CreateVersion(string name, string version, DatasetVersion body, CancellationToken cancellationToken = default); 
+		public virtual Response CreateVersion(string name, string version, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<DatasetVersion>> CreateVersionAsync(string name, string version, DatasetVersion body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateVersionAsync(string name, string version, RequestContent content, RequestContext context = null); 
+		public virtual Response DeleteVersion(string name, string version, RequestContext context = null); 
+		public virtual Task<Response> DeleteVersionAsync(string name, string version, RequestContext context = null); 
+		public virtual Pageable<DatasetVersion> GetLatests(int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetLatests(int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual AsyncPageable<DatasetVersion> GetLatestsAsync(int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetLatestsAsync(int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual Response<DatasetVersion> GetVersion(string name, string version, CancellationToken cancellationToken = default); 
+		public virtual Response GetVersion(string name, string version, RequestContext context); 
+		public virtual Task<Response<DatasetVersion>> GetVersionAsync(string name, string version, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetVersionAsync(string name, string version, RequestContext context); 
+		public virtual Pageable<DatasetVersion> GetVersions(string name, int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetVersions(string name, int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual AsyncPageable<DatasetVersion> GetVersionsAsync(string name, int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetVersionsAsync(string name, int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual Response<PendingUploadResponse> StartPendingUpload(string name, string version, PendingUploadRequest body, CancellationToken cancellationToken = default); 
+		public virtual Response StartPendingUpload(string name, string version, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<PendingUploadResponse>> StartPendingUploadAsync(string name, string version, PendingUploadRequest body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> StartPendingUploadAsync(string name, string version, RequestContent content, RequestContext context = null); 
+		public virtual Response<PendingUploadResponse> StartPendingUploadAutoIncrement(string name, PendingUploadType pendingUploadType, string pendingUploadId = null, string connectionName = null, CancellationToken cancellationToken = default); 
+		public virtual Response StartPendingUploadAutoIncrement(string name, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<PendingUploadResponse>> StartPendingUploadAutoIncrementAsync(string name, PendingUploadType pendingUploadType, string pendingUploadId = null, string connectionName = null, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> StartPendingUploadAutoIncrementAsync(string name, RequestContent content, RequestContext context = null); 
+		public DatasetVersion UploadFileAndCreate(string name, string version, string filePath); 
+		public DatasetVersion UploadFolderAndCreate(string name, string version, string folderPath); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownDatasetVersion))] 
+	public abstract class DatasetVersion : IJsonModel<DatasetVersion>, IPersistableModel<DatasetVersion> { 
+		protected DatasetVersion(string datasetUri); 
+		public string DatasetUri { get; set; }
+		public string Description { get; set; }
+		public string Id { get; }
+		public bool? IsReference { get; }
+		public string Name { get; }
+		public string Stage { get; set; }
+		public IDictionary<string, string> Tags { get; }
+		public string Version { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		DatasetVersion IJsonModel<DatasetVersion>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<DatasetVersion>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		DatasetVersion IPersistableModel<DatasetVersion>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<DatasetVersion>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<DatasetVersion>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownDeployment))] 
+	public abstract class Deployment : IJsonModel<Deployment>, IPersistableModel<Deployment> { 
+		protected Deployment(); 
+		public string Name { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Deployment IJsonModel<Deployment>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Deployment>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Deployment IPersistableModel<Deployment>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Deployment>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Deployment>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Deployments { 
+		protected Deployments(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response<Deployment> GetDeployment(string name, CancellationToken cancellationToken = default); 
+		public virtual Response GetDeployment(string name, RequestContext context); 
+		public virtual Task<Response<Deployment>> GetDeploymentAsync(string name, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetDeploymentAsync(string name, RequestContext context); 
+		public virtual Pageable<Deployment> GetDeployments(string modelPublisher = null, string modelName = null, bool? includeConnectionModels = null, int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetDeployments(string modelPublisher, string modelName, bool? includeConnectionModels, int? maxCount, int? skip, int? maxpagesize, RequestContext context); 
+		public virtual AsyncPageable<Deployment> GetDeploymentsAsync(string modelPublisher = null, string modelName = null, bool? includeConnectionModels = null, int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetDeploymentsAsync(string modelPublisher, string modelName, bool? includeConnectionModels, int? maxCount, int? skip, int? maxpagesize, RequestContext context); 
+	} 
+	
+	public class DeveloperMessage : ChatMessage, IJsonModel<DeveloperMessage>, IPersistableModel<DeveloperMessage> { 
+		public DeveloperMessage(IEnumerable<AIContent> content); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		DeveloperMessage IJsonModel<DeveloperMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<DeveloperMessage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		DeveloperMessage IPersistableModel<DeveloperMessage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<DeveloperMessage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<DeveloperMessage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class EmbeddingConfiguration : IJsonModel<EmbeddingConfiguration>, IPersistableModel<EmbeddingConfiguration> { 
+		public EmbeddingConfiguration(string modelDeploymentName, string embeddingField); 
+		public string EmbeddingField { get; set; }
+		public string ModelDeploymentName { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		EmbeddingConfiguration IJsonModel<EmbeddingConfiguration>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<EmbeddingConfiguration>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		EmbeddingConfiguration IPersistableModel<EmbeddingConfiguration>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<EmbeddingConfiguration>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<EmbeddingConfiguration>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Evaluation : IJsonModel<Evaluation>, IPersistableModel<Evaluation> { 
+		public Evaluation(InputData data, IDictionary<string, EvaluatorConfiguration> evaluators); 
+		public InputData Data { get; set; }
+		public string Description { get; set; }
+		public string DisplayName { get; set; }
+		public IDictionary<string, EvaluatorConfiguration> Evaluators { get; }
+		public string Id { get; }
+		public IDictionary<string, string> Properties { get; }
+		public string Status { get; }
+		public IDictionary<string, string> Tags { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Evaluation IJsonModel<Evaluation>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Evaluation>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Evaluation IPersistableModel<Evaluation>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Evaluation>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Evaluation>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Evaluations { 
+		protected Evaluations(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response<Evaluation> CreateRun(Evaluation evaluation, CancellationToken cancellationToken = default); 
+		public virtual Response CreateRun(RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Evaluation>> CreateRunAsync(Evaluation evaluation, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateRunAsync(RequestContent content, RequestContext context = null); 
+		public virtual Response<Evaluation> GetEvaluation(string name, CancellationToken cancellationToken = default); 
+		public virtual Response GetEvaluation(string name, RequestContext context); 
+		public virtual Task<Response<Evaluation>> GetEvaluationAsync(string name, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetEvaluationAsync(string name, RequestContext context); 
+		public virtual Pageable<Evaluation> GetEvaluations(int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetEvaluations(int? maxCount, int? skip, int? maxpagesize, RequestContext context); 
+		public virtual AsyncPageable<Evaluation> GetEvaluationsAsync(int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetEvaluationsAsync(int? maxCount, int? skip, int? maxpagesize, RequestContext context); 
+	} 
+	
+	public class EvaluatorConfiguration : IJsonModel<EvaluatorConfiguration>, IPersistableModel<EvaluatorConfiguration> { 
+		public EvaluatorConfiguration(string id); 
+		public IDictionary<string, string> DataMapping { get; }
+		public string Id { get; set; }
+		public IDictionary<string, BinaryData> InitParams { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		EvaluatorConfiguration IJsonModel<EvaluatorConfiguration>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<EvaluatorConfiguration>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		EvaluatorConfiguration IPersistableModel<EvaluatorConfiguration>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<EvaluatorConfiguration>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<EvaluatorConfiguration>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class FileContent : AIContent, IJsonModel<FileContent>, IPersistableModel<FileContent> { 
+		public FileContent(); 
+		public BinaryData Data { get; set; }
+		public Uri DataUri { get; set; }
+		public string FileName { get; set; }
+		public string MimeType { get; set; }
+		public Uri Uri { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileContent IJsonModel<FileContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<FileContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileContent IPersistableModel<FileContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<FileContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<FileContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class FileDatasetVersion : DatasetVersion, IJsonModel<FileDatasetVersion>, IPersistableModel<FileDatasetVersion> { 
+		public FileDatasetVersion(string datasetUri, string openAIPurpose); 
+		public string OpenAIPurpose { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileDatasetVersion IJsonModel<FileDatasetVersion>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<FileDatasetVersion>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileDatasetVersion IPersistableModel<FileDatasetVersion>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<FileDatasetVersion>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<FileDatasetVersion>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class FileSearchToolDefinition : AgentToolDefinition, IJsonModel<FileSearchToolDefinition>, IPersistableModel<FileSearchToolDefinition> { 
+		public FileSearchToolDefinition(IEnumerable<string> fileIds); 
+		public IList<string> FileIds { get; }
+		public int? MaxNumResults { get; set; }
+		public FileSearchToolDefinitionRankingOptions RankingOptions { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileSearchToolDefinition IJsonModel<FileSearchToolDefinition>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<FileSearchToolDefinition>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileSearchToolDefinition IPersistableModel<FileSearchToolDefinition>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<FileSearchToolDefinition>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<FileSearchToolDefinition>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class FileSearchToolDefinitionRankingOptions : IJsonModel<FileSearchToolDefinitionRankingOptions>, IPersistableModel<FileSearchToolDefinitionRankingOptions> { 
+		public FileSearchToolDefinitionRankingOptions(string ranker); 
+		public string Ranker { get; set; }
+		public float? ScoreThreshold { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileSearchToolDefinitionRankingOptions IJsonModel<FileSearchToolDefinitionRankingOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<FileSearchToolDefinitionRankingOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FileSearchToolDefinitionRankingOptions IPersistableModel<FileSearchToolDefinitionRankingOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<FileSearchToolDefinitionRankingOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<FileSearchToolDefinitionRankingOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class FolderDatasetVersion : DatasetVersion, IJsonModel<FolderDatasetVersion>, IPersistableModel<FolderDatasetVersion> { 
+		public FolderDatasetVersion(string datasetUri); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FolderDatasetVersion IJsonModel<FolderDatasetVersion>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<FolderDatasetVersion>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FolderDatasetVersion IPersistableModel<FolderDatasetVersion>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<FolderDatasetVersion>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<FolderDatasetVersion>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class FunctionToolOptions : AgentToolOptions, IJsonModel<FunctionToolOptions>, IPersistableModel<FunctionToolOptions> { 
+		public FunctionToolOptions(string name); 
+		public string Description { get; set; }
+		public string Name { get; set; }
+		public JSONSchema Parameters { get; set; }
+		public bool? Strict { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FunctionToolOptions IJsonModel<FunctionToolOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<FunctionToolOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		FunctionToolOptions IPersistableModel<FunctionToolOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<FunctionToolOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<FunctionToolOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class ImageContent : AIContent, IJsonModel<ImageContent>, IPersistableModel<ImageContent> { 
+		public ImageContent(); 
+		public BinaryData Data { get; set; }
+		public Uri DataUri { get; set; }
+		public string FileName { get; set; }
+		public object Height { get; set; }
+		public string MimeType { get; set; }
+		public Uri Uri { get; set; }
+		public object Width { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ImageContent IJsonModel<ImageContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ImageContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ImageContent IPersistableModel<ImageContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ImageContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ImageContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownIndex))] 
+	public abstract class Index : IJsonModel<Index>, IPersistableModel<Index> { 
+		protected Index(); 
+		public string Description { get; set; }
+		public string Id { get; }
+		public string Name { get; }
+		public string Stage { get; set; }
+		public IDictionary<string, string> Tags { get; }
+		public string Version { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Index IJsonModel<Index>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Index>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Index IPersistableModel<Index>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Index>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Index>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Indexes { 
+		protected Indexes(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response<Index> Create(string name, Index body, CancellationToken cancellationToken = default); 
+		public virtual Response Create(string name, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Index>> CreateAsync(string name, Index body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateAsync(string name, RequestContent content, RequestContext context = null); 
+		public virtual Response<Index> CreateVersion(string name, string version, Index body, CancellationToken cancellationToken = default); 
+		public virtual Response CreateVersion(string name, string version, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Index>> CreateVersionAsync(string name, string version, Index body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateVersionAsync(string name, string version, RequestContent content, RequestContext context = null); 
+		public virtual Response DeleteVersion(string name, string version, RequestContext context = null); 
+		public virtual Task<Response> DeleteVersionAsync(string name, string version, RequestContext context = null); 
+		public virtual Pageable<Index> GetLatests(int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetLatests(int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual AsyncPageable<Index> GetLatestsAsync(int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetLatestsAsync(int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual Response<Index> GetVersion(string name, string version, CancellationToken cancellationToken = default); 
+		public virtual Response GetVersion(string name, string version, RequestContext context); 
+		public virtual Task<Response<Index>> GetVersionAsync(string name, string version, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetVersionAsync(string name, string version, RequestContext context); 
+		public virtual Pageable<Index> GetVersions(string name, int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetVersions(string name, int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+		public virtual AsyncPageable<Index> GetVersionsAsync(string name, int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetVersionsAsync(string name, int? maxCount, string skip, string tags, string listViewType, RequestContext context); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownInputData))] 
+	public abstract class InputData : IJsonModel<InputData>, IPersistableModel<InputData> { 
+		protected InputData(); 
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		InputData IJsonModel<InputData>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<InputData>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		InputData IPersistableModel<InputData>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<InputData>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<InputData>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class InputDataset : InputData, IJsonModel<InputDataset>, IPersistableModel<InputDataset> { 
+		public InputDataset(string id); 
+		public string Id { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		InputDataset IJsonModel<InputDataset>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<InputDataset>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		InputDataset IPersistableModel<InputDataset>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<InputDataset>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<InputDataset>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class JSONAny : IJsonModel<JSONAny>, IPersistableModel<JSONAny> { 
+		public JSONAny(); 
+		public IList<JSONAny> ArrayValue { get; }
+		public bool? BoolValue { get; set; }
+		public double? FloatValue { get; set; }
+		public long? IntValue { get; set; }
+		public bool? NullValue { get; set; }
+		public IDictionary<string, JSONAny> ObjectValue { get; }
+		public string StringValue { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		JSONAny IJsonModel<JSONAny>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<JSONAny>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		JSONAny IPersistableModel<JSONAny>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<JSONAny>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<JSONAny>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class JSONSchema : IJsonModel<JSONSchema>, IPersistableModel<JSONSchema> { 
+		public JSONSchema(string type, IDictionary<string, JSONSchema> properties); 
+		public IDictionary<string, JSONSchema> Properties { get; }
+		public IList<string> Required { get; }
+		public string Type { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		JSONSchema IJsonModel<JSONSchema>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<JSONSchema>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		JSONSchema IPersistableModel<JSONSchema>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<JSONSchema>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<JSONSchema>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public readonly struct ListViewType : IEquatable<ListViewType> { 
+		public ListViewType(string value); 
+		public static ListViewType ActiveOnly { get; }
+		public static ListViewType All { get; }
+		public static ListViewType ArchivedOnly { get; }
+		public static bool operator ==(ListViewType left, ListViewType right); 
+		public static implicit operator ListViewType(string value); 
+		public static bool operator !=(ListViewType left, ListViewType right); 
+		public bool Equals(ListViewType other); 
+		public override bool Equals(object obj); 
+		public override int GetHashCode(); 
+		public override string ToString(); 
+	} 
+	
+	public class ManagedAzureAISearchIndex : Index, IJsonModel<ManagedAzureAISearchIndex>, IPersistableModel<ManagedAzureAISearchIndex> { 
+		public ManagedAzureAISearchIndex(string vectorStoreId); 
+		public string VectorStoreId { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ManagedAzureAISearchIndex IJsonModel<ManagedAzureAISearchIndex>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ManagedAzureAISearchIndex>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ManagedAzureAISearchIndex IPersistableModel<ManagedAzureAISearchIndex>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ManagedAzureAISearchIndex>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ManagedAzureAISearchIndex>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Messages { 
+		protected Messages(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response DeleteMessage(string threadId, string messageId, RequestContext context = null); 
+		public virtual Task<Response> DeleteMessageAsync(string threadId, string messageId, RequestContext context = null); 
+		public virtual Response<ChatMessage> GetMessage(string threadId, string messageId, CancellationToken cancellationToken = default); 
+		public virtual Response GetMessage(string threadId, string messageId, RequestContext context); 
+		public virtual Task<Response<ChatMessage>> GetMessageAsync(string threadId, string messageId, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetMessageAsync(string threadId, string messageId, RequestContext context); 
+		public virtual Pageable<ChatMessage> GetMessages(string threadId, CancellationToken cancellationToken = default); 
+		public virtual Pageable<BinaryData> GetMessages(string threadId, RequestContext context); 
+		public virtual AsyncPageable<ChatMessage> GetMessagesAsync(string threadId, CancellationToken cancellationToken = default); 
+		public virtual AsyncPageable<BinaryData> GetMessagesAsync(string threadId, RequestContext context); 
+		public virtual Response SendMessage(string threadId, ChatMessage resource, CancellationToken cancellationToken = default); 
+		public virtual Response SendMessage(string threadId, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response> SendMessageAsync(string threadId, ChatMessage resource, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> SendMessageAsync(string threadId, RequestContent content, RequestContext context = null); 
+		public virtual Response<ChatMessage> UpdateMessage(string threadId, string messageId, ChatMessage resource, CancellationToken cancellationToken = default); 
+		public virtual Response UpdateMessage(string threadId, string messageId, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<ChatMessage>> UpdateMessageAsync(string threadId, string messageId, ChatMessage resource, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> UpdateMessageAsync(string threadId, string messageId, RequestContent content, RequestContext context = null); 
+	} 
+	
+	public class ModelDeployment : Deployment, IJsonModel<ModelDeployment>, IPersistableModel<ModelDeployment> { 
+		public IReadOnlyDictionary<string, string> Capabilities { get; }
+		public string ConnectionName { get; }
+		public string ModelName { get; }
+		public string ModelPublisher { get; }
+		public string ModelVersion { get; }
+		public Sku Sku { get; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ModelDeployment IJsonModel<ModelDeployment>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ModelDeployment>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ModelDeployment IPersistableModel<ModelDeployment>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ModelDeployment>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ModelDeployment>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class NoneToolChoiceBehavior : ToolChoiceBehavior, IJsonModel<NoneToolChoiceBehavior>, IPersistableModel<NoneToolChoiceBehavior> { 
+		public NoneToolChoiceBehavior(); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		NoneToolChoiceBehavior IJsonModel<NoneToolChoiceBehavior>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<NoneToolChoiceBehavior>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		NoneToolChoiceBehavior IPersistableModel<NoneToolChoiceBehavior>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<NoneToolChoiceBehavior>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<NoneToolChoiceBehavior>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class OpenAIAgentModel : AgentModel, IJsonModel<OpenAIAgentModel>, IPersistableModel<OpenAIAgentModel> { 
+		public OpenAIAgentModel(string id, OpenAIModelOptions options); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		OpenAIAgentModel IJsonModel<OpenAIAgentModel>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<OpenAIAgentModel>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		OpenAIAgentModel IPersistableModel<OpenAIAgentModel>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<OpenAIAgentModel>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<OpenAIAgentModel>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class OpenAIModelOptions : IJsonModel<OpenAIModelOptions>, IPersistableModel<OpenAIModelOptions> { 
+		public OpenAIModelOptions(); 
+		public float? Temperature { get; set; }
+		public float? TopP { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		OpenAIModelOptions IJsonModel<OpenAIModelOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<OpenAIModelOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		OpenAIModelOptions IPersistableModel<OpenAIModelOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<OpenAIModelOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<OpenAIModelOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class OpenApiToolDefinition : AgentToolDefinition, IJsonModel<OpenApiToolDefinition>, IPersistableModel<OpenApiToolDefinition> { 
+		public OpenApiToolDefinition(string name, string openApiSpec); 
+		public string Description { get; set; }
+		public string Name { get; set; }
+		public string OpenApiSpec { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		OpenApiToolDefinition IJsonModel<OpenApiToolDefinition>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<OpenApiToolDefinition>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		OpenApiToolDefinition IPersistableModel<OpenApiToolDefinition>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<OpenApiToolDefinition>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<OpenApiToolDefinition>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class PendingUploadRequest : IJsonModel<PendingUploadRequest>, IPersistableModel<PendingUploadRequest> { 
+		public PendingUploadRequest(); 
+		public string ConnectionName { get; set; }
+		public string PendingUploadId { get; set; }
+		public PendingUploadType PendingUploadType { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		PendingUploadRequest IJsonModel<PendingUploadRequest>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<PendingUploadRequest>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		PendingUploadRequest IPersistableModel<PendingUploadRequest>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<PendingUploadRequest>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<PendingUploadRequest>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class PendingUploadResponse : IJsonModel<PendingUploadResponse>, IPersistableModel<PendingUploadResponse> { 
+		public BlobReferenceForConsumption BlobReferenceForConsumption { get; }
+		public string DatasetVersion { get; }
+		public string PendingUploadId { get; }
+		public PendingUploadType PendingUploadType { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		PendingUploadResponse IJsonModel<PendingUploadResponse>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<PendingUploadResponse>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		PendingUploadResponse IPersistableModel<PendingUploadResponse>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<PendingUploadResponse>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<PendingUploadResponse>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public readonly struct PendingUploadType : IEquatable<PendingUploadType> { 
+		public PendingUploadType(string value); 
+		public static PendingUploadType None { get; }
+		public static PendingUploadType TemporaryBlobReference { get; }
+		public static bool operator ==(PendingUploadType left, PendingUploadType right); 
+		public static implicit operator PendingUploadType(string value); 
+		public static bool operator !=(PendingUploadType left, PendingUploadType right); 
+		public bool Equals(PendingUploadType other); 
+		public override bool Equals(object obj); 
+		public override int GetHashCode(); 
+		public override string ToString(); 
+	} 
+	
+	public class RefusalContent : AIContent, IJsonModel<RefusalContent>, IPersistableModel<RefusalContent> { 
+		public RefusalContent(string refusal); 
+		public string Refusal { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RefusalContent IJsonModel<RefusalContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<RefusalContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RefusalContent IPersistableModel<RefusalContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<RefusalContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<RefusalContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class RequiredToolChoiceBehavior : ToolChoiceBehavior, IJsonModel<RequiredToolChoiceBehavior>, IPersistableModel<RequiredToolChoiceBehavior> { 
+		public RequiredToolChoiceBehavior(IEnumerable<string> toolNames); 
+		public IList<string> ToolNames { get; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RequiredToolChoiceBehavior IJsonModel<RequiredToolChoiceBehavior>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<RequiredToolChoiceBehavior>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RequiredToolChoiceBehavior IPersistableModel<RequiredToolChoiceBehavior>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<RequiredToolChoiceBehavior>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<RequiredToolChoiceBehavior>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Run : IJsonModel<Run>, IPersistableModel<Run> { 
+		public long CompletedAt { get; }
+		public long CreatedAt { get; }
+		public string RunId { get; }
+		public RunInputs RunInputs { get; }
+		public RunOutputs RunOutputs { get; }
+		public bool? Store { get; }
+		public string UserId { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Run IJsonModel<Run>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Run>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Run IPersistableModel<Run>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Run>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Run>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class RunInputs : IJsonModel<RunInputs>, IPersistableModel<RunInputs> { 
+		public RunInputs(IEnumerable<ChatMessage> input); 
+		public string AgentId { get; set; }
+		public IList<ChatMessage> Input { get; }
+		public IDictionary<string, string> Metadata { get; }
+		public RunOptions Options { get; set; }
+		public string ThreadId { get; set; }
+		public string UserId { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunInputs IJsonModel<RunInputs>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<RunInputs>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunInputs IPersistableModel<RunInputs>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<RunInputs>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<RunInputs>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class RunOptions : IJsonModel<RunOptions>, IPersistableModel<RunOptions> { 
+		public RunOptions(); 
+		public TruncationStrategy TruncationStrategy { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunOptions IJsonModel<RunOptions>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<RunOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunOptions IPersistableModel<RunOptions>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<RunOptions>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<RunOptions>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class RunOutputs : IJsonModel<RunOutputs>, IPersistableModel<RunOutputs> { 
+		public RunOutputsIncompleteDetails IncompleteDetails { get; }
+		public IReadOnlyList<ChatMessage> Messages { get; }
+		public RunOutputsStatus Status { get; }
+		public CompletionUsage Usage { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunOutputs IJsonModel<RunOutputs>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<RunOutputs>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunOutputs IPersistableModel<RunOutputs>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<RunOutputs>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<RunOutputs>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public static class RunOutputsExtensions { 
+		public static IEnumerable<string> GetTextMessages(this RunOutputs runOutputs); 
+	} 
+	
+	public class RunOutputsIncompleteDetails : IJsonModel<RunOutputsIncompleteDetails>, IPersistableModel<RunOutputsIncompleteDetails> { 
+		public string Reason { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunOutputsIncompleteDetails IJsonModel<RunOutputsIncompleteDetails>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<RunOutputsIncompleteDetails>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		RunOutputsIncompleteDetails IPersistableModel<RunOutputsIncompleteDetails>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<RunOutputsIncompleteDetails>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<RunOutputsIncompleteDetails>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public readonly struct RunOutputsStatus : IEquatable<RunOutputsStatus> { 
+		public RunOutputsStatus(string value); 
+		public static RunOutputsStatus Cancelled { get; }
+		public static RunOutputsStatus Completed { get; }
+		public static RunOutputsStatus Failed { get; }
+		public static RunOutputsStatus Incomplete { get; }
+		public static RunOutputsStatus InProgress { get; }
+		public static bool operator ==(RunOutputsStatus left, RunOutputsStatus right); 
+		public static implicit operator RunOutputsStatus(string value); 
+		public static bool operator !=(RunOutputsStatus left, RunOutputsStatus right); 
+		public bool Equals(RunOutputsStatus other); 
+		public override bool Equals(object obj); 
+		public override int GetHashCode(); 
+		public override string ToString(); 
+	} 
+	
+	public class SasCredential : BaseCredential, IJsonModel<SasCredential>, IPersistableModel<SasCredential> { 
+		public string SasToken { get; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		SasCredential IJsonModel<SasCredential>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<SasCredential>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		SasCredential IPersistableModel<SasCredential>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<SasCredential>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<SasCredential>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class ServicePatterns { 
+		protected ServicePatterns(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual ServicePatternsBuildingBlocks GetServicePatternsBuildingBlocksClient(); 
+	} 
+	
+	public class ServicePatternsBuildingBlocks { 
+		protected ServicePatternsBuildingBlocks(); 
+		public virtual HttpPipeline Pipeline { get; }
+	} 
+	
+	public class Sku : IJsonModel<Sku>, IPersistableModel<Sku> { 
+		public long Capacity { get; }
+		public string Family { get; }
+		public string Name { get; }
+		public string Size { get; }
+		public string Tier { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Sku IJsonModel<Sku>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Sku>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Sku IPersistableModel<Sku>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Sku>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Sku>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class SystemMessage : ChatMessage, IJsonModel<SystemMessage>, IPersistableModel<SystemMessage> { 
+		public SystemMessage(IEnumerable<AIContent> content); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		SystemMessage IJsonModel<SystemMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<SystemMessage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		SystemMessage IPersistableModel<SystemMessage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<SystemMessage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<SystemMessage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class TextContent : AIContent, IJsonModel<TextContent>, IPersistableModel<TextContent> { 
+		public TextContent(string text); 
+		public IList<Annotations> Annotations { get; }
+		public string Text { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		TextContent IJsonModel<TextContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<TextContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		TextContent IPersistableModel<TextContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<TextContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<TextContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Thread : IJsonModel<Thread>, IPersistableModel<Thread> { 
+		public Thread(IEnumerable<ChatMessage> messages); 
+		public IList<ChatMessage> Messages { get; }
+		public string ThreadId { get; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Thread IJsonModel<Thread>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<Thread>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		Thread IPersistableModel<Thread>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<Thread>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<Thread>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class Threads { 
+		protected Threads(); 
+		public virtual HttpPipeline Pipeline { get; }
+		public virtual Response<Thread> CreateThread(IEnumerable<ChatMessage> messages, CancellationToken cancellationToken = default); 
+		public virtual Response CreateThread(RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Thread>> CreateThreadAsync(IEnumerable<ChatMessage> messages, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> CreateThreadAsync(RequestContent content, RequestContext context = null); 
+		public virtual Response DeleteThread(string threadId, RequestContext context = null); 
+		public virtual Task<Response> DeleteThreadAsync(string threadId, RequestContext context = null); 
+		public virtual Response<Thread> GetThread(string threadId, CancellationToken cancellationToken = default); 
+		public virtual Response GetThread(string threadId, RequestContext context); 
+		public virtual Task<Response<Thread>> GetThreadAsync(string threadId, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetThreadAsync(string threadId, RequestContext context); 
+		public virtual Response<IReadOnlyList<Thread>> GetThreads(CancellationToken cancellationToken = default); 
+		public virtual Response GetThreads(RequestContext context); 
+		public virtual Task<Response<IReadOnlyList<Thread>>> GetThreadsAsync(CancellationToken cancellationToken = default); 
+		public virtual Task<Response> GetThreadsAsync(RequestContext context); 
+		public virtual Response<Thread> UpdateThread(string threadId, Thread body, CancellationToken cancellationToken = default); 
+		public virtual Response UpdateThread(string threadId, RequestContent content, RequestContext context = null); 
+		public virtual Task<Response<Thread>> UpdateThreadAsync(string threadId, Thread body, CancellationToken cancellationToken = default); 
+		public virtual Task<Response> UpdateThreadAsync(string threadId, RequestContent content, RequestContext context = null); 
+	} 
+	
+	public class ToolCallContent : AIContent, IJsonModel<ToolCallContent>, IPersistableModel<ToolCallContent> { 
+		public ToolCallContent(string name, string toolCallId); 
+		public JSONAny Arguments { get; set; }
+		public string Name { get; set; }
+		public string ToolCallId { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolCallContent IJsonModel<ToolCallContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ToolCallContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolCallContent IPersistableModel<ToolCallContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ToolCallContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ToolCallContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	[PersistableModelProxy(typeof(UnknownToolChoiceBehavior))] 
+	public abstract class ToolChoiceBehavior : IJsonModel<ToolChoiceBehavior>, IPersistableModel<ToolChoiceBehavior> { 
+		protected ToolChoiceBehavior(); 
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolChoiceBehavior IJsonModel<ToolChoiceBehavior>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ToolChoiceBehavior>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolChoiceBehavior IPersistableModel<ToolChoiceBehavior>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ToolChoiceBehavior>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ToolChoiceBehavior>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class ToolMessage : ChatMessage, IJsonModel<ToolMessage>, IPersistableModel<ToolMessage> { 
+		public ToolMessage(IEnumerable<AIContent> content); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolMessage IJsonModel<ToolMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ToolMessage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolMessage IPersistableModel<ToolMessage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ToolMessage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ToolMessage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class ToolResultContent : AIContent, IJsonModel<ToolResultContent>, IPersistableModel<ToolResultContent> { 
+		public ToolResultContent(string toolCallId); 
+		public JSONAny Results { get; set; }
+		public string ToolCallId { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolResultContent IJsonModel<ToolResultContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<ToolResultContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		ToolResultContent IPersistableModel<ToolResultContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<ToolResultContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<ToolResultContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class TruncationStrategy : IJsonModel<TruncationStrategy>, IPersistableModel<TruncationStrategy> { 
+		public TruncationStrategy(TruncationStrategyType type); 
+		public int? LastMessages { get; set; }
+		public TruncationStrategyType Type { get; set; }
+		protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		TruncationStrategy IJsonModel<TruncationStrategy>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<TruncationStrategy>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		TruncationStrategy IPersistableModel<TruncationStrategy>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<TruncationStrategy>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<TruncationStrategy>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public readonly struct TruncationStrategyType : IEquatable<TruncationStrategyType> { 
+		public TruncationStrategyType(string value); 
+		public static TruncationStrategyType Auto { get; }
+		public static TruncationStrategyType LastMessages { get; }
+		public static bool operator ==(TruncationStrategyType left, TruncationStrategyType right); 
+		public static implicit operator TruncationStrategyType(string value); 
+		public static bool operator !=(TruncationStrategyType left, TruncationStrategyType right); 
+		public bool Equals(TruncationStrategyType other); 
+		public override bool Equals(object obj); 
+		public override int GetHashCode(); 
+		public override string ToString(); 
+	} 
+	
+	public class UserMessage : ChatMessage, IJsonModel<UserMessage>, IPersistableModel<UserMessage> { 
+		public UserMessage(IEnumerable<AIContent> content); 
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		UserMessage IJsonModel<UserMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<UserMessage>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		UserMessage IPersistableModel<UserMessage>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<UserMessage>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<UserMessage>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+	public class VideoContent : AIContent, IJsonModel<VideoContent>, IPersistableModel<VideoContent> { 
+		public VideoContent(); 
+		public BinaryData Data { get; set; }
+		public Uri DataUri { get; set; }
+		public object Duration { get; set; }
+		public string FileName { get; set; }
+		public object Height { get; set; }
+		public string MimeType { get; set; }
+		public Uri Uri { get; set; }
+		public object Width { get; set; }
+		protected override void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		VideoContent IJsonModel<VideoContent>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+		void IJsonModel<VideoContent>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+		VideoContent IPersistableModel<VideoContent>.Create(BinaryData data, ModelReaderWriterOptions options); 
+		string IPersistableModel<VideoContent>.GetFormatFromOptions(ModelReaderWriterOptions options); 
+		BinaryData IPersistableModel<VideoContent>.Write(ModelReaderWriterOptions options); 
+	} 
+	
+} 
+
+namespace Microsoft.Extensions.Azure { 
+	public static class AIProjectsOneDPClientBuilderExtensions { 
+		public static IAzureClientBuilder<AIProjectClient, AIProjectClientOptions> AddAIProjectClient<TBuilder>(this TBuilder builder, Uri endpoint, AzureKeyCredential credential) where TBuilder : IAzureClientFactoryBuilder; 
+		public static IAzureClientBuilder<AIProjectClient, AIProjectClientOptions> AddAIProjectClient<TBuilder>(this TBuilder builder, Uri endpoint) where TBuilder : IAzureClientFactoryBuilderWithCredential; 
+		public static IAzureClientBuilder<AIProjectClient, AIProjectClientOptions> AddAIProjectClient<TBuilder, TConfiguration>(this TBuilder builder, TConfiguration configuration) where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>; 
+	} 
+	
+} 

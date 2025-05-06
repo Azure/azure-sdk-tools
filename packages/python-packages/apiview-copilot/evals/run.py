@@ -5,92 +5,161 @@ import argparse
 from typing import Set, Tuple, Any
 import copy
 import sys
+import yaml
 
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
+import openai
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
 
 dotenv.load_dotenv()
 
-MODEL = "o3-mini"
 NUM_RUNS: int = 3
+# for best results, this should always be a different model from the one we are evaluating
+MODEL_JUDGE = "gpt-4o"
+
+model_config: dict[str, str] = {
+    "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
+    "api_key": os.environ["AZURE_OPENAI_API_KEY"],
+    "azure_deployment": MODEL_JUDGE,
+    "api_version": "2025-01-01-preview",
+}
 
 
 class CustomAPIViewEvaluator:
-    """Evaluator for comparing expected and actual APIView violations."""
+    """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self):
-        """Needs to be defined for some reason"""
-        pass
+    def __init__(self): ...
 
-    def _get_violation_matches(
-        self, expected: dict[str, Any], actual: dict[str, Any]
-    ) -> Tuple[Set, Set, Set]:
-        """Compare violations based on both line numbers and rule IDs."""
+    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
+        """Compare comments based on both line numbers and rule IDs."""
         exact_matches = set()
         rule_matches_wrong_line = set()
-        line_matches_wrong_rule = set()
 
-        violations_left = copy.deepcopy(actual["violations"])
-        for expected_violation in expected["violations"]:
-            e_line = expected_violation["line_no"]
-            e_rules = frozenset(expected_violation["rule_ids"])
+        # Filter out summary comments
+        filtered_actual_comments = [c for c in actual["comments"] if c.get("source") != "summary"]
+        filtered_expected_comments = [c for c in expected["comments"] if c.get("source") != "summary"]
 
-            for actual_violation in violations_left:
-                a_line = actual_violation["line_no"]
-                a_rules = frozenset(actual_violation["rule_ids"])
+        # Create a copy to work with
+        comments_left = copy.deepcopy(filtered_actual_comments)
+
+        for expected_comment in filtered_expected_comments:
+            e_line = expected_comment["line_no"]
+            e_rules = frozenset(expected_comment["rule_ids"])
+
+            for actual_comment in comments_left:
+                a_line = actual_comment["line_no"]
+                a_rules = frozenset(actual_comment["rule_ids"])
 
                 rule_match = any(rule for rule in a_rules if rule in e_rules)
                 if e_line == a_line and rule_match:
                     exact_matches.add((e_line, tuple(sorted(e_rules))))
-                    # Remove the matched actual violation to avoid double counting
-                    violations_left.remove(actual_violation)
+                    # Remove the matched actual comment to avoid double counting
+                    comments_left.remove(actual_comment)
                     break
                 if rule_match:
                     if abs(e_line - a_line) <= 5:
                         # If the line numbers are close, consider it a match
-                        rule_matches_wrong_line.add(
-                            (tuple(sorted(e_rules)), e_line, a_line)
-                        )
-                elif e_line == a_line:
-                    line_matches_wrong_rule.add(
-                        (e_line, tuple(sorted(e_rules)), tuple(sorted(a_rules)))
-                    )
+                        rule_matches_wrong_line.add((tuple(sorted(e_rules)), e_line, a_line))
+                        comments_left.remove(actual_comment)
+                        break
 
-        return exact_matches, rule_matches_wrong_line, line_matches_wrong_rule
+        return exact_matches, rule_matches_wrong_line, comments_left
 
-    def __call__(
-        self, *, response: str, query: str, language: str, output: str, **kwargs
-    ):
+    def _evaluate_generic_comments(self, query: str, language: str, generic_comments: list[dict[str, Any]]) -> None:
+        """Evaluate generic comments. If they are invalid, they count as false positives and receive penalty."""
+
+        filter_path = pathlib.Path(__file__).parent.parent / "metadata" / language / "filter.yaml"
+        with open(filter_path, "r") as f:
+            filter_data = yaml.safe_load(f)
+            exceptions = filter_data["exceptions"].strip().split("\n")
+            exceptions = [e.split(". ", 1)[1] for e in exceptions]
+
+        client = openai.AzureOpenAI()
+        for comment in generic_comments:
+            line_no = comment["line_no"]
+            start_idx = max(0, line_no - 10)
+            end_idx = min(len(query), line_no + 10)
+            context = query[start_idx:end_idx]
+            response = client.responses.create(
+                model=MODEL_JUDGE,
+                input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",
+            )
+            comment["valid"] = "true" in response.output_text.lower()
+
+    def __call__(self, *, response: str, query: str, language: str, output: str, **kwargs):
         expected = json.loads(response)
         actual = json.loads(output)
 
-        exact_matches, rule_matches_wrong_line, line_matches_wrong_rule = (
-            self._get_violation_matches(expected, actual)
-        )
+        # Filter out summary comments
+        expected["comments"] = [c for c in expected["comments"] if c.get("source") != "summary"]
+        actual["comments"] = [c for c in actual["comments"] if c.get("source") != "summary"]
 
+        exact_matches, rule_matches_wrong_line, generic_comments = self._get_comment_matches(expected, actual)
+        self._evaluate_generic_comments(query, language, generic_comments)
+        expected_comments = len([c for c in expected["comments"] if c["rule_ids"]])
+        valid_generic_comments = len([c for c in generic_comments if c["valid"]])
         review_eval = {
-            "total_violations": len(expected["violations"]),
-            "violations_found": len(actual["violations"]),
-            "rule_matches_wrong_line": len(rule_matches_wrong_line),
-            "line_matches_wrong_rule": len(line_matches_wrong_rule),
+            "expected_comments": expected_comments,
+            "comments_found": len(actual["comments"]),
             "true_positives": len(exact_matches),
-            "false_positives": len(actual["violations"])
-            - (len(exact_matches) + len(rule_matches_wrong_line)),
-            "false_negatives": len(expected["violations"])
-            - (len(exact_matches) + len(rule_matches_wrong_line)),
-            "percent_coverage": (
-                (len(exact_matches) / len(expected["violations"]) * 100)
-                if expected["violations"]
-                else 0
-            ),
+            "valid_generic_comments": valid_generic_comments,
+            "false_positives": len(actual["comments"])
+            - (len(exact_matches) + len(rule_matches_wrong_line))
+            - valid_generic_comments,
+            "false_negatives": expected_comments - (len(exact_matches) + len(rule_matches_wrong_line)),
+            "percent_coverage": ((len(exact_matches) / expected_comments * 100) if expected_comments else 0),
+            "rule_matches_wrong_line": len(rule_matches_wrong_line),
             "wrong_line_details": list(rule_matches_wrong_line),
-            "wrong_rule_details": list(line_matches_wrong_rule),
         }
         return review_eval
+
+
+class CustomSimilarityEvaluator:
+    """Wraps the SimilarityEvaluator to make sure we only check similarity for comments with rule IDs."""
+
+    def __init__(self):
+        self._similarity_eval = SimilarityEvaluator(model_config=model_config)
+
+    def __call__(self, *, query: str, language: str, output: str, ground_truth: str, **kwargs):
+        output = json.loads(output)
+        ground_truth = json.loads(ground_truth)
+
+        # Filter out summary comments
+        output["comments"] = [c for c in output["comments"] if c.get("source") != "summary"]
+        ground_truth["comments"] = [c for c in ground_truth["comments"] if c.get("source") != "summary"]
+
+        actual = [c for c in output["comments"] if c["rule_ids"]]
+        if not actual:
+            return {"similarity": 0.0}
+        similarity = self._similarity_eval(
+            response=json.dumps(actual),
+            query=query,
+            ground_truth=json.dumps([c for c in ground_truth["comments"] if c["rule_ids"]]),
+        )
+        return similarity
+
+
+class CustomGroundednessEvaluator:
+    """Wraps the GroundednessEvaluator to make sure we only check groundedness for comments with rule IDs."""
+
+    def __init__(self):
+        self._groundedness_eval = GroundednessEvaluator(model_config=model_config)
+
+    def __call__(self, *, query: str, language: str, output: str, context: str, **kwargs):
+        output = json.loads(output)
+
+        # Filter out summary comments
+        output["comments"] = [c for c in output["comments"] if c.get("source") != "summary"]
+
+        actual = [c for c in output["comments"] if c["rule_ids"]]
+        if not actual:
+            return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
+        groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
+        return groundedness
 
 
 def review_apiview(query: str, language: str):
@@ -101,8 +170,9 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    ai_review = ApiViewReview(language=language, model=MODEL)
-    review = ai_review.get_response(query, chunk_input=False, use_rag=False)
+    reviewer = ApiViewReview(target=query, language=language)
+    review = reviewer.run()
+    reviewer.close()
     return {"response": review.model_dump_json()}
 
 
@@ -117,29 +187,26 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
         "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
     }
 
-    if row["outputs.custom_eval.total_violations"] == 0:
+    if row["outputs.custom_eval.expected_comments"] == 0:
         # tests with no violations are all or nothing
-        return 100.0 if row["outputs.custom_eval.violations_found"] == 0 else 0.0
+        # but still give credit if no violations found, but valid generic comments found
+        if (
+            row["outputs.custom_eval.comments_found"] == 0
+            or row["outputs.custom_eval.comments_found"] == row["outputs.custom_eval.valid_generic_comments"]
+        ):
+            return 100.0
+        return 0.0
 
-    exact_match_score = (
-        row["outputs.custom_eval.true_positives"]
-        / row["outputs.custom_eval.total_violations"]
-    )
+    exact_match_score = row["outputs.custom_eval.true_positives"] / row["outputs.custom_eval.expected_comments"]
 
-    remaining_violations = (
-        row["outputs.custom_eval.total_violations"]
-        - row["outputs.custom_eval.true_positives"]
-    )
+    remaining_comments = row["outputs.custom_eval.expected_comments"] - row["outputs.custom_eval.true_positives"]
     fuzzy_match_score = (
-        row["outputs.custom_eval.rule_matches_wrong_line"] / remaining_violations
-        if remaining_violations > 0
-        else 0.0
+        row["outputs.custom_eval.rule_matches_wrong_line"] / remaining_comments if remaining_comments > 0 else 0.0
     )
 
     false_positive_rate = (
-        row["outputs.custom_eval.false_positives"]
-        / row["outputs.custom_eval.violations_found"]
-        if row["outputs.custom_eval.violations_found"] > 0
+        row["outputs.custom_eval.false_positives"] / row["outputs.custom_eval.comments_found"]
+        if row["outputs.custom_eval.comments_found"] > 0
         else 0.0
     )
 
@@ -158,9 +225,7 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
     return round(normalized_score)
 
 
-def format_terminal_diff(
-    new: float, old: float, format_str: str = ".1f", reverse: bool = False
-) -> str:
+def format_terminal_diff(new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
     """Format difference with ANSI colors for terminal output."""
 
     diff = new - old
@@ -179,9 +244,7 @@ def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Display results in a table format."""
     for name, test_results in all_results.items():
         baseline_results = {}
-        baseline_path = (
-            pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-        )
+        baseline_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
 
         if baseline_path.exists():
             with open(baseline_path, "r") as f:
@@ -193,14 +256,13 @@ def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
         output_table(baseline_results, test_results, name)
 
 
-def output_table(
-    baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str
-) -> None:
+def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str) -> None:
     headers = [
         "Test Case",
         "Score",
         "Violations found",
         "Exact matches (TP)",
+        "Valid generic comments",
         "Fuzzy matches",
         "False positives (FP)",
         "Groundedness",
@@ -216,9 +278,8 @@ def output_table(
         fp = result["false_positives"]
         ground = result["groundedness"]
         sim = result["similarity"]
-        violations_found = (
-            f"{result['violations_found']} / {result['total_violations']}"
-        )
+        valid_generic = result["valid_generic_comments"]
+        comments_found = f"{result['comments_found']} / {result['expected_comments']}"
 
         terminal_row = [testcase]
         if testcase in baseline_results:
@@ -226,8 +287,9 @@ def output_table(
             terminal_row.extend(
                 [
                     f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
-                    violations_found,
+                    comments_found,
                     f"{exact}{format_terminal_diff(exact, base['true_positives'], 'd')}",
+                    f"{valid_generic}{format_terminal_diff(valid_generic, base['valid_generic_comments'], 'd')}",
                     f"{rule}{format_terminal_diff(rule, base['rule_matches_wrong_line'], 'd')}",
                     f"{fp}{format_terminal_diff(fp, base['false_positives'], 'd', reverse=True)}",
                     f"{ground:.1f}{format_terminal_diff(ground, base['groundedness'])}",
@@ -237,8 +299,9 @@ def output_table(
         else:
             values = [
                 f"{score:.1f}",
-                violations_found,
+                comments_found,
                 f"{exact}",
+                f"{valid_generic}",
                 str(rule),
                 str(fp),
                 f"{ground:.1f}",
@@ -262,12 +325,8 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
 
     if args.test_file == "all":
         # only update coverage if all tests are run
-        output_path = (
-            pathlib.Path(__file__).parent / "results" / args.language / "coverage.json"
-        )
-        guidelines_path = (
-            pathlib.Path(__file__).parent.parent / "guidelines" / args.language
-        )
+        output_path = pathlib.Path(__file__).parent / "results" / args.language / "coverage.json"
+        guidelines_path = pathlib.Path(__file__).parent.parent / "guidelines" / args.language
         guidelines = []
         for file in guidelines_path.glob("*.json"):
             with open(file, "r") as f:
@@ -286,39 +345,38 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
                 )
             )
 
-        print(
-            f"\nTest coverage for {args.language}: {len(rule_ids) / len(guideline_rule_ids) * 100:.2f}%"
-        )
+        print(f"\nTest coverage for {args.language}: {len(rule_ids) / len(guideline_rule_ids) * 100:.2f}%")
 
 
 def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Establish the current results as the new baseline."""
 
-    establish_baseline = input(
-        "\nDo you want to establish this as the new baseline? (y/n): "
-    )
+    establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
     if establish_baseline.lower() == "y":
         for name, result in all_results.items():
-            output_path = (
-                pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-            )
+            output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
             with open(str(output_path), "w") as f:
                 json.dump(result, indent=4, fp=f)
 
+    # whether or not we establish a baseline, we want to write results to a temp dir
+    log_path = pathlib.Path(__file__).parent / "results" / args.language / ".log"
+    if not log_path.exists():
+        log_path.mkdir(parents=True, exist_ok=True)
 
-def record_run_result(
-    result: dict[str, Any], rule_ids: Set[str]
-) -> list[dict[str, Any]]:
+    for name, result in all_results.items():
+        output_path = log_path / name[:-1]
+        with open(str(output_path), "w") as f:
+            json.dump(result, indent=4, fp=f)
+
+
+def record_run_result(result: dict[str, Any], rule_ids: Set[str]) -> list[dict[str, Any]]:
     run_result = []
     total_score = 0
 
     for row in result["rows"]:
         score = calculate_overall_score(row)
         total_score += score
-        rules = [
-            rule["rule_ids"]
-            for rule in json.loads(row["inputs.response"])["violations"]
-        ]
+        rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
         rule_ids.update(*rules)
 
         run_result.append(
@@ -326,19 +384,14 @@ def record_run_result(
                 "testcase": row["inputs.testcase"],
                 "expected": json.loads(row["inputs.response"]),
                 "actual": json.loads(row["outputs.response"]),
-                "total_violations": row["outputs.custom_eval.total_violations"],
-                "violations_found": row["outputs.custom_eval.violations_found"],
+                "expected_comments": row["outputs.custom_eval.expected_comments"],
+                "comments_found": row["outputs.custom_eval.comments_found"],
+                "valid_generic_comments": row["outputs.custom_eval.valid_generic_comments"],
                 "true_positives": row["outputs.custom_eval.true_positives"],
                 "false_positives": row["outputs.custom_eval.false_positives"],
                 "false_negatives": row["outputs.custom_eval.false_negatives"],
                 "percent_coverage": row["outputs.custom_eval.percent_coverage"],
-                "rule_matches_wrong_line": row[
-                    "outputs.custom_eval.rule_matches_wrong_line"
-                ],
-                "wrong_rule_details": row["outputs.custom_eval.wrong_rule_details"],
-                "line_matches_wrong_rule": row[
-                    "outputs.custom_eval.line_matches_wrong_rule"
-                ],
+                "rule_matches_wrong_line": row["outputs.custom_eval.rule_matches_wrong_line"],
                 "wrong_line_details": row["outputs.custom_eval.wrong_line_details"],
                 "similarity": row["outputs.similarity.similarity"],
                 "groundedness": row["outputs.groundedness.groundedness"],
@@ -348,9 +401,7 @@ def record_run_result(
         )
 
     average_score = total_score / len(result["rows"])
-    run_result.append(
-        {"average_score": average_score, "total_evals": len(result["rows"])}
-    )
+    run_result.append({"average_score": average_score, "total_evals": len(result["rows"])})
     return run_result
 
 
@@ -358,36 +409,30 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run evals for APIview copilot.")
     parser.add_argument(
         "--language",
+        "-l",
         type=str,
         default="python",
         help="The language to run evals for. Defaults to python.",
     )
     parser.add_argument(
-        "--n",
+        "--num-runs",
+        "-n",
         type=int,
         default=NUM_RUNS,
         help="The number of runs to perform, with the median of results kept. Defaults to 3.",
     )
     parser.add_argument(
         "--test-file",
+        "-t",
         type=str,
         default="all",
         help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()
 
-    # needed for AI-assisted evaluation
-    model_config: dict[str, str] = {
-        "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-        "api_key": os.environ["AZURE_OPENAI_API_KEY"],
-        # for best results, this should always be a different model from the one we are evaluating
-        "azure_deployment": "gpt-4o",
-        "api_version": "2025-01-01-preview",
-    }
-
     custom_eval = CustomAPIViewEvaluator()
-    groundedness = GroundednessEvaluator(model_config=model_config)
-    similarity_eval = SimilarityEvaluator(model_config=model_config)
+    groundedness = CustomGroundednessEvaluator()
+    similarity_eval = CustomSimilarityEvaluator()
 
     rule_ids = set()
 
@@ -400,8 +445,8 @@ if __name__ == "__main__":
             continue
 
         run_results = []
-        for run in range(args.n):
-            print(f"Running evals {run + 1}/{args.n} for {file.name}...")
+        for run in range(args.num_runs):
+            print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
             result = evaluate(
                 data=str(file),
                 evaluators={
@@ -412,7 +457,7 @@ if __name__ == "__main__":
                 evaluator_config={
                     "similarity": {
                         "column_mapping": {
-                            "response": "${target.response}",
+                            "output": "${target.response}",
                             "query": "${data.query}",
                             "language": "${data.language}",
                             "ground_truth": "${data.response}",
@@ -420,7 +465,7 @@ if __name__ == "__main__":
                     },
                     "groundedness": {
                         "column_mapping": {
-                            "response": "${target.response}",
+                            "output": "${target.response}",
                             "query": "${data.query}",
                             "language": "${data.language}",
                             "context": "${data.context}",
@@ -445,15 +490,11 @@ if __name__ == "__main__":
             )
 
             run_result = record_run_result(result, rule_ids)
-            print(
-                f"Average score for {file.name} run {run + 1}/{args.n}: {run_result[-1]['average_score']:.2f}"
-            )
+            print(f"Average score for {file.name} run {run + 1}/{args.num_runs}: {run_result[-1]['average_score']:.2f}")
             run_results.append(run_result)
 
         # take the median run based on the average score
-        median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[
-            len(run_results) // 2
-        ]
+        median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
         all_results[file.name] = median_result
 
     if not all_results:

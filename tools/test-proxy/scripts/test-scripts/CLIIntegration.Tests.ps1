@@ -272,6 +272,7 @@ Describe "AssetsModuleTests" {
                     AssetsRepo           = "Azure/azure-sdk-assets-integration"
                     AssetsRepoPrefixPath = "pull/scenarios"
                     AssetsRepoId         = ""
+                    Dotenv               = $true
                     TagPrefix            = "language/tables"
                     Tag                  = "python/tables_fc54d0"
                 }

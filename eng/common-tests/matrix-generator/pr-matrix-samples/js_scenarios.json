@@ -31,7 +31,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-abort-controller",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-abort-controller",
@@ -58,7 +58,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-amqp",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-amqp",
@@ -85,7 +85,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-auth",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-auth",
@@ -112,7 +112,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-client",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-client",
@@ -139,7 +139,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-http-compat",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-http-compat",
@@ -166,7 +166,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-lro",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-lro",
@@ -193,7 +193,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-paging",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-paging",
@@ -220,7 +220,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-rest-pipeline",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-rest-pipeline",
@@ -247,7 +247,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-sse",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-sse",
@@ -274,7 +274,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-tracing",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-tracing",
@@ -301,7 +301,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-util",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-util",
@@ -328,7 +328,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-core-xml",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-core-xml",
@@ -355,7 +355,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-logger",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-logger",
@@ -408,7 +408,7 @@
         "IsNewSdk": true,
         "ArtifactName": "azure-rest-core-client",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "azure-rest-core-client",
@@ -514,7 +514,7 @@
         "IsNewSdk": true,
         "ArtifactName": "typespec-ts-http-runtime",
         "ReleaseStatus": "2024-12-03",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "name": "typespec-ts-http-runtime",
@@ -523,6 +523,140 @@
             "/common/config",
             "/sdk/core/ci.yml"
           ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "@azure/arm-resources",
+        "Version": "6.0.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/resources/arm-resources",
+        "ServiceDirectory": "resources",
+        "ReadMePath": "sdk/resources/arm-resources/README.md",
+        "ChangeLogPath": "sdk/resources/arm-resources/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "mgmt",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-arm-resources",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-arm-resources",
+          "triggeringPaths": [
+            "/sdk/identity",
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/resources/ci.mgmt.yml"
+          ],
+          "safeName": "azurearmresources"
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "@azure/identity",
+        "Version": "4.8.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/identity/identity",
+        "ServiceDirectory": "identity",
+        "ReadMePath": "sdk/identity/identity/README.md",
+        "ChangeLogPath": "sdk/identity/identity/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-identity",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": [
+          "@azure-tests/perf-storage-blob"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-identity",
+          "triggeringPaths": [
+            "/sdk/test-utils",
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/identity/ci.yml"
+          ],
+          "safeName": "azureidentity"
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "@azure/service-bus",
+        "Version": "7.10.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/servicebus/service-bus",
+        "ServiceDirectory": "servicebus",
+        "ReadMePath": "sdk/servicebus/service-bus/README.md",
+        "ChangeLogPath": "sdk/servicebus/service-bus/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-service-bus",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-service-bus",
+          "triggeringPaths": [
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/servicebus/ci.yml"
+          ],
+          "safeName": "azureservicebus"
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "@azure/template",
+        "Version": "1.0.13-beta.2",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/template",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/template/README.md",
+        "ChangeLogPath": "sdk/template/template/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-template",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "name": "azure-template",
+          "triggeringPaths": [
+            "/sdk/test-utils",
+            "/sdk/identity",
+            "config",
+            "devcontainer",
+            "github",
+            "scripts",
+            "/common",
+            "/eng",
+            "/sdk/template/ci.yml"
+          ],
+          "safeName": "azuretemplate"
         },
         "CIParameters": {
           "CIMatrixConfigs": []

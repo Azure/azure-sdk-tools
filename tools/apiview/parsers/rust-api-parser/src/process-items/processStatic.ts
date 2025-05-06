@@ -3,6 +3,7 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isStaticItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a static item and adds its documentation to the ReviewLine.
@@ -15,6 +16,7 @@ export function processStatic(item: Item) {
 
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `static_${item.name}`);
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -27,9 +29,9 @@ export function processStatic(item: Item) {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_static",
     RenderClasses: ["interface"],
-    NavigateToId: item.id.toString(),
+    NavigateToId: reviewLine.LineId,
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,
   });

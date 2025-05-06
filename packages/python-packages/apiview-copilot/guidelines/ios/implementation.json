@@ -25,12 +25,12 @@
     "text": "YOU SHOULD use the @objc and @objMembers attributes ONLY when a Swift object must be exposed to ObjectiveC."
   },
   {
-    "id": "ios_implementation.html#ios-attr-available",
+    "id": "ios_implementation.html#ios-attr-available-for-os-versions",
     "category": "Attributes",
     "text": "DO use the @available attribute when implementation is contingent upon differences in supported OS or Swift versions."
   },
   {
-    "id": "ios_implementation.html#ios-attr-available",
+    "id": "ios_implementation.html#ios-attr-available-for-breaking-changes",
     "category": "Attributes",
     "text": "DO use the @available attribute to manage breaking changes and transition customers away from deprecated APIs. For example:\n\n```swift\n// usable but will issue a warning\n@available(*, deprecated, message: \"Optional message here...\")\nfunc myFunction() { ... }\n\n// unusable -- will issue a compiler error\n@available(*, unavailable, message: \"Optional message here...\")\nfunc myUnavailableFunc() { ... }\n\n// usable but will issue a warning\n@available(*, deprecated, renamed: \"BetterProtocolName\")\ntypealias BadProtocolName = BetterProtocolName\n\n```"
   },

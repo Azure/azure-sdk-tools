@@ -17,7 +17,7 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory,updateApiVersionInTspConfig } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, updateApiVersionInTspConfig } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
@@ -79,7 +79,7 @@ export async function generateRLCInPipeline(options: {
                 const tspConfigPath = path.join(tspDefDir, 'tspconfig.yaml')
                 logger.info(`rlc:tspConfigPath: ${tspConfigPath}`);
                 updateApiVersionInTspConfig(tspConfigPath, options.apiVersion);
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', tspConfigPath, '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', tspConfigPath, '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");

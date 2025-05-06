@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { any } from './arrays';
 import { WorkflowContext } from '../automation/workflow';
+import { toolError } from './messageUtils';
 
 export const writeTmpJsonFile = (context: WorkflowContext, fileName: string, content: unknown) => {
   const filePath = path.join(context.tmpFolder, fileName);
@@ -26,7 +27,8 @@ export const readTmpJsonFile = (context: WorkflowContext, fileName: string): unk
     context.logger.info(JSON.stringify(content, undefined, 2));
     return content;
   } catch (e) {
-    context.logger.error(`IOError: Failed to read ${fileName}: ${e.message}. Re-run if the error is retryable or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+    const message = toolError(`Failed to read ${fileName}: ${e.message}. Re-run if the error is retryable or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+    context.logger.error(message);
     return undefined;
   }
 };

@@ -215,17 +215,17 @@
     "text": "DO name functions with all-lowercase.  If part of the public API, start with az_<svcname>_[<objname>_].  If not, start with _. For example:\n\n{% highlight c %}\n// Part of the private API\nint64_t _az_compute_hash(int32_t a, int32_t b);\n\n// Part of the public API\nAZ_NODISCARD az_result az_widgets_client_init(az_widgets_client* self);\n\n// Bad - no leading underscore\nint64_t compute_hash(int32_t a, int32_t b);\n{% endhighlight %}"
   },
   {
-    "id": "clang_design.html#clang-design-naming-funcstatic",
+    "id": "clang_design.html#clang-design-naming-funcstatic-initializers",
     "category": "Functions",
     "text": "DO declare all functions that initialize structures with ..._<objname>_init.  These functions can fail and must return an az_result.\n\n{% highlight c %}\n\n// Initialize the object\nAZ_NODISCARD az_result az_widgets_client_init(az_widgets_client* self);\n\n{% endhighlight %}"
   },
   {
-    "id": "clang_design.html#clang-design-naming-funcstatic",
+    "id": "clang_design.html#clang-design-naming-funcstatic-options",
     "category": "Functions",
     "text": "DO declare all functions that return an initialized options structure (which can be examined/modified) with ..._<objname>_options_default.  These functions must always succeed.\n\n{% highlight c %}\n\n// Default initialized options object\nAZ_NODISCARD az_widgets_options az_widgets_options_default();\n\n{% endhighlight %}"
   },
   {
-    "id": "clang_design.html#clang-design-naming-funcstatic",
+    "id": "clang_design.html#clang-design-naming-funcstatic-same-source",
     "category": "Functions",
     "text": "YOU SHOULD declare all functions that are only used within the same source file as static.  Static functions may contain only the function name (no prefixes).  For example:\n\n{% highlight c %}\nstatic int64_t compute_hash(int32_t a, int32_t b) {\n// ...\n}\n{% endhighlight %}"
   },
@@ -567,7 +567,7 @@
   {
     "id": "clang_design.html#clang-docs-doxygen",
     "category": "Documentation Style",
-    "text": "DO include docstrings compatible with the doxygen (http://www.doxygen.nl/index.html) tool for generating reference documentation.\n\nFor example, a (very) simple docstring might look like:\n{% highlight c %}\n/**\n@struct az_appconf_client\n@brief The az_appconf_client represents the resources required for a connection to\n\n     an Azure AppcConfiguration resource.\n\n\n\n<code>     an Azure AppcConfiguration resource.\n</code>\n\n*/\n{% endhighlight %}"
+    "text": "DO include docstrings compatible with the doxygen (https://www.doxygen.nl/index.html) tool for generating reference documentation.\n\nFor example, a (very) simple docstring might look like:\n{% highlight c %}\n/**\n@struct az_appconf_client\n@brief The az_appconf_client represents the resources required for a connection to\n\n     an Azure AppcConfiguration resource.\n\n\n\n<code>     an Azure AppcConfiguration resource.\n</code>\n\n*/\n{% endhighlight %}"
   },
   {
     "id": "clang_design.html#clang-docs-doxygen-cmd",

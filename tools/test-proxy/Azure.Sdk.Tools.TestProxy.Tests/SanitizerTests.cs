@@ -689,7 +689,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Request.Headers, targetEntry.Request.Headers, new HashSet<string>(), new HashSet<string>()));
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Response.Headers, targetEntry.Response.Headers, new HashSet<string>(), new HashSet<string>()));
-            
+
             targetUntouchedEntry.Request.TryGetContentType(out var contentType);
             Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, contentType));
             Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, contentType));
@@ -845,26 +845,40 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(sanitizerCount, testDict.DefaultSanitizerList.Count);
         }
 
+        [Fact]
+        public async Task MultipartRequestsCanSanitizeWithoutChangingBytes()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
+            var worklessSanitizer = new BodyRegexSanitizer(regex: "abc123");
+            var requestRef = session.Session.Entries[0].Request;
+            var responseRef = session.Session.Entries[0].Response;
+            var requestBodyBytesBefore = Encoding.UTF8.GetString(requestRef.Body);
+            var responseBodyBytesBefore = Encoding.UTF8.GetString(responseRef.Body);
+           
+            await session.Session.Sanitize(worklessSanitizer);
 
+            var requestBodyBytesAfter = Encoding.UTF8.GetString(requestRef.Body);
+            var responseBodyBytesAfter = Encoding.UTF8.GetString(responseRef.Body);
 
-        // Re-enable w/ Azure/azure-sdk-tools#2900
-        //[Theory]
-        //[InlineData("batchresponse_00000000-0000-0000-0000-000000000000", "batchresponse_boundary", "Test.RecordEntries/multipart_request.json")]
-        //[InlineData("changesetresponse_955358ab-62b1-4d6c-804b-41cebb7c5e42", "changeset_boundry", "Test.RecordEntries/multipart_request.json")]
-        //public void GeneralRegexSanitizerAffectsMultipartRequest(string regex, string replacementValue, string targetFile)
-        //{
-        //    var session = TestHelpers.LoadRecordSession(targetFile);
+            Assert.Equal(requestBodyBytesBefore, requestBodyBytesAfter);
+            Assert.Equal(responseBodyBytesBefore, responseBodyBytesAfter);
+        }
 
-        //    var targetEntry = session.Session.Entries[0];
-        //    var matcher = new RecordMatcher();
+        [Fact]
+        public void CanDeserializeFromOriginalMultipartMixedRecording()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/old_multipart_request.json");
 
-        //    var sanitizer = new GeneralRegexSanitizer(value: replacementValue, regex: regex);
-        //    session.Session.Sanitize(sanitizer);
+            Assert.NotNull(session.Session.Entries.First().Request.Body);
+        }
 
-        //    var bodyString = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
-
-        //    Assert.DoesNotContain(regex, bodyString);
-        //    Assert.Contains(replacementValue, bodyString);
-        //}
+        [Fact]
+        public async Task CanSanitizeComplexRequest()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/failing_multipart_body.json");
+            var breakingSanitizer = new GeneralRegexSanitizer(value: "00000000-0000-0000-0000-000000000000", regex: "batch[a-z]*_([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b)", groupForReplace: "1");
+            await session.Session.Sanitize(breakingSanitizer);
+        }
     }
 }

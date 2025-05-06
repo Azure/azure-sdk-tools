@@ -322,3 +322,8 @@ export function updateApiVersionInTspConfig(tspConfigPath: string, apiVersion?: 
     fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
     logger.info(`Updated API version to ${apiVersion} in tspconfig.yaml in pipeline only.`);
 }
+
+// Get the spec repo where the project is defined to set into tsp-location.yaml
+export function generateRepoDataInTspLocation(repoUrl: string) {
+    return repoUrl.replace("https://github.com/", "")
+}

@@ -2,11 +2,18 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.CommandLine.Parsing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -94,13 +101,115 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
 
+        //protected internal static void UpdateSanitizedContentLength(RequestOrResponse requestOrResponse)
+        //{
+        //    var headers = requestOrResponse.Headers;
+        //    int sanitizedLength = requestOrResponse.Body?.Length ?? 0;
+        //    // Only update Content-Length if already present.
+        //    if (headers.ContainsKey("Content-Length"))
+        //    {
+        //        headers["Content-Length"] = new string[] { sanitizedLength.ToString(CultureInfo.InvariantCulture) };
+        //    }
+
+        public byte[] SanitizeMultipartBody(string boundary, byte[] raw)
+        {
+            // Boundary might have been sanitised to "REDACTED", handle that.
+            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, raw);
+
+            // Only run the LF→CRLF fixer once at the outermost level
+            // the reason we still do this instead of just using the body as-is, is that we may be loading up
+            // a recording from before we started storing the corrected multipart/mixed body.
+            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(raw);
+
+            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
+            using var outStream = new MemoryStream();
+
+            byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
+            byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{boundary}--\r\n");
+
+            try
+            {
+
+                MultipartSection section;
+                while ((section = reader.ReadNextSectionAsync()
+                                         .GetAwaiter()
+                                         .GetResult()) != null)
+                {
+                    // we actually need to figure out the sanitization length _before_ we look at the headers
+                    // as if there is a Content-Length header we need to update it to reflect the new reality
+                    byte[] original = MultipartUtilities.ReadAllBytes(section.Body);
+                    byte[] fixedBody = MultipartUtilities.NormalizeBareLf(original);
+                    byte[] newBody;
+
+                    if (MultipartUtilities.IsNestedMultipart(section.Headers, out var childBoundary))
+                    {
+                        newBody = SanitizeMultipartBody(childBoundary, fixedBody);
+                    }
+                    else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
+                    {
+                        var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(fixedBody));
+                        newBody = enc.GetBytes(sanitised);
+                    }
+                    else
+                    {
+                        // binary or application/http part – no extra sanitising,
+                        // but keep CR/LF corrections we just applied
+                        newBody = fixedBody;
+                    }
+
+                    // 1) opening boundary
+                    outStream.Write(boundaryStart);
+                    // 2) headers (by spec must be ASCII encoded)
+                    foreach (var h in section.Headers)
+                    {
+                        var newValue = h.Value;
+                        if (h.Key == "Content-Length")
+                        {
+                            var parsed = int.TryParse(h.Value[0], out var contentLength);
+                            if (parsed && contentLength != newBody.Length)
+                            {
+                                newValue = new StringValues(newBody.Length.ToString());
+                            }
+                        }
+                        var headerLine = $"{h.Key}: {newValue}\r\n";
+                        outStream.Write(Encoding.ASCII.GetBytes(headerLine));
+                    }
+                    // 3) blank line between headers and body
+                    outStream.Write(MultipartUtilities.CrLf);
+                    // 4) output the revised body (or nothing if there is nothing in the body)
+                    outStream.Write(newBody);
+                    outStream.Write(MultipartUtilities.CrLf);
+                }
+            }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(fixedRaw);
+                string message = $$"""
+The test-proxy is unexpectedly unable to read this section of the config during sanitization: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
+
+                throw new HttpException(HttpStatusCode.InternalServerError, message);
+            }
+
+            // 5) finally write closing boundary
+            outStream.Write(boundaryClose);
+
+            return outStream.ToArray();
+        }
+
         public virtual void SanitizeBody(RequestOrResponse message)
         {
             if (message.Body != null)
             {
                 message.TryGetContentType(out string contentType);
 
-                if (message.TryGetBodyAsText(out string text))
+                if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
+                {
+                    message.Body = SanitizeMultipartBody(boundary, message.Body);
+                }
+                else if (message.TryGetBodyAsText(out string text))
                 {
                     message.Body = Encoding.UTF8.GetBytes(SanitizeTextBody(contentType, text));
                 }

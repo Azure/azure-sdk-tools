@@ -121,7 +121,7 @@ export async function tryFormatSamples(packageDirectory: string) {
     const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
     try {
         await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
-        logger.info(`format samples successfully.`);
+        logger.info(`format sdk successfully.`);
     } catch (err) {
         logger.warn(`Failed to format samples due to: ${(err as Error)?.stack ?? err}`);
     }

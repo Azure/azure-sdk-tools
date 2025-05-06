@@ -410,6 +410,9 @@ namespace AzureSDKDSpecTools.Services
             {
                 "python" => true,
                 "dotnet" => true,
+                "javascript" => true,
+                "java" => true,
+                "go" => true,
                 _ => false,
             };
         }

@@ -9,6 +9,7 @@ import {
   resolvePath,
   Service,
 } from "@typespec/compiler";
+import { createSdkContext } from "@azure-tools/typespec-client-generator-core";
 import path from "path";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
@@ -22,6 +23,10 @@ export interface ResolvedApiViewEmitterOptions {
 
 export async function $onEmit(context: EmitContext<ApiViewEmitterOptions>) {
   const options = resolveOptions(context);
+  const pythonSdkContext = await createSdkContext(context, "@azure-tools/typespec-python");
+  const javaSdkContext = await createSdkContext(context, "@azure-tools/typespec-java");
+  const csharpSdkContext = await createSdkContext(context, "@azure-tools/typespec-csharp");
+  const tsSdkContext = await createSdkContext(context, "@azure-tools/typespec-ts");
   const emitter = createApiViewEmitter(context.program, options);
   await emitter.emitApiView();
 }

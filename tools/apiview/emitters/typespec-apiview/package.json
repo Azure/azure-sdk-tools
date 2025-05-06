@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "@azure-tools/typespec-azure-core": ">=0.53 <1.0",
+    "@azure-tools/typespec-client-generator-core": "0.55.1",
     "@types/node": "~18.11.19",
     "@typespec/eslint-plugin": ">=0.67 <1.0",
     "@typespec/library-linter": ">=0.67 <1.0",

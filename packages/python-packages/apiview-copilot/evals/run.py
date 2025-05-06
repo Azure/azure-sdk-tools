@@ -476,6 +476,7 @@ if __name__ == "__main__":
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
+            print(f"endpoint: {os.environ["AZURE_OPENAI_ENDPOINT"]}")
             result = evaluate(
                 data=str(file),
                 evaluators={

@@ -1,0 +1,385 @@
+package azcosmos
+	type Client struct
+		func NewClient(endpoint string, cred azcore.TokenCredential, o *ClientOptions) (*Client, error)
+		func NewClientFromConnectionString(connectionString string, o *ClientOptions) (*Client, error)
+		func NewClientWithKey(endpoint string, cred KeyCredential, o *ClientOptions) (*Client, error)
+		func (*Client) CreateDatabase(ctx context.Context, databaseProperties DatabaseProperties, o *CreateDatabaseOptions) (DatabaseResponse, error)
+		func (*Client) Endpoint() string
+		func (*Client) NewContainer(databaseId string, containerId string) (*ContainerClient, error)
+		func (*Client) NewDatabase(id string) (*DatabaseClient, error)
+		func (*Client) NewQueryDatabasesPager(query string, o *QueryDatabasesOptions) *azruntime.Pager[QueryDatabasesResponse]
+	
+	type ClientOptions struct
+		azcore.ClientOptions
+		EnableContentResponseOnWrite  bool
+		PreferredRegions              []string
+	
+	type CompositeIndex struct
+		Order  CompositeIndexOrder
+		Path   string
+	
+	type ConflictResolutionPolicy struct
+		Mode                 ConflictResolutionMode
+		ResolutionPath       string
+		ResolutionProcedure  string
+	
+	type ContainerClient struct
+		func (*ContainerClient) CreateItem(ctx context.Context, partitionKey PartitionKey, item []byte, o *ItemOptions) (ItemResponse, error)
+		func (*ContainerClient) Delete(ctx context.Context, o *DeleteContainerOptions) (ContainerResponse, error)
+		func (*ContainerClient) DeleteItem(ctx context.Context, partitionKey PartitionKey, itemId string, o *ItemOptions) (ItemResponse, error)
+		func (*ContainerClient) ExecuteTransactionalBatch(ctx context.Context, b TransactionalBatch, o *TransactionalBatchOptions) (TransactionalBatchResponse, error)
+		func (*ContainerClient) ID() string
+		func (*ContainerClient) NewQueryItemsPager(query string, partitionKey PartitionKey, o *QueryOptions) *runtime.Pager[QueryItemsResponse]
+		func (*ContainerClient) NewTransactionalBatch(partitionKey PartitionKey) TransactionalBatch
+		func (*ContainerClient) PatchItem(ctx context.Context, partitionKey PartitionKey, itemId string, ops PatchOperations, o *ItemOptions) (ItemResponse, error)
+		func (*ContainerClient) Read(ctx context.Context, o *ReadContainerOptions) (ContainerResponse, error)
+		func (*ContainerClient) ReadItem(ctx context.Context, partitionKey PartitionKey, itemId string, o *ItemOptions) (ItemResponse, error)
+		func (*ContainerClient) ReadThroughput(ctx context.Context, o *ThroughputOptions) (ThroughputResponse, error)
+		func (*ContainerClient) Replace(ctx context.Context, containerProperties ContainerProperties, o *ReplaceContainerOptions) (ContainerResponse, error)
+		func (*ContainerClient) ReplaceItem(ctx context.Context, partitionKey PartitionKey, itemId string, item []byte, o *ItemOptions) (ItemResponse, error)
+		func (*ContainerClient) ReplaceThroughput(ctx context.Context, throughputProperties ThroughputProperties, o *ThroughputOptions) (ThroughputResponse, error)
+		func (*ContainerClient) UpsertItem(ctx context.Context, partitionKey PartitionKey, item []byte, o *ItemOptions) (ItemResponse, error)
+	
+	type ContainerProperties struct
+		AnalyticalStoreTimeToLiveInSeconds  *int32
+		ConflictResolutionPolicy            *ConflictResolutionPolicy
+		DefaultTimeToLive                   *int32
+		ETag                                *azcore.ETag
+		ID                                  string
+		IndexingPolicy                      *IndexingPolicy
+		LastModified                        time.Time
+		PartitionKeyDefinition              PartitionKeyDefinition
+		ResourceID                          string
+		SelfLink                            string
+		UniqueKeyPolicy                     *UniqueKeyPolicy
+		
+		func (*ContainerProperties) UnmarshalJSON(b []byte) error
+		func (ContainerProperties) MarshalJSON() ([]byte, error)
+	
+	type ContainerResponse struct
+		Response
+		ContainerProperties  *ContainerProperties
+	
+	type CreateContainerOptions struct
+		ThroughputProperties  *ThroughputProperties
+	
+	type CreateDatabaseOptions struct
+		ThroughputProperties  *ThroughputProperties
+	
+	type DatabaseClient struct
+		func (*DatabaseClient) NewQueryContainersPager(query string, o *QueryContainersOptions) *runtime.Pager[QueryContainersResponse]
+		func (*DatabaseClient) CreateContainer(ctx context.Context, containerProperties ContainerProperties, o *CreateContainerOptions) (ContainerResponse, error)
+		func (*DatabaseClient) Delete(ctx context.Context, o *DeleteDatabaseOptions) (DatabaseResponse, error)
+		func (*DatabaseClient) ID() string
+		func (*DatabaseClient) NewContainer(id string) (*ContainerClient, error)
+		func (*DatabaseClient) Read(ctx context.Context, o *ReadDatabaseOptions) (DatabaseResponse, error)
+		func (*DatabaseClient) ReadThroughput(ctx context.Context, o *ThroughputOptions) (ThroughputResponse, error)
+		func (*DatabaseClient) ReplaceThroughput(ctx context.Context, throughputProperties ThroughputProperties, o *ThroughputOptions) (ThroughputResponse, error)
+	
+	type DatabaseProperties struct
+		ETag          *azcore.ETag
+		ID            string
+		LastModified  time.Time
+		ResourceID    string
+		SelfLink      string
+		
+		func (*DatabaseProperties) UnmarshalJSON(b []byte) error
+		func (DatabaseProperties) MarshalJSON() ([]byte, error)
+	
+	type DatabaseResponse struct
+		Response
+		DatabaseProperties  *DatabaseProperties
+	
+	type DedicatedGatewayRequestOptions struct
+		MaxIntegratedCacheStaleness  *time.Duration
+	
+	type DeleteContainerOptions struct
+	
+	type DeleteDatabaseOptions struct
+		IfMatchEtag      *azcore.ETag
+		IfNoneMatchEtag  *azcore.ETag
+	
+	type ExcludedPath struct
+		Path  string
+	
+	type IncludedPath struct
+		Path  string
+	
+	type IndexingPolicy struct
+		Automatic         bool
+		CompositeIndexes  [][]CompositeIndex
+		ExcludedPaths     []ExcludedPath
+		IncludedPaths     []IncludedPath
+		IndexingMode      IndexingMode
+		SpatialIndexes    []SpatialIndex
+	
+	type ItemOptions struct
+		ConsistencyLevel                *ConsistencyLevel
+		DedicatedGatewayRequestOptions  *DedicatedGatewayRequestOptions
+		EnableContentResponseOnWrite    bool
+		IfMatchEtag                     *azcore.ETag
+		IndexingDirective               *IndexingDirective
+		PostTriggers                    []string
+		PreTriggers                     []string
+		SessionToken                    *string
+	
+	type ItemResponse struct
+		Response
+		SessionToken  *string
+		Value         []byte
+	
+	type KeyCredential struct
+		func NewKeyCredential(accountKey string) (KeyCredential, error)
+		func (*KeyCredential) Update(accountKey string) error
+	
+	type PartitionKey struct
+		func NewPartitionKey() PartitionKey
+		func NewPartitionKeyBool(value bool) PartitionKey
+		func NewPartitionKeyNumber(value float64) PartitionKey
+		func NewPartitionKeyString(value string) PartitionKey
+		func (PartitionKey) AppendBool(value bool) PartitionKey
+		func (PartitionKey) AppendNull() PartitionKey
+		func (PartitionKey) AppendNumber(value float64) PartitionKey
+		func (PartitionKey) AppendString(value string) PartitionKey
+		var
+			NullPartitionKey PartitionKey = PartitionKey{
+	values: []interface{}{nil},
+}
+	
+	type PartitionKeyDefinition struct
+		Kind     PartitionKeyKind
+		Paths    []string
+		Version  int
+		
+		func (PartitionKeyDefinition) MarshalJSON() ([]byte, error)
+	
+	type PatchOperations struct
+		func (PatchOperations) MarshalJSON() ([]byte, error)
+		func (*PatchOperations) AppendAdd(path string, value any)
+		func (*PatchOperations) AppendIncrement(path string, value int64)
+		func (*PatchOperations) AppendRemove(path string)
+		func (*PatchOperations) AppendReplace(path string, value any)
+		func (*PatchOperations) AppendSet(path string, value any)
+		func (*PatchOperations) SetCondition(condition string)
+	
+	type QueryContainersOptions struct
+		ContinuationToken  *string
+		QueryParameters    []QueryParameter
+	
+	type QueryContainersResponse struct
+		Response
+		Containers         []ContainerProperties
+		ContinuationToken  *string
+	
+	type QueryDatabasesOptions struct
+		ContinuationToken  *string
+		QueryParameters    []QueryParameter
+	
+	type QueryDatabasesResponse struct
+		Response
+		ContinuationToken  *string
+		Databases          []DatabaseProperties
+	
+	type QueryItemsResponse struct
+		Response
+		ContinuationToken  *string
+		IndexMetrics       *string
+		Items              [][]byte
+		QueryMetrics       *string
+	
+	type QueryOptions struct
+		ConsistencyLevel                    *ConsistencyLevel
+		ContinuationToken                   *string
+		DedicatedGatewayRequestOptions      *DedicatedGatewayRequestOptions
+		EnableCrossPartitionQuery           *bool
+		EnableScanInQuery                   bool
+		PageSizeHint                        int32
+		PopulateIndexMetrics                bool
+		QueryParameters                     []QueryParameter
+		ResponseContinuationTokenLimitInKB  int32
+		SessionToken                        *string
+		UnstablePreviewQueryEngine          queryengine.QueryEngine
+	
+	type QueryParameter struct
+		Name   string
+		Value  any
+	
+	type ReadContainerOptions struct
+		PopulateQuotaInfo  bool
+	
+	type ReadDatabaseOptions struct
+		IfMatchEtag      *azcore.ETag
+		IfNoneMatchEtag  *azcore.ETag
+	
+	type ReplaceContainerOptions struct
+	
+	type Response struct
+		ActivityID     string
+		ETag           azcore.ETag
+		RawResponse    *http.Response
+		RequestCharge  float32
+	
+	type SpatialIndex struct
+		Path          string
+		SpatialTypes  []SpatialType
+	
+	type ThroughputOptions struct
+		IfMatchEtag      *azcore.ETag
+		IfNoneMatchEtag  *azcore.ETag
+	
+	type ThroughputProperties struct
+		ETag          *azcore.ETag
+		LastModified  time.Time
+		
+		func NewAutoscaleThroughputProperties(startingMaxThroughput int32) ThroughputProperties
+		func NewAutoscaleThroughputPropertiesWithIncrement(startingMaxThroughput int32, incrementPercentage int32) ThroughputProperties
+		func NewManualThroughputProperties(throughput int32) ThroughputProperties
+		func (*ThroughputProperties) AutoscaleIncrement() (int32, bool)
+		func (*ThroughputProperties) AutoscaleMaxThroughput() (int32, bool)
+		func (*ThroughputProperties) ManualThroughput() (int32, bool)
+		func (*ThroughputProperties) MarshalJSON() ([]byte, error)
+		func (*ThroughputProperties) UnmarshalJSON(b []byte) error
+	
+	type ThroughputResponse struct
+		Response
+		IsReplacePending      bool
+		MinThroughput         *int32
+		ThroughputProperties  *ThroughputProperties
+	
+	type TransactionalBatch struct
+		func (*TransactionalBatch) CreateItem(item []byte, o *TransactionalBatchItemOptions)
+		func (*TransactionalBatch) DeleteItem(itemID string, o *TransactionalBatchItemOptions)
+		func (*TransactionalBatch) PatchItem(itemID string, p PatchOperations, o *TransactionalBatchItemOptions)
+		func (*TransactionalBatch) ReadItem(itemID string, o *TransactionalBatchItemOptions)
+		func (*TransactionalBatch) ReplaceItem(itemID string, item []byte, o *TransactionalBatchItemOptions)
+		func (*TransactionalBatch) UpsertItem(item []byte, o *TransactionalBatchItemOptions)
+	
+	type TransactionalBatchItemOptions struct
+		IfMatchETag  *azcore.ETag
+	
+	type TransactionalBatchOptions struct
+		ConsistencyLevel              *ConsistencyLevel
+		EnableContentResponseOnWrite  bool
+		SessionToken                  string
+	
+	type TransactionalBatchResponse struct
+		Response
+		OperationResults  []TransactionalBatchResult
+		SessionToken      string
+		Success           bool
+	
+	type TransactionalBatchResult struct
+		ETag           azcore.ETag
+		RequestCharge  float32
+		ResourceBody   []byte
+		StatusCode     int32
+		
+		func (*TransactionalBatchResult) UnmarshalJSON(b []byte) error
+	
+	type UniqueKey struct
+		Paths  []string
+	
+	type UniqueKeyPolicy struct
+		UniqueKeys  []UniqueKey
+	
+	type CompositeIndexOrder string
+		func (CompositeIndexOrder) ToPtr() *CompositeIndexOrder
+		
+		const
+			CompositeIndexAscending CompositeIndexOrder = "ascending"
+			CompositeIndexDescending CompositeIndexOrder = "descending"
+	
+	type ConflictResolutionMode string
+		func (ConflictResolutionMode) ToPtr() *ConflictResolutionMode
+		
+		const
+			ConflictResolutionModeCustom ConflictResolutionMode = "Custom"
+			ConflictResolutionModeLastWriteWins ConflictResolutionMode = "LastWriterWins"
+	
+	type ConsistencyLevel string
+		func (ConsistencyLevel) ToPtr() *ConsistencyLevel
+		
+		const
+			ConsistencyLevelBoundedStaleness ConsistencyLevel = "BoundedStaleness"
+			ConsistencyLevelConsistentPrefix ConsistencyLevel = "ConsistentPrefix"
+			ConsistencyLevelEventual ConsistencyLevel = "Eventual"
+			ConsistencyLevelSession ConsistencyLevel = "Session"
+			ConsistencyLevelStrong ConsistencyLevel = "Strong"
+	
+	type DataType string
+		func (DataType) ToPtr() *DataType
+		
+		const
+			DataTypeLineString DataType = "LineString"
+			DataTypeMultiPolygon DataType = "MultiPolygon"
+			DataTypeNumber DataType = "Number"
+			DataTypePoint DataType = "Point"
+			DataTypePolygon DataType = "Polygon"
+			DataTypeString DataType = "String"
+	
+	type IndexingDirective string
+		func (IndexingDirective) ToPtr() *IndexingDirective
+		
+		const
+			IndexingDirectiveDefault IndexingDirective = "Default"
+			IndexingDirectiveExclude IndexingDirective = "Exclude"
+			IndexingDirectiveInclude IndexingDirective = "Include"
+	
+	type IndexingMode string
+		func (IndexingMode) ToPtr() *IndexingMode
+		
+		const
+			IndexingModeConsistent IndexingMode = "Consistent"
+			IndexingModeNone IndexingMode = "None"
+	
+	type PartitionKeyKind string
+		const
+			PartitionKeyKindHash PartitionKeyKind = "Hash"
+			PartitionKeyKindMultiHash PartitionKeyKind = "MultiHash"
+	
+	type SpatialType string
+		func (SpatialType) ToPtr() *SpatialType
+		
+		const
+			SpatialTypeLineString SpatialType = "LineString"
+			SpatialTypeMultiPolygon SpatialType = "MultiPolygon"
+			SpatialTypePoint SpatialType = "Point"
+			SpatialTypePolygon SpatialType = "Polygon"
+	
+	func CompositeIndexOrderValues() []CompositeIndexOrder
+	func ConflictResolutionModeValues() []ConflictResolutionMode
+	func ConsistencyLevelValues() []ConsistencyLevel
+	func DataTypeValues() []DataType
+	func IndexingDirectives() []IndexingDirective
+	func IndexingModeValues() []IndexingMode
+	func SpatialTypeValues() []SpatialType
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+package azcosmos/unstable/queryengine
+	type QueryEngine interface
+		CreateQueryPipeline(query string, plan string, pkranges string) (QueryPipeline, error)
+		SupportedFeatures() string
+		
+	type QueryPipeline interface
+		Close()
+		IsComplete() bool
+		ProvideData(data QueryResult) error
+		Query() string
+		Run() (*PipelineResult, error)
+		
+	type PipelineResult struct
+		IsCompleted  bool
+		Items        [][]byte
+		Requests     []QueryRequest
+	
+	type QueryRequest struct
+		Continuation         string
+		PartitionKeyRangeID  string
+	
+	type QueryResult struct
+		Data                 []byte
+		NextContinuation     string
+		PartitionKeyRangeID  string
+		
+		func NewQueryResult(partitionKeyRangeID string, data []byte, continuation string) QueryResult
+		func NewQueryResultString(partitionKeyRangeID string, data string, continuation string) QueryResult
+	

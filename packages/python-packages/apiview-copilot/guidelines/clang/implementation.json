@@ -87,7 +87,7 @@
   {
     "id": "clang_implementation.html#clang-objmodel-manyparams2",
     "category": "Functions with many parameters",
-    "text": "DO NOT include the class object in the encapsulating paramter struct.\n\nIf a method could require allocating memory then it should use the most relevant set of allocation callbacks. For example the az_widgets_client_add_side method may need to allocate or re-allocate the array of sides.  It should use the az_widgets_client allocators.  On the other hand the method:\n\n{% highlight c %}\nvoid az_widgets_client_set_str(az_widgets_client* herd, const char* str);\n{% endhighlight %}\n\nwould likely use the allocation callbacks inside the client->str structure.\n\nTODO: Rationalize advice here.  Earlier, we said don't include allocators inside the structure.\n\nCallback functions should be defined to take a pointer to the \"sender\" object as the first argument and a void pointer to user data as the last argument. Any additional arguments, if any, should be contextual data needed by the callback. For example say we had an object az_widgets_client that could make requests to be handled in a callback and we represent the response as an object az_response. We might define the following:\n\n{% highlight c %}\ntypedef bool (az_widgets_response_callback)(az_widgets_client client,\naz_response* resp,\nvoid* user_data);\nvoid az_widgets_client_set_response_callback(az_widgets_client* client,\naz_widgets_response_callback callback,\nvoid* user_data);\n{% endhighlight %}\n\nClient code would use this in the following manner:\n\n{% highlight c %}\ntypedef struct user_data {\nint some_int;\n} user_data;\n\nbool handle_resp(az_widgets_client* client,\naz_response* resp,\nvoid* user) {\nuser_data* data = user;\n/* do things with parameters */\nreturn true;\n}\n\nint main() {\nuser_data d = {.some_int = 5};\naz_widgets_client client = { 0 };\naz_widgets_client_init(&client);\naz_widgets_client_set_response_callback(&client, &handle_resp, &d);\n/* do something that triggers the callback */\n\n/* unset the callback if we don't want to handle it anymore */\naz_widgets_client_set_response_callback(&client, NULL, NULL);\n}\n{% endhighlight %}"
+    "text": "DO NOT include the class object in the encapsulating parameter struct.\n\nIf a method could require allocating memory then it should use the most relevant set of allocation callbacks. For example the az_widgets_client_add_side method may need to allocate or re-allocate the array of sides.  It should use the az_widgets_client allocators.  On the other hand the method:\n\n{% highlight c %}\nvoid az_widgets_client_set_str(az_widgets_client* herd, const char* str);\n{% endhighlight %}\n\nwould likely use the allocation callbacks inside the client->str structure.\n\nTODO: Rationalize advice here.  Earlier, we said don't include allocators inside the structure.\n\nCallback functions should be defined to take a pointer to the \"sender\" object as the first argument and a void pointer to user data as the last argument. Any additional arguments, if any, should be contextual data needed by the callback. For example say we had an object az_widgets_client that could make requests to be handled in a callback and we represent the response as an object az_response. We might define the following:\n\n{% highlight c %}\ntypedef bool (az_widgets_response_callback)(az_widgets_client client,\naz_response* resp,\nvoid* user_data);\nvoid az_widgets_client_set_response_callback(az_widgets_client* client,\naz_widgets_response_callback callback,\nvoid* user_data);\n{% endhighlight %}\n\nClient code would use this in the following manner:\n\n{% highlight c %}\ntypedef struct user_data {\nint some_int;\n} user_data;\n\nbool handle_resp(az_widgets_client* client,\naz_response* resp,\nvoid* user) {\nuser_data* data = user;\n/* do things with parameters */\nreturn true;\n}\n\nint main() {\nuser_data d = {.some_int = 5};\naz_widgets_client client = { 0 };\naz_widgets_client_init(&client);\naz_widgets_client_set_response_callback(&client, &handle_resp, &d);\n/* do something that triggers the callback */\n\n/* unset the callback if we don't want to handle it anymore */\naz_widgets_client_set_response_callback(&client, NULL, NULL);\n}\n{% endhighlight %}"
   },
   {
     "id": "clang_implementation.html#clang-objmodel-callback-userdata",
@@ -122,7 +122,7 @@
   {
     "id": "clang_implementation.html#clang-objmodel-manyparams2",
     "category": "Functions with many parameters",
-    "text": "DO NOT include the class object in the encapsulating paramter struct.\n\nRequests to the service fall into two basic groups - methods that make a single logical request, or a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation.  An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. For HTTP, the logical entity may combine data from headers, body and the status line. A common example is exposing an ETag header as a property on the logical entity in addition to any deserialized content from the body."
+    "text": "DO NOT include the class object in the encapsulating parameter struct.\n\nRequests to the service fall into two basic groups - methods that make a single logical request, or a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation.  An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. For HTTP, the logical entity may combine data from headers, body and the status line. A common example is exposing an ETag header as a property on the logical entity in addition to any deserialized content from the body."
   },
   {
     "id": "clang_implementation.html#clang-return-logical-entities",
@@ -222,7 +222,7 @@
   {
     "id": "clang_implementation.html#clang-testing-valgrind",
     "category": "Testing",
-    "text": "DO NOT have any memory leaks. Run samples and unit tests with valgrind (http://www.valgrind.org/downloads/current.html)  Unit tests and e2e tests are valgrind verified at the gate."
+    "text": "DO NOT have any memory leaks. Run samples and unit tests with valgrind (https://www.valgrind.org/downloads/current.html)  Unit tests and e2e tests are valgrind verified at the gate."
   },
   {
     "id": "clang_implementation.html#clang-testing-unittests",
@@ -262,7 +262,7 @@
   {
     "id": "clang_implementation.html#clang-tooling-clang-format",
     "category": "endif",
-    "text": "DO use clang-format (http://clang.llvm.org/docs/ClangFormat.html) for formatting, with the following command-line options:\n\n{% highlight bash %}\nclang-format -style=file -i  ...\n{% endhighlight %}\n\nUsing -i does an in-place edit of the files for style.  There is a Visual Studio extension (https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchain) that binds Ctrl-R Ctrl-F to this operation. Visual Studio 2019 includes this functionality by default.\n\nTODO: Decide on exact formatting standards to use and include here."
+    "text": "DO use clang-format (https://clang.llvm.org/docs/ClangFormat.html) for formatting, with the following command-line options:\n\n{% highlight bash %}\nclang-format -style=file -i  ...\n{% endhighlight %}\n\nUsing -i does an in-place edit of the files for style.  There is a Visual Studio extension (https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchain) that binds Ctrl-R Ctrl-F to this operation. Visual Studio 2019 includes this functionality by default.\n\nTODO: Decide on exact formatting standards to use and include here."
   },
   {
     "id": "clang_implementation.html#clang-tooling-cmake-docs",
@@ -282,7 +282,7 @@
   {
     "id": "clang_implementation.html#clang-format-clang",
     "category": "Formatting",
-    "text": "DO use clang-format (http://clang.llvm.org/docs/ClangFormat.html) for formatting your code. Use the common clang-format options from Engineering Systems.\n\nIn general, clang-format will format your code correctly and ensure consistency. However, these are few additional  rules to keep in mind."
+    "text": "DO use clang-format (https://clang.llvm.org/docs/ClangFormat.html) for formatting your code. Use the common clang-format options from Engineering Systems.\n\nIn general, clang-format will format your code correctly and ensure consistency. However, these are few additional  rules to keep in mind."
   },
   {
     "id": "clang_implementation.html#clang-format-clang-loops",
@@ -357,7 +357,7 @@
   {
     "id": "clang_implementation.html#clang-no-ms-secure-functions",
     "category": "Secure functions",
-    "text": "YOU SHOULD NOT use Microsoft security enhanced versions of CRT functions (https://docs.microsoft.com/cpp/c-runtime-library/security-enhanced-versions-of-crt-functions) to implement APIs that need to be portable across many platforms. Such code is not portable and is not C99 compatible. Adding that code to your API will complicate the implementation with little to no gain from the security side. See arguments against (http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1967.htm) \n\nTODO: Verify with the security team, and what are the alternatives?"
+    "text": "YOU SHOULD NOT use Microsoft security enhanced versions of CRT functions (https://docs.microsoft.com/cpp/c-runtime-library/security-enhanced-versions-of-crt-functions) to implement APIs that need to be portable across many platforms. Such code is not portable and is not C99 compatible. Adding that code to your API will complicate the implementation with little to no gain from the security side. See arguments against (https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1967.htm) \n\nTODO: Verify with the security team, and what are the alternatives?"
   },
   {
     "id": "clang_implementation.html#clang-test-implicit-assign",

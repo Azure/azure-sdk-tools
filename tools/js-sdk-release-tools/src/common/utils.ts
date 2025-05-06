@@ -297,3 +297,8 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
         });
     return options
 }
+
+// Get the spec repo where the project is defined to set into tsp-location.yaml
+export function generateRepoDataInTspLocation(repoUrl: string) {
+    return repoUrl.replace("https://github.com/", "")
+}

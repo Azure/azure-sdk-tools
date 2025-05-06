@@ -115,7 +115,7 @@
     "text": "DO NOT include preview API versions in a stable SDK release's API version enum."
   },
   {
-    "id": "android_design.html#android-versioning-no-previews-in-stable",
+    "id": "android_design.html#android-versioning-previews-only-in-beta",
     "category": "Service Versions",
     "text": "DO expose preview API versions only in beta SDKs."
   },
@@ -350,12 +350,12 @@
     "text": "DO provide one or more constructors with arguments, if a model type has required properties. If there are multiple mutually exclusive sets of supported required parameters, a constructor must be introduced for each of these. For example:\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\npackage com.azure.android.ai.textanalytics.models;\n\n@Fluent\npublic final class TextDocumentInput {\n    // Required properties.\n    private final String id;\n    private final String text;\n  \n    // Optional property.\n    private String language;\n  \n    // Constructor to enforce setting the required properties.\n    public TextDocumentInput(String id, String text) {\n        this.id = Objects.requireNonNull(id, \"'id' cannot be null.\");\n        this.text = Objects.requireNonNull(text, \"'text' cannot be null.\");\n    }\n  \n    // Required properties only have getters.\n    public String getId() {\n        return this.id;\n    }\n  \n    public String getText() {\n        return this.text;\n    }\n  \n    // Optional property has both getter and fluent setter.\n    public String getLanguage() {\n        return this.language;\n    }\n  \n    public TextDocumentInput setLanguage(String language) {\n        this.language = language;\n        return this;\n    }\n}\n\n```"
   },
   {
-    "id": "android_design.html#android-models-fluent",
+    "id": "android_design.html#android-models-fluent-api",
     "category": "Model Types",
     "text": "DO provide a fluent setter API to configure the model class, where each set method should return this. This allows chaining of set operations."
   },
   {
-    "id": "android_design.html#android-models-fluent",
+    "id": "android_design.html#android-models-fluent-override-set",
     "category": "Model Types",
     "text": "DO override all set methods when extending a fluent type to return the extended type. This allows chaining of set operations on the sub-class.\n\n```java\n@Fluent\npublic class SettlementOptions {\n    private ServiceBusTransactionContext transactionContext;\n\n    public ServiceBusTransactionContext getTransactionContext() {\n        return transactionContext;\n    }\n\n    public SettlementOptions setTransactionContext(ServiceBusTransactionContext transactionContext) {\n        this.transactionContext = transactionContext;\n        return this;\n    }\n}\n\n@Fluent\npublic final AbandonOptions extends SettlementOptions {\n    private Map&lt;String, Object&gt; propertiesToModify;\n\n    public Map&lt;String, Object&gt; getPropertiesToModify() {\n        return propertiesToModify;\n    }\n\n    public AbandonOptions setPropertiesToModify(Map&lt;String, Object&gt; propertiesToModify) {\n        this.propertiesToModify = propertiesToModify;\n        return this;\n    }\n\n    // Override setter method of the parent class\n    @Override\n    public AbandonOptions setTransactionContext(ServiceBusTransactionContext transactionContext) {\n        super.setTransactionContext(transactionContext);\n        return this;\n    }\n}\n\n```"
   },

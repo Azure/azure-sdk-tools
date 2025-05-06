@@ -12,7 +12,7 @@
   {
     "id": "golang_introduction.html#golang-general-idiomatic-code",
     "category": "General Guidelines {#golang-general}",
-    "text": "DO write idiomatic Go code.  If you're not familiar with the language, a great place to start is https://golang.org/doc/effective_go.  Do NOT simply attempt to translate your language of choice into Go.\n\nThis document contains guidelines developed primarily for typical Azure REST services, i.e. stateless services with request-response based interaction model. Many of the guidelines in this document are more broadly applicable, but some might be specific to such REST services.\n\nAzure services will be exposed to Go developers as one or more service client types and a set of supporting types.\n\nYour API surface consists of one or more service clients that the consumer instantiates to connect to your service, plus a set of supporting types."
+    "text": "DO write idiomatic Go code.  If you're not familiar with the language, a great place to start is https://golang.org/doc/effective_go (https://golang.org/doc/effective_go)   Do NOT simply attempt to translate your language of choice into Go.\n\nThis document contains guidelines developed primarily for typical Azure REST services, i.e. stateless services with request-response based interaction model. Many of the guidelines in this document are more broadly applicable, but some might be specific to such REST services.\n\nAzure services will be exposed to Go developers as one or more service client types and a set of supporting types.\n\nYour API surface consists of one or more service clients that the consumer instantiates to connect to your service, plus a set of supporting types."
   },
   {
     "id": "golang_introduction.html#golang-client-naming",
@@ -27,7 +27,17 @@
   {
     "id": "golang_introduction.html#golang-client-constructors-params",
     "category": "Service Client Constructors",
-    "text": "DO document all constructor parameters as part of the method block comment.\n\nTODO\n\nTODO"
+    "text": "DO document all constructor parameters as part of the method block comment."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-service-client-versioning-highest-api",
+    "category": "Setting the Service Version",
+    "text": "DO call the highest supported service API version by default."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-service-client-versioning-select-api-version",
+    "category": "Setting the Service Version",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client."
   },
   {
     "id": "golang_introduction.html#golang-api-service-client-immutable",
@@ -155,12 +165,12 @@
     "text": "DO return an instance of *runtime.Pager[T] for operations that return pages.  runtime.Pager[T] allows consumers to iterate over all pages as defined by the service."
   },
   {
-    "id": "golang_introduction.html#golang-pagination",
+    "id": "golang_introduction.html#golang-paged-method-naming",
     "category": "Methods Returning Collections (Paging)",
     "text": "DO name methods that return a *runtime.Pager[T] with pattern New<Operation>Pager."
   },
   {
-    "id": "golang_introduction.html#golang-params-service-validation",
+    "id": "golang_introduction.html#golang-paging-io",
     "category": "Methods Returning Collections (Paging)",
     "text": "DO NOT perform any IO when creating the runtime.Pager[T].  This implies that the method does NOT take a context and does NOT return an error.\n\n```go\nfunc (c *WidgetClient) NewListPager(options *WidgetClientListOptions) *runtime.Pager[WidgetClientListResponse] {\n\t// ...\n}\n\ntype WidgetClientListResponse struct {\n\tWidgetsListResult\n}\n\ntype WidgetsListResult struct {\n\tValues []*Widget\n\n\tNextLink *string\n}\n\npager := client.NewListPager(nil)\nfor pager.More() {\n\tpage, err := pager.NextPage(context.Background())\n\tif err != nil {\n\t\t// handle error...\n\t}\n\tfor _, w := range page.Value {\n\t\tprocess(w)\n\t}\n}\n\n```"
   },
@@ -192,12 +202,12 @@
   {
     "id": "golang_introduction.html#golang-lro-pattern",
     "category": "Methods Invoking Long Running Operations",
-    "text": "DO follow the operation pattern for all LROs.\n\n```go\n// example #1, blocking call to PollUntilDone()\npoller, err := client.BeginCreate(context.Background(), \"blue_widget\", nil)\nif err != nil {\n\t// handle error...\n}\n\nw, err = poller.PollUntilDone(context.Background(), &amp;runtime.PollUntilDoneOptions{Frequency: 5*time.Second})\nif err != nil {\n\t// handle error...\n}\n\nprocess(w)\n\n// example #2, customized poll loop\npoller, err := client.BeginCreate(context.Background(), \"green_widget\")\nif err != nil {\n\t// handle error...\n}\n\nfor {\n\tresp, err := poller.Poll(context.Background())\n\tif err != nil {\n\t\t// handle error ...\n\t}\n\tif poller.Done() {\n\t\tbreak\n\t}\n\tif delay := runtime.RetryAfter(resp); delay &gt; 0 {\n\t\ttime.Sleep(delay)\n\t} else {\n\t\ttime.Sleep(frequency)\n\t}\n}\nw, err := poller.Result(context.Background())\nif err != nil {\n\t// handle error ...\n}\nprocess(w)\n\n// example #3, resuming from a previous operation\n// getting the resume token from a previous poller instance\npoller, err := client.BeginCreate(context.Background(), \"blue_widget\", nil)\nif err != nil {\n\t// handle error...\n}\n\ntk, err := poller.ResumeToken()\nif err != nil {\n\t// handle error ...\n}\n\n// resuming from the resume token that was previously saved\npoller, err = client.BeginCreate(context.Background(), \"\", &amp;WidgetClientBeginCreateOptions{\n\tResumeToken: tk,\n})\nif err != nil {\n\t// handle error ...\n}\n\nw, err = poller.PollUntilDone(context.Background(), nil)\nif err != nil {\n\t// handle error...\n}\nprocess(w)\n\n```\n\nTODO\n\nTODO\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nTODO\n\nTODO"
+    "text": "DO follow the operation pattern for all LROs.\n\n```go\n// example #1, blocking call to PollUntilDone()\npoller, err := client.BeginCreate(context.Background(), \"blue_widget\", nil)\nif err != nil {\n\t// handle error...\n}\n\nw, err = poller.PollUntilDone(context.Background(), &amp;runtime.PollUntilDoneOptions{Frequency: 5*time.Second})\nif err != nil {\n\t// handle error...\n}\n\nprocess(w)\n\n// example #2, customized poll loop\npoller, err := client.BeginCreate(context.Background(), \"green_widget\")\nif err != nil {\n\t// handle error...\n}\n\nfor {\n\tresp, err := poller.Poll(context.Background())\n\tif err != nil {\n\t\t// handle error ...\n\t}\n\tif poller.Done() {\n\t\tbreak\n\t}\n\tif delay := runtime.RetryAfter(resp); delay &gt; 0 {\n\t\ttime.Sleep(delay)\n\t} else {\n\t\ttime.Sleep(frequency)\n\t}\n}\nw, err := poller.Result(context.Background())\nif err != nil {\n\t// handle error ...\n}\nprocess(w)\n\n// example #3, resuming from a previous operation\n// getting the resume token from a previous poller instance\npoller, err := client.BeginCreate(context.Background(), \"blue_widget\", nil)\nif err != nil {\n\t// handle error...\n}\n\ntk, err := poller.ResumeToken()\nif err != nil {\n\t// handle error ...\n}\n\n// resuming from the resume token that was previously saved\npoller, err = client.BeginCreate(context.Background(), \"\", &amp;WidgetClientBeginCreateOptions{\n\tResumeToken: tk,\n})\nif err != nil {\n\t// handle error ...\n}\n\nw, err = poller.PollUntilDone(context.Background(), nil)\nif err != nil {\n\t// handle error...\n}\nprocess(w)\n\n```\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well."
   },
   {
     "id": "golang_introduction.html#golang-const",
     "category": "Constants as Enumerations",
-    "text": "DO use a const for parameters, fields, and return types when values are known.\n\nTODO\n\nTODO"
+    "text": "DO use a const for parameters, fields, and return types when values are known."
   },
   {
     "id": "golang_introduction.html#golang-errors",
@@ -262,7 +272,7 @@
   {
     "id": "golang_introduction.html#golang-auth-policy-impl",
     "category": "Authentication",
-    "text": "DO provide a suitable authentication policy if your service implements a non-standard authentication system (that is, an authentication system that is not supported by Azure Core).  You also need to produce an authentication policy for the HTTP pipeline that can add credentials to requests given the alternative authentication mechanism provided by the service.  Custom credentials will need to implement the azcore.Credentials interface.\n\nTODO (namespaces in other languages)\n\nOne of the key things we want to support is to allow consumers of the package to easily write repeatable unit-tests for their applications without activating a service. This allows them to reliably and quickly test their code without worrying about the vagaries of the underlying service implementation (including, for example, network conditions or service outages). Mocking is also helpful to simulate failures, edge cases, and hard to reproduce situations (for example: does code work on February 29th)."
+    "text": "DO provide a suitable authentication policy if your service implements a non-standard authentication system (that is, an authentication system that is not supported by Azure Core).  You also need to produce an authentication policy for the HTTP pipeline that can add credentials to requests given the alternative authentication mechanism provided by the service.  Custom credentials will need to implement the azcore.Credentials interface.\n\nOne of the key things we want to support is to allow consumers of the package to easily write repeatable unit-tests for their applications without activating a service. This allows them to reliably and quickly test their code without worrying about the vagaries of the underlying service implementation (including, for example, network conditions or service outages). Mocking is also helpful to simulate failures, edge cases, and hard to reproduce situations (for example: does code work on February 29th)."
   },
   {
     "id": "golang_introduction.html#golang-mock-friendly",
@@ -297,7 +307,7 @@
   {
     "id": "golang_introduction.html#golang-package-registration",
     "category": "Packages {#golang-packages}",
-    "text": "DO register the chosen package name with the [Architecture Board]. Open an issue to request the package name. See the registered package list for a list of the currently registered packages."
+    "text": "DO register the chosen package name with the [Architecture Board]. Open an issue to request the package name. See the [registered package list] for a list of the currently registered packages."
   },
   {
     "id": "golang_introduction.html#golang-pkgpath-construction",
@@ -360,14 +370,19 @@
     "text": "DO depend on the azcore package for functionality that is common across all client packages.  This package includes APIs for HTTP connectivity, global configuration, logging, credential handling, and more."
   },
   {
-    "id": "golang_introduction.html#golang-dependencies-azure-core",
+    "id": "golang_introduction.html#golang-dependencies-sdk-internal",
     "category": "Dependencies",
     "text": "DO depend on the sdk/internal package for functionality that is common across all client packages that should not be publicly exported.  This package includes helpers for creating errors with stack frame information, and more."
   },
   {
     "id": "golang_introduction.html#golang-dependencies-approved-list",
     "category": "Dependencies",
-    "text": "DO NOT be dependent on any other packages within the client package distribution package, with the exception of the following:\n\n| Library    | Version | Usage                                            |\n|------------|---------|--------------------------------------------------|\n| `github.com/pkg/browser` | v0.0.0-20180916011732-0a3d74bf9ce4 | Used for opening URLs in the user's default browser.  Used in `azidentity` interactive credential. |\n\n\nTODO"
+    "text": "DO NOT be dependent on any other packages within the client package distribution package, with the exception of the following:\n\n| Library    | Version | Usage                                            |\n|------------|---------|--------------------------------------------------|\n| `github.com/pkg/browser` | v0.0.0-20180916011732-0a3d74bf9ce4 | Used for opening URLs in the user's default browser.  Used in `azidentity` interactive credential. |\n\n\nNative dependencies introduce lots of complexities and should be avoided."
+  },
+  {
+    "id": "golang_introduction.html#golang-problems-native-dependencies",
+    "category": "Native Code",
+    "text": "YOU SHOULD NOT use native dependencies."
   },
   {
     "id": "golang_introduction.html#golang-document-everything",
@@ -387,7 +402,17 @@
   {
     "id": "golang_introduction.html#golang-docs-to-silence",
     "category": "Documentation Style",
-    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the [GoDoc]. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The less questions you have to answer about your client library, the more time you have to build new features for your service.\n\nTODO\n\nCode examples are small functions that demonstrate a certain feature that is relevant to the client library.  Examples allow developers to quickly understand the full usage requirements of your client library.  Code examples shouldn't be any more complex than needed to demonstrate the feature.  Don't write full applications.  Examples should have a high signal to noise ratio between useful code and boilerplate code for non-related reasons."
+    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the [GoDoc]. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The less questions you have to answer about your client library, the more time you have to build new features for your service."
+  },
+  {
+    "id": "golang_introduction.html#golang-docs-readme",
+    "category": "README",
+    "text": "DO have a README.md file in the package root folder.\n\nAn example of a good README.md file can be found here (https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/security/keyvault/azkeys/README.md) "
+  },
+  {
+    "id": "golang_introduction.html#golang-docs-readme-consumer",
+    "category": "README",
+    "text": "DO optimize the README.md for the consumer of the client library.\n\nThe contributor guide (CONTRIBUTING.md) should be a separate file linked to from the main component README.md.\n\nCode examples are small functions that demonstrate a certain feature that is relevant to the client library.  Examples allow developers to quickly understand the full usage requirements of your client library.  Code examples shouldn't be any more complex than needed to demonstrate the feature.  Don't write full applications.  Examples should have a high signal to noise ratio between useful code and boilerplate code for non-related reasons."
   },
   {
     "id": "golang_introduction.html#golang-include-code-examples",
@@ -432,6 +457,6 @@
   {
     "id": "golang_introduction.html#golang-code-example-combination",
     "category": "Samples",
-    "text": "DO NOT combine multiple operations in a code example unless it\u2019s required for demonstrating the type or member. For example, a Cosmos DB code example doesn\u2019t include both account and container creation operations. Create an example for account creation, and another example for container creation.\n\nCombined operations require knowledge of additional operations that might be outside the user\u2019s current focus. The developer must first understand the code surrounding the operation they\u2019re working on and can\u2019t copy and paste the code example into their project.\n\n[OpenTelemetry]: https://opentelemetry.io\n[Azure Monitor]: https://azure.microsoft.com/services/monitor/\n[azure/azure-sdk-for-go]: https://github.com/azure/azure-sdk-for-go\n[GoDoc]: https://godoc.org\n[1]: https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s"
+    "text": "DO NOT combine multiple operations in a code example unless it\u2019s required for demonstrating the type or member. For example, a Cosmos DB code example doesn\u2019t include both account and container creation operations. Create an example for account creation, and another example for container creation.\n\nCombined operations require knowledge of additional operations that might be outside the user\u2019s current focus. The developer must first understand the code surrounding the operation they\u2019re working on and can\u2019t copy and paste the code example into their project.\n\n[OpenTelemetry]: https://opentelemetry.io\n[Azure Monitor]: https://azure.microsoft.com/services/monitor/\n[azure/azure-sdk-for-go]: https://github.com/azure/azure-sdk-for-go\n[GoDoc]: https://godoc.org\n[1]: https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s\n[registered package list]: {{ site.baseurl }}{% link docs/tables/registered_namespaces.md %}\n"
   }
 ]

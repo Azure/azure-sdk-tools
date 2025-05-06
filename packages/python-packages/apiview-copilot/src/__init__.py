@@ -2,7 +2,7 @@ import os
 
 from ._version import VERSION
 from ._apiview_reviewer import ApiViewReview
-from ._models import ReviewResult, Violation
+from ._models import ReviewResult, Comment
 
 __version__ = VERSION
 

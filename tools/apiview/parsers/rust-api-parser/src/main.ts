@@ -1,11 +1,14 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
-import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
-import { Crate, FORMAT_VERSION, ItemKind } from "../rustdoc-types/output/rustdoc-types";
-import { reexportLines } from "./process-items/processUse";
-import { itemKindOrder, sortExternalItems } from "./process-items/utils/sorting";
+import { CodeFile, TokenKind } from "./models/apiview-models";
+import { Crate, FORMAT_VERSION, Id } from "../rustdoc-types/output/rustdoc-types";
+import { externalReferencesLines } from "./process-items/utils/externalReexports";
+import { sortExternalItems } from "./process-items/utils/sorting";
+import { updateReviewLinesWithStableLineIds } from "./utils/lineIdUtils";
 
 let apiJson: Crate;
+export const processedItems = new Set<number>();
+export let PACKAGE_NAME: string;
 export function getAPIJson(): Crate {
   return apiJson;
 }
@@ -18,17 +21,6 @@ function processRootItem(codeFile: CodeFile): void {
   const reviewLines = processItem(apiJson.index[apiJson.root]);
   if (reviewLines) {
     codeFile.ReviewLines.push(...reviewLines);
-  }
-}
-
-/**
- * Processes internal reexport lines and adds them to the code file
- * @param codeFile The code file to add review lines to
- */
-function processInternalReexports(codeFile: CodeFile): void {
-  if (reexportLines.internal.length > 0) {
-    addSectionHeader(codeFile, "Internal module re-exports");
-    codeFile.ReviewLines.push(...reexportLines.internal);
   }
 }
 
@@ -53,101 +45,41 @@ function addSectionHeader(codeFile: CodeFile, headerText: string): void {
 }
 
 /**
- * Processes external module reexports and adds them to the code file
+ * Processes external references and adds them to the code file
  * @param codeFile The code file to add review lines to
  */
-function processExternalModuleReexports(codeFile: CodeFile): void {
-  if (reexportLines.external.items.length > 0) {
-    addSectionHeader(codeFile, "External module re-exports");
-
-    // Separate modules with and without RelatedToLine
-    const modulesWithRelatedToLine: { [LinedId: string]: ReviewLine } = {};
-    const modulesWithoutRelatedToLine = [];
-
-    for (const module of reexportLines.external.modules) {
-      if (!module.RelatedToLine) {
-        modulesWithoutRelatedToLine.push(module);
-      } else {
-        modulesWithRelatedToLine[module.RelatedToLine] = module;
-      }
-    }
-
-    // Sort only the modules without RelatedToLine
-    sortExternalItems(modulesWithoutRelatedToLine);
-
-    // Add to the code file
-    for (const module of modulesWithoutRelatedToLine) {
-      codeFile.ReviewLines.push(module);
-      if (module.LineId in modulesWithRelatedToLine) {
-        codeFile.ReviewLines.push(modulesWithRelatedToLine[module.LineId]);
-      }
-    }
-  }
-}
-
-/**
- * Checks if an item is already included in any of the external modules
- * @param reexportItem The item to check
- * @returns Whether the item is already included
- */
-function isItemAlreadyIncludedInModules(reexportItem: ReviewLine): boolean {
-  for (let j = 0; j < reexportLines.external.modules.length; j++) {
-    const moduleReexport = reexportLines.external.modules[j];
-
-    if (moduleReexport.Children && moduleReexport.Children.length > 0) {
-      for (let k = 0; k < moduleReexport.Children.length; k++) {
-        if (moduleReexport.Children[k].LineId === reexportItem.LineId) {
-          return true;
-        }
-      }
-    }
-  }
-
-  return false;
-}
-
-/**
- * Processes external item reexports and adds them to the code file
- * @param codeFile The code file to add review lines to
- */
-function processExternalItemReexports(codeFile: CodeFile): void {
-  if (reexportLines.external.items.length > 0) {
-    addSectionHeader(codeFile, "External items");
+function processExternalReferences(codeFile: CodeFile): void {
+  if (externalReferencesLines.length > 0) {
+    addSectionHeader(codeFile, "External references");
 
     // Sort the external items by kind (using itemKindOrder) and then by name
-    sortExternalItems(reexportLines.external.items);
+    sortExternalItems(externalReferencesLines);
 
     // Process external item re-exports that aren't already included in modules
-    for (let i = 0; i < reexportLines.external.items.length; i++) {
-      const reexportItem = reexportLines.external.items[i];
-
-      // Only add the item if it's not already included in external module reexports
-      if (!isItemAlreadyIncludedInModules(reexportItem)) {
-        codeFile.ReviewLines.push(reexportItem);
-      }
+    for (let i = 0; i < externalReferencesLines.length; i++) {
+      codeFile.ReviewLines.push(externalReferencesLines[i]);
     }
   }
 }
 
 /**
- * Builds the code file by processing items and reexports
+ * Builds the code file by processing items and paths from the rustdoc output
  * @returns The built code file
  */
 function buildCodeFile(): CodeFile {
   const codeFile: CodeFile = {
-    PackageName: apiJson.index[apiJson.root].name || "unknown",
-    PackageVersion: apiJson["crate_version"] || "unknown",
-    ParserVersion: "1.0.0",
+    PackageName: apiJson.index[apiJson.root].name || "unknown_root_package_name",
+    PackageVersion: apiJson["crate_version"] || "unknown_crate_version",
+    ParserVersion: "1.1.0",
     Language: "Rust",
     ReviewLines: [],
   };
+  PACKAGE_NAME = codeFile.PackageName;
 
   processRootItem(codeFile);
-  processInternalReexports(codeFile);
-  processExternalModuleReexports(codeFile);
-  processExternalItemReexports(codeFile);
-  addSectionHeader(codeFile, "End");
+  processExternalReferences(codeFile);
 
+  updateReviewLinesWithStableLineIds(codeFile.ReviewLines);
   return codeFile;
 }
 

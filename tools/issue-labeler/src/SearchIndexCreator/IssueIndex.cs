@@ -263,8 +263,14 @@ namespace SearchIndexCreator
                         IsSearchable = false
                     },
                     new SearchableField("Title"),
-                    new SearchableField("Service"),
-                    new SearchableField("Category"),
+                    new SearchableField("Service")
+                    {
+                        IsFilterable = true
+                    },
+                    new SearchableField("Category")
+                    {
+                        IsFilterable = true
+                    },
                     new SearchField("Author", SearchFieldDataType.String)
                     {
                         IsSearchable = false

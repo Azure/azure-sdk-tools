@@ -470,7 +470,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         }
 
         // Override the AI Issue Triage Service call to return the values set in the test
-        public override Task<IssueTriageResponse> QueryAIIssueTriageService(IssueEventGitHubPayload issueEventPayload)
+        public override Task<IssueTriageResponse> QueryAIIssueTriageService(IssueEventGitHubPayload issueEventPayload, bool predictLabels, bool predictAnswers)
         {
             return Task.FromResult(
                 new IssueTriageResponse { 

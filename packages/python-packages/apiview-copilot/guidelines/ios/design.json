@@ -105,7 +105,7 @@
     "text": "DO NOT include preview API versions in a stable SDK release's API version enum."
   },
   {
-    "id": "ios_design.html#ios-versioning-no-previews-in-stable",
+    "id": "ios_design.html#ios-versioning-previews-only-in-beta",
     "category": "Service Versions",
     "text": "DO expose preview API versions only in beta SDKs."
   },
@@ -722,7 +722,7 @@
   {
     "id": "ios_design.html#ios-dependencies-approved",
     "category": "Dependencies",
-    "text": "DO NOT be dependent on any other packages within the client library distribution package, with the exception of the following:\n\n| Name              | Role                          | Version |\n|-------------------|-------------------------------|:-------:|\n| [`LibName`]       | Library Role                  | 1.0.0   |\n\n[`LibName`]: https://aka.ms/go_libname\n\n\nTODO:\nHow can we use a common approved dependencies list."
+    "text": "DO NOT be dependent on any other packages within the client library distribution package, with the exception of the following:\n\n| Name              | Role                          | Version |\n|-------------------|-------------------------------|:-------:|\n\n\nTODO:\nHow can we use a common approved dependencies list."
   },
   {
     "id": "ios_design.html#ios-dependencies-snapshot",

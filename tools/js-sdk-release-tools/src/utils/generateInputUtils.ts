@@ -81,6 +81,11 @@ export async function parseInputJson(inputJson: any) {
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+
+    if (apiVersion.toLowerCase().includes('preview') && sdkReleaseType.toLowerCase() === 'stable') {
+        throw new Error(`SDK release type' must be set to 'beta' for the preview API specifications.`);
+    }
+
     return {
         sdkType,
         specFolder,

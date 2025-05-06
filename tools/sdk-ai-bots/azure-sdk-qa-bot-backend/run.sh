@@ -2,6 +2,26 @@
 
 PID_FILE="service.pid"
 NGROK_PID_FILE="ngrok.pid"
+DEV_MODE=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -dev)
+            DEV_MODE=true
+            shift
+            ;;
+        start|stop|restart|status)
+            COMMAND=$1
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [-dev] {start|stop|restart|status}"
+            exit 1
+            ;;
+    esac
+done
 
 start_service() {
     if [ -f "$PID_FILE" ]; then
@@ -22,11 +42,14 @@ start_service() {
         echo "Warning: Could not find service PID listening on port 8088"
     fi
     
-    # Start ngrok
-    nohup ngrok http 8088 --url https://neutral-pleasant-gecko.ngrok-free.app > ngrok.log 2>&1 &
-    NGROK_PID=$!
-    echo $NGROK_PID > "$NGROK_PID_FILE"
-    echo "Started ngrok with PID: $NGROK_PID"
+    # Only start ngrok in dev mode
+    if [ "$DEV_MODE" = true ]; then
+        echo "Starting ngrok in development mode..."
+        nohup ngrok http 8088 --url https://neutral-pleasant-gecko.ngrok-free.app > ngrok.log 2>&1 &
+        NGROK_PID=$!
+        echo $NGROK_PID > "$NGROK_PID_FILE"
+        echo "Started ngrok with PID: $NGROK_PID"
+    fi
 }
 
 stop_service() {
@@ -52,13 +75,15 @@ stop_service() {
         echo "Go service PID file not found, tried stopping by port"
     fi
     
-    # Stop ngrok
-    if [ -f "$NGROK_PID_FILE" ]; then
-        echo "Stopping ngrok..."
-        kill $(cat "$NGROK_PID_FILE") 2>/dev/null
-        rm "$NGROK_PID_FILE"
-    else
-        echo "Ngrok PID file not found"
+    # Only start ngrok in dev mode
+    if [ "$DEV_MODE" = true ]; then
+        if [ -f "$NGROK_PID_FILE" ]; then
+            echo "Stopping ngrok..."
+            kill $(cat "$NGROK_PID_FILE") 2>/dev/null
+            rm "$NGROK_PID_FILE"
+        else
+            echo "Ngrok PID file not found"
+        fi
     fi
 }
 
@@ -90,7 +115,7 @@ status_service() {
     fi
 }
 
-case "$1" in
+case "$COMMAND" in
     start)
         start_service
         ;;
@@ -106,7 +131,7 @@ case "$1" in
         status_service
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status}"
+        echo "Usage: $0 [-dev] {start|stop|restart|status}"
         exit 1
         ;;
 esac

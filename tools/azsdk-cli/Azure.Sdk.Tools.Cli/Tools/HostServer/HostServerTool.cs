@@ -52,7 +52,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             builder.Services.AddSingleton<IAzureService, AzureService>();
 
             builder.Services
-                .AddLogging()
                 .AddMcpServer()
                 .WithStdioServerTransport()
                 // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be

@@ -17,8 +17,6 @@ extends:
     - task: AzurePowerShell@5
       displayName: Run Evals (AzurePowerShell@5)
       env:
-        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-        AZURE_POD_IDENTITY_AUTHORITY_HOST: 'https://FakeAuthorityHost'
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)
         AZURE_SUBSCRIPTION_ID: faa080af-c1d8-40ad-9cce-e1a450ca5b57
@@ -32,12 +30,6 @@ extends:
         pwsh: true
         ScriptType: InlineScript
         Inline: |
-          $account = (Get-AzContext).Account;
-          $env:AZURESUBSCRIPTION_CLIENT_ID = $account.Id;
-          $env:AZURESUBSCRIPTION_TENANT_ID = $account.Tenants;
-
-          Write-Host (Get-Command python).Source
-
           python packages/python-packages/apiview-copilot/evals/run.py
 
           Write-Host "Last exit code: $LASTEXITCODE";

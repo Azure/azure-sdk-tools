@@ -22,7 +22,7 @@ type CompletionService struct {
 
 func NewCompletionService() (*CompletionService, error) {
 	return &CompletionService{
-		model: os.Getenv("AOAI_CHAT_COMPLETIONS_MODEL"),
+		model: config.AOAI_CHAT_COMPLETIONS_MODEL,
 	}, nil
 }
 
@@ -79,7 +79,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
 		log.Printf("category: %v, question: %v", intentResult.Category, intentResult.Question)
-		if intentResult.Category == model.QuestionCategory_Unbranded {
+		if len(req.Sources) == 0 && intentResult.Category == model.QuestionCategory_Unbranded {
 			req.Sources = []model.Source{model.Source_TypeSpec}
 		}
 		if len(intentResult.Question) > 0 {
@@ -130,14 +130,12 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	wg.Wait()
 
 	chunks := make([]string, 0)
-	printChunks := make([]string, 0)
 	chunkLength := 0
 	for _, result := range mergedChunks {
 		chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
 		chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
 		chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
 		chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
-		printChunks = append(printChunks, chunk)
 		chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
 
 		chunkLength += len(chunk)

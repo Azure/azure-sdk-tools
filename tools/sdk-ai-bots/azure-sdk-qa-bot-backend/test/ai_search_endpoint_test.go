@@ -1,15 +1,17 @@
-package search
+package test
 
 import (
 	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
 )
 
 func TestQueryIndex(t *testing.T) {
+	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	req := &model.QueryIndexRequest{
 		Search: "how can i install typespec?",

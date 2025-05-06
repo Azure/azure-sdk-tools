@@ -1,23 +1,16 @@
 package auth
 
 import (
-	"log"
 	"net/http"
-	"os"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 // APIKeyAuth middleware checks for a valid API key in the X-API-Key header
 func APIKeyAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get API key from environment variable
-		err := godotenv.Load()
-		if err != nil {
-			log.Fatal(err)
-		}
-		expectedAPIKey := os.Getenv("API_KEY")
+		expectedAPIKey := config.API_KEY
 		if expectedAPIKey == "" {
 			// If no API key is set in environment, consider the API open
 			c.Next()

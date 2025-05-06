@@ -10,12 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
-)
-
-const (
-	BaseUrl                = "https://typespechelper4storage.blob.core.windows.net"
-	KnowledgeBlobContainer = "knowledge"
-	FeedbackBlobContainer  = "feedback"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 )
 
 type StorageService struct {
@@ -31,7 +26,7 @@ func NewStorageService() (*StorageService, error) {
 	}
 
 	// Create a blob client
-	blobClient, err := azblob.NewClient(BaseUrl, credential, nil)
+	blobClient, err := azblob.NewClient(config.STORAGE_BASE_URL, credential, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create blob client: %v", err)
 	}
@@ -63,8 +58,8 @@ func (s *StorageService) GetBlobs(container string) []string {
 	return result
 }
 
-func (s *StorageService) DeleteBlob(path string) error {
-	blobUrl := fmt.Sprintf("%s/%s/%s", BaseUrl, KnowledgeBlobContainer, path)
+func (s *StorageService) DeleteBlob(container, path string) error {
+	blobUrl := fmt.Sprintf("%s/%s/%s", config.STORAGE_BASE_URL, container, path)
 	blobUrl = strings.ReplaceAll(blobUrl, "#", "%23")
 	// Create a blockBlob client
 	blockBlobClient, err := blockblob.NewClient(blobUrl, s.credential, &blockblob.ClientOptions{})

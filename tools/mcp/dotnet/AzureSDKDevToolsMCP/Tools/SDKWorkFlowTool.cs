@@ -119,7 +119,14 @@ namespace AzureSDKDSpecTools.Tools
                     return response;
                 }
 
-                if (pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
+                var isMgmtPlane = _typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
+                if (isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
+                {
+                    response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                    return response;
+                }
+
+                if(isMgmtPlane)
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} has ARM approval or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
                     response.Status = "Success";
@@ -127,7 +134,8 @@ namespace AzureSDKDSpecTools.Tools
                 }
                 else
                 {
-                    response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                    response.Details.Add($"Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
+                    response.Status = "Success";
                     return response;
                 }
             }

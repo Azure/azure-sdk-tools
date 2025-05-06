@@ -477,7 +477,7 @@ namespace AzureSDKDSpecTools.Services
             if (workItemId != 0)
             {
                 _logger.LogInformation("Adding SDK pull request to release plan");
-                await AddSdkInfoInReleasePlan(workItemId, language, GetPipelineUrl(buildId), pullrequestUrl);
+                await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullrequestUrl);
             }
             return pullrequestUrl;
         }

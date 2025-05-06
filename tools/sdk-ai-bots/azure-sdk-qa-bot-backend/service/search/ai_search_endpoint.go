@@ -6,13 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
-	"os"
 	"strings"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
-	"github.com/joho/godotenv"
 )
 
 type SearchClient struct {
@@ -22,14 +20,10 @@ type SearchClient struct {
 }
 
 func NewSearchClient() *SearchClient {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
 	return &SearchClient{
-		BaseUrl: os.Getenv("AI_SEARCH_BASEURL"),
-		ApiKey:  os.Getenv("AI_SEARCH_APIKEY"),
-		Index:   os.Getenv("AI_SEARCH_INDEX"),
+		BaseUrl: config.AI_SEARCH_BASE_URL,
+		ApiKey:  config.AI_SEARCH_APIKEY,
+		Index:   config.AI_SEARCH_INDEX,
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
 )
@@ -72,7 +73,7 @@ func updateFeedbackFile(filename string) {
 		fmt.Printf("failed to create storage service: %v", err)
 		return
 	}
-	if err := storageService.PutBlob(storage.FeedbackBlobContainer, filename, content); err != nil {
+	if err := storageService.PutBlob(config.STORAGE_FEEDBACK_CONTAINER, filename, content); err != nil {
 		fmt.Printf("failed to upload feedback file: %v", err)
 		return
 	}

@@ -26,6 +26,7 @@ func setupRouter() *gin.Engine {
 
 func main() {
 	// init resources
+	config.InitSecrets()
 	config.InitOpenAIClient()
 	
 	r := setupRouter()

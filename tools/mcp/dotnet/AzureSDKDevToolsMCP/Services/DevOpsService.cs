@@ -468,21 +468,40 @@ namespace AzureSDKDSpecTools.Services
         {
             var buildClient = _connection.GetBuildClient();
             var timeLine = await buildClient.GetBuildTimelineAsync(INTERNAL_PROJECT, buildId);
-            var record = timeLine.Records.FirstOrDefault(r => r.Name == "Create pull request") ?? null;
-            if (record == null)
+            var createPrJob = timeLine.Records.FirstOrDefault(r => r.Name == "Create pull request") ?? null;
+            if (createPrJob == null)
             {
-                throw new Exception($"SDK pull request dlink is not available for pipeline run, Pipeline link {timeLine.Url}");
+                return $"Failed to generate SDK. SDK pull request link is not available for pipeline run, Pipeline link {timeLine.Url}";
             }
 
-            var contentStream = await buildClient.GetAttachmentAsync(INTERNAL_PROJECT, buildId, timeLine.Id, record.Id , "Distributedtask.Core.Summary", "Pull Request Created");
-            var content = new StreamReader(contentStream);
-            var pullrequestUrl = ParseSDKPullRequestUrl(content.ReadToEnd());
-            if (workItemId != 0)
+            // Get SDK pull request from create pull request job attachment
+            if (createPrJob.Result == TaskResult.Succeeded)
             {
-                _logger.LogInformation("Adding SDK pull request to release plan");
-                await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullrequestUrl);
+                var contentStream = await buildClient.GetAttachmentAsync(INTERNAL_PROJECT, buildId, timeLine.Id, createPrJob.Id, "Distributedtask.Core.Summary", "Pull Request Created");
+                if (contentStream != null)
+                {
+                    var content = new StreamReader(contentStream);
+                    var pullrequestUrl = ParseSDKPullRequestUrl(content.ReadToEnd());
+                    if (workItemId != 0)
+                    {
+                        _logger.LogInformation("Adding SDK pull request to release plan");
+                        await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullrequestUrl);
+                    }
+                    return pullrequestUrl;
+                }                
             }
-            return pullrequestUrl;
+
+            // Chck if there is any warning related to Generate SDK or create pr jobs. Ignore all 1ES jobs to avoid showing irrelevant warning.
+            StringBuilder sb = new($"Failed to generate SDK pull request for {language}.");
+            foreach(var job in timeLine.Records.Where( t => !t.Name.Contains("1ES")))
+            {
+                if (job.Issues.Count > 0)
+                {
+                    job.Issues.ForEach(issue => sb.AppendLine(issue.Message));
+                }
+            }
+            return sb.ToString();
+
         }
 
         public static string GetPipelineUrl(int buildId)

@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
             return 0;
         }
 
-        [McpServerTool, Description("Get release plan for a service, product and API spec pull request")]
+        [McpServerTool(Name = "get-release-plan"), Description("Get release plan for a service, product and API spec pull request")]
         public async Task<List<string>> GetReleasePlan(string serviceTreeId, string productTreeId, string pullRequestLink)
         {
             // todo: once we get buy in from benbp/wesh we should move tools/mcp/dotnet/AzureSDKDevToolsMCP/Tools/ReleasePlanTool.cs here.

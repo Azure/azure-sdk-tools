@@ -45,10 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             return 0;
         }
 
-        [McpServerTool, Description("Echoes the message back to the client.")]
+        [McpServerTool(Name="hello-world"), Description("Echoes the message back to the client.")]
         public static string Echo(string message) => $"RESPONDING TO {message}";
-
-
-
     }
 }

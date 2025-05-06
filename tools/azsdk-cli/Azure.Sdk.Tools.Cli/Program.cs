@@ -10,14 +10,23 @@ public sealed class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        // todo: parse a command bundle here. pass it to CreateHostBuilder once we have an actual type
-        // todo: can we have a "start" verb and a <tool> verb? EG if someone calls <server.exe> HelloWorld
-        //   "This is a hello world input" -> we invoke just that tool
-        //   "<server.exe> start" -> runs server responding to vscode copilot chat
-        ServiceCollection services = new();
-        ConfigureServices(services, targetedTools: null);
-        var serviceProvider = services.BuildServiceProvider();
+        // create the default service collection which will make logging and commandfactory available for use
+        // The command factory itself will walk the assembly and discover any MCPTool implementors, and register them
+        // as commands.
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+        services.AddSingleton<CommandFactory>();
 
+        // any registrations below here are only necessary for CLI mode
+        // the hosttool mode re-inits its own service provider
+        services.AddSingleton<IAzureService, AzureService>();
+
+        // 4. Build the provider
+        var serviceProvider = services.BuildServiceProvider();
         var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
         var rootCommand = commandFactory.CreateRootCommand();
 
@@ -27,15 +36,4 @@ public sealed class Program
         // log into something easy to read?
         return await rootCommand.InvokeAsync(args);
     }
-
-    public static void ConfigureServices(IServiceCollection services, List<MCPTool>? targetedTools)
-    {
-        if (targetedTools == null)
-        {
-            services.AddMcpServer()
-                .WithStdioServerTransport()
-                .WithToolsFromAssembly();
-        }
-    }
-
 }

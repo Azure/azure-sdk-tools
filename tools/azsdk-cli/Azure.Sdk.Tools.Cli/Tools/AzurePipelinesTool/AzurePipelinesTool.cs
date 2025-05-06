@@ -15,7 +15,7 @@ using System.CommandLine;
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool : MCPTool
+public class AzurePipelinesTool
 {
     private string? project;
 
@@ -32,12 +32,12 @@ public class AzurePipelinesTool : MCPTool
         this.testClient = connection.GetClient<TestResultsHttpClient>();
     }
 
-    public override Command GetCommand()
+    public  Command GetCommand()
     {
-        throw new NotImplementedException();
+        return new Command("meep");
     }
 
-    public override async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public  async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
 
         return 0;

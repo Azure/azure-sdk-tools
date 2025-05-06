@@ -91,7 +91,7 @@ export async function buildPackage(
     // note: these commands will delete temp folder
     await tryBuildSamples(packageDirectory, rushxScript);    
     await tryTestPackage(packageDirectory, rushxScript);
-    await tryFormatSamples(packageDirectory);
+    await tryFormatSdk(packageDirectory);
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');

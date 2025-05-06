@@ -91,7 +91,7 @@ export async function buildPackage(
     // note: these commands will delete temp folder
     await tryBuildSamples(packageDirectory, rushxScript);    
     await tryTestPackage(packageDirectory, rushxScript);
-    await tryFormatSdk(packageDirectory);
+    await formatSdk(packageDirectory);
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');
@@ -113,18 +113,14 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     }
 }
 
-// no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryFormatSamples(packageDirectory: string) {
-    logger.info(`Start to format samples in '${packageDirectory}'.`);
+export async function formatSdk(packageDirectory: string) {
+    logger.info(`Start to format code in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
     const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
-    try {
-        await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
-        logger.info(`format sdk successfully.`);
-    } catch (err) {
-        logger.warn(`Failed to format samples due to: ${(err as Error)?.stack ?? err}`);
-    }
+    
+    await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
+    logger.info(`format sdk successfully.`);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

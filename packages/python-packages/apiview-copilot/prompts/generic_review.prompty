@@ -12,6 +12,7 @@ model:
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
     azure_deployment: o3-mini
     api_version: 2025-01-01-preview
+    api_key: ${env:AZURE_OPENAI_API_KEY}
   parameters:
     frequency_penalty: 0
     presence_penalty: 0

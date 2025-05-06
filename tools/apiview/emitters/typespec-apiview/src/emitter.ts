@@ -11,7 +11,7 @@ import {
 } from "@typespec/compiler";
 import { createSdkContext } from "@azure-tools/typespec-client-generator-core";
 import path from "path";
-import { ApiView } from "./apiview.js";
+import { ApiView, PackageData } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
 
 export interface ResolvedApiViewEmitterOptions {
@@ -21,13 +21,33 @@ export interface ResolvedApiViewEmitterOptions {
   includeGlobalNamespace: boolean;
 }
 
+interface SdkEmitterOptions {
+  namespace?: string;
+}
+
+async function getPackageData(context: EmitContext<ApiViewEmitterOptions>): Promise<Map<string, PackageData>> {
+  const emitterNames = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-python", "@azure-tools/typespec-ts"];
+  const packageNamespaces = new Map<string, PackageData>();
+  const originalOptions = context.options;
+  for (const emitterName of emitterNames) {
+    const packageOptions = context.program.compilerOptions.options![emitterName] as SdkEmitterOptions;
+    context.options = packageOptions as unknown as ApiViewEmitterOptions;
+    const sdkContext = await createSdkContext(context, emitterName);
+    const namespace = sdkContext.sdkPackage.clients[0]?.namespace;
+    const data: PackageData = {
+      namespace: namespace ?? "Unknown",
+      packageName: "Unknown",
+    }
+    packageNamespaces.set(emitterName, data);
+  }
+  context.options = originalOptions;
+  return packageNamespaces;
+}
+
 export async function $onEmit(context: EmitContext<ApiViewEmitterOptions>) {
   const options = resolveOptions(context);
-  const pythonSdkContext = await createSdkContext(context, "@azure-tools/typespec-python");
-  const javaSdkContext = await createSdkContext(context, "@azure-tools/typespec-java");
-  const csharpSdkContext = await createSdkContext(context, "@azure-tools/typespec-csharp");
-  const tsSdkContext = await createSdkContext(context, "@azure-tools/typespec-ts");
-  const emitter = createApiViewEmitter(context.program, options);
+  const packageNamespaces = await getPackageData(context);
+  const emitter = createApiViewEmitter(context.program, packageNamespaces, options);
   await emitter.emitApiView();
 }
 
@@ -86,32 +106,8 @@ function applyServiceFilter(program: Program, services: Service[], options: Reso
   return filtered;
 }
 
-function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterOptions) {
+function createApiViewEmitter(program: Program, packageNamespaces: Map<string, PackageData>, options: ResolvedApiViewEmitterOptions) {
   return { emitApiView };
-
-  function getPackageData(): Map<string, string> {
-    const packageData = new Map<string, string>();
-
-    // Check if `program.compilerOptions.options` exists and contains package information
-    if (program.compilerOptions.options) {
-      const options = program.compilerOptions.options;
-
-      const packagesToCheck = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-python", "@azure-tools/typespec-ts"];
-      for (const packageName of packagesToCheck) {
-        let packageOptions = options[packageName];
-        var namespace: string | undefined = undefined;
-        if (packageOptions) {
-          namespace = packageOptions["namespace"] as string;
-          if (namespace == undefined && packageOptions["package-details"]) {
-            let packageDetails = packageOptions["package-details"] as any;
-            namespace = packageDetails["name"] as string;  
-          }
-          packageData.set(packageName, namespace ?? "unspecified");
-        }
-      }
-    }
-    return packageData;
-  }
 
   async function emitApiView() {
     let services = listServices(program);
@@ -132,8 +128,8 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     for (const service of services) {
       const namespaceString = resolveNamespaceString(service.type) ?? "Unknown"
       const serviceTitle = service.title ? service.title : namespaceString;
-      
-      const apiview = new ApiView(serviceTitle, namespaceString, getPackageData(), options.includeGlobalNamespace, );
+
+      const apiview = new ApiView(serviceTitle, namespaceString, packageNamespaces, options.includeGlobalNamespace);
       apiview.compile(program);
       apiview.resolveMissingTypeReferences();
 

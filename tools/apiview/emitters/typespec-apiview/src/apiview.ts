@@ -55,6 +55,11 @@ import { LIB_VERSION } from "./version.js";
 import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, NavigationItem, ReviewLine, ReviewToken, ReviewTokenOptions, TokenKind } from "./schemas.js";
 import { NamespaceStack, reviewLineText } from "./util.js";
 
+export interface PackageData {
+  namespace: string;
+  packageName: string;
+}
+
 export class ApiView {
   name: string;
   packageName: string;
@@ -75,7 +80,7 @@ export class ApiView {
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, packageData: Map<string, string>, includeGlobalNamespace?: boolean) {
+  constructor(name: string, packageName: string, packageData: Map<string, PackageData>, includeGlobalNamespace?: boolean) {
     this.name = name;
     this.packageName = packageName;
     this.packageVersion = "ALL";
@@ -510,7 +515,7 @@ export class ApiView {
     return suffix.startsWith(".");
   }
 
-  private emitHeader(packageData: Map<string, string>) {
+  private emitHeader(packageData: Map<string, PackageData>) {
     const toolVersion = LIB_VERSION;
     const headerText = `// Package parsed using @azure-tools/typespec-apiview (version:${toolVersion})`;
     this.literal(headerText, {SkipDiff: true});

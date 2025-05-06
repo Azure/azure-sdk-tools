@@ -7,7 +7,7 @@ import { tryReadNpmPackageChangelog } from "../../common/utils.js";
 import { removeSync, outputFileSync } from "fs-extra";
 import { getFirstReleaseContent } from "../../common/changelog/modifyChangelogFileAndBumpVersion.js";
 
-describe("Breaking change detection", () => {
+describe("Change log for first release package", () => {
     test("ModularClient -> firstGA", async () => {
         const root = path.join(__dirname, "testCases/modular-first-release/");
         const content = getFirstReleaseContent(root, true);

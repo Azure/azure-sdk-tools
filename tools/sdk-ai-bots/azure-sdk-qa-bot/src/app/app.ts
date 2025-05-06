@@ -4,11 +4,11 @@ import config from "../config.js";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from "@microsoft/teams-ai";
-import { RAGModel } from "../models/RAGModel.js";
+import { FakeModel } from "../models/FakeModel.js";
 import { FeedbackReaction, sendFeedback } from "../backend/feedback.js";
 
 // Create AI components
-const model = new RAGModel({
+const model = new FakeModel({
     apiKey: config.azureOpenAIKey,
     tenantId: config.azureOpenAIDeploymentName,
     // TODO: make /completion endpoint configurable

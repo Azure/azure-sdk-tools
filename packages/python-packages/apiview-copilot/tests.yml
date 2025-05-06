@@ -14,10 +14,8 @@ extends:
       displayName: 'Install Test Requirements'
       workingDirectory: $(Build.SourcesDirectory)/packages/python-packages/apiview-copilot
 
-    - script: |
-        python evals/run.py
-      displayName: 'Run Evals'
-      workingDirectory: $(Build.SourcesDirectory)/packages/python-packages/apiview-copilot
+    - task: AzurePowerShell@5
+      displayName: Run Evals (AzurePowerShell@5)
       env:
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)
@@ -25,4 +23,17 @@ extends:
         AZURE_FOUNDRY_RESOURCE_GROUP: openai-shared
         AZURE_FOUNDRY_PROJECT_NAME: apiview-ai
         OPENAI_API_VERSION: 2025-03-01-preview
-  
+      inputs:
+        azureSubscription: azure-sdk-tests-playground
+        azurePowerShellVersion: LatestVersion
+        pwsh: true
+        ScriptType: InlineScript
+        Inline: |
+          $account = (Get-AzContext).Account;
+          $env:AZURESUBSCRIPTION_CLIENT_ID = $account.Id;
+          $env:AZURESUBSCRIPTION_TENANT_ID = $account.Tenants;
+
+          python packages/python-packages/apiview-copilot/evals/run.py
+
+          Write-Host "Last exit code: $LASTEXITCODE";
+          exit $LASTEXITCODE;

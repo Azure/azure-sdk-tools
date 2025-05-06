@@ -49,9 +49,6 @@ public class AzurePipelinesTool
     }
 
     public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
-    {
-        return await Task.FromResult(0);
-    }
 
     [McpServerTool, Description("Gets details for a pipeline run")]
     public async Task<string> GetPipelineRun(int buildId)

@@ -41,7 +41,7 @@ Additional features include:
    - Create a new VM with Ubuntu (recommended)
 
 2. Configure Required Permissions:
-   - Assign the following roles to your virtual machine:
+   - **Assign the following roles to your virtual machine's managed identity**
      - [Storage Blob Data Contributor](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Storage/storageAccounts/typespechelper4storage/iamAccessControl)
      - [Key Vault Secrets User](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/AzureSDKQABotConfig/users)
 
@@ -49,13 +49,15 @@ Additional features include:
 1. Clone the repository:
    ```bash
    git clone https://github.com/wanlwanl/wanl-fork-azure-sdk-tools.git
+   cd wanl-fork-azure-sdk-tools
    git checkout azure-sdk-ai-bot
-   cd wanl-fork-azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+   cd tools/sdk-ai-bots/azure-sdk-qa-bot-backend
    ```
 
 2. Install latest Go:
    ```bash
-   apt install golang-go
+   sudo apt install golang-go
+   
    ```
 
 3. Start the server:

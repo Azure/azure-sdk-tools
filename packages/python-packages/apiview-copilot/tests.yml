@@ -18,7 +18,7 @@ extends:
       displayName: Run Evals (AzureCLI@2)
       inputs:
         azureSubscription: azure-sdk-tests-playground   # your service connection
-        scriptType: ps
+        scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
           # verify az is logged in:

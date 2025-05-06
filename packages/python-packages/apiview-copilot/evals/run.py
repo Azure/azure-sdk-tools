@@ -3,6 +3,8 @@ import json
 import pathlib
 import argparse
 from typing import Set, Tuple, Any
+import prompty
+import prompty.azure_beta
 import copy
 import sys
 import yaml
@@ -10,7 +12,6 @@ import yaml
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
-import openai
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
@@ -19,13 +20,13 @@ dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4o"
+MODEL_JUDGE = "gpt-4.1"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
     "api_key": os.environ["AZURE_OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
-    "api_version": "2025-01-01-preview",
+    "api_version": "2025-03-01-preview",
 }
 
 
@@ -78,17 +79,24 @@ class CustomAPIViewEvaluator:
             exceptions = filter_data["exceptions"].strip().split("\n")
             exceptions = [e.split(". ", 1)[1] for e in exceptions]
 
-        client = openai.AzureOpenAI()
         for comment in generic_comments:
             line_no = comment["line_no"]
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            response = client.responses.create(
-                model=MODEL_JUDGE,
-                input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",
+            prompt_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "prompts", "eval_judge_prompt.prompty")
             )
-            comment["valid"] = "true" in response.output_text.lower()
+            response = prompty.execute(
+                prompt_path,
+                inputs={
+                    "code": context,
+                    "comment": comment["comment"],
+                    "exceptions": exceptions,
+                    "language": language,
+                },
+            )
+            comment["valid"] = "true" in response.lower()
 
     def __call__(self, *, response: str, query: str, language: str, output: str, **kwargs):
         expected = json.loads(response)
@@ -170,7 +178,7 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    reviewer = ApiViewReview(target=query, language=language)
+    reviewer = ApiViewReview(target=query, base=None, language=language)
     review = reviewer.run()
     reviewer.close()
     return {"response": review.model_dump_json()}

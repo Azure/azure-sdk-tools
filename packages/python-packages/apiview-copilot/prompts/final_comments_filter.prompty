@@ -11,7 +11,7 @@ model:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
     azure_deployment: o3-mini
-    api_version: 2025-01-01-preview
+    api_version: 2025-03-01-preview
   parameters:
     stop: []
     frequency_penalty: 0
@@ -89,28 +89,7 @@ system:
 user:
   Please validate the following review against the exceptions:
 
-  Proposed Review Comments:
+  # PROPOSED COMMENTS
   ```json
   {{comments}}
   ```
-
-assistant: |
-  I will analyze each comment in the review results and:
-
-  1. Check if it violates any of the validation rules by focusing on the content in the `comment` field, not other fields.
-  2. Flag any comments' `status` field as "REMOVE" that violate the exceptions
-  3. Flag any comments' `status` field as "KEEP" that enhance API design
-  4. For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
-
-  For each comment I will:
-  - Verify it doesn't comment on excluded aspects
-  - Ensure it focuses on API design quality
-  - Validate it improves developer experience
-  - Confirm it aligns with {{language}} best practices
-
-  The response will maintain the schema structure with:
-  - A list of comments
-  - Each comment containing line_no, bad_code, suggestion, and comment identical to the original
-  - Each comment will include new fields `status` and `status_reason` to indicate whether it was kept or removed and the reason for that decision.
-
-{{sample}}

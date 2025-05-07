@@ -131,9 +131,12 @@ export function processUse(
         apiJson,
       );
       moduleChildIds.forEach((childId) => {
-        annotatedReviewLines.children[childId] = [
-          createItemLineFromPath(childId, apiJson.paths[childId]),
-        ];
+        const childLine = createItemLineFromPath(childId, apiJson.paths[childId]);
+        if (childLine) {
+          annotatedReviewLines.children[childId] = [
+            childLine,
+          ];
+        }
       });
     }
   }

@@ -25,6 +25,8 @@ export function registerExternalItemReference(itemId: Id): void {
 
   const itemIdString = itemId.toString();
   const itemSummary = apiJson.paths[itemId];
+  if (itemSummary.path[itemSummary.path.length - 1].startsWith("__")) return;
+  
   const transformedItemKind = transformItemKind(itemSummary.kind);
   const value = itemSummary.path.join("::");
   lineIdMap.set(itemIdString, `external_${transformedItemKind}_${value}`);
@@ -59,8 +61,9 @@ function hasValidPath(itemSummary: ItemSummary): boolean {
 /**
  * Creates a single ReviewLine representing a non-module item
  */
-export function createItemLineFromPath(itemId: Id, itemSummary: ItemSummary): ReviewLine {
+export function createItemLineFromPath(itemId: Id, itemSummary: ItemSummary): ReviewLine | undefined {
   const value = itemSummary.path[itemSummary.path.length - 1];
+  if (value.startsWith("__")) return undefined;
   const transformedItemKind = transformItemKind(itemSummary.kind);
   lineIdMap.set(itemId.toString(), `external_${transformedItemKind}_${value}`);
   return {
@@ -216,7 +219,8 @@ function findModuleChildrenByPath(currentPath: string, apiJson: Crate): ReviewLi
 
   for (const childId of childIds) {
     const childItemSummary = apiJson.paths[childId];
-    children.push(createItemLineFromPath(Number(childId), childItemSummary));
+    const childLine = createItemLineFromPath(Number(childId), childItemSummary);
+    if(childLine) children.push(childLine);
   }
 
   // Sort children by kind and then by path

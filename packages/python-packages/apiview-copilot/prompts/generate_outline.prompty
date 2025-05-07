@@ -15,7 +15,7 @@ model:
     frequency_penalty: 0
     presence_penalty: 0
     max_completion_tokens: 80000
-    reasoning_effort: "high"
+    reasoning_effort: "low"
 sample:
   content: |
     # Package is parsed using apiview-stub-generator(version:0.3.18), Python version: 3.10.16

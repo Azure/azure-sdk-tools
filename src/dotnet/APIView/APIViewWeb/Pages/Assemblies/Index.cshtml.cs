@@ -9,15 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using APIViewWeb.Managers;
 using APIViewWeb.Helpers;
-using Microsoft.VisualStudio.Services.Common;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.LeanModels;
 using System.Text;
 using APIViewWeb.Managers.Interfaces;
-using System.IO;
-using ApiView;
-using Microsoft.AspNetCore.Http;
 
 namespace APIViewWeb.Pages.Assemblies
 {

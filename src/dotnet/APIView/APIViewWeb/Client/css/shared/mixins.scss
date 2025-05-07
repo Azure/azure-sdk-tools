@@ -144,6 +144,7 @@
         border: solid 3px var(--base-bg-color);
         background-color: var(--text-muted-color);
         border-radius: 6px;
+        min-height: 50px;
     }
     
     ::-webkit-scrollbar-track-piece {

@@ -25,9 +25,9 @@ namespace APIViewWeb.Managers
             return await _UserProfileRepository.TryGetUserProfileAsync(User.GetGitHubLogin());
         }
 
-        public async Task<UserProfileModel> TryGetUserProfileByNameAsync(string UserName)
+        public async Task<UserProfileModel> TryGetUserProfileByNameAsync(string userName, bool createIfNotExist = true)
         {
-            return await _UserProfileRepository.TryGetUserProfileAsync(UserName);
+            return await _UserProfileRepository.TryGetUserProfileAsync(userName, createIfNotExist);
         }
 
         public async Task UpdateUserProfile(string userName, UserProfileModel profile)

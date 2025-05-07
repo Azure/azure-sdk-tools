@@ -38,7 +38,7 @@ namespace APIViewWeb.Repositories
             UpdateCache(existingUserProfile, userName);
         }
 
-        public async Task<UserProfileModel> GetUserProfileAsync(string userName)
+        public async Task<UserProfileModel> GetUserProfileAsync(string userName, bool createIfNotExist = true)
         {
             if (_cache.TryGetValue(userName, out UserProfileModel _profile))
             {
@@ -46,7 +46,7 @@ namespace APIViewWeb.Repositories
             }
             else
             {
-                var profile = (await _userProfileManager.TryGetUserProfileByNameAsync(userName));
+                var profile = (await _userProfileManager.TryGetUserProfileByNameAsync(userName, createIfNotExist: createIfNotExist));
                 UpdateCache(profile, userName);
                 return profile;
             }

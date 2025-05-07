@@ -8,7 +8,6 @@ using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Configuration;
-using Octokit;
 
 namespace APIViewWeb
 {
@@ -21,7 +20,7 @@ namespace APIViewWeb
             _userProfileContainer = cosmosClient.GetContainer("APIView", "Profiles");
         }
 
-        public async Task<UserProfileModel> TryGetUserProfileAsync(string UserName)
+        public async Task<UserProfileModel> TryGetUserProfileAsync(string UserName, bool createIfNotExist = true)
         {
             try
             {
@@ -29,7 +28,11 @@ namespace APIViewWeb
             }
             catch
             {
-                return new UserProfileModel(UserName);
+                if (createIfNotExist) 
+                {
+                    return new UserProfileModel(UserName);
+                }
+                return default;
             }
         }
 

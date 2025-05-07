@@ -209,7 +209,7 @@ export function processImpl(
             Value: item.name || "unknown_impl",
             RenderClasses: ["interface"],
             NavigateToId: linedId,
-            NavigationDisplayName: `impl ${item.name}` || undefined,
+            NavigationDisplayName: `impl ${item.name}`,
           },
           { Kind: TokenKind.Punctuation, Value: "{" },
         ],

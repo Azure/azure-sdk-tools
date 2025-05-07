@@ -28,7 +28,7 @@
                 "description": "the original code that was bad. MUST be identical to the input."
               },
               "suggestion": {
-                "type": "string",
+                "type": ["string", "null"],
                 "description": "the suggested code which fixes the bad code. MUST be identical to the input."
               },
               "comment": {

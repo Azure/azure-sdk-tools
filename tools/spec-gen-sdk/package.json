@@ -5,7 +5,7 @@
     "email": "azsdkteam@microsoft.com",
     "url": "https://github.com/Azure/azure-sdk-tools"
   },
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "A TypeScript implementation of the API specification to SDK tool",
   "tags": [
     "spec-gen-sdk"

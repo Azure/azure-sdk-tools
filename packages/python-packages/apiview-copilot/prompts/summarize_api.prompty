@@ -1,0 +1,233 @@
+---
+name: Summarize APIView
+description: A prompt that summarizes an APIView to create a general comment.
+authors:
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: o3-mini
+    api_version: 2025-03-01-preview
+  parameters:
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 80000
+    reasoning_effort: "high"
+sample:
+  content: |
+    ```python
+    # Package is parsed using apiview-stub-generator(version:0.3.18), Python version: 3.10.16
+
+
+    namespace azure.keyvault.secrets
+      
+      class azure.keyvault.secrets.ApiVersion(str, Enum):
+        V2016_10_01 = "2016-10-01"
+        V7_0 = "7.0"
+        V7_1 = "7.1"
+        
+        
+      class azure.keyvault.secrets.DeletedSecret:
+        property deleted_date: datetime    # Read-only
+        property id: str    # Read-only
+        property name: str    # Read-only
+        property properties: SecretProperties    # Read-only
+        property recovery_id: str    # Read-only
+        property scheduled_purge_date: datetime    # Read-only
+        
+        def __init__(
+              self, 
+              properties: SecretProperties, 
+              deleted_date: Optional[datetime] = None, 
+              recovery_id: Optional[str] = None, 
+              scheduled_purge_date: Optional[datetime] = None
+          ) -> None
+        
+        def __repr__(self) -> str
+        
+        
+      class azure.keyvault.secrets.KeyVaultSecret:
+        property id: str    # Read-only
+        property name: str    # Read-only
+        property properties: SecretProperties    # Read-only
+        property value: str    # Read-only
+        
+        def __init__(
+              self, 
+              properties, 
+              value
+          ) -> None
+        
+        def __repr__(self) -> str
+        
+        
+      class azure.keyvault.secrets.SecretClient(KeyVaultClientBase): implements ContextManager 
+        property vault_url: str    # Read-only
+        
+        def __init__(
+              self, 
+              vault_url: str, 
+              credential, 
+              *, 
+              api_version: ApiVersion = ..., 
+              transport: HttpTransport = ..., 
+              **kwargs
+          ) -> None
+        
+        @distributed_trace
+        def backup_secret(
+              self, 
+              name: str, 
+              **kwargs
+          ) -> bytes
+        
+        @distributed_trace
+        def begin_delete_secret(
+              self, 
+              name: str, 
+              **kwargs
+          ) -> DeletedSecret
+        
+        @distributed_trace
+        def begin_recover_deleted_secret(
+              self, 
+              name: str, 
+              **kwargs
+          ) -> SecretProperties
+        
+        def close(self) -> None
+        
+        @distributed_trace
+        def get_deleted_secret(
+              self, 
+              name: str, 
+              **kwargs
+          ) -> DeletedSecret
+        
+        @distributed_trace
+        def get_secret(
+              self, 
+              name: str, 
+              version: str = None, 
+              **kwargs
+          ) -> KeyVaultSecret
+        
+        @distributed_trace
+        def list_deleted_secrets(self, **kwargs) -> ItemPaged[DeletedSecret]
+        
+        @distributed_trace
+        def list_properties_of_secret_versions(
+              self, 
+              name: str, 
+              **kwargs
+          ) -> ItemPaged[SecretProperties]
+        
+        @distributed_trace
+        def list_properties_of_secrets(self, **kwargs) -> ItemPaged[SecretProperties]
+        
+        @distributed_trace
+        def purge_deleted_secret(
+              self, 
+              name: str, 
+              **kwargs
+          ) -> None
+        
+        @distributed_trace
+        def restore_secret_backup(
+              self, 
+              backup: bytes, 
+              **kwargs
+          ) -> SecretProperties
+        
+        @distributed_trace
+        def set_secret(
+              self, 
+              name: str, 
+              value: str, 
+              *, 
+              content_type: Optional[str] = ..., 
+              enabled: Optional[bool] = ..., 
+              expires_on: Optional[datetime] = ..., 
+              not_before: Optional[datetime] = ..., 
+              tags: dict[str, str] = ..., 
+              **kwargs
+          ) -> KeyVaultSecret
+        
+        @distributed_trace
+        def update_secret_properties(
+              self, 
+              name: str, 
+              version: str = None, 
+              *, 
+              content_type: Optional[str] = ..., 
+              enabled: Optional[bool] = ..., 
+              expires_on: Optional[datetime] = ..., 
+              not_before: Optional[datetime] = ..., 
+              tags: dict[str, str] = ..., 
+              **kwargs
+          ) -> SecretProperties
+        
+        
+      class azure.keyvault.secrets.SecretProperties:
+        property content_type: str    # Read-only
+        property created_on: datetime    # Read-only
+        property enabled: bool    # Read-only
+        property expires_on: datetime    # Read-only
+        property id: str    # Read-only
+        property key_id: str    # Read-only
+        property name: str    # Read-only
+        property not_before: datetime    # Read-only
+        property recoverable_days: Optional[int]    # Read-only
+        property recovery_level: str    # Read-only
+        property tags: Dict[str, str]    # Read-only
+        property updated_on: datetime    # Read-only
+        property vault_url: str    # Read-only
+        property version: str    # Read-only
+        
+        def __init__(
+              self, 
+              attributes, 
+              vault_id, 
+              **kwargs
+          ) -> None
+        
+        def __repr__(self)
+    ```
+---
+system:
+  You are an expert API reviewer with deep knowledge of {{language}} and its ecosystem.
+  You will summarize the API in an APIView to make it easier for the architects to understand the overall service.
+  Do not use emojis in your response.
+  Ensure you examine the entire API and summarize the contents.
+  Do not make any judgement statements on the quality, necessity, or correctness of the API.
+  Do surround property names, class names, and method names with backticks.
+  Structure the output with headings, but keep the output concise and to the point. For example, don't list things with bulleted lists.
+  Begin your response with: "Here is a summary of the service described by this APIView:"
+
+  # Priorities
+  1. Summarize the purpose of the API based on the Client class and its methods. No method names--just a general description of the functionality.
+  2. Identify the API Version object and note the latest version. Do not list all the versions.
+  3. Identify any `*Client` classes, which are of primary interest to architects. List the method names on those classes without including any signatures. Do not guess what the methods do.
+  4. Identify other classes and methods, but don't include any signatures or property details.
+  5. Include any relevant details about the API's functionality and structure that may assist in understanding its use cases.
+
+  # Example Output:
+  Here is a summary of the service described by this APIView:
+
+  This API provides a service for managing widgets. It also allows for the management of widget properties and parts.
+  
+  The latest API version is: 2025-01-01.
+  
+  This API exposes a `WidgetClient` class that allows users to interact with widgets in a synchronous and asynchronous fashion. The client provides methods
+  for CRUD operations: `create`, `get`, `update` and `delete`.
+
+  The API also includes models such as `Widget`, `WidgetProperties`, and `WidgetPart` that describe the structure of widgets and their properties.
+
+user:
+  Summarize the following APIView for the {{language}} architects.
+  ```{{language}}
+  {{content}}
+  ```

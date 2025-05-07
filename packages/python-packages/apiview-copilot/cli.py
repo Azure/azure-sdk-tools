@@ -8,8 +8,6 @@ import pathlib
 
 from src._search_manager import SearchManager
 from src._apiview_reviewer import (
-    supported_models,
-    DEFAULT_MODEL,
     DEFAULT_USE_RAG,
 )
 
@@ -49,8 +47,8 @@ helps[
 
 def local_review(
     language: str,
-    path: str,
-    model: str = DEFAULT_MODEL,
+    target: str,
+    base: str = None,
     use_rag: bool = DEFAULT_USE_RAG,
 ):
     """
@@ -58,13 +56,29 @@ def local_review(
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(language=language, model=model, use_rag=use_rag)
-    filename = os.path.splitext(os.path.basename(path))[0]
+    if base is None:
+        filename = os.path.splitext(os.path.basename(target))[0]
+    else:
+        target_name = os.path.splitext(os.path.basename(target))[0]
+        base_name = os.path.splitext(os.path.basename(base))[0]
+        # find the common prefix
+        common_prefix = os.path.commonprefix([target_name, base_name])
+        # strip the common prefix from both names
+        target_name = target_name[len(common_prefix) :]
+        base_name = base_name[len(common_prefix) :]
+        filename = f"{common_prefix}_{base_name}_{target_name}"
 
-    with open(path, "r", encoding="utf-8") as f:
-        apiview = f.read()
+    with open(target, "r", encoding="utf-8") as f:
+        target_apiview = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base_apiview = f.read()
+    else:
+        base_apiview = None
 
-    review = rg.get_response(target=apiview)
+    reviewer = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
+    review = reviewer.run()
+    reviewer.close()
     output_path = os.path.join("scratch", "output", language)
     os.makedirs(output_path, exist_ok=True)
     output_file = os.path.join(output_path, f"{filename}.json")
@@ -100,7 +114,7 @@ def create_test_case(
             guidelines.extend(json.loads(f.read()))
 
     context = ""
-    for violation in expected_contents["violations"]:
+    for violation in expected_contents["comments"]:
         for rule_id in violation["rule_ids"]:
             for rule in guidelines:
                 if rule["id"] == rule_id:
@@ -159,9 +173,9 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
         f.write(apiview)
 
     with open(deconstructed_expected, "w") as f:
-        # sort violations by line number
+        # sort comments by line number
         expected = json.loads(expected)
-        expected["violations"] = sorted(expected["violations"], key=lambda x: x["line_no"])
+        expected["comments"] = sorted(expected["comments"], key=lambda x: x["line_no"])
         f.write(json.dumps(expected, indent=4))
 
     print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
@@ -178,16 +192,20 @@ def deploy_flask_app(
     deploy_app_to_azure(app_name, resource_group, subscription_id)
 
 
-def generate_review_from_app(language: str, path: str):
+def generate_review_from_app(language: str, target: str, base: Optional[str] = None):
     """Generates a review using the deployed Flask app."""
     from scripts.remote_review import generate_remote_review
 
     # Read the file content
-    with open(path, "r", encoding="utf-8") as f:
-        query = f.read()
+    with open(target, "r", encoding="utf-8") as f:
+        target = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base = f.read()
+    else:
+        base = None
 
-    print(f"Generating review for {path}...")
-    response = asyncio.run(generate_remote_review(query, language))
+    response = asyncio.run(generate_remote_review(target, language))
 
     # response is already a dict, no need to parse it
     if isinstance(response, dict):
@@ -288,16 +306,21 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
-                "model",
-                type=str,
-                help="The model to use for the review",
-                options_list=("--model", "-m"),
-                choices=supported_models,
-            )
-            ac.argument(
                 "use_rag",
                 action="store_true",
                 help="Use RAG pattern to generate the review.",
+            )
+            ac.argument(
+                "target",
+                type=str,
+                help="The path to the APIView file to review.",
+                options_list=("--target", "-t"),
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file to compare against. If omitted, copilot will review the entire target APIView.",
+                options_list=("--base", "-b"),
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

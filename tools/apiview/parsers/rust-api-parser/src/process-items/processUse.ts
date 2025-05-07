@@ -13,6 +13,7 @@ import { AnnotatedReviewLines } from "./utils/models";
 import { getAPIJson, processedItems } from "../main";
 import { processItem } from "./processItem";
 import { processModule } from "./processModule";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 function processSimpleUseItem(item: Item): AnnotatedReviewLines {
   const annotatedReviewLines: AnnotatedReviewLines = {
@@ -46,7 +47,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       },
     );
   } else {
-    const useValue = item.inner.use.source || "null";
+    const useValue = item.inner.use.source || "unknown_use_source";
     tokens.push(
       {
         Kind: TokenKind.Text,
@@ -65,8 +66,8 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       },
     );
   }
-
-  annotatedReviewLines.children[item.id] = [{ Tokens: tokens }];
+  lineIdMap.set(item.id.toString(), item.inner.use.name);
+  annotatedReviewLines.children[item.id] = [{ LineId: item.id.toString(), Tokens: tokens }];
   return annotatedReviewLines;
 }
 

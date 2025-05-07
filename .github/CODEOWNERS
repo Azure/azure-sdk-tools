@@ -37,6 +37,7 @@
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
 /tools/mock-service-host/               @raych1 @tadelesh
 /tools/perf-automation/                 @mikeharder @benbp
+/tools/perf-automation/**/*Rust*.cs     @gearama @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
 /tools/sdk-ai-bots/                     @raych1

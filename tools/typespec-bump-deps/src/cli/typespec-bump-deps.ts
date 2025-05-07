@@ -14,6 +14,8 @@ const knownPackages = [
   "@typespec/sse",
   "@typespec/streams",
   "@typespec/http-specs",
+  "@typespec/spector",
+  "@typespec/spec-api",
   "@azure-tools/typespec-client-generator-core",
   "@azure-tools/typespec-azure-core",
   "@azure-tools/typespec-azure-resource-manager",

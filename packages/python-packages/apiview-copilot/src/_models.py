@@ -15,11 +15,16 @@ class Comment(BaseModel):
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
     )
-    suggestion: str = Field(
+    suggestion: Optional[str] = Field(
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
     comment: str = Field(description="the contents of the comment.")
     source: str = Field(description="unique tag for the prompt that produced the comment.")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.suggestion == "" or self.suggestion == "null":
+            self.suggestion = None
 
 
 class Guideline(BaseModel):
@@ -107,8 +112,6 @@ class ReviewResult(BaseModel):
             raw_line_no = str(comment.get("line_no", "0")).replace(" ", "").strip()
 
             # Ensure all required fields exist
-            if "suggestion" not in comment:
-                comment["suggestion"] = ""
             if "rule_ids" not in comment:
                 comment["rule_ids"] = []
             if "source" not in comment:
@@ -136,38 +139,50 @@ class ReviewResult(BaseModel):
                         comment_copy["line_no"] = default_line_no
                     result_comments.append(Comment(**comment_copy))
         self.comments.extend(result_comments)
-        self._deduplicate_comments()
-        self.sort()
-
-    def _deduplicate_comments(self):
-        """
-        Deduplicate comments based on line number and rule IDs.
-        """
-        seen = {}
-        for comment in self.comments:
-            key = comment.line_no
-            if key not in seen:
-                seen[key] = comment
-            else:
-                # Prefer a comment with rule IDs over ones without
-                if seen[key].rule_ids:
-                    continue
-                seen[key] = comment
-        self.comments = list(seen.values())
 
     def merge(self, other: "ReviewResult", *, section: Section):
         """
         Merge two ReviewResult objects.
         """
         self._guideline_ids.update(other._guideline_ids)
-        self._merge_comments(other.comments, section)
+        filtered_comments = [x for x in other.comments if self._validate(item=x, section=section)]
+        self.comments.extend(filtered_comments)
 
-    def _validate(self, item: Comment) -> bool:
+    def sort(self):
         """
-        Validates the Improvement object.
-        If the result of validation is that the comment is invalid, return False.
-        Even if the comment is changed during validation, if it is still valid, return True.
+        Sort the comments by line number.
         """
+        self.comments.sort(key=lambda x: x.line_no)
+
+    def sorted(self) -> "ReviewResult":
+        """
+        Return a sorted list of comments.
+        """
+        self.sort()
+        return self
+
+    def _validate(self, *, item: Comment, section: Section) -> bool:
+        """
+        Validate a comment against a section of code.
+
+        This method:
+        1. Corrects line numbers by finding the actual line in the section
+        2. Validates rule IDs against known guidelines
+        3. Handles general comments that don't have specific rule IDs
+
+        Args:
+            item: The comment to validate
+            section: The section of code the comment applies to
+
+        Returns:
+            bool: True if the comment is valid, False otherwise
+        """
+        # Cure minor deviations in line numbers. If the line number can't be resolved, it is invalid
+        item.line_no = self._find_line_number(section, item)
+        if not item.line_no:
+            print(f"WARNING: Invalid line number {item.line_no} for comment: {item.comment}")
+            return False
+
         # If the rule IDs are empty, assume valid. These come from the
         # general prompts as opposed to the guideline-specific ones.
         if not item.rule_ids:
@@ -201,38 +216,6 @@ class ReviewResult(BaseModel):
                 return gid
         print(f"WARNING: Rule ID {rid} not found. Possible hallucination.")
         return None
-
-    def _merge_comments(self, comments: List[Comment], section: Section):
-        """
-        Process and combine batches of comments as needed. Attempts to
-        determine line numbers and ignores comments that can't be mapped to a line.
-        If multiple of the same comment are found on the same line, they are combined.
-        """
-        if not comments:
-            return
-
-        combined_comments = {}
-        for comment in comments:
-            # Cure minor deviations in line numbers. If the line number can't be resolved, skip
-            line_no = self._find_line_number(section, comment)
-            if line_no is None:
-                continue
-            comment.line_no = line_no
-            existing = combined_comments.get(line_no, None)
-            if existing:
-                for rule_id in comment.rule_ids:
-                    if rule_id not in existing.rule_ids:
-                        existing.rule_ids.append(rule_id)
-                        if existing.suggestion != comment.suggestion:
-                            # FIXME: Collect all suggestions and use the most popular??
-                            existing.suggestion = comment.suggestion
-                        existing.comment = existing.comment + " " + comment.comment
-            else:
-                combined_comments[line_no] = comment
-
-        # remove any comments that don't pass validation and then add them to the list
-        filtered_comments = [x for x in combined_comments.values() if self._validate(x)]
-        self.comments.extend(filtered_comments)
 
     def _find_line_number(self, chunk: Section, comment: Comment) -> Optional[int]:
         """
@@ -277,11 +260,5 @@ class ReviewResult(BaseModel):
 
         # If no match is found, return the original line number
         print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
-        comment.comment = f"${comment.comment} (general comment)"
+        comment.comment = f"{comment.comment} (general comment)"
         return comment.line_no
-
-    def sort(self):
-        """
-        Sort the comments by line number.
-        """
-        self.comments.sort(key=lambda x: x.line_no)

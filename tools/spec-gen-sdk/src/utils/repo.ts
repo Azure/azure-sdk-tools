@@ -1,3 +1,5 @@
+import { toolError } from "./messageUtils";
+
 /**
  * The name and optional organization that the repository belongs to.
  */
@@ -26,7 +28,7 @@ export function getRepository(repoUrl: string): Repository {
   if (repoUrl) {
     const match = repoUrl.match(urlPattern);
     if (!match) {
-      throw new Error(`Error: Invalid spec repository URL [${repoUrl}] provided. This is a sample of correct format: https://github.com/azure/azure-rest-api-specs`);
+      throw new Error(toolError(`Error: Invalid spec repository URL [${repoUrl}] provided. This is a sample of correct format: https://github.com/azure/azure-rest-api-specs`));
     }
     result = {
       owner: match[1],

@@ -7,6 +7,7 @@ import { getAPIJson, processedItems } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
 import { processUse } from "./processUse";
 import { AnnotatedReviewLines } from "./utils/models";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -24,6 +25,7 @@ export function processModule(
   const apiJson = getAPIJson();
   const isRootModule = item.id === apiJson.root;
 
+  lineIdMap.set(item.id.toString(), item.name || "unknown_mod");
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -54,10 +56,11 @@ export function processModule(
       });
     }
     fullName += item.name;
+    lineIdMap.set(item.id.toString(), fullName);
     // current module
     reviewLine.Tokens.push({
       Kind: TokenKind.TypeName,
-      Value: item.name || "null",
+      Value: item.name || "unknown_mod",
       RenderClasses: ["namespace"],
       NavigateToId: item.id.toString(),
       NavigationDisplayName: fullName,

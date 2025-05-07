@@ -29,20 +29,16 @@ extends:
     StandaloneExeMatrix:
     - rid: osx-x64
       framework: net8.0
-      assembly: Azure.Sdk.Tools.TestProxy
+      assembly: azsdk
     - rid: osx-arm64
       framework: net8.0
-      assembly: Azure.Sdk.Tools.TestProxy
+      assembly: azsdk
     - rid: win-x64
       framework: net8.0
-      assembly: Azure.Sdk.Tools.TestProxy
+      assembly: azsdk
     - rid: linux-x64
       framework: net8.0
-      assembly: Azure.Sdk.Tools.TestProxy
+      assembly: azsdk
     - rid: linux-arm64
       framework: net8.0
-      assembly: Azure.Sdk.Tools.TestProxy
-    TestPreSteps:
-      - pwsh: |
-          #vso[task.setvariable variable=COMPlus_Pkcs12UnspecifiedPasswordIterationLimit]-1
-        displayName: Override Acceptable Password Iteration Count
+      assembly: azsdk

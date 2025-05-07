@@ -6,6 +6,7 @@ import { processGenerics } from "./utils/processGenerics";
 import { isUnionItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
 import { getAPIJson } from "../main";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a union item and adds its documentation to the ReviewLine.
@@ -18,6 +19,7 @@ export function processUnion(item: Item): ReviewLine[] {
   const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `union_${item.name}`);
   // Process derives and impls
   let implResult: ImplProcessResult;
   if (item.inner.union && item.inner.union.impls) {
@@ -32,7 +34,6 @@ export function processUnion(item: Item): ReviewLine[] {
 
   if (implResult.deriveTokens.length > 0) {
     const deriveTokensLine: ReviewLine = {
-      LineId: item.id.toString() + "_derive",
       Tokens: implResult.deriveTokens,
       RelatedToLine: item.id.toString(),
     };
@@ -46,7 +47,7 @@ export function processUnion(item: Item): ReviewLine[] {
 
   unionLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_union_name",
     RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,

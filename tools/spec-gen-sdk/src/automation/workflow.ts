@@ -150,8 +150,8 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     if (!config || config.repositories.length === 0 || !config.repositories.some(r => r.repo === context.config.sdkName)) {
       if (!twoConfigProvided) {
         context.status = 'notEnabled';
-        message = configWarning(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in` +
-          ` 'swagger-to-sdk' section. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+        message = configWarning(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in ` +
+          `'swagger-to-sdk' section. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
         context.logger.warn(message);
         return;
       }

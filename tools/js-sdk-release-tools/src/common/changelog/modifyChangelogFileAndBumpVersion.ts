@@ -15,16 +15,16 @@ const date = yyyy + '-' + mm + '-' + dd;
 export function getFirstReleaseContent(packageFolderPath: string, isStableRelease: boolean) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const sdkType = getSDKType(packageFolderPath);
-    const firstBetaAndModularClientContent = `Initial release of the ${packageJsonData.name} package`;
-    const firstStableAndModularClientContent = `This is the first stable version with the package of ${packageJsonData.name}`;
+    const firstBetaContent = `Initial release of the ${packageJsonData.name} package`;
+    const firstStableContent = `This is the first stable version with the package of ${packageJsonData.name}`;
     const hlcClientContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
     switch (sdkType) {
         case SDKType.ModularClient:
-            return isStableRelease ? firstStableAndModularClientContent : firstBetaAndModularClientContent;
+            return isStableRelease ? firstStableContent : firstBetaContent;
         case SDKType.HighLevelClient:
             return hlcClientContent;
         case SDKType.RestLevelClient:
-            return `your change log content`; 
+            return isStableRelease ? firstStableContent : firstBetaContent;; 
         default:
             throw new Error(`Unsupported SDK type: ${sdkType}`);
     }

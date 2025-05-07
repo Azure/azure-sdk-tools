@@ -42,7 +42,7 @@ describe("Change log for first release package", () => {
         const root = path.join(__dirname, "testCases/rlc-first-release/");
         const content = getFirstReleaseContent(root, true);
         expect(content).toBe(
-            "your change log content",
+            "This is the first stable version with the package of @azure-rest/test",
         );
     });
 
@@ -50,7 +50,7 @@ describe("Change log for first release package", () => {
         const root = path.join(__dirname, "testCases/rlc-first-release/");
         const content = getFirstReleaseContent(root, false);
         expect(content).toBe(
-            "your change log content",
+            "Initial release of the @azure-rest/test package",
         );
     });
 });

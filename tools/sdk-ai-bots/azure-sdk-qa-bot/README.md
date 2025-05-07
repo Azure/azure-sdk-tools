@@ -5,6 +5,7 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 
 ## TODO
 
+- [ ] Decide the scope of links to support
 - [x] Refactor code, messy for now, since I reuse the template or samples directly
 - [x] Remove `Create IcM` button
 - [x] Hide `reference` button when there's no reference

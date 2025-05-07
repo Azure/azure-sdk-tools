@@ -10,6 +10,8 @@ import { ScrollBarSize } from './_models/userPreferenceModel';
 })
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
+  scrollBarHeight: string = '10px';
+  scrollBarWidth: string = '10px';
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService) { }
 
@@ -21,6 +23,7 @@ export class AppComponent  implements OnInit{
     this.userProfileService.getUserProfile().subscribe(
       (userProfile) => {
         const theme = userProfile.preferences.theme;
+        console.log("sbs", userProfile.preferences.scrollBarSize);
         switch (userProfile.preferences.scrollBarSize) {
           case ScrollBarSize.Medium:
             this.scrollBarHeight = this.scrollBarWidth = '15px';

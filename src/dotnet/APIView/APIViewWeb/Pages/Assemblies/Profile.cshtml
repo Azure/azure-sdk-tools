@@ -62,7 +62,7 @@
                             <select multiple name="Languages" id="approvable-language-select" aria-label="Approvable Language Select">
                                 @foreach (string language in Languages)
                                 {
-                                    <option value="@language" selected="@(Model.userProfile.Languages.Contains(language) ? true : false)">@language</option>
+                                    <option value="@language" selected="@(Model.userProfile.Preferences.ApprovedLanguages.Contains(language) ? true : false)">@language</option>
                                 }
                             </select>
                         </div>

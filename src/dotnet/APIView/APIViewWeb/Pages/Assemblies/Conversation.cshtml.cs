@@ -33,14 +33,12 @@ namespace APIViewWeb.Pages.Assemblies
         public HashSet<GithubUser> TaggableUsers { get; set; }
         public ConversationModel(
             IConfiguration configuration,
-            IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
             IReviewManager reviewManager,
             IAPIRevisionsManager apiRevisionsManager,
             UserProfileCache userProfileCache,
             ISamplesRevisionsManager samplesManager)
         {
-            _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;

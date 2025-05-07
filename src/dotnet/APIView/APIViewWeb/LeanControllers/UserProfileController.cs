@@ -39,7 +39,7 @@ namespace APIViewWeb.LeanControllers
         [HttpPut(Name = "UpdateUserProfile")]
         public async Task<ActionResult> UpdateUserProfile([FromBody] UserProfileModel userProfile)
         {
-            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: userProfile.Email, userPreferenceModel: userProfile.Preferences)
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: userProfile.Email, userPreferenceModel: userProfile.Preferences);
             return Ok();
         }
     }

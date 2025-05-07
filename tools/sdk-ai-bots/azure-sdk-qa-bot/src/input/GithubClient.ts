@@ -13,6 +13,7 @@ export interface PRDetails {
     }[];
     labels: string[];
     title: string;
+    diff: string;
 }
 
 type User = components["schemas"]["nullable-simple-user"];
@@ -37,6 +38,7 @@ export class GithubClient {
         this.authToken = authToken;
     }
 
+    // TODO: refactor
     public async getPullRequestDetails(prUrl: string): Promise<PRDetails> {
         const octokit = new Octokit({ auth: this.authToken });
 
@@ -91,6 +93,14 @@ export class GithubClient {
             reviewer: r.user?.login,
         }));
 
+        // 7. Fetch PR diff
+        const diff = await this.getPullRequestDiff(
+            octokit,
+            owner,
+            repo,
+            pull_number
+        );
+
         return {
             comments: {
                 review: reviewComments,
@@ -99,6 +109,28 @@ export class GithubClient {
             labels,
             reviews,
             title,
+            diff,
         };
+    }
+
+    private async getPullRequestDiff(
+        octokit: Octokit,
+        owner: string,
+        repo: string,
+        pull_number: number
+    ) {
+        try {
+            const response = await octokit.rest.pulls.get({
+                owner,
+                repo,
+                pull_number,
+                mediaType: {
+                    format: "diff",
+                },
+            });
+            return response.data as unknown as string;
+        } catch (error) {
+            console.error(`Failed to get diff: ${error}`);
+        }
     }
 }

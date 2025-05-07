@@ -40,7 +40,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             return command;
         }
 
+        #pragma warning disable CS1998
         public override async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
+        #pragma warning restore CS1998
         {
             string input = ctx.ParseResult.GetValueForArgument(_inputArg);
 

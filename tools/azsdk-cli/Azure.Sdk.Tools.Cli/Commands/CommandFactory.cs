@@ -16,8 +16,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
         private readonly ILogger<CommandFactory> _logger;
         private readonly ILoggerFactory _loggerFactory;
 
-        private readonly RootCommand? _rootCommand;
-
         public CommandFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
         {
             _serviceProvider = serviceProvider;

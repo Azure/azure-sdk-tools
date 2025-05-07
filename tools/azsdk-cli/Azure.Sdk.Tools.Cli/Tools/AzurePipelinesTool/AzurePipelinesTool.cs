@@ -37,7 +37,9 @@ public class AzurePipelinesTool
         return new Command("meep");
     }
 
-    public  async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
+    #pragma warning disable CS1998
+    public async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
+    #pragma warning restore CS1998
     {
 
         return 0;

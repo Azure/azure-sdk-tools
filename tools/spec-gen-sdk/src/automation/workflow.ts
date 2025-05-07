@@ -164,7 +164,7 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   if (enabledSdkForTspConfig && enabledSdkForReadme) {
     message = configWarning(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. ` +
       `Refer to https://aka.ms/azsdk/spec-gen-sdk-config to disable sdk configuration from one of them. ` +
-      `Use ${context.config.tspConfigPath} to generate ${context.config.sdkName} SDK.`);
+      `This generation will be using ${context.config.tspConfigPath} to generate ${context.config.sdkName} SDK.`);
     context.logger.warn(message);
     context.specConfigPath = context.config.tspConfigPath;
   } else if (!enabledSdkForTspConfig && !enabledSdkForReadme) {

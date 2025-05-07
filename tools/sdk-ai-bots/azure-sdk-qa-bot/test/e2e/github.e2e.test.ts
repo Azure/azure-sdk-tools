@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { getPullRequestDetails } from "../../src/input/github.js";
+import { getPullRequestDetails } from "../../src/input/GithubClient.js";
 
 // TODO: Add more tests to cover all branches and edge cases
 it("e2e test", async () => {

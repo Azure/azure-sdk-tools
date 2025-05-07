@@ -39,14 +39,14 @@ export class ThinkingHandler {
         this.messageId = resource.id;
     }
 
-    public async stop() {
+    // cancel timer as soon as possible when get reply
+    public cancelTimer() {
         this.isThinking = false;
         if (this.timerHandler) clearInterval(this.timerHandler);
     }
 
-    // separate this method from stop to make sure complete message is always shown,
-    // since complete message may be later than stop message if sending immediately after timer get cancelled
-    public async complete() {
+    // separate this method from cancelTimer to make sure complete message is always shown
+    public async stop() {
         const updated: Partial<TurnContext> = {
             type: "message",
             id: this.messageId,

@@ -21,8 +21,11 @@ extends:
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          # verify az is logged in:
-          az account show
+          az login --tenant 72f988bf-86f1-41af-91ab-2d7cd011db47
+          
+          az account set --subscription faa080af-c1d8-40ad-9cce-e1a450ca5b57
+          
+          az account show --query '{subscription:name,tenant:tenantId}'
 
           python packages/python-packages/apiview-copilot/evals/run.py
 

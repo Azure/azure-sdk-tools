@@ -3,6 +3,9 @@ using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {
@@ -45,6 +48,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
                 consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
             });
             builder.Services.AddSingleton<IAzureService, AzureService>();
+            builder.Services.AddSingleton<IGitHubService, GitHubService>();
+            builder.Services.AddSingleton<IGitHelper, GitHelper>();
+            builder.Services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
+            builder.Services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
+            builder.Services.AddSingleton<IDevOpsService, DevOpsService>();
 
             builder.Services
                 .AddMcpServer()

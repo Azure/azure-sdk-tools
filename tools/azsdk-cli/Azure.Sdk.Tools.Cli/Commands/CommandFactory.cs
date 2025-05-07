@@ -43,6 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                          typeof(MCPTool).IsAssignableFrom(t))
                          .ToList();
 
+
             // todo: we need to check the constructors here, and add any services to the bundle that may be necessary
             foreach (var t in toolTypes)
             {

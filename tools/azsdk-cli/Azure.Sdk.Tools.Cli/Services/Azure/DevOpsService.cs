@@ -234,9 +234,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         private async Task<WorkItem> CreateWorkItem(ReleasePlan releasePlan, string workItemType, string title)
         {
             var specDocument = releasePlan.GetPatchDocument();
-            specDocument.Add(new JsonPatchOperation
+            specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
             {
-                Operation = Operation.Add,
+                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                 Path = "/fields/System.Title",
                 Value = title
             });
@@ -252,9 +252,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
                 var prLinks = sb.ToString();
                 _logger.LogInformation($"Adding pull request {prLinks} to API spec work item.");
-                specDocument.Add(new JsonPatchOperation
+                specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.RESTAPIReviews",
                     Value = sb.ToString()
                 });
@@ -274,11 +274,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 // Add work item as child of release plan work item
-                var jsonLinkDocument = new JsonPatchDocument
+                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
                 {
                      new JsonPatchOperation
                      {
-                          Operation = Operation.Add,
+                          Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                           Path = "/relations/-",
                           Value = new WorkItemRelation
                           {
@@ -325,25 +325,24 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return false;
                 }
                 // Add work item as child of release plan work item
-                // todo: why does this fail compilation?
-                var jsonLinkDocument = new JsonPatchDocument
+                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
                 {
-                     //new JsonPatchOperation
-                     //{
-                     //     Operation = Operation.Add,
-                     //     Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
-                     //     Value = sdkGenerationPipelineUrl
-                     //}
+                     new JsonPatchOperation
+                     {
+                          Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                          Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
+                          Value = sdkGenerationPipelineUrl
+                     }
                 };
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
-                    //jsonLinkDocument.Add(
-                    //    new JsonPatchOperation
-                    //    {
-                    //        Operation = Operation.Add,
-                    //        Path = $"/fields/Custom.SDKPullRequestFor{language}",
-                    //        Value = sdkPullRequestUrl
-                    //    });
+                    jsonLinkDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/fields/Custom.SDKPullRequestFor{language}",
+                            Value = sdkPullRequestUrl
+                        });
                 }
 
                 await _connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);

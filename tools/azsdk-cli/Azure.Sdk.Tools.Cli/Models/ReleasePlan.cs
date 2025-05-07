@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.TeamFoundation.WorkItemTracking.Process.WebApi.Models.Process;
+using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi.Patch;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
@@ -27,53 +24,64 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string SpecType {  get; set; } = string.Empty;
         public List<SDKGenerationInfo> SDKGenerationInfos { get; set; } = [];
 
-        public JsonPatchDocument GetPatchDocument()
+        public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
-            // todo: why does this fail to compile when the code commented below is included?
-            var jsonDocument = new JsonPatchDocument()
+
+            List<JsonPatchOperation> coolio = new List<JsonPatchOperation>()
             {
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.ServiceTreeID",
-                //    Value = ServiceTreeId
-                //},
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.ProductServiceTreeID",
-                //    Value = ProductTreeId
-                //},
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.SDKReleaseMonth",
-                //    Value = SDKReleaseMonth
-                //},
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.MgmtScope",
-                //    Value = IsManagementPlane ? "Yes" : "No"
-                //},
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.DataScope",
-                //    Value = IsDataPlane ? "Yes" : "No"
-                //},
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.APISpecDefinitionType",
-                //    Value = SpecType
-                //},
-                //new JsonPatchOperation
-                //{
-                //    Operation = Operation.Add,
-                //    Path = "/fields/Custom.APISpecversion",
-                //    Value = SpecAPIVersion
-                //}
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.ServiceTreeID",
+                    Value = ServiceTreeId
+                }
+            };
+
+            // todo: why does this fail to compile when the code commented below is included?
+            var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.ServiceTreeID",
+                    Value = ServiceTreeId
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.ProductServiceTreeID",
+                    Value = ProductTreeId
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.SDKReleaseMonth",
+                    Value = SDKReleaseMonth
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.MgmtScope",
+                    Value = IsManagementPlane ? "Yes" : "No"
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.DataScope",
+                    Value = IsDataPlane ? "Yes" : "No"
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.APISpecDefinitionType",
+                    Value = SpecType
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.APISpecversion",
+                    Value = SpecAPIVersion
+                }
             };
             return jsonDocument;
         }

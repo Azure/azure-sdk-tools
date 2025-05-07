@@ -6,7 +6,7 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.TestResults.WebApi;
-using Azure.Sdk.Tools.Cli.Services.Azure;
+using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;

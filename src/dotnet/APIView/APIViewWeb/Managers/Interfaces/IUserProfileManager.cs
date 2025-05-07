@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Web;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers
@@ -13,6 +14,7 @@ namespace APIViewWeb.Managers
         public Task<UserProfileModel> TryGetUserProfileByNameAsync(string UserName);
         public Task UpdateUserPreferences(ClaimsPrincipal User, UserPreferenceModel preferences);
         public Task UpdateUserProfile(ClaimsPrincipal User, string email, HashSet<string> languages, UserPreferenceModel preferences);
+        public Task UpdateUserProfile(string userName, UserProfileModel profile);
         public Task SetUserEmailIfNullOrEmpty(ClaimsPrincipal User);
     }
 }

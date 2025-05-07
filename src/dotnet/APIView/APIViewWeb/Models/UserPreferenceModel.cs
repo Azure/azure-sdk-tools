@@ -46,7 +46,9 @@ namespace APIViewWeb.Models
             get => _language ?? new List<string>();
             set => _language = value;
         }
-
+        /// <summary>
+        /// This are the languages that an architect has selected to be able to approve
+        /// </summary>
         [Name("ApprovedLanguages")]
         public IEnumerable<string> ApprovedLanguages
         {

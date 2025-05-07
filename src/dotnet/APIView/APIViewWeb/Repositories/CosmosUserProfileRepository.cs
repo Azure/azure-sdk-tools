@@ -8,6 +8,7 @@ using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Configuration;
+using Octokit;
 
 namespace APIViewWeb
 {
@@ -34,9 +35,14 @@ namespace APIViewWeb
 
         public async Task<Result> UpsertUserProfileAsync(ClaimsPrincipal User, UserProfileModel userModel)
         {
-            if(User.GetGitHubLogin().Equals(userModel.UserName))
+            return await UpsertUserProfileAsync(User.GetGitHubLogin(), userModel);
+        }
+
+        public async Task<Result> UpsertUserProfileAsync(string userName, UserProfileModel userModel)
+        {
+            if (userName.Equals(userModel.UserName))
             {
-                await _userProfileContainer.UpsertItemAsync(userModel, new PartitionKey(User.GetGitHubLogin()));
+                await _userProfileContainer.UpsertItemAsync(userModel, new PartitionKey(userName));
                 return Result.Success;
             }
             else

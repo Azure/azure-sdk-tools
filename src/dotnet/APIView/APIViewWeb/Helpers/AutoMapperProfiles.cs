@@ -1,4 +1,3 @@
-using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using AutoMapper;
 
@@ -16,15 +15,17 @@ namespace APIViewWeb.Helpers
                 .ForMember(dest => dest.Status, opt => opt.MapFrom((src, dest) => src._status != null ? src._status : dest._status))
                 .ForMember(dest => dest.HideLineNumbers, opt => opt.MapFrom((src, dest) => src._hideLineNumbers != null ? src._hideLineNumbers : dest._hideLineNumbers))
                 .ForMember(dest => dest.HideLeftNavigation, opt => opt.MapFrom((src, dest) => src._hideLeftNavigation != null ? src._hideLeftNavigation : dest._hideLeftNavigation))
-                .ForMember(dest => dest.Theme, opt => opt.MapFrom((src, dest) => src._theme != null ? src._theme : dest._theme))
                 .ForMember(dest => dest.ShowHiddenApis, opt => opt.MapFrom((src, dest) => src._showHiddenApis != null ? src._showHiddenApis : dest._showHiddenApis))
+                .ForMember(dest => dest.ShowDocumentation, opt => opt.MapFrom((src, dest) => src._showDocumentation != null ? src._showDocumentation : dest._showDocumentation))
                 .ForMember(dest => dest.HideReviewPageOptions, opt => opt.MapFrom((src, dest) => src._hideReviewPageOptions != null ? src._hideReviewPageOptions : dest._hideReviewPageOptions))
                 .ForMember(dest => dest.HideIndexPageOptions, opt => opt.MapFrom((src, dest) => src._hideIndexPageOptions != null ? src._hideIndexPageOptions : dest._hideIndexPageOptions))
                 .ForMember(dest => dest.HideSamplesPageOptions, opt => opt.MapFrom((src, dest) => src._hideSamplesPageOptions != null ? src._hideSamplesPageOptions : dest._hideSamplesPageOptions))
                 .ForMember(dest => dest.HideRevisionsPageOptions, opt => opt.MapFrom((src, dest) => src._hideRevisionsPageOptions != null ? src._hideRevisionsPageOptions : dest._hideRevisionsPageOptions))
                 .ForMember(dest => dest.ShowComments, opt => opt.MapFrom((src, dest) => src._showComments != null ? src._showComments : dest._showComments))
                 .ForMember(dest => dest.ShowSystemComments, opt => opt.MapFrom((src, dest) => src._showSystemComments != null ? src._showSystemComments : dest._showSystemComments))
+                .ForMember(dest => dest.DisableCodeLinesLazyLoading, opt => opt.MapFrom((src, dest) => src._disableCodeLinesLazyLoading != null ? src._disableCodeLinesLazyLoading : dest._disableCodeLinesLazyLoading))
                 .ForMember(dest => dest.UseBetaIndexPage, opt => opt.MapFrom((src, dest) => src._useBetaIndexPage != null ? src._useBetaIndexPage : dest._useBetaIndexPage))
+                .ForMember(dest => dest.Theme, opt => opt.MapFrom((src, dest) => src._theme != null ? src._theme : dest._theme))
                 .ForMember(dest => dest.ScrollBarSize, opt => opt.MapFrom((src, dest) => src._scrollBarSize != null ? src._scrollBarSize : dest._scrollBarSize));
         }
     }

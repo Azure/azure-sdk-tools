@@ -9,5 +9,6 @@ namespace APIViewWeb.Repositories
     {
         public Task<UserProfileModel> TryGetUserProfileAsync(string UserName);
         public Task<Result> UpsertUserProfileAsync(ClaimsPrincipal User, UserProfileModel userModel);
+        public Task<Result> UpsertUserProfileAsync(string userName, UserProfileModel userModel);
     }
 }

@@ -11,7 +11,7 @@
     {
         ViewData["Title"] = Model.userProfile.UserName;
     }
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
 
     List<string> themes = new List<string>()
     {

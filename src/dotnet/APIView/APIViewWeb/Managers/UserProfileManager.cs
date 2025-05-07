@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using APIView.Identity;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb.Managers
 {
@@ -62,6 +61,11 @@ namespace APIViewWeb.Managers
             UserProfile.Email = email;
 
             await _UserProfileRepository.UpsertUserProfileAsync(User, UserProfile);
+        }
+
+        public async Task UpdateUserProfile(string userName, UserProfileModel profile)
+        {
+            await _UserProfileRepository.UpsertUserProfileAsync(User, profile);
         }
 
         public async Task SetUserEmailIfNullOrEmpty(ClaimsPrincipal User)

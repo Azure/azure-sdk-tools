@@ -13,39 +13,33 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly ILogger<AuthController> _logger;
         private readonly IUserProfileManager _userProfileManager;
-        private readonly UserPreferenceCache _userPreferenceCache;
+        private readonly UserProfileCache _userProfileCache;
 
-        public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager,
-            UserPreferenceCache userPreferenceCache)
+        public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager, UserProfileCache userProfileCache)
         {
             _logger = logger;
             _userProfileManager = userProfileManager;
-            _userPreferenceCache = userPreferenceCache;
+            _userProfileCache = userProfileCache;
         }
 
         [HttpGet]
         public async Task<ActionResult<UserProfileModel>> GetUserPreference()
         {
-            var userProfile = await _userProfileManager.TryGetUserProfileAsync(User);
-            var preference = await _userPreferenceCache.GetUserPreferences(User);
-            if (preference != null)
-            {
-                userProfile.Preferences = preference;
-            }
+            var userProfile = await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin());
             return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
         }
 
         [HttpPut("preference", Name = "UpdateUserPreference")]
-        public ActionResult UpdateUserPreference([FromBody] UserPreferenceModel userPreference)
+        public async Task<ActionResult> UpdateUserPreference([FromBody] UserPreferenceModel userPreference)
         {
-            _userPreferenceCache.UpdateUserPreference(userPreference, User);
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceModel: userPreference);
             return Ok();
         }
 
         [HttpPut(Name = "UpdateUserProfile")]
-        public ActionResult UpdateUserProfile([FromBody] UserProfileModel userProfile)
+        public async Task<ActionResult> UpdateUserProfile([FromBody] UserProfileModel userProfile)
         {
-            _userProfileManager.UpdateUserProfile(User, userProfile.Email, userProfile.Languages, userProfile.Preferences);
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: userProfile.Email, userPreferenceModel: userProfile.Preferences)
             return Ok();
         }
     }

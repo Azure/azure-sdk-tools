@@ -10,13 +10,13 @@ namespace APIViewWeb.Pages.Assemblies
     public class ProfileModel : PageModel
     {
         private readonly IUserProfileManager _manager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
 
         public UserProfileModel userProfile;
-        public ProfileModel(IUserProfileManager manager, UserPreferenceCache preferenceCache)
+        public ProfileModel(IUserProfileManager manager, UserProfileCache userProfileCache)
         {
             _manager = manager;
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
         }
 
         public async Task<IActionResult> OnGetAsync(string UserName)

@@ -47,12 +47,13 @@ extends:
                     failOnStderr: true
                     pwsh: true
                     arguments: '-PackageJsonPath ${{ parameters.PackageJsonPath }}'
+                  displayName: 'Determine Package Release Tag'
 
                 - pwsh: |
                     Write-Host "Will deploy with tag of $(Tag)"
                     echo "##vso[task.setvariable variable=Tag;isOutput=true]$(Tag)"
                   name: SetTag
-                  displayName: Set Package Tag
+                  displayName: Set Package Release Tag
 
             - template: /eng/common/pipelines/templates/jobs/npm-release-task.yml
               parameters:

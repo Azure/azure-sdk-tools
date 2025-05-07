@@ -205,7 +205,7 @@ def generate_review_from_app(language: str, target: str, base: Optional[str] = N
     else:
         base = None
 
-    response = asyncio.run(generate_remote_review(target, language))
+    response = asyncio.run(generate_remote_review(target=target, base=base, language=language))
 
     # response is already a dict, no need to parse it
     if isinstance(response, dict):

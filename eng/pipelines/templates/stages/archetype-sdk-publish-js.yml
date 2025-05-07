@@ -62,7 +62,7 @@ extends:
             - template: /eng/common/pipelines/templates/jobs/npm-release-task.yml
               parameters:
                 Artifact:
-                  name: ${{ parameters.ArtifactName }}
+                  name: ${{ replace( parameters.ArtifactName, '-', '_') }}
                   path: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
                 PathToArtifacts: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
                 Registry: 'https://registry.npmjs.org/'

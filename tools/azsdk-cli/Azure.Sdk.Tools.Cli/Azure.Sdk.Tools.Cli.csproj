@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>azsdk-cli</ToolCommandName>
+    <NoWarn>ASP0000;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

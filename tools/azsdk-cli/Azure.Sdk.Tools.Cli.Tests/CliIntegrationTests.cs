@@ -41,8 +41,12 @@ namespace Azure.Sdk.Tools.Cli.Tests
             var rawState = logger.Logs.Single();
             var kvps = rawState
                     as IReadOnlyCollection<KeyValuePair<string, object>>;
+
+            Assert.That(kvps, Is.Not.Null);
             var dict = kvps.ToDictionary(k => k.Key, v => v.Value);
             var cmdRes = dict["result"] as CommandResponse;
+
+            Assert.That(cmdRes, Is.Not.Null);
 
             Assert.That($"RESPONDING TO {args[1]}", Is.EqualTo(cmdRes.Result));
         }

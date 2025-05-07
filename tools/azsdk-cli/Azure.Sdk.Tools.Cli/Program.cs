@@ -8,9 +8,6 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        // create the default service collection which will make logging and commandfactory available for use
-        // The command factory itself will walk the assembly and discover any MCPTool implementors, and register them
-        // as commands.
         var services = new ServiceCollection();
         services.AddLogging(builder =>
         {

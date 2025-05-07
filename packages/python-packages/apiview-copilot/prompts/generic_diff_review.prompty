@@ -11,7 +11,7 @@ model:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
     azure_deployment: o3-mini
-    api_version: 2025-01-01-preview
+    api_version: 2025-03-01-preview
   parameters:
     frequency_penalty: 0
     presence_penalty: 0
@@ -134,12 +134,3 @@ user:
   ```{{language}}
   {{content}}
   ```
-assistant: |
-  Based on the evaluation criteria, analyze how delightful this API is and how well it adheres to {{language}} best practices. Consider:
-
-  1. Whether method and parameter names are clear and intuitive
-  2. If the complexity level is appropriate
-  3. If naming is consistent and follows conventions  
-  4. How well it adheres to {{language}} best practices
-
-  Provide specific suggestions for improvement where the API could be more delightful or more idiomatic in {{language}}.

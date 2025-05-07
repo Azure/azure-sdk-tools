@@ -3,6 +3,8 @@ import json
 import pathlib
 import argparse
 from typing import Set, Tuple, Any
+import prompty
+import prompty.azure_beta
 import copy
 import sys
 import yaml
@@ -10,7 +12,6 @@ import yaml
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
-import openai
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
@@ -25,7 +26,7 @@ model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
     "api_key": os.environ["AZURE_OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
-    "api_version": os.environ["OPENAI_API_VERSION"],
+    "api_version": "2025-03-01-preview",
 }
 
 weights: dict[str, float] = {
@@ -120,7 +121,6 @@ class CustomAPIViewEvaluator:
             exceptions = filter_data["exceptions"].strip().split("\n")
             exceptions = [e.split(". ", 1)[1] for e in exceptions]
 
-        client = openai.AzureOpenAI()
         for comment in generic_comments:
             if comment.get("source") != "generic":
                 continue
@@ -128,11 +128,19 @@ class CustomAPIViewEvaluator:
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            response = client.responses.create(
-                model=MODEL_JUDGE,
-                input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",
+            prompt_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "prompts", "eval_judge_prompt.prompty")
             )
-            comment["valid"] = "true" in response.output_text.lower()
+            response = prompty.execute(
+                prompt_path,
+                inputs={
+                    "code": context,
+                    "comment": comment["comment"],
+                    "exceptions": exceptions,
+                    "language": language,
+                },
+            )
+            comment["valid"] = "true" in response.lower()
 
     def _groundedness(self, actual: dict[str, Any], context: str) -> None:
         actual = [c for c in actual["comments"] if c["rule_ids"]]

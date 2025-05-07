@@ -4,6 +4,7 @@ import { CodeFile, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION, Id } from "../rustdoc-types/output/rustdoc-types";
 import { externalReferencesLines } from "./process-items/utils/externalReexports";
 import { sortExternalItems } from "./process-items/utils/sorting";
+import { updateReviewLinesWithStableLineIds } from "./utils/lineIdUtils";
 
 let apiJson: Crate;
 export const processedItems = new Set<number>();
@@ -67,8 +68,8 @@ function processExternalReferences(codeFile: CodeFile): void {
  */
 function buildCodeFile(): CodeFile {
   const codeFile: CodeFile = {
-    PackageName: apiJson.index[apiJson.root].name || "unknown",
-    PackageVersion: apiJson["crate_version"] || "unknown",
+    PackageName: apiJson.index[apiJson.root].name || "unknown_root_package_name",
+    PackageVersion: apiJson["crate_version"] || "unknown_crate_version",
     ParserVersion: "1.1.0",
     Language: "Rust",
     ReviewLines: [],
@@ -77,6 +78,8 @@ function buildCodeFile(): CodeFile {
 
   processRootItem(codeFile);
   processExternalReferences(codeFile);
+
+  updateReviewLinesWithStableLineIds(codeFile.ReviewLines);
   return codeFile;
 }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json;
+using AzureSDKDevToolsMCP.Services;
 using AzureSDKDSpecTools.Helpers;
 using AzureSDKDSpecTools.Models;
 using AzureSDKDSpecTools.Services;
@@ -18,32 +19,21 @@ namespace AzureSDKDSpecTools.Tools
         private readonly ITypeSpecHelper typeSpecHelper = _helper;
         private readonly ILogger<ReleasePlanTool> logger = _logger;
 
-        [McpServerTool, Description("Get release plan for a service, product and API spec pull request")]
-        public async Task<List<string>> GetReleasePlan(string serviceTreeId, string productTreeId, string pullRequestLink)
+        [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
+        public async Task<string> GetReleasePlan(string pullRequestLink)
         {
             List<string> releasePlanList = [];
             try
             {
-                var releasePlans = await devOpsService.GetReleasePlans(Guid.Parse(serviceTreeId), Guid.Parse(productTreeId), pullRequestLink);
-                if (releasePlans == null || releasePlans.Count == 0)
-                {
-                    releasePlanList.Add("Failed to get release plan details.");
-                }
-                else
-                {
-                    releasePlanList.Add($"Release Plan details for service: {serviceTreeId}, product: {productTreeId}, pull request: {pullRequestLink}");
-                    foreach (var releasePlan in releasePlans)
-                    {
-                        releasePlanList.Add($"work Item ID: {releasePlan.WorkItemId}, URL: {releasePlan.WorkItemUrl}, Status: {releasePlan.Status}");
-                    }
-                }
+                var releasePlan = await devOpsService.GetReleasePlan(pullRequestLink);
+                return releasePlan == null ? "Failed to get release plan details." :
+                    $"Release Plan: {JsonSerializer.Serialize(releasePlan)}";
             }
             catch (Exception ex)
             {
                 logger.LogError($"Failed to get release plan details: {ex.Message}");
-                releasePlanList.Add($"Failed to get release plan details: {ex.Message}");
+                return $"Failed to get release plan details: {ex.Message}";
             }
-            return releasePlanList;
         }
 
         [McpServerTool, Description("Get Release Plan: Get release plan work item details for a given work item id.")]
@@ -52,8 +42,10 @@ namespace AzureSDKDSpecTools.Tools
             try
             {
                 var releasePlan = await devOpsService.GetReleasePlan(workItemId);
-                return releasePlan != null ? JsonSerializer.Serialize(releasePlan) :
+                var releasePlanText = releasePlan != null ? JsonSerializer.Serialize(releasePlan) :
                        "Failed to get release plan details.";
+                logger.LogInformation($"Release plan details: {releasePlanText}");
+                return releasePlanText;
             }
             catch (Exception ex)
             {
@@ -71,8 +63,18 @@ namespace AzureSDKDSpecTools.Tools
                     throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
                 }
 
-                var specType = typeSpecHelper.IsTypeSpecProjectPath(typeSpecProjectPath)? "TypeSpec" : "OpenAPI";
+                var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath)? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
+
+                // Ensure a release plan is created only if the API specs pull request is in a public repository.
+                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(typeSpecProjectPath))
+                {
+                    return """
+                        SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
+                        Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
+                        A release plan cannot be created for SDK generation using a pull request in a private repository.
+                        """;
+                }
 
                 var releasePlan = new ReleasePlan
                 {
@@ -86,7 +88,7 @@ namespace AzureSDKDSpecTools.Tools
                     SpecPullRequests = [specPullRequestUrl]
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItem(releasePlan);
-                return workItem != null ? JsonSerializer.Serialize(workItem) : "Failed to create release plan work item.";
+                return workItem != null? JsonSerializer.Serialize(workItem) : "Failed to create release plan work item.";
             }
             catch (Exception ex)
             {

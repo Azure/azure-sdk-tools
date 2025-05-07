@@ -1,6 +1,5 @@
 import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
 import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
-import * as typespecUtils from '../src/utils/typespecUtils';
 import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
 import path from 'path';
 import fs from 'fs';
@@ -145,33 +144,6 @@ describe('Remove AnsiEscape Codes', () => {
   it('test ansi code error in net generate script', () => {
     const ansiError = '\x1b[31;1mWrite-Error: \x1b[31;1m[ERROR] The service service is not onboarded yet. We will not support onboard a new service from swagger. Please contact the DotNet language support channel at https://aka.ms/azsdk/donet-teams-channel and include this spec pull request.\x1b[0m';
     expect(removeAnsiEscapeCodes(ansiError)).toEqual('Write-Error: [ERROR] The service service is not onboarded yet. We will not support onboard a new service from swagger. Please contact the DotNet language support channel at https://aka.ms/azsdk/donet-teams-channel and include this spec pull request.');
-  })
-})
-
-describe('getTypeSpecProjectServiceName', () => {
-  it('test getTypeSpecProjectServiceName', () => {
-    const outputFolder = '{azure-resource-provider-folder}/Language/{version-status}/{version}/analyzetext.json';
-    const res = typespecUtils.getTypeSpecProjectServiceName(outputFolder);
-    expect(res).toEqual('Language');
-  })
-
-  it('test getTypeSpecProjectServiceName when output service-name ', () => {
-    const outputFolder = '{azure-resource-provider-folder}/{service-name}/{version-status}/{version}/analyzetext.json';
-    const res = typespecUtils.getTypeSpecProjectServiceName(outputFolder);
-    expect(res).toEqual('{service-name}');
-  })
-})
-
-describe('getTypeSpecProjectResourceProvider', () => {
-  it('test getTypeSpecProjectResourceProvider 1', () => {
-    const typespecProject = 'specification/cognitiveservices/OpenAI.Inference';
-    const res = typespecUtils.getTypeSpecProjectResourceProvider(typespecProject);
-    expect(res).toEqual('OpenAI.Inference');
-  })
-  it('test getTypeSpecProjectResourceProvider 2', () => {
-    const typespecProject = 'specification/cognitiveservices/ContentSafety/a/b/c';
-    const res = typespecUtils.getTypeSpecProjectResourceProvider(typespecProject);
-    expect(res).toEqual('ContentSafety/a/b/c');
   })
 })
 

@@ -4,6 +4,7 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isFunctionItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes the function header and adds modifiers and ABI information to the tokens
@@ -83,7 +84,7 @@ export function processFunction(item: Item): ReviewLine[] {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_fn",
     HasSuffixSpace: false,
     RenderClasses: ["method"],
     NavigateToId: item.id.toString(),
@@ -175,5 +176,6 @@ export function processFunction(item: Item): ReviewLine[] {
     });
   }
   reviewLines.push(reviewLine);
+  lineIdMap.set(item.id.toString(), `function_${item.name}`);
   return reviewLines;
 }

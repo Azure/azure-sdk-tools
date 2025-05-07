@@ -4,6 +4,7 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isAssocTypeItem } from "./utils/typeGuards";
 import { createGenericBoundTokens, processGenerics } from "./utils/processGenerics";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes an associated type item and returns ReviewLine objects.
@@ -32,7 +33,7 @@ export function processAssocType(item: Item): ReviewLine[] | null {
   // Add name
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "unknown",
+    Value: item.name || "unknown_assoc_type",
     HasSuffixSpace: false,
     RenderClasses: ["interface"],
   });
@@ -65,5 +66,6 @@ export function processAssocType(item: Item): ReviewLine[] | null {
   });
 
   reviewLines.push(reviewLine);
+  lineIdMap.set(item.id.toString(), `type_${item.name}`);
   return reviewLines;
 }

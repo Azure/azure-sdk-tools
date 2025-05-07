@@ -7,7 +7,5 @@ export function replaceCratePath(path: string): string {
 }
 
 export function replaceSuperPrefix(path: string): string {
-  return path.startsWith("super::")
-    ? path.replace("super::", "") 
-    : path;
+  return path.startsWith("super::") ? path.replace("super::", "") : path;
 }

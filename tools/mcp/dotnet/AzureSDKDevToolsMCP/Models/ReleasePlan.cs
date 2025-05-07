@@ -25,6 +25,7 @@ namespace AzureSDKDSpecTools.Models
         public bool IsDataPlane { get; set; } = false;
         public string SpecAPIVersion { get; set; } = string.Empty;
         public string SpecType {  get; set; } = string.Empty;
+        public List<SDKGenerationInfo> SDKGenerationInfos { get; set; } = [];
 
         public JsonPatchDocument GetPatchDocument()
         {
@@ -80,5 +81,12 @@ namespace AzureSDKDSpecTools.Models
         {
             return $"<a href=\"{pullRequest}\">{pullRequest}</a>";
         }
+    }
+
+    public class SDKGenerationInfo
+    {
+        public string Language { get; set; } = string.Empty;
+        public string GenerationPipelineUrl { get; set; } = string.Empty;
+        public string SdkPullRequestUrl {  get; set; } = string.Empty;
     }
 }

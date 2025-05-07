@@ -3,49 +3,247 @@
         {
             "rule_ids": [],
             "line_no": 1,
+            "bad_code": ".",
+            "suggestion": null,
+            "comment": "Remove the extraneous period or placeholder line at the start of the file, as it appears to be an unintended artifact that could cause confusion.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1,
             "bad_code": "",
-            "suggestion": "Augment the API with comprehensive JSDoc comments and inline examples to demonstrate common workflows and configurations.",
-            "comment": "Enhanced documentation would further boost discoverability and ease-of-use, particularly given the API’s complexity and the advanced TypeScript patterns it employs.",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nService Overview  \nThis API provides a comprehensive TypeScript library for interacting with a search service. It supports functionalities for document indexing, executing search queries, autosuggestions, and autocomplete operations. The API also offers capabilities for managing indexes, synonym maps, aliases, data source connections, and indexers. In addition, it includes advanced search features through a rich set of configurations for analyzers, token filters, and cognitive skills that enable language detection, image analysis, entity recognition, sentiment analysis, and vector search.\n\nAPI Version  \nAlthough the client classes include an `apiVersion` property provided via their options, there is no separate API version object in this excerpt. The version is instead managed through properties in the client options.\n\n*Client Classes  \nThe API exposes a `SearchClient` class with methods named: `autocomplete`, `deleteDocuments`, `getDocument`, `getDocumentsCount`, `indexDocuments`, `mergeDocuments`, `mergeOrUploadDocuments`, `search`, `suggest`, and `uploadDocuments`. The `SearchIndexClient` class provides methods: `analyzeText`, `createAlias`, `createIndex`, `createOrUpdateAlias`, `createOrUpdateIndex`, `createOrUpdateSynonymMap`, `createSynonymMap`, `deleteAlias`, `deleteIndex`, `deleteSynonymMap`, `getAlias`, `getIndex`, `getIndexStatistics`, `getSearchClient`, `getServiceStatistics`, `getSynonymMap`, `listAliases`, `listIndexes`, `listIndexesNames`, `listSynonymMaps`, and `listSynonymMapsNames`. The `SearchIndexerClient` class offers methods: `createDataSourceConnection`, `createIndexer`, `createOrUpdateDataSourceConnection`, `createOrUpdateIndexer`, `createOrUpdateSkillset`, `createSkillset`, `deleteDataSourceConnection`, `deleteIndexer`, `deleteSkillset`, `getDataSourceConnection`, `getIndexer`, `getIndexerStatus`, `getSkillset`, `listDataSourceConnections`, `listDataSourceConnectionsNames`, `listIndexers`, `listIndexersNames`, `listSkillsets`, `listSkillsetsNames`, `resetDocuments`, `resetIndexer`, `resetSkills`, and `runIndexer`.\n\nOther Classes and Enumerations  \nAdditional classes include `IndexDocumentsBatch` for batching document indexing operations and a default `GeographyPoint` class for spatial data representation. The API defines a broad range of interfaces and enumerations that cover configurations for character filters, analyzers, tokenizers, token filters, scoring functions, semantic search, vector search, and AI enrichment skills. It also provides utility functions such as `createSynonymMapFromFile` and `odata` that assist with file-based synonym map creation and OData query string construction.\n\nRelevant Details  \nThe API is structured to facilitate scalable and feature-rich search applications. It supports both traditional and semantic search queries, vector search algorithms, and deep integration with cognitive services. Advanced configuration options and extensive type definitions allow for precise tuning of search behavior, text analysis, and indexing workflows.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 4,
+            "bad_code": "export function odata(strings: TemplateStringsArray, ...values: unknown[]): string;",
+            "suggestion": "export function buildODataQuery(strings: TemplateStringsArray, ...values: unknown[]): string;",
+            "comment": "Rename 'odata' to 'buildODataQuery' to make its purpose clearer.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "typescript_implementation.html#ts-modules-no-default"
+            ],
+            "line_no": 6,
+            "bad_code": "export default class GeographyPoint {",
+            "suggestion": "export class GeographyPoint {",
+            "comment": "Default exports are discouraged; use named exports instead to align with best practices for TypeScript modules.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 9,
+            "bad_code": "constructor(geographyPoint: {",
+            "suggestion": "constructor({ latitude, longitude }: { latitude: number; longitude: number; });",
+            "comment": "Use parameter destructuring in the GeographyPoint constructor to improve clarity and usage.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 2136,
-            "bad_code": "export interface SearchIndexer { ... }",
-            "suggestion": "Consider providing a higher‑level fluent interface or facade that abstracts away the most common configurations and operations, reducing the need for end‑users to directly manipulate lower‑level types.",
-            "comment": "While the API’s flexibility is impressive, a simplified set of wrapper methods for common tasks can improve the developer experience by reducing boilerplate and potential misconfiguration.",
+            "line_no": 19,
+            "bad_code": "delete(keyName: keyof TModel, keyValues: string[]): void;",
+            "suggestion": "deleteByKey(keyName: keyof TModel, keyValues: string[]): void;",
+            "comment": "Rename the overloaded 'delete' method to 'deleteByKey' to clearly differentiate its purpose.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 2667,
-            "bad_code": "export enum KnownPIIDetectionSkillMaskingMode { ... }",
-            "suggestion": "Rename enums to remove the 'Known' prefix (for example, use 'PIIDetectionSkillMaskingMode' instead of 'KnownPIIDetectionSkillMaskingMode') so that the purpose of the enum is immediately clear.",
-            "comment": "While the prefix may have been chosen to distinguish constant sets, it can be confusing. More natural names would align with common JavaScript and TypeScript conventions.",
+            "line_no": 35,
+            "bad_code": "deleteDocuments(keyName: keyof TModel, keyValues: string[], options?: DeleteDocumentsOptions): Promise<IndexDocumentsResult>;",
+            "suggestion": "deleteDocumentsByKey(keyName: keyof TModel, keyValues: string[], options?: DeleteDocumentsOptions): Promise<IndexDocumentsResult>;",
+            "comment": "Rename the overloaded deleteDocuments method to 'deleteDocumentsByKey' to distinguish deletion by key from deletion by document.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 2680,
-            "bad_code": "export type BlobIndexerDataToExtract = `${KnownBlobIndexerDataToExtract}`;",
-            "suggestion": "Consider grouping similar string literal union types into well-named interfaces or type aliases to reduce repetition and complexity, possibly wrapping them in a configuration object.",
-            "comment": "Using template literal types increases type safety, but the proliferation of these types can clutter the API, making it harder to learn. Grouping related types can streamline the interface.",
+            "line_no": 83,
+            "bad_code": "createOrUpdateDataSourceConnection(dataSourceConnection: SearchIndexerDataSourceConnection, options?: CreateorUpdateDataSourceConnectionOptions): Promise<SearchIndexerDataSourceConnection>;",
+            "suggestion": "createOrUpdateDataSourceConnection(dataSourceConnection: SearchIndexerDataSourceConnection, options?: CreateOrUpdateDataSourceConnectionOptions): Promise<SearchIndexerDataSourceConnection>;",
+            "comment": "Correct the typo in the type name from 'CreateorUpdateDataSourceConnectionOptions' to 'CreateOrUpdateDataSourceConnectionOptions' for consistency.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 2890,
-            "bad_code": "export type NarrowedModel<TModel extends object, TFields extends SelectFields<TModel> = SelectFields<TModel>> = ...",
-            "suggestion": "Provide simplified helper types or wrapper functions for common use cases instead of requiring end‐users to directly interact with complex generics like NarrowedModel and SearchPick.",
-            "comment": "$The use of advanced generic constructs greatly enhances type safety but may intimidate less experienced developers. A simplified facade for typical scenarios could improve the developer experience. (general comment)",
+            "line_no": 84,
+            "bad_code": "createOrUpdateIndexer(indexer: SearchIndexer, options?: CreateorUpdateIndexerOptions): Promise<SearchIndexer>;",
+            "suggestion": "createOrUpdateIndexer(indexer: SearchIndexer, options?: CreateOrUpdateIndexerOptions): Promise<SearchIndexer>;",
+            "comment": "Fix the typo in the type name from 'CreateorUpdateIndexerOptions' to 'CreateOrUpdateIndexerOptions' for better clarity.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 2892,
-            "bad_code": "",
-            "suggestion": "",
-            "comment": "The API’s use of asynchronous iterators (PagedAsyncIterableIterator) for paged results is both modern and idiomatic, making it delightful for developers accustomed to asynchronous workflows in JavaScript.",
+            "line_no": 436,
+            "bad_code": "export enum KnownLexicalAnalyzerName {",
+            "suggestion": "export const enum LexicalAnalyzerName {",
+            "comment": "Use a const enum and remove the redundant 'Known' prefix for better performance and naming clarity. Additionally, consider splitting this large enum into smaller, logically grouped enums to improve discoverability in IDEs.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 635,
+            "bad_code": "Jns = \"Jns\"",
+            "suggestion": "Jns = \"jns\"",
+            "comment": "Ensure consistent casing for language codes; switch to lowercase to match other entries.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 921,
+            "bad_code": "export enum KnownSplitSkillLanguage {",
+            "suggestion": "export enum SplitSkillLanguage {",
+            "comment": "Consider removing the redundant 'Known' prefix from enum names for brevity and clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1161,
+            "bad_code": "odatatype: \"#Microsoft.Azure.Search.AIServicesByIdentity\";",
+            "suggestion": "odataType: \"#Microsoft.Azure.Search.AIServicesByIdentity\";",
+            "comment": "Rename the property to use camelCase ('odataType') so it aligns with TypeScript naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1421,
+            "bad_code": "odatatype: \"#Microsoft.Azure.Search.CognitiveServicesByKey\";",
+            "suggestion": "odataType: \"#Microsoft.Azure.Search.CognitiveServicesByKey\";",
+            "comment": "Use camelCase (odataType) for the OData type property to align with TypeScript conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 1450,
+            "bad_code": "export interface CreateorUpdateDataSourceConnectionOptions extends OperationOptions {",
+            "suggestion": "export interface CreateOrUpdateDataSourceConnectionOptions extends OperationOptions {",
+            "comment": "The interface name does not follow naming conventions; it should use 'CreateOrUpdate' with a capital 'O' in 'Or' for consistency and clarity.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 1455,
+            "bad_code": "export interface CreateorUpdateIndexerOptions extends OperationOptions {",
+            "suggestion": "export interface CreateOrUpdateIndexerOptions extends OperationOptions {",
+            "comment": "The interface name should be updated to 'CreateOrUpdateIndexerOptions' to fix the capitalization error and ensure consistent naming in accordance with guidelines.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1717,
+            "bad_code": "indexDocuments(batch: IndexDocumentsBatch<TModel>, options: IndexDocumentsOptions): Promise<IndexDocumentsResult>;",
+            "suggestion": "indexDocuments(batch: IndexDocumentsBatch<TModel>, options?: IndexDocumentsOptions): Promise<IndexDocumentsResult>;",
+            "comment": "Make the options parameter optional to simplify usage when defaults are acceptable.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1916,
+            "bad_code": "odatatype: \"#Microsoft.Azure.Search.NGramTokenizer\";",
+            "suggestion": "odataType: \"#Microsoft.Azure.Search.NGramTokenizer\";",
+            "comment": "Use camelCase for property names (e.g. 'odataType') to align with common TypeScript conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2003,
+            "bad_code": "[property: string]: any;",
+            "suggestion": "[property: string]: unknown;",
+            "comment": "Prefer 'unknown' over 'any' in index signatures for better type safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2095,
+            "bad_code": "export interface SearchDocumentsResult<TModel extends object, TFields extends SelectFields<TModel> = SelectFields<TModel>> extends SearchDocumentsResultBase {",
+            "suggestion": "export interface SearchDocumentsIteratorResult<TModel extends object, TFields extends SelectFields<TModel> = SelectFields<TModel>> extends SearchDocumentsResultBase {",
+            "comment": "Rename the interface to clarify that the results are provided as an iterator, which can reduce potential confusion.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2412,
+            "bad_code": "export interface Similarity {",
+            "suggestion": null,
+            "comment": "Consider splitting the file into smaller, domain-specific modules to improve maintainability and ease of navigation.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2413,
+            "bad_code": "odatatype: \"#Microsoft.Azure.Search.ClassicSimilarity\" | \"#Microsoft.Azure.Search.BM25Similarity\";",
+            "suggestion": "odataType: \"#Microsoft.Azure.Search.ClassicSimilarity\" | \"#Microsoft.Azure.Search.BM25Similarity\";",
+            "comment": "Rename 'odatatype' to 'odataType' to follow camelCase naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2701,
+            "bad_code": "export type CreateAliasOptions = OperationOptions;",
+            "suggestion": null,
+            "comment": "If these option aliases simply re-export OperationOptions without added context, consolidating them may reduce redundancy.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2773,
+            "bad_code": "__actionType: IndexActionType;",
+            "suggestion": "actionType: IndexActionType;",
+            "comment": "Avoid double-underscoring property names; using 'actionType' instead improves clarity and consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2899,
+            "bad_code": "export type SearchPick<TModel extends object, TFields extends SelectFields<TModel> = SelectFields<TModel>> = (<T>() => T extends TModel ? true : false) extends <T>() => T extends object ? true : false ? TModel : (<T>() => T extends TModel ? true : false) extends <T>() => T extends object ? true : false ? TModel : (<T>() => T extends any ? true : false ? TModel : (<T>() => T extends TFields ? true : false) extends <T>() => T extends never ? true : false ? never : (<T>() => T extends TFields ? true : false) extends <T>() => T extends SelectFields<TModel> ? true : false ? TModel : SearchPick<TModel, TFields>;",
+            "suggestion": null,
+            "comment": "This complex conditional type reduces readability; consider refactoring it or adding documentation to clarify its purpose. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2911,
+            "bad_code": "queryType?: \"simple\" | \"full\";",
+            "suggestion": "queryType: \"simple\" | \"full\";",
+            "comment": "Make the discriminant property required in both union branches to improve type narrowing.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2925,
+            "bad_code": "export type SelectArray<TFields = never> = [string] extends [TFields] ? readonly TFields[] : (<T>() => T extends TFields ? true : false) extends <T>() => T extends never ? true : false ? readonly string[] : readonly TFields[];",
+            "suggestion": null,
+            "comment": "Add inline documentation to explain this conditional logic for better clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2927,
+            "bad_code": "export type SelectFields<TModel extends object> = (<T>() => T extends TModel ? true : false) extends <T>() => T extends never ? true : false ? string : (<T>() => T extends TModel ? true : false) extends <T>() => T extends any ? true : false ? string : (<T>() => T extends TModel ? true : false) extends <T>() => T extends object ? true : false ? string : TModel extends Array<infer Elem> ? Elem extends object ? SelectFields<Elem> : never : {",
+            "suggestion": null,
+            "comment": "Consider adding documentation or refactoring this highly complex conditional type into smaller, more manageable pieces.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2931,
+            "bad_code": "export type SemanticErrorMode = `${KnownSemanticErrorMode}`;",
+            "suggestion": null,
+            "comment": "If 'KnownSemanticErrorMode' is already a union of string literals, consider using it directly without template literal wrapping for simplicity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2957,
+            "bad_code": "export type SuggestNarrowedModel<TModel extends object, TFields extends SelectFields<TModel> = SelectFields<TModel>> = (<T>() => T extends TModel ? true : false) extends <T>() => T extends never ? true : false ? TModel : (<T>() => T extends TModel ? true : false) extends <T>() => T extends object ? true : false ? TModel : (<T>() => T extends TFields ? true : false) extends <T>() => T extends never ? true : false ? keyof ExtractDocumentKey<TModel> extends never ? TModel : ExtractDocumentKey<TModel> : TFields extends SelectFields<TModel> ? NarrowedModel<TModel, TFields> : never;",
+            "suggestion": null,
+            "comment": "This intricate conditional type would benefit from additional comments or refactoring for greater understandability.",
             "source": "generic"
         }
     ]

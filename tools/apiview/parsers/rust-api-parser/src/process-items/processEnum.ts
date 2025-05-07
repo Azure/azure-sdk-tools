@@ -5,12 +5,14 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isEnumItem } from "./utils/typeGuards";
 import { getAPIJson } from "../main";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 export function processEnum(item: Item): ReviewLine[] {
   if (!isEnumItem(item)) return [];
   const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `enum_${item.name}`);
   // Process derives and impls
   let implResult: ImplProcessResult;
   if (item.inner.enum.impls) {
@@ -25,7 +27,6 @@ export function processEnum(item: Item): ReviewLine[] {
 
   if (implResult.deriveTokens.length > 0) {
     const deriveTokensLine: ReviewLine = {
-      LineId: item.id.toString() + "_derive",
       Tokens: implResult.deriveTokens,
       RelatedToLine: item.id.toString(),
     };
@@ -39,7 +40,7 @@ export function processEnum(item: Item): ReviewLine[] {
 
   enumLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_enum",
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     RenderClasses: ["enum"],
@@ -67,12 +68,13 @@ export function processEnum(item: Item): ReviewLine[] {
   if (item.inner.enum.variants) {
     enumLine.Children = item.inner.enum.variants.map((variant: number) => {
       const variantItem = apiJson.index[variant];
+      lineIdMap.set(variantItem.id.toString(), `variant_${variantItem.name}`);
       return {
         LineId: variantItem.id.toString(),
         Tokens: [
           {
             Kind: TokenKind.Text,
-            Value: variantItem.name || "null",
+            Value: variantItem.name || "unknown_variant",
             HasSuffixSpace: false,
           },
           {

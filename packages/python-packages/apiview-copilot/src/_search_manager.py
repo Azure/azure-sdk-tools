@@ -208,6 +208,10 @@ class SearchManager:
         self.filter_expression = f"lang eq '{language}'"
         if include_general_guidelines:
             self.filter_expression += " or lang eq '' or lang eq null"
+        self.static_guidelines = self._retrieve_static_guidelines(
+            language, include_general_guidelines=include_general_guidelines
+        )
+        self._static_guidelines_map = {x["id"]: x for x in self.static_guidelines}
 
     def _ensure_env_vars(self, vars: List[str]):
         """
@@ -220,7 +224,7 @@ class SearchManager:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def retrieve_static_guidelines(self, language, include_general_guidelines: bool = False) -> List[object]:
+    def _retrieve_static_guidelines(self, language, include_general_guidelines: bool = False) -> List[object]:
         """
         Retrieves the guidelines for the given language, optional with general guidelines.
         This method retrieves guidelines statically from the file system. It does not
@@ -289,6 +293,17 @@ class SearchManager:
             vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
         )
         return SearchResult(result)
+
+    def guidelines_for_ids(self, ids: List[str]) -> List[object]:
+        """
+        Retrieves the guidelines for the given IDs.
+        This method retrieves guidelines statically from the file system. It does not
+        query any Azure service.
+        """
+        guidelines = []
+        for id in set(ids):
+            guidelines.append(self._static_guidelines_map.get(id))
+        return guidelines
 
     def build_context(self, guideline_results: List[SearchResult], example_results: List[SearchResult]) -> Context:
         self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])

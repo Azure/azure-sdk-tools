@@ -2,14 +2,18 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -83,13 +87,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return record;
         }
 
+
         private static void DeserializeBody(RequestOrResponse requestOrResponse, in JsonElement property)
         {
             if (property.ValueKind == JsonValueKind.Null)
             {
                 requestOrResponse.Body = null;
             }
-            else if (IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
+            else if (ContentTypeUtilities.IsTextContentType(requestOrResponse.Headers, out Encoding encoding))
             {
                 if (property.ValueKind == JsonValueKind.Array)
                 {
@@ -114,6 +119,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
                 NormalizeJsonBody(requestOrResponse);
+            }
+            else if (ContentTypeUtilities.IsMultipartMixed(requestOrResponse.Headers, out var boundary) && property.ValueKind == JsonValueKind.Array)
+            {
+                requestOrResponse.Body = MultipartUtilities.DeserializeMultipartBody(property, boundary);
             }
             else if (property.ValueKind == JsonValueKind.Array)
             {
@@ -189,6 +198,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             jsonWriter.WriteEndObject();
         }
 
+
         private void SerializeBody(Utf8JsonWriter jsonWriter, string name, byte[] requestBody, IDictionary<string, string[]> headers)
         {
             if (requestBody == null)
@@ -200,7 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 jsonWriter.WriteStartArray(name);
                 jsonWriter.WriteEndArray();
             }
-            else if (IsTextContentType(headers, out Encoding encoding))
+            else if (ContentTypeUtilities.IsTextContentType(headers, out Encoding encoding))
             {
                 // Try parse response as JSON and write it directly if possible
                 try
@@ -253,6 +263,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteEndArray();
                 }
             }
+            else if (ContentTypeUtilities.IsMultipartMixed(headers, out var boundary))
+            {
+                MultipartUtilities.SerializeMultipartBody(jsonWriter, name, requestBody, boundary);
+            }
             else
             {
                 jsonWriter.WriteString(name, Convert.ToBase64String(requestBody));
@@ -297,25 +311,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteEndArray();
                 }
             }
-        }
-
-        public static bool TryGetContentType(IDictionary<string, string[]> requestHeaders, out string contentType)
-        {
-            contentType = null;
-            if (requestHeaders.TryGetValue("Content-Type", out var contentTypes) &&
-                contentTypes.Length == 1)
-            {
-                contentType = contentTypes[0];
-                return true;
-            }
-            return false;
-        }
-
-        public static bool IsTextContentType(IDictionary<string, string[]> requestHeaders, out Encoding encoding)
-        {
-            encoding = null;
-            return TryGetContentType(requestHeaders, out string contentType) &&
-                   ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
         }
 
         /// <summary>

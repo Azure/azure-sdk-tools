@@ -17,7 +17,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
     // Create the base token for the type name
     const baseToken: ReviewToken = {
       Kind: TokenKind.TypeName,
-      Value: replaceSuperPrefix(type.resolved_path.name) || "unnamed",
+      Value: replaceSuperPrefix(type.resolved_path.name) || "unnamed_resolved_path",
       HasSuffixSpace: false,
       NavigateToId: type.resolved_path.id.toString(),
     };

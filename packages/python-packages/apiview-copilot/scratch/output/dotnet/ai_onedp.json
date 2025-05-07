@@ -2,61 +2,301 @@
     "comments": [
         {
             "rule_ids": [],
-            "line_no": 8,
-            "bad_code": "namespace Azure.AI.Projects.OneDP {",
-            "suggestion": "namespace Azure.AI.Projects.[DescriptiveName] {",
-            "comment": "$The 'OneDP' suffix in the namespace is ambiguous from a client perspective. Renaming it to something that clearly indicates its domain or purpose would help users understand its context and scope. (general comment)",
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nThe API provides a comprehensive framework for managing AI projects with a strong emphasis on configuring, executing, and monitoring AI agents and their associated workflows. It covers operations ranging from agent creation and configuration to running processes, handling messaging threads, managing datasets and deployments, and evaluating AI outputs.\n\nThe latest API version is derived from the default parameter on methods such as in the `GetAgentsClient` method and the `AIProjectClientOptions.ServiceVersion` enumeration where the value is set to `V2025_05_01_Preview`.\n\nThis API exposes client classes such as `AgentsClient` and `AIProjectClient`. The `AgentsClient` offers methods including: `CreateAgent`, `DeleteAgent`, `GetAgent`, `GetAgents`, `GetRun`, `GetRuns`, `Run`, `Stream`, and `UpdateAgent`. The `AIProjectClient` provides methods: `GetAgentsClient`, `GetConnectionsClient`, `GetDatasetsClient`, `GetDeploymentsClient`, `GetEvaluationsClient`, `GetIndexesClient`, `GetMessagesClient`, `GetServicePatternsClient`, and `GetThreadsClient`.\n\nIn addition to the client classes, the API is structured around numerous model types and utility classes that support a wide range of functionality. Models such as `Agent`, `AgentCreationOptions`, and `AgentConfigurationOptions` encapsulate the configuration and state of agents, while content classes (`AudioContent`, `ImageContent`, `FileContent`, `TextContent`, etc.) represent various types of data exchanged within the system. A factory class (`AIProjectsOneDPModelFactory`) is provided to facilitate the creation of these models.\n\nOther components include dedicated classes to handle connections, datasets, deployments, evaluations, indexes, threads, and messaging. Many of these types implement common interfaces like `IJsonModel` and `IPersistableModel` for serialization and persistence, ensuring consistency in data handling across the service.\n\nFinally, extension methods in the `Microsoft.Extensions.Azure` namespace enable registering the `AIProjectClient` in Azure client builder pipelines, further integrating this service into Azure’s ecosystem.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 10,
+            "bad_code": "protected AgentsClient();",
+            "suggestion": "public AgentsClient();",
+            "comment": "Provide a public constructor so that clients can directly instantiate the AgentsClient.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 12,
-            "bad_code": "public virtual Response<Agent> CreateAgent(string displayName, string modelId, string instructions, CancellationToken cancellationToken = default);",
-            "suggestion": "public virtual Response<Agent> CreateAgent(AgentCreationOptions options, CancellationToken cancellationToken = default);",
-            "comment": "The AgentsClient exposes multiple overloads for CreateAgent (including ones with individual string parameters and ones accepting a RequestContent), which can overwhelm the user. Consolidating these overloads—preferably by emphasizing an options‐based pattern—can reduce ambiguity and improve discoverability.",
-            "source": "generic"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 20,
-            "bad_code": "public virtual Response<Agent> GetAgent(string agentId, CancellationToken cancellationToken = default);",
-            "suggestion": "/* Consider unifying the API by using a single pattern for conveying operation context (using either CancellationToken or a unified RequestContext) */",
-            "comment": "There are parallel overloads for GetAgent that use CancellationToken in one and RequestContext in another. This inconsistency forces users to wonder when to use one over the other. A more unified approach or detailed documentation distinguishing the two would improve the developer experience.",
+            "line_no": 14,
+            "bad_code": "public virtual Response CreateAgent(RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Response CreateAgentWithContent(RequestContent content, RequestContext context = null);",
+            "comment": "Rename the raw content overload to differentiate it from the strongly typed CreateAgent methods.",
             "source": "generic"
         },
         {
             "rule_ids": [
-                "dotnet_implementation.html#dotnet-lro-return"
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
             ],
-            "line_no": 36,
-            "bad_code": "public virtual Response<Run> Run(string modelId, string instructions, string message, CancellationToken cancellationToken = default);",
-            "suggestion": "public virtual Operation<Run> Run(WaitUntil wait, string modelId, string instructions, string message, CancellationToken cancellationToken = default);",
-            "comment": "If the 'Run' methods are intended to represent long-running operations, they should follow the LRO guidelines – that is, they should return a subclass of Operation<T> and take WaitUntil as the first parameter. Without this, the operation shape does not clearly signal the asynchronous polling behavior expected for LROs.",
+            "line_no": 21,
+            "bad_code": "public virtual Response GetAgent(string agentId, RequestContext context);",
+            "suggestion": "public virtual Response GetAgent(string agentId, RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null. Additionally, consider renaming the overload returning a non-generic Response to clarify its purpose.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
+            ],
+            "line_no": 23,
+            "bad_code": "public virtual Task<Response> GetAgentAsync(string agentId, RequestContext context);",
+            "suggestion": "public virtual Task<Response> GetAgentAsync(string agentId, RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null to comply with guidelines. Additionally, consider using a 'WithResponse' suffix for async raw response overloads to maintain naming consistency.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
+            ],
+            "line_no": 25,
+            "bad_code": "public virtual Response GetAgents(RequestContext context);",
+            "suggestion": "public virtual Response GetAgents(RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null to comply with guidelines. Additionally, consider naming overloads to clearly distinguish between methods returning raw responses and those returning strongly typed results.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
+            ],
+            "line_no": 27,
+            "bad_code": "public virtual Task<Response> GetAgentsAsync(RequestContext context);",
+            "suggestion": "public virtual Task<Response> GetAgentsAsync(RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null to comply with guidelines. Additionally, consider renaming the async raw response overload for GetAgents to improve clarity.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
+            ],
+            "line_no": 29,
+            "bad_code": "public virtual Response GetRun(string runId, RequestContext context);",
+            "suggestion": "public virtual Response GetRun(string runId, RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null to comply with parameter presence guidelines. Additionally, consider renaming the method for consistency with naming conventions for raw response overloads.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
+            ],
+            "line_no": 31,
+            "bad_code": "public virtual Task<Response> GetRunAsync(string runId, RequestContext context);",
+            "suggestion": "public virtual Task<Response> GetRunAsync(string runId, RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null.",
             "source": "guideline"
         },
         {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context-presence"
+            ],
+            "line_no": 33,
+            "bad_code": "public virtual Pageable<BinaryData> GetRuns(RequestContext context);",
+            "suggestion": "public virtual Pageable<BinaryData> GetRuns(RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional with a default value of null. Additionally, consider renaming the method to more clearly indicate it returns untyped binary data if that is its purpose.",
+            "source": "merged"
+        },
+        {
             "rule_ids": [],
-            "line_no": 77,
-            "bad_code": "BinaryData IPersistableModel<Agent>.Write(ModelReaderWriterOptions options);",
-            "suggestion": "/* Consider refactoring common serialization logic into a shared base or helper to eliminate repetitive interface member implementations */",
-            "comment": "Many types in the API repetitively implement similar methods for JSON and binary serialization. Abstracting the shared logic can reduce boilerplate, lower the chance of inconsistencies, and simplify maintenance.",
+            "line_no": 36,
+            "bad_code": "public virtual Response<Run> Run(string modelId, string instructions, string message, CancellationToken cancellationToken = default);",
+            "suggestion": "public virtual Response<Run> RunModel(string modelId, string instructions, string message, CancellationToken cancellationToken = default);",
+            "comment": "Rename this Run overload to RunModel to clarify that it initiates a run using model parameters.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 204,
-            "bad_code": "public static class AIProjectsOneDPModelFactory {",
-            "suggestion": "public static class AIProjectsModelFactory {",
-            "comment": "The model factory exposes many static methods with numerous optional parameters. This overload explosion can make discoverability difficult. Consider grouping related parameters into option objects or adopting a builder pattern for more fluent configuration.",
+            "line_no": 37,
+            "bad_code": "public virtual Response<Run> Run(string agentId, string message, CancellationToken cancellationToken = default);",
+            "suggestion": "public virtual Response<Run> RunAgent(string agentId, string message, CancellationToken cancellationToken = default);",
+            "comment": "Rename this Run overload to RunAgent to indicate it targets an existing agent.",
             "source": "generic"
         },
         {
             "rule_ids": [],
+            "line_no": 39,
+            "bad_code": "public virtual Response Run(RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Response RunWithContent(RequestContent content, RequestContext context = null);",
+            "comment": "Rename the raw content Run overload so its intent is distinct from the typed variants.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 43,
+            "bad_code": "public virtual Task<Response> RunAsync(RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Task<Response> RunWithContentAsync(RequestContent content, RequestContext context = null);",
+            "comment": "Rename the async raw content Run overload for clarity and consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 45,
+            "bad_code": "public virtual Response Stream(RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Response StreamWithContent(RequestContent content, RequestContext context = null);",
+            "comment": "Rename the raw content Stream overload to better indicate its low‐level nature.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 47,
+            "bad_code": "public virtual Task<Response> StreamAsync(RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Task<Response> StreamWithContentAsync(RequestContent content, RequestContext context = null);",
+            "comment": "Rename the async raw content Stream overload for improved naming consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 49,
+            "bad_code": "public virtual Response UpdateAgent(string agentId, RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Response UpdateAgentWithContent(string agentId, RequestContent content, RequestContext context = null);",
+            "comment": "Rename the raw content UpdateAgent overload to distinguish it from the strongly typed update method.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 51,
+            "bad_code": "public virtual Task<Response> UpdateAgentAsync(string agentId, RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Task<Response> UpdateAgentWithContentAsync(string agentId, RequestContent content, RequestContext context = null);",
+            "comment": "Rename the async raw content UpdateAgent overload for clarity and consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 59,
+            "bad_code": "AadCredential IJsonModel<AadCredential>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options);",
+            "suggestion": null,
+            "comment": "Serialization interface methods are repeated across models. Consider abstracting these common implementations into a generic base to reduce boilerplate.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 60,
+            "bad_code": "void IJsonModel<AadCredential>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options);",
+            "suggestion": null,
+            "comment": "If JSON serialization is intended for common usage, consider providing a public wrapper instead of keeping it only as an explicit interface implementation.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 185,
+            "bad_code": "public virtual AgentsClient GetAgentsClient(string apiVersion = \"2025-05-01-preview\");",
+            "suggestion": "public virtual AgentsClient GetAgentsClient(string apiVersion = ApiVersions.V2025_05_01Preview);",
+            "comment": "Replace the magic version string with a constant or enum value for better version management and discoverability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 205,
+            "bad_code": "public static Agent Agent(string agentId = null, string description = null, IDictionary<string, string> metadata = null, AgentCreationOptions creationOptions = null);",
+            "suggestion": "public static Agent CreateAgent(string agentId = null, string description = null, IDictionary<string, string> metadata = null, AgentCreationOptions creationOptions = null);",
+            "comment": "Rename factory methods to include an action verb (e.g. CreateAgent) to improve clarity and avoid conflicts with type names.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 206,
+            "bad_code": "public static AgentMessage AgentMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null);",
+            "suggestion": "public static AgentMessage CreateAgentMessage(string userId = null, string agentId = null, string messageId = null, string agentRunId = null, string threadId = null, IEnumerable<AIContent> content = null, string authorName = null, long? createdAt = null, long? completedAt = null);",
+            "comment": "Using a verb in the factory method name (e.g. CreateAgentMessage) clarifies its purpose and aligns with idiomatic API design.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 496,
+            "bad_code": "public virtual Pageable<DatasetVersion> GetLatests(int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default);",
+            "suggestion": "public virtual Pageable<DatasetVersion> GetLatestVersions(int? maxCount = null, string skip = null, string tags = null, ListViewType? listViewType = null, CancellationToken cancellationToken = default);",
+            "comment": "Rename the method to 'GetLatestVersions' for clarity and to follow idiomatic naming practices in C#.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-parameter-request-context"
+            ],
+            "line_no": 555,
+            "bad_code": "public virtual Response GetDeployment(string name, RequestContext context);",
+            "suggestion": "public virtual Response GetDeployment(string name, RequestContext context = null);",
+            "comment": "The RequestContext parameter should be optional by assigning a default value of null, in line with SDK guidelines. Additionally, consider providing a CancellationToken parameter in overloads with RequestContext to support consistent cancellation patterns.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 558,
+            "bad_code": "public virtual Pageable<Deployment> GetDeployments(string modelPublisher = null, string modelName = null, bool? includeConnectionModels = null, int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default);",
+            "suggestion": "public virtual Pageable<Deployment> GetDeployments(string modelPublisher = null, string modelName = null, bool? includeConnectionModels = null, int? maxCount = null, int? skip = null, int? maxPageSize = null, CancellationToken cancellationToken = default);",
+            "comment": "Rename the 'maxpagesize' parameter to 'maxPageSize' to follow standard camel casing and improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 565,
+            "bad_code": "public DeveloperMessage(IEnumerable<AIContent> content);",
+            "suggestion": "public DeveloperMessage(params AIContent[] content);",
+            "comment": "Consider adding a params overload to simplify the creation of DeveloperMessage instances when supplying multiple AIContent items.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 567,
+            "bad_code": "DeveloperMessage IJsonModel<DeveloperMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options);",
+            "suggestion": "public static DeveloperMessage Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options);",
+            "comment": "Expose a public static Create method for JSON deserialization to improve discoverability instead of relying solely on explicit interface implementations.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1090,
+            "bad_code": "public virtual ServicePatternsBuildingBlocks GetServicePatternsBuildingBlocksClient();",
+            "suggestion": "public virtual ServicePatternsBuildingBlocks GetBuildingBlocks();",
+            "comment": "Simplify the method name to make it more succinct and discoverable.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1134,
+            "bad_code": "public class Thread : IJsonModel<Thread>, IPersistableModel<Thread> {",
+            "suggestion": "public class ConversationThread : IJsonModel<ConversationThread>, IPersistableModel<ConversationThread> {",
+            "comment": "Rename the Thread class to ConversationThread to avoid confusion with System.Threading.Thread and improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1150,
+            "bad_code": "public virtual Response CreateThread(RequestContent content, RequestContext context = null);",
+            "suggestion": "public virtual Response CreateThreadFromContent(RequestContent content, RequestContext context = null);",
+            "comment": "Disambiguate the overloads by renaming this method to clearly indicate it creates a thread from a RequestContent.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1254,
+            "bad_code": "public object Duration { get; set;}",
+            "suggestion": "public TimeSpan Duration { get; set;}",
+            "comment": "Use a strongly typed TimeSpan for Duration instead of a generic object to better express intent. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1256,
+            "bad_code": "public object Height { get; set;}",
+            "suggestion": "public int Height { get; set;}",
+            "comment": "Replace object with int for Height to improve type safety and clarity. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1259,
+            "bad_code": "public object Width { get; set;}",
+            "suggestion": "public int Width { get; set;}",
+            "comment": "Replace object with int for Width to improve type safety and clarity. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "dotnet_implementation.html#dotnet-builder-class-name"
+            ],
             "line_no": 1271,
             "bad_code": "public static class AIProjectsOneDPClientBuilderExtensions {",
-            "suggestion": "public static class AIProjectsClientBuilderExtensions {",
-            "comment": "The client builder extension name also includes 'OneDP', which may not be self‐explanatory. Renaming it to align with the overall client naming conventions would improve clarity and consistency.",
-            "source": "generic"
+            "suggestion": "public static class AIProjectClientBuilderExtensions {",
+            "comment": "The extension class name does not follow the recommended naming convention and is inconsistent with the client type (AIProjectClient) used in the methods. Rename the class to AIProjectClientBuilderExtensions to align with guidelines and improve clarity.",
+            "source": "merged"
         }
     ]
 }

@@ -1,17 +1,20 @@
 import asyncio
+from dotenv import load_dotenv
 import os
 from pprint import pprint
 import sys
 import aiohttp
+from typing import Optional
 
-BASE_API_ENDPOINT = "https://apiview-gpt.azurewebsites.net"
+load_dotenv(override=True)
 
 
-async def generate_remote_review(query: str, language: str) -> str:
+async def generate_remote_review(*, target: str, base: Optional[str], language: str) -> str:
     """
     Sends the query to the API endpoint with the language as a path parameter and awaits the response.
     """
-    api_endpoint = f"{BASE_API_ENDPOINT}/{language}"
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/{language}"
 
     # Increase timeout to 5 minutes
     timeout = aiohttp.ClientTimeout(total=300)  # 5 minutes
@@ -19,7 +22,7 @@ async def generate_remote_review(query: str, language: str) -> str:
     async with aiohttp.ClientSession(timeout=timeout) as session:
         try:
             print(f"Sending request to {api_endpoint}...")
-            async with session.post(api_endpoint, json={"target": query}) as response:
+            async with session.post(api_endpoint, json={"target": target, "base": base}) as response:
                 if response.status == 200:
                     print("Request successful, waiting for response...")
                     # Already parsed as JSON by response.json()

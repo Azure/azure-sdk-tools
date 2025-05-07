@@ -9,7 +9,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using System.Diagnostics;
-using System.Collections;
 
 namespace APIViewWeb.MiddleWare
 {
@@ -39,11 +38,17 @@ namespace APIViewWeb.MiddleWare
                 Timestamp = DateTimeOffset.UtcNow
             };
 
+            if (context.Request.Headers.ContainsKey("x-correlation-id"))
+            {
+                var correlationId = context.Request.Headers["x-correlation-id"].ToString();
+                requestTelemetry.Properties.Add("CorrelationId", correlationId);
+                requestInfo.Add("CorrelationId", correlationId);
+            }
+
             var requestQueryParams = new Dictionary<string, string>();
             foreach (var query in context.Request.Query)
             {
                 requestQueryParams.Add(query.Key, query.Value);
-                
             }
             var requestQueryParamsString = JsonSerializer.Serialize(requestQueryParams);
             requestInfo.Add("Query Parameters", requestQueryParamsString);

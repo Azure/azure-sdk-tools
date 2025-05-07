@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-bump-deps",
-  "version": "0.9.9",
+  "version": "0.9.10",
   "description": "Tool to grab latest @next version for all Typespec packages",
   "main": "dist/index.js",
   "type": "module",
@@ -36,13 +36,13 @@
     "semver": "^7.7.1"
   },
   "devDependencies": {
-    "@types/chai": "^5.2.0",
-    "@types/node": "^22.13.10",
+    "@types/chai": "^5.2.1",
+    "@types/node": "^22.15.3",
     "@types/pacote": "11.1.8",
-    "@types/semver": "^7.5.8",
+    "@types/semver": "^7.7.0",
     "chai": "^5.2.0",
-    "vitest": "^3.0.8",
+    "vitest": "^3.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.3"
   }
 }

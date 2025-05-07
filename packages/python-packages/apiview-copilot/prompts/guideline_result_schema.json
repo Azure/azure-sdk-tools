@@ -25,15 +25,15 @@
               },
               "bad_code": {
                 "type": "string",
-                "description": "the original code that was bad, cited verbatim. MUST BE a single line of code."
+                "description": "must always cite the SINGLE matching APIView line, stopping at newlines. OMIT the line number. NEVER concatenate multiple lines."
               },
               "suggestion": {
-                "type": "string",
-                "description": "a suggested fix for the bad code. MUST be code, or null."
+                "type": ["string", "null"],
+                "description": "only the single replacement code line exactly as it should appear (no markdown fencing, no prose), or the literal JSON null if there’s no fix."
               },
               "comment": {
                 "type": "string",
-                "description": "description of the violation."
+                "description": "concise, human-readable description of the issue. DO NOT use code snippets. DO NOT cite line numbers or guideline IDs."
               }
             },
             "required": [

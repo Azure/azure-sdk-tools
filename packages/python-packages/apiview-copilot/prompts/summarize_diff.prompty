@@ -1,0 +1,90 @@
+---
+name: Summarize APIView Diff
+description: A prompt that summarizes the changes in an APIView diff to create a general comment.
+authors:
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: o3-mini
+    api_version: 2025-03-01-preview
+  parameters:
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 80000
+    reasoning_effort: "high"
+sample:
+  content: |
+    ```python
+    4:  namespace azure.keyvault.secrets
+    5:  	
+    6:  	class azure.keyvault.secrets.ApiVersion(str, Enum):
+    7:  		V2016_10_01 = "2016-10-01"
+    8:  		V7_0 = "7.0"
+    9:  		V7_1 = "7.1"
+    10: +		V7_2 = "7.2"
+    11: +		V7_3 = "7.3"
+    12: +		V7_4 = "7.4"
+    13: +		V7_5 = "7.5"
+    14: +		v7_6_preview_2 = "7.6-preview.2"
+    15:  		
+    16:  		
+    17:  	class azure.keyvault.secrets.DeletedSecret:
+    13: -		property deleted_date: datetime    # Read-only
+    14: -		property id: str    # Read-only
+    15: -		property name: str    # Read-only
+    18: +		property deleted_date: Optional[datetime]    # Read-only
+    19: +		property id: Optional[str]    # Read-only
+    20: +		property name: Optional[str]    # Read-only
+    21:  		property properties: SecretProperties    # Read-only
+    17: -		property recovery_id: str    # Read-only
+    18: -		property scheduled_purge_date: datetime    # Read-only
+    22: +		property recoveryId: Optional[str]    # Read-only
+    23: +		property scheduled_purge_date: Optional[datetime]    # Read-only
+    60:  	class azure.keyvault.secrets.SecretClient(KeyVaultClientBase): implements ContextManager 
+    61:  		property vault_url: str    # Read-only
+    62:  		
+    63:  		def __init__(
+    64:  			    self, 
+    65:  			    vault_url: str, 
+    52: -			    credential, 
+    66: +			    credential: TokenCredential, 
+    67:  			    important_value: str = ...,
+    54: -			    api_version: ApiVersion = ..., 
+    55: -			    transport: HttpTransport = ..., 
+    56: -			    **kwargs
+    68: +			    api_version: Union[ApiVersion, str] = ..., 
+    69: +			    verify_challenge_resource: Optional[bool] = ..., 
+    70: +			    **kwargs: Any
+    71:  			) -> None
+    ```
+---
+system:
+  You are an expert API reviewer with deep knowledge of {{language}} and its ecosystem.
+  You will summarize the changes in an APIView diff to make it easier for the architects to understand the changes.
+  Do not use emojis in your response.
+  Ensure you examine the entire diff and summarize the relevant changes in a clear and concise manner.
+  For API Version, just say what the newest version is. DO NOT mention any other versions.
+  Do not make any judgement statements on the quality, necessity, or correctness of any changes.
+  Do surround property names, class names, and method names with backticks.
+  Begin your response with: "Here is a summary of the changes in this APIView:"
+
+  # Example Output
+  Here is a summary of the changes in this APIView:
+  
+  This update introduces API Version 2025-01-01 of the Widgets service.
+
+  This change adds the `list_widget_parts` and `get_widget_part` methods to the `WidgetClient` class.
+
+  It adds type hints to various existing methods in the `WidgetClient` class like `create` and `update`.
+
+  Overall, this update adds some new functionality and improves type hinting for existing methods.
+
+user:
+  Summarize the following APIView diff for the {{language}} architects.
+  ```{{language}}
+  {{content}}
+  ```

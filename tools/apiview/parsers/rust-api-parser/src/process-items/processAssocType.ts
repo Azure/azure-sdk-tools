@@ -35,7 +35,6 @@ export function processAssocType(item: Item): ReviewLine[] | null {
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_assoc_type",
     HasSuffixSpace: false,
-    RenderClasses: ["interface"],
   });
 
   const generics = processGenerics(item.inner.assoc_type.generics);

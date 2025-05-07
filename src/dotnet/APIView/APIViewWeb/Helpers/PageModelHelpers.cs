@@ -354,7 +354,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.codeLines = codeLines;
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
 
-            HashSet<string> preferredApprovers = await GetPreferredApprovers(configuration, userProfileCache, user, review);
+            HashSet<string> preferredApprovers = GetPreferredApprovers(configuration, userProfileCache, user, review);
 
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
@@ -617,7 +617,7 @@ namespace APIViewWeb.Helpers
         /// <param name="user"></param>
         /// <param name="review"></param>
         /// <returns></returns>
-        public static async Task<HashSet<string>> GetPreferredApprovers(IConfiguration configuration, 
+        public static HashSet<string> GetPreferredApprovers(IConfiguration configuration, 
             UserProfileCache userProfileCache, ClaimsPrincipal user, ReviewListItemModel review)
         {
             HashSet<string> preferredApprovers = new HashSet<string>();

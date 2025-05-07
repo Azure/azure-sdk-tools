@@ -9,15 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using APIViewWeb.Managers;
 using APIViewWeb.Helpers;
-using Microsoft.VisualStudio.Services.Common;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.LeanModels;
 using System.Text;
 using APIViewWeb.Managers.Interfaces;
-using System.IO;
-using ApiView;
-using Microsoft.AspNetCore.Http;
+using APIViewWeb.DTOs;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -160,7 +157,7 @@ namespace APIViewWeb.Pages.Assemblies
                 isClosed = null;
             }
 
-            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceModel: new UserPreferenceModel {
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceDto: new UserPreferenceDto {
                 Language = languages,
                 State = state,
                 Status = status

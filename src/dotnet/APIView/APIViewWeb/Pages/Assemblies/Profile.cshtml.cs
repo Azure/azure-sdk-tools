@@ -19,20 +19,10 @@ namespace APIViewWeb.Pages.Assemblies
             _userProfileCache = userProfileCache;
         }
 
-        public async Task<IActionResult> OnGetAsync(string UserName)
+        public IActionResult OnGetAsync(string UserName)
         {
-            UserProfileModel profile;
-            if(UserName == null || User.GetGitHubLogin().Equals(UserName))
-            {
-                profile = await this._manager.TryGetUserProfileAsync(User);
-            }
-            else
-            {
-                profile = await this._manager.TryGetUserProfileByNameAsync(UserName);
-            }
-
-            userProfile = profile;
-            return Page();
+            var spaUrl = "https://spa." + Request.Host.ToString() + $"/profile/{UserName}";
+            return Redirect(spaUrl);
         }
     }
 }

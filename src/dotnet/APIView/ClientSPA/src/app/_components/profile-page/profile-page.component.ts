@@ -6,6 +6,7 @@ import { USER_NAME_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { SelectItemModel } from 'src/app/_models/review';
 import { ScrollBarSize } from 'src/app/_models/userPreferenceModel';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
@@ -17,7 +18,9 @@ import { environment } from 'src/environments/environment';
 export class ProfilePageComponent {
   assetsPath : string = environment.assetsPath;
   userName : string | null = null;
+  userEmail : string | undefined = undefined;
   userProfile : UserProfile | undefined;
+  allowedApprovers : string[] = [];
 
   notificationEmail: string | null = null;
   languages: SelectItemModel[] = [];
@@ -32,21 +35,50 @@ export class ProfilePageComponent {
   selectedScrollBarSize : ScrollBarSize = ScrollBarSize.Small;
   useSplitIndexPage : boolean = false;
   disableSaveButton : boolean = true;
+  isLoaded: boolean | undefined = undefined;
 
-  constructor(private route: ActivatedRoute, private userProfileService: UserProfileService) {}
+  constructor(private route: ActivatedRoute, private userProfileService: UserProfileService,
+    private reviewsService: ReviewsService) {}
 
   ngOnInit() {
     this.languages = getSupportedLanguages();
     this.userName = this.route.snapshot.paramMap.get(USER_NAME_ROUTE_PARAM);
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : UserProfile) => {
-        this.userProfile = userProfile;
-        this.notificationEmail = userProfile.email;
-        this.selectedLanguages = userProfile?.preferences.approvedLanguages?.map((lang: string) => ({ label: lang, data: lang }));
-        this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
-        this.useSplitIndexPage = userProfile.preferences.useBetaIndexPage;
-        this.selectedScrollBarSize = userProfile.preferences.scrollBarSize;
-    });
+    if (this.userName) {
+      this.userProfileService.getUserProfile().subscribe({
+        next: (userProfile : UserProfile) => {
+          this.userProfile = userProfile;
+          this.notificationEmail = userProfile.email;
+          this.selectedLanguages = userProfile?.preferences.approvedLanguages?.map((lang: string) => ({ label: lang, data: lang }));
+          console.log(userProfile);
+          console.log(this.selectedLanguages);
+          this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
+          this.useSplitIndexPage = userProfile.preferences.useBetaIndexPage;
+          this.selectedScrollBarSize = userProfile.preferences.scrollBarSize;
+
+          if (this.userName !== userProfile.userName) {
+            this.userProfileService.getUserProfile(this.userName!).subscribe({
+              next: (userProfile: UserProfile) => {
+                this.userEmail = userProfile.email;
+                this.isLoaded = true;
+              },
+              error: (error: any) => {
+                this.isLoaded = false;
+              }
+            });
+          } else {
+            this.isLoaded = true;
+          }
+        },
+        error: (error: any) => {
+          this.isLoaded = false;
+        }
+      });
+      this.reviewsService.getAllowedApprovers().subscribe({
+        next: (allowedApprovers: string[]) => {
+          this.allowedApprovers = allowedApprovers;
+        }
+      });
+    }
   }
 
   saveProfileChanges() {
@@ -58,6 +90,7 @@ export class ProfilePageComponent {
     this.userProfile!.preferences.scrollBarSize = this.selectedScrollBarSize;
     this.userProfileService.updateUserProfile(this.userProfile!).pipe(take(1)).subscribe({
       next: (response: any) => {
+        window.location.reload();
       },
       error: (error: any) => {
         this.disableSaveButton = false;

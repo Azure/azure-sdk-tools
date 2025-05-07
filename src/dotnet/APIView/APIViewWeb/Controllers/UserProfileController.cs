@@ -4,6 +4,7 @@ using APIViewWeb.Repositories;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using APIViewWeb.Managers;
+using APIViewWeb.DTOs;
 
 namespace APIViewWeb.Controllers
 {
@@ -23,7 +24,7 @@ namespace APIViewWeb.Controllers
             bool? showHiddenApis = null, bool? hideReviewPageOptions = null, bool? hideIndexPageOptions = null, 
             bool? showComments = null, bool? showSystemComments = null)
         {
-            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceModel: new UserPreferenceModel()
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceDto: new UserPreferenceDto()
             {
                 HideLeftNavigation = hideLeftNavigation,
                 HideLineNumbers = hideLineNumbers,
@@ -42,12 +43,12 @@ namespace APIViewWeb.Controllers
         /// <param name="email">This is the main email used for notifications</param>
         /// <param name="languages">The languages that the user has selected to approve</param>
         /// <param name="theme">The app theme</param>
-        /// <param name="useBetaIndexPage">If to use th ebeta index page</param>
+        /// <param name="useBetaIndexPage">If to use the beta index page</param>
         /// <returns></returns>
         [HttpPost]
         public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme", bool useBetaIndexPage=false)
         {
-            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: email, new UserPreferenceModel()
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: email, new UserPreferenceDto()
             {
                 Theme = theme,
                 UseBetaIndexPage = useBetaIndexPage,

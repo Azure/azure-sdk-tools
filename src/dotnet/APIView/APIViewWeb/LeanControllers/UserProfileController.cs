@@ -23,15 +23,24 @@ namespace APIViewWeb.LeanControllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<UserProfileModel>> GetUserPreference()
+        public async Task<ActionResult<UserProfileModel>> GetUserPreference([FromQuery]string userName = null)
         {
-            var userProfile = await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin());
+            userName = userName ?? User.GetGitHubLogin();
+            var userProfile = await _userProfileCache.GetUserProfileAsync(userName);
+            if (userProfile == default)
+            {
+                return new LeanJsonResult(null, StatusCodes.Status404NotFound);
+            }
             return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
         }
 
         [HttpPut("preference", Name = "UpdateUserPreference")]
         public async Task<ActionResult> UpdateUserPreference([FromBody] UserPreferenceModel userPreference)
         {
+            if (User.GetGitHubLogin() != userPreference.UserName)
+            {
+                return Forbid();
+            }
             await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceModel: userPreference);
             return Ok();
         }
@@ -39,6 +48,10 @@ namespace APIViewWeb.LeanControllers
         [HttpPut(Name = "UpdateUserProfile")]
         public async Task<ActionResult> UpdateUserProfile([FromBody] UserProfileModel userProfile)
         {
+            if (User.GetGitHubLogin() != userProfile.UserName)
+            {
+                return Forbid();
+            }
             await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: userProfile.Email, userPreferenceModel: userProfile.Preferences);
             return Ok();
         }

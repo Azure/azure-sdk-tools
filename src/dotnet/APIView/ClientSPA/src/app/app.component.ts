@@ -23,7 +23,6 @@ export class AppComponent  implements OnInit{
     this.userProfileService.getUserProfile().subscribe(
       (userProfile) => {
         const theme = userProfile.preferences.theme;
-        console.log("sbs", userProfile.preferences.scrollBarSize);
         switch (userProfile.preferences.scrollBarSize) {
           case ScrollBarSize.Medium:
             this.scrollBarHeight = this.scrollBarWidth = '15px';

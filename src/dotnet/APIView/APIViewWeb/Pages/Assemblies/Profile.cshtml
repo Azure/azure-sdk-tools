@@ -22,7 +22,7 @@
     string[] Languages = LanguageServiceHelpers.SupportedLanguages;
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     var theme = userPreference.Theme ?? "light-theme";
-    var useBetaIndexPage = userPreference.UseBetaIndexPage ?? false;
+    var useBetaIndexPage = userPreference.UseBetaIndexPage;
 }
 <div class="container py-2 mb-5">
     @if(Model.userProfile == null) 

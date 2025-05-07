@@ -11,7 +11,6 @@ namespace Azure.Sdk.Tools.Cli.Services
          /// todo: make this use reflection to populate itself with all of our services and helpers
         public static void RegisterCommonServices(IServiceCollection services)
         {
-            // todo: what doe sit look like to make this a Lazy<GitHubService>?
             // perhaps we move this to a static function that we can call within HostTool as well.
             services.AddSingleton<IAzureService, AzureService>();
             //services.AddSingleton<IGitHubService, GitHubService>();

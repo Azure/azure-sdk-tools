@@ -11,6 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers {
         public readonly List<object> Logs = new List<object>();
 
         public IDisposable BeginScope<TState>(TState state) => NullScope.Instance;
+
         public bool IsEnabled(LogLevel logLevel) => true;
 
         public void Log<TState>(
@@ -20,8 +21,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers {
             Exception exception,
             Func<TState, Exception, string> formatter)
         {
-            // store the raw state (typically a FormattedLogValues)
-            Logs.Add(state);
+            if (state != null)
+            {
+                // store the raw state (typically a FormattedLogValues)
+                Logs.Add(state);
+            }
         }
 
         // Null disposable for BeginScope

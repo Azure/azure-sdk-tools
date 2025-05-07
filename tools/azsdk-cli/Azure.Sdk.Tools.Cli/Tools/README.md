@@ -6,8 +6,8 @@
 - Ensure your class has the `[McpServerToolType]` attribute added to it
   - Eventual goal is to automatically recognize any classes that have this type as `[McpServerToolType]`.
   - For now you need to add the attribute yourself.
-- Mark each function with `[McpServerTool]`.
-- Leverage `HelloWorld.cs` for a functioning basic example (more advanced samples to follow)
+- Mark each function with that should be visible to MCP with `[McpServerTool]` attribute.
+- Create an override `GetCommand` and `HandleCommand`
 - Place your code under a _folder_ named the same as your Tool class name.
   - See `ReleasePlanTool` for an example of this folder structure.
 

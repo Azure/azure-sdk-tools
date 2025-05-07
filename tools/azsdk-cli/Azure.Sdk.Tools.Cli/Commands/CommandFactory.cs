@@ -34,6 +34,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
 
+            // here we should process the the args, pull out a `tools` argument, and only instantiate that tool if it matches
+            // this same function should exist within HostServerTool CreateAppBuilder step
+
             // walk the tools, register them as subcommands for the root command.
             var toolTypes = AppDomain.CurrentDomain
                          .GetAssemblies()
@@ -42,8 +45,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
                          typeof(MCPTool).IsAssignableFrom(t))
                          .ToList();
 
-
-            // todo: we need to check the constructors here, and add any services to the bundle that may be necessary
             foreach (var t in toolTypes)
             {
                 var tool = (MCPTool)ActivatorUtilities.CreateInstance(_serviceProvider, t);

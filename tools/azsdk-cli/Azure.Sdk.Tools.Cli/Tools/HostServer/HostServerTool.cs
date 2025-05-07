@@ -28,17 +28,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
         public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            // todo: should probably actually read out the unmatched args here like we do in test-proxy to grab the ASP.NET arguments
-            var host = CreateAppBuilder(new string[]{}).Build();
+            // pass the tools list and pass that on to tools
+            // pass along unmatched args to string[] unmatched args
+            var host = CreateAppBuilder(new List<string>(), new string[] { }).Build();
             await host.RunAsync(ct);
 
             return 0;
         }
 
-        public static WebApplicationBuilder CreateAppBuilder(string[] args)
+        public static WebApplicationBuilder CreateAppBuilder(List<string> tools, string[] unmatchedArgs)
         {
             // todo: implement our own module discovery that takes the `--tools` or `--tools-exclude` when booting
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(unmatchedArgs);
             builder.Logging.AddConsole(consoleLogOptions =>
             {
                 consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;

@@ -210,21 +210,27 @@ system:
   # Priorities
   1. Summarize the purpose of the API based on the Client class and its methods. No method names--just a general description of the functionality.
   2. Identify the API Version object and note the latest version. Do not list all the versions.
-  3. Identify any `*Client` classes, which are of primary interest to architects. List the method names on those classes without including any signatures. Do not guess what the methods do.
-  4. Identify other classes and methods, but don't include any signatures or property details.
-  5. Include any relevant details about the API's functionality and structure that may assist in understanding its use cases.
+  3. Identify any `*Client` classes, which are of primary interest to architects. Note if they have the same functionality or different.
+  4. Include a functional description of the service's Client methods, but DO NOT list method names or signatures. Focus on the functionality and purpose of the methods.
+  5. DO NOT list methods, properties, or classes except for client class names.
+  6. Use the acronym "CRUD" to abbreviate functionality that includes Create, Read, Update, and Delete operations.
+  7. Include markdown on the output headings to make them stand out.
 
   # Example Output:
   Here is a summary of the service described by this APIView:
 
+  **Purpose**
   This API provides a service for managing widgets. It also allows for the management of widget properties and parts.
   
+  **API Version**
   The latest API version is: 2025-01-01.
   
-  This API exposes a `WidgetClient` class that allows users to interact with widgets in a synchronous and asynchronous fashion. The client provides methods
-  for CRUD operations: `create`, `get`, `update` and `delete`.
+  **Client Classes**
+  This API exposes synchronous and asynchronous `WidgetClient` with equivalent functionality in order to manage Widgets.
 
-  The API also includes models such as `Widget`, `WidgetProperties`, and `WidgetPart` that describe the structure of widgets and their properties.
+  **Functional Overview**
+  The `WidgetClient` class provides methods for CRUD operations on Widgets and some actions like the ability to order a new part.
+
 
 user:
   Summarize the following APIView for the {{language}} architects.

@@ -55,24 +55,23 @@ def deploy_app_to_azure(
 
     try:
         print("Deploying to Azure App Service...")
-        subprocess.run(
-            [
-                "az.cmd",
-                "webapp",
-                "deploy",
-                "--resource-group",
-                resource_group,
-                "--name",
-                app_name,
-                "--src-path",
-                zip_file,
-                "--subscription",
-                subscription_id,
-                "--type",
-                "zip",
-            ],
-            check=True,
-        )
+        cmd = [
+            "az.cmd",
+            "webapp",
+            "deploy",
+            "--resource-group",
+            resource_group,
+            "--name",
+            app_name,
+            "--src-path",
+            zip_file,
+            "--subscription",
+            subscription_id,
+            "--type",
+            "zip",
+        ]
+        print("Running command:", " ".join(cmd))
+        subprocess.run(cmd, check=True)
         print("Deployment completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred during deployment: {e}")

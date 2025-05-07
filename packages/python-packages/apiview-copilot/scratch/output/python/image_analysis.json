@@ -5,7 +5,7 @@
             "line_no": 1,
             "bad_code": "",
             "suggestion": null,
-            "comment": "Here is a summary of the service described by this APIView:\n\nPurpose  \nThis API provides image analysis capabilities by allowing users to process images either through raw byte data or via URLs. It extracts various visual features such as captions, dense captions, object detection, people recognition, text (read), and smart crop suggestions. The service supports both synchronous and asynchronous workflows and is designed for use within managed context environments.\n\nAPI Version  \nThe API accepts an API version through the `api_version` parameter in the client initializer. No dedicated API Version object is exported, and explicit details regarding the latest version are not provided within the stub.\n\nClient Classes  \nThe primary client classes are `ImageAnalysisClient` and `AsyncImageAnalysisClient`. The `ImageAnalysisClient` exposes the methods `analyze`, `analyze_from_url`, `close`, and `send_request`. Similarly, `AsyncImageAnalysisClient` offers the methods `analyze`, `analyze_from_url`, `close`, and `send_request`.\n\nData Models and Additional Classes  \nA comprehensive set of models is defined under the `azure.ai.vision.imageanalysis.models` namespace. These include types such as `CaptionResult`, `CropRegion`, `DenseCaption`, `DenseCaptionsResult`, `DetectedObject`, `detectedPerson`, `DetectedTag`, `DetectedTextBlock`, `DetectedTextLine`, `DetectedTextWord`, `ImageAnalysisResult`, `ImageBoundingBox`, `ImageMetadata`, and `ImagePoint`. Additionally, `ObjectsResult` comes with methods `get_result` and `set_result`, while `SmartCropsResult`, `ReadResult`, and `TagsResult` capture specialized aspects of the analysis. An enumeration named `VisualFeatures` lists available features such as `CAPTION`, `DENSE_CAPTIONS`, `OBJECTS`, `PEOPLE`, `READ`, `SMART_CROPS`, and `tags`. There is also an asynchronous model, `PeopleResult`, provided under the `azure.ai.vision.imageanalysis.models.aio` namespace.\n\nAdditional Details  \nThe API methods are enhanced with distributed tracing features through the decorators `distributed_trace` and `distributed_trace_async` for synchronous and asynchronous operations respectively. Many of the model classes implement `MutableMapping`, supporting flexible, dictionary-like interactions with the image analysis results.",
+            "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis API provides a service that analyzes images to extract various insights such as captions, detailed descriptions, object and people detection, text recognition, smart crop suggestions, and tagging. The service accepts both raw image data and image URLs, enabling automated extraction of rich visual metadata.\n\n**API Version**  \nThe service supports versioning through a configurable parameter during client initialization. Though an explicit API Version object is not provided, the `api_version` parameter allows the selection of the desired version.\n\n**Client Classes**  \nThe API exposes both a synchronous `ImageAnalysisClient` and an asynchronous `AsyncImageAnalysisClient`. These classes offer equivalent image analysis capabilities while catering to different execution models, with each acting as a context manager for resource management.\n\n**Functional Overview**  \nThe client classes facilitate read operations on image inputs by processing the provided data or URLs to generate analysis results. They support a range of configurable options such as language selection, model version, and custom aspect ratios for smart crops. Additionally, they encapsulate the underlying HTTP communication, offering methods for managing requests and responses without exposing low-level implementation details.",
             "source": "summary"
         },
         {
@@ -13,19 +13,9 @@
                 "python_design.html#python-client-connection-string"
             ],
             "line_no": 10,
-            "bad_code": "connection_string: Optional[str] = None",
+            "bad_code": "connection_string: Optional[str] = None,",
             "suggestion": null,
-            "comment": "The constructor should not accept a connection_string parameter; instead, a separate from_connection_string factory method should be provided.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-kwargs"
-            ],
-            "line_no": 34,
-            "bad_code": "gender_neutral_caption: Optional[bool] = ...",
-            "suggestion": "        *,",
-            "comment": "Optional parameters must be declared as keyword-only; insert a '*' before them in the method signature.",
+            "comment": "The constructor should not take a connection_string parameter; instead, a separate from_connection_string factory method should be provided.",
             "source": "guideline"
         },
         {
@@ -33,45 +23,17 @@
                 "python_design.html#python-client-same-name-sync-async"
             ],
             "line_no": 53,
-            "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "suggestion": "class azure.ai.vision.imageanalysis.aio.ImageAnalysisClient(ImageAnalysisClient): implements AsyncContextManager",
-            "comment": "Async clients should share the same class name as their sync counterparts; the async version is distinguished by its namespace, not by an 'Async' prefix.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-client-constructor-api-version-argument-1"
-            ],
-            "line_no": 54,
-            "bad_code": "def __init__(self,",
-            "suggestion": "def __init__(self, endpoint: str, credential: Union[AzureKeyCredential, AsyncTokenCredential], *, api_version: str = ..., **kwargs: Any) -> None",
-            "comment": "Async client constructors must accept an optional api_version keyword-only argument to allow version specification.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [
-                "python_implementation.html#python-codestyle-static-methods"
-            ],
-            "line_no": 88,
-            "bad_code": "@staticmethod",
-            "suggestion": null,
-            "comment": "Static methods should be avoided in client types; remove the staticmethod decorator and use an instance method instead.",
-            "source": "guideline"
-        },
-        {
-            "rule_ids": [],
-            "line_no": 90,
-            "bad_code": "        self,",
-            "suggestion": null,
-            "comment": "Remove the 'self' parameter from a static method’s signature.",
-            "source": "generic"
+            "bad_code": "class azure.ai.vision.imageanalysis.aio.AsyncImageAnalysisClient(ImageAnalysisClient):",
+            "suggestion": "class azure.ai.vision.imageanalysis.aio.ImageAnalysisClient(ImageAnalysisClient):",
+            "comment": "Rename the async client to match the sync client by removing the 'Async' prefix, and ensure async context management is implemented using async __aenter__ and __aexit__ methods if needed, rather than specifying 'implements AsyncContextManager'.",
+            "source": "merged"
         },
         {
             "rule_ids": [],
             "line_no": 168,
-            "bad_code": "    ivar list: List[DenseCaption]",
-            "suggestion": "    ivar items: List[DenseCaption]",
-            "comment": "Avoid using the built‐in name 'list' as an attribute; consider renaming it (e.g. to 'items').",
+            "bad_code": "ivar list: List[DenseCaption]",
+            "suggestion": "ivar items: List[DenseCaption]",
+            "comment": "Rename the attribute to avoid shadowing the built-in name 'list'.",
             "source": "generic"
         },
         {
@@ -81,15 +43,15 @@
             "line_no": 209,
             "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
             "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedPerson(MutableMapping[str, Any]):",
-            "comment": "Class names should use PascalCase; rename 'detectedPerson' to 'DetectedPerson' to follow naming conventions.",
+            "comment": "The class name should use PascalCase to follow Python naming conventions; rename 'detectedPerson' to 'DetectedPerson'.",
             "source": "merged"
         },
         {
             "rule_ids": [],
             "line_no": 409,
-            "bad_code": "    ivar list: List[DetectedObject]",
-            "suggestion": "    ivar items: List[DetectedObject]",
-            "comment": "Rename the attribute to avoid shadowing the built‐in 'list'.",
+            "bad_code": "ivar list: List[DetectedObject]",
+            "suggestion": "ivar items: List[DetectedObject]",
+            "comment": "Rename the attribute to avoid shadowing the built-in name 'list'.",
             "source": "generic"
         },
         {
@@ -98,9 +60,9 @@
             ],
             "line_no": 411,
             "bad_code": "def get_result(self) -> ObjectsResult",
-            "suggestion": "def result(self) -> ObjectsResult",
-            "comment": "Replace the explicit getter method with a property by renaming the method to 'result' for a more idiomatic and Pythonic API.",
-            "source": "merged"
+            "suggestion": null,
+            "comment": "Instead of a simple getter method, expose a property to align with best practices.",
+            "source": "guideline"
         },
         {
             "rule_ids": [
@@ -109,39 +71,49 @@
             "line_no": 413,
             "bad_code": "def set_result(self, obj) -> None",
             "suggestion": null,
-            "comment": "Avoid using explicit set_ methods for setting values. Instead, implement setter functionality using properties for a more Pythonic and maintainable design.",
+            "comment": "Replace the simple setter method with a property setter to adhere to coding guidelines. Additionally, consider adding an explicit type annotation for the parameter to improve clarity.",
             "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-async"
+            ],
+            "line_no": 432,
+            "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
+            "suggestion": "class azure.ai.vision.imageanalysis.models.PeopleResult(MutableMapping[str, Any]):",
+            "comment": "Models should not be duplicated in an aio submodule; share the model from the main namespace instead.",
+            "source": "guideline"
         },
         {
             "rule_ids": [],
             "line_no": 433,
-            "bad_code": "    ivar list: List[detectedPerson]",
-            "suggestion": "    ivar items: List[DetectedPerson]",
-            "comment": "Rename the attribute to avoid shadowing 'list' and update the type to use proper PascalCase.",
+            "bad_code": "ivar list: List[detectedPerson]",
+            "suggestion": "ivar items: List[DetectedPerson]",
+            "comment": "Rename the attribute to avoid shadowing 'list' and reference the correctly cased class name.",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 473,
-            "bad_code": "    ivar list: List[CropRegion]",
-            "suggestion": "    ivar items: List[CropRegion]",
-            "comment": "Rename the attribute to avoid conflict with the built‐in 'list'.",
+            "bad_code": "ivar list: List[CropRegion]",
+            "suggestion": "ivar items: List[CropRegion]",
+            "comment": "Rename the attribute to avoid shadowing the built-in name 'list'.",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 492,
             "bad_code": "ivar list: List[DetectedTag]",
-            "suggestion": "ivar tags: List[DetectedTag]",
-            "comment": "Avoid using the built-in name 'list' as an attribute; 'tags' is more descriptive and avoids shadowing.",
+            "suggestion": "ivar detected_tags: List[DetectedTag]",
+            "comment": "Rename the attribute to avoid shadowing the built-in 'list' and to improve clarity.",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 498,
             "bad_code": "list: List[DetectedTag]",
-            "suggestion": "tags: List[DetectedTag]",
-            "comment": "Rename the parameter from 'list' to 'tags' to prevent conflicts with Python built-ins and improve clarity.",
+            "suggestion": "detected_tags: List[DetectedTag]",
+            "comment": "Change the parameter name from 'list' to a more descriptive name to prevent conflicts with Python’s built-in type.",
             "source": "generic"
         },
         {
@@ -151,7 +123,7 @@
             "line_no": 517,
             "bad_code": "tags = 'tags'",
             "suggestion": "TAGS = 'tags'",
-            "comment": "Enum member names should be written in uppercase for consistency and to follow naming conventions.",
+            "comment": "Enum member names should be uppercase to ensure clarity and maintain a consistent naming convention.",
             "source": "merged"
         }
     ]

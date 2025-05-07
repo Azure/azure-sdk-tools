@@ -57,12 +57,16 @@ Additional features include:
 2. Install latest Go:
    ```bash
    sudo apt install golang-go
-   
    ```
 
 3. Start the server:
    ```bash
-   go run .
+   ./run.sh start
+   
+   other commands:
+   ./run.sh restart
+   ./run.sh stop
+   ./run.sh status
    ```
 
 ## API Usage

@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             // ctx gives us access to options via getNamedOption() and we can pass the arguments that are used
             // were passed our command creation in GetCommand()
 
-            // todo: should probably actually read out the unmatched args here like we do in test-proxy
+            // todo: should probably actually read out the unmatched args here like we do in test-proxy to grab the ASP.NET arguments
             var host = CreateAppBuilder(new string[]{}).Build();
             await host.RunAsync(ct);
 

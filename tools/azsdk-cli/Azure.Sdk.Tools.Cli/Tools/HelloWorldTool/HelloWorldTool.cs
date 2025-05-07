@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
@@ -12,14 +13,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
     {
         private readonly ILogger<HelloWorldTool> _logger;
 
+
         public HelloWorldTool(ILogger<HelloWorldTool> logger)
         {
             _logger = logger;
         }
 
+        private Argument<string> _inputArg = new Argument<string>(
+            name: "input",
+            description: "The text to echo back"
+        )
+        {
+            Arity = ArgumentArity.ExactlyOne
+        };
+
         public override Command GetCommand()
         {
             Command command = new Command("hello-world");
+            command.AddArgument(_inputArg);
 
             command.SetHandler(async ctx =>
             {
@@ -31,11 +42,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 
         public override async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var result = Echo("abc123");
+            string input = ctx.ParseResult.GetValueForArgument(_inputArg);
 
-            // eventually we want to ensure that we use @result for complex objects as well
-            // lets start off with best logging practices if we can
-            _logger.LogInformation("Echoing {result}", result);
+            var result = new CommandResponse()
+            {
+                Status = 0,
+                Result = Echo(input)
+            };
+
+            _logger.LogInformation("Result {result}", result);
 
             return 0;
         }

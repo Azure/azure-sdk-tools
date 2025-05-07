@@ -2,6 +2,7 @@
 
 ## 2025-05-06 - 0.6.1
 
+- Turned duplicated SDK config error into warning and continued SDK generation based on TypeSpecs
 - Assigned value to language while constructing PackageData object
 
 ## 2025-05-02 - 0.6.0

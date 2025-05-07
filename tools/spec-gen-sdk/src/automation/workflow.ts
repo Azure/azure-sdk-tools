@@ -135,7 +135,8 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
         if (tspConfigPath.includes(".Management")) {
           sampleTspConfigUrl = "https://aka.ms/azsdk/tspconfig-sample-mpg"
         }
-        message = configWarning(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Refer to ${sampleTspConfigUrl} to add the right emitter config in the 'tspconfig.yaml' file`);
+        message = configWarning(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. ` +
+          `This typespec project will be skipped from SDK generation. Refer to ${sampleTspConfigUrl} to add the right emitter config in the 'tspconfig.yaml' file`);
         context.logger.warn(message);
         return;
       }
@@ -149,7 +150,8 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     if (!config || config.repositories.length === 0 || !config.repositories.some(r => r.repo === context.config.sdkName)) {
       if (!twoConfigProvided) {
         context.status = 'notEnabled';
-        message = configWarning(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in 'swagger-to-sdk' section. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`)
+        message = configWarning(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in 'swagger-to-sdk' section. ` +
+          `Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
         context.logger.warn(message);
         return;
       }
@@ -160,8 +162,11 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   // only needs to check the two config provided case when both config enable the sdk generation or both config disable the sdk generation
   // the last case is the normal case, only one config enabled the sdk generation
   if (enabledSdkForTspConfig && enabledSdkForReadme) {
-    message = configError(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. Refer to https://aka.ms/azsdk/spec-gen-sdk-config to disable sdk configuration from one of them`);
-    throw new Error(message);
+    message = configWarning(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. ` +
+      `Refer to https://aka.ms/azsdk/spec-gen-sdk-config to disable sdk configuration from one of them. ` +
+      `Use ${context.config.tspConfigPath} to generate ${context.config.sdkName} SDK.`);
+    context.logger.warn(message);
+    context.specConfigPath = context.config.tspConfigPath;
   } else if (!enabledSdkForTspConfig && !enabledSdkForReadme) {
     context.status = 'notEnabled';
     message = configWarning("No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.");
@@ -196,7 +201,7 @@ const workflowGenerateSdk = async (context: WorkflowContext) => {
     return;
   }
 
-  context.logger.log('info', `Handle the following typespec project: ${context.specConfigPath}`);
+  context.logger.log('info', `Handle the following spec config: ${context.specConfigPath}`);
   if (fs.existsSync(suppressionFile)) {
     filterSuppressionFileMap.set(context.specConfigPath, suppressionFile);
   }

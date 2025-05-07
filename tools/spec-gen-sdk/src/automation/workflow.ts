@@ -42,6 +42,7 @@ export type WorkflowContext = SdkAutoContext & {
   stagedArtifactsFolder?: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
+  isSdkConfigDuplicated?: boolean;
   specConfigPath?: string;
   pendingPackages: PackageData[];
   handledPackages: PackageData[];
@@ -164,9 +165,11 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   if (enabledSdkForTspConfig && enabledSdkForReadme) {
     message = configWarning(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. ` +
       `Refer to https://aka.ms/azsdk/spec-gen-sdk-config to disable sdk configuration from one of them. ` +
-      `This generation will be using ${context.config.tspConfigPath} to generate ${context.config.sdkName} SDK.`);
+      `This generation will be using TypeSpecs to generate the SDK.`);
     context.logger.warn(message);
+    context.logger.info(`SDK to generate:${context.config.sdkName}, configPath: ${context.config.tspConfigPath}`);
     context.specConfigPath = context.config.tspConfigPath;
+    context.isSdkConfigDuplicated = true;
   } else if (!enabledSdkForTspConfig && !enabledSdkForReadme) {
     context.status = 'notEnabled';
     message = configWarning("No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.");

@@ -1,0 +1,48 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/azsdk-cli
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/azsdk-cli
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/azsdk-cli
+    ReleaseBinaries: true
+    StandaloneExeMatrix:
+    - rid: osx-x64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: osx-arm64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: win-x64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: linux-x64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: linux-arm64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    TestPreSteps:
+      - pwsh: |
+          #vso[task.setvariable variable=COMPlus_Pkcs12UnspecifiedPasswordIterationLimit]-1
+        displayName: Override Acceptable Password Iteration Count

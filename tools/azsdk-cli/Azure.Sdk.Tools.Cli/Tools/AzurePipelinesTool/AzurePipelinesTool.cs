@@ -11,35 +11,35 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool
+public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentService> aiAgentServiceWrapper, ILogger<AzurePipelinesTool> logger)
 {
     public string? project;
 
-    private readonly BuildHttpClient buildClient;
-    private readonly TestResultsHttpClient testClient;
-    private readonly IAIAgentService aiAgentService;
-    private readonly ILogger<AzurePipelinesTool> logger;
+    private BuildHttpClient? buildClient;
+    private TestResultsHttpClient? testClient;
+    private readonly Lazy<IAzureService> azureService = azureService;
+    private readonly Lazy<IAIAgentService> aiAgentServiceWrapper = aiAgentServiceWrapper;
+    private IAIAgentService? aiAgentService;
+    private readonly ILogger<AzurePipelinesTool> logger = logger;
+    private readonly Boolean initialized = false;
 
-    public AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAgentService, ILogger<AzurePipelinesTool> logger)
-    {
-        var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
-        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
-        var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
-        var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
-        this.buildClient = connection.GetClient<BuildHttpClient>();
-        this.testClient = connection.GetClient<TestResultsHttpClient>();
-        this.aiAgentService = aiAgentService;
-        this.logger = logger;
-    }
+    // Commands
+    private readonly string getPipelineRunCommandName = "get-pipeline-run";
 
-    public  Command GetCommand()
+    // Options
+    private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "The build ID to get the pipeline run for");
+    private readonly Option<string> projectOpt = new(["--project", "-p"], () => "public", "The project to get the pipeline run for");
+
+    public Command GetCommand()
     {
         Command command = new("azure-pipelines");
 
+        command.AddCommand(new Command(this.getPipelineRunCommandName, "Get details for a pipeline run") { this.buildIdOpt, this.projectOpt });
         command.SetHandler(async ctx =>
         {
             ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
@@ -48,7 +48,35 @@ public class AzurePipelinesTool
         return command;
     }
 
-    public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<ICommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    {
+        Initialize();
+
+        if (ctx.ParseResult.CommandResult.Command.Name == this.getPipelineRunCommandName)
+        {
+            var buildId = ctx.ParseResult.GetValueForOption(this.buildIdOpt);
+            var projectId = ctx.ParseResult.GetValueForOption(this.projectOpt);
+            var result = await GetPipelineRun(buildId);
+            return new CommandResponse(result);
+        }
+
+        return new CommandResponse("No command found", true);
+    }
+
+    private void Initialize()
+    {
+        if (this.initialized)
+        {
+            return;
+        }
+        var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
+        var token = this.azureService.Value.GetCredential().GetToken(new TokenRequestContext(tokenScope));
+        var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
+        var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
+        this.buildClient = connection.GetClient<BuildHttpClient>();
+        this.testClient = connection.GetClient<TestResultsHttpClient>();
+        this.aiAgentService = this.aiAgentServiceWrapper.Value;
+    }
 
     [McpServerTool, Description("Gets details for a pipeline run")]
     public async Task<string> GetPipelineRun(int buildId)
@@ -163,7 +191,7 @@ public class AzurePipelinesTool
 
         using var stream = new MemoryStream(logBytes);
 
-        var file = await this.aiAgentService.UploadFileAsync(stream, filename);
+        var file = await this.aiAgentService.Value.UploadFileAsync(stream, filename);
 
         var response = "";
         return string.Join("\n", response);

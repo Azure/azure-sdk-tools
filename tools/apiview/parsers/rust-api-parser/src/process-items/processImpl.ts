@@ -96,7 +96,8 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
       },
     );
     const implGenerics = processGenerics(implItem.inner.impl.generics);
-    const implTraitName = (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name;
+    const implTraitName =
+      (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name;
     // Create the main impl line with trait name and type
     const reviewLineForImpl: ReviewLine = {
       LineId: lineId,
@@ -133,14 +134,20 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
       ],
     };
 
-    const tokenStringForDisplay = reviewLineForImpl.Tokens.slice(0, reviewLineForImpl.Tokens.length - 1).map((token) => (token.HasPrefixSpace ? " " : "") + token.Value + (token.HasSuffixSpace ? " " : "")).join("");
+    const tokenStringForDisplay = reviewLineForImpl.Tokens.slice(
+      0,
+      reviewLineForImpl.Tokens.length - 1,
+    )
+      .map(
+        (token) =>
+          (token.HasPrefixSpace ? " " : "") + token.Value + (token.HasSuffixSpace ? " " : ""),
+      )
+      .join("");
     const matchingToken = reviewLineForImpl.Tokens.find((token) => token.Value === implTraitName);
     if (matchingToken) {
       matchingToken.NavigationDisplayName = tokenStringForDisplay;
     }
-    lineIdMap.set(
-      lineId, prefixId + tokenStringForDisplay.replace(/[^a-zA-Z0-9]+/g, "_")
-    );
+    lineIdMap.set(lineId, prefixId + tokenStringForDisplay.replace(/[^a-zA-Z0-9]+/g, "_"));
 
     const closingLine: ReviewLine = {
       RelatedToLine: lineId,

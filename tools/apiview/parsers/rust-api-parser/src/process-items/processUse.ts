@@ -133,9 +133,7 @@ export function processUse(
       moduleChildIds.forEach((childId) => {
         const childLine = createItemLineFromPath(childId, apiJson.paths[childId]);
         if (childLine) {
-          annotatedReviewLines.children[childId] = [
-            childLine,
-          ];
+          annotatedReviewLines.children[childId] = [childLine];
         }
       });
     }

@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.Json;
-using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -11,12 +10,15 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentService> aiAgentServiceWrapper, ILogger<AzurePipelinesTool> logger)
+public class AzurePipelinesTool(
+    Lazy<IAzureService> azureService,
+    Lazy<IAIAgentService> aiAgentServiceWrapper,
+    ILogger<AzurePipelinesTool> logger) : MCPTool
 {
     public string? project;
 
@@ -30,37 +32,52 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
 
     // Commands
     private readonly string getPipelineRunCommandName = "get-pipeline-run";
+    private readonly string analyzePipelineCommandName = "analyze";
 
     // Options
-    private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "The build ID to get the pipeline run for");
-    private readonly Option<string> projectOpt = new(["--project", "-p"], () => "public", "The project to get the pipeline run for");
+    private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "Pipeline/Build ID") { IsRequired = true };
+    private readonly Option<string> projectOpt = new(["--project", "-p"], () => "public", "Pipeline project name") { IsRequired = true };
+    private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log") { IsRequired = true };
 
-    public Command GetCommand()
+    public override Command GetCommand()
     {
-        Command command = new("azure-pipelines");
+        Console.WriteLine($"BBP IN COMMAND FUNC");
+        Command command = new("azp", "Azure Pipelines Tool");
 
         command.AddCommand(new Command(this.getPipelineRunCommandName, "Get details for a pipeline run") { this.buildIdOpt, this.projectOpt });
+        command.AddCommand(new Command(this.analyzePipelineCommandName, "Analyze a pipeline run") { this.buildIdOpt, this.projectOpt, this.logIdOpt });
         command.SetHandler(async ctx =>
         {
+            Console.WriteLine($"BBP IN HANDLER FUNC");
             ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
         });
 
         return command;
     }
 
-    public override async Task<ICommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         Initialize();
 
-        if (ctx.ParseResult.CommandResult.Command.Name == this.getPipelineRunCommandName)
+        var cmd = ctx.ParseResult.CommandResult.Command.Name;
+
+        if (cmd == this.getPipelineRunCommandName)
         {
             var buildId = ctx.ParseResult.GetValueForOption(this.buildIdOpt);
             var projectId = ctx.ParseResult.GetValueForOption(this.projectOpt);
             var result = await GetPipelineRun(buildId);
-            return new CommandResponse(result);
+            this.logger.LogInformation("{result}", result);
+        }
+        else if (cmd == this.analyzePipelineCommandName)
+        {
+            var buildId = ctx.ParseResult.GetValueForOption(this.buildIdOpt);
+            var projectId = ctx.ParseResult.GetValueForOption(this.projectOpt);
+            var logId = ctx.ParseResult.GetValueForOption(this.logIdOpt);
+            var result = await AnalyzePipelineFailureLog(projectId!, buildId, logId);
+            this.logger.LogInformation("{result}", result);
         }
 
-        return new CommandResponse("No command found", true);
+        throw new NotImplementedException($"Command {cmd} not implemented");
     }
 
     private void Initialize()
@@ -86,7 +103,7 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
 
         try
         {
-            var build = await this.buildClient.GetBuildAsync(project, buildId);
+            var build = await this.buildClient!.GetBuildAsync(project, buildId);
             this.project = project;
             return JsonSerializer.Serialize(build);
         }
@@ -94,7 +111,7 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
         try
         {
             project = project == "public" ? "internal" : "public";
-            var build = await this.buildClient.GetBuildAsync(project, buildId);
+            var build = await this.buildClient!.GetBuildAsync(project, buildId);
             this.project = project;
             return JsonSerializer.Serialize(build);
         }
@@ -112,7 +129,7 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
 
     public async Task<List<TimelineRecord>> GetPipelineFailuresTyped(int buildId)
     {
-        var timeline = await this.buildClient.GetBuildTimelineAsync(this.project, buildId);
+        var timeline = await this.buildClient!.GetBuildTimelineAsync(this.project, buildId);
         var failedNonTests = timeline.Records.Where(r => r.Result == TaskResult.Failed && !IsTestStep(r.Name)).ToList();
         return failedNonTests;
     }
@@ -126,7 +143,7 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
     public async Task<string> GetPipelineFailedTestResults(int buildId)
     {
         var results = new List<ShallowTestCaseResult>();
-        var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId);
+        var testRuns = await testClient!.GetTestResultsByPipelineAsync(project, buildId);
         results.AddRange(testRuns);
         while (testRuns.ContinuationToken != null)
         {
@@ -173,7 +190,7 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
     ")]
     public async Task<string> GetPipelineFailureLog(int buildId, int logId)
     {
-        var logContent = await this.buildClient.GetBuildLogLinesAsync(project, buildId, logId);
+        var logContent = await this.buildClient!.GetBuildLogLinesAsync(project, buildId, logId);
         var output = new List<string>();
         foreach (var line in logContent)
         {
@@ -182,19 +199,19 @@ public class AzurePipelinesTool(Lazy<IAzureService> azureService, Lazy<IAIAgentS
         return JsonSerializer.Serialize(string.Join("\n", output));
     }
 
-    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId)
+    public async Task<string> AnalyzePipelineFailureLog(string project, int buildId, int logId)
     {
-        var logContent = await this.buildClient.GetBuildLogLinesAsync(this.project, buildId, logId);
+        var logContent = await this.buildClient!.GetBuildLogLinesAsync(project, buildId, logId);
         var logText = string.Join("\n", logContent);
         var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);
-        var filename = $"{this.project}-{buildId}-{logId}.txt";
+        var session = $"{this.project}-{buildId}-{logId}";
+        var filename = $"{session}.txt";
 
         using var stream = new MemoryStream(logBytes);
+        var (response, usage) = await this.aiAgentService!.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
+        usage.LogCost();
 
-        var file = await this.aiAgentService.Value.UploadFileAsync(stream, filename);
-
-        var response = "";
-        return string.Join("\n", response);
+        return response;
     }
 
     public bool IsTestStep(string stepName)

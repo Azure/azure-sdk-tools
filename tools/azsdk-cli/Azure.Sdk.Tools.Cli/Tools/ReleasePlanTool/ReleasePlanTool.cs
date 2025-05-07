@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public class ReleasePlanTool(IDevOpsService _devOpsService, ITypeSpecHelper _helper, ILogger<ReleasePlanTool> _logger) : MCPTool
+    public class ReleasePlanTool(IDevOpsService _devOpsService, ITypeSpecHelper _helper, ILogger<ReleasePlanTool> _logger)
     {
         private readonly IDevOpsService devOpsService = _devOpsService;
         private readonly ITypeSpecHelper typeSpecHelper = _helper;
@@ -37,29 +37,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
             }
         }
 
-        public override Command GetCommand()
-        {
-            Command command = new Command("get-release-plan");
+        //public override Command GetCommand()
+        //{
+        //    Command command = new Command("get-release-plan");
 
-            command.SetHandler(async ctx =>
-            {
-                ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
-            });
+        //    command.SetHandler(async ctx =>
+        //    {
+        //        ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
+        //    });
 
-            return command;
-        }
+        //    return command;
+        //}
 
-        // HandleCommand is effectively the actual "worker" for the Tool when looked at from the
-        // CLI pov. Each individual function marked with attribute [McpServerTool] will themselves
-        // be accessible when this class is loaded into assembly and added to MCP configuration in 
-        // HostServerTool.CreateAppBuilder
-        public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
-        {
-            // todo: use the ctx to get the arguments that will bind to workitemId
-            var releasePlan = GetReleasePlanDetails(1);
+        //// HandleCommand is effectively the actual "worker" for the Tool when looked at from the
+        //// CLI pov. Each individual function marked with attribute [McpServerTool] will themselves
+        //// be accessible when this class is loaded into assembly and added to MCP configuration in 
+        //// HostServerTool.CreateAppBuilder
+        //public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        //{
+        //    // todo: use the ctx to get the arguments that will bind to workitemId
+        //    var releasePlan = GetReleasePlanDetails(1);
 
-            return 0;
-        }
+        //    return 0;
+        //}
 
         [McpServerTool, Description("Get Release Plan: Get release plan work item details for a given work item id.")]
         public async Task<string> GetReleasePlanDetails(int workItemId)

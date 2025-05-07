@@ -16,14 +16,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
         private readonly ILogger<CommandFactory> _logger;
         private readonly ILoggerFactory _loggerFactory;
 
-        private readonly RootCommand _rootCommand;
+        private readonly RootCommand? _rootCommand;
 
         public CommandFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
         {
             _serviceProvider = serviceProvider;
             _logger = loggerFactory.CreateLogger<CommandFactory>();
             _loggerFactory = loggerFactory;
-            _rootCommand = CreateRootCommand();
         }
 
         /// <summary>
@@ -31,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
         /// to initialize whichever MCP tools we need to add to the configuration and pass on to HostTool.
         /// </summary>
         /// <returns></returns>
-        public RootCommand CreateRootCommand()
+        public RootCommand CreateRootCommand(string[] args)
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
 

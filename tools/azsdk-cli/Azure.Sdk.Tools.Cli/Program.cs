@@ -15,14 +15,14 @@ public class Program
         services.AddLogging(builder =>
         {
             builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Debug);
+            builder.SetMinimumLevel(LogLevel.Information);
         });
         services.AddSingleton<CommandFactory>();
         ServiceRegistrations.RegisterCommonServices(services);
 
         var serviceProvider = services.BuildServiceProvider();
         var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
-        var rootCommand = commandFactory.CreateRootCommand();
+        var rootCommand = commandFactory.CreateRootCommand(args);
 
         return await rootCommand.InvokeAsync(args);
     }

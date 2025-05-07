@@ -18,11 +18,9 @@ namespace Azure.Sdk.Tools.Cli.Contract
     /// </summary>
     public abstract class MCPTool : MCPToolInterface
     {
-        public MCPTool() {
-            Command = GetCommand();
-        }
+        public MCPTool() {}
 
-        public Command Command;
+        public Command? Command;
 
         public abstract Command GetCommand();
 

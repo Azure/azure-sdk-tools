@@ -14,11 +14,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             // todo: what doe sit look like to make this a Lazy<GitHubService>?
             // perhaps we move this to a static function that we can call within HostTool as well.
             services.AddSingleton<IAzureService, AzureService>();
-            services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<IGitHelper, GitHelper>();
-            services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
-            services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
-            services.AddSingleton<IDevOpsService, DevOpsService>();
+            //services.AddSingleton<IGitHubService, GitHubService>();
+            //services.AddSingleton<IGitHelper, GitHelper>();
+            //services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
+            //services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
+            //services.AddSingleton<IDevOpsService, DevOpsService>();
         }
     }
 }

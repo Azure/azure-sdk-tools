@@ -88,7 +88,6 @@ export function processFunction(item: Item): ReviewLine[] {
     HasSuffixSpace: false,
     RenderClasses: ["method"],
     NavigateToId: item.id.toString(),
-    NavigationDisplayName: item.name || undefined,
   });
 
   const genericsTokens = processGenerics(item.inner.function.generics);

@@ -79,7 +79,7 @@ export function createItemLineFromPath(itemId: Id, itemSummary: ItemSummary): Re
         Value: value,
         RenderClasses: ["dependencies"],
         NavigateToId: itemId.toString(),
-        NavigationDisplayName: value,
+        NavigationDisplayName: [ItemKind.Constant, ItemKind.Function, ItemKind.AssocConst, ItemKind.Static, ItemKind.StructField].includes(itemSummary.kind) ? undefined : value,
         HasSuffixSpace: true,
       },
       {

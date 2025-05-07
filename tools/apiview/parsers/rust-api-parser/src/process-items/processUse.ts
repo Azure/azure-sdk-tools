@@ -36,7 +36,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       {
         Kind: TokenKind.TypeName,
         Value: item.inner.use.name,
-        RenderClasses: ["dependencies"],
+        RenderClasses: ["struct"],
         NavigateToId: dereferencedId.toString(),
         NavigationDisplayName: item.inner.use.name,
         HasSuffixSpace: false,
@@ -60,7 +60,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       {
         Kind: TokenKind.TypeName,
         Value: replaceCratePath(useValue),
-        RenderClasses: ["dependencies"],
+        RenderClasses: ["struct"],
         NavigateToId: dereferencedId.toString(),
         NavigationDisplayName: item.inner.use.name,
       },

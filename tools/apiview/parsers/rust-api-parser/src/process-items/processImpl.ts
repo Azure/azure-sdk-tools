@@ -96,6 +96,7 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
       },
     );
     const implGenerics = processGenerics(implItem.inner.impl.generics);
+    const implTraitName = (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name;
     // Create the main impl line with trait name and type
     const reviewLineForImpl: ReviewLine = {
       LineId: lineId,
@@ -108,18 +109,15 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
         ...implGenerics.params,
         {
           Kind: TokenKind.MemberName,
-          Value: (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name,
+          Value: implTraitName,
           HasPrefixSpace: true,
           HasSuffixSpace: false,
           NavigateToId: lineId,
-          // Create navigation display name by combining trait and type names
-          NavigationDisplayName:
-            implItem.inner.impl.trait.name + "_" + parentName.map((token) => token.Value).join(""),
           RenderClasses: ["interface"],
         },
         // Add any generic arguments the trait might have
         ...processGenericArgs(implItem.inner.impl.trait.args),
-        { Kind: TokenKind.Punctuation, Value: "for", HasPrefixSpace: true },
+        { Kind: TokenKind.Punctuation, Value: "for", HasPrefixSpace: true, HasSuffixSpace: true },
         // Add the type the trait is implemented for
         ...parentName,
         ...implGenerics.wherePredicates,
@@ -135,12 +133,13 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
       ],
     };
 
+    const tokenStringForDisplay = reviewLineForImpl.Tokens.slice(0, reviewLineForImpl.Tokens.length - 1).map((token) => (token.HasPrefixSpace ? " " : "") + token.Value + (token.HasSuffixSpace ? " " : "")).join("");
+    const matchingToken = reviewLineForImpl.Tokens.find((token) => token.Value === implTraitName);
+    if (matchingToken) {
+      matchingToken.NavigationDisplayName = tokenStringForDisplay;
+    }
     lineIdMap.set(
-      lineId,
-      prefixId +
-        reviewLineForImpl.Tokens.map((token) => token.Value)
-          .join("_")
-          .replace(/[^a-zA-Z0-9]+/g, ""),
+      lineId, prefixId + tokenStringForDisplay.replace(/[^a-zA-Z0-9]+/g, "_")
     );
 
     const closingLine: ReviewLine = {
@@ -203,7 +202,7 @@ export function processImpl(
             Value: item.name || "unknown_impl",
             RenderClasses: ["interface"],
             NavigateToId: linedId,
-            NavigationDisplayName: item.name || undefined,
+            NavigationDisplayName: `impl ${item.name}` || undefined,
           },
           { Kind: TokenKind.Punctuation, Value: "{" },
         ],

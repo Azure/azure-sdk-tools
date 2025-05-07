@@ -22,20 +22,21 @@ namespace AzureSDKDevToolsMCP.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> _logger)
+    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> logger)
     {
-        private readonly ITypeSpecHelper typeSpecHelper = _helper;
-        private readonly ILogger<SpecValidationTools> logger = _logger;
+        private readonly ITypeSpecHelper _typeSpecHelper = _helper;
+        private readonly ILogger<SpecValidationTools> _logger = logger;
 
         /// <summary>
         /// Validates the TypeSpec API specification.
         /// </summary>
         /// <param name="typeSpecProjectRootPath">The root path of the TypeSpec project.</param>
-        [McpServerTool, Description("Run TypeSpec validation. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
+        [McpServerTool, Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
         public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
+            _logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
             var validationResults = new List<string>();
-            if (!typeSpecHelper.IsTypeSpecProjectPath(typeSpecProjectRootPath))
+            if (!_typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
             {
                 validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
                 return validationResults;
@@ -44,15 +45,16 @@ namespace AzureSDKDevToolsMCP.Tools
             try
             {
                 var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
+                _logger.LogInformation($"Repo root path: {specRepoRootPath}");
                 // Run npm ci
-                logger.LogInformation("Running npm ci");                
+                _logger.LogInformation("Running npm ci");                
                 RunNpmCi(specRepoRootPath);
-                logger.LogInformation("Completed runnign npm ci");
+                _logger.LogInformation("Completed runnign npm ci");
 
                 //Run TypeSpec validation
-                logger.LogInformation("Running npx tsv to run the validation");
+                _logger.LogInformation("Running npx tsv to run the validation");
                 ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                logger.LogInformation("Completed running TypeSpec validation");
+                _logger.LogInformation("Completed running TypeSpec validation");
             }
             catch (Exception ex)
             {
@@ -78,7 +80,7 @@ namespace AzureSDKDevToolsMCP.Tools
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
-            {
+            {                
                 var output = RunProcess("cmd.exe", $"/C npx tsv {typeSpecProjectRootPath}", specRepoRootPath);
                 validationResults.Add(output);
             }
@@ -87,7 +89,6 @@ namespace AzureSDKDevToolsMCP.Tools
                 var output = RunProcess("npx", $"tsv {typeSpecProjectRootPath}", specRepoRootPath);
                 validationResults.Add(output);
             }
-
             return "TypeSpec validation completed successfully";
         }
        
@@ -123,9 +124,10 @@ namespace AzureSDKDevToolsMCP.Tools
                 process.Refresh();
                 output.Append(process.StandardOutput.ReadToEnd());                
             }
+            output.Append(process.StandardOutput.ReadToEnd());
             if (process.ExitCode != 0)
             {
-                throw new Exception(process.StandardError.ReadToEnd());
+                output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
             }
             return output.ToString();
         }

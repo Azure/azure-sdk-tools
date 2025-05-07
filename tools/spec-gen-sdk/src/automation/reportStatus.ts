@@ -102,6 +102,7 @@ export const generateReport = (context: WorkflowContext) => {
   executionReport = {
     packages: packageReports,
     executionResult: context.status,
+    isSdkConfigDuplicated: context.isSdkConfigDuplicated,
     fullLogPath: context.fullLogFileName,
     filteredLogPath: context.filteredLogFileName,
     stagedArtifactsFolder: context.stagedArtifactsFolder,

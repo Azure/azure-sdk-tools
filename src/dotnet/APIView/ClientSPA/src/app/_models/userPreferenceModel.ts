@@ -1,12 +1,13 @@
 export enum ScrollBarSize {
-    Small = 'Small',
-    Medium = 'Medium',
-    Large = 'Large'
+    Small = 'small',
+    Medium = 'medium',
+    Large = 'large'
 }
 
 export class UserPreferenceModel {
     userName : string
     language : string []
+    approvedLanguages: string []
     theme : string
     hideReviewPageOptions : boolean
     hideSamplesPageOptions : boolean
@@ -18,12 +19,13 @@ export class UserPreferenceModel {
     showSystemComments: boolean
     useBetaIndexPage: boolean
     disableCodeLinesLazyLoading: boolean
-    scrollBarSize: ScrollBarSize | null
+    scrollBarSize: ScrollBarSize
 
 
     constructor() {
         this.userName = '';
-        this.language = []
+        this.language = [];
+        this.approvedLanguages = [];
         this.theme = '';
         this.hideReviewPageOptions  = false;
         this.hideSamplesPageOptions  = false;

@@ -29,7 +29,7 @@ export class ProfilePageComponent {
   ];
   selectedTheme : SelectItemModel = { label: "light", data: "light-theme" };
   scrollBarSizes : string[] = ["small", "medium", "large"];
-  selectedScrollBarSize : ScrollBarSize | null = ScrollBarSize.Small;
+  selectedScrollBarSize : ScrollBarSize = ScrollBarSize.Small;
   useSplitIndexPage : boolean = false;
   disableSaveButton : boolean = true;
 
@@ -42,7 +42,7 @@ export class ProfilePageComponent {
       (userProfile : UserProfile) => {
         this.userProfile = userProfile;
         this.notificationEmail = userProfile.email;
-        this.selectedLanguages = userProfile?.languages?.map((lang: string) => ({ label: lang, data: lang }));
+        this.selectedLanguages = userProfile?.preferences.approvedLanguages?.map((lang: string) => ({ label: lang, data: lang }));
         this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
         this.useSplitIndexPage = userProfile.preferences.useBetaIndexPage;
         this.selectedScrollBarSize = userProfile.preferences.scrollBarSize;
@@ -52,7 +52,7 @@ export class ProfilePageComponent {
   saveProfileChanges() {
     this.disableSaveButton = true;
     this.userProfile!.email = this.notificationEmail!;
-    this.userProfile!.languages = this.selectedLanguages.map((lang: SelectItemModel) => lang.data);
+    this.userProfile!.preferences.approvedLanguages = this.selectedLanguages.map((lang: SelectItemModel) => lang.data);
     this.userProfile!.preferences.theme = this.selectedTheme.data;
     this.userProfile!.preferences.useBetaIndexPage = this.useSplitIndexPage;
     this.userProfile!.preferences.scrollBarSize = this.selectedScrollBarSize;

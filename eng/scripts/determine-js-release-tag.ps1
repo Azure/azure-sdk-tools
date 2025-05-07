@@ -16,9 +16,11 @@ function Is-NonGA($version) {
 $pkgVersion = $packageJson.version
 
 if (Is-NonGA($pkgVersion)) {
+    Write-Host "Setting tag for non GA version $pkgVersion to beta"
     Write-Host "##vso[task.setvariable variable=Tag;]beta"
 }
 else {
+    Write-Host "Setting tag for version $pkgVersion to latest"
     Write-Host "##vso[task.setvariable variable=Tag;]latest"
 }
 

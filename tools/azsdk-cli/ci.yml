@@ -30,16 +30,16 @@ extends:
     StandaloneExeMatrix:
     - rid: osx-x64
       framework: net8.0
-      assembly: azsdk
+      assembly: Azure.Sdk.Tools.Cli
     - rid: osx-arm64
       framework: net8.0
-      assembly: azsdk
+      assembly: Azure.Sdk.Tools.Cli
     - rid: win-x64
       framework: net8.0
-      assembly: azsdk
+      assembly: Azure.Sdk.Tools.Cli
     - rid: linux-x64
       framework: net8.0
-      assembly: azsdk
+      assembly: Azure.Sdk.Tools.Cli
     - rid: linux-arm64
       framework: net8.0
-      assembly: azsdk
+      assembly: Azure.Sdk.Tools.Cli

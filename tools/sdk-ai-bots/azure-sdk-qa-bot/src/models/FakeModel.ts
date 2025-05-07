@@ -6,26 +6,32 @@ import {
     Tokenizer,
 } from "@microsoft/teams-ai";
 import { CardFactory, MessageFactory, TurnContext } from "botbuilder";
-import { getRAGReply, RAGOptions } from "../backend/rag.js";
+import { getRAGReply, RAGOptions, RAGReply } from "../backend/rag.js";
 import { createReplyCard } from "../cards/components/reply.js";
 import { PromptResponse } from "@microsoft/teams-ai/lib/types/PromptResponse.js";
-import { OCRPool } from "../input/image.js";
+import {
+    ImageInputProcessor,
+    ImageInputProcessorOptions,
+} from "../input/ImageInputProcessor.js";
 import { ThinkingHandler } from "../turn/ThinkingHandler.js";
+import { LinkPromptGenerator } from "../turn/LinkPromptGenerator.js";
+import config from "../config.js";
+
+export interface FakeModelOptions {
+    rag: RAGOptions;
+    input: {
+        image: ImageInputProcessorOptions;
+    };
+}
 
 export class FakeModel implements PromptCompletionModel {
-    // // OCR
-    // private readonly ocrLanguages = ["eng"];
-    // private readonly ocrWorkers = 4;
-    // private readonly ocrPool = OCRPool.create(
-    //     this.ocrLanguages,
-    //     this.ocrWorkers
-    // );
+    private imageInputProcessorPromise: Promise<ImageInputProcessor>;
+    private options: FakeModelOptions;
 
-    // RAG
-    private options: RAGOptions;
-
-    constructor(options: RAGOptions) {
+    constructor(options: FakeModelOptions) {
         this.options = options;
+        const processor = new ImageInputProcessor();
+        this.imageInputProcessorPromise = processor.init(options.input.image);
     }
 
     public async completePrompt(
@@ -38,10 +44,21 @@ export class FakeModel implements PromptCompletionModel {
         const thinkingHandler = new ThinkingHandler(context);
         await thinkingHandler.start(context);
 
-        const prompt = await this.generatePromptToRag(context);
-        const ragReply = await getRAGReply(prompt, this.options);
-        thinkingHandler.stop();
+        const prompt = await this.generatePrompt(context);
+        if (config.debug) {
+            await context.sendActivity(`[DEBUG] Prompt: ${prompt}`);
+        }
+        console.log("🚀 ~ FakeModel ~ completePrompt ~ prompt:", prompt);
+        const ragReply = await getRAGReply(prompt, this.options.rag);
+        // TODO: try merge cancelTimer and stop into one method
+        thinkingHandler.cancelTimer();
+        await this.replyToUser(context, ragReply);
 
+        await thinkingHandler.stop();
+        return { status: "success" };
+    }
+
+    private async replyToUser(context: TurnContext, ragReply: RAGReply) {
         const card = createReplyCard(ragReply);
         console.log("🚀 ~ RAGModel ~ card:", card);
         const attachment = CardFactory.adaptiveCard(card);
@@ -50,19 +67,37 @@ export class FakeModel implements PromptCompletionModel {
             MessageFactory.text(ragReply.answer),
             replyCard,
         ]);
-
-        await thinkingHandler.complete();
-        return { status: "success" };
     }
 
-    private async generatePromptToRag(context: TurnContext) {
+    private async generatePrompt(context: TurnContext) {
+        console.log(
+            "🚀 ~ FakeModel ~ generatePrompt ~ context.activity:",
+            JSON.stringify(context.activity, null, 2)
+        );
+        console.log(
+            "🚀 ~ FakeModel ~ generatePrompt ~ context.activity.attachments:",
+            JSON.stringify(context.activity.attachments, null, 2)
+        );
         const removedMentionText = TurnContext.removeRecipientMention(
             context.activity
         );
-        const prompt = removedMentionText
+        const text = removedMentionText
             .toLowerCase()
             .replace(/\n|\r/g, "")
             .trim();
+        const textPrompt = `## Question\n${text}\n`;
+
+        const linkPromptGenerator = new LinkPromptGenerator(context);
+        const githubLinkPrompts =
+            await linkPromptGenerator.generateGithubPullRequestPrompts();
+
+        const prompt = [textPrompt, ...githubLinkPrompts].join("\n\n");
         return prompt;
+    }
+
+    // TODO
+    private async getImageInputProcessor(): Promise<ImageInputProcessor> {
+        const processor = await this.imageInputProcessorPromise;
+        return processor;
     }
 }

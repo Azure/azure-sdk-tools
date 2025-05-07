@@ -1,5 +1,5 @@
 import axios from "axios";
-const MY_DEBUG = false;
+import config from "../config.js";
 
 export interface RAGOptions {
     endpoint: string;
@@ -26,6 +26,7 @@ export async function getRAGReply(
 ): Promise<RAGReply> {
     // test format
     const debugText = `
+[DEBUG] reply with format:
     ???
 
     # hello \`hi-123\` 11111 - 22222
@@ -44,7 +45,7 @@ export async function getRAGReply(
 2. asdas dsdas
 *ffas aa*, **dasda asss**, _sdddas_, __dasdaaaaaa__
     `;
-    if (MY_DEBUG)
+    if (config.debug)
         return {
             answer: debugText,
             has_result: true,

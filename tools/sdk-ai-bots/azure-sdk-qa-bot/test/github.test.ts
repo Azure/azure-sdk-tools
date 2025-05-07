@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getPullRequestDetails } from "../src/input/github.js";
+import { getPullRequestDetails } from "../src/input/GithubClient.js";
 import { Octokit } from "@octokit/rest";
 
 // Mock the Octokit client

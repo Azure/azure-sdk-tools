@@ -1,5 +1,6 @@
 import { ActivityTypes, MemoryStorage, TurnContext } from "botbuilder";
 import * as path from "path";
+import { fileURLToPath } from "url";
 import config from "../config.js";
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
@@ -9,15 +10,27 @@ import { FeedbackReaction, sendFeedback } from "../backend/feedback.js";
 
 // Create AI components
 const model = new FakeModel({
-    apiKey: config.azureOpenAIKey,
-    tenantId: config.azureOpenAIDeploymentName,
-    // TODO: make /completion endpoint configurable
-    endpoint: config.azureOpenAIEndpoint + "/completion",
+    rag: {
+        apiKey: config.azureOpenAIKey,
+        tenantId: config.azureOpenAIDeploymentName,
+        // TODO: make /completion endpoint configurable
+        endpoint: config.azureOpenAIEndpoint + "/completion",
+    },
+    input: {
+        image: {
+            // TODO: make configurable
+            languages: ["en"],
+            numWorkers: 4,
+        },
+    },
 });
-const dir = import.meta.dirname;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const prompts = new PromptManager({
-    promptsFolder: path.join(dir, "../prompts"),
+    promptsFolder: path.join(__dirname, "../prompts"),
 });
+
 const planner = new ActionPlanner({
     model,
     prompts,

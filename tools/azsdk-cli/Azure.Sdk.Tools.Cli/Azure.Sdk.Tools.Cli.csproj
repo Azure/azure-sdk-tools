@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackAsTool>true</PackAsTool>
+    <IsPackable>true</IsPackable>
     <ToolCommandName>azsdk-cli</ToolCommandName>
     <NoWarn>ASP0000</NoWarn>
   </PropertyGroup>

@@ -131,13 +131,14 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 
 	chunks := make([]string, 0)
 	chunkLength := 0
+	var chunkTitles []string
 	for _, result := range mergedChunks {
 		chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
 		chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
 		chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
 		chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
 		chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
-
+		chunkTitles = append(chunkTitles, result.Title)
 		chunkLength += len(chunk)
 		if chunkLength > 100000 {
 			break
@@ -145,7 +146,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		chunks = append(chunks, chunk)
 	}
 	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
-
+	log.Printf("documents: %v", chunkTitles)
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, *req.PromptTemplate)
 	if err != nil {

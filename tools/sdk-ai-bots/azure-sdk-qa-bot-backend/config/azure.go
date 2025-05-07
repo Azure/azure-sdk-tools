@@ -19,7 +19,7 @@ const (
 	AOAI_CHAT_COMPLETIONS_MODEL    = "gpt-4o"
 	AOAI_CHAT_COMPLETIONS_ENDPOINT = "https://typespecaicent1405101257.openai.azure.com"
 	AI_SEARCH_BASE_URL             = "https://typspehelper4search.search.windows.net"
-	AI_SEARCH_INDEX                = "typespec-knowledge-v2"
+	AI_SEARCH_INDEX                = "typespec-knowledge"
 	STORAGE_BASE_URL               = "https://typespechelper4storage.blob.core.windows.net"
 	STORAGE_KNOWLEDGE_CONTAINER    = "knowledge"
 	STORAGE_FEEDBACK_CONTAINER     = "feedback"

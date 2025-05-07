@@ -8,17 +8,14 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
 {
-
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
     public class ReleasePlanTool : MCPTool
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ReleasePlanTool> _logger;
 
-        public ReleasePlanTool(IServiceProvider serviceProvider, ILogger<ReleasePlanTool> logger)
+        public ReleasePlanTool(ILogger<ReleasePlanTool> logger)
         {
-            _serviceProvider = serviceProvider;
             _logger = logger;
         }
 

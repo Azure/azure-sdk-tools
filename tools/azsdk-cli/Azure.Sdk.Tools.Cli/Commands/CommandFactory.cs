@@ -44,7 +44,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
                          .ToList();
 
             // todo: we need to check the constructors here, and add any services to the bundle that may be necessary
-
             foreach (var t in toolTypes)
             {
                 var tool = (MCPTool)ActivatorUtilities.CreateInstance(_serviceProvider, t);

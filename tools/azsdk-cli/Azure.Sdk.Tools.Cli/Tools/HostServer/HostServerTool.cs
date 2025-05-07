@@ -8,12 +8,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {
     public class HostServerTool : MCPTool
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<HostServerTool> _logger;
 
-        public HostServerTool(IServiceProvider serviceProvider, ILogger<HostServerTool> logger)
+        public HostServerTool(ILogger<HostServerTool> logger)
         {
-            _serviceProvider = serviceProvider;
             _logger = logger;
         }
 

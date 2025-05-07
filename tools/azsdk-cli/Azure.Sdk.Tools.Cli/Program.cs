@@ -21,19 +21,10 @@ public sealed class Program
         });
         services.AddSingleton<CommandFactory>();
 
-        // any registrations below here are only necessary for CLI mode
-        // the hosttool mode re-inits its own service provider
-        services.AddSingleton<IAzureService, AzureService>();
-
-        // 4. Build the provider
         var serviceProvider = services.BuildServiceProvider();
         var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
         var rootCommand = commandFactory.CreateRootCommand();
 
-        // should probably swap over to returning a CommandResponse object similar to 
-        // azure-mcp...but at the same time we could just structured log the result in the
-        // HandleCommand function of each tool, then maybe a ConsoleFormatter to turn the structured
-        // log into something easy to read?
         return await rootCommand.InvokeAsync(args);
     }
 }

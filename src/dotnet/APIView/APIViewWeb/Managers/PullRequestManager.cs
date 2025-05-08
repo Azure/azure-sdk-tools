@@ -18,9 +18,6 @@ namespace APIViewWeb.Managers
 {
     public class PullRequestManager : IPullRequestManager
     {
-        static readonly string PR_APIVIEW_BOT_COMMENT_IDENTIFIER = "**API change check**";
-        static readonly string PR_APIVIEW_BOT_COMMENT = "APIView has identified API level changes in this PR and created following API reviews.";
-        static readonly string PR_APIVIEW_BOT_NO_CHANGE_COMMENT = "API changes are not detected in this pull request.";
         static readonly GitHubClient _githubClient = new GitHubClient(new ProductHeaderValue("apiview"));
         
         private readonly TelemetryClient _telemetryClient;
@@ -89,39 +86,6 @@ namespace APIViewWeb.Managers
             return pullRequestModel;
         }
 
-        public async Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName, string commitSha)
-        {
-            var existingComment = await GetExistingCommentForPackage(repoOwner, repoName, prNumber);
-            var bldr = new StringBuilder(PR_APIVIEW_BOT_COMMENT_IDENTIFIER);
-            bldr.Append(Environment.NewLine).Append(Environment.NewLine);
-            if (pullRequests.Count > 0)
-            {
-                bldr.Append(PR_APIVIEW_BOT_COMMENT).Append(Environment.NewLine).Append(Environment.NewLine);
-                // Include API review revisions generated with same exact Commit Sha as latest commit SHA to exclude any stale reviews that are not modified in latest commit.
-                // This will ensure comment shows only the reviews modified byu latest commit.
-                foreach (var p in pullRequests.Where(p => p.Commits.LastOrDefault() == commitSha))
-                {
-                    var revisionLink = ManagerHelpers.ResolveReviewUrl(pullRequest: p, hostName: hostName);
-                    bldr.Append('[').Append(p.PackageName).Append("](").Append(revisionLink).Append(')');
-                    bldr.Append(Environment.NewLine);
-                }
-                bldr.Append(Environment.NewLine);
-            }
-            else
-            {
-                bldr.Append(PR_APIVIEW_BOT_NO_CHANGE_COMMENT);
-            }
-
-            if (existingComment != null)
-            {
-                await _githubClient.Issue.Comment.Update(repoOwner, repoName, existingComment.Id, bldr.ToString());
-            }
-            else
-            {
-                await _githubClient.Issue.Comment.Create(repoOwner, repoName, prNumber, bldr.ToString());
-            }
-        }
-
         public async Task CleanupPullRequestData()
         {
             var telemetry = new RequestTelemetry { Name = "Cleaning up Reviews created for pull requests" };
@@ -156,26 +120,6 @@ namespace APIViewWeb.Managers
             {
                 _telemetryClient.StopOperation(operation);
             }
-        }
-
-        private async Task<IssueComment> GetExistingCommentForPackage(string repoOwner, string repoName, int pr)
-        {
-            IReadOnlyList<IssueComment> comments = null;
-            try
-            {
-                comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-            if (comments != null)
-            {
-                // Check for comment created for current package.
-                // GitHub issue comment unfortunately doesn't have any key to verify. So we need to check actual body to find the comment.
-                return comments.Where(c => c.Body.Contains(PR_APIVIEW_BOT_COMMENT_IDENTIFIER)).LastOrDefault();
-            }
-            return null;
         }
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)

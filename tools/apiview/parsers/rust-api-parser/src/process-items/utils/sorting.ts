@@ -86,16 +86,28 @@ export function getSortedChildIds(childItems: number[]): { nonModule: number[]; 
 
   // First pass: categorize all items by their kind
   for (const childId of childItems) {
-    const child = apiJson.index[childId];
-    if (!child) continue;
+    if (childId in apiJson.index) {
+      const child = apiJson.index[childId];
+      if (!child) continue;
 
-    const kind = getItemKind(child);
-    if (!kind || !children[kind]) continue;
+      const kind = getItemKind(child);
+      if (!kind || !children[kind]) continue;
 
-    children[kind].push({
-      id: child.id,
-      name: getItemSortName(child, kind),
-    });
+      children[kind].push({
+        id: child.id,
+        name: getItemSortName(child, kind),
+      });
+    } else if (childId in apiJson.paths) {
+      const child = apiJson.paths[childId];
+      if (!child) continue;
+      const kind = child.kind;
+      if (!children[kind]) continue;
+
+      children[kind].push({
+        id: childId,
+        name: child.path[child.path.length - 1], // Use the last part of the path as the name
+      });
+    }
   }
 
   // Sort items within each kind by name (case-insensitive)

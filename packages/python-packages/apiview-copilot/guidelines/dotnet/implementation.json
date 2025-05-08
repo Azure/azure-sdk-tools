@@ -30,7 +30,7 @@
     "text": "If present this DO be a required parameter."
   },
   {
-    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-required",
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-first",
     "category": "Parameter presence and ordering",
     "text": "If present this DO be the first parameter."
   },
@@ -135,7 +135,7 @@
     "text": "If present this DO be a required parameter."
   },
   {
-    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-required",
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-first",
     "category": "Parameter presence and ordering",
     "text": "If present this DO be the first parameter."
   },
@@ -367,7 +367,7 @@
   {
     "id": "dotnet_implementation.html#dotnet-tracing-sources",
     "category": "Distributed Tracing {#dotnet-distributedtracing}",
-    "text": "DO NOT use DiagnosticSource, or ActivitySource API directly from client libraries. Activity can be used directly when DiagnosticScope does not expose corresponding APIs.\n\nTODO: Add guidance regarding user agent strings\n\nAll Azure client libraries ship with a set of extension methods that provide integration with ASP.NET Core applications by registering clients with DependencyInjection container, flowing Azure SDK logs to ASP.NET Core logging subsystem and providing ability to use configuration subsystem for client configuration (for more examples see https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/core/Microsoft.Extensions.Azure)"
+    "text": "DO NOT use DiagnosticSource, or ActivitySource API directly from client libraries. Activity can be used directly when DiagnosticScope does not expose corresponding APIs.\n\nTODO: Add guidance regarding user agent strings\n\nAll Azure client libraries ship with a set of extension methods that provide integration with ASP.NET Core applications by registering clients with DependencyInjection container, flowing Azure SDK logs to ASP.NET Core logging subsystem and providing ability to use configuration subsystem for client configuration (for more examples see https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/extensions/Microsoft.Extensions.Azure)"
   },
   {
     "id": "dotnet_implementation.html#dotnet-builder-class-name",
@@ -407,6 +407,6 @@
   {
     "id": "dotnet_implementation.html#dotnet-client-builder-overload-configuration",
     "category": "Integration with ASP.NET Core",
-    "text": "DO provide extension method for IAzureClientFactoryBuilderWithConfiguration<TConfiguration> that takes TConfiguration configuration. This overload would allow customers to pass in a IConfiguration object and create client dynamically based on configuration values.\n\nSample implementation:\n\n```C#\npublic static IAzureClientBuilder&lt;SecretClient, SecretClientOptions&gt; AddSecretClient&lt;TBuilder, TConfiguration&gt;(this TBuilder builder, TConfiguration configuration)\n    where TBuilder : IAzureClientFactoryBuilderWithConfiguration&lt;TConfiguration&gt;\n{\n    return builder.RegisterClientFactory&lt;SecretClient, SecretClientOptions&gt;(configuration);\n}\n\n```\n\n[.NET Framework Design Guidelines]: https://docs.microsoft.com/dotnet/standard/design-guidelines/\n[.NET Framework Constructor Design]: https://docs.microsoft.com/dotnet/standard/design-guidelines/constructor\n[Azure Application Configuration service]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration\n[Azure.Core]: https://www.nuget.org/packages/Azure.Core/\n[Moq]: https://github.com/moq/moq4\n[adparch]: https://github.com/azure/azure-sdk/issues\n[.NET Standard 2.0]: https://docs.microsoft.com/dotnet/standard/net-standard\n[azure/azure-sdk-for-net]: https://github.com/azure/azure-sdk-for-net\n[.NET Target Framework Monikers]: https://learn.microsoft.com/dotnet/standard/frameworks"
+    "text": "DO provide extension method for IAzureClientFactoryBuilderWithConfiguration<TConfiguration> that takes TConfiguration configuration. This overload would allow customers to pass in a IConfiguration object and create client dynamically based on configuration values.\n\nSample implementation:\n\n```C#\npublic static IAzureClientBuilder&lt;SecretClient, SecretClientOptions&gt; AddSecretClient&lt;TBuilder, TConfiguration&gt;(this TBuilder builder, TConfiguration configuration)\n    where TBuilder : IAzureClientFactoryBuilderWithConfiguration&lt;TConfiguration&gt;\n{\n    return builder.RegisterClientFactory&lt;SecretClient, SecretClientOptions&gt;(configuration);\n}\n\n```\n\n[.NET Framework Design Guidelines]: https://learn.microsoft.com/dotnet/standard/design-guidelines/\n[.NET Framework Constructor Design]: https://learn.microsoft.com/dotnet/standard/design-guidelines/constructor\n[Azure Application Configuration service]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration\n[Azure.Core]: https://www.nuget.org/packages/Azure.Core/\n[Moq]: https://github.com/moq/moq4\n[adparch]: https://github.com/azure/azure-sdk/issues\n[.NET Standard 2.0]: https://learn.microsoft.com/dotnet/standard/net-standard\n[azure/azure-sdk-for-net]: https://github.com/azure/azure-sdk-for-net\n[.NET Target Framework Monikers]: https://learn.microsoft.com/dotnet/standard/frameworks\n[long term support (LTS)]: https://dotnet.microsoft.com/platform/support/policy/dotnet-core#release-types\n[.NET runtime libraries]: https://learn.microsoft.com/dotnet/standard/runtime-libraries-overview"
   }
 ]

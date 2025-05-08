@@ -1,5 +1,34 @@
 # Release
 
+## 2025-05-06 - 0.6.1
+
+- Turned duplicated SDK config error into warning and continued SDK generation based on TypeSpecs
+- Assigned value to language while constructing PackageData object
+
+## 2025-05-02 - 0.6.0
+
+- Normalize the log message with prefixes
+- Report more info in the summary line of log for telemetry purpose
+- Removed unused codes
+
+## 2025-04-24 - 0.5.1
+
+- Move service name variable into the package object
+
+## 2025-04-22 - 0.5.0
+
+- Output service names and artifact staging folder in execution report.
+
+## 2025-04-17 - 0.4.2
+
+- Refactor sdk-suppressions.yaml link
+- Remove render template's sdk-suppressions link only
+
+## 2025-04-17 - 0.4.1
+
+- Added pull request link to the generated html report
+- Added captureTransport to each script log
+
 ## 2025-04-10 - 0.4.0
 
 - Added run-mode input parameter

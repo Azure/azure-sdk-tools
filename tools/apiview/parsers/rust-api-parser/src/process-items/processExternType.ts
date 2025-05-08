@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isExternTypeItem } from "./utils/typeGuards";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes an extern type item and returns ReviewLine objects.
@@ -30,7 +31,7 @@ export function processExternType(item: Item): ReviewLine[] | null {
   // Add name
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "unknown",
+    Value: item.name || "unknown_extern_type",
   });
 
   // Add semicolon
@@ -40,5 +41,6 @@ export function processExternType(item: Item): ReviewLine[] | null {
   });
 
   reviewLines.push(reviewLine);
+  lineIdMap.set(item.id.toString(), `extern_type_${item.name}`);
   return reviewLines;
 }

@@ -74,45 +74,15 @@
         "CIParameters": {
           "CIMatrixConfigs": []
         }
-      },
-      {
-        "Name": "azure-resourcemanager-appconfiguration",
-        "Version": "1.1.0-beta.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/appconfiguration/azure-resourcemanager-appconfiguration",
-        "ServiceDirectory": "appconfiguration",
-        "ReadMePath": "sdk/appconfiguration/azure-resourcemanager-appconfiguration/README.md",
-        "ChangeLogPath": "sdk/appconfiguration/azure-resourcemanager-appconfiguration/CHANGELOG.md",
-        "Group": "com.azure.resourcemanager",
-        "SdkType": "mgmt",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-resourcemanager-appconfiguration",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          "com.azure:perf-test-core"
-        ],
-        "ArtifactDetails": {
-          "name": "azure-resourcemanager-appconfiguration",
-          "releaseInBatch": "${{ parameters.release_azureresourcemanagerappconfiguration }}",
-          "safeName": "azureresourcemanagerappconfiguration",
-          "groupId": "com.azure.resourcemanager",
-          "triggeringPaths": [
-            "/sdk/appconfiguration/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
       }
     ]
   },
   {
-    "name": "Eng and Core",
+    "name": "Core changes + excluded files changed",
     "diff": {
       "ChangedFiles": [
         "eng/versioning/external_dependencies.txt",
-        "sdk/clientcore/optional-dependency-tests/pom.xml",
+        "sdk/clientcore/core/pom.xml",
         "sdk/core/azure-core/src/test/java/com/azure/core/validation/http/LocalTestServer.java"
       ],
       "ChangedServices": [
@@ -219,7 +189,7 @@
         "IsNewSdk": true,
         "ArtifactName": "core",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": [
           "io.clientcore:optional-dependency-tests"
         ],
@@ -230,44 +200,6 @@
           "groupId": "io.clientcore",
           "triggeringPaths": [
             "/sdk/parents/clientcore-parent",
-            "/sdk/clientcore/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [
-            {
-              "Name": "clientcore_ci_test_base",
-              "GenerateVMJobs": true,
-              "Path": "sdk/clientcore/platform-matrix.json",
-              "Selection": "sparse",
-              "NonSparseParameters": "Agent"
-            }
-          ]
-        }
-      },
-      {
-        "Name": "http-okhttp3",
-        "Version": "1.0.0-beta.3",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/clientcore/http-okhttp3",
-        "ServiceDirectory": "clientcore",
-        "ReadMePath": "sdk/clientcore/http-okhttp3/README.md",
-        "ChangeLogPath": "sdk/clientcore/http-okhttp3/CHANGELOG.md",
-        "Group": "io.clientcore",
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "http-okhttp3",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          "io.clientcore:optional-dependency-tests"
-        ],
-        "ArtifactDetails": {
-          "name": "http-okhttp3",
-          "releaseInBatch": "${{ parameters.release_clientcorehttpokhttp3 }}",
-          "safeName": "httpokhttp3",
-          "groupId": "io.clientcore",
-          "triggeringPaths": [
             "/sdk/clientcore/ci.yml"
           ]
         },

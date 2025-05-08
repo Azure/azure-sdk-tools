@@ -1,9 +1,14 @@
 import os
 import json
+import sys
+
+# Add the parent directory to sys.path so imports work correctly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts._markdown_parser import parse_markdown
 
-_PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 if __name__ == "__main__":
@@ -11,15 +16,11 @@ if __name__ == "__main__":
     azure_sdk_path = os.getenv("AZURE_SDK_REPO_PATH")
     rest_api_guidelines_path = os.getenv("REST_API_GUIDELINES_PATH")
     if not azure_sdk_path:
-        raise Exception(
-            "Please set the AZURE_SDK_REPO_PATH environment variable manually or in your .env file."
-        )
+        raise Exception("Please set the AZURE_SDK_REPO_PATH environment variable manually or in your .env file.")
     else:
         azure_sdk_path = os.path.normpath(azure_sdk_path)
     if not rest_api_guidelines_path:
-        raise Exception(
-            "Please set the REST_API_GUIDELINES_PATH environment variable manually or in your .env file."
-        )
+        raise Exception("Please set the REST_API_GUIDELINES_PATH environment variable manually or in your .env file.")
     else:
         rest_api_guidelines_path = os.path.normpath(rest_api_guidelines_path)
 

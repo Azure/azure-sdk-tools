@@ -1,41 +1,54 @@
-import { Crate, Id, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
-import { getAPIJson } from "../../main";
-import { ReviewLine, TokenKind } from "../../models/apiview-models";
+import { Crate, Id, ItemKind, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
+import { getAPIJson, processedItems } from "../../main";
+import { ReviewLine, ReviewToken, TokenKind } from "../../models/apiview-models";
+import { lineIdMap } from "../../utils/lineIdUtils";
+
+export const externalReferencesLines: ReviewLine[] = [];
 
 /**
- * Processes external re-exports and creates a structured view
- * @param itemId id of the item being re-exported
- * @returns Object containing ReviewLine arrays for both items and modules
+ * Registers external item references in the API view output.
+ * This function checks if an item exists in the external paths collection and
+ * adds it to the references list if it hasn't been processed yet.
+ * @param itemId The ID of the item being used/re-exported.
  */
-export function externalReexports(itemId: Id): { items: ReviewLine[]; modules: ReviewLine[] } {
+export function registerExternalItemReference(itemId: Id): void {
   const apiJson = getAPIJson();
-  if (!isValidItemId(itemId, apiJson)) {
-    return { items: [], modules: [] };
+  if (
+    processedItems.has(itemId) ||
+    itemId in apiJson.index ||
+    !(itemId in apiJson.paths) ||
+    lineIdMap.has(itemId.toString()) ||
+    externalReferencesLines.some((line) => line.LineId === itemId.toString()) // Check if the item already exists
+  ) {
+    return;
   }
 
+  const itemIdString = itemId.toString();
   const itemSummary = apiJson.paths[itemId];
-  // Check if the item has a path
-  if (!hasValidPath(itemSummary)) {
-    return { items: [], modules: [] };
-  }
+  if (itemSummary.path[itemSummary.path.length - 1].startsWith("__")) return;
 
-  // Handle differently based on item kind
-  if (itemSummary.kind === "module") {
-    return processModuleReexport(itemId, itemSummary, apiJson);
-  } else {
-    // For non-module items, just represent them directly
-    return {
-      items: [createItemLine(itemId, itemSummary)],
-      modules: [],
-    };
-  }
-}
-
-/**
- * Checks if the item ID is valid in the given API JSON
- */
-function isValidItemId(itemId: Id, apiJson: Crate): boolean {
-  return !!(itemId && apiJson && apiJson.paths && apiJson.paths[itemId]);
+  const transformedItemKind = transformItemKind(itemSummary.kind);
+  const value = itemSummary.path.join("::");
+  lineIdMap.set(itemIdString, `external_${transformedItemKind}_${value}`);
+  externalReferencesLines.push({
+    LineId: itemIdString,
+    Tokens: [
+      {
+        Kind: TokenKind.Keyword,
+        Value: "pub",
+      },
+      {
+        Kind: TokenKind.Keyword,
+        Value: transformedItemKind,
+      },
+      {
+        Kind: TokenKind.TypeName,
+        Value: value,
+        RenderClasses: ["dependencies"],
+        NavigateToId: itemIdString,
+      },
+    ],
+  });
 }
 
 /**
@@ -48,7 +61,14 @@ function hasValidPath(itemSummary: ItemSummary): boolean {
 /**
  * Creates a single ReviewLine representing a non-module item
  */
-function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
+export function createItemLineFromPath(
+  itemId: Id,
+  itemSummary: ItemSummary,
+): ReviewLine | undefined {
+  const value = itemSummary.path[itemSummary.path.length - 1];
+  if (value.startsWith("__")) return undefined;
+  const transformedItemKind = transformItemKind(itemSummary.kind);
+  lineIdMap.set(itemId.toString(), `external_${transformedItemKind}_${value}`);
   return {
     LineId: itemId.toString(),
     Tokens: [
@@ -58,28 +78,50 @@ function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
       },
       {
         Kind: TokenKind.Keyword,
-        Value: itemSummary.kind,
+        Value: transformedItemKind,
       },
       {
         Kind: TokenKind.TypeName,
-        Value: itemSummary.path.concat().join("::"),
+        Value: value,
         RenderClasses: ["dependencies"],
         NavigateToId: itemId.toString(),
+        NavigationDisplayName: [
+          ItemKind.Constant,
+          ItemKind.Function,
+          ItemKind.AssocConst,
+          ItemKind.Static,
+          ItemKind.StructField,
+        ].includes(itemSummary.kind)
+          ? undefined
+          : value,
+        HasSuffixSpace: true,
+      },
+      {
+        Kind: TokenKind.Comment,
+        Value: `/* re-export of ${itemSummary.path.join("::")} */`,
       },
     ],
   };
 }
 
+export function transformItemKind(itemKind: ItemKind) {
+  if (itemKind === ItemKind.Module) return "mod";
+  if (itemKind === ItemKind.Function) return "fn";
+  if (itemKind === ItemKind.Constant) return "const";
+  return itemKind;
+}
+
 /**
  * Processes a module re-export, including finding all its children
  */
-function processModuleReexport(
+export function processModuleReexport(
   itemId: Id,
   itemSummary: ItemSummary,
   apiJson: Crate,
-): { items: ReviewLine[]; modules: ReviewLine[] } {
-  const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary);
-  const children = findModuleChildren(itemSummary.path.join("::"), apiJson);
+  parentModule?: { prefix: string; id: number },
+): ReviewLine[] {
+  const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary, parentModule);
+  const children = findModuleChildrenByPath(itemSummary.path.join("::"), apiJson);
 
   if (children.length === 0) {
     // Add closing brace to the header line for empty modules
@@ -87,77 +129,109 @@ function processModuleReexport(
       Kind: TokenKind.Punctuation,
       Value: "}",
     });
-    return {
-      modules: [moduleHeaderLine],
-      items: [],
-    };
-  } else {
-    // Add children and a separate closing brace line for non-empty modules
-    moduleHeaderLine.Children = children;
-    return {
-      modules: [
-        moduleHeaderLine,
-        {
-          RelatedToLine: itemId.toString(),
-          Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-        },
-      ],
-      items: [],
-    };
+    return [moduleHeaderLine];
   }
+  // Add children and a separate closing brace line for non-empty modules
+  moduleHeaderLine.Children = children;
+  return [
+    moduleHeaderLine,
+    {
+      RelatedToLine: itemId.toString(),
+      Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+    },
+  ];
 }
 
 /**
  * Creates the header line for a module
  */
-function createModuleHeaderLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
-  return {
-    LineId: itemId.toString(),
-    Tokens: [
-      {
-        Kind: TokenKind.Keyword,
-        Value: "pub",
-      },
-      {
-        Kind: TokenKind.Keyword,
-        Value: itemSummary.kind,
-      },
+function createModuleHeaderLine(
+  itemId: Id,
+  itemSummary: ItemSummary,
+  parentModule?: { prefix: string; id: number },
+): ReviewLine {
+  let lineIdValue = "mod";
+  const tokens: ReviewToken[] = [
+    {
+      Kind: TokenKind.Keyword,
+      Value: "pub mod",
+    },
+  ];
+
+  if (parentModule) {
+    tokens.push(
       {
         Kind: TokenKind.TypeName,
-        Value: itemSummary.path.concat().join("::"),
-        NavigateToId: itemId.toString(),
+        Value: parentModule.prefix,
+        NavigateToId: parentModule.id.toString(),
+        HasSuffixSpace: false,
+        RenderClasses: ["namespace"],
       },
       {
         Kind: TokenKind.Punctuation,
-        Value: "{",
+        Value: `::`,
         HasSuffixSpace: false,
       },
-    ],
+    );
+  }
+
+  const value = itemSummary.path[itemSummary.path.length - 1];
+  tokens.push(
+    {
+      Kind: TokenKind.TypeName,
+      Value: value,
+      NavigateToId: itemId.toString(),
+      NavigationDisplayName: parentModule ? parentModule.prefix + "::" + value : value,
+      RenderClasses: ["namespace"],
+    },
+    {
+      Kind: TokenKind.Punctuation,
+      Value: "{",
+      HasSuffixSpace: false,
+    },
+    {
+      Kind: TokenKind.Comment,
+      Value: `/* re-export of ${itemSummary.path.join("::")} */`,
+      HasPrefixSpace: true,
+      HasSuffixSpace: true,
+    },
+  );
+  lineIdValue += `_${value}`;
+
+  lineIdMap.set(itemId.toString(), `mod_${lineIdValue}`);
+  return {
+    LineId: itemId.toString(),
+    Tokens: tokens,
   };
 }
 
 /**
- * Finds all child items of a module based on path
+ * Returns all child item IDs of a module based on path
  */
-function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
-  const children: ReviewLine[] = [];
-
-  // Process all items in paths to find children
+export function getModuleChildIdsByPath(currentPath: string, apiJson: Crate): number[] {
+  const childIds: number[] = [];
   for (const childId in apiJson.paths) {
     const childItemSummary = apiJson.paths[childId];
-
-    // Skip if the child doesn't have a path
-    if (!hasValidPath(childItemSummary)) {
-      continue;
-    }
-
+    if (!hasValidPath(childItemSummary)) continue;
     const childPath = childItemSummary.path.join("::");
-
-    // Check if this is a child path (starts with the current path and is not the same path)
     if (childPath !== currentPath && childPath.startsWith(currentPath + "::")) {
-      // Add as a child
-      children.push(createItemLine(Number(childId), childItemSummary));
+      childIds.push(Number(childId));
     }
+  }
+  return childIds;
+}
+
+/**
+ * Finds all child items of a module based on path and returns ReviewLines
+ */
+function findModuleChildrenByPath(currentPath: string, apiJson: Crate): ReviewLine[] {
+  const childIds = getModuleChildIdsByPath(currentPath, apiJson);
+  const children: ReviewLine[] = [];
+
+  for (const childId of childIds) {
+    const childItemSummary = apiJson.paths[childId];
+    const childLine = createItemLineFromPath(Number(childId), childItemSummary);
+    if (childLine) children.push(childLine);
   }
 
   // Sort children by kind and then by path

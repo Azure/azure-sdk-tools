@@ -2,17 +2,16 @@
     {
         "testcase": "few_violations",
         "expected": {
-            "status": "Error",
-            "violations": [
+            "comments": [
                 {
                     "rule_ids": [
-                        "python_design.html#python-client-same-name-sync-async",
-                        "python_design.html#python-namespaces-async"
+                        "python_design.html#python-client-same-name-sync-async"
                     ],
                     "line_no": 78,
                     "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatchingAsyncClient(ClinicalMatchingClientOperationsMixin): implements AsyncContextManager",
-                    "suggestion": "Move the async client into an '.aio' sub-namespace (e.g. azure.healthinsights.clinicalmatching.aio) and rename the class to 'ClinicalMatchingClient' so that both sync and async clients share the same client name.",
-                    "comment": "Async clients should use the same client name as the synchronous version and reside in an '.aio' namespace. Using 'ClinicalMatchingAsyncClient' in the same namespace violates the naming and namespace guidelines."
+                    "suggestion": "Place the async client in an '.aio' subpackage and name it identically to the sync client (i.e. ClinicalMatchingClient). For example:\n\n# In module azure.healthinsights.clinicalmatching.aio\nclass ClinicalMatchingClient(ClinicalMatchingClientOperationsMixin):\n    async def begin_match_trials(...): ...\n    async def close(...): ...",
+                    "comment": "The async client does not follow the naming and namespace conventions. According to the guidelines (python_design.html#python-client-same-name-sync-async and python_design.html#python-client-namespace-async), the async client should have the same name as its synchronous counterpart and reside in an '.aio' namespace.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -20,23 +19,40 @@
                     ],
                     "line_no": 91,
                     "bad_code": "async def begin_match_trials(",
-                    "suggestion": "Add full PEP484 type annotations to all parameters and the return type, for example: \n\n@overload\nasync def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = \"application/json\", repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]:\n    ...",
-                    "comment": "Public async methods must include proper type hints. The async overloads for begin_match_trials are missing type annotations, which violates PEP484 guidelines."
+                    "suggestion": "async def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = \"application/json\", repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]:",
+                    "comment": "Public asynchronous methods must include full PEP484 type annotations. The async overloads for 'begin_match_trials' are missing explicit type hints.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 368,
+                    "bad_code": "contacts: Optional[List[ForwardRef('ContactDetails')]]",
+                    "suggestion": "Add 'from __future__ import annotations' at the top of the module to simplify forward references in type hints.",
+                    "comment": "$Explicit use of ForwardRef can be avoided in Python 3.10+ using postponed evaluation of annotations. This change can improve readability and reduce boilerplate in type annotations. (general comment)",
+                    "source": "generic"
                 }
             ]
         },
         "actual": {
-            "status": "Error",
-            "violations": [
+            "comments": [
                 {
                     "rule_ids": [
-                        "python_design.html#python-client-same-name-sync-async",
-                        "python_design.html#python-namespaces-async"
+                        "python_design.html#python-namespaces-async",
+                        "python_design.html#python-client-same-name-sync-async"
                     ],
                     "line_no": 78,
                     "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatchingAsyncClient(ClinicalMatchingClientOperationsMixin): implements AsyncContextManager",
-                    "suggestion": "Rename the asynchronous client to use the same client name as the synchronous version (e.g. 'ClinicalMatchingClient') and move it to the 'azure.healthinsights.clinicalmatching.aio' namespace.",
-                    "comment": "Async clients in Azure SDK should use the same client name as their sync counterparts and be placed in an '.aio' subpackage. The current naming and namespace placement violates both of these guidelines."
+                    "suggestion": "Place the async client in the azure.healthinsights.clinicalmatching.aio namespace and rename it to ClinicalMatchingClient.",
+                    "comment": "The async client should have the same name as the sync client and reside in an .aio sub-namespace, as specified in the guidelines.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 90,
+                    "bad_code": "@overload\\nasync def begin_match_trials(",
+                    "suggestion": "Add complete type hints to the async overload definitions, mirroring the synchronous version for clarity and consistency.",
+                    "comment": "Lack of explicit type annotations in the async overloads may hinder both static analysis and developer understanding.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -44,31 +60,38 @@
                     ],
                     "line_no": 91,
                     "bad_code": "async def begin_match_trials(",
-                    "suggestion": "Add complete PEP484 type hints for all parameters and the return type in the async 'begin_match_trials' overloads and implementation (e.g. annotate 'body', 'content_type', etc. and specify the return type as 'LROPoller[TrialMatcherResult]').",
-                    "comment": "Public async methods must include PEP484 type hints. The async overloads for 'begin_match_trials' are missing type annotations, which violates the guidelines."
+                    "suggestion": "Add explicit type annotations for all parameters and the return type for the async overloads of begin_match_trials, e.g., 'async def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = \"application/json\", ... ) -> LROPoller[TrialMatcherResult]'",
+                    "comment": "The async overload definitions for begin_match_trials lack type hints. Public API methods should include full PEP484 annotations for consistency.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 147,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.HealthInsightsKeyCredential:",
+                    "suggestion": "Define this class with a simple name (e.g., HealthInsightsKeyCredential) in its own module; let the package structure imply the full namespace.",
+                    "comment": "Fully qualified names in class definitions clutter the API view. In Python, it is conventional to use short class names and rely on the module/package organization.",
+                    "source": "generic"
                 }
             ]
         },
-        "total_violations": 2,
-        "violations_found": 2,
+        "expected_comments": 2,
+        "comments_found": 4,
+        "valid_generic_comments": 1,
         "true_positives": 2,
-        "false_positives": 0,
+        "false_positives": 1,
         "false_negatives": 0,
-        "percent_coverage": 100.0,
+        "percent_coverage": 100,
         "rule_matches_wrong_line": 0,
-        "wrong_rule_details": [],
-        "line_matches_wrong_rule": 0,
         "wrong_line_details": [],
         "similarity": 5,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately identifying and addressing the guidelines and violations mentioned, without adding unsupported information or omitting critical details.",
-        "overall_score": 100
+        "groundedness_reason": "The RESPONSE is fully grounded and complete, accurately reflecting the guidelines provided in the CONTEXT without introducing unsupported information or omitting critical details.",
+        "overall_score": 92
     },
     {
         "testcase": "many_violations",
         "expected": {
-            "status": "Error",
-            "violations": [
+            "comments": [
                 {
                     "rule_ids": [
                         "python_design.html#python-client-naming",
@@ -77,7 +100,8 @@
                     "line_no": 6,
                     "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
                     "suggestion": "class azure.healthinsights.clinicalmatching.ClinicalMatchingClient(ClinicalMatchingClientOperationsMixin): implements ContextManager",
-                    "comment": "Service client types must have a 'Client' suffix and the sync and async client classes should share the same name."
+                    "comment": "Service client types should be named with a 'Client' suffix. In addition, the sync and async clients must share the same name. Rename the sync client from 'ClinicalMatching' to 'ClinicalMatchingClient' to comply with these guidelines.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -86,34 +110,28 @@
                     "line_no": 11,
                     "bad_code": "api_key: str",
                     "suggestion": "Use a credential object from azure.core.credentials (e.g., AzureKeyCredential) instead of a raw string for the api key.",
-                    "comment": "Authentication parameters should leverage azure-core credential classes rather than using a simple string."
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-lro-poller-begin-naming"
-                    ],
-                    "line_no": 66,
-                    "bad_code": "def create_trials(",
-                    "suggestion": "def begin_create_trials(",
-                    "comment": "Long running operations should use a 'begin_' prefix. Rename 'create_trials' to 'begin_create_trials'."
+                    "comment": "Authentication parameters should leverage azure-core credential classes rather than using a simple string.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
                         "python_design.html#python-client-options-naming"
                     ],
                     "line_no": 70,
-                    "bad_code": "options: Optional[CreateTrialsOptions] = None,",
-                    "suggestion": "Remove the 'options' bag parameter and instead expose each optional parameter directly as keyword-only arguments.",
-                    "comment": "The use of an 'options bag' (CreateTrialsOptions) is disallowed. Optional parameters should be provided as individual keyword-only arguments."
+                    "bad_code": "    options: Optional[CreateTrialsOptions] = None,",
+                    "suggestion": "    <individual keyword parameters> instead of an options bag",
+                    "comment": "Avoid using an options bag object to group optional parameters. Pass each optional parameter as a separate keyword-only argument.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
                         "python_design.html#python-lro-poller-begin-naming"
                     ],
-                    "line_no": 181,
-                    "bad_code": "async def create_trials(",
-                    "suggestion": "async def begin_create_trials(",
-                    "comment": "Long running operations should use a 'begin_' prefix. Rename the async 'create_trials' method to 'begin_create_trials'."
+                    "line_no": 93,
+                    "bad_code": "def create_trials(",
+                    "suggestion": "def begin_create_trials(",
+                    "comment": "Long running operations must use a 'begin_' prefix. Rename 'create_trials' to 'begin_create_trials' per the long running operations naming guideline.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -122,16 +140,8 @@
                     "line_no": 102,
                     "bad_code": "def trials(",
                     "suggestion": "def list_trials(",
-                    "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-paged-prefix"
-                    ],
-                    "line_no": 217,
-                    "bad_code": "def trials(",
-                    "suggestion": "def list_trials(",
-                    "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type."
+                    "comment": "Methods that enumerate resources should be prefixed with 'list_'. Rename 'trials' to 'list_trials' to follow the paging method naming guideline.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -140,7 +150,46 @@
                     "line_no": 108,
                     "bad_code": "def erase_trials(",
                     "suggestion": "def delete_trials(",
-                    "comment": "Deletion operations should use a preferred verb like 'delete_' instead of 'erase_'."
+                    "comment": "For deletion operations the preferred verb is 'delete_'. Rename 'erase_trials' to 'delete_trials' per the service verb naming guidelines.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-lro-poller-begin-naming"
+                    ],
+                    "line_no": 214,
+                    "bad_code": "async def create_trials(",
+                    "suggestion": "async def begin_create_trials(",
+                    "comment": "Long running operations should use a 'begin_' prefix. Rename the async 'create_trials' method to 'begin_create_trials'.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-paged-prefix"
+                    ],
+                    "line_no": 223,
+                    "bad_code": "def trials(",
+                    "suggestion": "def list_trials(",
+                    "comment": "Methods that enumerate resources should be prefixed with 'list_'. Consider renaming 'trials' to 'list_trials' and returning an ItemPaged type.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-service-verbs"
+                    ],
+                    "line_no": 229,
+                    "bad_code": "async def erase_trials(",
+                    "suggestion": "async def delete_trials(",
+                    "comment": "Deletion operation names should use the 'delete_' prefix rather than 'erase_'. Rename 'erase_trials' to 'delete_trials' in the async client.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 824,
+                    "bad_code": "ivar innerrror: Optional[InnerError]",
+                    "suggestion": "ivar inner_error: Optional[InnerError]",
+                    "comment": "There is a typo in the attribute name ('innerrror'). Correcting it to 'inner_error' (or a similar consistent name) improves clarity and consistency in the API.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -149,7 +198,8 @@
                     "line_no": 998,
                     "bad_code": "ivar eligibilityCriteriaEvidence: Optional[str]",
                     "suggestion": "ivar eligibility_criteria_evidence: Optional[str]",
-                    "comment": "Variable names should use snake_case instead of camelCase."
+                    "comment": "Variable names should use snake_case instead of camelCase.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -158,7 +208,8 @@
                     "line_no": 1000,
                     "bad_code": "ivar patientDataEvidence: Optional[ClinicalNoteEvidence]",
                     "suggestion": "ivar patient_data_evidence: Optional[ClinicalNoteEvidence]",
-                    "comment": "Variable names should use snake_case instead of camelCase."
+                    "comment": "Variable names should use snake_case instead of camelCase.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -167,31 +218,32 @@
                     "line_no": 1001,
                     "bad_code": "ivar patientInfoEvidence: Optional[ClinicalCodedElement]",
                     "suggestion": "ivar patient_info_evidence: Optional[ClinicalCodedElement]",
-                    "comment": "Variable names should use snake_case instead of camelCase."
+                    "comment": "Variable names should use snake_case instead of camelCase.",
+                    "source": "guideline"
                 }
             ]
         },
         "actual": {
-            "status": "Error",
-            "violations": [
-                {
-                    "rule_ids": [
-                        "python_design.html#python-client-naming",
-                        "python_design.html#python-client-same-name-sync-async"
-                    ],
-                    "line_no": 6,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
-                    "suggestion": "Rename the sync client to have the same name as the async client (e.g. ClinicalMatchingClient) so that both sync and async clients share the same base name.",
-                    "comment": "Service client types should have a 'Client' suffix. Rename the synchronous client to 'ClinicalMatchingClient'. The sync and async clients must use the same client name across their respective namespaces."
-                },
+            "comments": [
                 {
                     "rule_ids": [
                         "python_design.html#python-client-options-naming"
                     ],
                     "line_no": 70,
                     "bad_code": "options: Optional[CreateTrialsOptions] = None,",
-                    "suggestion": "Remove the options bag parameter and expose individual keyword-only arguments for each optional setting.",
-                    "comment": "Do not use an options bag object to group optional parameters; instead, each optional parameter should be a keyword-only argument."
+                    "suggestion": "Replace the 'options' parameter with individual keyword-only arguments for each optional setting.",
+                    "comment": "Do not use an 'options bag' object to group optional parameters; pass each optional parameter as a separate keyword-only argument (python_design.html#python-client-options-naming).",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-paged-prefix"
+                    ],
+                    "line_no": 102,
+                    "bad_code": "def trials(",
+                    "suggestion": "def list_trials(",
+                    "comment": "Methods that enumerate resources should be prefixed with 'list_' (python_design.html#python-paged-prefix).",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -200,65 +252,60 @@
                     "line_no": 108,
                     "bad_code": "def erase_trials(",
                     "suggestion": "def delete_trials(",
-                    "comment": "Deletion operations should use the preferred verb 'delete_' rather than 'erase_'."
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-paged-prefix",
-                        "python_design.html#python-response-paged-protocol"
-                    ],
-                    "line_no": 102,
-                    "bad_code": "def trials(",
-                    "suggestion": "def list_trials(\u2026) -> ItemPaged[TrialMatcherResult]:",
-                    "comment": "Methods that enumerate resources should be prefixed with 'list_' and return a value that implements the ItemPaged protocol rather than a plain list."
+                    "comment": "Deletion operations should use 'delete_' as the verb rather than 'erase_' (python_design.html#python-client-service-verbs).",
+                    "source": "guideline"
                 }
             ]
         },
-        "total_violations": 11,
-        "violations_found": 4,
-        "true_positives": 4,
+        "expected_comments": 12,
+        "comments_found": 3,
+        "valid_generic_comments": 0,
+        "true_positives": 3,
         "false_positives": 0,
-        "false_negatives": 7,
-        "percent_coverage": 36.3636363636,
+        "false_negatives": 9,
+        "percent_coverage": 25,
         "rule_matches_wrong_line": 0,
-        "wrong_rule_details": [],
-        "line_matches_wrong_rule": 0,
         "wrong_line_details": [],
-        "similarity": 4,
+        "similarity": 3,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, addressing specific violations and providing corrections that align with the guidelines provided. It does not introduce any unsupported information or omit any critical details from the CONTEXT.",
-        "overall_score": 53
+        "groundedness_reason": "The RESPONSE accurately reflects the guidelines provided in the CONTEXT without omitting any critical details or introducing unsupported information. It adheres to the naming conventions and method prefixes specified in the CONTEXT.",
+        "overall_score": 42
     },
     {
         "testcase": "no_violations",
         "expected": {
-            "status": "Success",
-            "violations": []
+            "comments": []
         },
         "actual": {
-            "status": "Success",
-            "violations": []
+            "comments": [
+                {
+                    "rule_ids": [],
+                    "line_no": 56,
+                    "bad_code": "content_type: str = ...",
+                    "suggestion": "content_type: str = \"application/json\"",
+                    "comment": "The concrete implementation\u2019s default for 'content_type' should align with the overload definitions. Explicitly setting it to 'application/json' enhances consistency.",
+                    "source": "generic"
+                }
+            ]
         },
-        "total_violations": 0,
-        "violations_found": 0,
+        "expected_comments": 0,
+        "comments_found": 1,
+        "valid_generic_comments": 1,
         "true_positives": 0,
         "false_positives": 0,
         "false_negatives": 0,
-        "percent_coverage": 0.0,
+        "percent_coverage": 0,
         "rule_matches_wrong_line": 0,
-        "wrong_rule_details": [],
-        "line_matches_wrong_rule": 0,
         "wrong_line_details": [],
-        "similarity": 5,
-        "groundedness": 1,
-        "groundedness_reason": "The RESPONSE is completely ungrounded because there is no CONTEXT provided to relate it to, making it impossible for the RESPONSE to adhere to any information.",
+        "similarity": 0,
+        "groundedness": 0,
+        "groundedness_reason": "No comments found.",
         "overall_score": 100.0
     },
     {
         "testcase": "multiple_same_violations",
         "expected": {
-            "status": "Error",
-            "violations": [
+            "comments": [
                 {
                     "rule_ids": [
                         "python_design.html#python-models-enum-string"
@@ -266,7 +313,8 @@
                     "line_no": 194,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.AgeUnit(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.AgeUnit(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "Enum types should be implemented as extensible enumerations by inheriting from both str and Enum, per the guideline 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -275,7 +323,8 @@
                     "line_no": 270,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalDocumentType(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalDocumentType(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "This enum should be extensible; inherit from str along with Enum as recommended by 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -284,7 +333,8 @@
                     "line_no": 307,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialAcceptedSex(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialAcceptedSex(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "For extensibility, the enum should inherit from str and Enum as per the guideline 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -293,7 +343,8 @@
                     "line_no": 393,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPhase(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPhase(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "Implement the enum as an extensible enumeration by subclassing from str and Enum ('python-models-enum-string').",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -302,7 +353,8 @@
                     "line_no": 402,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPurpose(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPurpose(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "Extend the enum by inheriting from str along with Enum, following 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -311,7 +363,8 @@
                     "line_no": 415,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialRecruitmentStatus(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialRecruitmentStatus(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "This enum should inherit from str and Enum to be extensible, as described in 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -320,7 +373,8 @@
                     "line_no": 488,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialSource(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialSource(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "For extensibility, implement the enum by inheriting from both str and Enum ('python-models-enum-string').",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -329,7 +383,8 @@
                     "line_no": 493,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialStudyType(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialStudyType(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "Change the enum declaration to inherit from str and Enum to comply with 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -338,7 +393,8 @@
                     "line_no": 568,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.DocumentContentSourceType(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.DocumentContentSourceType(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "To allow for extensibility, the enum should subclass both str and Enum ('python-models-enum-string').",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -347,7 +403,8 @@
                     "line_no": 573,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.DocumentType(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.DocumentType(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "This enum should also be extensible by inheriting from str alongside Enum, as per 'python-models-enum-string'.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -356,7 +413,18 @@
                     "line_no": 720,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.JobStatus(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.JobStatus(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "For consistency and extensibility, define the enum by inheriting from str and Enum ('python-models-enum-string').",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-string"
+                    ],
+                    "line_no": 812,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.RepeatabilityResultType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.RepeatabilityResultType(str, Enum):",
+                    "comment": "$The enum should be made extensible by subclassing both str and Enum, following 'python-models-enum-string'. (general comment)",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -365,41 +433,30 @@
                     "line_no": 899,
                     "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherInferenceType(Enum):",
                     "suggestion": "class azure.healthinsights.clinicalmatching.models.TrialMatcherInferenceType(str, Enum):",
-                    "comment": "Enums should subclass str to be extensible as per guidelines."
+                    "comment": "Implement this enum as an extensible enumeration by inheriting from str in addition to Enum ('python-models-enum-string').",
+                    "source": "guideline"
                 }
             ]
         },
         "actual": {
-            "status": "Error",
-            "violations": [
-                {
-                    "rule_ids": [
-                        "python_design.html#python-client-async-keywords"
-                    ],
-                    "line_no": 139,
-                    "bad_code": "def send_request(",
-                    "suggestion": "async def send_request(",
-                    "comment": "In the async client, all service methods should use the async/await keywords. The send_request method is defined with a regular def instead of async def, which violates the async client guidelines."
-                }
-            ]
+            "comments": []
         },
-        "total_violations": 12,
-        "violations_found": 1,
+        "expected_comments": 13,
+        "comments_found": 0,
+        "valid_generic_comments": 0,
         "true_positives": 0,
-        "false_positives": 1,
-        "false_negatives": 12,
-        "percent_coverage": 0.0,
+        "false_positives": 0,
+        "false_negatives": 13,
+        "percent_coverage": 0,
         "rule_matches_wrong_line": 0,
-        "wrong_rule_details": [],
-        "line_matches_wrong_rule": 0,
         "wrong_line_details": [],
-        "similarity": 1,
-        "groundedness": 3,
-        "groundedness_reason": "The RESPONSE accurately describes a coding error and provides a suggestion, but this information is not supported by the CONTEXT, which only mentions using extensible enumerations.",
+        "similarity": 0,
+        "groundedness": 0,
+        "groundedness_reason": "No comments found.",
         "overall_score": 0
     },
     {
-        "average_score": 63.25,
+        "average_score": 58.5,
         "total_evals": 4
     }
 ]

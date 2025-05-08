@@ -6,9 +6,7 @@ PACKAGE_NAME = "apiview-copilot"
 DESCRIPTION = "A tool for generating APIView AI review."
 
 with open(os.path.join("src", "_version.py"), "r") as fd:
-    version = re.search(
-        r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
-    ).group(1)
+    version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not version:
     raise RuntimeError("Cannot find version information")

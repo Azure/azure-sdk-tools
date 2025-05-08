@@ -277,7 +277,7 @@
   {
     "id": "typescript_implementation.html#ts-dependencies-no-polyfills",
     "category": "Dependencies {#ts-dependencies}",
-    "text": "YOU SHOULD NOT depend directly on polyfills or other libraries that modify global scope. If developers using older runtimes need to polyfill some capability, the package install and usage instructions (in the README) should indicate this dependency.\n\nThe following table lists the well-known and already-blessed dependencies outside of Azure Core that may be used in production (non-test) code.\n\n\n\n| Package             | Usage  |\n|---------------------|--------|\n| `axios`             | HTTP client abstraction with browser and node support |\n| `debug`             | Logging library |\n| `events`            | Node EventEmitter polyfill |\n| `stream-browserify` | Node Stream polyfill for browsers |\n| `process`           | Node Process polyfill (though you should prefer to use small stubs) |\n| `rhea`              | Library for talking over AMQP |\n| `rhea-promise`      | Promisified version of `rhea` |\n| `tough-cookie`      | Support cookies, even in Node |\n| `url`               | Node Url polyfill |\n| `util`              | Node Util polyfill |\n| `uuid`              | Generate GUIDs |\n\n\nThere are occasions when common code needs to be shared between several client libraries.  For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+    "text": "YOU SHOULD NOT depend directly on polyfills or other libraries that modify global scope. If developers using older runtimes need to polyfill some capability, the package install and usage instructions (in the README) should indicate this dependency.\n\nThe following table lists the well-known and already-blessed dependencies outside of Azure Core that may be used in production (non-test) code.\n\n\n\n| Package             | Usage  |\n|---------------------|--------|\n| `events`            | Node EventEmitter polyfill |\n| `stream-browserify` | Node Stream polyfill for browsers |\n| `process`           | Node Process polyfill (though you should prefer to use small stubs) |\n| `rhea`              | Library for talking over AMQP |\n| `rhea-promise`      | Promisified version of `rhea` |\n\n\nThere are occasions when common code needs to be shared between several client libraries.  For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
   },
   {
     "id": "typescript_implementation.html#general-implementing-common-library-usage",
@@ -297,7 +297,7 @@
   {
     "id": "typescript_implementation.html#ts-use-mocha-karma",
     "category": "Testing TypeScript libraries",
-    "text": "YOU SHOULD use Mocha (https://mochajs.org/) and Karma (http://karma-runner.github.io/4.0/index.html) as these tools support build pipelines and work in browsers and node.\n\nConsistent versioning allows consumers to determine what to expect from a new version of the library.  However, versioning rules tend to be very idiomatic to the language.  The engineering system release guidelines require the use of MAJOR.MINOR.PATCH format for the version."
+    "text": "YOU SHOULD use Mocha (https://mochajs.org/) and Karma (https://karma-runner.github.io/4.0/index.html) as these tools support build pipelines and work in browsers and node.\n\nConsistent versioning allows consumers to determine what to expect from a new version of the library.  However, versioning rules tend to be very idiomatic to the language.  The engineering system release guidelines require the use of MAJOR.MINOR.PATCH format for the version."
   },
   {
     "id": "typescript_implementation.html#general-versioning-bump",
@@ -355,7 +355,7 @@
     "text": "DO NOT use a major version of 0, even for beta packages."
   },
   {
-    "id": "typescript_implementation.html#general-versioning-bump",
+    "id": "typescript_implementation.html#versioning-bump-from-track-1",
     "category": "Versioning {#ts-versioning}",
     "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other npm scope or language.\n\nSemantic versioning is more of a lofty ideal than a practical specification for some libraries. Also, one person's bug might be another person's key feature (https://xkcd.com/1172/)  Package authors are required to follow semver in a way that is useful for their consumers.\n\nFor more details, review the [Releases policy]({{ site.baseurl }}/policies_releases.html)."
   },

@@ -5,7 +5,7 @@ trigger:
       - main
   paths:
     include:
-      - packages/python-packages/apiview-gpt
+      - packages/python-packages/apiview-copilot
 
 pr:
   branches:
@@ -13,16 +13,16 @@ pr:
       - main
   paths:
     include:
-      - packages/python-packages/apiview-gpt
+      - packages/python-packages/apiview-copilot
 
 steps:
   - script: |
       zip -r app.zip .
-    workingDirectory: packages/python-packages/apiview-gpt
+    workingDirectory: packages/python-packages/apiview-copilot
     displayName: 'Package app into a zip file'
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: 'packages/python-packages/apiview-gpt/app.zip'
+      pathToPublish: 'packages/python-packages/apiview-copilot/app.zip'
       artifactName: 'drop'
       publishLocation: 'Container'

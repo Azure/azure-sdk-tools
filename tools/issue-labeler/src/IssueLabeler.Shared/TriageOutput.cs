@@ -8,7 +8,7 @@ namespace IssueLabeler.Shared
 {
     public class TriageOutput
     {
-        public string[] Labels { get; set; }
+        public IEnumerable<string> Labels { get; set; }
         public string Answer { get; set; }
         public string AnswerType { get; set; }
     }

@@ -321,35 +321,6 @@
         }
       },
       {
-        "Name": "azure-common",
-        "Version": "1.1.29",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/azure-common",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/azure-common/README.md",
-        "ChangeLogPath": "sdk/core/azure-common/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": false,
-        "ArtifactName": "azure-common",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "skipPublishDocMs": true,
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ],
-          "name": "azure-common",
-          "safeName": "azurecommon"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
         "Name": "azure-communication-chat",
         "Version": "1.3.0",
         "DevVersion": null,
@@ -708,90 +679,6 @@
         }
       },
       {
-        "Name": "azure-mgmt-keyvault",
-        "Version": "11.0.0",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/keyvault/azure-mgmt-keyvault",
-        "ServiceDirectory": "keyvault",
-        "ReadMePath": "sdk/keyvault/azure-mgmt-keyvault/README.md",
-        "ChangeLogPath": "sdk/keyvault/azure-mgmt-keyvault/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "mgmt",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-mgmt-keyvault",
-        "ReleaseStatus": "2025-03-13",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "triggeringPaths": [
-            "/sdk/keyvault/ci.yml"
-          ],
-          "name": "azure-mgmt-keyvault",
-          "safeName": "azuremgmtkeyvault"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "azure-mgmt-network",
-        "Version": "28.1.0",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/network/azure-mgmt-network",
-        "ServiceDirectory": "network",
-        "ReadMePath": "sdk/network/azure-mgmt-network/README.md",
-        "ChangeLogPath": "sdk/network/azure-mgmt-network/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "mgmt",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-mgmt-network",
-        "ReleaseStatus": "2024-12-20",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "triggeringPaths": [
-            "/sdk/network/ci.yml"
-          ],
-          "name": "azure-mgmt-network",
-          "safeName": "azuremgmtnetwork"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
-        "Name": "azure-mgmt-resource",
-        "Version": "23.3.0",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/resources/azure-mgmt-resource",
-        "ServiceDirectory": "resources",
-        "ReadMePath": "sdk/resources/azure-mgmt-resource/README.md",
-        "ChangeLogPath": "sdk/resources/azure-mgmt-resource/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "mgmt",
-        "IsNewSdk": true,
-        "ArtifactName": "azure-mgmt-resource",
-        "ReleaseStatus": "2025-02-24",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "triggeringPaths": [
-            "/sdk/resources/ci.yml"
-          ],
-          "name": "azure-mgmt-resource",
-          "safeName": "azuremgmtresource"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
-      },
-      {
         "Name": "azure-servicebus",
         "Version": "7.14.1",
         "DevVersion": null,
@@ -874,34 +761,6 @@
         "CIParameters": {
           "CIMatrixConfigs": []
         }
-      },
-      {
-        "Name": "corehttp",
-        "Version": "1.0.0b6",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/core/corehttp",
-        "ServiceDirectory": "core",
-        "ReadMePath": "sdk/core/corehttp/README.md",
-        "ChangeLogPath": "sdk/core/corehttp/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": false,
-        "ArtifactName": "corehttp",
-        "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
-        "AdditionalValidationPackages": [
-          ""
-        ],
-        "ArtifactDetails": {
-          "triggeringPaths": [
-            "/sdk/core/ci.yml"
-          ],
-          "name": "corehttp",
-          "safeName": "corehttp"
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": []
-        }
       }
     ]
   },
@@ -979,7 +838,7 @@
           "IsNewSdk": false,
           "ArtifactName": "azure-identity-broker",
           "ReleaseStatus": "Unreleased",
-          "IncludedForValidation": true,
+          "IncludedForValidation": false,
           "AdditionalValidationPackages": [
             ""
           ],
@@ -1014,7 +873,7 @@
           "IsNewSdk": true,
           "ArtifactName": "azure-identity",
           "ReleaseStatus": "Unreleased",
-          "IncludedForValidation": true,
+          "IncludedForValidation": false,
           "AdditionalValidationPackages": [
             ""
           ],

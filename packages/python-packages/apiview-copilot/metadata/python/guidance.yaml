@@ -1,0 +1,8 @@
+custom_rules: |
+  ## Pythonic Design
+  - Does it follow "The Zen of Python" principles?
+  - Are Python idioms used appropriately?
+  - Does it leverage Python's strengths (e.g. duck typing, iterators)?
+  - Does it avoid un-Pythonic patterns from other languages?
+  - Is it consistent with the Python standard library style?
+  - Does the API use proper type hints and follow best static typing practices for Python?

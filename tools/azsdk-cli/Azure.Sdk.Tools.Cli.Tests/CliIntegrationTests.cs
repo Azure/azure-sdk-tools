@@ -66,17 +66,15 @@ namespace Azure.Sdk.Tools.Cli.Tests
         {
             var azureService = new AzureService();
             var aiAgentServiceMock = new Mock<IAIAgentService>();
+            aiAgentServiceMock.Setup(a =>
+                a.QueryFileAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(("test response", new TokenUsage("gpt-test", 0, 0)));
 
             var logger = new TestLogger<AzurePipelinesTool>();
             var cmd = new AzurePipelinesTool(azureService, aiAgentServiceMock.Object, logger).GetCommand();
 
             var exitCode = await cmd.InvokeAsync(args);
             Assert.That(exitCode, Is.EqualTo(0));
-
-            foreach (var log in logger.Logs)
-            {
-                Console.WriteLine($"bbp => {log}");
-            }
         }
     }
 }

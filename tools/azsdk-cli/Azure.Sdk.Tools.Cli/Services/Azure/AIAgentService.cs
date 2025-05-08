@@ -4,8 +4,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public class TokenUsage
 {
-    protected long PromptTokens { get; set; }
-    protected long CompletionTokens { get; set; }
+    protected double PromptTokens { get; set; }
+    protected double CompletionTokens { get; set; }
     protected double InputCost { get; set; }
     protected double OutputCost { get; set; }
     protected double TotalCost { get; set; }
@@ -44,6 +44,7 @@ public class TokenUsage
             return;
         }
 
+
         InputCost = PromptTokens / oneMillion * inputPrice;
         OutputCost = CompletionTokens / oneMillion * outputPrice;
     }
@@ -52,10 +53,11 @@ public class TokenUsage
     {
         var _inputCost = InputCost == 0 ? "?" : InputCost.ToString("F3");
         var _outputCost = OutputCost == 0 ? "?" : OutputCost.ToString("F3");
+        var _totalCost = (InputCost + OutputCost) == 0 ? "?" : (InputCost + OutputCost).ToString("F3");
         Console.WriteLine("Usage (cost / tokens):");
         Console.WriteLine($"  Input: ${_inputCost} / {PromptTokens}");
         Console.WriteLine($"  Output: ${_outputCost} / {CompletionTokens}");
-        Console.WriteLine($"  Total: ${_inputCost + _outputCost} / {PromptTokens + CompletionTokens}");
+        Console.WriteLine($"  Total: ${_totalCost} / {PromptTokens + CompletionTokens}");
     }
 
     public static TokenUsage operator +(TokenUsage a, TokenUsage b) => new()

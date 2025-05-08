@@ -15,18 +15,14 @@ using Azure.Sdk.Tools.Cli.Services;
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool(
-    Lazy<IAzureService> azureService,
-    Lazy<IAIAgentService> aiAgentServiceWrapper,
-    ILogger<AzurePipelinesTool> logger) : MCPTool
+public class AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAgentService, ILogger<AzurePipelinesTool> logger) : MCPTool
 {
     public string? project;
 
     private BuildHttpClient? buildClient;
     private TestResultsHttpClient? testClient;
-    private readonly Lazy<IAzureService> azureService = azureService;
-    private readonly Lazy<IAIAgentService> aiAgentServiceWrapper = aiAgentServiceWrapper;
-    private IAIAgentService? aiAgentService;
+    private readonly IAzureService azureService = azureService;
+    private readonly IAIAgentService aiAgentService = aiAgentService;
     private readonly ILogger<AzurePipelinesTool> logger = logger;
     private readonly Boolean initialized = false;
 
@@ -36,21 +32,23 @@ public class AzurePipelinesTool(
 
     // Options
     private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "Pipeline/Build ID") { IsRequired = true };
-    private readonly Option<string> projectOpt = new(["--project", "-p"], () => "public", "Pipeline project name") { IsRequired = true };
     private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log") { IsRequired = true };
+    private readonly Option<string> projectOpt = new(["--project", "-p"], () => "public", "Pipeline project name");
 
     public override Command GetCommand()
     {
-        Console.WriteLine($"BBP IN COMMAND FUNC");
         Command command = new("azp", "Azure Pipelines Tool");
 
-        command.AddCommand(new Command(this.getPipelineRunCommandName, "Get details for a pipeline run") { this.buildIdOpt, this.projectOpt });
-        command.AddCommand(new Command(this.analyzePipelineCommandName, "Analyze a pipeline run") { this.buildIdOpt, this.projectOpt, this.logIdOpt });
-        command.SetHandler(async ctx =>
+        var pipelineRunCommand = new Command(this.getPipelineRunCommandName, "Get details for a pipeline run") { this.buildIdOpt, this.projectOpt };
+        var analyzePipelineCommand = new Command(this.analyzePipelineCommandName, "Analyze a pipeline run") { this.buildIdOpt, this.projectOpt, this.logIdOpt };
+
+        // Do not add a handler for the 'azp' command, that way System.CommandLine can fall back to the
+        // root command handler and print help text.
+        foreach (var subCommand in new[] { pipelineRunCommand, analyzePipelineCommand })
         {
-            Console.WriteLine($"BBP IN HANDLER FUNC");
-            ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
-        });
+            subCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            command.AddCommand(subCommand);
+        }
 
         return command;
     }
@@ -60,24 +58,27 @@ public class AzurePipelinesTool(
         Initialize();
 
         var cmd = ctx.ParseResult.CommandResult.Command.Name;
+        var buildId = ctx.ParseResult.GetValueForOption(this.buildIdOpt);
+        var project = ctx.ParseResult.GetValueForOption(this.projectOpt);
 
         if (cmd == this.getPipelineRunCommandName)
         {
-            var buildId = ctx.ParseResult.GetValueForOption(this.buildIdOpt);
-            var projectId = ctx.ParseResult.GetValueForOption(this.projectOpt);
-            var result = await GetPipelineRun(buildId);
+            this.logger.LogInformation("Getting pipeline run {buildId} in project {project}", buildId, project);
+            var result = await GetPipelineRun(buildId, project);
             this.logger.LogInformation("{result}", result);
+            return 0;
         }
         else if (cmd == this.analyzePipelineCommandName)
         {
-            var buildId = ctx.ParseResult.GetValueForOption(this.buildIdOpt);
-            var projectId = ctx.ParseResult.GetValueForOption(this.projectOpt);
+            this.logger.LogInformation("Analyzing pipeline {buildId} in project {project}", buildId, project);
             var logId = ctx.ParseResult.GetValueForOption(this.logIdOpt);
-            var result = await AnalyzePipelineFailureLog(projectId!, buildId, logId);
+            var result = await AnalyzePipelineFailureLog(buildId, logId, project);
             this.logger.LogInformation("{result}", result);
+            return 0;
         }
 
-        throw new NotImplementedException($"Command {cmd} not implemented");
+        this.logger.LogError("Command {cmd} not implemented", cmd);
+        return 1;
     }
 
     private void Initialize()
@@ -87,19 +88,18 @@ public class AzurePipelinesTool(
             return;
         }
         var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
-        var token = this.azureService.Value.GetCredential().GetToken(new TokenRequestContext(tokenScope));
+        var token = this.azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
         var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
         var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
         this.buildClient = connection.GetClient<BuildHttpClient>();
         this.testClient = connection.GetClient<TestResultsHttpClient>();
-        this.aiAgentService = this.aiAgentServiceWrapper.Value;
     }
 
     [McpServerTool, Description("Gets details for a pipeline run")]
-    public async Task<string> GetPipelineRun(int buildId)
+    public async Task<string> GetPipelineRun(int buildId, string? project = null)
     {
         // _project state changes to the last successful GET to the build api
-        var project = this.project ?? "public";
+        project ??= this.project ?? "public";
 
         try
         {
@@ -188,8 +188,9 @@ public class AzurePipelinesTool(
         Find other log lines in addition to the final error that may be descriptive of the problem.
         For example, 'Powershell exited with code 1' is not an error message, but the error message may be in the logs above it.
     ")]
-    public async Task<string> GetPipelineFailureLog(int buildId, int logId)
+    public async Task<string> GetPipelineFailureLog(int buildId, int logId, string? project = null)
     {
+        project ??= this.project ?? "public";
         var logContent = await this.buildClient!.GetBuildLogLinesAsync(project, buildId, logId);
         var output = new List<string>();
         foreach (var line in logContent)
@@ -199,8 +200,9 @@ public class AzurePipelinesTool(
         return JsonSerializer.Serialize(string.Join("\n", output));
     }
 
-    public async Task<string> AnalyzePipelineFailureLog(string project, int buildId, int logId)
+    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null)
     {
+        project ??= this.project ?? "public";
         var logContent = await this.buildClient!.GetBuildLogLinesAsync(project, buildId, logId);
         var logText = string.Join("\n", logContent);
         var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);

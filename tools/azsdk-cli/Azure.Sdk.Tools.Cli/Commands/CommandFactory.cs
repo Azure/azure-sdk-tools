@@ -1,12 +1,7 @@
 using System.CommandLine;
-using System.Text.Encodings.Web;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.Reflection;
-using Microsoft.Azure.Pipelines.WebApi;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
-using ModelContextProtocol.Protocol.Types;
+using System.IO.Enumeration;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -23,6 +18,35 @@ namespace Azure.Sdk.Tools.Cli.Commands
             _loggerFactory = loggerFactory;
         }
 
+        private List<Type> GetFilteredToolTypes(string[] args)
+        {
+            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
+            List<Type> toolsList;
+
+            if (toolMatchList.Count > 0)
+            {
+                toolsList = AppDomain.CurrentDomain
+                             .GetAssemblies()
+                             .SelectMany(a => SafeGetTypes(a))
+                             .Where(t => !t.IsAbstract &&
+                             typeof(MCPTool).IsAssignableFrom(t))
+                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name)))
+                             .ToList();
+            }
+            else
+            {
+                // defaults to everything
+                toolsList = AppDomain.CurrentDomain
+                             .GetAssemblies()
+                             .SelectMany(a => SafeGetTypes(a))
+                             .Where(t => !t.IsAbstract &&
+                             typeof(MCPTool).IsAssignableFrom(t))
+                             .ToList();
+            }
+
+            return toolsList;
+        } 
+
         /// <summary>
         /// Creates the primary parsing entry point for the application. Uses the registered service providers
         /// to initialize whichever MCP tools we need to add to the configuration and pass on to HostTool.
@@ -31,18 +55,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public RootCommand CreateRootCommand(string[] args)
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
+            rootCommand.AddOption(SharedOptions.ToolOption);
 
-            // here we should process the the args, pull out a `tools` argument, and only instantiate that tool if it matches
-            // this same function should exist within HostServerTool CreateAppBuilder step
+            var toolTypes = GetFilteredToolTypes(args);
 
             // walk the tools, register them as subcommands for the root command.
-            var toolTypes = AppDomain.CurrentDomain
-                         .GetAssemblies()
-                         .SelectMany(a => SafeGetTypes(a))
-                         .Where(t => !t.IsAbstract &&
-                         typeof(MCPTool).IsAssignableFrom(t))
-                         .ToList();
-
             foreach (var t in toolTypes)
             {
                 var tool = (MCPTool)ActivatorUtilities.CreateInstance(_serviceProvider, t);

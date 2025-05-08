@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Services;
 
@@ -21,6 +23,11 @@ public class Program
         var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
         var rootCommand = commandFactory.CreateRootCommand(args);
 
-        return await rootCommand.InvokeAsync(args);
+        var parsedCommands = new CommandLineBuilder(rootCommand)
+               .UseDefaults()            // adds help, version, error reporting, suggestions…
+               .UseExceptionHandler()    // catches unhandled exceptions and writes them out
+               .Build();
+
+        return await parsedCommands.InvokeAsync(args);
     }
 }

@@ -2,12 +2,14 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {
     public class HostServerTool : MCPTool
     {
         private readonly ILogger<HostServerTool> _logger;
+        private readonly Argument<string[]> _unmatchedAspNetArguments = new Argument<string[]>();
 
         public HostServerTool(ILogger<HostServerTool> logger)
         {
@@ -17,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
         public override Command GetCommand()
         {
             Command command = new Command("start");
+            command.AddArgument(_unmatchedAspNetArguments);
 
             command.SetHandler(async ctx =>
             {
@@ -28,18 +31,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
         public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            // pass the tools list and pass that on to tools
-            // pass along unmatched args to string[] unmatched args
-            var host = CreateAppBuilder(new List<string>(), new string[] { }).Build();
-            await host.RunAsync(ct);
+            var unmatched = ctx.ParseResult.GetValueForArgument<string[]>(_unmatchedAspNetArguments);
+            var toolsOption = ctx.ParseResult.GetValueForOption<string>(SharedOptions.ToolOption);
+            var tools = toolsOption != null
+                ? toolsOption.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) 
+                : new string[] { };
 
-            return 0;
+            var host = CreateAppBuilder(tools, unmatched).Build();
+            try
+            {
+                await host.RunAsync(ct);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Exception during web app run: {ex}", ex);
+                return 1;
+            }
         }
 
-        public static WebApplicationBuilder CreateAppBuilder(List<string> tools, string[] unmatchedArgs)
+        public static WebApplicationBuilder CreateAppBuilder(string[]? tools, string[] unmatchedArgs)
         {
-            // todo: implement our own module discovery that takes the `--tools` or `--tools-exclude` when booting
-            var builder = WebApplication.CreateBuilder(unmatchedArgs);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(unmatchedArgs);
+
             builder.Logging.AddConsole(consoleLogOptions =>
             {
                 consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
@@ -47,15 +61,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
             ServiceRegistrations.RegisterCommonServices(builder.Services);
 
-            builder.Services
-                .AddMcpServer()
-                .WithStdioServerTransport()
-                // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
-                // behind a command line flag or we could try to run in both modes at once if possible.
-                //.WithHttpTransport()
-                // todo: we can definitely honor the --tools param here to filter down the provided tools
-                // for now, lets just use WithtoolsFromAssembly to actually run this thing
-                .WithToolsFromAssembly();
+            // For testing SSE can be easier to use. Comment above and uncomment below. Eventually this will be
+            // behind a command line flag or we could try to run in both modes at once if possible.
+            //.WithHttpTransport()
+
+            if (tools != null)
+            {
+                builder.Services
+                    .AddMcpServer()
+                    .WithStdioServerTransport()
+                    .WithToolsFromAssembly();
+            }
+            else
+            {
+                // need to handle 
+            }
 
             return builder;
         }

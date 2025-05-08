@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                              .SelectMany(a => SafeGetTypes(a))
                              .Where(t => !t.IsAbstract &&
                              typeof(MCPTool).IsAssignableFrom(t))
-                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name)))
+                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name) || t.Name.StartsWith("HostServer")))
                              .ToList();
             }
             else

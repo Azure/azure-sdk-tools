@@ -65,9 +65,9 @@ namespace AzureSDKDSpecTools.Tools
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath)? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-
+                var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
                 // Ensure a release plan is created only if the API specs pull request is in a public repository.
-                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(typeSpecProjectPath))
+                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath))
                 {
                     return """
                         SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.

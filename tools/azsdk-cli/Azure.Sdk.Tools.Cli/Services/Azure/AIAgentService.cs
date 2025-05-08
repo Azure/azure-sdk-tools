@@ -76,13 +76,13 @@ public interface IAIAgentService
     Task<(string, TokenUsage)> QueryFileAsync(Stream contents, string filename, string session, string query);
 }
 
-public class AIAgentService : IAIAgentService
+public class AIAgentService(IAzureService azureService) : IAIAgentService
 {
-    private readonly string vectorStoreName;
+    private string vectorStoreName;
     private string vectorStoreId;
-    private readonly AgentsClient client;
-    private readonly string agentId;
-    private readonly string model;
+    private AgentsClient client;
+    private string agentId;
+    private string model;
     private readonly IAzureService azureService = azureService;
 
     private const string LogQueryPrompt = @"

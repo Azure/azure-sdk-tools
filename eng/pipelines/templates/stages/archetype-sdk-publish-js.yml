@@ -27,34 +27,6 @@ extends:
           dependsOn: ${{ parameters.BuildStageName }}
 
           jobs:
-            - job: PrePublish
-              variables:
-                - template: /eng/pipelines/templates/variables/image.yml
-              pool:
-                name: $(LINUXPOOL)
-                image: $(LINUXVMIMAGE)
-                os: linux
-              steps:
-                - checkout: self
-
-                - download: current
-                  artifact: ${{ parameters.ArtifactName }}
-                  timeoutInMinutes: 5
-
-                - task: PowerShell@2
-                  inputs:
-                    filePath: '$(Build.SourcesDirectory)/eng/scripts/determine-js-release-tag.ps1'
-                    failOnStderr: true
-                    pwsh: true
-                    arguments: '-PackageJsonPath ${{ parameters.PackageJsonPath }}'
-                  displayName: 'Determine Package Release Tag'
-
-                - pwsh: |
-                    Write-Host "Will deploy with tag of $(Tag)"
-                    echo "##vso[task.setvariable variable=Tag;isOutput=true]$(Tag)"
-                  name: SetTag
-                  displayName: Set Package Release Tag
-
             - template: /eng/common/pipelines/templates/jobs/npm-release-task.yml
               parameters:
                 Artifact:

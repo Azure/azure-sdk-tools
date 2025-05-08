@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getPullRequestDetails } from "../src/input/GithubClient.js";
 import { Octokit } from "@octokit/rest";
+import { GithubClient } from "../src/input/GithubClient.js";
 
 // Mock the Octokit client
 vi.mock("@octokit/rest", () => {
@@ -98,14 +98,14 @@ describe("GitHub PR Details Fetcher", () => {
         const prUrl =
             "https://github.com/Azure/azure-rest-api-specs/pull/34286";
 
-        const details = await getPullRequestDetails(prUrl);
+        const githubClient = new GithubClient();
+        const details = await githubClient.getPullRequestDetails(prUrl);
 
         // Verify Octokit was called with correct parameters
         expect(Octokit).toHaveBeenCalledWith({ auth: undefined });
 
         // Check the returned data structure
         expect(details).toHaveProperty("reviews");
-        expect(details).toHaveProperty("checks");
         expect(details).toHaveProperty("comments");
         expect(details).toHaveProperty("labels");
 
@@ -118,13 +118,6 @@ describe("GitHub PR Details Fetcher", () => {
         expect(details.comments.review.map((r) => r.comment)).toEqual([
             "This is a review comment on the code.",
             "Another inline comment on the code changes.",
-        ]);
-
-        // Validate checks array
-        expect(details.checks).toEqual([
-            { name: "TypeSpec Linter", conclusion: "success" },
-            { name: "Build and Test", conclusion: "failure" },
-            { name: "In Progress Check", conclusion: null },
         ]);
 
         // Validate reviewers array (only approved or changes requested)
@@ -141,8 +134,9 @@ describe("GitHub PR Details Fetcher", () => {
     it("should throw an error for invalid GitHub PR URL", async () => {
         const invalidUrl = "https://github.com/invalid/url";
 
-        await expect(getPullRequestDetails(invalidUrl)).rejects.toThrow(
-            "Invalid PR URL"
-        );
+        const githubClient = new GithubClient();
+        await expect(
+            githubClient.getPullRequestDetails(invalidUrl)
+        ).rejects.toThrow("Invalid PR URL");
     });
 });

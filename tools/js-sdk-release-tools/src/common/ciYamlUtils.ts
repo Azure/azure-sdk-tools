@@ -99,6 +99,7 @@ async function createManagementPlaneCiYaml(
     npmPackageInfo: NpmPackageInfo
 ): Promise<void> {
     const artifact = getArtifact(npmPackageInfo);
+    // Use two ways to get the dirname to avoid failures caused by node version issues.
     const __dirname = import.meta.dirname || dirname(fileURLToPath(import.meta.url));
     const templatePath = posix.join(__dirname, 'ciYamlTemplates/ci.mgmt.template.yml');
     const template = await readFile(templatePath, { encoding: 'utf-8' });

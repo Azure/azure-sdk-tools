@@ -82,7 +82,7 @@ export async function parseInputJson(inputJson: any) {
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
-    if (apiVersion.toLowerCase().includes('preview') && sdkReleaseType.toLowerCase() === 'stable') {
+    if (apiVersion &&apiVersion.toLowerCase().includes('preview') && sdkReleaseType.toLowerCase() === 'stable') {
         throw new Error(`SDK release type' must be set to 'beta' for the preview API specifications.`);
     }
 

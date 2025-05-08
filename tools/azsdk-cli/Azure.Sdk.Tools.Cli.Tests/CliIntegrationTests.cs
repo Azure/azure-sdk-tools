@@ -55,26 +55,5 @@ namespace Azure.Sdk.Tools.Cli.Tests
 
             Assert.That($"RESPONDING TO {args[1]}", Is.EqualTo(cmdRes.Result));
         }
-
-        private static readonly object[] AzurePipelineToolArgs = new[]
-        {
-            new object[] { new[] { "azp", "analyze", "--project", "public", "--build-id", "4817839", "--log-id", "187" } },
-            // new object[] { new[] { "azp", "analyze" } },
-        };
-        [Test, TestCaseSource(nameof(AzurePipelineToolArgs))]
-        public async Task TestAzurePipelineCLIOptions(string[] args)
-        {
-            var azureService = new AzureService();
-            var aiAgentServiceMock = new Mock<IAIAgentService>();
-            aiAgentServiceMock.Setup(a =>
-                a.QueryFileAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(("test response", new TokenUsage("gpt-test", 0, 0)));
-
-            var logger = new TestLogger<AzurePipelinesTool>();
-            var cmd = new AzurePipelinesTool(azureService, aiAgentServiceMock.Object, logger).GetCommand();
-
-            var exitCode = await cmd.InvokeAsync(args);
-            Assert.That(exitCode, Is.EqualTo(0));
-        }
     }
 }

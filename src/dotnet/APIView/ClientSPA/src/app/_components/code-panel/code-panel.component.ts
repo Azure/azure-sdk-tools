@@ -654,7 +654,7 @@ export class CodePanelComponent implements OnChanges{
       this.scrollToNode(navigateToRow.nodeIdHashed);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more active comments threads to navigate to.', key: 'bl', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No more active comments threads to navigate to.', key: 'bl', life: 3000 });
     }
   }
 
@@ -677,7 +677,7 @@ export class CodePanelComponent implements OnChanges{
       this.scrollToNode(navigateToRow.nodeIdHashed);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more diffs to navigate to.', key: 'bl', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Diff Navigation', detail: 'No more diffs to navigate to.', key: 'bl', life: 3000 });
     }
   }
 

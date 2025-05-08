@@ -49,7 +49,7 @@ export class CommentThreadComponent {
 
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  constructor(private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.menuItemsLoggedInUsers.push({
@@ -262,13 +262,14 @@ export class CommentThreadComponent {
     }
 
     const HTML_STRIP_REGEX = /<\/?[^>]+(>|$)/g
-    const emptyCommentContentWarning = "Comment content is empty. No action taken.";
+    const emptyCommentContentWarningMessage = { severity: 'info', icon: 'bi bi-info-circle', summary: "Comment Info", detail: "Comment content is empty. No action taken.", key: 'bl', life: 3000 };
+
 
     if (replyEditorContainer) {
       const content = this.getEditorContent("replyEditor");
       const contentText = content.replace(HTML_STRIP_REGEX, '');
       if (contentText.length === 0) {
-        this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: emptyCommentContentWarning, key: 'bl', life: 3000 });
+        this.messageService.add(emptyCommentContentWarningMessage);
       } else {
         this.saveCommentActionEmitter.emit(
           { 
@@ -290,7 +291,7 @@ export class CommentThreadComponent {
       const content = this.getEditorContent(commentId!);
       const contentText = content.replace(HTML_STRIP_REGEX, '');
       if (contentText.length === 0) {
-        this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: emptyCommentContentWarning, key: 'bl', life: 3000 });
+        this.messageService.add(emptyCommentContentWarningMessage);
       } else {
         this.saveCommentActionEmitter.emit(
           { 

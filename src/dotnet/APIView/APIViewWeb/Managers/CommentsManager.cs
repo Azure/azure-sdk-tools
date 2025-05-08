@@ -84,6 +84,11 @@ namespace APIViewWeb.Managers
             return new ReviewCommentsModel(reviewId, comments);
         }
 
+        public async Task<IEnumerable<CommentItemModel>> GetAPIRevisionCommentsAsync(string apiRevisionId, string createdBy = null)
+        {
+            return await _commentsRepository.GetCommentsForAPIRevisionAsync(apiRevisionId: apiRevisionId, createdBy: createdBy);
+        }
+
         public async Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);

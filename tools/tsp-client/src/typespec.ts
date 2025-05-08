@@ -7,6 +7,7 @@ import {
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
+import { EMITTER_PREFIXES } from "./utils.js";
 
 export interface TspLocation {
   directory: string;
@@ -103,8 +104,11 @@ export async function compileTsp({
   }
   if (additionalEmitterOptions) {
     additionalEmitterOptions.split(";").forEach((option) => {
-      const [key, value] = option.split("=");
+      let [key, value] = option.split("=");
       if (key && value) {
+        if (EMITTER_PREFIXES.some((prefix) => key?.startsWith(prefix))) {
+          key = key.split(".")[1]!;
+        }
         emitterOverrideOptions[key] = value;
       }
     });

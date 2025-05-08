@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 

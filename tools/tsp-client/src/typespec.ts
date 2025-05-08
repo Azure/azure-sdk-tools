@@ -128,7 +128,7 @@ export async function compileTsp({
       if (typeof value === "object") {
         value = JSON.stringify(value);
       }
-      return `--option ${key}=${value}`;
+      return `--option ${emitterPackage}.${key}=${value}`;
     })
     .join(" ");
 

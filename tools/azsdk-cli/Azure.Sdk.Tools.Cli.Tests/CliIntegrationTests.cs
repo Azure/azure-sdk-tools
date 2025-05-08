@@ -1,8 +1,12 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
+using Moq;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Tests
 {
@@ -15,9 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Tests
 
             var tool = (T)Activator.CreateInstance(
                 typeof(T),
-                args: new object[] { testLogger }
+                args: [testLogger]
             )!;
-
+            // Nothing needs to be added here. The parameter 'services' is already optional by using 'object[] services = null'.
+            // The assignment 'services ??= Array.Empty<object>();' ensures it defaults to an empty array if not provided.
             var tuple = new Tuple<Command, TestLogger<T>>(
                 item1: tool.GetCommand(),
                 item2: testLogger
@@ -49,6 +54,29 @@ namespace Azure.Sdk.Tools.Cli.Tests
             Assert.That(cmdRes, Is.Not.Null);
 
             Assert.That($"RESPONDING TO {args[1]}", Is.EqualTo(cmdRes.Result));
+        }
+
+        private static readonly object[] AzurePipelineToolArgs = new[]
+        {
+            new object[] { new[] { "azp", "analyze", "--project", "public", "--build-id", "4817839", "--log-id", "187" } },
+            // new object[] { new[] { "azp", "analyze" } },
+        };
+        [Test, TestCaseSource(nameof(AzurePipelineToolArgs))]
+        public async Task TestAzurePipelineCLIOptions(string[] args)
+        {
+            var azureService = new AzureService();
+            var aiAgentServiceMock = new Mock<IAIAgentService>();
+
+            var logger = new TestLogger<AzurePipelinesTool>();
+            var cmd = new AzurePipelinesTool(azureService, aiAgentServiceMock.Object, logger).GetCommand();
+
+            var exitCode = await cmd.InvokeAsync(args);
+            Assert.That(exitCode, Is.EqualTo(0));
+
+            foreach (var log in logger.Logs)
+            {
+                Console.WriteLine($"bbp => {log}");
+            }
         }
     }
 }

@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             var unmatched = ctx.ParseResult.GetValueForArgument<string[]>(_unmatchedAspNetArguments);
             var toolsOption = ctx.ParseResult.GetValueForOption<string>(SharedOptions.ToolOption);
             var tools = toolsOption != null
-                ? toolsOption.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) 
+                ? toolsOption.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 : new string[] { };
 
             var host = CreateAppBuilder(tools, unmatched).Build();

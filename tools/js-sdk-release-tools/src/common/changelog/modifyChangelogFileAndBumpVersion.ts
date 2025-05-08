@@ -24,7 +24,7 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
         case SDKType.HighLevelClient:
             return hlcClientContent;
         case SDKType.RestLevelClient:
-            return isStableRelease ? firstStableContent : firstBetaContent;; 
+            return isStableRelease ? firstStableContent : firstBetaContent;
         default:
             throw new Error(`Unsupported SDK type: ${sdkType}`);
     }

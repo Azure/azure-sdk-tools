@@ -18,34 +18,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             _loggerFactory = loggerFactory;
         }
 
-        private List<Type> GetFilteredToolTypes(string[] args)
-        {
-            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
-            List<Type> toolsList;
-
-            if (toolMatchList.Count > 0)
-            {
-                toolsList = AppDomain.CurrentDomain
-                             .GetAssemblies()
-                             .SelectMany(a => SafeGetTypes(a))
-                             .Where(t => !t.IsAbstract &&
-                             typeof(MCPTool).IsAssignableFrom(t))
-                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name)))
-                             .ToList();
-            }
-            else
-            {
-                // defaults to everything
-                toolsList = AppDomain.CurrentDomain
-                             .GetAssemblies()
-                             .SelectMany(a => SafeGetTypes(a))
-                             .Where(t => !t.IsAbstract &&
-                             typeof(MCPTool).IsAssignableFrom(t))
-                             .ToList();
-            }
-
-            return toolsList;
-        } 
 
         /// <summary>
         /// Creates the primary parsing entry point for the application. Uses the registered service providers
@@ -57,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
             rootCommand.AddOption(SharedOptions.ToolOption);
 
-            var toolTypes = GetFilteredToolTypes(args);
+            var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 
             // walk the tools, register them as subcommands for the root command.
             foreach (var t in toolTypes)
@@ -68,16 +40,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             }
 
             return rootCommand;
-        }
-
-        private static IEnumerable<Type> SafeGetTypes(Assembly asm)
-        {
-            try {
-                return asm.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex) {
-                return ex.Types!.Where(t => t != null)!;
-            }
         }
     }
 }

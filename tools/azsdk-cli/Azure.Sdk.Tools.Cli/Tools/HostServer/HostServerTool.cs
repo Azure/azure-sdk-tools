@@ -3,6 +3,9 @@ using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.Cli.Commands;
+using ModelContextProtocol.Server;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {
@@ -50,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             }
         }
 
-        public static WebApplicationBuilder CreateAppBuilder(string[]? tools, string[] unmatchedArgs)
+        public static WebApplicationBuilder CreateAppBuilder(string[] tools, string[] unmatchedArgs)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(unmatchedArgs);
 
@@ -65,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             // behind a command line flag or we could try to run in both modes at once if possible.
             //.WithHttpTransport()
 
-            if (tools != null)
+            if (tools.Length == 0)
             {
                 builder.Services
                     .AddMcpServer()
@@ -74,7 +77,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             }
             else
             {
-                // need to handle 
+                var toolTypes = SharedOptions.GetFilteredToolTypes(tools);
+
+                builder.Services
+                    .AddMcpServer()
+                    .WithStdioServerTransport()
+                    .WithTools(toolTypes);
             }
 
             return builder;

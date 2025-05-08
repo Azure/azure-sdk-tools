@@ -1,5 +1,8 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using Azure.Sdk.Tools.Cli.Contract;
+using System.IO.Enumeration;
+using System.Reflection;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -30,6 +33,48 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => s.ToLowerInvariant())
                 .ToList();
+        }
+
+
+        public static List<Type> GetFilteredToolTypes(string[] args)
+        {
+            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
+            List<Type> toolsList;
+
+            if (toolMatchList.Count > 0)
+            {
+                toolsList = AppDomain.CurrentDomain
+                             .GetAssemblies()
+                             .SelectMany(a => SafeGetTypes(a))
+                             .Where(t => !t.IsAbstract &&
+                             typeof(MCPTool).IsAssignableFrom(t))
+                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name)))
+                             .ToList();
+            }
+            else
+            {
+                // defaults to everything
+                toolsList = AppDomain.CurrentDomain
+                             .GetAssemblies()
+                             .SelectMany(a => SafeGetTypes(a))
+                             .Where(t => !t.IsAbstract &&
+                             typeof(MCPTool).IsAssignableFrom(t))
+                             .ToList();
+            }
+
+            return toolsList;
+        }
+
+        public static IEnumerable<Type> SafeGetTypes(Assembly asm)
+        {
+            try
+            {
+                return asm.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types!.Where(t => t != null)!;
+            }
         }
     }
 }

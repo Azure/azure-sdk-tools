@@ -7,6 +7,13 @@ import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory } from "./fs.js";
 
+export const EMITTER_PREFIXES = [
+  "@azure-tools/typespec-",
+  "@typespec/http-",
+  "@typespec/openapi3",
+  "@azure-typespec/",
+];
+
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
   for (const dir of additionalDirectories ?? []) {

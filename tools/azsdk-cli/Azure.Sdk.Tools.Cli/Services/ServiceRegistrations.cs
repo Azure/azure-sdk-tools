@@ -13,11 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             // perhaps we move this to a static function that we can call within HostTool as well.
             services.AddSingleton<IAzureService, AzureService>();
-            //services.AddSingleton<IGitHubService, GitHubService>();
-            //services.AddSingleton<IGitHelper, GitHelper>();
-            //services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
-            //services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
-            //services.AddSingleton<IDevOpsService, DevOpsService>();
+            services.AddSingleton<IAIAgentService, AIAgentService>();
+            services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IGitHelper, GitHelper>();
+            services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
+            services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
+            services.AddSingleton<IDevOpsService, DevOpsService>();
         }
 
 

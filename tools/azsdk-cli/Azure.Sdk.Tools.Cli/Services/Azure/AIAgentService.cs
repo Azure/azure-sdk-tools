@@ -102,18 +102,18 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
         {
             throw new InvalidOperationException("AZURE_AI_PROJECT_CONNECTION_STRING environment variable is not set.");
         }
-        var agentId = System.Environment.GetEnvironmentVariable("AZURE_AI_AGENT_ID");
-        if (string.IsNullOrEmpty(agentId))
+        var _agentId = System.Environment.GetEnvironmentVariable("AZURE_AI_AGENT_ID");
+        if (string.IsNullOrEmpty(_agentId))
         {
             throw new InvalidOperationException("AZURE_AI_AGENT_ID environment variable is not set.");
         }
-        this.agentId = agentId;
+        agentId = _agentId;
         var modelDeploymentName = System.Environment.GetEnvironmentVariable("AZURE_AI_MODEL_DEPLOYMENT_NAME");
         if (string.IsNullOrEmpty(modelDeploymentName))
         {
             throw new InvalidOperationException("MODEL_DEPLOYMENT_NAME environment variable is not set.");
         }
-        this.model = modelDeploymentName;
+        model = modelDeploymentName;
         // The vector store ID is annoying to find, so support name as an alternative
         var _vectorStoreId = System.Environment.GetEnvironmentVariable("AZURE_AI_VECTOR_STORE_ID");
         var _vectorStoreName = System.Environment.GetEnvironmentVariable("AZURE_AI_VECTOR_STORE_NAME");
@@ -121,19 +121,19 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
         {
             throw new InvalidOperationException("AZURE_AI_VECTOR_STORE_NAME or AZURE_AI_VECTOR_STORE_ID environment variable is not set.");
         }
-        this.vectorStoreId = _vectorStoreId ?? string.Empty;
-        this.vectorStoreName = _vectorStoreName ?? string.Empty;
+        vectorStoreId = _vectorStoreId ?? string.Empty;
+        vectorStoreName = _vectorStoreName ?? string.Empty;
 
-        this.client = new(connectionString, azureService.GetCredential());
+        client = new(connectionString, azureService.GetCredential());
     }
 
     public AgentsClient GetClient()
     {
-        if (this.client == null)
+        if (client == null)
         {
             Initialize();
         }
-        return this.client;
+        return client;
     }
 
     public async Task<(string, TokenUsage)> QueryFileAsync(Stream contents, string filename, string session, string query)
@@ -150,7 +150,7 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
         tool.VectorStoreIds.Add(vectorStore.Id);
 
         Agent agent = await client.CreateAgentAsync(
-            model: this.model,
+            model: model,
             name: session,
             instructions: LogQueryPrompt,
             tools: [new FileSearchToolDefinition()],
@@ -179,7 +179,10 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
             {
                 if (contentItem is MessageTextContent textItem)
                 {
-                    response.Add(textItem.Text);
+                    if (textItem.Text != query)
+                    {
+                        response.Add(textItem.Text);
+                    }
                 }
                 else
                 {
@@ -188,7 +191,7 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
             }
         }
 
-        var tokenUsage = new TokenUsage(this.model, runResponse.Usage.PromptTokens, runResponse.Usage.CompletionTokens);
+        var tokenUsage = new TokenUsage(model, runResponse.Usage.PromptTokens, runResponse.Usage.CompletionTokens);
         return (string.Join("\n", response), tokenUsage);
     }
 
@@ -200,45 +203,46 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
             throw new ArgumentException($"Filename '{filename}' must have a file extension (*.txt, *.md, ...)", nameof(filename));
         }
 
-        var files = await this.client.GetFilesAsync(purpose: AgentFilePurpose.Agents);
+        var client = GetClient();
+
+        var files = await client.GetFilesAsync(purpose: AgentFilePurpose.Agents);
         if (files.Value.Any(f => f.Filename == filename))
         {
             Console.WriteLine($"File '{filename}' already exists. Skipping upload.");
             return;
         }
 
-        var client = GetClient();
-        if (string.IsNullOrEmpty(this.vectorStoreId))
+        if (string.IsNullOrEmpty(vectorStoreId))
         {
             AgentPageableListOfVectorStore vectors = await client.GetVectorStoresAsync();
-            var vectorStore = vectors.Data.FirstOrDefault(v => v.Name == this.vectorStoreName);
+            var vectorStore = vectors.Data.FirstOrDefault(v => v.Name == vectorStoreName);
             if (vectorStore == null)
             {
-                throw new InvalidOperationException($"Vector store with name '{this.vectorStoreName}' not found.");
+                throw new InvalidOperationException($"Vector store with name '{vectorStoreName}' not found.");
             }
-            this.vectorStoreId = vectorStore.Id;
+            vectorStoreId = vectorStore.Id;
         }
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        Console.WriteLine($"[INFO] Starting upload of '{filename}' to vector store '{this.vectorStoreName ?? this.vectorStoreId}' at {DateTime.UtcNow:O}");
+        Console.WriteLine($"[INFO] Starting upload of '{filename}' to vector store '{vectorStoreName ?? vectorStoreId}' at {DateTime.UtcNow:O}");
         AgentFile file = await client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
 
         VectorStoreFileBatch batch = await client.CreateVectorStoreFileBatchAsync(
-            vectorStoreId: this.vectorStoreId,
+            vectorStoreId: vectorStoreId,
             fileIds: [file.Id]
         );
 
         while (true)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(500));
-            batch = await client.GetVectorStoreFileBatchAsync(this.vectorStoreId, batch.Id);
+            batch = await client.GetVectorStoreFileBatchAsync(vectorStoreId, batch.Id);
             if (batch.Status == VectorStoreFileBatchStatus.Completed)
             {
                 break;
             }
             else if (batch.Status == VectorStoreFileBatchStatus.Failed)
             {
-                throw new Exception($"File processing failed for {filename} uploading to vector store {this.vectorStoreId}.");
+                throw new Exception($"File processing failed for {filename} uploading to vector store {vectorStoreId}.");
             }
             await Task.Delay(TimeSpan.FromSeconds(0.5));
         }

@@ -83,6 +83,7 @@ public class AIAgentService : IAIAgentService
     private readonly AgentsClient client;
     private readonly string agentId;
     private readonly string model;
+    private readonly IAzureService azureService = azureService;
 
     private const string LogQueryPrompt = @"
 You are an assistant that analyzes Azure Pipelines failure logs. You will be provided with a log file from an Azure Pipelines build. Your task is to analyze the log and provide a summary of the failure. Include relevant data like error type, error messages, functions and error lines. Find other log lines in addition to the final error that may be descriptive of the problem. Errors like 'Powershell exited with code 1' are not error messages, but the error message may be in the logs above it. Provide suggested next steps. Respond only in valid JSON, in the following format:
@@ -94,8 +95,7 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
     ""suggested_fix"": ""...""
 }";
 
-
-    public AIAgentService(IAzureService azureService)
+    private void Initialize()
     {
         var connectionString = System.Environment.GetEnvironmentVariable("AZURE_AI_PROJECT_CONNECTION_STRING");
         if (string.IsNullOrEmpty(connectionString))
@@ -129,6 +129,10 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
 
     public AgentsClient GetClient()
     {
+        if (this.client == null)
+        {
+            Initialize();
+        }
         return this.client;
     }
 
@@ -139,12 +143,13 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
             throw new ArgumentException($"Filename '{filename}' must have a file extension (*.txt, *.md, ...)", nameof(filename));
         }
 
-        AgentFile uploaded = await this.client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
-        VectorStore vectorStore = await this.client.CreateVectorStoreAsync(fileIds: [uploaded.Id], name: filename);
+        var client = GetClient();
+        AgentFile uploaded = await client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
+        VectorStore vectorStore = await client.CreateVectorStoreAsync(fileIds: [uploaded.Id], name: filename);
         FileSearchToolResource tool = new();
         tool.VectorStoreIds.Add(vectorStore.Id);
 
-        Agent agent = await this.client.CreateAgentAsync(
+        Agent agent = await client.CreateAgentAsync(
             model: this.model,
             name: session,
             instructions: LogQueryPrompt,
@@ -152,18 +157,18 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
             toolResources: new ToolResources() { FileSearch = tool }
         );
 
-        AgentThread thread = await this.client.CreateThreadAsync();
-        ThreadMessage message = await this.client.CreateMessageAsync(thread.Id, MessageRole.User, query);
-        ThreadRun runResponse = await this.client.CreateRunAsync(thread, agent);
+        AgentThread thread = await client.CreateThreadAsync();
+        ThreadMessage message = await client.CreateMessageAsync(thread.Id, MessageRole.User, query);
+        ThreadRun runResponse = await client.CreateRunAsync(thread, agent);
 
         do
         {
             await Task.Delay(TimeSpan.FromMilliseconds(500));
-            runResponse = await this.client.GetRunAsync(thread.Id, runResponse.Id);
+            runResponse = await client.GetRunAsync(thread.Id, runResponse.Id);
         }
         while (runResponse.Status == RunStatus.Queued || runResponse.Status == RunStatus.InProgress);
 
-        PageableList<ThreadMessage> afterRunMessagesResponse = await this.client.GetMessagesAsync(thread.Id);
+        PageableList<ThreadMessage> afterRunMessagesResponse = await client.GetMessagesAsync(thread.Id);
         var messages = afterRunMessagesResponse.Data;
         var response = new List<string>();
 
@@ -202,9 +207,10 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
             return;
         }
 
+        var client = GetClient();
         if (string.IsNullOrEmpty(this.vectorStoreId))
         {
-            AgentPageableListOfVectorStore vectors = await this.client.GetVectorStoresAsync();
+            AgentPageableListOfVectorStore vectors = await client.GetVectorStoresAsync();
             var vectorStore = vectors.Data.FirstOrDefault(v => v.Name == this.vectorStoreName);
             if (vectorStore == null)
             {
@@ -215,9 +221,9 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         Console.WriteLine($"[INFO] Starting upload of '{filename}' to vector store '{this.vectorStoreName ?? this.vectorStoreId}' at {DateTime.UtcNow:O}");
-        AgentFile file = await this.client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
+        AgentFile file = await client.UploadFileAsync(contents, AgentFilePurpose.Agents, filename);
 
-        VectorStoreFileBatch batch = await this.client.CreateVectorStoreFileBatchAsync(
+        VectorStoreFileBatch batch = await client.CreateVectorStoreFileBatchAsync(
             vectorStoreId: this.vectorStoreId,
             fileIds: [file.Id]
         );
@@ -225,7 +231,7 @@ You are an assistant that analyzes Azure Pipelines failure logs. You will be pro
         while (true)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(500));
-            batch = await this.client.GetVectorStoreFileBatchAsync(this.vectorStoreId, batch.Id);
+            batch = await client.GetVectorStoreFileBatchAsync(this.vectorStoreId, batch.Id);
             if (batch.Status == VectorStoreFileBatchStatus.Completed)
             {
                 break;

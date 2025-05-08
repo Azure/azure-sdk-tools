@@ -20,14 +20,17 @@ extends:
         azureSubscription: azure-sdk-tests-playground   # your service connection
         scriptType: bash
         scriptLocation: inlineScript
+        addSpnToEnvironment: true
         inlineScript: |
-          # verify az is logged in:
+          # Login using service principal (credentials are automatically injected by the task)
+          az account set --subscription "$(AZURE_SUBSCRIPTION_ID)"
+          
+          # Verify account
           az account show
-
+          
           python packages/python-packages/apiview-copilot/evals/run.py
-
-          Write-Host "Last exit code: $LASTEXITCODE"
-          exit $LASTEXITCODE
+          
+          exit $?
       env:
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)

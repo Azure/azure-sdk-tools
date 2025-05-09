@@ -312,7 +312,7 @@ export function updateApiVersionInTspConfig(tspConfigPath: string, apiVersion?: 
     const tspConfigContent = fs.readFileSync(tspConfigPath, 'utf8');
     const tspConfig = yamlLoad(tspConfigContent);
 
-    if (typeof tspConfig !== 'object' || tspConfig === null) {
+    if (!tspConfig || typeof tspConfig !== 'object') {
         throw new Error('Invalid tspconfig.yaml format.');
     }
 

@@ -40,15 +40,47 @@ This is caused by one of two issues:
 
 - The user didn't properly re-record tests
 - A `push` was _successful_ but somehow the user `assets.json` wasn't updated
-  - The most likely case here is that the update to the tag in `assets.json` WAS updated, but the user accidentally discarded via `git checkout`
+  - The most likely case here is that the update to the tag in `assets.json` WAS updated, but the user accidentally the updated `assets.json` tag change via `git checkout`. Due to nonpresence of _pending_ recording changes, further `test-proxy push` calls aren't pushing a new tag or updating `assets.json`.
 
 ### The user didn't record new tests
 
-todo: steps to verify changed files in `assets` after re-record
+The `test-proxy` does _not_ push a new tag when no recording changes are detected. To verify that the tests are actually recording properly, first devs should invoke their tests in `RECORD` mode. How that should be done for `azure-sdk` devs is documented in each language repo's `CONTRIBUTING.md`. After running the tests, locate the `assets.json` associated with the package. This is normally located at the root of the package code.
 
-### A successful push but accidentally discarded `assets.json`
+Once the dev knows which `assets.json` is associated with their package, use that `assets.json` to interrogate which `.assets` folder is the one in question.
 
-todo: steps to add a change manually to enable the `push`.
+> For a primer on `asset-sync` concepts, feel free to read [this document](https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/documentation/asset-sync/README.md). For the purposes of this FAQ, just understand that every `assets.json`, once `restored`, will have a folder under `.assets` folder at the root of the language repo containing all the recordings for _just that `assets.json`_.
+
+```bash
+C:/repo/azure-sdk-for-java|>test-proxy config locate -a ./sdk/tables/azure-data-tables/assets.json
+Running proxy version is Azure.Sdk.Tools.TestProxy 1.0.0-dev.20250226.1
+git --version
+C:/repo/azure-sdk-for-java/.assets/v5O3LEDhWR/java # <-- this is the location of the cloned assets
+C:/repo/azure-sdk-for-java|>cd C:/repo/azure-sdk-for-java/.assets/v5O3LEDhWR/java
+C:/repo/azure-sdk-for-java/.assets/v5O3LEDhWR/java|>git status
+HEAD detached at java/tables/azure-data-tables_a4db4b064a
+You are in a sparse checkout with 98% of tracked files present.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   sdk/tables/azure-data-tables/src/test/resources/session-records/TableAsyncClientTest.submitTransaction.json
+        modified:   sdk/tables/azure-data-tables/src/test/resources/session-records/TableAsyncClientTest.submitTransactionAllActions.json
+        modified:   sdk/tables/azure-data-tables/src/test/resources/session-records/TableAsyncClientTest.submitTransactionAllActionsForEntitiesWithSingleQuotesInPartitionKey.json
+...
+```
+
+In the example above, one can visibly see that the `recordings` have been updated by the record action.
+
+**Ensure return to a folder within the language repo before invoking `test-proxy push path/to/assets.json`.** The test-proxy is not intended to be run from within an `.assets` directory.
+
+### I successfully pushed, but accidentally discarded `assets.json` tag updates
+
+There are a couple ways to go about this:
+
+- First, devs could check the `Azure/azure-sdk-assets` repo for the tag just pushed, then manually update their `assets.json` to reference the new tag.
+- Second, devs "touch" a file within an .assets repo. This puts the .assets slice in a pushable state where `test-proxy push` will actually push and update the target tag.
+
+For option two, devs should use the `test-proxy config locate -a path/to/assets.json`, `cd` to that directory, and add a newline or something similarly meaningless within a file in that `.assets` slice.
 
 ## It looks like trying to check out a recording fails with 500 and some weird git error
 

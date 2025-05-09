@@ -33,6 +33,7 @@ export async function generateMgmt(options: {
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
+    const changedPackagePaths:string[] = [];
     if (!options.skipGeneration) {
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
@@ -116,6 +117,7 @@ export async function generateMgmt(options: {
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {
                 changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+                changedPackagePaths.push(changedPackageDirectory);
             }
             logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
             execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
@@ -173,4 +175,6 @@ export async function generateMgmt(options: {
         }
     }
     logger.info(`Generate SDK from '${options.readmeMd}' successfully.`);
+
+    return changedPackagePaths; 
 }

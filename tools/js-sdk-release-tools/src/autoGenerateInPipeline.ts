@@ -40,9 +40,10 @@ async function automationGenerateInPipeline(
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
+        let changedPackagePaths: string[] | undefined;
         switch (sdkType) {
             case SDKType.HighLevelClient:
-                await generateMgmt({
+                changedPackagePaths = await generateMgmt({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: specFolder,
                     readmeMd: readmeMd!,
@@ -56,7 +57,7 @@ async function automationGenerateInPipeline(
                 });
                 break;
             case SDKType.RestLevelClient:
-                await generateRLCInPipeline({
+                changedPackagePaths = await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
                     readmeMd: readmeMd,
@@ -98,13 +99,10 @@ async function automationGenerateInPipeline(
         }
 
         await generateCodeOwnersAndIgnoreLink(sdkType, {
-            skipGeneration: skipGeneration,
+            changedPackagePaths: changedPackagePaths!,
             typespecProject: typespecProject,
             typeSpecDirectory: specFolder,
-            swaggerRepo: specFolder,
             sdkRepo: String(shell.pwd()),
-            readmeMd: readmeMd,
-            autorestConfig: autorestConfig
            });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;

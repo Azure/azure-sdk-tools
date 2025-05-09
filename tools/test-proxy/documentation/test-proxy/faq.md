@@ -15,8 +15,14 @@ On the same shell that the dev will `test-proxy push` from:
 ```bash
 git clone -c core.longpaths=true --no-checkout --filter=tree:0 https://github.com/Azure/azure-sdk-assets.git
 git checkout -b a-test-branch
-git push -u origin a-test-branch
+git push -u origin a-test-branch # users should clean up after pushing a test branch, but in the case they don't devs may need to select a different test branch name
 ```
+
+If this _fails_, credentials are either not cached in the `credential manager` OR the user doesn't have write access to the repo.
+
+If this _succeeds_, then the `test-proxy push` run from the same shell session _should succeed as well_.
+
+> Devs should ensure they navigate to `Azure/azure-sdk-assets` and clean up the test branch they just successfully pushed.
 
 ### How to get write access to `azure-sdk-assets`
 

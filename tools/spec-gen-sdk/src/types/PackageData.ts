@@ -221,6 +221,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     breakingChangeItems,
     version: result.version,
     readmeMd: result.readmeMd,
-    typespecProject: result.typespecProject
+    typespecProject: result.typespecProject,
+    language: result.language,
   };
 };

@@ -1,4 +1,4 @@
-﻿###############################
+###############################
 # Core EditorConfig Options   #
 ###############################
 root = true
@@ -138,4 +138,6 @@ csharp_space_between_method_call_empty_parameter_list_parentheses = false
 # Wrapping preferences
 csharp_preserve_single_line_statements = true
 csharp_preserve_single_line_blocks = true
-
+# disable this. or me. warnings
+dotnet_diagnostic.IDE0003.severity = none
+dotnet_diagnostic.IDE0009.severity = none

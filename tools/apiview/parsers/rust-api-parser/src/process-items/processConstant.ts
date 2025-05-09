@@ -25,8 +25,6 @@ export function processConstant(item: Item) {
     Value: item.name || "unknown_const",
     HasSuffixSpace: false,
     NavigateToId: item.id.toString(),
-    NavigationDisplayName: item.name,
-    RenderClasses: ["interface"],
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

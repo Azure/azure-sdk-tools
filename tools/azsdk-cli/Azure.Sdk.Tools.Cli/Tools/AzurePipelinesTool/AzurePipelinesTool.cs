@@ -11,11 +11,12 @@ using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.VisualStudio.Services.OAuth;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Core;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFactory azureAgentServiceFactory, ILogger<AzurePipelinesTool> logger) : MCPTool
+public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFactory azureAgentServiceFactory, ILogger<AzurePipelinesTool> logger, ICommandFormatter formatter) : MCPTool
 {
     public string? project;
 
@@ -24,6 +25,7 @@ public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFa
     private readonly IAzureService azureService = azureService;
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory = azureAgentServiceFactory;
     private readonly ILogger<AzurePipelinesTool> logger = logger;
+    private readonly ICommandFormatter formatter = formatter;
     private readonly Boolean initialized = false;
 
     // Commands
@@ -205,7 +207,7 @@ public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFa
         return JsonSerializer.Serialize(string.Join("\n", output));
     }
 
-    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null, string? aiEndpoint = null, string? aiModel = null)
+    public async Task<FormattedResponse> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null, string? aiEndpoint = null, string? aiModel = null)
     {
         project ??= project ?? "public";
         var aiAgentService = azureAgentServiceFactory.Create(aiModel, aiEndpoint);
@@ -220,7 +222,14 @@ public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFa
         var (response, usage) = await aiAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
         usage.LogCost();
 
-        return response;
+        var logAnalysisResponse = JsonSerializer.Deserialize<LogAnalysisResponse>(response) ?? new LogAnalysisResponse();
+        return formatter.Format(logAnalysisResponse);
+    }
+
+    [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]
+    public async Task<FormattedResponse> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null)
+    {
+        return await AnalyzePipelineFailureLog(buildId, logId, project, null, null);
     }
 
     public bool IsTestStep(string stepName)

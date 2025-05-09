@@ -23,6 +23,24 @@ public class Program
         var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
         var rootCommand = commandFactory.CreateRootCommand(args);
 
+        var outputFormat = SharedOptions.GetOutputFormat(args);
+        if (args[0] == "server")
+        {
+            services.AddScoped<ICommandFormatter, McpFormatter>();
+        }
+        else if (outputFormat == "plain")
+        {
+            services.AddScoped<ICommandFormatter, PlainTextFormatter>();
+        }
+        else if (outputFormat == "json")
+        {
+            services.AddScoped<ICommandFormatter, JsonFormatter>();
+        }
+        else
+        {
+            throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
+        }
+
         var parsedCommands = new CommandLineBuilder(rootCommand)
                .UseDefaults()            // adds help, version, error reporting, suggestions…
                .UseExceptionHandler()    // catches unhandled exceptions and writes them out

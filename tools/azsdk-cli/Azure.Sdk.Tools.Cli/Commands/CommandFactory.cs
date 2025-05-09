@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Services;
 using System.Reflection;
 using System.IO.Enumeration;
 
@@ -28,6 +29,16 @@ namespace Azure.Sdk.Tools.Cli.Commands
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
             rootCommand.AddOption(SharedOptions.ToolOption);
+
+            SharedOptions.Format.AddValidator(result =>
+            {
+                var value = result.GetValueForOption(SharedOptions.Format);
+                if (value != "plain" && value != "json")
+                {
+                    result.ErrorMessage = $"Invalid output format '{value}'. Supported formats are: plain, json";
+                }
+            });
+            rootCommand.AddOption(SharedOptions.Format);
 
             var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 

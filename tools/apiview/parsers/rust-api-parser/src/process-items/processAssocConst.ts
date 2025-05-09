@@ -33,7 +33,6 @@ export function processAssocConst(item: Item): ReviewLine[] | null {
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_assoc_const",
     HasSuffixSpace: false,
-    RenderClasses: ["interface"],
   });
 
   // Add colon

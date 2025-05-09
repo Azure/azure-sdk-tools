@@ -53,6 +53,8 @@ export async function parseInputJson(inputJson: any) {
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
     const autorestConfig: string | undefined = inputJson['autorestConfig'];
+    const apiVersion: string = inputJson['apiVersion'];
+    const sdkReleaseType: string = inputJson['sdkReleaseType'];
     const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
     // TODO: consider remove it, since it's not defined in inputJson schema
     const skipGeneration: boolean | undefined = inputJson['skipGeneration'];
@@ -79,6 +81,11 @@ export async function parseInputJson(inputJson: any) {
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+
+    if (apiVersion && apiVersion.toLowerCase().includes('preview') && sdkReleaseType.toLowerCase() === 'stable') {
+        throw new Error(`SDK release type' must be set to 'beta' for the preview API specifications.`);
+    }
+
     return {
         sdkType,
         specFolder,
@@ -90,6 +97,8 @@ export async function parseInputJson(inputJson: any) {
         outputJson,
         skipGeneration,
         runningEnvironment,
-        typespecProject
+        typespecProject,
+        apiVersion,
+        sdkReleaseType,
     };
 }

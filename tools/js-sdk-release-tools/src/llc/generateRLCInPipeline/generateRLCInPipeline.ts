@@ -38,6 +38,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string;
+    sdkReleaseType: string;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -243,7 +245,7 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
-            const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
+            const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
             outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;

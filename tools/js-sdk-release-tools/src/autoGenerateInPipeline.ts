@@ -8,6 +8,7 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
+import { updateApiVersionInTspConfig } from "./common/utils.js";
 
 import shell from 'shelljs';
 import fs from 'fs';
@@ -32,7 +33,9 @@ async function automationGenerateInPipeline(
         skipGeneration,
         runningEnvironment,
         typespecProject,
-        autorestConfig
+        autorestConfig,
+        apiVersion,
+        sdkReleaseType,
     } = await parseInputJson(inputJson);
 
     try {
@@ -51,13 +54,20 @@ async function automationGenerateInPipeline(
                     swaggerRepoUrl: repoHttpsUrl,
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
-                    runningEnvironment: runningEnvironment
+                    runningEnvironment: runningEnvironment,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
+                const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
+                if (typespecProject && !skipGeneration && sdkGenerationType !== "command") {                    
+                    const tspDefDir = path.join(swaggerRepo, typespecProject);
+                    updateApiVersionInTspConfig(tspDefDir, apiVersion);                       
+                }
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
-                    swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
+                    swaggerRepo: swaggerRepo,
                     readmeMd: readmeMd,
                     typespecProject: typespecProject,
                     autorestConfig,
@@ -68,12 +78,15 @@ async function automationGenerateInPipeline(
                     sdkGenerationType: sdkGenerationType === 'command' ? 'command' : 'script',
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
-                    gitCommitId: gitCommitId
+                    gitCommitId: gitCommitId,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
 
             case SDKType.ModularClient: {
                 const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
+                updateApiVersionInTspConfig(typeSpecDirectory, apiVersion);
                 const sdkRepoRoot = String(shell.pwd()).replaceAll('\\', '/');
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
@@ -86,8 +99,10 @@ async function automationGenerateInPipeline(
                     repoUrl,
                     local,
                     // support MPG for now
-                    versionPolicyName: 'management'
-                };
+                    versionPolicyName: 'management',
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
+                };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;

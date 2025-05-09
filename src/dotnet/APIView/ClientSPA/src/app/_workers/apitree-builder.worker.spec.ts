@@ -216,7 +216,6 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.postMessage(arrayBuffer);
     });
 
-
     it('test diff lines in full diff without docs', (done) => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
@@ -309,6 +308,7 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.postMessage(apiTreeBuilderData);
       apiTreeBuilder.postMessage(arrayBuffer);
     });
+    
     it('test diff lines in node style diff without docs', (done) => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {

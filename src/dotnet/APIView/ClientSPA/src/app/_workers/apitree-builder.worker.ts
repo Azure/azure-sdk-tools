@@ -113,6 +113,9 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (isParentNodeWithDiff && !node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
+    if (node.codeLines.filter(c => c.nodeId === "azure.identity.get_bearer_token_provider").length > 0) {
+      console.log(JSON.stringify(node, null, 2));
+    }
     addNodeToBuffer = true;
   }
 
@@ -126,6 +129,9 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if ((!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
+    //if (diffBuffer.length > 0) {
+    //  console.log(renderCodeLineForTesting(diffBuffer, "buffer  ", 130));
+    //}
     diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
     diffBuffer = [];
   }
@@ -154,6 +160,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          //console.log(renderCodeLineForTesting([codeLine], "codeline", 160));
           visibleNodes.add(nodeIdHashed);
           addPostDiffContext = true;
         }
@@ -162,11 +169,16 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
           if (addPostDiffContext && diffBuffer.length === 3)
           {
             codePanelRowData.push(...diffBuffer);
+            //if (diffBuffer.length > 0) {
+            //  console.log(renderCodeLineForTesting(diffBuffer, "buffer  ", 170));
+            //}
             diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
             diffBuffer = [];
             addPostDiffContext = false;
           }
+          //console.log(renderCodeLineObjectForTesting(diffBuffer));
           diffBuffer.push(codeLine);
+          //console.log(renderCodeLineForTesting([codeLine], "CodeLine:", 178));
           addJustDiffBuffer();
         }
       }
@@ -208,6 +220,9 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if (node.bottomTokenNodeIdHash) {
     codePanelRowData.push(...diffBuffer);
+    //if (diffBuffer.length > 0) {
+    //  console.log(renderCodeLineForTesting(diffBuffer, "buffer  ", 219));
+    //}
     diffBuffer = [];
 
     let bottomTokenNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
@@ -219,6 +234,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
           setLineNumber(codeLine);
           if (buildNode) {
             codePanelRowData.push(codeLine);
+            //console.log(renderCodeLineForTesting([codeLine], "codeline", 232));
             visibleNodes.add(codeLine.nodeIdHashed);
           }
         }
@@ -277,4 +293,27 @@ function FilterVisibleNavigationNodes(node: NavigationTreeNode) {
   if (visibleNodes.has(node.data.nodeIdHashed) || (node.children && node.children.some(c => c.visible))) {
     node.visible = true;
   }
+}
+
+function renderCodeLineObjectForTesting(data : CodePanelRowData[]) {
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    console.log(JSON.stringify(row));
+  }
+}
+
+function renderCodeLineForTesting(data : CodePanelRowData[], type : string, lineNumber : number) : string {
+  const lines : string[] = [];
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    let line = "";
+    for (let j = 0; j < row.rowOfTokens.length; j++) {
+      const token = row.rowOfTokens[j];
+      if (token.value) {
+        line += token.value;
+      }
+    }
+    lines.push(type + ", " + lineNumber + " : " + line);
+  }
+  return lines.join("\n");
 }

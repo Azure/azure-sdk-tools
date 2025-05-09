@@ -86,7 +86,12 @@ There are a couple ways to go about this:
 - First, devs could check the `Azure/azure-sdk-assets` repo for the tag just pushed, then manually update their `assets.json` to reference the new tag.
 - Second, devs "touch" a file within an .assets repo. This puts the .assets slice in a pushable state where `test-proxy push` will actually push and update the target tag.
 
-For option two, devs should use the `test-proxy config locate -a path/to/assets.json`, `cd` to that directory, and add a newline or something similarly meaningless within a file in that `.assets` slice.
+For option two, devs should use the `test-proxy config locate -a path/to/assets.json`, then:
+
+- `cd` to that directory
+- Choose a file randomly, add a newline or something similarly meaningless within a recording file
+- Check `git status` from within the `.assets` path to ensure their change is detected by git.
+- `cd` back to language repo root, then `test-proxy push -a path/to/assets.json`. The touched file will cause the proxy to push a new tag and re-update the `assets.json`.
 
 ## It looks like trying to check out a recording fails with 500 and some weird git error
 

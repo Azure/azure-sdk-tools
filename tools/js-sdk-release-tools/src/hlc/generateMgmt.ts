@@ -105,20 +105,20 @@ export async function generateMgmt(options: {
                 }
             }
 
-            logger.info(`Start to run command: 'rush update'.`);
-            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+            logger.info(`Start to run command: 'pnpm update'.`);
+            execSync('pnpm install', {stdio: 'inherit'});
             
             await migratePackage(packagePath);
             
-            logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-            execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+            logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
+            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
             logger.info('Start to generate changelog and bump version...');
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {
                 changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
             }
-            logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
-            execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            logger.info(`Start to run command: 'pnpm pack --filter ${packageJson.name}'.`);
+            execSync(`pnpm pack --filter ${packageJson.name}`, {stdio: 'inherit'});
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
             }

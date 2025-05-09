@@ -9,38 +9,11 @@ import { runCommand, runCommandOptions } from './utils.js';
 
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
-import unixify from 'unixify';
 import { migratePackage } from './migration.js';
 
-interface ProjectItem {
-    packageName: string;
-    projectFolder: string;
-    versionPolicyName: string;
-}
-
-async function updateRushJson(projectItem: ProjectItem) {
-    const content = await readFile('rush.json', { encoding: 'utf-8' });
-    const rushJson = parse(content.toString());
-    const projects = (rushJson as CommentObject)?.['projects'] as CommentArray<CommentJSONValue>;
-    if (!projects) {
-        throw new Error('Failed to parse projects in rush.json.');
-    }
-    const isCurrentPackageExist = projects.filter((p) => p?.['packageName'] === projectItem.packageName).length > 0;
-    if (isCurrentPackageExist) {
-        logger.info(`'${projectItem.packageName}' exists, no need to update rush.json.`);
-        return;
-    }
-    // add new project and keep comment at the same time
-    const newProjects = assign(projects, [...projects, projectItem]);
-    const newRushJson = assign(rushJson, { ...(rushJson as CommentObject), projects: newProjects });
-    const newRushJsonContent = stringify(newRushJson, undefined, 2);
-    writeFile('rush.json', newRushJsonContent, { encoding: 'utf-8', flush: true });
-    logger.info('Updated rush.json successfully.');
-}
-
-async function packPackage(packageDirectory: string, packageName: string, rushxScript: string) {
+async function packPackage(packageDirectory: string, packageName: string) {
     const cwd = join(packageDirectory);
-    await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
+    await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);
     logger.info(`Pack '${packageName}' successfully.`);
 }
 
@@ -62,35 +35,28 @@ async function addApiViewInfo(
 export async function buildPackage(
     packageDirectory: string,
     options: ModularClientPackageOptions,
-    packageResult: PackageResult,
-    rushScript: string,
-    rushxScript: string
+    packageResult: PackageResult
 ) {
     const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
 
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
-    await updateRushJson({
-        packageName: name,
-        projectFolder: unixify(relativePackageDirectoryToSdkRoot),
-        versionPolicyName: options.versionPolicyName
-    });
 
-    logger.info(`Start to rush update.`);
-    await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
-    logger.info(`Rush update successfully.`);
+    logger.info(`Start to pnpm install.`);
+    await runCommand(`pnpm`, ['install'], runCommandOptions, false);
+    logger.info(`Pnpm install successfully.`);
 
     await migratePackage(packageDirectory);
 
     logger.info(`Start to build package '${name}'.`);
-    await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
+    await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
     logger.info(`Build package '${name}' successfully.`);
 
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryBuildSamples(packageDirectory, rushxScript);    
-    await tryTestPackage(packageDirectory, rushxScript);
+    await tryBuildSamples(packageDirectory);    
+    await tryTestPackage(packageDirectory);
     await formatSdk(packageDirectory);
 
     // restore in temp folder
@@ -101,12 +67,12 @@ export async function buildPackage(
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryBuildSamples(packageDirectory: string, rushxScript: string) {
+export async function tryBuildSamples(packageDirectory: string) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
+        await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, true);
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
@@ -124,23 +90,23 @@ export async function formatSdk(packageDirectory: string) {
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryTestPackage(packageDirectory: string, rushxScript: string) {
+export async function tryTestPackage(packageDirectory: string) {
     logger.info(`Start to test package in '${packageDirectory}'.`);
     const env = { ...process.env, TEST_MODE: 'record' };
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300, true);
+        await runCommand(`pnpm`, ['run', 'test:node'], options, true, 300, true);
         logger.info(`tested package successfully.`);
     } catch (err) {
         logger.warn(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
     }
 }
 
-export async function createArtifact(packageDirectory: string, rushxScript: string): Promise<string> {
+export async function createArtifact(packageDirectory: string): Promise<string> {
     logger.info(`Start to create artifact in '${packageDirectory}'`);
     const info = await getNpmPackageInfo(packageDirectory);
-    await packPackage(packageDirectory, info.name, rushxScript);
+    await packPackage(packageDirectory, info.name);
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
     await access(artifactPath);

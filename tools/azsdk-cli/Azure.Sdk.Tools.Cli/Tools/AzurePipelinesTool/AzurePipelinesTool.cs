@@ -17,14 +17,14 @@ using Azure.Core;
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAgentService, ILogger<AzurePipelinesTool> logger) : MCPTool
+public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFactory azureAgentServiceFactory, ILogger<AzurePipelinesTool> logger) : MCPTool
 {
     public string? project;
 
     private BuildHttpClient buildClient;
     private TestResultsHttpClient testClient;
     private readonly IAzureService azureService = azureService;
-    private readonly IAIAgentService aiAgentService = aiAgentService;
+    private readonly IAzureAgentServiceFactory azureAgentServiceFactory = azureAgentServiceFactory;
     private readonly ILogger<AzurePipelinesTool> logger = logger;
     private readonly Boolean initialized = false;
 
@@ -36,13 +36,16 @@ public class AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAg
     private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "Pipeline/Build ID") { IsRequired = true };
     private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log") { IsRequired = true };
     private readonly Option<string> projectOpt = new(["--project", "-p"], () => "public", "Pipeline project name");
+    private readonly Option<string> aiEndpointOpt = new(["--ai-endpoint"], "The endpoint for the Azure AI Agent service");
+    private readonly Option<string> aiModelOpt = new(["--ai-model"], "The model to use for the Azure AI Agent");
 
     public override Command GetCommand()
     {
         Command command = new("azp", "Azure Pipelines Tool");
-
         var pipelineRunCommand = new Command(getPipelineRunCommandName, "Get details for a pipeline run") { buildIdOpt, projectOpt };
-        var analyzePipelineCommand = new Command(analyzePipelineCommandName, "Analyze a pipeline run") { buildIdOpt, projectOpt, logIdOpt };
+        var analyzePipelineCommand = new Command(analyzePipelineCommandName, "Analyze a pipeline run") {
+            buildIdOpt, projectOpt, logIdOpt, aiEndpointOpt, aiModelOpt
+        };
 
         // Do not add a handler for the 'azp' command, that way System.CommandLine can fall back to the
         // root command handler and print help text.
@@ -74,7 +77,9 @@ public class AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAg
         {
             logger.LogInformation("Analyzing pipeline {buildId} in project {project}...", buildId, project);
             var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
-            var result = await AnalyzePipelineFailureLog(buildId, logId, project);
+            var aiEndpoint = ctx.ParseResult.GetValueForOption(aiEndpointOpt);
+            var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
+            var result = await AnalyzePipelineFailureLog(buildId, logId, project, aiEndpoint, aiModel);
             logger.LogInformation("{result}", result);
             return 0;
         }
@@ -202,9 +207,11 @@ public class AzurePipelinesTool(IAzureService azureService, IAIAgentService aiAg
         return JsonSerializer.Serialize(string.Join("\n", output));
     }
 
-    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null)
+    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null, string? aiEndpoint = null, string? aiModel = null)
     {
         project ??= project ?? "public";
+        var aiAgentService = azureAgentServiceFactory.Create(aiModel, aiEndpoint);
+
         var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
         var logText = string.Join("\n", logContent);
         var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);

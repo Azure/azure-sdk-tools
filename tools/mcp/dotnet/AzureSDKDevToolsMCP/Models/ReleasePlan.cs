@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Services.WebApi.Patch;
-using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using DevOpsPatch = Microsoft.VisualStudio.Services.WebApi.Patch;
+using DevOpsPatchJson = Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace AzureSDKDSpecTools.Models
 {
@@ -27,49 +27,49 @@ namespace AzureSDKDSpecTools.Models
         public string SpecType {  get; set; } = string.Empty;
         public List<SDKGenerationInfo> SDKGenerationInfos { get; set; } = [];
 
-        public JsonPatchDocument GetPatchDocument()
+        public DevOpsPatchJson.JsonPatchDocument GetPatchDocument()
         {
-            var jsonDocument = new JsonPatchDocument()
+            var jsonDocument = new DevOpsPatchJson.JsonPatchDocument()
             {
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.ServiceTreeID",
                     Value = ServiceTreeId
                 },
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.ProductServiceTreeID",
                     Value = ProductTreeId
                 },
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.SDKReleaseMonth",
                     Value = SDKReleaseMonth
                 },
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.MgmtScope",
                     Value = IsManagementPlane ? "Yes" : "No"
                 },
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.DataScope",
                     Value = IsDataPlane ? "Yes" : "No"
                 },
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.APISpecDefinitionType",
                     Value = SpecType
                 },
-                new JsonPatchOperation
+                new DevOpsPatchJson.JsonPatchOperation
                 {
-                    Operation = Operation.Add,
+                    Operation = DevOpsPatch.Operation.Add,
                     Path = "/fields/Custom.APISpecversion",
                     Value = SpecAPIVersion
                 }

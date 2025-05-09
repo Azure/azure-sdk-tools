@@ -19,17 +19,16 @@ namespace AzureSDKSpecToolTests
             devOpsService = new DevOpsService(logger, new DevOpsConnection());
         }
 
-        [Fact]
+        [Fact (Skip = "Disabled for default run.")]
         public async Task GetReleasePlanTest()
         {
             var releasePlan = await devOpsService.GetReleasePlan(26960);
-            await devOpsService.GetPipelineRun(4813417);
             Assert.NotNull(releasePlan);
             Assert.Equal(26960, releasePlan.WorkItemId);
             Assert.True(!string.IsNullOrEmpty(releasePlan.Title));
         }
 
-        [Fact]
+        [Fact (Skip = "Disabled for default run test since it uses an actual PR link")]
         public async Task GetReleasePlansForServicePrductTest()
         {
             var pr = "https://github.com/Azure/azure-rest-api-specs/pull/32282";

@@ -1,6 +1,6 @@
 import {logger} from "./logger.js";
 import {inc as semverInc} from "semver";
-
+import { ApiVersionType } from "../common/types.js"
 
 export function getVersion(npmViewResult: Record<string, any> | undefined, tag: string) {
     const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
@@ -79,4 +79,13 @@ export function getNewVersion(stableVersion: string | undefined, usedVersions: s
             }
         }
     }
+}
+
+export async function getReleaseStatus(apiVersionType: string, options?: { apiVersion: string, sdkReleaseType: string }) {
+    let isStableRelease = apiVersionType != ApiVersionType.Preview;
+    if(options && options.apiVersion !== '' && options.sdkReleaseType !== '') {
+        logger.info(`Detected appVersion is ${options.apiVersion}, sdkReleaseType is ${options.sdkReleaseType}`);
+        isStableRelease = options.sdkReleaseType == 'stable'
+    }
+    return isStableRelease;
 }

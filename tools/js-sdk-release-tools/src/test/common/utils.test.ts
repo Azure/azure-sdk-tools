@@ -3,6 +3,8 @@ import { resolveOptions, updateApiVersionInTspConfig } from "../../common/utils.
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
 import * as fs from "fs";
+import {    getReleaseStatus
+} from "../../utils/version.js";
 
 describe("resolveOptions", () => {
     test("loads config at the given path", async () => {
@@ -48,5 +50,28 @@ describe("updateApiVersionInTspConfig", () => {
         expect(() => updateApiVersionInTspConfig(typeSpecDirectory, expectedVersion)).toThrow(
             "tspconfig.yaml not found at path:"
         );
+    });
+});
+
+describe("getReleaseStatus", () => {
+    test("apiVersion is stable, sdkReleaseType is stable", async () => {
+        const result = await getReleaseStatus("Preview", { apiVersion: "2023-10-01", sdkReleaseType: "stable" });
+        expect(result).toBe(true);
+    });
+    test("apiVersion is stable, sdkReleaseType is beta", async () => {
+        const result = await getReleaseStatus("Preview", { apiVersion: "2023-10-01", sdkReleaseType: "beta" });
+        expect(result).toBe(false);
+    });
+    test("apiVersion is preview, sdkReleaseType is stable", async () => {
+        const result = await getReleaseStatus("Stable", { apiVersion: "2023-10-01-preview", sdkReleaseType: "stable" });
+        expect(result).toBe(true);
+    });
+    test("apiVersion is preview, sdkReleaseType is beta", async () => {
+        const result = await getReleaseStatus("Stable", { apiVersion: "2023-10-01-preview", sdkReleaseType: "beta" });
+        expect(result).toBe(false);
+    });
+    test("apiVersion not be provided", async () => {
+        const result = await getReleaseStatus("Preview", { apiVersion: "", sdkReleaseType: "stable" });
+        expect(result).toBe(false);
     });
 });

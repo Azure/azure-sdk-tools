@@ -1,6 +1,6 @@
 # `Test-Proxy` Frequently Asked Questions
 
-## My `push` push failed with a `403` error
+## My `push` failed with a `403` error
 
 This is likely due to either:
 
@@ -89,4 +89,4 @@ In this case, the issue is likely due to an unhandled edge case when resolving a
 - Zip up your `.assets` folder at the root of your repo
 - Share the folder with `scbedd` over teams along with any details on the proxy-side error that you've found in your logs.
 - Delete your existing `.assets`
-- Re-run your tests. The proxy will download a fresh copy of the tag from your `assets.json` re-init the `.assets` folder automatically.
+- Re-run your tests. The proxy will download a fresh copy of the tag from your `assets.json` and re-init the `.assets` folder automatically.

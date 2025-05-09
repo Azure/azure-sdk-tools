@@ -28,13 +28,6 @@ _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 info_log_file = os.path.join(_PACKAGE_ROOT, "info.log")
 
-# Create a unified logger configuration
-logging.basicConfig(
-    level=logging.INFO,  # Set the base level to INFO
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    force=True,
-)
-
 # Create handlers for error.log and info.log
 error_handler = logging.FileHandler(error_log_file, mode="w")  # Overwrite on each run
 error_handler.setLevel(logging.ERROR)  # Log only ERROR and higher levels
@@ -44,10 +37,17 @@ info_handler = logging.FileHandler(info_log_file, mode="w")  # Overwrite on each
 info_handler.setLevel(logging.INFO)  # Log INFO and higher levels
 info_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 
+# Create a console handler for terminal output
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.ERROR)  # Only log ERROR and higher to the terminal
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
 # Add handlers to the root logger
 root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)  # Set the base level to DEBUG to capture all logs
 root_logger.addHandler(error_handler)
 root_logger.addHandler(info_handler)
+root_logger.addHandler(console_handler)
 
 # Create module-level logger
 logger = logging.getLogger(__name__)

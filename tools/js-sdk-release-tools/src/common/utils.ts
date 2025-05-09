@@ -144,21 +144,21 @@ export function fixChangelogFormat(content: string) {
     return content;
 }
 
-export function tryReadNpmPackageChangelog(changelogPath: string, packageFolderPath?: string, packageName?: string, version?: string): string {
+export function tryReadNpmPackageChangelog(changelogPathFromNpm: string, packageFolderPath?: string, packageName?: string, version?: string): string {
     try {
-        if (!fs.existsSync(changelogPath)) {
-            logger.warn(`NPM package's changelog '${changelogPath}' does not exist.`);
+        if (!fs.existsSync(changelogPathFromNpm)) {
+            logger.warn(`NPM package's changelog '${changelogPathFromNpm}' does not exist.`);
             if (packageFolderPath && packageName && version) {
-                tryCreateLastestChangeLog(packageFolderPath, packageName, version, changelogPath);
+                tryCreateLastestChangeLog(packageFolderPath, packageName, version, changelogPathFromNpm);
             }
             else {
                 return ""
             }
         }
-        const originalChangeLogContent = fs.readFileSync(changelogPath, { encoding: 'utf-8' });
+        const originalChangeLogContent = fs.readFileSync(changelogPathFromNpm, { encoding: 'utf-8' });
         return originalChangeLogContent;
     } catch (err) {
-        logger.warn(`Failed to read NPM package's changelog '${changelogPath}': ${(err as Error)?.stack ?? err}`);
+        logger.warn(`Failed to read NPM package's changelog '${changelogPathFromNpm}': ${(err as Error)?.stack ?? err}`);
         return '';
     }
 }

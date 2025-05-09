@@ -51,11 +51,11 @@ public class Program
 
         if (isCLI)
         {
-            // register the command line formatter
+            // todo: register the command line formatter
         }
         else
         {
-            // register the server formatter
+            // todo: register the server formatter
         }
 
         var toolTypes = SharedOptions.GetFilteredToolTypes(args);

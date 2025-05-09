@@ -262,7 +262,7 @@ export class CommentThreadComponent {
     }
 
     const HTML_STRIP_REGEX = /<\/?[^>]+(>|$)/g
-    const emptyCommentContentWarningMessage = { severity: 'info', icon: 'bi bi-info-circle', summary: "Comment Info", detail: "Comment content is empty. No action taken.", key: 'bl', life: 3000 };
+    const emptyCommentContentWarningMessage = { severity: 'info', icon: 'bi bi-info-circle', summary: "Comment Info", detail: "Comment content is empty. No action taken.", key: 'bc', life: 3000 };
 
 
     if (replyEditorContainer) {

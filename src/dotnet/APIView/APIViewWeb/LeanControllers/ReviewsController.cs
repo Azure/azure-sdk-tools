@@ -18,7 +18,6 @@ namespace APIViewWeb.LeanControllers
 {
     public class ReviewsController : BaseApiController
     {
-        private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
@@ -37,7 +36,6 @@ namespace APIViewWeb.LeanControllers
             ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub,
             INotificationManager notificationManager, IWebHostEnvironment env)
         {
-            _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
             _commentsManager = commentManager;

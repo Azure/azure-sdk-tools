@@ -1,7 +1,7 @@
 export class ToastMessageData {
-    type: "AICommentsGenerated" | ""
+    action: "RefreshPage" | ""
 
     constructor() {
-        this.type = ''
+        this.action = ''
     }
 }

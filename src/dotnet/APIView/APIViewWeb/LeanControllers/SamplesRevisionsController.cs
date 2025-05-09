@@ -11,14 +11,12 @@ namespace APIViewWeb.LeanControllers
 {
     public class SamplesRevisionsController : BaseApiController
     {
-        private readonly ILogger<SamplesRevisionsController> _logger;
         private readonly ISamplesRevisionsManager _samplesRevisionsManager;
         private readonly ICommentsManager _commentsManager;
 
         public SamplesRevisionsController(ILogger<SamplesRevisionsController> logger,
             ISamplesRevisionsManager samplesRevisionsManager, ICommentsManager commentsManager)
         {
-            _logger = logger;
             _samplesRevisionsManager = samplesRevisionsManager;
             _commentsManager = commentsManager;
         }

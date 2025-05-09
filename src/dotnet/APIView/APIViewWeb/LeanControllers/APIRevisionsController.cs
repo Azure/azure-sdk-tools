@@ -21,7 +21,6 @@ namespace APIViewWeb.LeanControllers
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
-        private readonly IPullRequestManager _pullRequestManager;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
@@ -33,7 +32,6 @@ namespace APIViewWeb.LeanControllers
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
             _signalRHubContext = signalRHub;
-            _pullRequestManager = pullRequestManager;
         }
 
         /// <summary>
@@ -157,7 +155,7 @@ namespace APIViewWeb.LeanControllers
         {
             try
             {
-                var violations = await _reviewManager.GenerateAIReview(reviewId, activeApiRevisionId);
+                var violations = await _reviewManager.GenerateAIReview(User, reviewId, activeApiRevisionId, diffApiRevisionId);
                 return new LeanJsonResult(violations, StatusCodes.Status200OK);
             }
             catch (Exception ex)

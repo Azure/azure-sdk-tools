@@ -38,6 +38,7 @@ namespace APIViewWeb
             {
                 query.Append($" AND c.CreatedBy = '{createdBy}'");
             }
+            query.Append($" AND c.IsDeleted = false");
             return await GetCommentsFromQueryAsync(query.ToString());
         }
 

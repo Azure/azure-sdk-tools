@@ -6,22 +6,20 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
 )
 
+// Defines the structure for source directories
 type Source struct {
 	path   string
 	folder string
-}
-
-type ReleaseNote struct {
-	Title       string
-	Version     string
-	ReleaseDate string
-	Link        string
+	name   string
 }
 
 func main() {
@@ -30,10 +28,12 @@ func main() {
 		{
 			path:   "docs/typespec/website/src/content/docs/docs",
 			folder: "typespec_docs",
+			name:   "TypeSpec",
 		},
 		{
 			path:   "docs/typespec-azure/website/src/content/docs/docs",
 			folder: "typespec_azure_docs",
+			name:   "TypeSpec Azure",
 		},
 	}
 
@@ -46,17 +46,11 @@ func main() {
 			fmt.Printf("Error creating target directory: %v\n", err)
 			return
 		}
-
-		// Process release notes and generate index
-		releaseNotes, err := processReleaseNotes(sourceDir, strings.Contains(source.folder, "azure"))
+		err := createReleaseNotesIndex(source, targetDir)
 		if err != nil {
-			fmt.Printf("Error processing release notes: %v\n", err)
+			fmt.Printf("Error creating release notes index: %v\n", err)
 			return
 		}
-		if err := generateReleaseNoteIndex(releaseNotes, targetDir, source); err != nil {
-			fmt.Printf("Error generating release notes index: %v\n", err)
-		}
-
 		// Walk through all markdown files in source directory
 		err = filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -229,106 +223,6 @@ func convertMarkdown(r io.Reader, w io.Writer) error {
 	return nil
 }
 
-func processReleaseNotes(sourceDir string, isTypespecAzure bool) ([]ReleaseNote, error) {
-	var releaseNotes []ReleaseNote
-	releaseNotesDir := filepath.Join(sourceDir, "release-notes")
-
-	err := filepath.Walk(releaseNotesDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || !strings.HasSuffix(info.Name(), ".md") {
-			return nil
-		}
-
-		file, err := os.Open(path)
-		if err != nil {
-			return fmt.Errorf("error opening file %s: %w", path, err)
-		}
-		defer file.Close()
-
-		relPath, err := filepath.Rel(sourceDir, path)
-		if err != nil {
-			return fmt.Errorf("error getting relative path: %w", err)
-		}
-
-		var note ReleaseNote
-		scanner := bufio.NewScanner(file)
-		inFrontmatter := false
-
-		baseURL := "https://typespec.io/docs/"
-		if isTypespecAzure {
-			baseURL = "https://azure.github.io/typespec-azure/docs/"
-		}
-		note.Link = baseURL + strings.TrimSuffix(relPath, filepath.Ext(relPath)) + "/"
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			if line == "---" {
-				if !inFrontmatter {
-					inFrontmatter = true
-					continue
-				} else {
-					break
-				}
-			}
-			if inFrontmatter {
-				if strings.HasPrefix(line, "title:") {
-					note.Title = strings.TrimSpace(strings.TrimPrefix(line, "title:"))
-				}
-				if strings.HasPrefix(line, "version:") {
-					note.Version = strings.Trim(strings.TrimSpace(strings.TrimPrefix(line, "version:")), "\"'")
-				}
-				if strings.HasPrefix(line, "releaseDate:") {
-					note.ReleaseDate = strings.TrimSpace(strings.TrimPrefix(line, "releaseDate:"))
-				}
-			}
-		}
-
-		releaseNotes = append(releaseNotes, note)
-
-		return scanner.Err()
-	})
-
-	return releaseNotes, err
-}
-
-func generateReleaseNoteIndex(notes []ReleaseNote, targetDir string, source Source) error {
-	// reverse the order of notes
-	for i, j := 0, len(notes)-1; i < j; i, j = i+1, j-1 {
-		notes[i], notes[j] = notes[j], notes[i]
-	}
-	indexPath := filepath.Join(targetDir, "release-notes-index.md")
-	file, err := os.Create(indexPath)
-	if err != nil {
-		return fmt.Errorf("error creating index file: %w", err)
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	defer writer.Flush()
-
-	title := "TypeSpec Release Notes Index"
-	if strings.Contains(source.folder, "azure") {
-		title = "TypeSpec Azure Release Notes Index"
-	}
-
-	_, err = writer.WriteString(fmt.Sprintf("# %s\n\n", title))
-	if err != nil {
-		return fmt.Errorf("error writing title: %w", err)
-	}
-
-	for _, note := range notes {
-		_, err = writer.WriteString(fmt.Sprintf("- Version: %s (Released: %s)\n  [%s](%s)\n\n",
-			note.Version, note.ReleaseDate, note.Title, note.Link))
-		if err != nil {
-			return fmt.Errorf("error writing note: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func deleteExpiredBlobs(currentFiles []string) error {
 	currentFileMap := make(map[string]bool)
 	for _, file := range currentFiles {
@@ -354,4 +248,195 @@ func deleteExpiredBlobs(currentFiles []string) error {
 		}
 	}
 	return nil
+}
+
+// createReleaseNotesIndex creates an index file with content from the 10 most recent release notes
+func createReleaseNotesIndex(source Source, targetDir string) error {
+	// Path to release notes directory
+	releaseNotesDir := filepath.Join(source.path, "release-notes")
+
+	// Check if release notes directory exists
+	if _, err := os.Stat(releaseNotesDir); os.IsNotExist(err) {
+		fmt.Printf("Release notes directory not found for %s, skipping index creation\n", source.folder)
+		return nil
+	}
+
+	releaseFiles := []string{}
+	err := filepath.Walk(releaseNotesDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		// Match files with pattern release-YYYY-MM-DD.md or release-YYYY-MM-DD.mdx
+		matched, err := regexp.MatchString(`release-\d{4}-\d{2}-\d{2}\.(md|mdx)$`, info.Name())
+		if err != nil {
+			return err
+		}
+
+		if matched {
+			releaseFiles = append(releaseFiles, path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error walking release notes directory: %w", err)
+	}
+
+	// Sort files by date (newest first)
+	sort.Slice(releaseFiles, func(i, j int) bool {
+		// Extract dates from filenames
+		dateI := extractDateFromFilename(releaseFiles[i])
+		dateJ := extractDateFromFilename(releaseFiles[j])
+
+		// Compare dates (reverse order for newest first)
+		return dateI.After(dateJ)
+	})
+
+	// Take only the 10 most recent files (or fewer if less than 10 exist)
+	maxFiles := 10
+	if len(releaseFiles) < maxFiles {
+		maxFiles = len(releaseFiles)
+	}
+	recentReleaseFiles := releaseFiles[:maxFiles]
+
+	// Create index content
+	indexTitle := fmt.Sprintf("# %s - Recent Version Release Notes\n", source.folder)
+	description := fmt.Sprintf("There contains latest release version and changes of %s\n\n", source.name)
+	content := indexTitle + description
+
+	// Add content from each release note file
+	for _, filePath := range recentReleaseFiles {
+		fileContent, err := os.ReadFile(filePath)
+		if err != nil {
+			fmt.Printf("Error reading release note file %s: %v\n", filePath, err)
+			continue
+		}
+
+		// Get relative file path for building the release link
+		relFilePath, err := filepath.Rel(source.path, filePath)
+		if err != nil {
+			fmt.Printf("Error getting relative path for %s: %v\n", filePath, err)
+			relFilePath = filepath.Base(filePath)
+		}
+
+		// Prepare release link based on the source repository
+		var releaseLink string
+		if source.folder == "typespec_docs" {
+			releaseLink = fmt.Sprintf("https://typespec.io/docs/%s", relFilePath)
+		} else if source.folder == "typespec_azure_docs" {
+			releaseLink = fmt.Sprintf("https://azure.github.io/typespec-azure/docs/%s", relFilePath)
+		}
+
+		// Remove file extension from link
+		releaseLink = strings.TrimSuffix(releaseLink, filepath.Ext(releaseLink))
+
+		// Extract title, release date, and version from frontmatter
+		title, releaseDate, version := extractReleaseInfo(string(fileContent))
+
+		// Create section header with extracted information and link
+		releaseHeader := fmt.Sprintf("## [version-%s-%s](%s)\n", title, releaseDate, releaseLink)
+		if version != "" {
+			releaseHeader = fmt.Sprintf("## [version-%s-%s (v%s)](%s)\n", title, releaseDate, version, releaseLink)
+		}
+
+		// Extract and organize sections
+		sections := extractSections(string(fileContent))
+
+		// Add the release header and sections to content
+		content += releaseHeader + sections + "\n"
+	}
+
+	// Create the index file in the target directory
+	indexPath := filepath.Join(targetDir, "version-release-notes-index.md")
+	err = os.WriteFile(indexPath, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("error writing release notes index: %w", err)
+	}
+
+	fmt.Printf("Created release notes index for %s\n", source.folder)
+	return nil
+}
+
+// extractDateFromFilename extracts date from a filename in the format release-YYYY-MM-DD.md
+func extractDateFromFilename(path string) time.Time {
+	filename := filepath.Base(path)
+	re := regexp.MustCompile(`release-(\d{4}-\d{2}-\d{2})`)
+	matches := re.FindStringSubmatch(filename)
+
+	if len(matches) < 2 {
+		// Return zero time if no match found
+		return time.Time{}
+	}
+
+	// Parse the date
+	t, err := time.Parse("2006-01-02", matches[1])
+	if err != nil {
+		// Return zero time on error
+		return time.Time{}
+	}
+
+	return t
+}
+
+// extractReleaseInfo extracts title, releaseDate and version from release note frontmatter
+func extractReleaseInfo(content string) (string, string, string) {
+	// Default values
+	title := ""
+	releaseDate := ""
+	version := ""
+
+	// Look for frontmatter between --- markers
+	frontmatterRegex := regexp.MustCompile(`(?s)---\s*(.*?)\s*---`)
+	matches := frontmatterRegex.FindStringSubmatch(content)
+	if len(matches) < 2 {
+		return title, releaseDate, version
+	}
+
+	frontmatter := matches[1]
+
+	// Split frontmatter into lines and process each line
+	scanner := bufio.NewScanner(strings.NewReader(frontmatter))
+	for scanner.Scan() {
+		line := scanner.Text()
+		line = strings.TrimSpace(line)
+
+		// Look for title, releaseDate, and version fields
+		if strings.HasPrefix(line, "title:") {
+			title = strings.TrimSpace(strings.TrimPrefix(line, "title:"))
+			// Remove quotes if present
+			title = strings.Trim(title, "\"'")
+		} else if strings.HasPrefix(line, "releaseDate:") {
+			releaseDate = strings.TrimSpace(strings.TrimPrefix(line, "releaseDate:"))
+		} else if strings.HasPrefix(line, "version:") {
+			version = strings.TrimSpace(strings.TrimPrefix(line, "version:"))
+			// Remove quotes if present
+			version = strings.Trim(version, "\"'")
+		}
+	}
+
+	return title, releaseDate, version
+}
+
+// extractSections extracts content and downgrades the heading levels
+func extractSections(content string) string {
+	// Remove frontmatter
+	frontmatterRegex := regexp.MustCompile(`(?s)---.*?---\s*`)
+	contentWithoutFrontmatter := frontmatterRegex.ReplaceAllString(content, "")
+
+	// Remove special markups like caution blocks
+	cautionRegex := regexp.MustCompile(`(?s):::caution.*?:::\s*`)
+	contentWithoutMarkup := cautionRegex.ReplaceAllString(contentWithoutFrontmatter, "")
+
+	// Downgrade all headers (add one more # to each header)
+	// Match headers with any number of # characters
+	headerRegex := regexp.MustCompile(`(?m)^(#+)\s+(.+)$`)
+	downgradedContent := headerRegex.ReplaceAllString(contentWithoutMarkup, "#$1 $2")
+
+	return strings.TrimSpace(downgradedContent)
 }

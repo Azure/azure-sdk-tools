@@ -103,6 +103,12 @@ curl --request POST \
 go test ./...
 ```
 
+## Deploy
+
+  ```bash
+  ./deploy-to-azure.sh -t [tag] -m [prod|slot(default)]
+  ```
+
 ## Contributing
 
 1. Fork the repository

@@ -5,18 +5,18 @@ import (
 )
 
 type QueryIndexRequest struct {
-	Count         bool          `json:"count,omitempty";`
-	Search        string        `json:"search,omitempty"`
-	Select        string        `json:"select,omitempty"`
-	Top           int           `json:"top,omitempty"`
-	VectorQueries []VectorQuery `json:"vectorQueries,omitempty"`
-	OrderBy       string        `json:"orderby,omitempty"`
-	Filter        string        `json:"filter,omitempty"`
-	QueryType   string        `json:"queryType,omitempty"`
-	SemanticConfiguration string `json:"semanticConfiguration,omitempty"`
-	Captions      string        `json:"captions,omitempty"`
-	Answers       string        `json:"answers,omitempty"`
-	QueryLanguage  string        `json:"queryLanguage,omitempty"`
+	Count                 bool          `json:"count,omitempty";`
+	Search                string        `json:"search,omitempty"`
+	Select                string        `json:"select,omitempty"`
+	Top                   int           `json:"top,omitempty"`
+	VectorQueries         []VectorQuery `json:"vectorQueries,omitempty"`
+	OrderBy               string        `json:"orderby,omitempty"`
+	Filter                string        `json:"filter,omitempty"`
+	QueryType             string        `json:"queryType,omitempty"`
+	SemanticConfiguration string        `json:"semanticConfiguration,omitempty"`
+	Captions              string        `json:"captions,omitempty"`
+	Answers               string        `json:"answers,omitempty"`
+	QueryLanguage         string        `json:"queryLanguage,omitempty"`
 }
 
 type VectorQuery struct {
@@ -47,6 +47,9 @@ type Index struct {
 }
 
 func GetIndexLink(chunk Index) string {
+	if strings.HasPrefix(chunk.Title, "version-release-notes-index") {
+		return "Please reference link from document content"
+	}
 	path := strings.Join(strings.Split(chunk.Title, "#"), "/")
 	path = strings.TrimSuffix(path, ".md")
 	path = strings.TrimSuffix(path, ".mdx")

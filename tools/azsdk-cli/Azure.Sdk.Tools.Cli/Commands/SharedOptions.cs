@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false,
         };
 
-        public static List<string> GetToolsFromArgs(string[] args)
+        public static string[] GetToolsFromArgs(string[] args)
         {
             var root = new RootCommand
             {
@@ -27,12 +27,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             var raw = result.GetValueForOption(ToolOption);
             if (string.IsNullOrWhiteSpace(raw))
-                return new List<string>();
+                return new string[] { };
 
             return raw
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => s.ToLowerInvariant())
-                .ToList();
+                .ToArray();
         }
 
 
@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var toolMatchList = SharedOptions.GetToolsFromArgs(args);
             List<Type> toolsList;
 
-            if (toolMatchList.Count > 0)
+            if (toolMatchList.Length > 0)
             {
                 toolsList = AppDomain.CurrentDomain
                              .GetAssemblies()

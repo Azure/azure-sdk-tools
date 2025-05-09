@@ -25,7 +25,7 @@ done
 if [[ "$DEPLOY_MODE" == "prod" ]]; then
     echo "Performing slot swap to deploy to production..."
     # Swap the deployment slot with production
-    az webapp deployment slot swap --resource-group ${RESOURCE_GROUP} --name ${APP_NAME} --slot ${APP_SLOT_NAME} --target-slot ${APP_NAME}
+    az webapp deployment slot swap --resource-group ${RESOURCE_GROUP} --name ${APP_NAME} --slot ${APP_SLOT_NAME}
     echo "Production deployment completed successfully!"
     exit 0
 fi

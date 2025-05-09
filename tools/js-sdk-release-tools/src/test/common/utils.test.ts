@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { resolveOptions } from "../../common/utils.js";
+import { resolveOptions, updateApiVersionInTspConfig } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
+import * as fs from "fs";
 
 describe("resolveOptions", () => {
     test("loads config at the given path", async () => {
@@ -29,6 +30,23 @@ describe("resolveOptions", () => {
         strictEqual(
             options.configFile.parameters?.["service-dir"]?.default,
             "sdk/informaticadatamanagement",
+        );
+    });
+});
+
+describe("updateApiVersionInTspConfig", () => {
+    test("Updated API version into tspconfig.yaml ", () => {
+        const typeSpecDirectory = path.join(__dirname, "tsp");
+        const expectedVersion = "2023-10-01";
+        updateApiVersionInTspConfig(typeSpecDirectory, expectedVersion);
+        const data: string = fs.readFileSync(path.join(typeSpecDirectory, 'tspconfig.yaml'), 'utf8');
+        expect(data.includes(`api-version: '${expectedVersion}'`)).toBe(true);
+    });
+    test("not found tspconfig.yaml ", () => {
+        const typeSpecDirectory = path.join(__dirname);
+        const expectedVersion = "2023-10-01";
+        expect(() => updateApiVersionInTspConfig(typeSpecDirectory, expectedVersion)).toThrow(
+            "tspconfig.yaml not found at path:"
         );
     });
 });

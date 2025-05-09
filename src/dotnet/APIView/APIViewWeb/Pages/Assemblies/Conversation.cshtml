@@ -6,7 +6,7 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = "Conversation";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
 }
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">

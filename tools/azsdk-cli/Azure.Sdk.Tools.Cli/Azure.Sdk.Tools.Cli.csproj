@@ -8,6 +8,7 @@
     <IsPackable>true</IsPackable>
     <ToolCommandName>azsdk-cli</ToolCommandName>
     <NoWarn>ASP0000;CS8603;CS8618</NoWarn>
+    <AssemblyName>azsdk-cli</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

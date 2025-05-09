@@ -3,9 +3,6 @@ using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.Cli.Commands;
-using ModelContextProtocol.Server;
-using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {

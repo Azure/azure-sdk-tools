@@ -8,6 +8,7 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
+import { updateApiVersionInTspConfig } from "./common/utils.js";
 
 import shell from 'shelljs';
 import fs from 'fs';
@@ -59,9 +60,14 @@ async function automationGenerateInPipeline(
                 });
                 break;
             case SDKType.RestLevelClient:
+                const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
+                if (typespecProject && !skipGeneration && sdkGenerationType !== "command") {                    
+                    const tspDefDir = path.join(swaggerRepo, typespecProject);
+                    updateApiVersionInTspConfig(tspDefDir, apiVersion);                       
+                }
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
-                    swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
+                    swaggerRepo: swaggerRepo,
                     readmeMd: readmeMd,
                     typespecProject: typespecProject,
                     autorestConfig,
@@ -80,6 +86,7 @@ async function automationGenerateInPipeline(
 
             case SDKType.ModularClient: {
                 const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
+                updateApiVersionInTspConfig(typeSpecDirectory, apiVersion);
                 const sdkRepoRoot = String(shell.pwd()).replaceAll('\\', '/');
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
@@ -95,7 +102,7 @@ async function automationGenerateInPipeline(
                     versionPolicyName: 'management',
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
-                };
+                };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;

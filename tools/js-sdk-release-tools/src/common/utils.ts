@@ -299,12 +299,13 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
     return options
 }
 
-export function updateApiVersionInTspConfig(tspConfigPath: string, apiVersion?: string) {
+export function updateApiVersionInTspConfig(typeSpecDirectory: string, apiVersion?: string) {
     if (!apiVersion || apiVersion === '') {
         logger.warn(`No apiVersion provided, skipping update to tspconfig.yaml.`);
         return;
     }
     
+    const tspConfigPath = path.join(typeSpecDirectory, 'tspconfig.yaml');
     if (!fs.existsSync(tspConfigPath)) {
         throw new Error(`tspconfig.yaml not found at path: ${tspConfigPath}`);
     }

@@ -9,15 +9,20 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.TestResults.WebApi;
-using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.VisualStudio.Services.OAuth;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Core;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 
 [McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFactory azureAgentServiceFactory, ILogger<AzurePipelinesTool> logger) : MCPTool
+public class AzurePipelinesTool(
+    IAzureService azureService,
+    IAzureAgentServiceFactory azureAgentServiceFactory,
+    IResponseService responseService,
+    ILogger<AzurePipelinesTool> logger) : MCPTool
 {
     public string? project;
 
@@ -25,6 +30,7 @@ public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFa
     private TestResultsHttpClient testClient;
     private readonly IAzureService azureService = azureService;
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory = azureAgentServiceFactory;
+    private readonly IResponseService responseService = responseService;
     private readonly ILogger<AzurePipelinesTool> logger = logger;
     private readonly Boolean initialized = false;
 
@@ -222,7 +228,13 @@ public class AzurePipelinesTool(IAzureService azureService, IAzureAgentServiceFa
         var (response, usage) = await aiAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
         usage.LogCost();
 
-        return response;
+        return responseService.RespondFromJson<LogAnalysisResponse>(response);
+    }
+
+    [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]
+    public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null)
+    {
+        return await AnalyzePipelineFailureLog(buildId, logId, project, null, null);
     }
 
     public bool IsTestStep(string stepName)

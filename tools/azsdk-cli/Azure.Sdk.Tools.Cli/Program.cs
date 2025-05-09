@@ -39,7 +39,7 @@ public class Program
         {
             consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
         });
-        
+
         // register common services
         ServiceRegistrations.RegisterCommonServices(builder.Services);
 
@@ -50,13 +50,28 @@ public class Program
             l.SetMinimumLevel(LogLevel.Information);
         });
 
-        if (isCLI)
+        if (!isCLI)
         {
-            // todo: register the command line formatter
+            var formatter = new McpFormatter() as ICommandFormatter;
+            builder.Services.AddSingleton<IResponseService>(new ResponseService(formatter));
         }
         else
         {
-            // todo: register the server formatter
+            var outputFormat = SharedOptions.GetOutputFormat(args);
+            if (outputFormat == "plain")
+            {
+                var formatter = new PlainTextFormatter() as ICommandFormatter;
+                builder.Services.AddSingleton<IResponseService>(new ResponseService(formatter));
+            }
+            else if (outputFormat == "json")
+            {
+                var formatter = new JsonFormatter() as ICommandFormatter;
+                builder.Services.AddSingleton<IResponseService>(new ResponseService(formatter));
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
+            }
         }
 
         var toolTypes = SharedOptions.GetFilteredToolTypes(args);

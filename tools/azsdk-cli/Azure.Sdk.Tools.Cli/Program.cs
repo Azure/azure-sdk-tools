@@ -10,18 +10,8 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        var services = new ServiceCollection();
-        services.AddLogging(builder =>
-        {
-            builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Information);
-        });
-        services.AddSingleton<CommandFactory>();
-        ServiceRegistrations.RegisterCommonServices(services);
-
-        var serviceProvider = services.BuildServiceProvider();
-        var commandFactory = serviceProvider.GetRequiredService<CommandFactory>();
-        var rootCommand = commandFactory.CreateRootCommand(args);
+        ServerApp = CreateAppBuilder(args).Build();
+        var rootCommand = CommandFactory.CreateRootCommand(args, ServerApp.Services);
 
         var parsedCommands = new CommandLineBuilder(rootCommand)
                .UseDefaults()            // adds help, version, error reporting, suggestions…
@@ -29,5 +19,63 @@ public class Program
                .Build();
 
         return await parsedCommands.InvokeAsync(args);
+    }
+
+    public static bool IsCLI(string[] args) => !args.Select(x => x.Trim().ToLowerInvariant()).Any(x => x == "start");
+
+    public static WebApplication ServerApp;
+
+    public static WebApplicationBuilder CreateAppBuilder(string[] args)
+    {
+        var tools = SharedOptions.GetToolsFromArgs(args);
+        var isCLI = IsCLI(args);
+
+        // Any args that ASP.NET doesn't recognize will be _ignored_ by the CreateBuilder, so we don't need to ONLY
+        // pass unmatched ASP.NET config values like --ASPNET_URLS to the builder. It'll just quietly ignore everything
+        // it doesn't recognize.
+        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+        builder.Logging.AddConsole(consoleLogOptions =>
+        {
+            consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
+        });
+        
+        // register common services
+        ServiceRegistrations.RegisterCommonServices(builder.Services);
+
+        // add the console logger
+        builder.Services.AddLogging(l =>
+        {
+            l.AddConsole();
+            l.SetMinimumLevel(LogLevel.Information);
+        });
+
+        if (isCLI)
+        {
+            // register the command line formatter
+        }
+        else
+        {
+            // register the server formatter
+        }
+
+        if (tools.Length == 0)
+        {
+            builder.Services
+                .AddMcpServer()
+                .WithStdioServerTransport()
+                .WithToolsFromAssembly();
+        }
+        else
+        {
+            var toolTypes = SharedOptions.GetFilteredToolTypes(tools);
+
+            builder.Services
+                .AddMcpServer()
+                .WithStdioServerTransport()
+                .WithTools(toolTypes);
+        }
+
+        return builder;
     }
 }

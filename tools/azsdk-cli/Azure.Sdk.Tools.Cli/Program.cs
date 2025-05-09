@@ -27,7 +27,6 @@ public class Program
 
     public static WebApplicationBuilder CreateAppBuilder(string[] args)
     {
-        var tools = SharedOptions.GetToolsFromArgs(args);
         var isCLI = IsCLI(args);
 
         // Any args that ASP.NET doesn't recognize will be _ignored_ by the CreateBuilder, so we don't need to ONLY
@@ -59,7 +58,8 @@ public class Program
             // register the server formatter
         }
 
-        if (tools.Length == 0)
+        var toolTypes = SharedOptions.GetFilteredToolTypes(args);
+        if (toolTypes.Count == 0)
         {
             builder.Services
                 .AddMcpServer()
@@ -68,7 +68,6 @@ public class Program
         }
         else
         {
-            var toolTypes = SharedOptions.GetFilteredToolTypes(tools);
 
             builder.Services
                 .AddMcpServer()

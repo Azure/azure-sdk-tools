@@ -17,7 +17,6 @@ export async function generateTypeScriptCodeFromTypeSpec(
     packageDirectory: string
 ): Promise<void> {    
     const tspConfigPath = join(options.typeSpecDirectory, 'tspconfig.yaml');
-    logger.info(`mlc:tspConfigPath: ${tspConfigPath}`);   
     updateApiVersionInTspConfig(tspConfigPath, options.apiVersion);
     
     logger.info('Start to generate code by tsp-client.');

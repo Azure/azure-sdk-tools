@@ -24,21 +24,30 @@ from ._retry import retry_with_backoff
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
-# Configure logger to write to project root error.log
-log_file = os.path.join(_PACKAGE_ROOT, "error.log")
+# Configure logger to write to project root error.log and info.log
+error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
+info_log_file = os.path.join(_PACKAGE_ROOT, "info.log")
 
+# Create a unified logger configuration
 logging.basicConfig(
-    filename=log_file,
-    filemode="w",  # overwrite on each run
-    level=logging.ERROR,
+    level=logging.INFO,  # Set the base level to INFO
     format="%(asctime)s - %(levelname)s - %(message)s",
     force=True,
 )
 
-for handler in logging.root.handlers:
-    if isinstance(handler, logging.FileHandler):
-        handler.setLevel(logging.ERROR)
-        handler.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+# Create handlers for error.log and info.log
+error_handler = logging.FileHandler(error_log_file, mode="w")  # Overwrite on each run
+error_handler.setLevel(logging.ERROR)  # Log only ERROR and higher levels
+error_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
+info_handler = logging.FileHandler(info_log_file, mode="w")  # Overwrite on each run
+info_handler.setLevel(logging.INFO)  # Log INFO and higher levels
+info_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
+# Add handlers to the root logger
+root_logger = logging.getLogger()
+root_logger.addHandler(error_handler)
+root_logger.addHandler(info_handler)
 
 # Create module-level logger
 logger = logging.getLogger(__name__)

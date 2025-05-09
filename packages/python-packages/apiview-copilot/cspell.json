@@ -6,7 +6,8 @@
     "**/dist/**",
     "**/build/**",
     "**/.venv/**",
-    "**/__pycache__/**"
+    "**/__pycache__/**",
+    "**/*.env" // Exclude .env files
   ],
   "words": [
     "apiview",
@@ -32,12 +33,11 @@
     "pyenv",
     "reranker",
     "retryable",
+    "SIGALRM",
+    "signum",
     "textvector",
     "tjprescott",
     "vectorizable"
   ],
-  "dictionaries": [
-    "python",
-    "softwareTerms"
-  ]
+  "dictionaries": ["python", "softwareTerms"]
 }

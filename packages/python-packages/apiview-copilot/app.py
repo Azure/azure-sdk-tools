@@ -19,7 +19,7 @@ supported_languages = [
 ]
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-log_file = os.path.join(_PACKAGE_ROOT, "error.log")
+error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 
 
 @app.route("/<language>", methods=["POST"])
@@ -45,8 +45,8 @@ def api_reviewer(language: str):
         reviewer.close()
 
         # check if "error.log" file exists and is not empty
-        if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
-            with open(log_file, "r") as f:
+        if os.path.exists(error_log_file) and os.path.getsize(error_log_file) > 0:
+            with open(error_log_file, "r") as f:
                 error_message = f.read()
                 print(f"Error log:\n{error_message}")
 

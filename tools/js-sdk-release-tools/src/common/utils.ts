@@ -9,7 +9,7 @@ import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
-import { tryCreateLastChangeLog } from './npmUtils.js';
+import { tryCreateLastestChangeLog } from './npmUtils.js';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -149,7 +149,7 @@ export function tryReadNpmPackageChangelog(changelogPath: string, packageFolderP
         if (!fs.existsSync(changelogPath)) {
             logger.warn(`NPM package's changelog '${changelogPath}' does not exist.`);
             if (packageFolderPath && packageName && version) {
-                tryCreateLastChangeLog(packageFolderPath, packageName, version, changelogPath);
+                tryCreateLastestChangeLog(packageFolderPath, packageName, version, changelogPath);
             }
             else {
                 return ""

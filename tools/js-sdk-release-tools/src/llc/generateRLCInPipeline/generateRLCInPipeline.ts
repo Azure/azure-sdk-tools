@@ -232,16 +232,16 @@ export async function generateRLCInPipeline(options: {
             }
         }
 
-        logger.info(`Start to update rush.`);
-        execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        logger.info(`Start to update.`);
+        execSync('pnpm install', {stdio: 'inherit'});
         
         await migratePackage(packagePath);
         
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
-        logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
-        execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
+        execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+        logger.info(`Start to run command 'pnpm pack --filter ${packageName}'.`);
+        execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];

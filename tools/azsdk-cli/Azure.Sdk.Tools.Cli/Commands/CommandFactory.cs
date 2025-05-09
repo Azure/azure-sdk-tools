@@ -1,7 +1,5 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
-using System.Reflection;
-using System.IO.Enumeration;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {

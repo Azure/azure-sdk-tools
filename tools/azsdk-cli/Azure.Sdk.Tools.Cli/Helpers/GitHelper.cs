@@ -1,12 +1,5 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
-
-using System;
-using System.Collections.Generic;
 using Azure.Sdk.Tools.Cli.Services;
 using LibGit2Sharp;
-using Microsoft.Extensions.Logging;
 
 
 namespace Azure.Sdk.Tools.Cli.Helpers

@@ -20,9 +20,9 @@ export async function migratePackage(packageDirectory: string): Promise<void> {
         }
     );
 
-    logger.info(`Start to rush update after migration.`);
-    await runCommand(`node`, ['common/scripts/install-run-rush.js', 'update'], runCommandOptions, false);
-    logger.info(`Rush update successfully.`);
+    logger.info(`Start to install dependencies using pnpm after migration.`);
+    await runCommand(`pnpm`, ['install'], runCommandOptions, false);
+    logger.info(`Dependencies installed successfully.`);
 
     logger.info(`Migrated package '${info.name}' successfully`);
 }

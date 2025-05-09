@@ -37,4 +37,4 @@ extends:
                 TopLevelArtifactName: ${{ parameters.ArtifactName }}
                 varDependencies:
                   - key: Tag
-                    value: "latest"
+                    value: "beta"

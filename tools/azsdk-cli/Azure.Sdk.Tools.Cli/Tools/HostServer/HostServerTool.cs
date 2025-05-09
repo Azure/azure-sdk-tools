@@ -29,10 +29,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
         public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var toolsOption = ctx.ParseResult.GetValueForOption<string>(SharedOptions.ToolOption);
-            var tools = toolsOption != null
-                ? toolsOption.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                : new string[] { };
 
             try
             {

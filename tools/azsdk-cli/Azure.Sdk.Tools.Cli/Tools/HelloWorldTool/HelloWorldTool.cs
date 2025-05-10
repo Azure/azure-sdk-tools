@@ -47,13 +47,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
         {
             string input = ctx.ParseResult.GetValueForArgument(_inputArg);
 
-            var result = new CommandResponse()
+            var result = new DefaultCommandResponse()
             {
                 Status = 0,
                 Result = Echo(input)
             };
 
             _logger.LogInformation("Result {result}", result);
+            _logger.LogInformation("{result}", formatter.Format(result));
 
             return 0;
         }

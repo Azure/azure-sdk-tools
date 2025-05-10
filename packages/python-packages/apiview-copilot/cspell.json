@@ -27,6 +27,7 @@
     "jsonify",
     "kristapratico",
     "levelname",
+    "lineterm",
     "loadenv",
     "popleft",
     "prompty",
@@ -37,6 +38,7 @@
     "signum",
     "textvector",
     "tjprescott",
+    "tofile",
     "vectorizable"
   ],
   "dictionaries": ["python", "softwareTerms"]

@@ -15,7 +15,7 @@ def _zip_current_repo(output_filename: str):
     """Zip the current repository."""
     print("Zipping the current repository...")
     folders_to_keep = ["src", "guidelines", "prompts", "metadata"]
-    files_to_keep = ["app.py", "requirements.txt", "startup.sh"]
+    files_to_keep = ["app.py", "requirements.txt"]
     with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for root, _, files in os.walk("."):
             for file in files:

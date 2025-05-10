@@ -6,7 +6,8 @@
     "**/dist/**",
     "**/build/**",
     "**/.venv/**",
-    "**/__pycache__/**"
+    "**/__pycache__/**",
+    "**/*.env" // Exclude .env files
   ],
   "words": [
     "apiview",
@@ -26,18 +27,19 @@
     "jsonify",
     "kristapratico",
     "levelname",
+    "lineterm",
     "loadenv",
     "popleft",
     "prompty",
     "pyenv",
     "reranker",
     "retryable",
+    "SIGALRM",
+    "signum",
     "textvector",
     "tjprescott",
+    "tofile",
     "vectorizable"
   ],
-  "dictionaries": [
-    "python",
-    "softwareTerms"
-  ]
+  "dictionaries": ["python", "softwareTerms"]
 }

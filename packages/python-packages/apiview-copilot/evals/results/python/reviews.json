@@ -40,7 +40,7 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis API provides functionality to analyze images by extracting visual features and metadata. It processes image data\u2014either provided as bytes or via URLs\u2014to generate detailed analysis results that include information such as captions, information on objects, people, text regions, smart crop regions, and tags.\n\n**API Version**  \nThe clients are configured with an `api_version` parameter during initialization. The stub does not specify an explicit latest version, so the desired version must be provided by the consumer.\n\n**Client Classes**  \nThe service exposes two primary client classes: the synchronous `ImageAnalysisClient` in the `azure.ai.vision.imageanalysis` namespace and the asynchronous `ImageAnalysisClient` in the `azure.ai.vision.imageanalysis.aio` namespace. Both classes offer equivalent functionality, differing only in their approach to synchronous versus asynchronous execution.\n\n**Functional Overview**  \nThe clients enable operations that can be understood as a read process: they accept image data or image URLs along with parameters to fine-tune the analysis. The functionality includes sending analysis requests that return processed results, handling low-level HTTP requests if needed, and managing connection lifecycles. These operations focus on retrieving (read) analytical data from images rather than full CRUD operations.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nService Purpose  \nThis API provides image analysis capabilities. It enables clients to analyze images provided as raw binary data or accessible via a URL. The analysis extracts visual features such as captions, dense captions, object detection, people detection, text recognition, smart cropping suggestions, and tagging.\n\nAPI Version  \nThe service allows the client to specify the API version through an `api_version` parameter in the client\u2019s initialization. There is no separate API Version object provided; the version is determined by the string supplied at construction.\n\nClient Classes  \nThe primary classes are the synchronous `ImageAnalysisClient` from the azure.ai.vision.imageanalysis namespace and the asynchronous `ImageAnalysisClient` from the azure.ai.vision.imageanalysis.aio namespace. The synchronous client exposes the methods `analyze`, `analyze_from_url`, `close`, and `send_request`. The asynchronous client similarly includes `analyze`, `analyze_from_url`, `close`, and `send_request`.\n\nModel Classes  \nThe API also includes a range of models in the azure.ai.vision.imageanalysis.models namespace. These include classes such as `CaptionResult`, `CropRegion`, `DenseCaption`, `DenseCaptionsResult`, `DetectedTextBlock`, `DetectedTextLine`, `DetectedTextWord`, `ImageAnalysisResult`, `ImageBoundingBox`, `ImageMetadata`, `ImagePoint`, `ObjectsResult`, `PeopleResult`, `ReadResult`, `SmartCropsResult`, and `TagsResult`, along with the `VisualFeatures` enum. These model classes define the structures used to convey details of image metadata and analysis outcomes.",
                     "source": "summary"
                 },
                 {
@@ -50,8 +50,16 @@
                     "line_no": 10,
                     "bad_code": "connection_string: Optional[str] = None,",
                     "suggestion": null,
-                    "comment": "The synchronous client constructor should not accept a connection string parameter. Instead, provide a separate from_connection_string factory method.",
+                    "comment": "The constructor should not accept a connection_string parameter. Instead, a from_connection_string factory method should be provided.",
                     "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 171,
+                    "bad_code": "    ivar list: List[DenseCaption]",
+                    "suggestion": "    ivar captions: List[DenseCaption]",
+                    "comment": "Rename the 'list' attribute to avoid shadowing the built\u2011in list type and improve clarity.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -60,14 +68,14 @@
                     "line_no": 382,
                     "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
                     "suggestion": null,
-                    "comment": "Models should not be duplicated in the aio namespace; PeopleResult must be defined only once in the shared models namespace.",
+                    "comment": "Models should not be duplicated in the async namespace; PeopleResult should be defined only once in the shared models module.",
                     "source": "guideline"
                 }
             ]
         },
         "expected_comments": 2,
-        "comments_found": 2,
-        "valid_generic_comments": 0,
+        "comments_found": 3,
+        "valid_generic_comments": 1,
         "invalid_generic_comments": [],
         "true_positives": 2,
         "false_positives": 0,
@@ -78,7 +86,7 @@
         "fuzzy_matches": 0,
         "similarity": 4,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE accurately and completely reflects all essential information from the CONTEXT without adding or omitting anything.",
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately reflecting both guidelines without adding or omitting information.",
         "overall_score": 97
     },
     {
@@ -198,24 +206,38 @@
         "actual": {
             "comments": [
                 {
+                    "rule_ids": [],
+                    "line_no": 1,
+                    "bad_code": "",
+                    "suggestion": null,
+                    "comment": "Here is a summary of the service described by this APIView:\n\nService Purpose  \nThis API provides image analysis capabilities by processing images supplied either as raw bytes or via URLs. It supports extraction of visual features such as captions, dense captions, object detection, people detection, text extraction, smart crop suggestions, and tags. The service is designed for use with context management and offers both synchronous and asynchronous methods to interact with image analysis functionalities.\n\nAPI Version  \nThere is no distinct API version object provided. The clients accept an `api_version` parameter that allows users to specify the target version of the service.\n\nPrimary Client Classes  \nThe API exposes the `ImageAnalysisClient` class with methods `analyze`, `analyze_from_url`, `close`, and `send_request`. Its asynchronous counterpart, `AsyncImageAnalysisClient`, provides similar functionalities through methods `analyze`, `analyze_from_url`, `close`, and `send_request`.\n\nSupporting Models and Enums  \nThe API includes a range of model classes defined in the `azure.ai.vision.imageanalysis.models` namespace. These classes represent components of the image analysis results such as `CaptionResult`, `CropRegion`, `DenseCaption`, `DenseCaptionsResult`, `DetectedObject`, `detectedPerson`, `DetectedTag`, `DetectedTextBlock`, `DetectedTextLine`, `DetectedTextWord`, `ImageAnalysisResult`, `ImageBoundingBox`, `ImageMetadata`, `ImagePoint`, `ObjectsResult`, `PeopleResult`, `ReadResult`, `SmartCropsResult`, and `TagsResult`. In addition, the `VisualFeatures` enumeration specifies available analysis options including caption, dense captions, objects, people, read, smart crops, and tags.",
+                    "source": "summary"
+                },
+                {
                     "rule_ids": [
                         "python_design.html#python-client-connection-string"
                     ],
                     "line_no": 10,
-                    "bad_code": "connection_string: Optional[str] = None",
-                    "suggestion": "def __init__(self, endpoint: str, credential: Union[AzureKeyCredential, TokenCredential], *, api_version: str = ..., **kwargs: Any) -> None",
-                    "comment": "The client constructor must not accept a connection string. Instead, provide a separate from_connection_string factory method.",
+                    "bad_code": "connection_string: Optional[str] = None,",
+                    "suggestion": null,
+                    "comment": "The constructor must not accept a connection string; instead, provide a separate from_connection_string factory method.",
                     "source": "guideline"
                 },
                 {
-                    "rule_ids": [
-                        "python_implementation.html#python-codestyle-kwargs"
-                    ],
-                    "line_no": 30,
-                    "bad_code": "def analyze_from_url(",
-                    "suggestion": "def analyze_from_url(self, image_url: str, visual_features: List[VisualFeatures], *, gender_neutral_caption: Optional[bool] = ..., language: Optional[str] = ..., model_version: Optional[str] = ..., smart_crops_aspect_ratios: Optional[List[float]] = ..., **kwargs: Any) -> ImageAnalysisResult",
-                    "comment": "Optional parameters should be keyword-only. Insert a '*' after the required parameters to enforce keyword-only arguments.",
-                    "source": "guideline"
+                    "rule_ids": [],
+                    "line_no": 90,
+                    "bad_code": "self,",
+                    "suggestion": null,
+                    "comment": "Static methods should not include 'self' in their parameter list; remove it from the signature.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 168,
+                    "bad_code": "ivar list: List[DenseCaption]",
+                    "suggestion": "ivar captions: List[DenseCaption]",
+                    "comment": "Avoid using built-in names like 'list' for attributes; choose a more descriptive name such as 'captions' to improve clarity.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -224,36 +246,78 @@
                     "line_no": 209,
                     "bad_code": "class azure.ai.vision.imageanalysis.models.detectedPerson(MutableMapping[str, Any]):",
                     "suggestion": "class azure.ai.vision.imageanalysis.models.DetectedPerson(MutableMapping[str, Any]):",
-                    "comment": "Type names must use PascalCase. Rename detectedPerson to DetectedPerson.",
-                    "source": "guideline"
+                    "comment": "Class names should use PascalCase (CapWords) as per naming conventions; rename 'detectedPerson' to 'DetectedPerson'.",
+                    "source": "merged"
                 },
                 {
-                    "rule_ids": [
-                        "python_implementation.html#python-codestyle-properties"
-                    ],
+                    "rule_ids": [],
                     "line_no": 411,
                     "bad_code": "def get_result(self) -> ObjectsResult",
                     "suggestion": "def result(self) -> ObjectsResult",
-                    "comment": "Avoid simple getter methods; use a property instead to expose the result.",
+                    "comment": "Consider replacing the getter method with a property to provide a more idiomatic Python interface.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-async"
+                    ],
+                    "line_no": 432,
+                    "bad_code": "class azure.ai.vision.imageanalysis.models.aio.PeopleResult(MutableMapping[str, Any]):",
+                    "suggestion": "class azure.ai.vision.imageanalysis.models.PeopleResult(MutableMapping[str, Any]):",
+                    "comment": "Models should not be duplicated in the aio namespace; PeopleResult should reside in the shared models package.",
                     "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 492,
+                    "bad_code": "ivar list: List[DetectedTag]",
+                    "suggestion": "ivar detected_tags: List[DetectedTag]",
+                    "comment": "Rename the instance variable to avoid shadowing the built-in 'list'.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 498,
+                    "bad_code": "list: List[DetectedTag]",
+                    "suggestion": "detected_tags: List[DetectedTag]",
+                    "comment": "Rename the parameter to avoid using a built-in name and improve clarity.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 504,
+                    "bad_code": "def __init__(self, *args: Any, **kwargs: Any) -> None",
+                    "suggestion": null,
+                    "comment": "Using *args and **kwargs hides the intended signature. Consider explicitly declaring parameters if possible.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-models-enum-name-uppercase"
+                    ],
+                    "line_no": 517,
+                    "bad_code": "tags = 'tags'",
+                    "suggestion": "TAGS = 'tags'",
+                    "comment": "Enum member names should be uppercase to ensure consistency and adhere to naming conventions.",
+                    "source": "merged"
                 }
             ]
         },
         "expected_comments": 10,
-        "comments_found": 4,
-        "valid_generic_comments": 0,
+        "comments_found": 10,
+        "valid_generic_comments": 6,
         "invalid_generic_comments": [],
-        "true_positives": 3,
-        "false_positives": 1,
-        "false_negatives": 7,
-        "percent_coverage": 30.0,
+        "true_positives": 4,
+        "false_positives": 0,
+        "false_negatives": 6,
+        "percent_coverage": 40.0,
         "rule_matches_wrong_line": 0,
         "wrong_line_details": [],
         "fuzzy_matches": 0,
         "similarity": 3,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately reflecting the guidelines and providing precise, relevant suggestions without omissions or unsupported additions.",
-        "overall_score": 38
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately reflecting the guidelines and providing precise, relevant feedback for each rule without adding or omitting information.",
+        "overall_score": 53
     },
     {
         "testcase": "small_apiview_no_violations",
@@ -261,14 +325,73 @@
             "comments": []
         },
         "actual": {
-            "comments": []
+            "comments": [
+                {
+                    "rule_ids": [],
+                    "line_no": 1,
+                    "bad_code": "",
+                    "suggestion": null,
+                    "comment": "Here is a summary of the service described by this APIView:\n\nThis API provides image analysis functionality, enabling users to submit images either as raw binary data or via URLs. The service analyzes the images to extract visual features such as captions, dense captions, objects, people, read text, smart crops, and tags. It supports operations that return detailed analysis results including bounding boxes, metadata, and detected text information.\n\nThe API constructor for the client classes accepts an `api_version` parameter, though there is no dedicated API Version object explicitly defined. The clients rely on this parameter to work with a particular API release.\n\nThe primary client classes of interest are `azure.ai.vision.imageanalysis.ImageAnalysisClient` and `azure.ai.vision.imageanalysis.aio.ImageAnalysisClient`. The synchronous client exposes methods `analyze`, `analyze_from_url`, `close`, and `send_request`. The asynchronous client similarly provides methods `analyze`, `analyze_from_url`, `close`, and `send_request`.\n\nIn addition, the API includes multiple model classes under the `azure.ai.vision.imageanalysis.models` namespace. These models represent the structure of results from image analysis operations, such as `ImageAnalysisResult`, `DenseCaptionsResult`, `DetectedTextBlock`, `ImageBoundingBox`, and others. The `VisualFeatures` enumeration defines the valid feature types that can be requested during analysis.",
+                    "source": "summary"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 170,
+                    "bad_code": "ivar list: List[DenseCaption]",
+                    "suggestion": "ivar captions: List[DenseCaption]",
+                    "comment": "Rename 'list' to 'captions' to avoid overshadowing the built-in list and to be more descriptive.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 362,
+                    "bad_code": "ivar list: List[DetectedObject]",
+                    "suggestion": "ivar objects: List[DetectedObject]",
+                    "comment": "Rename the attribute from 'list' to 'objects' for clarity and to prevent conflicts with built-in names.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 382,
+                    "bad_code": "ivar list: List[DetectedPerson]",
+                    "suggestion": "ivar people: List[DetectedPerson]",
+                    "comment": "Rename 'list' to 'people' to improve readability and avoid shadowing the built-in type.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 422,
+                    "bad_code": "ivar list: List[CropRegion]",
+                    "suggestion": "ivar smart_crops: List[CropRegion]",
+                    "comment": "Use a more descriptive name like 'smart_crops' instead of 'list' to reflect the content and avoid name conflicts.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 441,
+                    "bad_code": "ivar list: List[DetectedTag]",
+                    "suggestion": "ivar tags: List[DetectedTag]",
+                    "comment": "Rename 'list' to 'tags' to prevent overshadowing the built-in and enhance clarity.",
+                    "source": "generic"
+                }
+            ]
         },
         "expected_comments": 0,
-        "comments_found": 0,
-        "valid_generic_comments": 0,
-        "invalid_generic_comments": [],
+        "comments_found": 5,
+        "valid_generic_comments": 4,
+        "invalid_generic_comments": [
+            {
+                "rule_ids": [],
+                "line_no": 382,
+                "bad_code": "ivar list: List[DetectedPerson]",
+                "suggestion": "ivar people: List[DetectedPerson]",
+                "comment": "Rename 'list' to 'people' to improve readability and avoid shadowing the built-in type.",
+                "source": "generic",
+                "valid": false
+            }
+        ],
         "true_positives": 0,
-        "false_positives": 0,
+        "false_positives": 1,
         "false_negatives": 0,
         "percent_coverage": 0.0,
         "rule_matches_wrong_line": 0,
@@ -277,7 +400,7 @@
         "similarity": 0,
         "groundedness": 0,
         "groundedness_reason": "No comments found.",
-        "overall_score": 100.0
+        "overall_score": 0.0
     },
     {
         "testcase": "small_apiview_multiple_same_violations",
@@ -340,14 +463,22 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis service provides comprehensive image analysis capabilities. It processes input images\u2014either supplied as raw bytes or via a URL\u2014to extract a range of visual insights and metadata.\n\n**API Version**  \nThe clients accept an optional `api_version` parameter during initialization. Although an explicit API version object is not defined in the APIView, this parameter allows users to specify the service version they wish to interact with.\n\n**Client Classes**  \nThe API offers two primary client classes: a synchronous `ImageAnalysisClient` in the main namespace and an asynchronous `ImageAnalysisClient` in the async namespace. Both clients deliver equivalent functionality, tailored to different runtime environments.\n\n**Functional Overview**  \nEach client class enables image processing by analyzing visual features specified through a list of options. The operations include generating descriptive captions (with gender neutrality options), extracting detailed region captions, detecting objects and people, performing optical character recognition, suggesting smart crop regions based on aspect ratios, and identifying relevant tags. Distributed tracing is integrated into these operations, and the clients support context management for clean resource handling. Additionally, a lower-level request-sending facility is provided for scenarios that require more granular control over HTTP interactions, with results consolidated into an image analysis response object.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nOverview:  \nThis API provides image analysis capabilities, enabling users to process images provided as raw bytes or via URLs. The service supports extraction of numerous visual features, including captioning, dense captioning, object detection, people detection, text recognition, smart cropping, and tag assignment. The analysis results are encapsulated in detailed models that describe captions, bounding box information, dense captions, recognized texts, and other image properties.\n\nAPI Version:  \nAn API version is accepted through the `api_version` parameter in the client initializers; however, no separate API Version object is explicitly defined within the APIView.\n\nClient Classes:  \nThe service exposes a synchronous `ImageAnalysisClient` in the primary namespace and an asynchronous `ImageAnalysisClient` in the `aio` namespace. The synchronous client offers the methods `analyze`, `analyze_from_url`, `close`, and `send_request`. The asynchronous client provides the corresponding methods `analyze`, `analyze_from_url`, `close`, and `send_request`.\n\nModel Classes:  \nA range of model classes defines the structure of the image analysis responses. These include models for representing captions (`CaptionResult`), dense captions (`DenseCaption` and `DenseCaptionsResult`), cropping regions (`CropRegion`), detected texts (`DetectedTextBlock`, `DetectedTextLine`, and `DetectedTextWord`), as well as models for image metadata (`ImageMetadata` and `ImageBoundingBox`), objects (`ObjectsResult`), people (`PeopleResult`), read results (`ReadResult`), smart crops (`SmartCropsResult`), and tags (`TagsResult`). Additionally, the `VisualFeatures` enumeration lists the supported feature types such as caption, dense captions, objects, people, read, smart crops, and tags.\n\nAdditional Details:  \nThe client classes are designed for context management and incorporate distributed tracing for both synchronous and asynchronous operations. These capabilities, alongside the tightly integrated data models, support diverse image analysis scenarios and facilitate customized feature extraction workflows.",
                     "source": "summary"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 166,
+                    "bad_code": "ivar list: List[DenseCaption]",
+                    "suggestion": "ivar items: List[DenseCaption]",
+                    "comment": "Rename the attribute from 'list' to 'items' to avoid shadowing the built-in and improve clarity.",
+                    "source": "generic"
                 }
             ]
         },
         "expected_comments": 4,
-        "comments_found": 0,
-        "valid_generic_comments": 0,
+        "comments_found": 1,
+        "valid_generic_comments": 1,
         "invalid_generic_comments": [],
         "true_positives": 0,
         "false_positives": 0,
@@ -402,18 +533,8 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThe API provides a service that processes patient clinical data to generate clinical trial matching results. It ingests detailed patient records and related healthcare information and utilizes advanced inference mechanisms to determine appropriate clinical trial opportunities based on clinical documents, demographics, and evidentiary data.\n\n**API Version**  \nThe clients accept an `api_version` parameter during initialization, allowing configuration of the service version. There is no separate version object explicitly enumerated; the latest version is effectively determined by the default or provided parameter value.\n\n**Client Classes**  \nThe service exposes two principal client classes, namely `ClinicalMatchingClient` and `ClinicalMatchingAsyncClient`. Both clients offer equivalent functionality with the former using a synchronous approach and the latter designed for asynchronous operations.\n\n**Functional Overview**  \nThe clients support initiating a trial matching process that works as a long-running operation. This process accepts trial matching input in various forms, including structured data and streamable content, and returns inferences about clinical trial eligibility. They also incorporate context management to handle resource cleanup, low-level HTTP communication capabilities, and distributed tracing support to monitor request flows. Overall, the API facilitates a workflow where healthcare data is analyzed to furnish clinical trial match results rather than performing conventional CRUD operations.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nOverview  \nThe API provides a service for clinical trial matching as part of the Azure HealthInsights offering. It accepts clinical data such as patient records, clinical documents, and demographic information and processes trial matching requests. The design includes support for long-running operations and distributed tracing, allowing users to initiate, monitor, and retrieve results for clinical trial matching jobs.\n\nAPI Version  \nBoth the synchronous and asynchronous client classes accept an `api_version` string parameter during initialization. No standalone API version object is defined in this view and no explicit latest version is provided.\n\nClient Classes  \nThe service exposes a synchronous client, `ClinicalMatchingClient`, and its asynchronous counterpart, `ClinicalMatchingAsyncClient`. The `ClinicalMatchingClient` offers methods such as `__init__`, `begin_match_trials`, `close`, and `send_request`. Similarly, the `ClinicalMatchingAsyncClient` provides `__init__`, `begin_match_trials`, `close`, and `send_request`.\n\nOther Classes and Models  \nBeyond the client classes, the API defines a credential class, `HealthInsightsKeyCredential`, for authentication purposes. In addition, a wide range of model classes is provided under the models namespace. These models cover aspects such as accepted age, age ranges, geographic areas, clinical coded elements, various clinical trial details and metadata, patient records, document content, error handling, and trial matching results. Enumerations are also defined for units of age, document types, clinical document types, clinical trial phases, purposes and recruitment statuses, among other aspects.\n\nOverall, the structure and associated models of this APIaim to support detailed and traceable clinical trial matching workflows while enabling both synchronous and asynchronous interaction patterns.",
                     "source": "summary"
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-namespaces-async"
-                    ],
-                    "line_no": 76,
-                    "bad_code": "namespace azure.healthinsights.clinicalmatching",
-                    "suggestion": "namespace azure.healthinsights.clinicalmatching.aio",
-                    "comment": "Async clients must reside in a sub-namespace with an .aio suffix.",
-                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -421,8 +542,38 @@
                     ],
                     "line_no": 91,
                     "bad_code": "async def begin_match_trials(",
-                    "suggestion": "async def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = \"application/json\", repeatability_first_sent: Optional[datetime] = ..., repeatability_request_id: Optional[str] = ..., **kwargs: Any) -> LROPoller[TrialMatcherResult]",
-                    "comment": "This public async method overload should include complete PEP484 type hints to improve clarity and maintain consistency with type annotation guidelines.",
+                    "suggestion": "async def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = 'application/json', repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]",
+                    "comment": "The async overload is missing required type hints for parameters and the return type. Please provide complete type annotations and default values for clarity and compliance with PEP484.",
+                    "source": "merged"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-pep484"
+                    ],
+                    "line_no": 102,
+                    "bad_code": "async def begin_match_trials(",
+                    "suggestion": "async def begin_match_trials(self, body: JSON, *, content_type: str = 'application/json', repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]:",
+                    "comment": "The async overload definition is missing type annotations for parameters and the return type.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-pep484"
+                    ],
+                    "line_no": 113,
+                    "bad_code": "async def begin_match_trials(",
+                    "suggestion": "async def begin_match_trials(self, body: IO, *, content_type: str = 'application/json', repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]:",
+                    "comment": "The async overload definition is missing type annotations for parameters and the return type.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-pep484"
+                    ],
+                    "line_no": 124,
+                    "bad_code": "async def begin_match_trials(",
+                    "suggestion": "async def begin_match_trials(self, body: Union[TrialMatcherData, JSON, IO], *, content_type: str = 'application/json', continuation_token: Optional[str] = None, polling: Union[bool, PollingMethod] = False, polling_interval: Optional[int] = None, repeatability_first_sent: Optional[datetime] = None, repeatability_request_id: Optional[str] = None, **kwargs: Any) -> LROPoller[TrialMatcherResult]:",
+                    "comment": "The async implementation of begin_match_trials should include full type annotations for all parameters and the return type, and provide explicit default values as appropriate, to comply with PEP484 and improve code clarity.",
                     "source": "merged"
                 },
                 {
@@ -430,26 +581,60 @@
                     "line_no": 502,
                     "bad_code": "PATIENT_REGISTRIES = \"patientRegistries\"",
                     "suggestion": "PATIENT_REGISTRIES = \"patient_registries\"",
-                    "comment": "Use a consistent naming convention for string values in constants.",
+                    "comment": "Constant string values should follow a consistent snake_case style to match Python conventions.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 522,
+                    "bad_code": "    *args: Any,",
+                    "suggestion": "    mapping: Optional[Mapping[str, Any]] = None,",
+                    "comment": "Replacing *args with an explicit 'mapping' parameter improves readability and type inference.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 580,
+                    "bad_code": "    FHIR_BUNDLE = \"fhirBundle\"",
+                    "suggestion": "    FHIR_BUNDLE = \"fhir_bundle\"",
+                    "comment": "Enum member values should use a consistent snake_case style to align with Python naming conventions.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 728,
+                    "bad_code": "    PARTIALLY_COMPLETED = \"partiallyCompleted\"",
+                    "suggestion": "    PARTIALLY_COMPLETED = \"partially_completed\"",
+                    "comment": "Ensure enum strings follow a consistent naming scheme (e.g. snake_case) unless dictated by external requirements.",
                     "source": "generic"
                 }
             ]
         },
         "expected_comments": 2,
-        "comments_found": 3,
-        "valid_generic_comments": 1,
-        "invalid_generic_comments": [],
+        "comments_found": 8,
+        "valid_generic_comments": 3,
+        "invalid_generic_comments": [
+            {
+                "rule_ids": [],
+                "line_no": 522,
+                "bad_code": "    *args: Any,",
+                "suggestion": "    mapping: Optional[Mapping[str, Any]] = None,",
+                "comment": "Replacing *args with an explicit 'mapping' parameter improves readability and type inference.",
+                "source": "generic",
+                "valid": false
+            }
+        ],
         "true_positives": 1,
-        "false_positives": 1,
+        "false_positives": 4,
         "false_negatives": 1,
         "percent_coverage": 50.0,
         "rule_matches_wrong_line": 0,
         "wrong_line_details": [],
         "fuzzy_matches": 0,
-        "similarity": 3,
-        "groundedness": 5,
-        "groundedness_reason": "The response is fully grounded in the context, accurately reflecting both the namespace and type hinting guidelines without adding or omitting information.",
-        "overall_score": 50
+        "similarity": 2,
+        "groundedness": 4,
+        "groundedness_reason": "The RESPONSE accurately addresses the PEP484 type hint rule but omits the client naming convention rule, making it incomplete.",
+        "overall_score": 38
     },
     {
         "testcase": "medium_apiview_many_violations",
@@ -593,7 +778,7 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis API provides a clinical trial matching service that accepts patient records and configuration data to evaluate trial eligibility. The service processes clinical matching requests using long running operations and returns trial match results along with associated inferences and details.\n\n**API Version**  \nThe clients accept an `api_version` parameter during initialization. No specific latest version is explicitly provided in the APIView.\n\n**Client Classes**  \nThe service exposes both a synchronous client\u2014`ClinicalMatching`\u2014and an asynchronous client\u2014`ClinicalMatchingClient`. Both classes offer equivalent functionality for interacting with the clinical trial matching operations.\n\n**Functional Overview**  \nThe clients provide functionality that covers key CRUD operations. They enable clients to submit trial matching requests (create), retrieve trial matching results (read), and delete trials as needed (delete). In addition, the operations use long running pollers for asynchronous processing, and both clients include a method for sending low-level HTTP requests if custom behavior is required.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nPurpose  \nThis API offers clinical trial matching functionality. It accepts patient and clinical document data to find relevant clinical trials, supporting both trial creation and matching operations. The service is built to handle long-running operations and includes facilities for distributed tracing.\n\nAPI Version  \nBoth the synchronous and asynchronous client classes accept an `api_version` parameter during initialization. No dedicated API version object is defined, and the latest version is not explicitly stated in this view.\n\nClient Classes  \nThe primary client classes are the synchronous `ClinicalMatching` and the asynchronous `ClinicalMatchingClient`. Their methods include:  \n`__init__`, `begin_match_trials`, `create_trials`, `trials`, `erase_trials`, `close`, and `send_request`.\n\nAdditional Classes and Methods  \nThe API includes a comprehensive set of model classes within the models namespace. These models represent clinical trial data structures, patient records, trial matching configurations and results, along with various supporting types such as `ClinicalTrialDetails`, `PatientRecord`, `TrialMatcherData`, and `TrialMatcherResult`. Several enumerations such as `AgeUnit`, `ClinicalDocumentType`, `JobStatus`, and others encapsulate domain-specific constants. The models also include classes for handling geographic data, clinical coded elements, and error information.  \nThe service integrates synchronous and asynchronous patterns and uses long-running operation pollers (`LROPoller` and `AsyncLROPoller`) to manage operations that require polling.",
                     "source": "summary"
                 },
                 {
@@ -602,19 +787,17 @@
                     ],
                     "line_no": 70,
                     "bad_code": "options: Optional[CreateTrialsOptions] = None,",
-                    "suggestion": null,
-                    "comment": "Avoid using an options bag object; instead, pass each optional parameter as a keyword-only argument.",
+                    "suggestion": "unit: Optional[Union[str, AgeUnit]] = None, value: Optional[float] = None, language: Optional[str] = None, date: Optional[datetime.datetime] = None,",
+                    "comment": "Avoid using an options bag; expose each optional parameter individually as keyword-only arguments.",
                     "source": "guideline"
                 },
                 {
-                    "rule_ids": [
-                        "python_design.html#python-paged-prefix"
-                    ],
+                    "rule_ids": [],
                     "line_no": 102,
                     "bad_code": "def trials(",
                     "suggestion": "def list_trials(",
-                    "comment": "Methods that return collections should be prefixed with 'list_' to indicate paging support.",
-                    "source": "guideline"
+                    "comment": "Rename the method to include a verb, clarifying that it returns a list of trial results.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -623,17 +806,17 @@
                     "line_no": 108,
                     "bad_code": "def erase_trials(",
                     "suggestion": "def delete_trials(",
-                    "comment": "Deletion operations should use the 'delete_' prefix instead of 'erase_'.",
+                    "comment": "Deletion methods should use the 'delete_' prefix rather than 'erase_'.",
                     "source": "guideline"
                 },
                 {
                     "rule_ids": [
-                        "python_design.html#python-paged-prefix"
+                        "python_design.html#python-client-async-keywords"
                     ],
                     "line_no": 223,
                     "bad_code": "def trials(",
-                    "suggestion": "def list_trials(",
-                    "comment": "Async list methods should also be prefixed with 'list_' to clarify they enumerate resources.",
+                    "suggestion": "async def trials(",
+                    "comment": "Asynchronous client methods must be defined with 'async def' to use async/await properly.",
                     "source": "guideline"
                 },
                 {
@@ -643,15 +826,15 @@
                     "line_no": 229,
                     "bad_code": "async def erase_trials(",
                     "suggestion": "async def delete_trials(",
-                    "comment": "Async deletion methods should use the 'delete_' prefix to match guidelines.",
+                    "comment": "Deletion methods should use the 'delete_' prefix rather than 'erase_'.",
                     "source": "guideline"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 348,
-                    "bad_code": "ivar sub_type: Union[str, GeoJsonPropertiesSubType]",
-                    "suggestion": "ivar subtype: Union[str, GeoJsonPropertiesSubType]",
-                    "comment": "Rename 'sub_type' to 'subtype' for brevity and consistency with Python naming conventions.",
+                    "line_no": 548,
+                    "bad_code": "ivar facility_areas: Optional[List[ForwardRef('GeographicArea')]]",
+                    "suggestion": "ivar facility_areas: Optional[List['GeographicArea']]",
+                    "comment": "Use a string literal for forward references instead of ForwardRef for simplicity.",
                     "source": "generic"
                 },
                 {
@@ -659,15 +842,15 @@
                     "line_no": 824,
                     "bad_code": "ivar innerrror: Optional[InnerError]",
                     "suggestion": "ivar innererror: Optional[InnerError]",
-                    "comment": "Fix the typo in the attribute name to ensure consistency and clarity.",
+                    "comment": "Fix the typo in the attribute name to correctly spell 'innererror'.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 997,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherInferenceEvidence(MutableMapping[str, Any]):",
-                    "suggestion": "class TrialMatcherInferenceEvidence(MutableMapping[str, Any]):",
-                    "comment": "Remove redundant package qualification from the class name for a more idiomatic Python API.",
+                    "line_no": 869,
+                    "bad_code": "    type: Union[str, DocumentType]",
+                    "suggestion": "    document_type: Union[str, DocumentType]",
+                    "comment": "Avoid using the built-in name 'type'; rename the parameter to something more descriptive.",
                     "source": "generic"
                 },
                 {
@@ -676,8 +859,8 @@
                     ],
                     "line_no": 998,
                     "bad_code": "ivar eligibilityCriteriaEvidence: Optional[str]",
-                    "suggestion": "ivar eligibility_criteria_evidence: Optional[str]",
-                    "comment": "Instance variable names should use snake_case to follow Python naming conventions.",
+                    "suggestion": "eligibility_criteria_evidence: Optional[str] = None",
+                    "comment": "Rename the instance variable to use snake_case for consistency with Python naming conventions, and define it using standard PEP 526 style with a default value.",
                     "source": "merged"
                 },
                 {
@@ -686,8 +869,8 @@
                     ],
                     "line_no": 1000,
                     "bad_code": "ivar patientDataEvidence: Optional[ClinicalNoteEvidence]",
-                    "suggestion": "ivar patient_data_evidence: Optional[ClinicalNoteEvidence]",
-                    "comment": "Instance variable names should use snake_case for consistency with Python naming conventions.",
+                    "suggestion": "patient_data_evidence: Optional[ClinicalNoteEvidence] = None",
+                    "comment": "Rename the instance variable to use snake_case for consistency with Python conventions, and initialize it with a default value as per PEP 526.",
                     "source": "merged"
                 },
                 {
@@ -696,59 +879,45 @@
                     ],
                     "line_no": 1001,
                     "bad_code": "ivar patientInfoEvidence: Optional[ClinicalCodedElement]",
-                    "suggestion": "ivar patient_info_evidence: Optional[ClinicalCodedElement]",
-                    "comment": "Instance variable names should use snake_case to follow Python naming conventions.",
+                    "suggestion": "patient_info_evidence: Optional[ClinicalCodedElement] = None",
+                    "comment": "Use snake_case for attribute names and standard type annotation syntax with a default value to follow naming conventions and improve consistency.",
                     "source": "merged"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 1023,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherInferenceType(str, Enum):",
-                    "suggestion": "class TrialMatcherInferenceType(str, Enum):",
-                    "comment": "Remove package prefix from the class name to simplify usage.",
-                    "source": "generic"
-                },
-                {
-                    "rule_ids": [],
-                    "line_no": 1027,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherModelConfiguration(MutableMapping[str, Any]):",
-                    "suggestion": "class TrialMatcherModelConfiguration(MutableMapping[str, Any]):",
-                    "comment": "Omit redundant module path from the class name for a cleaner API design.",
-                    "source": "generic"
-                },
-                {
-                    "rule_ids": [],
-                    "line_no": 1075,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherResult(MutableMapping[str, Any]):",
-                    "suggestion": "class TrialMatcherResult(MutableMapping[str, Any]):",
-                    "comment": "Simplify the class name by removing the package namespace for improved clarity.",
-                    "source": "generic"
-                },
-                {
-                    "rule_ids": [],
-                    "line_no": 1085,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.TrialMatcherResults(MutableMapping[str, Any]):",
-                    "suggestion": "class TrialMatcherResults(MutableMapping[str, Any]):",
-                    "comment": "Remove the module namespace from the class name to match conventional Python usage.",
+                    "line_no": 1052,
+                    "bad_code": "ivar id: str",
+                    "suggestion": "patient_id: str",
+                    "comment": "Avoid shadowing the built-in 'id'; use a more descriptive name such as 'patient_id'.",
                     "source": "generic"
                 }
             ]
         },
         "expected_comments": 12,
-        "comments_found": 15,
-        "valid_generic_comments": 7,
-        "invalid_generic_comments": [],
-        "true_positives": 8,
-        "false_positives": 0,
-        "false_negatives": 4,
-        "percent_coverage": 66.6666666667,
+        "comments_found": 12,
+        "valid_generic_comments": 4,
+        "invalid_generic_comments": [
+            {
+                "rule_ids": [],
+                "line_no": 824,
+                "bad_code": "ivar innerrror: Optional[InnerError]",
+                "suggestion": "ivar innererror: Optional[InnerError]",
+                "comment": "Fix the typo in the attribute name to correctly spell 'innererror'.",
+                "source": "generic",
+                "valid": false
+            }
+        ],
+        "true_positives": 6,
+        "false_positives": 2,
+        "false_negatives": 6,
+        "percent_coverage": 50.0,
         "rule_matches_wrong_line": 0,
         "wrong_line_details": [],
         "fuzzy_matches": 0,
         "similarity": 3,
         "groundedness": 5,
-        "groundedness_reason": "The RESPONSE is fully grounded, accurately and thoroughly reflecting all relevant guidelines from the CONTEXT without introducing unsupported information or omitting critical points.",
-        "overall_score": 72
+        "groundedness_reason": "The RESPONSE accurately and thoroughly applies the guidelines from the CONTEXT to specific code examples, without adding unsupported information or omitting critical details.",
+        "overall_score": 55
     },
     {
         "testcase": "medium_apiview_no_violations",
@@ -762,46 +931,38 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThe service enables clinical trial matching by evaluating patient records and clinical criteria against trial configurations. It processes detailed clinical data to produce trial matching outcomes and inference details, supporting workflows that assess eligibility and match patients to suitable clinical trials.\n\n**API Version**  \nThe API version is provided as a parameter (`api_version`) when initializing a client. The latest version is not explicitly specified within this APIView.\n\n**Client Classes**  \nThe API exposes two primary client classes: a synchronous `ClinicalMatchingClient` and an asynchronous `ClinicalMatchingClient` (located in the `.aio` namespace). Both classes offer equivalent functionality, differing only in execution mode.\n\n**Functional Overview**  \nThe clients support initiating long-running clinical trial matching operations through a method that accepts various input formats such as structured trial matcher data, JSON, or file-like objects. These operations follow a CRUD pattern in that they create and manage matching tasks from submission to result retrieval. Additionally, the clients provide methods for managing the underlying HTTP requests and proper resource cleanup via context management.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nOverview  \nThis API provides a service for clinical matching, primarily focused on processing and evaluating clinical trial data in relation to patient records. The service enables initiating long\u2010running trial matching operations, handling HTTP requests and responses, and processing clinical and geographic data to support trial eligibility determination.\n\nAPI Version  \nThe client initialization accepts an `api_version` string parameter. No explicit API version object is defined within this API; instead, the version is provided at runtime.\n\nClient Classes  \nThe service exposes a synchronous `ClinicalMatchingClient` and its asynchronous counterpart in the `aio` namespace. The synchronous client offers methods: `__init__`, `begin_match_trials`, `close`, and `send_request`. The asynchronous client mirrors these with methods: `__init__`, `begin_match_trials`, `close`, and `send_request`.\n\nSupporting Models  \nWithin the `models` namespace, the API defines a comprehensive suite of model classes that represent various clinical and trial matching entities. These include models for age details (`AcceptedAge`, `AcceptedAgeRange`, `AgeUnit`), clinical content (`ClinicalCodedElement`, `ExtendedClinicalCodedElement`, `ClinicalNoteEvidence`), trial information (`ClinicalTrialDetails`, `ClinicalTrialMetadata`, `ClinicalTrialPhase`, `ClinicalTrialPurpose`, `ClinicalTrialRecruitmentStatus`, `ClinicalTrials`, `TrialMatcherResult`, `TrialMatcherResults`), geographic data (`AreaGeometry`, `AreaProperties`, `GeographicArea`, `GeographicLocation`, `GeoJsonGeometryType`, `GeoJsonPropertiesSubType`, `GeoJsonType`), patient records (`PatientDocument`, `PatientInfo`, `PatientRecord`, `PatientInfoSex`), and additional supporting entities such as `Error`, `InnerError` and various enumeration types. This structure facilitates detailed clinical trial matching, capturing elements such as patient demographics, evidence inferences, and trial registry filtering.\n\nFunctional and Structural Details  \nThe API is designed to support both synchronous and asynchronous long-running operations via poller objects. It incorporates enhanced HTTP tracing and streaming support via methods like `send_request`. The extensive models illustrate a domain-specific design that captures a wide array of clinical, geographic, and trial-related metadata required for effective clinical matching operations.",
                     "source": "summary"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 393,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPhase(str, Enum):",
-                    "suggestion": "class ClinicalTrialPhase(str, Enum):",
-                    "comment": "Use a concise enum name without the full module path.",
+                    "line_no": 501,
+                    "bad_code": "ivar custom_trials: Optional[List[ForwardRef('ClinicalTrialDetails')]]",
+                    "suggestion": "ivar custom_trials: Optional[List[ClinicalTrialDetails]]",
+                    "comment": "Use 'from __future__ import annotations' to simplify forward references and remove the need for explicit ForwardRef.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 402,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialPurpose(str, Enum):",
-                    "suggestion": "class ClinicalTrialPurpose(str, Enum):",
-                    "comment": "Remove redundant namespace information from the enum declaration.",
+                    "line_no": 502,
+                    "bad_code": "ivar registry_filters: Optional[List[ForwardRef('ClinicalTrialRegistryFilter')]]",
+                    "suggestion": "ivar registry_filters: Optional[List[ClinicalTrialRegistryFilter]]",
+                    "comment": "Eliminate explicit ForwardRef usage by leveraging postponed evaluation of annotations via 'from __future__ import annotations'.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 415,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialRecruitmentStatus(str, Enum):",
-                    "suggestion": "class ClinicalTrialRecruitmentStatus(str, Enum):",
-                    "comment": "Simplify the enum class name; the module already provides context.",
-                    "source": "generic"
-                },
-                {
-                    "rule_ids": [],
-                    "line_no": 493,
-                    "bad_code": "class azure.healthinsights.clinicalmatching.models.ClinicalTrialStudyType(str, Enum):",
-                    "suggestion": "class ClinicalTrialStudyType(str, Enum):",
-                    "comment": "Remove the redundant namespace from the enum class name.",
+                    "line_no": 575,
+                    "bad_code": "FHIR_BUNDLE = \"fhirBundle\"",
+                    "suggestion": null,
+                    "comment": "If external constraints do not mandate this format, consider normalizing enum value naming for consistency across members.",
                     "source": "generic"
                 }
             ]
         },
         "expected_comments": 0,
-        "comments_found": 4,
-        "valid_generic_comments": 4,
+        "comments_found": 3,
+        "valid_generic_comments": 3,
         "invalid_generic_comments": [],
         "true_positives": 0,
         "false_positives": 0,
@@ -958,46 +1119,30 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis service is designed to perform clinical matching by processing patient records and clinical trial information to derive trial suitability. Its functionality centers on evaluating clinical data against trial criteria to produce inference results for matching patients to clinical trials.\n\n**API Version**  \nThe client constructors include an `api_version` parameter. Although a discrete API version object is not defined, the intended version is provided at initialization, with the latest version specified by that parameter.\n\n**Client Classes**  \nThe API offers both a synchronous `ClinicalMatchingClient` and an asynchronous `ClinicalMatchingClient` (found in the aio namespace). These client classes provide equivalent capabilities, differing only in their synchronous versus asynchronous operation modes.\n\n**Functional Overview**  \nThe service\u2019s client methods enable the initiation of clinical matching operations as long-running tasks. They accept inputs in multiple formats to convey clinical trial criteria and patient data, trigger processing of this information, and ultimately return matching results and inferences. In addition, the clients support sending customized HTTP requests and managing resource lifecycle events such as closure of the client session.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nThe API provides functionality for clinical matching operations by processing patient data along with clinical trial configuration information to initiate trial matching. It enables users to submit data\u2014using various input types\u2014to generate long-running trial matching operations that yield detailed trial matching results and inferences, all within a health insights context.\n\nThe API supports versioning through the use of an `api_version` parameter in the client constructors; however, no dedicated API Version object is defined, and no explicit latest version is indicated.\n\nThe primary client classes of interest are the synchronous `ClinicalMatchingClient` in the main namespace and the asynchronous `ClinicalMatchingClient` in the asynchronous namespace. In both, the available methods are `__init__`, `begin_match_trials`, `close`, and `send_request`.\n\nIn addition, the API comprises an extensive suite of model classes that cover aspects such as patient records, clinical trial details, trial inferences, and geographic information. Examples include data models like `TrialMatcherData`, `TrialMatcherResult`, `ClinicalTrialDetails`, `ClinicalTrialMetadata`, and `PatientRecord`, alongside several enumerations such as `AgeUnit`, `ClinicalDocumentType`, `ClinicalTrialPhase`, and others. These models define the detailed schema for the inputs and outputs related to the clinical matching process while also addressing error handling and auxiliary data representations.\n\nThe overall design is structured to support both synchronous and asynchronous workflows and leverages long-running operation pollers to manage the trial matching process, providing a comprehensive framework for integrating clinical matching into client applications.",
                     "source": "summary"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 363,
-                    "bad_code": "contacts: Optional[List[ForwardRef('ContactDetails')]]",
-                    "suggestion": "contacts: Optional[List['ContactDetails']]",
-                    "comment": "Use quoted type hints for forward references to align with common Python idioms. (general comment)",
+                    "line_no": 568,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.DocumentContentSourceType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.DocumentContentSourceType(str, Enum):",
+                    "comment": "Subclass str alongside Enum for better interoperability when using enum values as strings.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 583,
-                    "bad_code": "ivar innererror: Optional[InnerError]",
-                    "suggestion": "inner_error: Optional[InnerError]",
-                    "comment": "Rename 'innererror' to 'inner_error' to follow standard snake_case naming conventions.",
-                    "source": "generic"
-                },
-                {
-                    "rule_ids": [],
-                    "line_no": 653,
-                    "bad_code": "ivar type: Union[str, GeoJsonType]",
-                    "suggestion": "geojson_type: Union[str, GeoJsonType]",
-                    "comment": "Do not use the built-in name 'type'; choose a more descriptive name like 'geojson_type' for clarity.",
-                    "source": "generic"
-                },
-                {
-                    "rule_ids": [],
-                    "line_no": 734,
-                    "bad_code": "ivar type: Union[str, DocumentType]",
-                    "suggestion": "doc_type: Union[str, DocumentType]",
-                    "comment": "Avoid using the built-in name 'type' as an attribute; rename it (e.g. to 'doc_type') to prevent shadowing.",
+                    "line_no": 573,
+                    "bad_code": "class azure.healthinsights.clinicalmatching.models.DocumentType(Enum):",
+                    "suggestion": "class azure.healthinsights.clinicalmatching.models.DocumentType(str, Enum):",
+                    "comment": "Subclass str with Enum for consistent string conversion and usage.",
                     "source": "generic"
                 }
             ]
         },
         "expected_comments": 13,
-        "comments_found": 4,
-        "valid_generic_comments": 4,
+        "comments_found": 2,
+        "valid_generic_comments": 2,
         "invalid_generic_comments": [],
         "true_positives": 0,
         "false_positives": 0,
@@ -1044,7 +1189,7 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThe service enables intelligent document processing. It offers capabilities to extract structured information from documents, build and manage document classifiers and models, and perform document analysis in both batch and single-document modes. It supports operations that create, retrieve, update, and delete (CRUD) resources and provides mechanisms for handling long\u2010running operations.\n\n**API Version**  \nThe client classes accept an `api_version` parameter at initialization, allowing users to specify the version of the service to interact with. The latest version is used by default when no specific version is provided.\n\n**Client Classes**  \nArchitecturally relevant client classes include the synchronous `DocumentIntelligenceAdministrationClient` and `DocumentIntelligenceClient`, as well as their asynchronous equivalents in the `azure.ai.documentintelligence.aio` namespace. The administration client focuses on resource management tasks such as building, copying, retrieving, and deleting classifiers and models, while the main client concentrates on document analysis, classification, and delivering analysis outputs.\n\n**Functional Overview**  \nThe administration-oriented client supports CRUD operations over document classifier and model resources. It provides functionality for initiating build and copy operations, as well as for retrieving resource details and monitoring long-running operations through pollers. The document analysis client offers capabilities to perform detailed analysis\u2014ranging from text extraction to output generation in formats such as PDFs and figures\u2014in both batch and individual modes. Parallel synchronous and asynchronous methods allow integration into a wide array of application architectures without compromising responsiveness.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nPurpose  \nThis API provides a comprehensive document intelligence service that enables document analysis, classification, and model building. It supports operations for authorizing the copying of classifiers and models, initiating long\u2010running operations to build, compose, and analyze documents (both individually and in batches), retrieving operation results such as analyzed content, figures, and PDFs, and managing the lifecycle of document-related resources.\n\nAPI Version  \nThe clients accept an `api_version` parameter during initialization to indicate the version of the service to use. Although there is no distinct API version object, the latest version is determined by the default value configured by the client initializers.\n\nPrimary Client Classes  \nThe synchronous `DocumentIntelligenceAdministrationClient` provides methods including `authorize_classifier_copy`, `authorize_model_copy`, `begin_build_classifier`, `begin_build_document_model`, `begin_compose_model`, `begin_copy_classifier_to`, `begin_copy_model_to`, `close`, `delete_classifier`, `delete_model`, `get_classifier`, `get_model`, `get_operation`, `get_resource_details`, `list_classifiers`, `list_models`, `list_operations`, `analyze_document_async`, and `send_request`. The synchronous `DocumentIntelligenceClient` offers methods such as `begin_analyze_batch_documents`, `begin_analyze_document`, `begin_classify_document`, `close`, `delete_analyze_batch_result`, `delete_analyze_result`, `get_analyze_batch_result`, `get_analyze_result_figure`, `get_analyze_result_pdf`, `list_analyze_batch_results`, and `send_request`. Their asynchronous counterparts in the `aio` namespace mirror these functionalities with asynchronous implementations.\n\nOther Classes and Methods  \nAdditional classes include the pollers such as `AnalyzeDocumentLROPoller` and its async equivalent, which manage the long\u2010running operations. A broad set of model classes (found under the `models` namespace) defines the data structures for document analysis requests and results. These include representations for addresses, analyzed documents, batch operations and results, classifier and model details, bounding regions, document fields, spans, styles, tables, and various enumerations for options like content formatting and operation statuses.\n\nAdditional Functional and Structural Details  \nThe API is structured to support both synchronous and asynchronous use cases and follows a context management pattern for resource cleanup. It employs long\u2010running operation pollers to manage tasks that do not complete immediately. The flexibility in input types (for example, supporting JSON, byte streams, and file-like objects) and the comprehensive suite of models facilitate a wide range of document processing and analysis scenarios.",
                     "source": "summary"
                 },
                 {
@@ -1052,28 +1197,26 @@
                     "line_no": 6,
                     "bad_code": "class azure.ai.documentintelligence.AnalyzeDocumentLROPoller(LROPoller[+PollingReturnType_co]):",
                     "suggestion": "class azure.ai.documentintelligence.AnalyzeDocumentLROPoller(LROPoller[PollingReturnType_co]):",
-                    "comment": "Eliminate the non\u2010standard '+' prefix in the generic parameter for clearer, idiomatic type hints.",
+                    "comment": "Remove the '+' from the generic type parameter to adhere to standard Python type hint syntax.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [
-                        "python_design.html#python-response-paged-protocol"
-                    ],
-                    "line_no": 317,
-                    "bad_code": "def list_classifiers(self, **kwargs: Any) -> Iterable[DocumentClassifierDetails]",
-                    "suggestion": "def list_classifiers(self, **kwargs: Any) -> ItemPaged[DocumentClassifierDetails]",
-                    "comment": "Listing methods should return a pager type that implements the ItemPaged protocol instead of a generic Iterable so that paging (via by_page) is supported.",
-                    "source": "guideline"
-                },
-                {
-                    "rule_ids": [
-                        "python_design.html#python-client-sync-async-separate-clients"
+                        "python_design.html#python-client-separate-sync-async"
                     ],
                     "line_no": 326,
                     "bad_code": "async def analyze_document_async(",
                     "suggestion": null,
-                    "comment": "This client mixes asynchronous operations with synchronous methods. Async operations should be provided in a separate async client rather than using an async method inside the sync client.",
+                    "comment": "The async method is defined in a client class that otherwise provides synchronous operations. Async operations should reside in a separate async client in the .aio namespace.",
                     "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 492,
+                    "bad_code": "body: JSON",
+                    "suggestion": "body: Dict[str, Any]",
+                    "comment": "Use a standard dict type alias for JSON payloads to clarify expected input.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -1081,67 +1224,101 @@
                     ],
                     "line_no": 937,
                     "bad_code": "@asyncio.coroutine",
-                    "suggestion": null,
-                    "comment": "The @asyncio.coroutine decorator is deprecated and should be removed. Use native async/await syntax by defining the function with async def instead.",
+                    "suggestion": "async def get_classifier_old(",
+                    "comment": "Replace the deprecated asyncio.coroutine decorator with an async def declaration to comply with modern async/await syntax guidelines.",
                     "source": "merged"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 1164,
-                    "bad_code": "body: Union[AnalyzeDocumentRequest, JSON, IO[bytes]],",
+                    "line_no": 1047,
+                    "bad_code": "    *,",
+                    "suggestion": "    *, content_type: str = \"application/json\",",
+                    "comment": "The final implementation of begin_analyze_batch_documents omits the content_type parameter specified in the overloads. Including it improves consistency.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-separate-sync-async"
+                    ],
+                    "line_no": 1266,
+                    "bad_code": "def list_analyze_batch_results(",
+                    "suggestion": "async def list_analyze_batch_results(",
+                    "comment": "This method is defined synchronously even though it returns an async iterable, mixing sync and async patterns. In an async client all methods should be declared async.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 1496,
+                    "bad_code": "model_id: str",
                     "suggestion": null,
-                    "comment": "Define a type alias for the union of accepted body types to improve readability and maintainability of the signature.",
+                    "comment": "Group required keyword-only parameters together before the optional ones for improved clarity.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 1827,
-                    "bad_code": "AZURE_BLOB = \"azureBlob\"",
-                    "suggestion": null,
-                    "comment": "Enum member values differ in style from their names; consider aligning enum values with conventional naming or document the discrepancy clearly.",
+                    "line_no": 2037,
+                    "bad_code": "ivar tags: dict[str, str]",
+                    "suggestion": "ivar tags: Optional[Dict[str, str]]",
+                    "comment": "Align the field type with the constructor\u2019s Optional annotation for consistency.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 2154,
-                    "bad_code": "type: Union[str, DocumentFieldType],",
+                    "line_no": 2077,
+                    "bad_code": "def __init__(self, *args: Any, **kwargs: Any) -> None",
                     "suggestion": null,
-                    "comment": "Avoid shadowing the built\u2010in name 'type'; consider renaming this parameter (e.g. to 'field_type').",
+                    "comment": "Avoid a catch\u2010all initializer with *args and **kwargs; an explicit constructor or factory methods would improve parameter discoverability.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2093,
+                    "bad_code": "ivar warnings: Optional[List[ForwardRef('DocumentIntelligenceWarning')]]",
+                    "suggestion": null,
+                    "comment": "Enable postponed evaluation of annotations (e.g. via 'from __future__ import annotations') to eliminate the need for explicit ForwardRef usage.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
                     "line_no": 2507,
-                    "bad_code": "def __init__(self, *args: Any, **kwargs: Any) -> None",
-                    "suggestion": null,
-                    "comment": "The final generic constructor using *args and **kwargs obscures which parameters are expected, hindering type checking and IDE autocomplete. Consider defining an explicit signature.",
+                    "bad_code": "def __init__(",
+                    "suggestion": "def __init__(self, mapping: Optional[Mapping[str, Any]] = None, **kwargs: Any) -> None:",
+                    "comment": "Avoid the ambiguous use of *args and **kwargs; use an explicit signature (or separate factory methods) to improve clarity and type safety.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
                     "line_no": 2983,
                     "bad_code": "ivar footnotes: Optional[List[ForwardRef('DocumentFootnote')]]",
-                    "suggestion": "footnotes: Optional[List[DocumentFootnote]]",
-                    "comment": "Leverage postponed evaluation (e.g. via 'from __future__ import annotations') to avoid needing explicit ForwardRef in type hints.",
+                    "suggestion": "ivar footnotes: Optional[List[DocumentFootnote]]",
+                    "comment": "Leverage postponed evaluation of annotations (e.g. via 'from __future__ import annotations') to eliminate explicit ForwardRef usage and simplify type hints.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 3005,
+                    "bad_code": "    *args: Any,",
+                    "suggestion": null,
+                    "comment": "Using generic *args in the __init__ implementation obscures the explicit parameters declared in the overloads. Consider using an explicit __init__ signature with keyword-only parameters (and a separate factory method for mapping initialization) to improve discoverability.",
                     "source": "generic"
                 }
             ]
         },
         "expected_comments": 2,
-        "comments_found": 9,
-        "valid_generic_comments": 6,
+        "comments_found": 13,
+        "valid_generic_comments": 10,
         "invalid_generic_comments": [],
-        "true_positives": 1,
-        "false_positives": 2,
-        "false_negatives": 1,
-        "percent_coverage": 50.0,
+        "true_positives": 2,
+        "false_positives": 1,
+        "false_negatives": 0,
+        "percent_coverage": 100.0,
         "rule_matches_wrong_line": 0,
         "wrong_line_details": [],
         "fuzzy_matches": 0,
-        "similarity": 4,
-        "groundedness": 3,
-        "groundedness_reason": "The response is mostly grounded but includes an unsupported addition (the pager protocol), which is not in the CONTEXT.",
-        "overall_score": 46
+        "similarity": 3,
+        "groundedness": 5,
+        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately reflecting all essential points without adding or omitting information.",
+        "overall_score": 93
     },
     {
         "testcase": "large_apiview_many_violations",
@@ -1266,54 +1443,84 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThe API provides advanced document intelligence functionality that enables analysis, classification, and management of documents through automated extraction, OCR, and layout analysis. It supports the initiation and monitoring of long-running operations for tasks such as building and copying document classifiers and models, as well as performing detailed document analysis.\n\n**API Version**  \nThe service operations require an API version to be specified via the `api_version` parameter in the client constructors. Although a version object is not explicitly defined, the clients are designed to work with the latest service version as determined by that parameter.\n\n**Client Classes**  \nThe API exposes two primary client classes, namely the synchronous `DocumentIntelligenceAdministrationClient` and `DocumentIntelligenceClient`, along with their asynchronous equivalents. Both pairs provide similar capabilities in managing the lifecycle and analysis of document intelligence models and classifiers.\n\n**Functional Overview**  \nThe administration client facilitates CRUD operations on document classifiers and models by offering methods to authorize copy operations, trigger the build and composition of models, and delete or retrieve existing artifacts. In contrast, the document client is focused on the analysis of documents including batch and single-document processing, classification, and result retrieval in different formats such as illustration figures or PDFs. Both clients rely on long-running poller objects to manage asynchronous operations and provide detailed operation status and result retrieval.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nService Purpose  \nThis API offers document intelligence capabilities. It provides functionality for analyzing documents, building and composing document models, classifying documents, and performing related long\u2011running operations. The service is designed for both synchronous and asynchronous use cases and supports operations such as authorization for copying classifiers and models as well as retrieving detailed operation and resource information.\n\nAPI Version  \nThe client initializers include an `api_version` parameter to specify the target API version. Although the default value is unspecified in the stub, version management is supported through this parameter.\n\nKey Client Classes  \nThe service exposes a `DocumentIntelligenceAdministrationClient` class with methods such as `authorize_classifier_copy`, `authorize_model_copy`, `begin_build_classifier`, `begin_build_document_model`, `begin_compose_model`, `begin_copy_classifier_to`, `begin_copy_model_to`, `close`, `delete_classifier`, `delete_model`, `get_classifier`, `get_model`, `get_operation`, `get_resource_details`, `list_classifiers`, `list_models`, `list_operations`, `send_request`, and `client`. In addition, the `DocumentIntelligenceClient` class provides methods including `begin_analyze_batch_documents`, `begin_analyze_document`, `begin_classify_document`, `close`, `delete_analyze_batch_result`, `delete_analyze_result`, `get_analyze_batch_result`, `get_analyze_result_figure`, `get_analyze_result_pdf`, `list_analyze_batch_results`, `process_document`, `analyze_batch`, and `send_request`.\n\nAsynchronous Variants  \nWithin the asynchronous namespace, the API provides corresponding classes such as `azure.ai.documentintelligence.async.DocumentIntelligenceAdministrationClient` and `azure.ai.documentintelligence.async.DocumentIntelligenceClient`. These classes mirror the synchronous methods (for example, `authorize_classifier_copy`, `begin_build_document_model`, `begin_analyze_document`, and so on) and include asynchronous operations and poller classes such as `AsyncAnalyzeDocumentLROPoller`.\n\nAdditional Structures and Models  \nA wide range of supporting types is defined in the models namespace. These include data structures for requests (for example, `AnalyzeBatchDocumentsRequest`, `AnalyzeDocumentRequest`, `BuildDocumentClassifierRequest`, and `BuildDocumentModelRequest`), operation and result details (such as `AnalyzeBatchOperation`, `AnalyzeBatchResult`, `AnalyzeResult`, `DocumentClassifierDetails`, and `DocumentModelDetails`), and error handling (including `DocumentIntelligenceError` and related inner error types). There are also several models to describe document structure and content such as `AddressValue`, `AnalyzedDocument`, `DocumentBarcode`, `DocumentFigure`, `DocumentField`, `DocumentKeyValuePair`, and various enums for content formats and operation kinds.\n\nThis structure assists in the management and analysis of document data while providing detailed, asynchronous and synchronous control over long\u2011running operations.",
                     "source": "summary"
                 },
                 {
-                    "rule_ids": [],
-                    "line_no": 5,
-                    "bad_code": "class azure.ai.documentintelligence.AnalyzeDocumentLROPoller(LROPoller[+PollingReturnType_co]):",
-                    "suggestion": "class azure.ai.documentintelligence.AnalyzeDocumentLROPoller(LROPoller[PollingReturnType_co]):",
-                    "comment": "Remove the plus sign in the generic parameter to use standard Python generic notation.",
-                    "source": "generic"
-                },
-                {
                     "rule_ids": [
                         "python_design.html#python-response-paged-protocol"
                     ],
-                    "line_no": 317,
+                    "line_no": 316,
                     "bad_code": "def list_classifiers(self, **kwargs: Any) -> Iterable[DocumentClassifierDetails]",
                     "suggestion": "def list_classifiers(self, **kwargs: Any) -> ItemPaged[DocumentClassifierDetails]",
-                    "comment": "Listing methods should return an ItemPaged type to support pagination features.",
+                    "comment": "List methods should return a paged response object that implements the ItemPaged protocol.",
                     "source": "guideline"
                 },
                 {
                     "rule_ids": [
-                        "python_design.html#python-response-paged-protocol"
+                        "python_design.html#python-client-hier-vend"
                     ],
-                    "line_no": 320,
-                    "bad_code": "def list_models(self, **kwargs: Any) -> Iterable[DocumentModelDetails]",
-                    "suggestion": "def list_models(self, **kwargs: Any) -> ItemPaged[DocumentModelDetails]",
-                    "comment": "Listing methods should return an ItemPaged type to support pagination features.",
+                    "line_no": 332,
+                    "bad_code": "def client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "suggestion": "def get_document_intelligence_client(self, name, **kwargs) -> DocumentIntelligenceClient",
+                    "comment": "The method should be renamed to follow the 'get_<child>_client' naming convention for hierarchical clients, improving clarity and aligning with design guidelines.",
+                    "source": "merged"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 517,
+                    "bad_code": "def begin_analyze_document(",
+                    "suggestion": "def begin_analyze_document(self, model_id: str, body: Union[AnalyzeDocumentRequest, JSON, IO[bytes]], *, content_type: str = 'application/json', features: Optional[List[Union[str, DocumentAnalysisFeature]]] = None, locale: Optional[str] = None, output: Optional[List[Union[str, AnalyzeOutputOption]]] = None, output_content_format: Optional[Union[str, DocumentContentFormat]] = None, pages: Optional[str] = None, query_fields: Optional[List[str]] = None, string_index_type: Optional[Union[str, StringIndexType]] = None, **kwargs: Any) -> AnalyzeDocumentLROPoller[AnalyzeResult]",
+                    "comment": "The final implementation of begin_analyze_document is missing the 'content_type' parameter present in other overloads; adding it improves consistency and discoverability.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 572,
+                    "bad_code": "def begin_classify_document(",
+                    "suggestion": "def begin_classify_document(self, classifier_id: str, body: Union[ClassifyDocumentRequest, JSON, IO[bytes]], *, content_type: str = 'application/json', pages: Optional[str] = None, split: Optional[Union[str, SplitMode]] = None, string_index_type: Optional[Union[str, StringIndexType]] = None, **kwargs: Any) -> LROPoller[AnalyzeResult]",
+                    "comment": "Include the 'content_type' parameter in the implementation to align with the overload signatures for begin_classify_document.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-lro-poller-begin-naming"
+                    ],
+                    "line_no": 602,
+                    "bad_code": "def get_analyze_batch_result(self, continuation_token: str) -> LROPoller[AnalyzeBatchResult]",
+                    "suggestion": "def begin_get_analyze_batch_result(self, continuation_token: str) -> LROPoller[AnalyzeBatchResult]",
+                    "comment": "Long running operations must use the begin_ prefix when returning an LROPoller.",
                     "source": "guideline"
                 },
                 {
                     "rule_ids": [
-                        "python_design.html#python-response-paged-protocol"
+                        "python_implementation.html#python-codestyle-optional-args",
+                        "python_implementation.html#python-codestyle-long-args"
                     ],
-                    "line_no": 323,
-                    "bad_code": "def list_operations(self, **kwargs: Any) -> Iterable[DocumentIntelligenceOperationDetails]",
-                    "suggestion": "def list_operations(self, **kwargs: Any) -> ItemPaged[DocumentIntelligenceOperationDetails]",
-                    "comment": "Listing methods should return an ItemPaged type to support pagination features.",
+                    "line_no": 629,
+                    "bad_code": "def process_document(",
+                    "suggestion": "def process_document(self, model_id, doc_type, source, version, *, locale, format, pages, fields, timeout) -> AnalyzeResult",
+                    "comment": "This method has too many positional parameters and should use a * to enforce keyword-only parameters for the optional ones.",
                     "source": "guideline"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 520,
-                    "bad_code": "body: Union[AnalyzeDocumentRequest, JSON, IO[bytes]]",
-                    "suggestion": "body: DocumentInput",
-                    "comment": "Define a type alias (e.g. DocumentInput = Union[AnalyzeDocumentRequest, JSON, IO[bytes]]) to simplify repeated union type annotations.",
+                    "line_no": 636,
+                    "bad_code": "format,",
+                    "suggestion": "doc_format,",
+                    "comment": "Rename the 'format' parameter to 'doc_format' to avoid shadowing the built-in name.",
                     "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-optional-args",
+                        "python_design.html#python-lro-poller-begin-naming"
+                    ],
+                    "line_no": 643,
+                    "bad_code": "def analyze_batch(",
+                    "suggestion": "def begin_analyze_batch(self, model_id, body, *, features=None, locale=None, output=None) -> LROPoller[AnalyzeBatchResult]",
+                    "comment": "The method should be renamed with a begin_ prefix to indicate it is a long running operation, and optional parameters should be made keyword-only. Additionally, add explicit type annotations to parameters to improve clarity.",
+                    "source": "merged"
                 },
                 {
                     "rule_ids": [
@@ -1322,16 +1529,68 @@
                     "line_no": 661,
                     "bad_code": "namespace azure.ai.documentintelligence.async",
                     "suggestion": "namespace azure.ai.documentintelligence.aio",
-                    "comment": "Async client namespaces should use the '.aio' suffix rather than '.async'.",
+                    "comment": "Async clients should be placed in an '.aio' sub-namespace rather than '.async'.",
                     "source": "guideline"
                 },
                 {
-                    "rule_ids": [],
-                    "line_no": 1053,
-                    "bad_code": "async def begin_analyze_batch_documents(",
-                    "suggestion": "async def begin_analyze_batch_documents(self, model_id: str, body: Union[AnalyzeBatchDocumentsRequest, JSON, IO[bytes]], *, content_type: str = 'application/json', features: Optional[List[Union[str, DocumentAnalysisFeature]]] = ..., locale: Optional[str] = ..., output: Optional[List[Union[str, AnalyzeOutputOption]]] = ..., output_content_format: Optional[Union[str, DocumentContentFormat]] = ..., pages: Optional[str] = ..., query_fields: Optional[List[str]] = ..., string_index_type: Optional[Union[str, StringIndexType]] = ..., **kwargs: Any) -> AsyncLROPoller[AnalyzeBatchResult]",
-                    "comment": "The final implementation for begin_analyze_batch_documents omits the 'content_type' parameter present in the overloads, leading to an inconsistency.",
-                    "source": "generic"
+                    "rule_ids": [
+                        "python_design.html#python-client-async-keywords"
+                    ],
+                    "line_no": 973,
+                    "bad_code": "def list_classifiers(self, **kwargs: Any) -> AsyncIterable[DocumentClassifierDetails]",
+                    "suggestion": "async def list_classifiers(self, **kwargs: Any) -> AsyncIterable[DocumentClassifierDetails]",
+                    "comment": "Async operations must be defined with 'async def' to properly support asynchronous execution.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-async-keywords"
+                    ],
+                    "line_no": 976,
+                    "bad_code": "def list_models(self, **kwargs: Any) -> AsyncIterable[DocumentModelDetails]",
+                    "suggestion": "async def list_models(self, **kwargs: Any) -> AsyncIterable[DocumentModelDetails]",
+                    "comment": "Async methods should use the async/await syntax; use 'async def' here.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-sync-async-separate-clients"
+                    ],
+                    "line_no": 1276,
+                    "bad_code": "def list_analyze_batch_results(",
+                    "suggestion": null,
+                    "comment": "Mixing synchronous and asynchronous methods in the same client violates the guideline to provide separate clients for sync and async operations.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1427,
+                    "bad_code": "ivar failedCount: int",
+                    "suggestion": "ivar failed_count: int",
+                    "comment": "Variable names should use snake_case for consistency and to follow Python naming conventions.",
+                    "source": "merged"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1428,
+                    "bad_code": "ivar skippedCount: int",
+                    "suggestion": "ivar skipped_count: int",
+                    "comment": "Instance variable names should use snake_case instead of camelCase.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_implementation.html#python-codestyle-vars-naming"
+                    ],
+                    "line_no": 1429,
+                    "bad_code": "ivar succeededCount: int",
+                    "suggestion": "ivar succeeded_count: int",
+                    "comment": "Instance variable names should use snake_case instead of camelCase.",
+                    "source": "guideline"
                 },
                 {
                     "rule_ids": [
@@ -1339,9 +1598,9 @@
                     ],
                     "line_no": 1948,
                     "bad_code": "neural = \"neural\"",
-                    "suggestion": "NEURAL = \"neural\"",
-                    "comment": "Enum member names should be in uppercase.",
-                    "source": "guideline"
+                    "suggestion": "NEURAL = 'neural'",
+                    "comment": "Enum member names should be uppercase for consistency and to follow naming conventions.",
+                    "source": "merged"
                 },
                 {
                     "rule_ids": [
@@ -1349,56 +1608,70 @@
                     ],
                     "line_no": 1949,
                     "bad_code": "template = \"template\"",
-                    "suggestion": "TEMPLATE = \"template\"",
-                    "comment": "Enum member names should be in uppercase.",
-                    "source": "guideline"
+                    "suggestion": "TEMPLATE = 'template'",
+                    "comment": "Enum member names should be uppercase for consistency and to follow naming conventions.",
+                    "source": "merged"
                 },
                 {
-                    "rule_ids": [
-                        "17"
-                    ],
-                    "line_no": 2493,
-                    "bad_code": "def __init__(",
-                    "suggestion": null,
-                    "comment": "Relying on a catch\u2010all __init__ using *args and **kwargs obscures the valid parameters. An explicit signature (or input validation) would improve discoverability and developer experience.",
+                    "rule_ids": [],
+                    "line_no": 2047,
+                    "bad_code": "ivar tags: dict[str, str]",
+                    "suggestion": "ivar tags: Optional[Dict[str, str]]",
+                    "comment": "Ensure the attribute type aligns with the __init__ signature by marking tags as Optional and using consistent generic types.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 2993,
-                    "bad_code": "ivar footnotes: Optional[List[ForwardRef('DocumentFootnote')]]",
-                    "suggestion": "footnotes: Optional[List['DocumentFootnote']]",
-                    "comment": "Use a string literal for forward references to simplify annotations in line with modern Python practices.",
+                    "line_no": 2139,
+                    "bad_code": "ivar type: Union[str, DocumentFieldType]",
+                    "suggestion": "ivar field_type: Union[str, DocumentFieldType]",
+                    "comment": "Rename the 'type' attribute to 'field_type' to avoid shadowing the built-in name.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2493,
+                    "bad_code": "def __init__(",
+                    "suggestion": null,
+                    "comment": "Using *args and **kwargs in the constructor obscures the intended parameter list. Prefer explicit, keyword-only parameters to improve discoverability and type-checker support.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 3011,
+                    "bad_code": "def __init__(self, mapping: Mapping[str, Any]) -> None",
+                    "suggestion": "def from_dict(cls, mapping: Mapping[str, Any]) -> DocumentTable:",
+                    "comment": "Introduce a dedicated class method for dict\u2010based initialization to separate concerns and provide a clearer, more idiomatic API.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [
-                        "python_design.html#python-errors-use-standard-exceptions",
+                        "python_design.html#python-namespaces-prefix",
                         "python_design.html#python-errors-azure-exceptions"
                     ],
                     "line_no": 3160,
                     "bad_code": "class DocumentIntelligenceCustomError(Exception):",
-                    "suggestion": "class DocumentIntelligenceCustomError(AzureError):",
-                    "comment": "Custom exception types should derive from an Azure core exception (e.g. AzureError) rather than directly from Exception.",
-                    "source": "guideline"
+                    "suggestion": "class azure.ai.documentintelligence.DocumentIntelligenceCustomError(azure.core.exceptions.AzureError):",
+                    "comment": "The custom exception should be fully namespaced under the azure.ai.documentintelligence package and should inherit from an azure-core exception type such as AzureError rather than directly from Exception.",
+                    "source": "merged"
                 }
             ]
         },
         "expected_comments": 11,
-        "comments_found": 12,
-        "valid_generic_comments": 5,
+        "comments_found": 22,
+        "valid_generic_comments": 7,
         "invalid_generic_comments": [],
-        "true_positives": 3,
-        "false_positives": 4,
-        "false_negatives": 8,
-        "percent_coverage": 27.2727272727,
+        "true_positives": 8,
+        "false_positives": 7,
+        "false_negatives": 3,
+        "percent_coverage": 72.7272727273,
         "rule_matches_wrong_line": 0,
         "wrong_line_details": [],
         "fuzzy_matches": 0,
         "similarity": 3,
         "groundedness": 5,
         "groundedness_reason": "The RESPONSE is entirely based on the CONTEXT, accurately and thoroughly conveying all essential information without introducing unsupported details or omitting critical points.",
-        "overall_score": 34
+        "overall_score": 66
     },
     {
         "testcase": "large_apiview_no_violations",
@@ -1412,26 +1685,164 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis service provides a comprehensive document intelligence solution that enables clients to analyze documents, extract rich features from them, and manage the models and classifiers needed for these tasks. It supports the initiation and monitoring of long\u2010running operations for tasks such as training, composing, and copying classifiers and document models, along with operations to retrieve analysis results in various formats.\n\n**API Version**  \nClient constructors in both the administration and analysis clients accept an `api_version` parameter to enforce compatibility with a specific version of the service. The stub does not explicitly designate a latest version; instead, the caller is expected to supply the appropriate version as needed.\n\n**Client Classes**  \nThe API exposes synchronous clients such as `DocumentIntelligenceAdministrationClient` and `DocumentIntelligenceClient` and their asynchronous counterparts in the `aio` namespace. The administration clients focus on operations for managing resources\u2014including creating, reading, updating, and deleting (CRUD) classifiers and document models\u2014while the analysis clients focus on processing documents and retrieving analysis outcomes.\n\n**Functional Overview**  \nThe administration client provides functionality to perform CRUD operations on document classifiers and models, to authorize copy actions between resources, and to initiate model-building and model-composing operations that run asynchronously. In contrast, the analysis client supports initiating long\u2011running tasks for batch document analysis, single document analysis, and document classification. Both clients offer methods to retrieve detailed information on operations and results, including formats such as PDF and graphical outputs, and they allow callers to submit custom HTTP requests when needed.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nOverview  \nThe API provides document intelligence capabilities. It enables users to analyze, classify, and build document models as well as manage document classifiers through both long\u2010running operations and immediate responses. The service supports synchronous and asynchronous interactions and includes utilities such as HTTP request sending and context management.\n\nAPI Version  \nClient constructors accept an `api_version` parameter. There is no distinct API version object exposed here; users specify the version during client initialization.\n\nSynchronous *Client Classes  \nThe synchronous administration client, `DocumentIntelligenceAdministrationClient`, offers methods such as `authorize_classifier_copy`, `authorize_model_copy`, `begin_build_classifier`, `begin_build_document_model`, `begin_compose_model`, `begin_copy_classifier_to`, `begin_copy_model_to`, `close`, `delete_classifier`, `delete_model`, `get_classifier`, `get_model`, `get_operation`, `get_resource_details`, `list_classifiers`, `list_models`, `list_operations`, and `send_request`. The synchronous processing client, `DocumentIntelligenceClient`, exposes methods including `begin_analyze_batch_documents`, `begin_analyze_document`, `begin_classify_document`, `close`, `delete_analyze_batch_result`, `delete_analyze_result`, `get_analyze_batch_result`, `get_analyze_result_figure`, `get_analyze_result_pdf`, `list_analyze_batch_results`, and `send_request`.\n\nAsynchronous *Client Classes  \nWithin the asynchronous namespace the API provides `AsyncAnalyzeDocumentLROPoller` with its `from_continuation_token` method and asynchronous versions of the administration and processing clients. The asynchronous administration client (also named `DocumentIntelligenceAdministrationClient` in the aio namespace) includes methods such as `authorize_classifier_copy`, `authorize_model_copy`, `begin_build_classifier`, `begin_build_document_model`, `begin_compose_model`, `begin_copy_classifier_to`, `begin_copy_model_to`, `close`, `delete_classifier`, `delete_model`, `get_classifier`, `get_model`, `get_operation`, `get_resource_details`, `list_classifiers`, `list_models`, `list_operations`, and `send_request`. The asynchronous processing client, `DocumentIntelligenceClient` in the aio namespace, includes methods like `begin_analyze_batch_documents`, `begin_analyze_document`, `begin_classify_document`, `close`, `delete_analyze_batch_result`, `delete_analyze_result`, `get_analyze_batch_result`, `get_analyze_result_figure`, `get_analyze_result_pdf`, `list_analyze_batch_results`, and `send_request`.\n\nAdditional Model Classes  \nIn the `models` namespace the API defines many classes that encapsulate the structure of document analysis requests and responses. These include data models such as `AddressValue`, `AnalyzeBatchDocumentsRequest`, `AnalyzeBatchOperation`, `AnalyzeBatchResult`, `AnalyzeDocumentRequest`, `AnalyzeResult`, and many others related to document pages, paragraphs, fields, tables, barcodes, formulas, errors, warnings, and operation details. These models are used to structure detailed information about document contents, layout elements, classification parameters, and operational metadata.\n\nFunctionality and Structure  \nThe API is organized to support advanced document analysis workflows. It uses long-running pollers (for example, via `AnalyzeDocumentLROPoller` and its asynchronous variant) to handle operations that require significant processing time. Distributed tracing wrappers are applied to many methods, indicating built-in support for telemetry and monitoring. In addition to high-level document analysis and classification operations, lower-level HTTP request sending is available for custom interactions. The combination of synchronous and asynchronous clients and a comprehensive set of model classes supports a wide range of document intelligence use cases.",
                     "source": "summary"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 6,
+                    "bad_code": "class azure.ai.documentintelligence.AnalyzeDocumentLROPoller(LROPoller[+PollingReturnType_co]):",
+                    "suggestion": "class AnalyzeDocumentLROPoller(LROPoller[PollingReturnType_co]):",
+                    "comment": "Avoid embedding fully\u2010qualified names and non\u2010standard generic syntax (the '+' marker) in class definitions; rely on module structure and standard TypeVar usage.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 317,
+                    "bad_code": "def list_classifiers(self, **kwargs: Any) -> Iterable[DocumentClassifierDetails]",
+                    "suggestion": "def list_classifiers(self, **kwargs: Any) -> ItemPaged[DocumentClassifierDetails]",
+                    "comment": "List operations should return an object that implements the ItemPaged protocol, which supports paging, instead of a plain Iterable.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 499,
+                    "bad_code": "def begin_analyze_document(",
+                    "suggestion": null,
+                    "comment": "If many optional parameters accumulate, consider grouping related options into a configuration object to reduce signature complexity.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 519,
+                    "bad_code": "body: Union[AnalyzeDocumentRequest, JSON, IO[bytes]],",
+                    "suggestion": null,
+                    "comment": "Consider using a type alias for frequently repeated union types to enhance readability.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 621,
+                    "bad_code": "def list_analyze_batch_results(",
+                    "suggestion": "def list_analyze_batch_results(self, model_id: str, **kwargs: Any) -> ItemPaged[AnalyzeBatchOperation]",
+                    "comment": "Listing methods should return a paging object that implements the ItemPaged protocol (with support for by_page()) rather than a plain Iterable.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 951,
+                    "bad_code": "def list_models(self, **kwargs: Any) -> AsyncIterable[DocumentModelDetails]",
+                    "suggestion": "def list_models(self, **kwargs: Any) -> AsyncItemPaged[DocumentModelDetails]",
+                    "comment": "Async listing methods should return a paging type (AsyncItemPaged) that supports page\u2010wise iteration rather than a generic AsyncIterable.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 954,
+                    "bad_code": "def list_operations(self, **kwargs: Any) -> AsyncIterable[DocumentIntelligenceOperationDetails]",
+                    "suggestion": "def list_operations(self, **kwargs: Any) -> AsyncItemPaged[DocumentIntelligenceOperationDetails]",
+                    "comment": "Async listing methods should return a paging type (AsyncItemPaged) to facilitate both item\u2010by\u2010item and page\u2010by\u2010page iteration.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 1494,
+                    "bad_code": "def __init__(",
+                    "suggestion": null,
+                    "comment": "Remove this global __init__ function; __init__ should only be defined within a class to avoid confusion.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 1502,
+                    "bad_code": "ivar bounding_regions: Optional[List[ForwardRef('BoundingRegion')]]",
+                    "suggestion": "ivar bounding_regions: Optional[List[BoundingRegion]]",
+                    "comment": "Leverage postponed annotation evaluation (e.g. via \u2018from __future__ import annotations\u2019) to remove redundant ForwardRef usage, simplifying the type hints.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 1522,
+                    "bad_code": "def __init__(",
+                    "suggestion": null,
+                    "comment": "Avoid using a catch\u2010all constructor with *args and **kwargs as it obscures the intended parameters. Consider making the constructor explicit or providing a dedicated factory method.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 1964,
+                    "bad_code": "ivar tags: dict[str, str]",
+                    "suggestion": null,
+                    "comment": "Maintain consistency in type annotations across the API by standardizing on either built-in generics or typing aliases.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2062,
+                    "bad_code": "def __init__(",
+                    "suggestion": null,
+                    "comment": "Avoid relying on a catch\u2010all *args and **kwargs implementation; use a more explicit constructor signature to enhance discoverability and type safety.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2110,
+                    "bad_code": "ivar bounding_regions: Optional[List[ForwardRef('BoundingRegion')]]",
+                    "suggestion": "ivar bounding_regions: Optional[List['BoundingRegion']]",
+                    "comment": "Prefer using string literal annotations for forward references to improve readability.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2494,
+                    "bad_code": "*args: Any,",
+                    "suggestion": null,
+                    "comment": "Using *args and **kwargs across overloads obscures the expected parameters. Consider providing an explicit __init__ signature for direct keyword arguments and a separate factory (e.g. from_mapping) for dict-based initialization.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2988,
+                    "bad_code": "def __init__(self, *args: Any, **kwargs: Any) -> None",
+                    "suggestion": null,
+                    "comment": "Avoid using a catch-all initializer; consider explicit alternative constructors (e.g. a from_mapping classmethod) to improve type safety and discoverability.",
+                    "source": "generic"
                 }
             ]
         },
         "expected_comments": 0,
-        "comments_found": 0,
-        "valid_generic_comments": 0,
-        "invalid_generic_comments": [],
+        "comments_found": 15,
+        "valid_generic_comments": 10,
+        "invalid_generic_comments": [
+            {
+                "rule_ids": [],
+                "line_no": 2062,
+                "bad_code": "def __init__(",
+                "suggestion": null,
+                "comment": "Avoid relying on a catch\u2010all *args and **kwargs implementation; use a more explicit constructor signature to enhance discoverability and type safety.",
+                "source": "generic",
+                "valid": false
+            }
+        ],
         "true_positives": 0,
-        "false_positives": 0,
+        "false_positives": 5,
         "false_negatives": 0,
         "percent_coverage": 0.0,
         "rule_matches_wrong_line": 0,
         "wrong_line_details": [],
         "fuzzy_matches": 0,
-        "similarity": 0,
-        "groundedness": 0,
-        "groundedness_reason": "No comments found.",
-        "overall_score": 100.0
+        "similarity": 1,
+        "groundedness": 5,
+        "groundedness_reason": "The RESPONSE accurately and completely reflects the information in the CONTEXT, without adding or omitting any critical details.",
+        "overall_score": 0.0
     },
     {
         "testcase": "large_apiview_multiple_same_violations",
@@ -1496,8 +1907,56 @@
                     "line_no": 1,
                     "bad_code": "",
                     "suggestion": null,
-                    "comment": "Here is a summary of the service described by this APIView:\n\n**Purpose**  \nThis API provides a document intelligence service that enables the processing and extraction of structured information from documents. It supports operations for creating, reading, updating, and deleting (CRUD) custom document models and classifiers as well as performing detailed analysis and classification of documents.\n\n**API Version**  \nThe clients require an `api_version` parameter during initialization to ensure compatibility with the service. Although the available versions are not enumerated in the view, the use of this parameter indicates that the service supports versioning with a latest version determined by the deployment configuration.\n\n**Client Classes**  \nThe service exposes both synchronous and asynchronous clients. The `DocumentIntelligenceAdministrationClient` (together with its asynchronous counterpart in the `aio` namespace) provides administrative functionality for managing document models and classifiers, including build, compose, copy, and deletion operations. In contrast, the `DocumentIntelligenceClient` (and its async variant) focuses on document analysis operations such as initiating batch or individual analysis tasks, classifying documents, retrieving analysis outputs, and monitoring long\u2010running operations.\n\n**Functional Overview**  \nThe clients offer methods that initiate long-running operations through polling constructs (for example, via classes like `AnalyzeDocumentLROPoller` and its asynchronous equivalent). These operations cover authorizing model or classifier copy actions, building and composing custom models, and establishing classifiers. In addition, the clients support analysis of documents with capabilities to process both file and URL inputs, extract various content elements (such as figures, tables, and textual features), and retrieve results in multiple formats. They also provide functions for listing resources and operations, fetching detailed resource and operational information, and sending custom HTTP requests to extend functionality.",
+                    "comment": "Here is a summary of the service described by this APIView:\n\nService Overview  \nThis API provides a comprehensive document intelligence service that supports the analysis, classification, and management of documents and custom models. It enables users to initiate long\u2010running operations for analyzing individual documents or batches, build and copy classifiers and models, retrieve detailed results, and handle various document processing tasks. The service accommodates both content extraction and structural analysis as well as administrative operations related to document model lifecycle management.\n\nAPI Version  \nThe client initialization methods accept an `api_version` parameter to specify the service version. No dedicated API version object is explicitly defined here, but the clients are designed to work with versioned endpoints where the latest version is used when the parameter is not overridden.\n\nSynchronous Client Classes  \nThe primary client classes for synchronous operations are the `DocumentIntelligenceAdministrationClient` and the `DocumentIntelligenceClient`. The administration client exposes methods including `authorize_classifier_copy`, `authorize_model_copy`, `begin_build_classifier`, `begin_build_document_model`, `begin_compose_model`, `begin_copy_classifier_to`, `begin_copy_model_to`, `close`, `delete_classifier`, `delete_model`, `get_classifier`, `get_model`, `get_operation`, `get_resource_details`, `list_classifiers`, `list_models`, `list_operations`, and `send_request`. The main document intelligence client provides operations via methods such as `begin_analyze_batch_documents`, `begin_analyze_document`, `begin_classify_document`, `close`, `delete_analyze_batch_result`, `delete_analyze_result`, `get_analyze_batch_result`, `get_analyze_result_figure`, `get_analyze_result_pdf`, `list_analyze_batch_results`, and `send_request`.\n\nAsynchronous Client Classes  \nFor asynchronous use cases, corresponding client classes are available in the asynchronous namespace. The asynchronous administration client offers methods that mirror its synchronous counterpart, including `authorize_classifier_copy`, `authorize_model_copy`, `begin_build_classifier`, `begin_build_document_model`, `begin_compose_model`, `begin_copy_classifier_to`, `begin_copy_model_to`, `close`, `delete_classifier`, `delete_model`, `get_classifier`, `get_model`, `get_operation`, `get_resource_details`, `list_classifiers`, `list_models`, `list_operations`, and `send_request`. Similarly, the asynchronous document intelligence client provides methods such as `begin_analyze_batch_documents`, `begin_analyze_document`, `begin_classify_document`, `close`, `delete_analyze_batch_result`, `delete_analyze_result`, `get_analyze_batch_result`, `get_analyze_result_figure`, `get_analyze_result_pdf`, `list_analyze_batch_results`, and `send_request`. In addition, long-running operation poller classes like `AsyncAnalyzeDocumentLROPoller` facilitate asynchronous operation tracking.\n\nSupporting Models and Utilities  \nA wide array of model classes in the `azure.ai.documentintelligence.models` namespace defines the request and response schemas, error handling structures, and domain-specific entities for document representation. These include classes for document requests and results (such as `AnalyzeDocumentRequest`, `AnalyzeBatchDocumentsRequest`, `AnalyzeResult`, and `AnalyzeBatchResult`), representations of document elements (for example, `AnalyzedDocument`, `DocumentPage`, `DocumentLine`, `DocumentTable`, and `DocumentField`), geographic and stylistic details (such as `BoundingRegion` and `DocumentStyle`), and several enumeration types that control aspects of processing (for instance, `AnalyzeOutputOption`, `DocumentAnalysisFeature`, `ContentSourceKind`, and `StringIndexType`). The models cover both the operational aspects of initiating analysis and the detailed structure of the output generated from document processing.\n\nIn summary, this API is structured to support complex workflows in document analysis and model management through both synchronous and asynchronous patterns while offering a rich set of models to represent document content, errors, and configuration details.",
                     "source": "summary"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 317,
+                    "bad_code": "def list_classifiers(self, **kwargs: Any) -> Iterable[DocumentClassifierDetails]",
+                    "suggestion": "def list_classifiers(self, **kwargs: Any) -> ItemPaged[DocumentClassifierDetails]",
+                    "comment": "List methods should return a pager type that implements the ItemPaged protocol rather than a generic Iterable.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 320,
+                    "bad_code": "def list_models(self, **kwargs: Any) -> Iterable[DocumentModelDetails]",
+                    "suggestion": "def list_models(self, **kwargs: Any) -> ItemPaged[DocumentModelDetails]",
+                    "comment": "List methods should return a pager type that implements the ItemPaged protocol rather than a generic Iterable.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-response-paged-protocol"
+                    ],
+                    "line_no": 321,
+                    "bad_code": "def list_operations(self, **kwargs: Any) -> Iterable[DocumentIntelligenceOperationDetails]",
+                    "suggestion": "def list_operations(self, **kwargs: Any) -> ItemPaged[DocumentIntelligenceOperationDetails]",
+                    "comment": "List methods should return a pager type that implements the ItemPaged protocol rather than a generic Iterable.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [
+                        "python_design.html#python-client-async-keywords"
+                    ],
+                    "line_no": 948,
+                    "bad_code": "def list_classifiers(self, **kwargs: Any) -> AsyncIterable[DocumentClassifierDetails]",
+                    "suggestion": "async def list_classifiers(self, **kwargs: Any) -> AsyncIterable[DocumentClassifierDetails]",
+                    "comment": "Async methods in the aio namespace should be declared using async def.",
+                    "source": "guideline"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 1031,
+                    "bad_code": "body: Union[AnalyzeBatchDocumentsRequest, JSON, IO[bytes]],",
+                    "suggestion": "body: BodyType,",
+                    "comment": "Introduce a type alias (e.g., BodyType) to simplify the union type annotation in method signatures.",
+                    "source": "generic"
                 },
                 {
                     "rule_ids": [
@@ -1505,36 +1964,84 @@
                     ],
                     "line_no": 1251,
                     "bad_code": "def list_analyze_batch_results(",
-                    "suggestion": "async def list_analyze_batch_results(",
-                    "comment": "A synchronous listing method is present alongside asynchronous methods. Sync and async operations should be split into separate client classes.",
+                    "suggestion": null,
+                    "comment": "A synchronous method is defined in an otherwise asynchronous client. Synchronous operations should be provided in a separate client.",
                     "source": "guideline"
                 },
                 {
-                    "rule_ids": [
-                        "17"
-                    ],
-                    "line_no": 1494,
-                    "bad_code": "def __init__(",
-                    "suggestion": null,
-                    "comment": "A catch\u2010all __init__ using *args and **kwargs makes the API less discoverable and hinders IDE support. Consider defining an explicit signature or a dedicated from_dict factory method.",
+                    "rule_ids": [],
+                    "line_no": 1502,
+                    "bad_code": "ivar bounding_regions: Optional[List[ForwardRef('BoundingRegion')]]",
+                    "suggestion": "ivar bounding_regions: Optional[List[BoundingRegion]]",
+                    "comment": "Leverage postponed evaluation of annotations (e.g. via from __future__ import annotations) to avoid explicit ForwardRef usage.",
                     "source": "generic"
                 },
                 {
                     "rule_ids": [],
-                    "line_no": 1997,
-                    "bad_code": "status: Union[str, DocumentIntelligenceOperationStatus]",
-                    "suggestion": "status: DocumentIntelligenceOperationStatus",
-                    "comment": "Since the enum is a string subclass, use it directly instead of a union with str to simplify the type.",
+                    "line_no": 1812,
+                    "bad_code": "AZURE_BLOB = \"azureBlob\"",
+                    "suggestion": null,
+                    "comment": "Enum member values mix casing styles; consider standardizing the value formatting to be consistent with Python conventions where possible.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2006,
+                    "bad_code": "    *args: Any,",
+                    "suggestion": null,
+                    "comment": "Avoid using a catch\u2010all *args in the constructor. An explicit signature improves discoverability and type checking.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2078,
+                    "bad_code": "ivar warnings: Optional[List[ForwardRef('DocumentIntelligenceWarning')]]",
+                    "suggestion": "warnings: Optional[List[DocumentIntelligenceWarning]]",
+                    "comment": "Leverage 'from __future__ import annotations' to simplify forward references in type hints.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2582,
+                    "bad_code": "ivar tags: dict[str, str]",
+                    "suggestion": "ivar tags: Optional[Dict[str, str]]",
+                    "comment": "Align the attribute annotation with the constructor signature by marking tags as optional if they can be omitted.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2990,
+                    "bad_code": "*args: Any,",
+                    "suggestion": null,
+                    "comment": "Avoid overly generic *args collection in the initializer to enhance static type checking and developer auto-completion.",
+                    "source": "generic"
+                },
+                {
+                    "rule_ids": [],
+                    "line_no": 2996,
+                    "bad_code": "ivar bounding_regions: Optional[List[ForwardRef('BoundingRegion')]]",
+                    "suggestion": null,
+                    "comment": "Replace 'ivar' comments with PEP 526 style type annotations to leverage Python\u2019s static analysis capabilities.",
                     "source": "generic"
                 }
             ]
         },
         "expected_comments": 5,
-        "comments_found": 3,
-        "valid_generic_comments": 2,
-        "invalid_generic_comments": [],
+        "comments_found": 13,
+        "valid_generic_comments": 7,
+        "invalid_generic_comments": [
+            {
+                "rule_ids": [],
+                "line_no": 2006,
+                "bad_code": "    *args: Any,",
+                "suggestion": null,
+                "comment": "Avoid using a catch\u2010all *args in the constructor. An explicit signature improves discoverability and type checking.",
+                "source": "generic",
+                "valid": false
+            }
+        ],
         "true_positives": 0,
-        "false_positives": 1,
+        "false_positives": 6,
         "false_negatives": 5,
         "percent_coverage": 0.0,
         "rule_matches_wrong_line": 0,
@@ -1542,11 +2049,11 @@
         "fuzzy_matches": 0,
         "similarity": 1,
         "groundedness": 1,
-        "groundedness_reason": "The RESPONSE is completely ungrounded and unrelated to the CONTEXT, which is about extensible enumerations.",
+        "groundedness_reason": "The RESPONSE is entirely unrelated to the CONTEXT and introduces topics not present in the provided material.",
         "overall_score": 0
     },
     {
-        "average_score": 53.083333333333336,
+        "average_score": 41.833333333333336,
         "total_evals": 12
     }
 ]

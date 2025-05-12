@@ -10,6 +10,9 @@ This directory contains the evaluation testing for APIView Copilot.
   ```
   AZURE_OPENAI_ENDPOINT=<your-endpoint>
   AZURE_OPENAI_API_KEY=<your-key>
+  AZURE_SUBSCRIPTION_ID=faa080af-c1d8-40ad-9cce-e1a450ca5b57
+  AZURE_FOUNDRY_RESOURCE_GROUP=openai-shared
+  AZURE_FOUNDRY_PROJECT_NAME=apiview-ai
   ```
 
 > Note: the API key is needed for AI-assisted evaluations. The service does not support Entra ID yet.

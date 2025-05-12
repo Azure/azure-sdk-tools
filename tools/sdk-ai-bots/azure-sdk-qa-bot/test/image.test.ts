@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "url";
 import { ComputerVisionClient } from "@azure/cognitiveservices-computervision";
 import { ApiKeyCredentials } from "@azure/ms-rest-js";
+import { GetReadResultResponse } from "@azure/cognitiveservices-computervision/esm/models/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,8 +36,7 @@ describe("Image OCR", () => {
             // 1. 填入你的终结点（endpoint）和密钥（key）
             const endpoint =
                 "https://wanl-test-ocr.cognitiveservices.azure.com/";
-            // TODO: !!!!!!!!!!!!!!!!!!!!!!!!! dont upload this to github !!!!!!!!!!!!!!!!!!!!!!!!!!!
-            const key = "xxxxxxxxxxxxxxxxxxxxxxxxx";
+            const key = process.env["AZURE_COMPUTER_VISION_KEY"];
 
             // 2. 创建客户端
             const creds = new ApiKeyCredentials({
@@ -46,8 +46,7 @@ describe("Image OCR", () => {
 
             // 3. 指定待 OCR 的图片 URL
             const imageUrl =
-                // "https://raw.githubusercontent.com/Azure-Samples/cognitive-services-sample-data-files/master/ComputerVision/Images/printed_text.jpg";
-                join(__dirname, "images/ocr-eng.png");
+                "https://raw.githubusercontent.com/wanlwanl/wanl-fork-azure-sdk-tools/refs/heads/wanl/ocr/tools/sdk-ai-bots/azure-sdk-qa-bot/test/images/ocr-eng.png";
 
             const readResponse = await client.read(imageUrl);
             const operationLocation = readResponse.operationLocation;
@@ -59,7 +58,7 @@ describe("Image OCR", () => {
             const operationId = operationLocation.split("/").slice(-1)[0];
 
             // 5. 轮询直到识别完成
-            let result;
+            let result: GetReadResultResponse;
             while (true) {
                 result = await client.getReadResult(operationId);
                 if (
@@ -70,9 +69,9 @@ describe("Image OCR", () => {
                 }
                 await new Promise((resolve) => setTimeout(resolve, 1000));
             }
-            console.log("🚀 ~ ocrWithTypeScript ~ result:", result);
 
             // 6. 处理并打印识别结果
+            let text = "";
             if (
                 result.status === "succeeded" &&
                 result.analyzeResult?.readResults
@@ -81,11 +80,13 @@ describe("Image OCR", () => {
                     console.log(`--- 第 ${page.page} 页 ---`);
                     for (const line of page.lines) {
                         console.log(line.text);
+                        text += line.text + "\n";
                     }
                 }
             } else {
                 console.error("OCR 识别未成功，请检查输入和密钥。");
             }
+            console.log("🚀 ~ ocrWithTypeScript ~ text:", text);
         }
 
         await ocrWithTypeScript();

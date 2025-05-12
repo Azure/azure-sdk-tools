@@ -35,6 +35,3 @@ extends:
                 PathToArtifacts: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
                 Registry: 'https://registry.npmjs.org/'
                 TopLevelArtifactName: ${{ parameters.ArtifactName }}
-                varDependencies:
-                  - key: Tag
-                    value: "beta"

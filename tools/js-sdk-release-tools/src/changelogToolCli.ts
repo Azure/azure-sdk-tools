@@ -3,7 +3,11 @@
 import { generateChangelogAndBumpVersion } from "./common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
 import { logger } from "./utils/logger.js";
 
-const changelogToolCli = async (options: any) => {
+const changelogToolCli = async (options: {
+    packagePath: string;
+    apiVersion: string;
+    sdkReleaseType: string;
+  }) => {
     if (!options.packagePath) {
         logger.error(`Invalid package path '${options.packagePath}'.`);
     } else {

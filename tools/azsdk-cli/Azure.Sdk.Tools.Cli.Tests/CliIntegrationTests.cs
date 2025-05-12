@@ -21,8 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tests
                 typeof(T),
                 args: [testLogger]
             )!;
-            // Nothing needs to be added here. The parameter 'services' is already optional by using 'object[] services = null'.
-            // The assignment 'services ??= Array.Empty<object>();' ensures it defaults to an empty array if not provided.
+
             var tuple = new Tuple<Command, TestLogger<T>>(
                 item1: tool.GetCommand(),
                 item2: testLogger

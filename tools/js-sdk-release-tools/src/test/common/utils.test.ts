@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { resolveOptions, updateApiVersionInTspConfig } from "../../common/utils.js";
+import { resolveOptions, specifiyApiVersionToGenerateSDKByTypeSpec } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
 import * as fs from "fs";
@@ -36,18 +36,18 @@ describe("resolveOptions", () => {
     });
 });
 
-describe("updateApiVersionInTspConfig", () => {
+describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
     test("Updated API version into tspconfig.yaml ", () => {
         const typeSpecDirectory = path.join(__dirname, "tsp");
         const expectedVersion = "2023-10-01";
-        updateApiVersionInTspConfig(typeSpecDirectory, expectedVersion);
+        specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory, expectedVersion);
         const data: string = fs.readFileSync(path.join(typeSpecDirectory, 'tspconfig.yaml'), 'utf8');
         expect(data.includes(`api-version: '${expectedVersion}'`)).toBe(true);
     });
     test("not found tspconfig.yaml ", () => {
         const typeSpecDirectory = path.join(__dirname);
         const expectedVersion = "2023-10-01";
-        expect(() => updateApiVersionInTspConfig(typeSpecDirectory, expectedVersion)).toThrow(
+        expect(() => specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory, expectedVersion)).toThrow(
             "tspconfig.yaml not found at path:"
         );
     });

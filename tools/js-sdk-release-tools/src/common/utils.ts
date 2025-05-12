@@ -299,7 +299,7 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
     return options
 }
 
-export function updateApiVersionInTspConfig(typeSpecDirectory: string, apiVersion: string) {
+export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: string, apiVersion: string) {
     if (apiVersion === '') {
         logger.warn(`No api-version is provided, skip updating tspconfig.yaml.`);
         return;

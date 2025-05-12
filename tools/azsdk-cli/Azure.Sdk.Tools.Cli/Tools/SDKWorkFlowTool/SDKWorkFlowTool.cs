@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Status = "Failed";
                 }
 
-                // Verify if spec is read yto generate SDK
+                // Verify if spec is read to generate SDK
                 var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullrequestNumber);
                 if (!readiness.Status.Equals("Success"))
                 {

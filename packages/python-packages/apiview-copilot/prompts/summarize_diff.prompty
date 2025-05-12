@@ -3,7 +3,7 @@ name: Summarize APIView Diff
 description: A prompt that summarizes the changes in an APIView diff to create a general comment.
 authors:
   - tjprescott
-version: 1.0.0
+version: 1.1.0
 model:
   api: chat
   configuration:
@@ -67,21 +67,34 @@ system:
   You will summarize the changes in an APIView diff to make it easier for the architects to understand the changes.
   Do not use emojis in your response.
   Ensure you examine the entire diff and summarize the relevant changes in a clear and concise manner.
-  For API Version, just say what the newest version is. DO NOT mention any other versions.
+  Use structured headings like **Added**, **Modified**, and **Removed** to organize the summary.
+  For APIView, only include the LATEST version.
   Do not make any judgement statements on the quality, necessity, or correctness of any changes.
   Do surround property names, class names, and method names with backticks.
-  Begin your response with: "Here is a summary of the changes in this APIView:"
+  Begin your response with the heading: "## Diff Summary"
 
-  # Example Output
+  # Priorities
+  1. Summarize the functional impact of the changes (e.g., new parameters, updated types, removed methods).
+  2. Group similar changes together (e.g., type hint updates for multiple properties).
+  3. Use concise language to describe the changes without listing unnecessary details like line numbers.
+  4. Focus on the changes that are most relevant to architects, such as new functionality or breaking changes.
+
+  # Example Output:
   Here is a summary of the changes in this APIView:
-  
-  This update introduces API Version 2025-01-01 of the Widgets service.
 
-  This change adds the `list_widget_parts` and `get_widget_part` methods to the `WidgetClient` class.
+  ## Diff Summary
 
-  It adds type hints to various existing methods in the `WidgetClient` class like `create` and `update`.
+  **Added**
+  - New API version: `2025-01-01`.
+  - `SecretClient` now includes a `verify_challenge_resource` parameter in its constructor.
+  - Added `recoveryId` and `scheduled_purge_date` properties to `DeletedSecret`.
 
-  Overall, this update adds some new functionality and improves type hinting for existing methods.
+  **Modified**
+  - Updated type hints for several properties in `DeletedSecret` to make them optional.
+  - Updated the `credential` parameter in `SecretClient` to use `TokenCredential`.
+
+  **Removed**
+  - Deprecated the `transport` parameter in the `SecretClient` constructor.
 
 user:
   Summarize the following APIView diff for the {{language}} architects.

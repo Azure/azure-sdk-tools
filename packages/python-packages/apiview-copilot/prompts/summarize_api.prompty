@@ -205,7 +205,7 @@ system:
   Do not make any judgement statements on the quality, necessity, or correctness of the API.
   Do surround property names, class names, and method names with backticks.
   Structure the output with headings, but keep the output concise and to the point. For example, don't list things with bulleted lists.
-  Begin your response with: "Here is a summary of the service described by this APIView:"
+  Begin your response with the heading "## API Summary"
 
   # Priorities
   1. Summarize the purpose of the API based on the Client class and its methods. No method names--just a general description of the functionality.
@@ -217,7 +217,8 @@ system:
   7. Include markdown on the output headings to make them stand out.
 
   # Example Output:
-  Here is a summary of the service described by this APIView:
+  
+  ## API Summary
 
   **Purpose**
   This API provides a service for managing widgets. It also allows for the management of widget properties and parts.

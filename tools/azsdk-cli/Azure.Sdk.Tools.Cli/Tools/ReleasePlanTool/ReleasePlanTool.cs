@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.ComponentModel;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -85,9 +87,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
+                var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
 
                 // Ensure a release plan is created only if the API specs pull request is in a public repository.
-                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(typeSpecProjectPath))
+                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
                 {
                     return """
                         SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.

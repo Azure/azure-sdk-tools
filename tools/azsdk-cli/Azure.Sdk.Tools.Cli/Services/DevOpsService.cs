@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -26,33 +28,38 @@ namespace Azure.Sdk.Tools.Cli.Services
         private BuildHttpClient _buildClient;
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
-        private AccessToken _token;
+        private AccessToken? _token;
         private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
-
-        public DevOpsConnection()
-        {
-            _token = GetToken();
-            var connection = new VssConnection(new Uri(DevOpsService.DEVOPS_URL), new VssOAuthAccessTokenCredential(_token.Token));
-            _buildClient = connection.GetClient<BuildHttpClient>();
-            _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
-            _projectClient = connection.GetClient<ProjectHttpClient>();
-        }
-
-        private static AccessToken GetToken()
-        {
-            return (new DefaultAzureCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
-        }
 
         private void RefreshConnection()
         {
-            if (_token.ExpiresOn < DateTimeOffset.Now.AddMinutes(5))
+            if (_token != null && _token?.ExpiresOn > DateTimeOffset.Now.AddMinutes(5))
+                return;
+
+            try
             {
-                _token = GetToken();
-                var connection = new VssConnection(new Uri(DevOpsService.DEVOPS_URL), new VssOAuthAccessTokenCredential(_token.Token));
+                _token = (new DefaultAzureCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
+            }
+            catch
+            {
+                _token = (new InteractiveBrowserCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
+            }
+
+            if (_token == null)
+                throw new Exception("Failed to get DevOps access token. Please make sure you have access to Azure DevOps and you are logged in using az login.");
+
+
+            try
+            {
+                var connection = new VssConnection(new Uri(DevOpsService.DEVOPS_URL), new VssOAuthAccessTokenCredential(_token?.Token));
                 _buildClient = connection.GetClient<BuildHttpClient>();
                 _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
                 _projectClient = connection.GetClient<ProjectHttpClient>();
             }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to refresh DevOps connection. Error: {ex.Message}");
+            }            
         }
 
         public BuildHttpClient GetBuildClient()
@@ -164,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             var apiSpecWorkItems = await FetchWorkItems(query);
             if (apiSpecWorkItems.Count == 0)
             {
-                throw new Exception($"Failed to find API sepc work item for pull request URL {pullRequestUrl}");
+                throw new Exception($"Failed to find API spec work item for pull request URL {pullRequestUrl}");
             }
 
             foreach (var workItem in apiSpecWorkItems)

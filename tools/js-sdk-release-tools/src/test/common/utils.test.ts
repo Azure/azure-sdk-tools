@@ -48,7 +48,7 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
         const typeSpecDirectory = path.join(__dirname);
         const expectedVersion = "2023-10-01";
         expect(() => specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory, expectedVersion)).toThrow(
-            "tspconfig.yaml not found at path:"
+            `Failed to find tspconfig.yaml at path: D:\\GithubSource\\tmpSource\\azure-sdk-tools\\tools\\js-sdk-release-tools\\src\\test\\common\\tspconfig.yaml`
         );
     });
 });

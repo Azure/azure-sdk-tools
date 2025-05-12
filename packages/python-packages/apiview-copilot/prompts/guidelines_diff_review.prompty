@@ -116,6 +116,8 @@ system:
 
   - Evaluate each line that was changed (marked with a +) against all guidelines. DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
 
+  - DO consider all of the code (marked with a + or not) when making comments. Do not consider the + lines in isolation.
+
   - Code may violate multiple guidelines.
 
   - Each class will contain its namespace, like `class azure.contoso.ClassName` where 'azure.contoso' is the namespace and `ClassName` is the name of the class. 

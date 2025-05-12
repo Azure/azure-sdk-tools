@@ -19,6 +19,8 @@ async function automationGenerateInPipeline(
     use: string | undefined,
     typespecEmitter: string | undefined,
     sdkGenerationType: string | undefined,
+    inputApiVersion: string | undefined,
+    inputsdkReleaseType: string | undefined,
     local: boolean
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
@@ -38,9 +40,19 @@ async function automationGenerateInPipeline(
         sdkReleaseType,
     } = await parseInputJson(inputJson);
 
+    const currAPIVersion = inputApiVersion ?? apiVersion;
+    const currSDKReleaseType = inputsdkReleaseType ?? sdkReleaseType;
+
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
+        }
+        if(sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration) {
+            if( (sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient) {
+                const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
+                const tspDefDir = path.join(swaggerRepo, typespecProject);
+                specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
+            }
         }
         switch (sdkType) {
             case SDKType.HighLevelClient:
@@ -55,19 +67,15 @@ async function automationGenerateInPipeline(
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
                     runningEnvironment: runningEnvironment,
-                    apiVersion: apiVersion,
-                    sdkReleaseType: sdkReleaseType,
+                    apiVersion: currAPIVersion,
+                    sdkReleaseType: currSDKReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
-                const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
-                if (typespecProject && !skipGeneration && sdkGenerationType !== "command") {                    
-                    const tspDefDir = path.join(swaggerRepo, typespecProject);
-                    specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);                       
-                }
+                
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
-                    swaggerRepo: swaggerRepo,
+                    swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
                     readmeMd: readmeMd,
                     typespecProject: typespecProject,
                     autorestConfig,
@@ -79,14 +87,13 @@ async function automationGenerateInPipeline(
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
                     gitCommitId: gitCommitId,
-                    apiVersion: apiVersion,
-                    sdkReleaseType: sdkReleaseType,
+                    apiVersion: currAPIVersion,
+                    sdkReleaseType: currSDKReleaseType,
                 });
                 break;
 
             case SDKType.ModularClient: {
                 const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
-                specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory, apiVersion);
                 const sdkRepoRoot = String(shell.pwd()).replaceAll('\\', '/');
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
@@ -100,8 +107,8 @@ async function automationGenerateInPipeline(
                     local,
                     // support MPG for now
                     versionPolicyName: 'management',
-                    apiVersion: apiVersion,
-                    sdkReleaseType: sdkReleaseType,
+                    apiVersion: currAPIVersion,
+                    sdkReleaseType: currSDKReleaseType,
                 };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
@@ -132,13 +139,15 @@ const optionDefinitions = [
     { name: 'sdkGenerationType', type: String },
     { name: 'inputJsonPath', type: String },
     { name: 'outputJsonPath', type: String },
+    { name: "apiVersion", type: String },
+    { name: "sdkReleaseType", type: String },
     // this option should be only used in local run, it will skip backup node modules, etc.
     // do NOT set to true in sdk automation pipeline 
-    { name: 'local', type: Boolean, defaultValue: false }
+    { name: 'local', type: Boolean, defaultValue: false }    
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local ?? false).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType,  options.apiVersion, options.sdkReleaseType, options.local ?? false).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

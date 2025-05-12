@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using Azure.AI.Projects;
 
 namespace Azure.Sdk.Tools.Cli.Services;

@@ -39,7 +39,6 @@ export async function generateRLCInPipeline(options: {
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
-    const changedPackagePaths:string[] = [];
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
@@ -245,9 +244,6 @@ export async function generateRLCInPipeline(options: {
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
-            if (relativePackagePath) {
-                changedPackagePaths.push(relativePackagePath);
-            }
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
             outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
@@ -280,5 +276,4 @@ export async function generateRLCInPipeline(options: {
             changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Rlc);
         }        
     }
-    return changedPackagePaths;
 }

@@ -57,7 +57,7 @@ async function automationGenerateInPipeline(
                 });
                 break;
             case SDKType.RestLevelClient:
-                changedPackagePaths = (await generateRLCInPipeline({
+                await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
                     readmeMd: readmeMd,
@@ -71,7 +71,7 @@ async function automationGenerateInPipeline(
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
                     gitCommitId: gitCommitId
-                }))!;
+                });
                 break;
 
             case SDKType.ModularClient: {

@@ -34,6 +34,7 @@ export async function generateCodeOwnersAndIgnoreLink(
             relativePackageDirToSdkRoot,
         );
     } else {
+        // Only for hlc.
         for (const packageFolderPath of options.changedPackagePaths) {
             logger.info(`packageFolderPath '${packageFolderPath}'`);
             await generateCodeOwnersAndIgnoreLinkForPackage(packageFolderPath);

@@ -1,16 +1,25 @@
 #!/usr/bin/env node
 
-import {generateChangelogAndBumpVersion} from "./common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
-import {logger} from "./utils/logger.js";
+import { generateChangelogAndBumpVersion } from "./common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import { logger } from "./utils/logger.js";
 
-const changelogToolCli = async (packageFolderPath: string | undefined) => {
-    if (!packageFolderPath) {
-        logger.error(`Invalid package path '${packageFolderPath}'.`);
+const changelogToolCli = async (options: any) => {
+    if (!options.packagePath) {
+        logger.error(`Invalid package path '${options.packagePath}'.`);
     } else {
-        await generateChangelogAndBumpVersion(packageFolderPath);
+        await generateChangelogAndBumpVersion(options.packagePath, {
+            apiVersion: options.apiVersion,
+            sdkReleaseType: options.sdkReleaseType,
+        });
     }
 };
 
-const packageFolderPath = process.argv.pop();
+const optionDefinitions = [
+    { name: "packagePath", type: String },
+    { name: "apiVersion", type: String },
+    { name: "sdkReleaseType", type: String },
+];
+import commandLineArgs from "command-line-args";
+const options = commandLineArgs(optionDefinitions);
 
-changelogToolCli(packageFolderPath);
+changelogToolCli(options);

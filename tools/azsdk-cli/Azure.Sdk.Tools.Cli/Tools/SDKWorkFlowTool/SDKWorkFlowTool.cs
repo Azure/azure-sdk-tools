@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly static string DEFAULT_BRANCH = "main";
 
 
-        [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project toot as params.")]
+        [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
         {
             var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);

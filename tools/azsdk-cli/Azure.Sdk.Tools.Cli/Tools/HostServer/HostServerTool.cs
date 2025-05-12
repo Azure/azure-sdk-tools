@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;

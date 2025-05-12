@@ -1,6 +1,5 @@
-using Microsoft.TeamFoundation.WorkItemTracking.Process.WebApi.Models.Process;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi.Patch;
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
@@ -27,17 +26,6 @@ namespace Azure.Sdk.Tools.Cli.Models
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
 
-            List<JsonPatchOperation> coolio = new List<JsonPatchOperation>()
-            {
-                new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/Custom.ServiceTreeID",
-                    Value = ServiceTreeId
-                }
-            };
-
-            // todo: why does this fail to compile when the code commented below is included?
             var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
             {
                 new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation

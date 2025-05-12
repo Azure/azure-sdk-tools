@@ -85,8 +85,11 @@ function updateCODEOWNERS(packagePath: string) {
 function updateIgnoreLink(packageName: string) {
     const jsSdkRepoPath = String(shell.pwd());
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
-    const content = fs.readFileSync(ignoreLinksPath, "utf8");
+    let content = fs.readFileSync(ignoreLinksPath, "utf8");
     const newLine = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
+    if (!content.endsWith("\n")) {
+        content += "\n";
+    }
     const updatedContent = content + newLine + "\n";
     fs.writeFileSync(ignoreLinksPath, updatedContent);
 }

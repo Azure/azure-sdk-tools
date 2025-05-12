@@ -245,7 +245,9 @@ export async function generateRLCInPipeline(options: {
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
-            changedPackagePaths.push(relativePackagePath)
+            if (relativePackagePath) {
+                changedPackagePaths.push(relativePackagePath);
+            }
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
             outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;

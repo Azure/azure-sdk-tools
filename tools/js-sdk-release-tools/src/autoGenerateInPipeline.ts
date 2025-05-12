@@ -40,7 +40,7 @@ async function automationGenerateInPipeline(
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        let changedPackagePaths: string[] | undefined;
+        let changedPackagePaths: string[] = [];
         switch (sdkType) {
             case SDKType.HighLevelClient:
                 changedPackagePaths = await generateMgmt({

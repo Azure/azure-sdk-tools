@@ -317,10 +317,19 @@ export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: str
         throw new Error('Invalid tspconfig.yaml format.');
     }
 
-    tspConfig['options']['@azure-tools/typespec-ts']['api-version'] = apiVersion;
+    const emitterOptions = tspConfig.options?.[emitterName];
+    if (!emitterOptions) {
+        throw new Error(`Missing ${emitterName} options in tspconfig.yaml.`);
+    }
 
-    const updatedTspConfigContent = dump(tspConfig);
-    fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
+    const currApiVersion = emitterOptions['api-version'];
+    if (currApiVersion !== apiVersion) {
+        logger.warn(`The api-version in tspconfig.yaml is different from the one provided: ${currApiVersion} != ${apiVersion}`);
+        emitterOptions['api-version'] = apiVersion;
+        const updatedTspConfigContent = dump(tspConfig);
+        fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
+    }
+
     logger.info(`Use api-version: ${apiVersion} to generate SDK.`);
 }
 

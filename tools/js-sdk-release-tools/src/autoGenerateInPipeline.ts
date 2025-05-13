@@ -18,9 +18,7 @@ async function automationGenerateInPipeline(
     outputJsonPath: string,
     use: string | undefined,
     typespecEmitter: string | undefined,
-    sdkGenerationType: string | undefined,
-    inputApiVersion: string | undefined,
-    inputsdkReleaseType: string | undefined
+    sdkGenerationType: string | undefined
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
@@ -44,21 +42,19 @@ async function automationGenerateInPipeline(
     const local = runMode === 'local'
     let currAPIVersion ="";
     let currSDKReleaseType = "";
-    if (enableApiVersionAndReleaseType) {
-        currAPIVersion = inputApiVersion ?? apiVersion;
-        currSDKReleaseType = inputsdkReleaseType ?? sdkReleaseType;
-    }    
 
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        if(enableApiVersionAndReleaseType && sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration) {
-            if( (sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient) {
-                const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
-                const tspDefDir = path.join(swaggerRepo, typespecProject);
-                specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
-            }
+        if (enableApiVersionAndReleaseType && sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration &&
+            ((sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient)) {
+            const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
+            const tspDefDir = path.join(swaggerRepo, typespecProject);
+            specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
+
+            currAPIVersion = apiVersion;
+            currSDKReleaseType = sdkReleaseType;
         }
         switch (sdkType) {
             case SDKType.HighLevelClient:
@@ -144,15 +140,13 @@ const optionDefinitions = [
     { name: 'sdkGenerationType', type: String },
     { name: 'inputJsonPath', type: String },
     { name: 'outputJsonPath', type: String },
-    { name: "apiVersion", type: String },
-    { name: "sdkReleaseType", type: String },
     // this option should be only used in local run, it will skip backup node modules, etc.
     // do NOT set to true in sdk automation pipeline 
     { name: 'local', type: Boolean, defaultValue: false }    
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType,  options.apiVersion, options.sdkReleaseType).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

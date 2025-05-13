@@ -74,11 +74,13 @@ function updateCODEOWNERS(packagePath: string) {
     );
     if (configSectionIndex !== -1) {
         const newContentBeforeConfig = `# PRLabel: %Mgmt\n${packagePath}/ @qiaozha @MaryGao\n`;
-        content =
-            content.slice(0, configSectionIndex) +
-            newContentBeforeConfig +
-            "\n" +
-            content.slice(configSectionIndex);
+        if (!content.includes(newContentBeforeConfig)) {
+            content =
+                content.slice(0, configSectionIndex) +
+                newContentBeforeConfig +
+                "\n" +
+                content.slice(configSectionIndex);
+        }
     }
     fs.writeFileSync(codeownersPath, content);
 }

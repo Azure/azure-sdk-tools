@@ -274,6 +274,6 @@ export async function generateRLCInPipeline(options: {
         }
         if (!options.skipGeneration && !!packagePath) {
             changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Rlc);
-        }        
+        }
     }
 }

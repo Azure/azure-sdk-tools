@@ -319,7 +319,7 @@ export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: str
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {
-        throw new Error(`Missing ${emitterName} options in tspconfig.yaml.`);
+        throw new Error(`Failed to find ${emitterName} options in tspconfig.yaml.`);
     }
 
     const currApiVersion = emitterOptions['api-version'];

@@ -20,11 +20,7 @@ extends:
         azureSubscription: azure-sdk-tests-playground   # your service connection
         scriptType: bash
         scriptLocation: inlineScript
-        addSpnToEnvironment: true
         inlineScript: |
-          # Login using service principal (credentials are automatically injected by the task)
-          az account set --subscription "$(AZURE_SUBSCRIPTION_ID)"
-          
           # Verify account
           az account show
           

@@ -6,7 +6,6 @@ import * as path from "path";
 import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git.js";
 import {generateChangelogAndBumpVersion} from "../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
 import {Changelog} from "../changelog/changelogGenerator.js";
-import {changeRushJson} from "../utils/changeRushJson.js";
 import {modifyOrGenerateCiYml} from "../utils/changeCiYaml.js";
 import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample.js";
 import {changeReadmeMd} from "./utils/changeReadmeMd.js";
@@ -68,8 +67,6 @@ export async function generateMgmt(options: {
             const packageName = packageJson.name;
 
             if (!options.skipGeneration) {
-                changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
-
                 // change configuration to skip build test, sample
                 changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Hlc);
 

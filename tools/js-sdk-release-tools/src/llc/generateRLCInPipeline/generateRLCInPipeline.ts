@@ -5,7 +5,6 @@ import * as path from "path";
 import { addApiViewInfo } from "../../utils/addApiViewInfo.js";
 import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
 import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample.js";
-import { changeRushJson } from "../../utils/changeRushJson.js";
 import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo.js";
 import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git.js";
 import { logger } from "../../utils/logger.js";
@@ -16,11 +15,9 @@ import {
     generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
-import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
-import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { migratePackage } from "../../common/migration.js";
 
 export async function generateRLCInPipeline(options: {
@@ -212,8 +209,6 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);
         if (!options.skipGeneration) {
             await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, packageName.includes("arm"));
-
-            await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 
             // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample

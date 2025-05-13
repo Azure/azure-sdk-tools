@@ -324,7 +324,7 @@ export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: str
 
     const currApiVersion = emitterOptions['api-version'];
     if (currApiVersion !== apiVersion) {
-        logger.warn(`The api-version in tspconfig.yaml is different from the one provided: ${currApiVersion} != ${apiVersion}`);
+        logger.warn(`The specified api-version ${apiVersion} is going to override ${apiVersionInTspConfig} in tspconfig.yaml`);
         emitterOptions['api-version'] = apiVersion;
         const updatedTspConfigContent = dump(tspConfig);
         fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');

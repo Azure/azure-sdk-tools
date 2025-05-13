@@ -28,7 +28,7 @@ namespace AzureSDKDevToolsMCP.Tools
         private const string typespecValidationCommandName = "validate-typespec";
 
         // Options
-        private readonly Option<string> typeSpecProjectPathOpt = new(["-typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
 
 
         /// <summary>

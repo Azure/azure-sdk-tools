@@ -11,7 +11,7 @@ model:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
     azure_deployment: o3-mini
-    api_version: 2025-01-01-preview
+    api_version: 2025-03-01-preview
   parameters:
     stop: []
     frequency_penalty: 0
@@ -30,39 +30,45 @@ sample:
     6. Suggest adding docstrings
     7. Suggest using pydantic or dataclasses for models
     8. Comment on async list method naming
-    9. Comment on indentation or namespace declaration
+    9. Comment on indentation
     10. Suggest consolidating multiple overloads
     11. Suggest providing convenience methods directly on the client
     12. Comment on non-standard use of TypedDict syntax
-    13. Comment about ivar being non-standard use
+    13. Comment about ivar being non-standard in docstrings
     14. Comment about use of distributed_trace/async decorators
     15. Comment about methods ending with :
+    16. Comments about not using the non-standard namespace declaration
+    17. Comment on the overuse of **kwargs
+    18. Comment on class names being prefixed by the full module name
   comments: |
     {
       "comments": [
         {
           "line_no": 2,
           "bad_code": "def method1(self, arg1: str) -> None",
-          "suggestion": "Add docstring explaining method purpose",
-          "comment": "Methods should have descriptive docstrings"
+          "suggestion": "",
+          "comment": "Methods should have descriptive docstrings",
+          "source": "generic"
         },
         {
           "line_no": 2,
           "bad_code": "def method1(self, arg1: str) -> None",
           "suggestion": "`def method1(self, arg1: str) -> None:`",
-          "comment": "Methods should end with a colon"
+          "comment": "Methods should end with a colon",
+          "source": "generic"
         },
         {
           "line_no": 2,
           "bad_code": "def method1(self, arg1: str) -> None",
           "suggestion": "def get_something(self, name: str) -> None",
           "comment": "Method name should be more descriptive"
+          "source": "generic"
         }
       ]
     }
   sample: ""
 ---
-system: |
+system:
   You are a helpful AI that reviews {{language}} API design comments from another AI. Your role is to filter out any comments that violate a set of known exceptions. You will receive:
   1. The proposed comments to review
   2. The exceptions that must be followed
@@ -78,33 +84,12 @@ system: |
   - Flag any comments' `status` field as "REMOVE" that violate the exceptions
   - Flag any comments' `status` field as "KEEP" that enhance API design
   - All comments MUST be flagged with a `status` field, and a `status_reason`.
-  - Maintain the same output schema as the proposed comments, except for the addition of `status` and `status_reason` fields.
+  - For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
 
-user: |
+user:
   Please validate the following review against the exceptions:
 
-  Proposed Review Comments:
+  # PROPOSED COMMENTS
   ```json
   {{comments}}
   ```
-
-assistant: |
-  I will analyze each comment in the review results and:
-
-  1. Check if it violates any of the validation rules by focusing on the content in the `comment` field, not other fields.
-  2. Flag any comments' `status` field as "REMOVE" that violate the exceptions
-  3. Flag any comments' `status` field as "KEEP" that enhance API design
-  4. Return a filtered set of comments in the same schema, with the addition of `status` and `status_reason` fields.
-
-  For each comment I will:
-  - Verify it doesn't comment on excluded aspects
-  - Ensure it focuses on API design quality
-  - Validate it improves developer experience
-  - Confirm it aligns with {{language}} best practices
-
-  The response will maintain the schema structure with:
-  - A list of comments
-  - Each comment containing line_no, bad_code, suggestion, and comment identical to the original
-  - Each comments will include new fields `status` and `status_reason` to indicate whether it was kept or removed and the reason for that decision.
-
-{{sample}}

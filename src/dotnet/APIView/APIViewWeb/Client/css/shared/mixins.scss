@@ -131,19 +131,20 @@
     }
 }
 
-@mixin webkit-scrollbar($height: 10px, $width: 10px) {
+@mixin webkit-scrollbar {
     ::-webkit-scrollbar {
-        width: $width;
+        width: 10px;
     }
     
     ::-webkit-scrollbar:horizontal {
-        height: $height;
+        height: 10px;
     }
     
     ::-webkit-scrollbar-thumb {
         border: solid 3px var(--base-bg-color);
         background-color: var(--text-muted-color);
         border-radius: 6px;
+        min-height: 50px;
     }
     
     ::-webkit-scrollbar-track-piece {

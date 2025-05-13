@@ -2,74 +2,124 @@
     "comments": [
         {
             "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nOverview  \nThis API provides a service for analyzing and understanding various content types within Azure. The service exposes both synchronous and asynchronous clients that enable users to interact with analyzers for content evaluation, management, and transformation. It facilitates operations that accept different input formats and supports long‐running tasks with poller objects.\n\nAPI Version  \nThe clients accept an `api_version` parameter during initialization. Although an explicit version object is not defined in the APIView, users can specify the desired version within the client constructors.\n\n*Client Classes  \nThe synchronous client, `azure.ai.contentunderstanding.ContentUnderstandingClient`, exposes the methods `__init__`, `close`, and `send_request`. Its asynchronous counterpart, `azure.ai.contentunderstanding.aio.ContentUnderstandingClient`, similarly provides `__init__`, `close`, and `send_request`.\n\nIn addition, the service includes analyzer operation clients in both synchronous and asynchronous variants. The asynchronous operations class, `azure.ai.contentunderstanding.aio.operations.AnalyzersOperations`, offers methods named `begin_analyze`, `begin_analyze_binary`, `begin_create_or_replace`, `delete`, `get`, `get_operation_status`, `get_result`, `get_result_image`, `list`, and `update`. The synchronous operations provided in `azure.ai.contentunderstanding.operations.AnalyzersOperations` include the same set of method names.\n\nOther Classes and Methods  \nA wide range of models under `azure.ai.contentunderstanding.models` encapsulate the data structures necessary for content analysis. Key models include `AnalyzeResult`, `ContentAnalyzer`, `ContentAnalyzerConfig`, `ContentField`, and `ContentSpan`. The APIView also defines specialized field models such as `ArrayField`, `BooleanField`, `DateField`, `IntegerField`, `NumberField`, `ObjectField`, `StringField`, and `TimeField` to represent various extracted data types. Enumerations and supporting classes like `DataSourceKind`, `DocumentBarcodeKind`, `DocumentFormulaKind`, `ParagraphRole`, and others further detail the structure and metadata for document and media content, including types for audio-visual and document content.\n\nRelevant API Functionality and Structure  \nThe design of the API centers around content analyzers, enabling users to create, update, delete, and retrieve analyzer resources. It supports both context-managed synchronous and asynchronous client patterns and includes methods to send HTTP requests as well as to manage long-running operations via pollers. Overloads in methods such as those in the analyzers operations classes support different input types (for example, JSON or byte streams) to accommodate diverse use cases in content extraction and analysis.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [],
             "line_no": 110,
             "bad_code": "input: bytes,",
-            "suggestion": "data: bytes,",
-            "comment": "Avoid using 'input' as a parameter name since it shadows Python's built-in function. A more descriptive name such as 'data' or 'binary_data' is recommended.",
+            "suggestion": "binary_data: bytes,",
+            "comment": "Avoid using 'input' as a parameter name as it shadows a built-in function.",
             "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 192,
+            "bad_code": "def list(self, **kwargs: Any) -> AsyncIterable[ContentAnalyzer]",
+            "suggestion": "def list_analyzers(self, **kwargs: Any) -> AsyncIterable[ContentAnalyzer]",
+            "comment": "Listing methods should be prefixed with 'list_' to clearly indicate resource enumeration.",
+            "source": "guideline"
         },
         {
             "rule_ids": [],
             "line_no": 266,
             "bad_code": "ivar spans: list[ContentSpan]",
             "suggestion": "ivar spans: List[ContentSpan]",
-            "comment": "There is an inconsistency in generic type annotation style. Standardize on either the built-in generics (e.g. 'list[...]' if targeting Python 3.9+) or on the typing counterparts (e.g. 'List[...]') to maintain consistency throughout the API.",
+            "comment": "Use consistent type annotations by preferring List from the typing module over the built-in list.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1041,
-            "bad_code": "ivar type: Optional[Union[str, FieldType]]",
-            "suggestion": "ivar field_type: Optional[Union[str, FieldType]]",
-            "comment": "Avoid shadowing Python built-ins such as 'type'. Renaming this attribute (for example, to 'field_type') makes the intent clearer and prevents potential conflicts.",
+            "line_no": 267,
+            "bad_code": "ivar type: Literal[ARRAY]",
+            "suggestion": "ivar field_type: Literal[ARRAY]",
+            "comment": "Avoid shadowing the built-in name 'type' by renaming the attribute to something like 'field_type'.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 306,
+            "bad_code": "ivar fields: dict[str, ContentField]",
+            "suggestion": "ivar fields: Dict[str, ContentField]",
+            "comment": "For consistency with other type hints, use Dict from the typing module instead of the built-in dict.",
             "source": "generic"
         },
         {
             "rule_ids": [],
             "line_no": 1138,
             "bad_code": "ivar spans: list[ContentSpan]",
-            "suggestion": "ivar spans: List[ContentSpan]",
-            "comment": "For consistency and clarity, use the standard generic type from the typing module (List) rather than the built-in list when annotating types.",
+            "suggestion": "ivar spans: Optional[List[ContentSpan]]",
+            "comment": "Use a consistent type annotation style and align the attribute’s type with its constructor signature.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1213,
-            "bad_code": "ivar type: Literal[NUMBER]",
-            "suggestion": "ivar field_type: Literal[NUMBER]",
-            "comment": "Naming an attribute 'type' shadows Python’s built-in. Renaming it (for example, to 'field_type') prevents potential conflicts and clarifies intent.",
+            "line_no": 1139,
+            "bad_code": "ivar type: Literal[INTEGER]",
+            "suggestion": "ivar type: Literal['integer']",
+            "comment": "Use a string literal for the literal value to avoid relying on an undefined constant.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1254,
-            "bad_code": "ivar value_object: Optional[Dict[str, ForwardRef('ContentField')]]",
-            "suggestion": "from __future__ import annotations  // then use: value_object: Optional[Dict[str, ContentField]]",
-            "comment": "Leveraging 'from __future__ import annotations' can simplify forward references, making the type hints clearer and more maintainable.",
+            "line_no": 1212,
+            "bad_code": "        ivar spans: list[ContentSpan]",
+            "suggestion": "        ivar spans: List[ContentSpan]",
+            "comment": "Use consistent type annotation style for collections; align with overloads by using 'List' from the typing module.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1510,
-            "bad_code": "def __init__(\n\t    self, \n\t    *args, \n\t    **kwargs\n\t)",
-            "suggestion": "def __init__(self, client: HttpClient, config: Config) -> None:",
-            "comment": "Using *args and **kwargs in the public constructor reduces discoverability of required parameters. Consider defining them explicitly to make the API more self‐documenting.",
+            "line_no": 1236,
+            "bad_code": "                type: str",
+            "suggestion": "                field_type: str",
+            "comment": "Avoid shadowing the built-in 'type' by renaming the parameter to 'field_type' for clarity.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1517,
-            "bad_code": "def begin_analyze(",
-            "suggestion": "def begin_analyze_from_url(self, analyzer_id: str, url: str, *, content_type: str = 'application/json', **kwargs: Any) -> LROPoller[AnalyzeResult]:",
-            "comment": "The multiple overloads for begin_analyze (handling URL, JSON body, and binary IO) may be confusing. Splitting these into clearly named methods (e.g. begin_analyze_from_url) can improve clarity.",
+            "line_no": 1242,
+            "bad_code": "        def __init__(",
+            "suggestion": null,
+            "comment": "Consider providing an explicit __init__ signature rather than using *args and **kwargs for better discoverability and type safety.",
             "source": "generic"
         },
         {
             "rule_ids": [],
-            "line_no": 1550,
-            "bad_code": "body: Union[JSON, IO[bytes]] = _Unset,",
-            "suggestion": "body: Optional[Union[JSON, IO[bytes]]] = None,",
-            "comment": "Relying on an internal sentinel (_Unset) can be confusing. Using None as the default (or ensuring the sentinel is clearly documented) improves clarity.",
+            "line_no": 1276,
+            "bad_code": "                type: str",
+            "suggestion": "                field_type: str",
+            "comment": "Rename the 'type' parameter to 'field_type' to prevent confusion with the built-in and improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1333,
+            "bad_code": "    class azure.ai.contentunderstanding.models.ResourceOperationStatusContentAnalyzerContentAnalyzerError(MutableMapping[str, Any]):",
+            "suggestion": "    class azure.ai.contentunderstanding.models.ResourceOperationStatusContentAnalyzerError(MutableMapping[str, Any]):",
+            "comment": "Shorten the class name to eliminate redundant segments and improve readability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1393,
+            "bad_code": "                type: str",
+            "suggestion": "                field_type: str",
+            "comment": "Use a more descriptive name like 'field_type' instead of 'type' to avoid shadowing the built-in.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1433,
+            "bad_code": "                type: str",
+            "suggestion": "                field_type: str",
+            "comment": "Change 'type' to 'field_type' to avoid clashing with Python’s built-in name.",
             "source": "generic"
         },
         {
@@ -77,16 +127,19 @@
             "line_no": 1560,
             "bad_code": "input: bytes,",
             "suggestion": "data: bytes,",
-            "comment": "The parameter name 'input' shadows the built-in input() function. Renaming it to something like 'data' avoids this conflict and follows best practices.",
+            "comment": "Avoid using 'input', a built-in function name; rename the parameter (e.g. to 'data') for clarity.",
             "source": "generic"
         },
         {
-            "rule_ids": [],
-            "line_no": 1645,
-            "bad_code": "def update(",
-            "suggestion": "def update_from_json(self, analyzer_id: str, resource: JSON, *, content_type: str = 'application/merge-patch+json', **kwargs: Any) -> ContentAnalyzer:",
-            "comment": "Similar to begin_analyze, the update method has several overloads for different resource types. Consider splitting these into separate methods to reduce complexity and help users understand the API.",
-            "source": "generic"
+            "rule_ids": [
+                "python_design.html#python-paged-prefix",
+                "python_design.html#python-response-paged-protocol"
+            ],
+            "line_no": 1642,
+            "bad_code": "def list(self, **kwargs: Any) -> Iterable[ContentAnalyzer]",
+            "suggestion": "def list_analyzers(self, **kwargs: Any) -> ItemPaged[ContentAnalyzer]",
+            "comment": "The method should be renamed with a 'list_' prefix to clearly indicate it enumerates resources, and its name should be more descriptive to avoid shadowing the built-in list type. Additionally, it should return an ItemPaged object to properly support paging of results.",
+            "source": "merged"
         }
     ]
 }

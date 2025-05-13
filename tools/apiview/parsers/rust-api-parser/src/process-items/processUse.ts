@@ -13,6 +13,7 @@ import { AnnotatedReviewLines } from "./utils/models";
 import { getAPIJson, processedItems } from "../main";
 import { processItem } from "./processItem";
 import { processModule } from "./processModule";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 function processSimpleUseItem(item: Item): AnnotatedReviewLines {
   const annotatedReviewLines: AnnotatedReviewLines = {
@@ -35,7 +36,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       {
         Kind: TokenKind.TypeName,
         Value: item.inner.use.name,
-        RenderClasses: ["dependencies"],
+        RenderClasses: ["struct"],
         NavigateToId: dereferencedId.toString(),
         NavigationDisplayName: item.inner.use.name,
         HasSuffixSpace: false,
@@ -46,7 +47,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       },
     );
   } else {
-    const useValue = item.inner.use.source || "null";
+    const useValue = item.inner.use.source || "unknown_use_source";
     tokens.push(
       {
         Kind: TokenKind.Text,
@@ -59,14 +60,14 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       {
         Kind: TokenKind.TypeName,
         Value: replaceCratePath(useValue),
-        RenderClasses: ["dependencies"],
+        RenderClasses: ["struct"],
         NavigateToId: dereferencedId.toString(),
         NavigationDisplayName: item.inner.use.name,
       },
     );
   }
-
-  annotatedReviewLines.children[item.id] = [{ Tokens: tokens }];
+  lineIdMap.set(item.id.toString(), item.inner.use.name);
+  annotatedReviewLines.children[item.id] = [{ LineId: item.id.toString(), Tokens: tokens }];
   return annotatedReviewLines;
 }
 
@@ -130,9 +131,10 @@ export function processUse(
         apiJson,
       );
       moduleChildIds.forEach((childId) => {
-        annotatedReviewLines.children[childId] = [
-          createItemLineFromPath(childId, apiJson.paths[childId]),
-        ];
+        const childLine = createItemLineFromPath(childId, apiJson.paths[childId]);
+        if (childLine) {
+          annotatedReviewLines.children[childId] = [childLine];
+        }
       });
     }
   }

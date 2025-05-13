@@ -13,6 +13,7 @@ export type ExecutionReport = {
   stagedArtifactsFolder?: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
+  isSdkConfigDuplicated?: boolean;
 };
 
 export type PackageReport = {

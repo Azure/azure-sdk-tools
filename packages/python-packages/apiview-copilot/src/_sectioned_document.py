@@ -1,10 +1,13 @@
-from typing import List, NamedTuple
+import re
+from typing import List, Optional
 
 
-class LineData(NamedTuple):
-    line_no: int
-    indent: int
-    line: str
+class LineData:
+    def __init__(self, *, line_no: Optional[int], indent: int, line: str, git_status: Optional[str] = None):
+        self.line_no = line_no
+        self.indent = indent
+        self.line = line
+        self.git_status = git_status
 
 
 class Section:
@@ -18,7 +21,12 @@ class Section:
 
     def numbered(self) -> str:
         """Returns the lines with line numbers."""
-        numbered_lines = [f"{x.line_no}: {x.line}" for x in self.lines]
+        numbered_lines = []
+        for x in self.lines:
+            val = ""
+            if x.line_no is not None:
+                val = f"{x.line_no}: {x.git_status or ''}"
+            numbered_lines.append(f"{val}{x.line}")
         return "\n".join(numbered_lines)
 
     def idx_for_line_no(self, line_no: int) -> int:
@@ -40,16 +48,28 @@ class SectionedDocument:
         lines: List[str] = None,
         line_data: List[LineData] = None,
         base_indent: int = 0,
-        max_chunk_size: int = 500,
+        max_chunk_size: int = 250,
     ):
+        if max_chunk_size == 1:
+            raise ValueError("max_chunk_size must be greater than 1")
+
         self.sections = []
         # Step 1: Create initial fine-grained sections based on indentation
         if line_data is None:
             line_data = []
-            for i, line in enumerate(lines):
+            for line in lines:
+                # Parse the line to get it's line number and diff status
+                pattern = r"^(\d+): ( |\+|\-)?(.*)$"
+                match = re.match(pattern, line)
+                if match:
+                    line_no = int(match.group(1))
+                    git_status = match.group(2)
+                    line = match.group(3)
+                else:
+                    line_no = None
+                    git_status = None
                 indent = len(line) - len(line.lstrip())
-                # ensure line numbers are 1-indexed, not 0-indexed
-                line_data.append(LineData(i + 1, indent, line))
+                line_data.append(LineData(line_no=line_no, indent=indent, line=line, git_status=git_status))
 
         top_level_lines = [
             x
@@ -92,18 +112,12 @@ class SectionedDocument:
                     current_section_lines = []
                     current_size = 0
 
-                # top line of the oversized section
-                top_line = section.lines[0]
-
-                # place the remaining lines in a new sectioned documents
-                sub_sections = SectionedDocument(
-                    line_data=section.lines[1:], base_indent=base_indent + 1, max_chunk_size=max_chunk_size
-                )
-                for sub_section in sub_sections:
-                    # Add the top line of the oversized section to the new sub-section
-                    sub_section.lines.insert(0, top_line)
-                    # Add the sub-sections as new sections
-                    self.sections.append(sub_section)
+                # Subdivide the oversized section
+                top_line = section.lines[0]  # The root line to include in all subsections
+                for i in range(1, section_size, max_chunk_size - 1):
+                    chunk = section.lines[i : i + (max_chunk_size - 1)]
+                    chunk.insert(0, top_line)  # Include the root line in all chunks
+                    self.sections.append(Section(chunk))
                 continue
 
             # If adding this section would exceed max_chunk_size, finalize current chunk

@@ -42,16 +42,22 @@ async function automationGenerateInPipeline(
     const local = runMode === 'local'
     let currAPIVersion ="";
     let currSDKReleaseType = "";
+    let tag = "";
 
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        if (enableApiVersionAndReleaseType && sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration &&
-            ((sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient)) {
-            const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
-            const tspDefDir = path.join(swaggerRepo, typespecProject);
-            specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
+        if (enableApiVersionAndReleaseType) {
+            if (sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration &&((sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient)){
+                const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
+                const tspDefDir = path.join(swaggerRepo, typespecProject);
+                specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
+            } else {
+                // for high level client, we will build a tag for the package
+                logger.warn(`The specified api-version ${apiVersion} is going to apply to swagger.`);
+                tag = `package-${apiVersion}`;
+            }
 
             currAPIVersion = apiVersion;
             currSDKReleaseType = sdkReleaseType;
@@ -63,6 +69,7 @@ async function automationGenerateInPipeline(
                     swaggerRepo: specFolder,
                     readmeMd: readmeMd!,
                     gitCommitId: gitCommitId,
+                    tag: tag,
                     use: use,
                     outputJson: outputJson,
                     swaggerRepoUrl: repoHttpsUrl,

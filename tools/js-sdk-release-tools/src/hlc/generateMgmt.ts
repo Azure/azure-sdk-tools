@@ -38,7 +38,7 @@ export async function generateMgmt(options: {
     if (!options.skipGeneration) {
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
-        if (options.tag) {
+        if (options.tag && options.tag !== '') {
             cmd += ` --tag=${options.tag}`;
         }
 

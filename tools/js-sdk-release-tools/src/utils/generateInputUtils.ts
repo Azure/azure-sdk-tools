@@ -54,6 +54,7 @@ export async function parseInputJson(inputJson: any) {
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
     const autorestConfig: string | undefined = inputJson['autorestConfig'];
     const apiVersion: string = inputJson['apiVersion'];
+    const runMode: string = inputJson['runMode'];
     const sdkReleaseType: string = inputJson['sdkReleaseType'];
     const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
     // TODO: consider remove it, since it's not defined in inputJson schema
@@ -99,6 +100,7 @@ export async function parseInputJson(inputJson: any) {
         runningEnvironment,
         typespecProject,
         apiVersion,
+        runMode,
         sdkReleaseType,
     };
 }

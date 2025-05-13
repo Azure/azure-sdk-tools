@@ -35,19 +35,25 @@ async function automationGenerateInPipeline(
         skipGeneration,
         runningEnvironment,
         typespecProject,
-        autorestConfig,
+        autorestConfig,        
         apiVersion,
+        runMode,
         sdkReleaseType,
     } = await parseInputJson(inputJson);
 
-    const currAPIVersion = inputApiVersion ?? apiVersion;
-    const currSDKReleaseType = inputsdkReleaseType ?? sdkReleaseType;
+    const enableApiVersionAndReleaseType = runMode === 'release' || runMode === 'local';
+    let currAPIVersion ="";
+    let currSDKReleaseType = "";
+    if (enableApiVersionAndReleaseType) {
+        currAPIVersion = inputApiVersion ?? apiVersion;
+        currSDKReleaseType = inputsdkReleaseType ?? sdkReleaseType;
+    }    
 
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        if(sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration) {
+        if(enableApiVersionAndReleaseType && sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration) {
             if( (sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient) {
                 const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
                 const tspDefDir = path.join(swaggerRepo, typespecProject);
@@ -71,8 +77,7 @@ async function automationGenerateInPipeline(
                     sdkReleaseType: currSDKReleaseType,
                 });
                 break;
-            case SDKType.RestLevelClient:
-                
+            case SDKType.RestLevelClient:                
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),

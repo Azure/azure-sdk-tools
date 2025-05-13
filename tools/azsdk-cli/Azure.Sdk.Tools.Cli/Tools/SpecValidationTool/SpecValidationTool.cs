@@ -20,7 +20,9 @@ namespace AzureSDKDevToolsMCP.Tools
     public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> logger): MCPTool
     {
         private readonly ITypeSpecHelper _typeSpecHelper = _helper;
+#pragma warning disable CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
         private readonly ILogger<SpecValidationTools> _logger = logger;
+#pragma warning restore CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
 
         // Commands
         private const string typespecValidationCommandName = "validate-typespec";
@@ -49,12 +51,14 @@ namespace AzureSDKDevToolsMCP.Tools
                 var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
                 _logger.LogInformation($"Repo root path: {specRepoRootPath}");
 
-                // Todo: Run npm ci only if "node_modules/.bin/tsv" is not present to impprove validation performance
-
-                // Run npm ci
-                _logger.LogInformation("Running npm ci");                
-                RunNpmCi(specRepoRootPath);
-                _logger.LogInformation("Completed running npm ci");
+                // Run npm ci only if "node_modules/.bin/tsv" is not present to improve validation performance
+                if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
+                {
+                    // Run npm ci
+                    _logger.LogInformation("Running npm ci");
+                    RunNpmCi(specRepoRootPath);
+                    _logger.LogInformation("Completed running npm ci");
+                }
 
                 //Run TypeSpec validation
                 _logger.LogInformation("Running npx tsv to run the validation");
@@ -66,6 +70,12 @@ namespace AzureSDKDevToolsMCP.Tools
                 validationResults.Add($"Error: {ex.Message}");
             }
             return validationResults;
+        }
+
+        private bool IsTypeSpecValidationExecutablePresent(string repoRoot)
+        {
+            var tsvExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsv.cmd" : "tsv";
+            return File.Exists(Path.Combine(repoRoot, "node_modules", ".bin", tsvExecutable));
         }
 
         public static void RunNpmCi(string repoRoot)

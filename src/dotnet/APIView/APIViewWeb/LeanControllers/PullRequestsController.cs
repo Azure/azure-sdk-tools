@@ -15,7 +15,6 @@ namespace APIViewWeb.LeanControllers
 {
     public class PullRequestsController  : BaseApiController
     {
-        private readonly ILogger<PullRequestsController> _logger;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
         private readonly IEnumerable<LanguageService> _languageServices;
@@ -24,7 +23,6 @@ namespace APIViewWeb.LeanControllers
             ILogger<PullRequestsController> logger,
             IPullRequestManager pullRequestManager, IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
-            _logger = logger;
             _pullRequestManager = pullRequestManager;
             _configuration = configuration;
             _languageServices = languageServices;

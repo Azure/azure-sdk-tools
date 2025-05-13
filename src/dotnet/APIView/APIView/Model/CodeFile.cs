@@ -45,7 +45,6 @@ namespace ApiView
         public string CrossLanguagePackageId { get; set; }
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
         // APIForest will be removed once server changes are added to dereference this property
-        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public List<CodeFileToken[]> LeafSections { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeDiagnostic[] Diagnostics { get; set; }
@@ -155,6 +154,16 @@ namespace ApiView
                 line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language));
             }
             return sb.ToString();
+        }
+
+        public List<(string lineText, string lineId)> GetApiLines(bool skipDocs = true)
+        {
+            List<(string lineText, string lineId)> builder = new List<(string lineText, string lineId)>();
+            foreach (var line in ReviewLines)
+            {
+                line.AppendApiTextToBuilder(builder, 0, skipDocs, GetIndentationForLanguage(Language));
+            }
+            return builder;
         }
 
         public static int GetIndentationForLanguage(string language)

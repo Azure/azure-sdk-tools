@@ -485,7 +485,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         },
         error: (error: any) => {
           this.creatingRevision = false;
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to create new API Revision', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Revision Failure', detail: 'Failed to create new API Revision', key: 'bc', life: 3000 });
         }
       });
     }

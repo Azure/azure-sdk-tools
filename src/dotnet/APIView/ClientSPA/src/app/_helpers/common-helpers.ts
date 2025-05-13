@@ -62,3 +62,7 @@ export function isDiffRow(row: CodePanelRowData) {
 export function convertRowOfTokensToString(rowOfTokens: StructuredToken[]): string {
   return rowOfTokens.map(token => token.value).join('');
 }
+
+export function getTreeStyleLanguages() {
+  return ["C#", "Go", "Java", "JavaScript", "Python", "Rust", "Swift"];
+}

@@ -16,7 +16,7 @@ def _zip_current_repo(output_filename: str):
     print("Zipping the current repository...")
     folders_to_keep = ["src", "guidelines", "prompts", "metadata"]
     files_to_keep = ["app.py", "requirements.txt"]
-    with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for root, _, files in os.walk("."):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -25,7 +25,7 @@ def _zip_current_repo(output_filename: str):
                 top_level_folder = rel_path.split(os.sep)[0]
                 if not top_level_folder in folders_to_keep and rel_path not in files_to_keep:
                     continue
-                zipf.write(file_path, rel_path)
+                zip_file.write(file_path, rel_path)
     print(f"Repository zipped to {output_filename}")
 
 
@@ -55,24 +55,23 @@ def deploy_app_to_azure(
 
     try:
         print("Deploying to Azure App Service...")
-        subprocess.run(
-            [
-                "az.cmd",
-                "webapp",
-                "deploy",
-                "--resource-group",
-                resource_group,
-                "--name",
-                app_name,
-                "--src-path",
-                zip_file,
-                "--subscription",
-                subscription_id,
-                "--type",
-                "zip",
-            ],
-            check=True,
-        )
+        cmd = [
+            "az.cmd",
+            "webapp",
+            "deploy",
+            "--resource-group",
+            resource_group,
+            "--name",
+            app_name,
+            "--src-path",
+            zip_file,
+            "--subscription",
+            subscription_id,
+            "--type",
+            "zip",
+        ]
+        print("Running command:", " ".join(cmd))
+        subprocess.run(cmd, check=True)
         print("Deployment completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred during deployment: {e}")

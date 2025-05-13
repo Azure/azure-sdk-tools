@@ -355,7 +355,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       icon.classList.add('bi-clipboard');
     }, 1500);
 
-    this.copyReviewTextEmitter.emit(true);
+    this.copyReviewTextEmitter.emit(this.isDiffView);
   }
 
   clearReviewSearch() {

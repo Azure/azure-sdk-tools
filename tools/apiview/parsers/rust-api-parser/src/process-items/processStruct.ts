@@ -49,7 +49,7 @@ export function processStruct(item: Item): ReviewLine[] {
   structLine.Tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_struct",
-    RenderClasses: ["struct"],
+    RenderClasses: ["class"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,

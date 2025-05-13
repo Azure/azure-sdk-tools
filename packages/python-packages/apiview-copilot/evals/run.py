@@ -55,6 +55,9 @@ class CustomAPIViewEvaluator:
                 review_eval["comments_found"] == 0
                 or review_eval["comments_found"] == review_eval["valid_generic_comments"]
             ):
+                # give credit b/c we have no violations to calc groundedness or similarity
+                review_eval["groundedness"] = 5
+                review_eval["similarity"] = 5
                 return 100.0
             return 0.0
 
@@ -223,7 +226,11 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
             row["outputs.metrics.comments_found"] == 0
             or row["outputs.metrics.comments_found"] == row["outputs.metrics.valid_generic_comments"]
         ):
+            # give credit b/c we have no violations to calc groundedness or similarity
+            row["outputs.metrics.groundedness"] = 5
+            row["outputs.metrics.similarity"] = 5
             return 100.0
+
         return 0.0
 
     exact_match_score = row["outputs.metrics.true_positives"] / row["outputs.metrics.expected_comments"]

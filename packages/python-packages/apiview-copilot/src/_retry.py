@@ -1,11 +1,20 @@
 import json
+import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+
+class TimeoutException(Exception):
+    """Custom exception for timeouts."""
+
+    pass
 
 
 def retry_with_backoff(
     func,
     *,
     max_retries=5,
-    retry_exceptions=(json.JSONDecodeError, TimeoutError, ConnectionError),
+    timeout=180,  # Timeout for each call in seconds (default: 3 minutes)
+    retry_exceptions=(json.JSONDecodeError, TimeoutError, ConnectionError, TimeoutException),
     non_retryable_exceptions=(AttributeError, TypeError, NameError, SyntaxError, PermissionError),
     on_failure=None,
     on_retry=None,
@@ -13,11 +22,12 @@ def retry_with_backoff(
     description="operation",
 ):
     """
-    Generic retry function with smart defaults.
+    Generic retry function with smart defaults, support for honoring 'Retry-After' headers, and per-call timeout.
 
     Args:
         func: The function to retry
         max_retries: Maximum number of retries
+        timeout: Timeout for each function call in seconds
         retry_exceptions: Tuple of exceptions that should trigger a retry.
                          Default includes JSON parsing errors, timeouts, and connection issues.
         non_retryable_exceptions: Tuple of exceptions that should never be retried.
@@ -32,8 +42,15 @@ def retry_with_backoff(
     """
     for attempt in range(max_retries):
         try:
-            result = func()
+            # Use ThreadPoolExecutor to enforce a timeout
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(func)
+                result = future.result(timeout=timeout)  # Wait for the result with a timeout
             return result
+        except TimeoutError:
+            if logger:
+                logger.error(f"Timeout in {description}: Function execution exceeded {timeout} seconds")
+            e = TimeoutException(f"Function execution exceeded {timeout} seconds")
         except Exception as e:
             # Check if this is a non-retryable exception
             if isinstance(e, non_retryable_exceptions):
@@ -56,15 +73,36 @@ def retry_with_backoff(
             if logger:
                 print(error_msg)
 
-            # Call the on_retry callback if provided
-            if on_retry:
-                on_retry(e, attempt, max_retries)
+        # Check for 'Retry-After' header if the exception has it
+        retry_after = None
+        if hasattr(e, "response") and e.response is not None:
+            retry_after = e.response.headers.get("Retry-After")
+            if retry_after:
+                try:
+                    retry_after = int(retry_after)
+                    if logger:
+                        logger.info(f"Retry-After header found: {retry_after} seconds")
+                except ValueError:
+                    retry_after = None  # Ignore invalid Retry-After values
 
-            # If this was the last attempt, call on_failure and return its result
-            if attempt == max_retries - 1:
-                if on_failure:
-                    return on_failure(e, attempt)
-                raise  # Re-raise the exception if no on_failure handler
+        # Use Retry-After if available, otherwise use exponential backoff
+        if retry_after is None:
+            retry_after = 2**attempt  # Exponential backoff
+            if logger:
+                logger.info(f"Using exponential backoff: {retry_after} seconds")
+
+        # Call the on_retry callback if provided
+        if on_retry:
+            on_retry(e, attempt, max_retries)
+
+        # Wait before retrying
+        time.sleep(retry_after)
+
+        # If this was the last attempt, call on_failure and return its result
+        if attempt == max_retries - 1:
+            if on_failure:
+                return on_failure(e, attempt)
+            raise  # Re-raise the exception if no on_failure handler
 
     # This shouldn't be reached, but just in case
     raise RuntimeError(f"Failed after {max_retries} attempts")

@@ -1,4 +1,4 @@
 scratch/prompts
 raw_requests
 build
-error.log
+*.log

@@ -35,7 +35,7 @@ export function processTraitAlias(item: Item): ReviewLine[] {
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown",
     HasSuffixSpace: false,
-    RenderClasses: ["interface"],
+    RenderClasses: ["type"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

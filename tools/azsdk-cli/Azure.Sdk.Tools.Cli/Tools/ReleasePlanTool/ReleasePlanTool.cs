@@ -54,11 +54,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
         public override Command GetCommand()
         {
             Command command = new Command("release-plan");
+            var subCommands = new[]
+            {
+                new Command(getReleasePlanDetailsCommandName, "Get details of a release plan") {workItemIdOpt},
+                new Command(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt }
+            };
 
-            var getReleasePlanDetailsCommand = new Command(getReleasePlanDetailsCommandName, "Get details of a release plan") {workItemIdOpt};
-            var createReleasePlanCommand = new Command(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt };
-
-            foreach (var subCommand in new[] { getReleasePlanDetailsCommand, createReleasePlanCommand })
+            foreach (var subCommand in subCommands)
             {
                 subCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
                 command.AddCommand(subCommand);
@@ -72,23 +74,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
         // HostServerTool.CreateAppBuilder
         public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-
-            switch(command)
+            var commandParser = ctx.ParseResult;
+            var command = commandParser.CommandResult.Command.Name;            
+            switch (command)
             {
                 case getReleasePlanDetailsCommandName:
-                    var workItemId = ctx.ParseResult.GetValueForOption(workItemIdOpt);
+                    var workItemId = commandParser.GetValueForOption(workItemIdOpt);
                     var releasePlanDetails = await GetReleasePlanDetails(workItemId);
                     logger.LogInformation($"Release plan details: {releasePlanDetails}");
                     return 0;
 
                 case createReleasePlanCommandName:
-                    var typeSpecProjectPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
-                    var targetReleaseMonthYear = ctx.ParseResult.GetValueForOption(targetReleaseOpt);
-                    var serviceTreeId = ctx.ParseResult.GetValueForOption(serviceTreeIdOpt);
-                    var productTreeId = ctx.ParseResult.GetValueForOption(productTreeIdOpt);
-                    var specApiVersion = ctx.ParseResult.GetValueForOption(apiVersionOpt);
-                    var specPullRequestUrl = ctx.ParseResult.GetValueForOption(pullRequestOpt);
+                    var typeSpecProjectPath = commandParser.GetValueForOption(typeSpecProjectPathOpt);
+                    var targetReleaseMonthYear = commandParser.GetValueForOption(targetReleaseOpt);
+                    var serviceTreeId = commandParser.GetValueForOption(serviceTreeIdOpt);
+                    var productTreeId = commandParser.GetValueForOption(productTreeIdOpt);
+                    var specApiVersion = commandParser.GetValueForOption(apiVersionOpt);
+                    var specPullRequestUrl = commandParser.GetValueForOption(pullRequestOpt);
                     var releasePlan = await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl);
                     logger.LogInformation($"Release plan created: {releasePlan}");
                     return 0;

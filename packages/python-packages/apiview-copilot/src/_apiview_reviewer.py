@@ -85,6 +85,7 @@ class ApiViewReview:
         base: Optional[str],
         *,
         language: str,
+        outline: Optional[str] = None,
         use_rag: bool = DEFAULT_USE_RAG,
     ):
         self.target = self._unescape(target)
@@ -99,7 +100,7 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
-        self.outline = None
+        self.outline = outline
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):

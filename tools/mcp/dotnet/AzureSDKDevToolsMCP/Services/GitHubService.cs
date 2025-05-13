@@ -1,19 +1,21 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Octokit;
-using Octokit.Models;
-using Octokit.Clients;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using AzureSDKDSpecTools.Services;
+using Microsoft.Extensions.Logging;
+using Octokit;
+using Octokit.Clients;
+using Octokit.Models;
 
 namespace AzureSDKDevToolsMCP.Services
 {
     public interface IGitHubService
     {
         public Task<User> GetGitUserDetails();
-        public Task<IReadOnlyList<CheckRun>> GetPullRequestChecksAsync(string repoOwner, string repoName, int pullRequestNumber);
+        public Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string repoName, string repoOwner);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string> GetGitHubParentRepoUrl(string owner, string repoName);
         public Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
@@ -40,15 +42,6 @@ namespace AzureSDKDevToolsMCP.Services
         {
             var user = await gitHubClient.User.Current();
             return user;
-        }
-
-        public async Task<IReadOnlyList<CheckRun>> GetPullRequestChecksAsync(string repoOwner, string repoName, int pullRequestNumber)
-        {
-            var pr = await GetPullRequestAsync(repoOwner, repoName, pullRequestNumber) ?? throw new InvalidOperationException($"Pull request {pullRequestNumber} not found.");
-            var checks = await gitHubClient.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha);
-            return checks == null
-                ? throw new InvalidOperationException($"Check runs for pull request {pullRequestNumber} not found.")
-                : checks.CheckRuns;
         }
 
         public async Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber)
@@ -178,7 +171,7 @@ namespace AzureSDKDevToolsMCP.Services
 
         public async Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber)
         {
-            List<string> responseList = new List<string>();
+            List<string> responseList = [];
             try
             {
                 var comments = await gitHubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pullRequestNumber);
@@ -198,6 +191,42 @@ namespace AzureSDKDevToolsMCP.Services
                 responseList.Add($"Failed to get comments for pull request {pullRequestNumber}. Error: {ex.Message}");
                 return responseList;
             }
+        }
+
+        public async Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string repoName, string repoOwner)
+        {
+            var checkResults = new List<string>();
+            try
+            {
+                var pr = await GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
+                if (pr == null)
+                {
+                    logger.LogError($"Pull request {pullRequestNumber} not found");
+                    throw new NotFoundException($"Pull request {pullRequestNumber} not found.", System.Net.HttpStatusCode.NotFound);
+                }
+
+                var checkResponse = await gitHubClient.Check.Run.GetAllForReference(repoOwner, repoName, pr.Head.Sha);
+                if (checkResponse == null || checkResponse.TotalCount == 0)
+                {
+                    logger.LogError("No checkruns found for pull request.");
+                    return ["No checks found for the pull request."];
+                }
+
+                var checkRuns = checkResponse.CheckRuns.Where(c => !c.Name.StartsWith("[TEST-IGNORE]"));
+                foreach (var check in checkRuns)
+                {
+                    checkResults.Add($"Name: {check.Name}, Status: {check.Status}, Output: {check.Output.Summary}, Conclusion: {check.Conclusion}, Link: {check.HtmlUrl}");
+                }
+                checkResults.Add($"Total checks found: {checkResults.Count}");
+                int pendingRequiedChecks = checkRuns.Count(check => check.Status != CheckStatus.Completed || check.Conclusion == CheckConclusion.Failure);
+                checkResults.Add($"Failed checks: {checkRuns.Count(check => check.Conclusion == CheckConclusion.Failure)}");
+                checkResults.Add($"Pending required checks to merge the PR: {pendingRequiedChecks}.");
+            }
+            catch (Exception ex)
+            {
+                checkResults.Add($"Failed to get Github pull request checks, Error: {ex.Message}");
+            }
+            return checkResults;
         }
     }
 }

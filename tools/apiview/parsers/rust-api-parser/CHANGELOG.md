@@ -5,6 +5,7 @@
     - Refactored module processing with enhanced sorting and organization of child items
     - Fixed bugs and improved utility functions for better code maintainability
 - Updated `ReviewLine#LineId`s to stable, meaningful identifiers rather than relying on the dynamic rustdoc ids.
+- Updated `RenderClasses` and `NavigationDisplayName`s for various elements to improve rendering experience. 
 
 # 1.0.1
 

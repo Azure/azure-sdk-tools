@@ -1,45 +1,81 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AzureSDKDevToolsMCP.Helpers;
+using AzureSDKDSpecTools.Models;
+using Microsoft.Extensions.Logging;
 
 namespace AzureSDKDSpecTools.Helpers
 {
     public interface ITypeSpecHelper
     {
-        public bool IsTypeSpecProjectPath(string path);
+        public bool IsValidTypeSpecProjectPath(string path);
         public bool IsTypeSpecProjectForMgmtPlane(string Path);
-        public bool GetAPIVersion(string path);
+        public bool IsRepoPathForPublicSpecRepo(string path);
+        public string GetSpecRepoRootPath(string path);
+        public string GetTypeSpecProjectRelativePath(string typeSpecProjectPath);
     }
     public class TypeSpecHelper : ITypeSpecHelper
     {
-        static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
+        private IGitHelper _gitHelper;
+        private static readonly string SPEC_REPO_NAME = "azure-rest-api-specs";
 
-        public bool IsTypeSpecProjectPath(string path)
+        public TypeSpecHelper(IGitHelper gitHelper)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new ArgumentException("TypeSpec project root path cannot be null or empty.", nameof(path));
-            }
-
-            // Check if the path is a valid TypeSpec project path
-            if (!Directory.Exists(path) || !File.Exists(Path.Combine(path, TSPCONFIG_FILENAME)))
-            {
-                return false;
-            }
-            return true;
+            _gitHelper = gitHelper;
         }
 
-        public bool GetAPIVersion(string path)
+        public bool IsValidTypeSpecProjectPath(string path)
         {
-            throw new NotImplementedException();
+            return TypeSpecProject.IsValidTypeSpecProjectPath(path);
         }
 
         public bool IsTypeSpecProjectForMgmtPlane(string Path)
         {
-            //Todo: Process TypeSpec project and find whether this is mgmt or dataplane.
-            return true;
+            var typeSpecObject = TypeSpecProject.ParseTypeSpecConfig(Path);
+            return typeSpecObject?.IsManagementPlane ?? false;
+        }
+
+        public bool IsRepoPathForPublicSpecRepo(string path)
+        {
+            var uri = _gitHelper.GetRepoRemoteUri(path);
+            return uri.ToString().Contains(SPEC_REPO_NAME);
+        }
+
+        public string GetSpecRepoRootPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("path cannot be null or empty.", nameof(path));
+            }
+
+            if (Directory.Exists(Path.Combine(path, "specification")))
+            {
+                return path;
+            }
+
+            // Get absolute path for repo root from given path.
+            // Repo root is the parent of "specification" folder.
+            var currentDirectory = new DirectoryInfo(path);
+            while (currentDirectory != null && !currentDirectory.Name.Equals("specification"))
+            {
+                currentDirectory = currentDirectory.Parent;
+            }
+            return currentDirectory?.Parent?.FullName ?? string.Empty;
+        }
+
+        public string GetTypeSpecProjectRelativePath(string  typeSpecProjectPath)
+        {
+            if (string.IsNullOrEmpty(typeSpecProjectPath) || !IsValidTypeSpecProjectPath(typeSpecProjectPath))
+            {
+                return string.Empty;
+            }
+
+            int specIndex = typeSpecProjectPath.IndexOf("specification");
+            return specIndex >= 0? typeSpecProjectPath[specIndex..].Replace("\\", "/") : string.Empty;
         }
     }
 }

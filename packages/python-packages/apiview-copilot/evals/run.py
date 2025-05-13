@@ -3,6 +3,8 @@ import json
 import pathlib
 import argparse
 from typing import Set, Tuple, Any
+import prompty
+import prompty.azure_beta
 import copy
 import sys
 import yaml
@@ -10,7 +12,6 @@ import yaml
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
-import openai
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
@@ -19,34 +20,79 @@ dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4o"
+MODEL_JUDGE = "gpt-4.1"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
     "api_key": os.environ["AZURE_OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
-    "api_version": "2025-01-01-preview",
+    "api_version": "2025-03-01-preview",
 }
+
+weights: dict[str, float] = {
+    "exact_match_weight": 0.7,  # Exact match (rule id and line number)
+    "groundedness_weight": 0.2,  # Staying grounded in guidelines
+    "similarity_weight": 0.1,  # Similarity between expected and actual
+    "false_positive_penalty": 0.3,  # Penalty for false positives
+    "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
+}
+
 
 
 class CustomAPIViewEvaluator:
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self): ...
+    def __init__(self):
+        self._groundedness_eval = GroundednessEvaluator(model_config=model_config)
+        self._similarity_eval = SimilarityEvaluator(model_config=model_config)
+
+    def _calculate_overall_score(self, review_eval: dict[str, Any]) -> float:
+        """Calculate the overall score based on the review evaluation metrics."""
+        if review_eval["expected_comments"] == 0:
+            # tests with no violations are all or nothing
+            # but still give credit if no violations found, but valid generic comments found
+            if (
+                review_eval["comments_found"] == 0
+                or review_eval["comments_found"] == review_eval["valid_generic_comments"]
+            ):
+                # give credit b/c we have no violations to calc groundedness or similarity
+                review_eval["groundedness"] = 5
+                review_eval["similarity"] = 5
+                return 100.0
+            return 0.0
+
+        exact_match_score = review_eval["true_positives"] / review_eval["expected_comments"]
+
+        remaining_comments = review_eval["expected_comments"] - review_eval["true_positives"]
+        fuzzy_match_score = (
+            review_eval["rule_matches_wrong_line"] / remaining_comments if remaining_comments > 0 else 0.0
+        )
+
+        false_positive_rate = (
+            review_eval["false_positives"] / review_eval["comments_found"]
+            if review_eval["comments_found"] > 0
+            else 0.0
+        )
+        score = (
+            weights["exact_match_weight"] * exact_match_score
+            + weights["groundedness_weight"] * (review_eval["groundedness"] - 1) / 4
+            + weights["similarity_weight"] * (review_eval["similarity"] - 1) / 4
+            + weights["fuzzy_match_bonus"] * fuzzy_match_score
+            - weights["false_positive_penalty"] * false_positive_rate
+        )
+
+        normalized_score = max(0, min(100, score * 100))
+        return round(normalized_score)
 
     def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
         """Compare comments based on both line numbers and rule IDs."""
         exact_matches = set()
         rule_matches_wrong_line = set()
 
-        # Filter out summary comments
-        filtered_actual_comments = [c for c in actual["comments"] if c.get("source") != "summary"]
-        filtered_expected_comments = [c for c in expected["comments"] if c.get("source") != "summary"]
-
         # Create a copy to work with
-        comments_left = copy.deepcopy(filtered_actual_comments)
+        comments_left = copy.deepcopy(actual["comments"])
 
-        for expected_comment in filtered_expected_comments:
+        for expected_comment in expected["comments"]:
             e_line = expected_comment["line_no"]
             e_rules = frozenset(expected_comment["rule_ids"])
 
@@ -78,35 +124,67 @@ class CustomAPIViewEvaluator:
             exceptions = filter_data["exceptions"].strip().split("\n")
             exceptions = [e.split(". ", 1)[1] for e in exceptions]
 
-        client = openai.AzureOpenAI()
         for comment in generic_comments:
+            if comment.get("source") != "generic":
+                continue
             line_no = comment["line_no"]
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            response = client.responses.create(
-                model=MODEL_JUDGE,
-                input=f"Given the following code snippet, comment, and exceptions, state 'true' or 'false' whether the comment is a fair {language} review of the code and doesn't mention topics in the exceptions:\n CODE:\n{context}\nEXCEPTIONS:{exceptions}\nCOMMENT:\n{comment['comment']}",
+            prompt_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "prompts", "eval_judge_prompt.prompty")
             )
-            comment["valid"] = "true" in response.output_text.lower()
+            response = prompty.execute(
+                prompt_path,
+                inputs={
+                    "code": context,
+                    "comment": comment["comment"],
+                    "exceptions": exceptions,
+                    "language": language,
+                },
+            )
+            comment["valid"] = "true" in response.lower()
 
-    def __call__(self, *, response: str, query: str, language: str, output: str, **kwargs):
+    def _groundedness(self, actual: dict[str, Any], context: str) -> None:
+        actual = [c for c in actual["comments"] if c["rule_ids"]]
+        if not actual:
+            return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
+        groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
+        return groundedness
+    
+    def _similarity(self, expected: dict[str, Any], actual: dict[str, Any], query: str) -> None:
+        actual = [c for c in actual["comments"] if c["rule_ids"]]
+        if not actual:
+            return {"similarity": 0.0}
+        similarity = self._similarity_eval(
+            response=json.dumps(actual),
+            query=query,
+            ground_truth=json.dumps([c for c in expected["comments"] if c["rule_ids"]]),
+        )
+        return similarity
+
+    def __call__(self, *, response: str, query: str, language: str, actual: str, testcase: str, context: str, **kwargs):
         expected = json.loads(response)
-        actual = json.loads(output)
+        actual = json.loads(actual)
 
         # Filter out summary comments
         expected["comments"] = [c for c in expected["comments"] if c.get("source") != "summary"]
         actual["comments"] = [c for c in actual["comments"] if c.get("source") != "summary"]
 
+        groundedness = self._groundedness(actual, context)
+        similarity = self._similarity(expected, actual, query)
+
         exact_matches, rule_matches_wrong_line, generic_comments = self._get_comment_matches(expected, actual)
         self._evaluate_generic_comments(query, language, generic_comments)
         expected_comments = len([c for c in expected["comments"] if c["rule_ids"]])
-        valid_generic_comments = len([c for c in generic_comments if c["valid"]])
+        valid_generic_comments = len([c for c in generic_comments if c.get("valid") is True])
+        invalid_generic_comments = [c for c in generic_comments if c.get("valid") is False]
         review_eval = {
             "expected_comments": expected_comments,
             "comments_found": len(actual["comments"]),
             "true_positives": len(exact_matches),
             "valid_generic_comments": valid_generic_comments,
+            "invalid_generic_comments": invalid_generic_comments,
             "false_positives": len(actual["comments"])
             - (len(exact_matches) + len(rule_matches_wrong_line))
             - valid_generic_comments,
@@ -114,52 +192,14 @@ class CustomAPIViewEvaluator:
             "percent_coverage": ((len(exact_matches) / expected_comments * 100) if expected_comments else 0),
             "rule_matches_wrong_line": len(rule_matches_wrong_line),
             "wrong_line_details": list(rule_matches_wrong_line),
+            "fuzzy_matches": len(rule_matches_wrong_line),
+            "groundedness": groundedness["groundedness"],
+            "groundedness_reason": groundedness["groundedness_reason"],
+            "similarity": similarity["similarity"],
+            "testcase": testcase,
         }
+        review_eval["score"] = self._calculate_overall_score(review_eval)
         return review_eval
-
-
-class CustomSimilarityEvaluator:
-    """Wraps the SimilarityEvaluator to make sure we only check similarity for comments with rule IDs."""
-
-    def __init__(self):
-        self._similarity_eval = SimilarityEvaluator(model_config=model_config)
-
-    def __call__(self, *, query: str, language: str, output: str, ground_truth: str, **kwargs):
-        output = json.loads(output)
-        ground_truth = json.loads(ground_truth)
-
-        # Filter out summary comments
-        output["comments"] = [c for c in output["comments"] if c.get("source") != "summary"]
-        ground_truth["comments"] = [c for c in ground_truth["comments"] if c.get("source") != "summary"]
-
-        actual = [c for c in output["comments"] if c["rule_ids"]]
-        if not actual:
-            return {"similarity": 0.0}
-        similarity = self._similarity_eval(
-            response=json.dumps(actual),
-            query=query,
-            ground_truth=json.dumps([c for c in ground_truth["comments"] if c["rule_ids"]]),
-        )
-        return similarity
-
-
-class CustomGroundednessEvaluator:
-    """Wraps the GroundednessEvaluator to make sure we only check groundedness for comments with rule IDs."""
-
-    def __init__(self):
-        self._groundedness_eval = GroundednessEvaluator(model_config=model_config)
-
-    def __call__(self, *, query: str, language: str, output: str, context: str, **kwargs):
-        output = json.loads(output)
-
-        # Filter out summary comments
-        output["comments"] = [c for c in output["comments"] if c.get("source") != "summary"]
-
-        actual = [c for c in output["comments"] if c["rule_ids"]]
-        if not actual:
-            return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
-        groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
-        return groundedness
 
 
 def review_apiview(query: str, language: str):
@@ -170,48 +210,44 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    reviewer = ApiViewReview(target=query, language=language)
+    reviewer = ApiViewReview(target=query, language=language, base=None)
     review = reviewer.run()
     reviewer.close()
-    return {"response": review.model_dump_json()}
+    return {"actual": review.model_dump_json()}
 
 
 def calculate_overall_score(row: dict[str, Any]) -> float:
     """Calculate weighted score based on various metrics."""
 
-    weights = {
-        "exact_match_weight": 0.7,  # Exact match (rule id and line number)
-        "groundedness_weight": 0.2,  # Staying grounded in guidelines
-        "similarity_weight": 0.1,  # Similarity between expected and actual
-        "false_positive_penalty": 0.3,  # Penalty for false positives
-        "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
-    }
-
-    if row["outputs.custom_eval.expected_comments"] == 0:
+    if row["outputs.metrics.expected_comments"] == 0:
         # tests with no violations are all or nothing
         # but still give credit if no violations found, but valid generic comments found
         if (
-            row["outputs.custom_eval.comments_found"] == 0
-            or row["outputs.custom_eval.comments_found"] == row["outputs.custom_eval.valid_generic_comments"]
+            row["outputs.metrics.comments_found"] == 0
+            or row["outputs.metrics.comments_found"] == row["outputs.metrics.valid_generic_comments"]
         ):
+            # give credit b/c we have no violations to calc groundedness or similarity
+            row["outputs.metrics.groundedness"] = 5
+            row["outputs.metrics.similarity"] = 5
             return 100.0
+
         return 0.0
 
-    exact_match_score = row["outputs.custom_eval.true_positives"] / row["outputs.custom_eval.expected_comments"]
+    exact_match_score = row["outputs.metrics.true_positives"] / row["outputs.metrics.expected_comments"]
 
-    remaining_comments = row["outputs.custom_eval.expected_comments"] - row["outputs.custom_eval.true_positives"]
+    remaining_comments = row["outputs.metrics.expected_comments"] - row["outputs.metrics.true_positives"]
     fuzzy_match_score = (
-        row["outputs.custom_eval.rule_matches_wrong_line"] / remaining_comments if remaining_comments > 0 else 0.0
+        row["outputs.metrics.rule_matches_wrong_line"] / remaining_comments if remaining_comments > 0 else 0.0
     )
 
     false_positive_rate = (
-        row["outputs.custom_eval.false_positives"] / row["outputs.custom_eval.comments_found"]
-        if row["outputs.custom_eval.comments_found"] > 0
+        row["outputs.metrics.false_positives"] / row["outputs.metrics.comments_found"]
+        if row["outputs.metrics.comments_found"] > 0
         else 0.0
     )
 
-    groundedness_normalized = (row["outputs.groundedness.groundedness"] - 1) / 4
-    similarity_normalized = (row["outputs.similarity.similarity"] - 1) / 4
+    groundedness_normalized = (row["outputs.metrics.groundedness"] - 1) / 4
+    similarity_normalized = (row["outputs.metrics.similarity"] - 1) / 4
 
     score = (
         weights["exact_match_weight"] * exact_match_score
@@ -383,19 +419,21 @@ def record_run_result(result: dict[str, Any], rule_ids: Set[str]) -> list[dict[s
             {
                 "testcase": row["inputs.testcase"],
                 "expected": json.loads(row["inputs.response"]),
-                "actual": json.loads(row["outputs.response"]),
-                "expected_comments": row["outputs.custom_eval.expected_comments"],
-                "comments_found": row["outputs.custom_eval.comments_found"],
-                "valid_generic_comments": row["outputs.custom_eval.valid_generic_comments"],
-                "true_positives": row["outputs.custom_eval.true_positives"],
-                "false_positives": row["outputs.custom_eval.false_positives"],
-                "false_negatives": row["outputs.custom_eval.false_negatives"],
-                "percent_coverage": row["outputs.custom_eval.percent_coverage"],
-                "rule_matches_wrong_line": row["outputs.custom_eval.rule_matches_wrong_line"],
-                "wrong_line_details": row["outputs.custom_eval.wrong_line_details"],
-                "similarity": row["outputs.similarity.similarity"],
-                "groundedness": row["outputs.groundedness.groundedness"],
-                "groundedness_reason": row["outputs.groundedness.groundedness_reason"],
+                "actual": json.loads(row["outputs.actual"]),
+                "expected_comments": row["outputs.metrics.expected_comments"],
+                "comments_found": row["outputs.metrics.comments_found"],
+                "valid_generic_comments": row["outputs.metrics.valid_generic_comments"],
+                "invalid_generic_comments": row["outputs.metrics.invalid_generic_comments"],
+                "true_positives": row["outputs.metrics.true_positives"],
+                "false_positives": row["outputs.metrics.false_positives"],
+                "false_negatives": row["outputs.metrics.false_negatives"],
+                "percent_coverage": row["outputs.metrics.percent_coverage"],
+                "rule_matches_wrong_line": row["outputs.metrics.rule_matches_wrong_line"],
+                "wrong_line_details": row["outputs.metrics.wrong_line_details"],
+                "fuzzy_matches": row["outputs.metrics.fuzzy_matches"],
+                "similarity": row["outputs.metrics.similarity"],
+                "groundedness": row["outputs.metrics.groundedness"],
+                "groundedness_reason": row["outputs.metrics.groundedness_reason"],
                 "overall_score": score,
             }
         )
@@ -418,22 +456,19 @@ if __name__ == "__main__":
         "--num-runs",
         "-n",
         type=int,
-        default=NUM_RUNS,
+        default=1,
         help="The number of runs to perform, with the median of results kept. Defaults to 3.",
     )
     parser.add_argument(
         "--test-file",
         "-t",
         type=str,
-        default="all",
+        default="reviews.jsonl",
         help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()
 
     custom_eval = CustomAPIViewEvaluator()
-    groundedness = CustomGroundednessEvaluator()
-    similarity_eval = CustomSimilarityEvaluator()
-
     rule_ids = set()
 
     tests_directory = pathlib.Path(__file__).parent / "tests" / args.language
@@ -444,49 +479,35 @@ if __name__ == "__main__":
         if args.test_file != "all" and file.name != args.test_file:
             continue
 
+        azure_ai_project = {
+            "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
+            "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
+            "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
+        }
+
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
             result = evaluate(
                 data=str(file),
                 evaluators={
-                    "custom_eval": custom_eval,
-                    "similarity": similarity_eval,
-                    "groundedness": groundedness,
+                    "metrics": custom_eval,
                 },
                 evaluator_config={
-                    "similarity": {
-                        "column_mapping": {
-                            "output": "${target.response}",
-                            "query": "${data.query}",
-                            "language": "${data.language}",
-                            "ground_truth": "${data.response}",
-                        },
-                    },
-                    "groundedness": {
-                        "column_mapping": {
-                            "output": "${target.response}",
-                            "query": "${data.query}",
-                            "language": "${data.language}",
-                            "context": "${data.context}",
-                        },
-                    },
-                    "custom_eval": {
+                    "metrics": {
                         "column_mapping": {
                             "response": "${data.response}",
                             "query": "${data.query}",
                             "language": "${data.language}",
-                            "output": "${target.response}",
+                            "actual": "${target.actual}",
+                            "testcase": "${data.testcase}",
+                            "context": "${data.context}",
                         },
                     },
                 },
                 target=review_apiview,
-                # TODO we can send data to our foundry project for history / more graphical insights
-                # azure_ai_project={
-                #     "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-                #     "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
-                #     "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
-                # }
+                fail_on_evaluator_errors=True,
+                azure_ai_project=azure_ai_project,
             )
 
             run_result = record_run_result(result, rule_ids)

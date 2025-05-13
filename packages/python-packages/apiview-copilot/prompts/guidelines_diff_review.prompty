@@ -10,7 +10,7 @@ model:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
     azure_deployment: o3-mini
-    api_version: 2025-01-01-preview
+    api_version: 2025-03-01-preview
   parameters:
     frequency_penalty: 0
     presence_penalty: 0
@@ -115,6 +115,8 @@ system:
   followed.
 
   - Evaluate each line that was changed (marked with a +) against all guidelines. DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
+
+  - DO consider all of the code (marked with a + or not) when making comments. Do not consider the + lines in isolation.
 
   - Code may violate multiple guidelines.
 

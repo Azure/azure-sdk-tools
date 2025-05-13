@@ -24,21 +24,30 @@ from ._retry import retry_with_backoff
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
-# Configure logger to write to project root error.log
-log_file = os.path.join(_PACKAGE_ROOT, "error.log")
+# Configure logger to write to project root error.log and info.log
+error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
+info_log_file = os.path.join(_PACKAGE_ROOT, "info.log")
 
-logging.basicConfig(
-    filename=log_file,
-    filemode="w",  # overwrite on each run
-    level=logging.ERROR,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    force=True,
-)
+# Create handlers for error.log and info.log
+error_handler = logging.FileHandler(error_log_file, mode="w")  # Overwrite on each run
+error_handler.setLevel(logging.ERROR)  # Log only ERROR and higher levels
+error_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 
-for handler in logging.root.handlers:
-    if isinstance(handler, logging.FileHandler):
-        handler.setLevel(logging.ERROR)
-        handler.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+info_handler = logging.FileHandler(info_log_file, mode="w")  # Overwrite on each run
+info_handler.setLevel(logging.INFO)  # Log INFO and higher levels
+info_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
+# Create a console handler for terminal output
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.ERROR)  # Only log ERROR and higher to the terminal
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
+# Add handlers to the root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)  # Set the base level to DEBUG to capture all logs
+root_logger.addHandler(error_handler)
+root_logger.addHandler(info_handler)
+root_logger.addHandler(console_handler)
 
 # Create module-level logger
 logger = logging.getLogger(__name__)
@@ -90,6 +99,7 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
+        self.outline = None
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):
@@ -150,7 +160,7 @@ class ApiViewReview:
             response = self._run_prompt(prompt_path, inputs)
 
             # Process result based on task type
-            if task_name == "summary":
+            if task_name == "summary" or task_name == "outline":
                 result = response  # Just return the text
             else:
                 # Parse JSON for guideline/generic tasks
@@ -169,11 +179,12 @@ class ApiViewReview:
 
     def _generate_comments(self):
         """
-        Generate comments for the API view but submitting jobs in parallel.
+        Generate comments for the API view by submitting jobs in parallel.
         """
         summary_tag = "summary"
         guideline_tag = "guideline"
         generic_tag = "generic"
+        outline_tag = "outline"
 
         sectioned_doc = self._create_sectioned_document()
 
@@ -193,9 +204,13 @@ class ApiViewReview:
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
+        # Outline prompt is always based on self.target
+        outline_prompt_file = "generate_outline.prompty"
+        outline_content = self.target
+
         # Set up progress tracking
         print("Processing sections: ", end="", flush=True)
-        total_prompts = 1 + (len(sections_to_process) * 2)  # 1 for summary + 2 for each section
+        total_prompts = 1 + (len(sections_to_process) * 2) + 1  # 1 for summary, 1 for outline, 2 for each section
         prompt_status = [self.PENDING] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation
@@ -225,7 +240,19 @@ class ApiViewReview:
             status_array=prompt_status,
         )
 
-        # 2. Guideline and generic tasks for each section
+        # 2. Outline task (always based on self.target)
+        all_futures[outline_tag] = self.executor.submit(
+            self._execute_prompt_task,
+            prompt_path=os.path.join(_PROMPTS_FOLDER, outline_prompt_file),
+            inputs={
+                "content": outline_content,
+            },
+            task_name=outline_tag,
+            status_idx=1,
+            status_array=prompt_status,
+        )
+
+        # 3. Guideline and generic tasks for each section
         for idx, (section_idx, section) in enumerate(sections_to_process):
             # First check if cancellation is requested
             if cancel_event.is_set():
@@ -256,7 +283,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=(idx * 2) + 1,
+                status_idx=(idx * 2) + 2,
                 status_array=prompt_status,
             )
 
@@ -272,7 +299,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=generic_key,
-                status_idx=(idx * 2) + 2,
+                status_idx=(idx * 2) + 3,
                 status_array=prompt_status,
             )
 
@@ -290,11 +317,16 @@ class ApiViewReview:
                     source="summary",
                 )
 
+            # Process outline result
+            outline_response = all_futures[outline_tag].result()
+            if outline_response:
+                self.outline = outline_response
+
             # Process each section's results
             section_results = {}
 
             for key, future in all_futures.items():
-                if key == summary_tag:
+                if key in {summary_tag, outline_tag}:
                     continue  # Already processed
                 try:
                     result = future.result()
@@ -408,6 +440,7 @@ class ApiViewReview:
                 inputs={
                     "content": comment.model_dump(),
                     "language": self._get_language_pretty_name(),
+                    "outline": self.outline,
                 },
             )
 

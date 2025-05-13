@@ -67,6 +67,8 @@ export async function tryCreateLastStableNpmView(lastStableVersion: string, pack
 
 export function tryCreateLastestChangeLog(packageFolderPath: string, packageName: string, version: string, targetChangelogPath: string) {
     logger.info(`Start to get and clone CHANGELOG.md from latest ${packageName} release tag.`);
+    const path1 = path.relative("/", path.join(packageFolderPath,"CHANGELOG.md"));
+    logger.info(path1);
     const targentchangelogPath = packageFolderPath.split("sdk");
     const changelogPathInRepo = path.join("sdk", targentchangelogPath[targentchangelogPath.length - 1], "CHANGELOG.md").replace(/\\/g, "/");
     const gitCommand = `git --no-pager show ${packageName}_${version}:${changelogPathInRepo}`;

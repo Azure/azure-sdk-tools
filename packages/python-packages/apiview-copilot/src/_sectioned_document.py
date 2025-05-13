@@ -48,8 +48,11 @@ class SectionedDocument:
         lines: List[str] = None,
         line_data: List[LineData] = None,
         base_indent: int = 0,
-        max_chunk_size: int = 500,
+        max_chunk_size: int = 250,
     ):
+        if max_chunk_size == 1:
+            raise ValueError("max_chunk_size must be greater than 1")
+
         self.sections = []
         # Step 1: Create initial fine-grained sections based on indentation
         if line_data is None:
@@ -109,18 +112,12 @@ class SectionedDocument:
                     current_section_lines = []
                     current_size = 0
 
-                # top line of the oversized section
-                top_line = section.lines[0]
-
-                # place the remaining lines in a new sectioned documents
-                sub_sections = SectionedDocument(
-                    line_data=section.lines[1:], base_indent=base_indent + 1, max_chunk_size=max_chunk_size
-                )
-                for sub_section in sub_sections:
-                    # Add the top line of the oversized section to the new sub-section
-                    sub_section.lines.insert(0, top_line)
-                    # Add the sub-sections as new sections
-                    self.sections.append(sub_section)
+                # Subdivide the oversized section
+                top_line = section.lines[0]  # The root line to include in all subsections
+                for i in range(1, section_size, max_chunk_size - 1):
+                    chunk = section.lines[i : i + (max_chunk_size - 1)]
+                    chunk.insert(0, top_line)  # Include the root line in all chunks
+                    self.sections.append(Section(chunk))
                 continue
 
             # If adding this section would exceed max_chunk_size, finalize current chunk

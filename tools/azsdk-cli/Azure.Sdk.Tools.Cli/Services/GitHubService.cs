@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using Microsoft.Extensions.Logging;
 using Octokit;
 using System.Runtime.InteropServices;

@@ -387,12 +387,15 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
 def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Establish the current results as the new baseline."""
 
-    establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-    if establish_baseline.lower() == "y":
-        for name, result in all_results.items():
-            output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-            with open(str(output_path), "w") as f:
-                json.dump(result, indent=4, fp=f)
+    # only ask if we're not in CI
+    in_ci = os.getenv('TF_BUILD', False)
+    if in_ci is False:
+        establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+        if establish_baseline.lower() == "y":
+            for name, result in all_results.items():
+                output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
+                with open(str(output_path), "w") as f:
+                    json.dump(result, indent=4, fp=f)
 
     # whether or not we establish a baseline, we want to write results to a temp dir
     log_path = pathlib.Path(__file__).parent / "results" / args.language / ".log"
@@ -488,6 +491,7 @@ if __name__ == "__main__":
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
+            print(f"endpoint: {os.environ['AZURE_OPENAI_ENDPOINT']}")
             result = evaluate(
                 data=str(file),
                 evaluators={

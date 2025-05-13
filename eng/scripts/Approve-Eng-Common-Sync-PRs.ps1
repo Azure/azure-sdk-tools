@@ -6,6 +6,8 @@ param(
   [string] $ToolsPRNumber
 )
 
+$PSNativeCommandUseErrorActionPreference = $true
+
 . "${PSScriptRoot}/../common/scripts/logging.ps1"
 . "${PSScriptRoot}/../common/scripts/Helpers/git-helpers.ps1"
 

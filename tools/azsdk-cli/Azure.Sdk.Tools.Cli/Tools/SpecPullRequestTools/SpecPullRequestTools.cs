@@ -45,6 +45,15 @@ namespace AzureSDKDevToolsMCP.Tools
         private readonly Option<string> repoNameOpt = new(["--repo-name"], () => "azure-rest-api-specs", "GitHub repo name") { IsRequired = false };
 
 
+        [McpServerTool, Description("Connect to GitHub using personal access token.")]
+        public async Task<string> GetGitHubUserDetails()
+        {
+            var user = await this.gitHubService.GetGitUserDetails();
+            return user != null
+                ? $"Connected to GitHub as {user.Login}"
+                : "Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.";
+        }
+
         [McpServerTool, Description("Check if TypeSpec project is in public repo. Provide absolute path to TypeSpec project root as param.")]
         public bool CheckIfSpecInPublicRepo(string typeSpecProjectPath)
         {

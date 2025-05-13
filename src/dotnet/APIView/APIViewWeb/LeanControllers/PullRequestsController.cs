@@ -88,7 +88,8 @@ namespace APIViewWeb.LeanControllers
                 foreach (var pr in prsForCommit)
                 {
                     var prDto = new PullRequestReviewDto();
-                    var languageService = LanguageServiceHelpers.GetLanguageService(language: pr.Language, languageServices: _languageServices);
+                    var language = LanguageServiceHelpers.MapLanguageAlias(pr.Language);
+                    var languageService = LanguageServiceHelpers.GetLanguageService(language: language, languageServices: _languageServices);
                     if (languageService.UsesTreeStyleParser) // Languages using treestyle parser are also using the spa UI
                     {
                         prDto.Url = string.Format(reviewSpaUrlTemplate, spaHost, pr.ReviewId, pr.APIRevisionId);
@@ -98,7 +99,7 @@ namespace APIViewWeb.LeanControllers
                         prDto.Url = string.Format(reviewUrlTemplate, host, pr.ReviewId, pr.APIRevisionId);
                     }
                     prDto.PackageName = pr.PackageName;
-                    prDto.Language = pr.Language;
+                    prDto.Language = language;
                     pullRequestReviewDtos.Add(prDto);
                 }
                 statusCode = StatusCodes.Status200OK;

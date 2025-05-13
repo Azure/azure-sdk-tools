@@ -314,7 +314,7 @@ export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: str
     const tspConfig = yamlLoad(tspConfigContent);
 
     if (!tspConfig || typeof tspConfig !== 'object') {
-        throw new Error('Invalid tspconfig.yaml format.');
+        throw new Error('Failed to parse tspconfig.yaml.');
     }
 
     const emitterOptions = tspConfig.options?.[emitterName];

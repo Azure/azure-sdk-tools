@@ -20,8 +20,7 @@ async function automationGenerateInPipeline(
     typespecEmitter: string | undefined,
     sdkGenerationType: string | undefined,
     inputApiVersion: string | undefined,
-    inputsdkReleaseType: string | undefined,
-    local: boolean
+    inputsdkReleaseType: string | undefined
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
@@ -42,6 +41,7 @@ async function automationGenerateInPipeline(
     } = await parseInputJson(inputJson);
 
     const enableApiVersionAndReleaseType = runMode === 'release' || runMode === 'local';
+    const local = runMode === 'local'
     let currAPIVersion ="";
     let currSDKReleaseType = "";
     if (enableApiVersionAndReleaseType) {
@@ -77,7 +77,7 @@ async function automationGenerateInPipeline(
                     sdkReleaseType: currSDKReleaseType,
                 });
                 break;
-            case SDKType.RestLevelClient:                
+            case SDKType.RestLevelClient:
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
@@ -152,7 +152,7 @@ const optionDefinitions = [
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType,  options.apiVersion, options.sdkReleaseType, options.local ?? false).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType,  options.apiVersion, options.sdkReleaseType).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

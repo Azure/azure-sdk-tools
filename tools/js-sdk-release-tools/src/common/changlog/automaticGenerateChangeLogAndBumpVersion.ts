@@ -22,7 +22,7 @@ import { getversionDate } from "../../utils/version.js";
 import { ApiVersionType, SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
-import { tryCreateLastStableNpmView, tryGetNpmView } from '../npmUtils.js';
+import { lastStableNpmViewParameter, tryCreateLastStableNpmView, tryGetNpmView } from '../npmUtils.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -64,15 +64,31 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packageFolderPath);
+                const lastStableApiView: lastStableNpmViewParameter = {
+                    file: "ApiView",
+                    version: stableVersion,
+                    packageName: packageName,
+                    packageFolderPath: packageFolderPath,
+                    sdkRootPath: jsSdkRepoPath,
+                    npmPackagePath: npmPackageRoot,
+                }
                 if (!fs.existsSync(apiMdFileNPM)) {
-                    fs.mkdirSync(path.join(npmPackageRoot,"review"));
-                    await tryCreateLastStableNpmView(stableVersion, packageName, packageFolderPath);
+                    fs.mkdirSync(path.join(npmPackageRoot, "review"));
+                    await tryCreateLastStableNpmView(lastStableApiView);
                 }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
-                let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, packageFolderPath, packageName, stableVersion);
+                const lastStableChangelog: lastStableNpmViewParameter = {
+                    file: "CHANGELOG.md",
+                    version: stableVersion,
+                    packageName: packageName,
+                    packageFolderPath: packageFolderPath,
+                    sdkRootPath: jsSdkRepoPath,
+                    npmPackagePath: npmPackageRoot,
+                }
+                let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, lastStableChangelog);
                 if (nextVersion) {
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
@@ -87,7 +103,15 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     const nextDate = getversionDate(npmViewResult, nextVersion);
                     if (latestDate && nextDate && latestDate <= nextDate) {
                         const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
-                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, packageFolderPath, packageName, nextVersion);
+                        const lastNextChangelog: lastStableNpmViewParameter = {
+                            file: "CHANGELOG.md",
+                            version: nextVersion,
+                            packageName: packageName,
+                            packageFolderPath: packageFolderPath,
+                            sdkRootPath: jsSdkRepoPath,
+                            npmPackagePath: npmPackageRoot,
+                        }
+                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, lastNextChangelog);
                         logger.info('Keep previous preview changelog.');
                     }
                 }

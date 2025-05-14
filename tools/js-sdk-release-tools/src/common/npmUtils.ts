@@ -5,7 +5,7 @@ import * as fetch from 'npm-registry-fetch';
 import { getApiReviewPath } from './utils.js';
 import shell from 'shelljs';
 import { writeFile } from 'fs';
-import path from 'path';
+import path, { relative } from 'path';
 import { logger } from '../utils/logger.js';
 import { error } from 'console';
 import fs from 'fs';
@@ -46,40 +46,44 @@ export async function tryGetNpmView(packageName: string): Promise<{ [id: string]
         return undefined;
     }
 }
-
-export async function tryCreateLastStableNpmView(lastStableVersion: string, packageName: string, packageFolderPath: string) {
-    logger.info(`Start to get and clone Api View file from last ${packageName} stable release tag.`);
-    const targetApiViewPath = getApiReviewPath(packageFolderPath).split("sdk");
-    const apiViewPath = path.join("sdk", targetApiViewPath[targetApiViewPath.length - 1]).replace(/\\/g, "/");
-
-    const gitCommand = `git --no-pager show ${packageName}_${lastStableVersion}:${apiViewPath}`;
-
-    try {
-        const lastStableApiViewContext = shell.exec(gitCommand, { silent: true }).stdout;
-
-        const lastStableApiViewPath = getApiReviewPath(path.join(packageFolderPath, 'changelog-temp', 'package'));
-        fs.writeFileSync(lastStableApiViewPath, lastStableApiViewContext, { encoding: 'utf-8' });
-        logger.info(`Create Api View file from the tag ${packageName}_${lastStableVersion} package successfully`);
-    } catch (error) {
-        logger.error(`Failed to read Api View file in ${apiViewPath} from the tag ${packageName}_${lastStableVersion}.\n Error details: ${error}`);
-    }
+export interface lastStableNpmViewParameter {
+    file: "ApiView" | "CHANGELOG.md";
+    version: string;
+    packageFolderPath: string;
+    packageName: string;
+    sdkRootPath: string;
+    npmPackagePath: string;
 }
 
-export function tryCreateLastestChangeLog(packageFolderPath: string, packageName: string, version: string, targetChangelogPath: string) {
-    logger.info(`Start to get and clone CHANGELOG.md from latest ${packageName} release tag.`);
-    const path1 = path.relative("/", path.join(packageFolderPath,"CHANGELOG.md"));
-    logger.info(path1);
-    const targentchangelogPath = packageFolderPath.split("sdk");
-    const changelogPathInRepo = path.join("sdk", targentchangelogPath[targentchangelogPath.length - 1], "CHANGELOG.md").replace(/\\/g, "/");
-    const gitCommand = `git --no-pager show ${packageName}_${version}:${changelogPathInRepo}`;
+export function tryCreateLastStableNpmView(lastStableNpmViewParameter: lastStableNpmViewParameter) {
+    const {
+        file,
+        version,
+        packageFolderPath,
+        packageName,
+        sdkRootPath,
+        npmPackagePath
+    } = lastStableNpmViewParameter;
+    let sdkFilePath = "";
+    let targetFilePath = "";
+    logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
+    if (file === "CHANGELOG.md") {
+        sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
+        targetFilePath = path.join(npmPackagePath, file);
+    }
+    else {
+        sdkFilePath = relative(sdkRootPath, getApiReviewPath(packageFolderPath)).replace(/\\/g, "/");
+        targetFilePath = getApiReviewPath(npmPackagePath)
+    }
+
+    const gitCommand = `git --no-pager show ${packageName}_${version}:${sdkFilePath}`;
 
     try {
-        const latestChangeLog = shell.exec(gitCommand, { silent: true });
-        const latestChangeLogContext = latestChangeLog.stdout;
+        const lastStableNpmViewContext = shell.exec(gitCommand, { silent: true }).stdout;
 
-        fs.writeFileSync(targetChangelogPath, latestChangeLogContext, { encoding: 'utf-8' });
-        logger.info(`Create CHANGELOG.md from the tag ${packageName}_${version} successfully`);
+        fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
+        logger.info(`Create ${packageFolderPath} from the tag ${packageName}_${version} successfully`);
     } catch (error) {
-        logger.error(`Failed to read CHANGELOG.md in ${changelogPathInRepo} from the tag ${packageName}_${version}.\n Error details: ${error}`)
+        logger.error(`Failed to read ${packageFolderPath} in ${sdkFilePath} from the tag ${packageName}_${version}.\n Error details: ${error}`)
     }
 }

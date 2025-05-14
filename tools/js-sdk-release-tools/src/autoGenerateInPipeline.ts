@@ -5,7 +5,7 @@ import { generateMgmt } from './hlc/generateMgmt.js';
 import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules.js';
 import { logger } from './utils/logger.js';
 import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline.js';
-import { ModularClientPackageOptions, SDKType } from './common/types.js';
+import { ModularClientPackageOptions, SDKType, RunModeType } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
 import { specifiyApiVersionToGenerateSDKByTypeSpec } from "./common/utils.js";
@@ -38,8 +38,8 @@ async function automationGenerateInPipeline(
         sdkReleaseType,
     } = await parseInputJson(inputJson);
 
-    const enableApiVersionAndReleaseType = runMode === 'release' || runMode === 'local';
-    const local = runMode === 'local'
+    const enableApiVersionAndReleaseType = runMode === RunModeType.Release || runMode === RunModeType.Local;
+    const local = runMode === RunModeType.Local;
     let currAPIVersion ="";
     let currSDKReleaseType = "";
     let tag = "";
@@ -48,17 +48,12 @@ async function automationGenerateInPipeline(
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        if (enableApiVersionAndReleaseType) {
-            if (sdkType !== SDKType.HighLevelClient && typespecProject && !skipGeneration &&((sdkType === SDKType.RestLevelClient && sdkGenerationType === "command") || sdkType === SDKType.ModularClient)){
+        if (enableApiVersionAndReleaseType && !skipGeneration) {
+            if (sdkType !== SDKType.HighLevelClient && typespecProject ){
                 const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
                 const tspDefDir = path.join(swaggerRepo, typespecProject);
                 specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
-            } else {
-                // for high level client, we will build a tag for the package
-                logger.warn(`The specified api-version ${apiVersion} is going to apply to swagger.`);
-                tag = `package-${apiVersion}`;
             }
-
             currAPIVersion = apiVersion;
             currSDKReleaseType = sdkReleaseType;
         }
@@ -69,7 +64,6 @@ async function automationGenerateInPipeline(
                     swaggerRepo: specFolder,
                     readmeMd: readmeMd!,
                     gitCommitId: gitCommitId,
-                    tag: tag,
                     use: use,
                     outputJson: outputJson,
                     swaggerRepoUrl: repoHttpsUrl,

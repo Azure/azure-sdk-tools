@@ -10,6 +10,13 @@ export enum ApiVersionType {
     Preview = 'Preview'
 }
 
+export enum RunModeType {
+    Release = 'release',
+    Local = 'local',
+    SpecPullRequest = 'spec-pull-request',
+    Batch = 'batch'
+}
+
 export interface ChangelogResult {
     content: string;
     hasBreakingChange: boolean;

@@ -36,6 +36,12 @@ export async function generateMgmt(options: {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
     if (!options.skipGeneration) {
+        if(options.apiVersion !== '') {
+            // for high level client, we will build a tag for the package
+            logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+            options.tag = `package-${options.apiVersion}`;
+        }
+
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
         if (options.tag && options.tag !== '') {

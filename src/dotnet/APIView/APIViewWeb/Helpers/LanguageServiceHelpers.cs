@@ -39,7 +39,7 @@ namespace APIViewWeb.Helpers
             if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
                 return "TypeSpec";
 
-            return language;
+            return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
         }
 
         public static string GetLanguageFromRepoName(string repoName)

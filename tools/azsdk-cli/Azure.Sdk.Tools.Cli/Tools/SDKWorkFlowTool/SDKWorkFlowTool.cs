@@ -30,6 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly static string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private readonly static string REPO_OWNER = "Azure";
         private readonly static string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
+        private readonly static string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
         private readonly static string DEFAULT_BRANCH = "main";
 
         // Commands
@@ -125,24 +126,28 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var isMgmtPlane = _typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
-                if (isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
+                // Check if ARM or API stewardship approval is present if PR is not in merged status
+                if (!pullRequest.Merged)
                 {
-                    response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
-                    return response;
+                    // Check ARM approval label is present on the management pull request
+                    if (isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
+                    {
+                        response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                        return response;
+                    }
+
+                    // Check if API stewardship approval label is present on the data plane pull request
+                    if (!isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(API_STEWARDSHIP_APPROVAL)))
+                    {
+                        response.Details.Add($"Pull request {pullRequest.Number} does not have API stewardship approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                        return response;
+                    }
                 }
 
-                if(isMgmtPlane)
-                {
-                    response.Details.Add($"Pull request {pullRequest.Number} has ARM approval or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
-                    response.Status = "Success";
-                    return response;
-                }
-                else
-                {
-                    response.Details.Add($"Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
-                    response.Status = "Success";
-                    return response;
-                }
+                var approvalLabel = isMgmtPlane ? ARM_SIGN_OFF_LABEL : API_STEWARDSHIP_APPROVAL;
+                response.Details.Add($"Pull request {pullRequest.Number} has {approvalLabel} or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
+                response.Status = "Success";
+                return response;
             }
             catch (Exception ex)
             {

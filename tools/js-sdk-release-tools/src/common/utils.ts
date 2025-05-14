@@ -299,7 +299,7 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
     return options
 }
 
-export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: string, apiVersion: string) {
+export function trySpecifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: string, apiVersion: string) {
     if (apiVersion === '') {
         logger.warn(`No api-version is provided, skip updating tspconfig.yaml.`);
         return;
@@ -312,11 +312,16 @@ export function specifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: str
     }
 
     const tspConfigContent = fs.readFileSync(tspConfigPath, 'utf8');
-    const tspConfig = yamlLoad(tspConfigContent);
 
-    if (!tspConfig || typeof tspConfig !== 'object') {
-        throw new Error('Failed to parse tspconfig.yaml.');
-    }
+    let tspConfig;
+    try {
+        tspConfig = yamlLoad(tspConfigContent);
+        if (!tspConfig || typeof tspConfig !== 'object') {
+            throw new Error('Failed to parse tspconfig.yaml.');
+        }
+    } catch (error) {
+        throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
+    }    
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {

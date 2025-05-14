@@ -8,7 +8,7 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType, RunModeType } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
-import { specifiyApiVersionToGenerateSDKByTypeSpec } from "./common/utils.js";
+import { trySpecifiyApiVersionToGenerateSDKByTypeSpec } from "./common/utils.js";
 
 import shell from 'shelljs';
 import fs from 'fs';
@@ -52,7 +52,7 @@ async function automationGenerateInPipeline(
             if (sdkType !== SDKType.HighLevelClient && typespecProject ){
                 const swaggerRepo = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
                 const tspDefDir = path.join(swaggerRepo, typespecProject);
-                specifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
+                trySpecifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
             }
             currAPIVersion = apiVersion;
             currSDKReleaseType = sdkReleaseType;

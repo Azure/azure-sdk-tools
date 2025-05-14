@@ -4,7 +4,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.Text.Json;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -28,10 +27,6 @@ public class AzurePipelinesTool(
 
     private BuildHttpClient buildClient;
     private TestResultsHttpClient testClient;
-    private readonly IAzureService azureService = azureService;
-    private readonly IAzureAgentServiceFactory azureAgentServiceFactory = azureAgentServiceFactory;
-    private readonly IOutputService output = output;
-    private readonly ILogger<AzurePipelinesTool> logger = logger;
     private readonly Boolean initialized = false;
 
     // Commands

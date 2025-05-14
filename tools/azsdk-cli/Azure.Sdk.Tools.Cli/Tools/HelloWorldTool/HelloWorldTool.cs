@@ -7,16 +7,13 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
-using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 {
 
     [McpServerToolType, Description("Echoes the message back to the client.")]
-    public class HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputService output) : MCPTool
+    public class HelloWorldTool(IOutputService output) : MCPTool
     {
-        private readonly ILogger<HelloWorldTool> logger = logger;
-        private readonly IOutputService output = output;
         private Argument<string> _inputArg = new Argument<string>(
             name: "input",
             description: "The text to echo back"

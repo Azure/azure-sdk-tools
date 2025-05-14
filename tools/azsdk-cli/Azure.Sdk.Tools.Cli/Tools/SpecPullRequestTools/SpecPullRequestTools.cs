@@ -15,17 +15,13 @@ namespace AzureSDKDevToolsMCP.Tools
 {
     [Description("Pull request tools")]
     [McpServerToolType]
-    public class SpecPullRequestTools(IGitHubService gitHubService, 
-        IGitHelper gitHelper, 
+    public class SpecPullRequestTools(
+        IGitHubService gitHubService,
+        IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
         ILogger<SpecPullRequestTools> logger,
-        ITypeSpecHelper typeSpecHelper): MCPTool
+        ITypeSpecHelper typeSpecHelper) : MCPTool
     {
-        private readonly IGitHubService gitHubService = gitHubService;
-        private readonly IGitHelper gitHelper = gitHelper;
-        private readonly ILogger<SpecPullRequestTools> logger = logger;
-        private readonly ISpecPullRequestHelper prHelper = prHelper;
-        private readonly ITypeSpecHelper typeSpecHelper = typeSpecHelper;
         private readonly static string REPO_OWNER = "Azure";
         private readonly static string REPO_NAME = "azure-rest-api-specs";
 
@@ -48,7 +44,7 @@ namespace AzureSDKDevToolsMCP.Tools
         [McpServerTool, Description("Connect to GitHub using personal access token.")]
         public async Task<string> GetGitHubUserDetails()
         {
-            var user = await this.gitHubService.GetGitUserDetails();
+            var user = await gitHubService.GetGitUserDetails();
             return user != null
                 ? $"Connected to GitHub as {user.Login}"
                 : "Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.";
@@ -57,8 +53,8 @@ namespace AzureSDKDevToolsMCP.Tools
         [McpServerTool, Description("Check if TypeSpec project is in public repo. Provide absolute path to TypeSpec project root as param.")]
         public bool CheckIfSpecInPublicRepo(string typeSpecProjectPath)
         {
-            var repoRootPath = this.typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-            var isPublicRepo = this.typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath);
+            var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+            var isPublicRepo = typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath);
             return isPublicRepo;
         }
 
@@ -96,7 +92,7 @@ namespace AzureSDKDevToolsMCP.Tools
             catch (Exception ex)
             {
                 return $"Failed to find pull request for current branch, Error: {ex.Message}";
-            }            
+            }
         }
 
         [McpServerTool, Description("Create pull request for spec changes. Provide title, description and absolute path to TypeSpec project root as params. Creates a pull request for committed changes in the current branch.")]
@@ -128,7 +124,7 @@ namespace AzureSDKDevToolsMCP.Tools
             {
                 results.Add($"Failed to create a pull request, Error: {ex.Message}");
                 return results;
-            }            
+            }
         }
 
         private async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner)
@@ -174,14 +170,14 @@ namespace AzureSDKDevToolsMCP.Tools
                 {
                     prDetails.ApiViews.AddRange(apiviewlinks);
                 }
-                      
+
                  return JsonSerializer.Serialize(prDetails);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
                 return $"Failed to get pull request summary. Error {ex.Message}";
-            }            
+            }
         }
 
         public override Command GetCommand()

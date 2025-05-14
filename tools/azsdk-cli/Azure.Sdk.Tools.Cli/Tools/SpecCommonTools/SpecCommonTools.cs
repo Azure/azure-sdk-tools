@@ -11,10 +11,8 @@ namespace AzureSDKDSpecTools.Tools
 {
     [Description("This type contains tools to run various common tasks in specs repo")]
     [McpServerToolType]
-    public class SpecCommonTools(IGitHelper _gitHelper, ILogger<SpecCommonTools> _logger): MCPTool
+    public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger): MCPTool
     {
-        private IGitHelper gitHelper = _gitHelper;
-        private ILogger<SpecCommonTools> logger = _logger;
 
         static readonly string GET_CHANGED_TYPESPEC_PROJECT_SCRIPT = "eng/scripts/Get-TypeSpec-Folders.ps1";
 
@@ -66,7 +64,7 @@ namespace AzureSDKDSpecTools.Tools
             catch (Exception ex)
             {
                 return [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {ex.Message}"];
-            }            
+            }
         }
 
         public override Command GetCommand()

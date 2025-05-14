@@ -84,7 +84,7 @@ export async function parseInputJson(inputJson: any) {
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
     if (apiVersion && apiVersion.toLowerCase().includes('preview') && sdkReleaseType.toLowerCase() === 'stable') {
-        throw new Error(`SDK release type' must be set to 'beta' for the preview API specifications.`);
+        throw new Error(`SDK release type must be set to 'beta' for the preview API specifications.`);
     }
 
     return {

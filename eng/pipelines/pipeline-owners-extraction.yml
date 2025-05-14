@@ -37,7 +37,7 @@ stages:
             dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
           workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
         env:
-          GITHUB_TOKEN: $(azuresdkartifacts-azure-sdk-write-teams-github-pat)
+          GITHUB_TOKEN: $(azuresdk-github-pat)
 
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'

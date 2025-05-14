@@ -25,7 +25,7 @@ async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: stri
             tag: tag,
             use: use,
             additionalArgs: additionalArgs,
-            apiVersion: apiVersion ||'',
+            apiVersion: apiVersion || '',
             sdkReleaseType: sdkReleaseType ||''
         });
     }

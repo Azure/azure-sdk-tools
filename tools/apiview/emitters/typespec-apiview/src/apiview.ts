@@ -268,9 +268,14 @@ export class ApiView {
   }
 
   private indent() {
-    // enure no trailing space at the end of the line
-    const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
-    lastToken.HasSuffixSpace = false;
+    // ensure no trailing space at the end of the line
+    try {
+      const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
+      lastToken.HasSuffixSpace = false;
+    } catch (e) {
+      // no tokens, so nothing to do
+      return;
+    }
 
     if (this.currentParent) {
       this.currentParent.Children.push(this.currentLine);

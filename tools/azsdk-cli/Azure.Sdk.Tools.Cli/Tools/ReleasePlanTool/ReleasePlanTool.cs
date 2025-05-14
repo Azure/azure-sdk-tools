@@ -68,10 +68,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlanTool
             return command;
         }
 
-        // HandleCommand is effectively the actual "worker" for the Tool when looked at from the
-        // CLI pov. Each individual function marked with attribute [McpServerTool] will themselves
-        // be accessible when this class is loaded into assembly and added to MCP configuration in 
-        // HostServerTool.CreateAppBuilder
         public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var commandParser = ctx.ParseResult;

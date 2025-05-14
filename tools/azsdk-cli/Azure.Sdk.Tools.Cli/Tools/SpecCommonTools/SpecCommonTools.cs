@@ -22,7 +22,7 @@ namespace AzureSDKDSpecTools.Tools
         private const string getModifiedProjectsCommandName = "get-modified-projects";
 
         // Options
-        private readonly Option<string> repoRootOpt = new(["-repo-root"], "Path to azure-rest-api-spec repo root") { IsRequired = true };
+        private readonly Option<string> repoRootOpt = new(["--repo-root"], "Path to azure-rest-api-spec repo root") { IsRequired = true };
         private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch to compare the changes") { IsRequired = true };
 
         [McpServerTool, Description("This tool returns list of TypeSpec projects modified in current branch")]

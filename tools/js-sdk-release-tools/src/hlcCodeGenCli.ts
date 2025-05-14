@@ -13,10 +13,6 @@ async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: stri
         logger.error(`Ensure the READMD file '${absoluteReadmeMd}' exist and is valid. Refer to the sample file at https://github.com/Azure/azure-rest-api-specs/tree/main/documentation/samplefiles`);
     } else {
         const gitCommitId = await getLastCommitId(regexResult[1]);
-        if(apiVersion && sdkReleaseType) {
-            logger.info(`API version is specified as ${apiVersion}`);
-            tag = `package-${apiVersion}`;
-        }
         await generateMgmt({
             sdkRepo: String(shell.pwd()),
             swaggerRepo: regexResult[1],

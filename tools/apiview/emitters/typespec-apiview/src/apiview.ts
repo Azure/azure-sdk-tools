@@ -294,7 +294,7 @@ export class ApiView {
 
   private deindent() {
     if (!this.currentParent) {
-      throw new Error("Cannot deindent without an indent.");
+      return;
     }
     // Ensure that the last line before the deindent has no blank lines
     const lastChild = this.currentParent.Children.pop();

@@ -316,9 +316,6 @@ export function trySpecifiyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: 
     let tspConfig;
     try {
         tspConfig = yamlLoad(tspConfigContent);
-        if (!tspConfig || typeof tspConfig !== 'object') {
-            throw new Error('Failed to parse tspconfig.yaml.');
-        }
     } catch (error) {
         throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
     }    

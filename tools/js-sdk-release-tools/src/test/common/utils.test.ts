@@ -7,6 +7,9 @@ import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
 import * as fs from "fs";
 import { getReleaseStatus } from "../../utils/version.js";
+import { getRandomInt } from "../utils/utils.js";
+import { ensureDir, remove, writeFile } from "fs-extra";
+import { stringify } from "yaml";
 
 describe("resolveOptions", () => {
     test("loads config at the given path", async () => {
@@ -40,29 +43,111 @@ describe("resolveOptions", () => {
 });
 
 describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
-    test("Updated API version into tspconfig.yaml ", () => {
-        const typeSpecDirectory = path.join(__dirname, "tsp");
-        const expectedVersion = "2023-10-01";
-        trySpecifiyApiVersionToGenerateSDKByTypeSpec(
-            typeSpecDirectory,
-            expectedVersion,
+    test("Updated API version into tspconfig.yaml", async () => {
+        const fakeTspConfig = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "is-modular-library": true,
+                },
+            },
+        };
+        const tempSpecFolder = path.join(
+            __dirname,
+            `tmp/spec-${getRandomInt(10000)}`,
         );
-        const data: string = fs.readFileSync(
-            path.join(typeSpecDirectory, "tspconfig.yaml"),
-            "utf8",
-        );
-        expect(data.includes(`api-version: '${expectedVersion}'`)).toBe(true);
-    });
-    test("not found tspconfig.yaml ", () => {
-        const typeSpecDirectory = path.join(__dirname);
-        const expectedVersion = "2023-10-01";
-        const tspConfigPath = path.join(typeSpecDirectory, "tspconfig.yaml");
-        expect(() =>
+        try {
+            await ensureDir(tempSpecFolder);
+            await writeFile(
+                path.join(tempSpecFolder, "tspconfig.yaml"),
+                stringify(fakeTspConfig),
+                {
+                    encoding: "utf8",
+                    flush: true,
+                },
+            );
+            const expectedVersion = "2023-10-01";
             trySpecifiyApiVersionToGenerateSDKByTypeSpec(
-                typeSpecDirectory,
+                tempSpecFolder,
                 expectedVersion,
-            ),
-        ).toThrow(`Failed to find tspconfig.yaml at path: ${tspConfigPath}`);
+            );
+            const data: string = fs.readFileSync(
+                path.join(tempSpecFolder, "tspconfig.yaml"),
+                "utf8",
+            );
+            expect(data.includes(`api-version: '${expectedVersion}'`)).toBe(
+                true,
+            );
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
+
+    test("not found @azure-tools/typespec-ts options in tspconfig.yaml", async () => {
+        const fakeTspConfig = {
+            options: {
+                "@azure-tools/typespec-go": {
+                    "is-modular-library": true,
+                },
+            },
+        };
+        const tempSpecFolder = path.join(
+            __dirname,
+            `tmp/spec-${getRandomInt(10000)}`,
+        );
+        try {
+            await ensureDir(tempSpecFolder);
+            await writeFile(
+                path.join(tempSpecFolder, "tspconfig.yaml"),
+                stringify(fakeTspConfig),
+                {
+                    encoding: "utf8",
+                    flush: true,
+                },
+            );
+            expect(() =>
+                trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+                    tempSpecFolder,
+                    "2023-10-01",
+                ),
+            ).toThrow(
+                `Failed to find @azure-tools/typespec-ts options in tspconfig.yaml.`,
+            );
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
+
+    test("Failed to parse tspconfig.yaml", async () => {    
+        const badYaml = `
+            skills:
+              - JavaScript
+              - Node.js
+              - YAML
+                - extra-indent-error
+        `;    
+        const tempSpecFolder = path.join(
+            __dirname,
+            `tmp/spec-${getRandomInt(10000)}`,
+        );
+        try {
+            await ensureDir(tempSpecFolder);
+            await writeFile(
+                path.join(tempSpecFolder, "tspconfig.yaml"),
+                badYaml,
+                {
+                    encoding: "utf8",
+                    flush: true,
+                },
+            );
+            expect(() =>
+                trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+                    tempSpecFolder,
+                    "2023-10-01",
+                ),
+            ).toThrowError('Failed to parse tspconfig.yaml');
+        } finally {
+            await remove(tempSpecFolder);
+        }
     });
 });
 
@@ -74,6 +159,7 @@ describe("getReleaseStatus", () => {
         });
         expect(result).toBe(true);
     });
+
     test("apiVersion is stable, sdkReleaseType is beta", async () => {
         const result = await getReleaseStatus("Preview", {
             apiVersion: "2023-10-01",
@@ -81,6 +167,7 @@ describe("getReleaseStatus", () => {
         });
         expect(result).toBe(false);
     });
+
     test("apiVersion is preview, sdkReleaseType is stable", async () => {
         const result = await getReleaseStatus("Stable", {
             apiVersion: "2023-10-01-preview",
@@ -88,6 +175,7 @@ describe("getReleaseStatus", () => {
         });
         expect(result).toBe(true);
     });
+
     test("apiVersion is preview, sdkReleaseType is beta", async () => {
         const result = await getReleaseStatus("Stable", {
             apiVersion: "2023-10-01-preview",
@@ -95,6 +183,7 @@ describe("getReleaseStatus", () => {
         });
         expect(result).toBe(false);
     });
+
     test("apiVersion not be provided", async () => {
         const result = await getReleaseStatus("Preview", {
             apiVersion: "",

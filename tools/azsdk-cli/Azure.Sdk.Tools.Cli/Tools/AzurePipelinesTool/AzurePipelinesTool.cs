@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
 public class AzurePipelinesTool(
     IAzureService azureService,
     IAzureAgentServiceFactory azureAgentServiceFactory,
-    IResponseService responseService,
+    IOutputService output,
     ILogger<AzurePipelinesTool> logger) : MCPTool
 {
     public string? project;
@@ -30,7 +30,7 @@ public class AzurePipelinesTool(
     private TestResultsHttpClient testClient;
     private readonly IAzureService azureService = azureService;
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory = azureAgentServiceFactory;
-    private readonly IResponseService responseService = responseService;
+    private readonly IOutputService output = output;
     private readonly ILogger<AzurePipelinesTool> logger = logger;
     private readonly Boolean initialized = false;
 
@@ -76,7 +76,7 @@ public class AzurePipelinesTool(
         {
             logger.LogInformation("Getting pipeline run {buildId} in project {project}...", buildId, project);
             var result = await GetPipelineRun(buildId, project);
-            logger.LogInformation("{result}", result);
+            output.Output(result);
             return 0;
         }
         else if (cmd == analyzePipelineCommandName)
@@ -86,7 +86,7 @@ public class AzurePipelinesTool(
             var aiEndpoint = ctx.ParseResult.GetValueForOption(aiEndpointOpt);
             var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
             var result = await AnalyzePipelineFailureLog(buildId, logId, project, aiEndpoint, aiModel);
-            logger.LogInformation("{result}", result);
+            output.Output(result);
             return 0;
         }
 
@@ -118,15 +118,16 @@ public class AzurePipelinesTool(
         {
             var build = await buildClient.GetBuildAsync(_project, buildId);
             project = _project;
-            return JsonSerializer.Serialize(build);
+            return output.Format(build);
         }
         catch { }
+
         try
         {
             _project = _project == "public" ? "internal" : "public";
             var build = await buildClient.GetBuildAsync(_project, buildId);
             project = _project;
-            return JsonSerializer.Serialize(build);
+            return output.Format(build);
         }
         catch { }
 
@@ -137,7 +138,7 @@ public class AzurePipelinesTool(
     public async Task<string> GetPipelineFailures(int buildId)
     {
         var failedNonTests = await GetPipelineFailuresTyped(buildId);
-        return JsonSerializer.Serialize(failedNonTests);
+        return output.Format(failedNonTests);
     }
 
     public async Task<List<TimelineRecord>> GetPipelineFailuresTyped(int buildId)
@@ -146,7 +147,6 @@ public class AzurePipelinesTool(
         var failedNonTests = timeline.Records.Where(r => r.Result == TaskResult.Failed && !IsTestStep(r.Name)).ToList();
         return failedNonTests;
     }
-
 
     [McpServerTool, Description(@"
         Analyze and diagnose the failed test results from a pipeline.
@@ -193,7 +193,7 @@ public class AzurePipelinesTool(
             }
         }
 
-        return JsonSerializer.Serialize(failedRunData);
+        return output.Format(failedRunData);
     }
 
     [McpServerTool, Description(@"
@@ -205,12 +205,12 @@ public class AzurePipelinesTool(
     {
         project ??= project ?? "public";
         var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
-        var output = new List<string>();
+        var _out = new List<string>();
         foreach (var line in logContent)
         {
-            output.Add(line);
+            _out.Add(line);
         }
-        return JsonSerializer.Serialize(string.Join("\n", output));
+        return output.Format(_out);
     }
 
     public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null, string? aiEndpoint = null, string? aiModel = null)
@@ -228,7 +228,7 @@ public class AzurePipelinesTool(
         var (response, usage) = await aiAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
         usage.LogCost();
 
-        return responseService.RespondFromJson<LogAnalysisResponse>(response);
+        return output.ValidateAndFormat<LogAnalysisResponse>(response);
     }
 
     [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]

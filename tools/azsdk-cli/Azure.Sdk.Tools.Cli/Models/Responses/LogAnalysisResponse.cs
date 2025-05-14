@@ -3,7 +3,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LogAnalysisResponse() : BaseCommandResponse()
+public class LogAnalysisResponse()
 {
     [JsonPropertyName("summary")]
     public string Summary { get; set; } = string.Empty;
@@ -14,7 +14,7 @@ public class LogAnalysisResponse() : BaseCommandResponse()
     [JsonPropertyName("suggestedfix")]
     public string SuggestedFix { get; set; } = string.Empty;
 
-    public override string ToPlainText()
+    public override string ToString()
     {
         return $"### Summary:\n" +
                $"{Summary}\n" +

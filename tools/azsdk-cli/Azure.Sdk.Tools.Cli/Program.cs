@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli;
@@ -52,21 +53,18 @@ public class Program
 
         if (!isCLI)
         {
-            var formatter = new McpFormatter() as ICommandFormatter;
-            builder.Services.AddSingleton<IResponseService>(new ResponseService(formatter));
+            builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Mcp));
         }
         else
         {
             var outputFormat = SharedOptions.GetOutputFormat(args);
             if (outputFormat == "plain")
             {
-                var formatter = new PlainTextFormatter() as ICommandFormatter;
-                builder.Services.AddSingleton<IResponseService>(new ResponseService(formatter));
+                builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Plain));
             }
             else if (outputFormat == "json")
             {
-                var formatter = new JsonFormatter() as ICommandFormatter;
-                builder.Services.AddSingleton<IResponseService>(new ResponseService(formatter));
+                builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Json));
             }
             else
             {

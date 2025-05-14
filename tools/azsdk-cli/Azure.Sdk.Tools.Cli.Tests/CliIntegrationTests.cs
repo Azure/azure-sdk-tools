@@ -1,6 +1,7 @@
+using Moq;
 using System.CommandLine;
-using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
@@ -9,15 +10,17 @@ namespace Azure.Sdk.Tools.Cli.Tests;
 
 internal class CliIntegrationTests
 {
+    private Mock<OutputService> outputServiceMock = new(MockBehavior.Strict);
 
     private Tuple<Command, TestLogger<T>> GetTestInstanceWithLogger<T>() where T : MCPTool
     {
         var testLogger = new TestLogger<T>();
-        var responseService = new ResponseService(new PlainTextFormatter());
+        outputServiceMock = new(OutputModes.Plain) { CallBase = true };
+        outputServiceMock.Setup(s => s.Output(It.IsAny<string>())).Verifiable();
 
         var tool = (T)Activator.CreateInstance(
             typeof(T),
-            args: [testLogger, responseService]
+            args: [testLogger, outputServiceMock.Object]
         )!;
         // Nothing needs to be added here. The parameter 'services' is already optional by using 'object[] services = null'.
         // The assignment 'services ??= Array.Empty<object>();' ensures it defaults to an empty array if not provided.
@@ -37,16 +40,23 @@ internal class CliIntegrationTests
     {
         var (cmd, logger) = GetTestInstanceWithLogger<HelloWorldTool>();
 
+        var output = "";
+        outputServiceMock
+            .Setup(s => s.Output(It.IsAny<string>()))
+            .Callback<string>(s => output = s);
+
         var exitCode = await cmd.InvokeAsync(args);
         Assert.That(exitCode, Is.EqualTo(0));
 
-        var rawState = logger.Logs.Single();
         var expected = @"
 Exit Code: 0
 Message: RESPONDING TO HI. MY NAME IS
 Result: null
-Duration: 0ms
-";
-        Assert.That(rawState.ToString(), Is.EqualTo(expected.Trim()));
+Duration: 0ms".TrimStart();
+
+        outputServiceMock
+            .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
+
+        Assert.That(output, Is.EqualTo(expected));
     }
 }

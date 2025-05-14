@@ -3,7 +3,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class DefaultCommandResponse() : BaseCommandResponse()
+public class DefaultCommandResponse()
 {
     [JsonPropertyName("exitcode")]
     public int ExitCode { get; set; }
@@ -18,7 +18,7 @@ public class DefaultCommandResponse() : BaseCommandResponse()
     [JsonPropertyName("duration")]
     public long Duration { get; set; }
 
-    public override string ToPlainText()
+    public override string ToString()
     {
         return $"Exit Code: {ExitCode}\n" +
                $"Message: {Message}\n" +

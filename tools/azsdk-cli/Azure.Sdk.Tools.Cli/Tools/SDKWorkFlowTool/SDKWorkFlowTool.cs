@@ -15,17 +15,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
     [Description("This Type contains a set of tools to help with TypeSpec to SDK generation work flow.")]
     [McpServerToolType]
     public class SpecWorkflowTool(IGitHubService githubService,
-        IDevOpsService devopsService, 
-        IGitHelper gitHelper, 
-        ITypeSpecHelper typespecHelper, 
+        IDevOpsService devopsService,
+        IGitHelper gitHelper,
+        ITypeSpecHelper typespecHelper,
         ILogger<SpecWorkflowTool> logger,
-        ISpecPullRequestHelper specHelper): MCPTool
+        IOutputService output,
+        ISpecPullRequestHelper specHelper) : MCPTool
     {
         private readonly IGitHubService _githubService = githubService;
         private readonly IDevOpsService _devopsService = devopsService;
         private readonly IGitHelper _gitHelper = gitHelper;
         private readonly ITypeSpecHelper _typespecHelper = typespecHelper;
         private readonly ILogger<SpecWorkflowTool> _logger = logger;
+        private readonly IOutputService _output = output;
         private readonly ISpecPullRequestHelper _specHelper = specHelper;
         private readonly static string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private readonly static string REPO_OWNER = "Azure";
@@ -52,12 +54,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
         {
             var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);
-            return response.ToString();
+            return _output.Format(response);
         }
 
         private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullrequestNumber)
         {
-            GenericResponse response = new GenericResponse()
+            var response = new GenericResponse()
             {
                 Status = "Failed"
             };
@@ -73,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Get current branch name
                 var repoRootPath = _typespecHelper.GetSpecRepoRootPath(typeSpecProjectRoot);
                 var branchName = _gitHelper.GetBranchName(repoRootPath);
-                
+
                 // Check if current repo is private or public repo
                 if (!_typespecHelper.IsRepoPathForPublicSpecRepo(repoRootPath))
                 {
@@ -151,7 +153,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.Status = "Failed";
                 response.Details.Add($"Failed to check if TypeSpec is ready for SDK generation. Error: {ex.Message}");
                 return response;
-            }            
+            }
         }
 
 
@@ -210,7 +212,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
-                    return response.ToString();
+                {
+                    return _output.Format(response);
+                }
 
                 string typeSpecProjectPath = _typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
                 string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
@@ -220,14 +224,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     Status = "Success",
                     Details = [$"Azure DevOps pipeline {pipelineRun.Url} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
                 };
-                return response.ToString();
+                return _output.Format(response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Details.Add($"Failed to run pipeline to generate SDK, Details: {ex.Message}");
                 response.Status = "Failed";
-                return response.ToString();
-            }            
+                return _output.Format(response);
+            }
         }
 
         /// <summary>
@@ -253,7 +257,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.Status = "Failed";
                 response.Details.Add($"Failed to get pipeline run with id {buildId}. Error: {ex.Message}");
             }
-            return response.ToString();
+            return _output.Format(response);
         }
 
         /// <summary>
@@ -275,7 +279,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"Failed to get SDK generation pipeline run wiht build ID {buildId}";
                 }
 
-                if(pipeline.Status != BuildStatus.Completed)
+                if (pipeline.Status != BuildStatus.Completed)
                 {
                     return $"SDK generation pipeline is not in completed status to get generated SDK pull request details, Status: {pipeline.Status.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
@@ -285,7 +289,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
-                return await _devopsService.GetSDKPullRequestFromPipelineRun(buildId, language, workItemId);
+                var data = await _devopsService.GetSDKPullRequestFromPipelineRun(buildId, language, workItemId);
+                return _output.Format(data);
             }
             catch (Exception ex)
             {
@@ -323,11 +328,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     _logger.LogInformation($"Is API spec ready for SDK generation: {isSpecReady}");
                     return 0;
                 case generateSdkCommandName:
-                    var sdkGenerationResponse = await GenerateSDK(commandParser.GetValueForOption(typeSpecProjectPathOpt), 
-                        commandParser.GetValueForOption(apiVersionOpt), 
-                        commandParser.GetValueForOption(sdkReleaseTypeOpt), 
-                        commandParser.GetValueForOption(languageOpt), 
-                        commandParser.GetValueForOption(pullRequestNumberOpt), 
+                    var sdkGenerationResponse = await GenerateSDK(commandParser.GetValueForOption(typeSpecProjectPathOpt),
+                        commandParser.GetValueForOption(apiVersionOpt),
+                        commandParser.GetValueForOption(sdkReleaseTypeOpt),
+                        commandParser.GetValueForOption(languageOpt),
+                        commandParser.GetValueForOption(pullRequestNumberOpt),
                         commandParser.GetValueForOption(workItemIdOpt));
                     _logger.LogInformation($"SDK generation response: {sdkGenerationResponse}");
                     return 0;

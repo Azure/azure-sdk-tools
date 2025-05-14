@@ -1,11 +1,9 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Microsoft.TeamFoundation.TestManagement.WebApi;
 
-namespace Azure.Sdk.Tools.Cli.Tests;
+namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
-internal class FormatTests
+internal class OutputServiceTests
 {
     private readonly string summary = "a test summary";
     private readonly List<LogError> errors =
@@ -26,7 +24,7 @@ internal class FormatTests
     private readonly string suggestedFix = "a test suggested fix";
 
     [Test]
-    public void TestLogAnalysisJsonResponse()
+    public void TestTypedJsonOutput()
     {
         var json = @"{
   ""summary"": ""a test summary"",
@@ -45,27 +43,21 @@ internal class FormatTests
   ""suggestedfix"": ""a test suggested fix""
 }";
 
-        var logger = new TestLogger<LogAnalysisResponse>();
-        var response = new ResponseService(new JsonFormatter()).Respond(new LogAnalysisResponse
-        {
-            Summary = summary,
-            Errors = errors,
-            SuggestedFix = suggestedFix
-        });
+        var output = new OutputService(OutputModes.Json);
+        var formatted = output.ValidateAndFormat<LogAnalysisResponse>(json);
 
-        Assert.That(response, Is.EqualTo(json));
+        Assert.That(formatted, Is.EqualTo(json));
     }
 
     [Test]
-    public void TestLogAnalysisPlainTextResponse()
+    public void TestPlainTextOutput()
     {
-
-        var response = new ResponseService(new PlainTextFormatter()).Respond(new LogAnalysisResponse
+        var response = new LogAnalysisResponse
         {
             Summary = summary,
             Errors = errors,
             SuggestedFix = suggestedFix
-        });
+        };
 
         var expectedStr = @"
 ### Summary:
@@ -79,6 +71,9 @@ file1:1 - message1
 file2:2 - message2
 ".TrimStart();
 
-        Assert.That(response, Is.EqualTo(expectedStr));
+        var output = new OutputService(OutputModes.Plain);
+        var formatted = output.Format(response);
+
+        Assert.That(formatted, Is.EqualTo(expectedStr));
     }
 }

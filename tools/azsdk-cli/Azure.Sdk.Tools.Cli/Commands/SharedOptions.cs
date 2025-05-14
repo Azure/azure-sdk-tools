@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static Option<string> Format = new(["--output", "-o"], () => "plain")
         {
-            Description = "The format of the output. Supported formats are: plain, json, mcp",
+            Description = "The format of the output. Supported formats are: plain, json",
             IsRequired = false,
         };
 

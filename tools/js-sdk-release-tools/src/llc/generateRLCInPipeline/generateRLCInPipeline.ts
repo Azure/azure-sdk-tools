@@ -5,6 +5,7 @@ import * as path from "path";
 import { addApiViewInfo } from "../../utils/addApiViewInfo.js";
 import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
 import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample.js";
+import { changeRushJson } from "../../utils/changeRushJson.js";
 import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo.js";
 import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git.js";
 import { logger } from "../../utils/logger.js";
@@ -15,10 +16,13 @@ import {
     generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
+import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { migratePackage } from "../../common/migration.js";
+import { isRushRepo } from "../../common/rushUtils.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -209,7 +213,9 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);
         if (!options.skipGeneration) {
             await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, packageName.includes("arm"));
-
+            if (isRushRepo(options.sdkRepo)) {
+                await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
+            }
             // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
@@ -226,17 +232,30 @@ export async function generateRLCInPipeline(options: {
                 outputPackageInfo.packageFolder = relativePackagePath;
             }
         }
-
-        logger.info(`Start to update.`);
-        execSync('pnpm install', {stdio: 'inherit'});
+        if (isRushRepo(options.sdkRepo)) {
+            logger.info(`Start to update rush.`);
+            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+    
+            await migratePackage(options.sdkRepo, packagePath);
+    
+            logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
+            // To build generated codes except test and sample, we need to change tsconfig.json.
+            execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
+            execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
+        }else {
+            logger.info(`Start to update.`);
+            execSync('pnpm install', {stdio: 'inherit'});
+            
+            await migratePackage(options.sdkRepo, packagePath);
+            
+            logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
+            // To build generated codes except test and sample, we need to change tsconfig.json.
+            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'pnpm pack --filter ${packageName}'.`);
+            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+        }
         
-        await migratePackage(packagePath);
-        
-        logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
-        // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
-        logger.info(`Start to run command 'pnpm pack --filter ${packageName}'.`);
-        execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];

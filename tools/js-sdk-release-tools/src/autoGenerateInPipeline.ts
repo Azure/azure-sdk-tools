@@ -149,7 +149,7 @@ const optionDefinitions = [
     { name: 'outputJsonPath', type: String },
     // this option should be only used in local run, it will skip backup node modules, etc.
     // do NOT set to true in sdk automation pipeline 
-    { name: 'local', type: Boolean, defaultValue: false }    
+    { name: 'local', type: Boolean, defaultValue: false }
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);

@@ -127,21 +127,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var isMgmtPlane = _typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
                 // Check if ARM or API stewardship approval is present if PR is not in merged status
-                if (!pullRequest.Merged)
+                // Check ARM approval label is present on the management pull request
+                if (!pullRequest.Merged && isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
                 {
-                    // Check ARM approval label is present on the management pull request
-                    if (isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
-                    {
-                        response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
-                        return response;
-                    }
+                    response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                    return response;
+                }
 
-                    // Check if API stewardship approval label is present on the data plane pull request
-                    if (!isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(API_STEWARDSHIP_APPROVAL)))
-                    {
-                        response.Details.Add($"Pull request {pullRequest.Number} does not have API stewardship approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
-                        return response;
-                    }
+                // Check if API stewardship approval label is present on the data plane pull request
+                if (!pullRequest.Merged && !isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(API_STEWARDSHIP_APPROVAL)))
+                {
+                    response.Details.Add($"Pull request {pullRequest.Number} does not have API stewardship approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
+                    return response;
                 }
 
                 var approvalLabel = isMgmtPlane ? ARM_SIGN_OFF_LABEL : API_STEWARDSHIP_APPROVAL;

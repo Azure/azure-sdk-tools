@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.CommandLine;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
@@ -15,10 +17,19 @@ namespace AzureSDKDevToolsMCP.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> logger)
+    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> logger): MCPTool
     {
         private readonly ITypeSpecHelper _typeSpecHelper = _helper;
+#pragma warning disable CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
         private readonly ILogger<SpecValidationTools> _logger = logger;
+#pragma warning restore CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
+
+        // Commands
+        private const string typespecValidationCommandName = "validate-typespec";
+
+        // Options
+        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+
 
         /// <summary>
         /// Validates the TypeSpec API specification.
@@ -39,10 +50,15 @@ namespace AzureSDKDevToolsMCP.Tools
             {
                 var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
                 _logger.LogInformation($"Repo root path: {specRepoRootPath}");
-                // Run npm ci
-                _logger.LogInformation("Running npm ci");                
-                RunNpmCi(specRepoRootPath);
-                _logger.LogInformation("Completed runnign npm ci");
+
+                // Run npm ci only if "node_modules/.bin/tsv" is not present to improve validation performance
+                if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
+                {
+                    // Run npm ci
+                    _logger.LogInformation("Running npm ci");
+                    RunNpmCi(specRepoRootPath);
+                    _logger.LogInformation("Completed running npm ci");
+                }
 
                 //Run TypeSpec validation
                 _logger.LogInformation("Running npx tsv to run the validation");
@@ -54,6 +70,12 @@ namespace AzureSDKDevToolsMCP.Tools
                 validationResults.Add($"Error: {ex.Message}");
             }
             return validationResults;
+        }
+
+        private bool IsTypeSpecValidationExecutablePresent(string repoRoot)
+        {
+            var tsvExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsv.cmd" : "tsv";
+            return File.Exists(Path.Combine(repoRoot, "node_modules", ".bin", tsvExecutable));
         }
 
         public static void RunNpmCi(string repoRoot)
@@ -123,6 +145,33 @@ namespace AzureSDKDevToolsMCP.Tools
                 output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
             }
             return output.ToString();
+        }
+
+        public override Command GetCommand()
+        {
+            Command command = new Command(typespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+            command.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            return command;
+        }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public override async Task<int> HandleCommand(System.CommandLine.Invocation.InvocationContext ctx, CancellationToken ct)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            var command = ctx.ParseResult.CommandResult.Command.Name;
+
+            switch (command)
+            {
+                case typespecValidationCommandName:
+                    var repoRootPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
+                    var validationResults = RunTypeSpecValidation(repoRootPath);
+                    logger.LogInformation($"Validation results: [{validationResults}]");
+                    return 0;
+
+                default:
+                    logger.LogError($"Unknown command: {command}");
+                    return 1;
+            }
         }
     }
 }

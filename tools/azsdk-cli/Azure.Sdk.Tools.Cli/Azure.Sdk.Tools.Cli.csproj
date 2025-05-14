@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,7 +7,7 @@
     <PackAsTool>true</PackAsTool>
     <IsPackable>true</IsPackable>
     <ToolCommandName>azsdk</ToolCommandName>
-    <NoWarn>ASP0000;CS8603;CS8618</NoWarn>
+    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn>
     <AssemblyName>azsdk</AssemblyName>
   </PropertyGroup>
 

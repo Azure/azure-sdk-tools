@@ -6,6 +6,9 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
+using System.CommandLine;
+using Azure.Sdk.Tools.Cli.Contract;
+using System.CommandLine.Invocation;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -16,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IGitHelper gitHelper, 
         ITypeSpecHelper typespecHelper, 
         ILogger<SpecWorkflowTool> logger,
-        ISpecPullRequestHelper specHelper)
+        ISpecPullRequestHelper specHelper): MCPTool
     {
         private readonly IGitHubService _githubService = githubService;
         private readonly IDevOpsService _devopsService = devopsService;
@@ -29,6 +32,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly static string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
         private readonly static string DEFAULT_BRANCH = "main";
 
+        // Commands
+        private const string checkApiReadinessCommandName = "check-api-readiness";
+        private const string generateSdkCommandName = "generate-sdk";
+        private const string getPipelineStatusCommandName = "create-pr";
+        private const string getSdkPullRequestCommandName = "get-sdk-pr";
+
+        // Options
+        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<int> pullRequestNumberOpt = new(["--pr"], "Pull request number") { IsRequired = true };
+        private readonly Option<string> apiVersionOpt = new(["--api-version"], "API version") { IsRequired = true };
+        private readonly Option<string> sdkReleaseTypeOpt = new(["--release-type"], "SDK release type: beta or stable") { IsRequired = true };
+        private readonly Option<string> languageOpt = new(["--language"], "SDK language, Options[Python, .NET, JavaScript, Java, go]") { IsRequired = true };
+        private readonly Option<int> workItemIdOpt = new(["--workitem-id"], "SDK release plan work item id") { IsRequired = true };
+        private readonly Option<int> pipelineRunIdOpt = new(["--pipeline-run"], "SDK generation pipeline run id") { IsRequired = true };
 
         [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
@@ -271,6 +288,58 @@ namespace Azure.Sdk.Tools.Cli.Tools
             catch (Exception ex)
             {
                 return $"Failed to get pull request details from SDK generation pipeline, Error: {ex.Message}";
+            }
+        }
+
+        public override Command GetCommand()
+        {
+            var command = new Command("spec-workflow");
+            var subCommands = new[]
+            {
+                new Command(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK") { typeSpecProjectPathOpt, pullRequestNumberOpt },
+                new Command(generateSdkCommandName, "Generate SDK for a TypeSpec project") { typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt },
+                new Command(getPipelineStatusCommandName, "Get SDK generation pipeline run status") { pipelineRunIdOpt },
+                new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt }
+            };
+
+            foreach (var subCommand in subCommands)
+            {
+                subCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+                command.AddCommand(subCommand);
+            }
+            return command;
+        }
+
+        public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        {
+            var command = ctx.ParseResult.CommandResult.Command.Name;
+            var commandParser = ctx.ParseResult;
+            switch (command)
+            {
+                case checkApiReadinessCommandName:
+                    var isSpecReady =  await CheckApiReadyForSDKGeneration(commandParser.GetValueForOption(typeSpecProjectPathOpt), commandParser.GetValueForOption(pullRequestNumberOpt));
+                    _logger.LogInformation($"Is API spec ready for SDK generation: {isSpecReady}");
+                    return 0;
+                case generateSdkCommandName:
+                    var sdkGenerationResponse = await GenerateSDK(commandParser.GetValueForOption(typeSpecProjectPathOpt), 
+                        commandParser.GetValueForOption(apiVersionOpt), 
+                        commandParser.GetValueForOption(sdkReleaseTypeOpt), 
+                        commandParser.GetValueForOption(languageOpt), 
+                        commandParser.GetValueForOption(pullRequestNumberOpt), 
+                        commandParser.GetValueForOption(workItemIdOpt));
+                    _logger.LogInformation($"SDK generation response: {sdkGenerationResponse}");
+                    return 0;
+                case getPipelineStatusCommandName:
+                    var pipelineRunStatus = await GetPipelineRunStatus(commandParser.GetValueForOption(pipelineRunIdOpt));
+                    _logger.LogInformation($"SDK generation pipeline run status: {pipelineRunStatus}");
+                    return 0;
+                case getSdkPullRequestCommandName:
+                    var sdkPullRequestDetails = await GetSDKPullRequestDetails(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(pipelineRunIdOpt), commandParser.GetValueForOption(workItemIdOpt));
+                    _logger.LogInformation($"SDK pull request details: {sdkPullRequestDetails}");
+                    return 0;
+                default:
+                    _logger.LogError($"Unknown command: '{command}'");
+                    return 1;
             }
         }
     }

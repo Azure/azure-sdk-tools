@@ -305,18 +305,22 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private static string MapLanguageToId(string language)
         {
-            return language switch
+            var lang = language.ToLower();
+            return lang switch
             {
-                ".NET" => "Dotnet",
+                ".net" => "Dotnet",
+                "csharp" => "Dotnet",
+                "js" => "JavaScript",
                 _ => language
             };
         }
 
         private static string MapLanguageIdToName(string language)
         {
-            return language switch
+            var lang = language.ToLower();
+            return lang switch
             {
-                "Dotnet" => ".NET",
+                "dotnet" => ".NET",
                 _ => language
             };
         }

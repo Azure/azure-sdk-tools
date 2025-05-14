@@ -6,6 +6,10 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
+using System.CommandLine;
+using Azure.Sdk.Tools.Cli.Contract;
+using System.CommandLine.Invocation;
+using Octokit;
 
 namespace AzureSDKDevToolsMCP.Tools
 {
@@ -15,7 +19,7 @@ namespace AzureSDKDevToolsMCP.Tools
         IGitHelper gitHelper, 
         ISpecPullRequestHelper prHelper,
         ILogger<SpecPullRequestTools> logger,
-        ITypeSpecHelper typeSpecHelper)
+        ITypeSpecHelper typeSpecHelper): MCPTool
     {
         private readonly IGitHubService gitHubService = gitHubService;
         private readonly IGitHelper gitHelper = gitHelper;
@@ -24,6 +28,22 @@ namespace AzureSDKDevToolsMCP.Tools
         private readonly ITypeSpecHelper typeSpecHelper = typeSpecHelper;
         private readonly static string REPO_OWNER = "Azure";
         private readonly static string REPO_NAME = "azure-rest-api-specs";
+
+        // Commands
+        private const string checkIfSpecInPublicRepoCommandName = "check-if-repo-is-public";
+        private const string getPullRequestForCurrentBranchCommandName = "get-pr-for-current-branch";
+        private const string createPullRequestCommandName = "create-pr";
+        private const string getPullRequestCommandName = "get-pr-details";
+
+        // Options
+        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> titleOpt = new(["--title"], "Title for the pull request") { IsRequired = true };
+        private readonly Option<string> descriptionOpt = new(["--description"], "Description for the pull request") { IsRequired = true };
+        private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch for the pull request") { IsRequired = false};
+        private readonly Option<int> pullRequestNumberOpt = new(["--pr"], "Pull request number") { IsRequired = true };
+        private readonly Option<string> repoOwnerOpt = new(["--repo-owner"], () => "Azure", "GitHub repo owner") { IsRequired = false };
+        private readonly Option<string> repoNameOpt = new(["--repo-name"], () => "azure-rest-api-specs", "GitHub repo name") { IsRequired = false };
+
 
         [McpServerTool, Description("Connect to GitHub using personal access token.")]
         public async Task<string> GetGitHubUserDetails()
@@ -162,6 +182,59 @@ namespace AzureSDKDevToolsMCP.Tools
                 logger.LogError(ex.Message);
                 return $"Failed to get pull request summary. Error {ex.Message}";
             }            
+        }
+
+        public override Command GetCommand()
+        {
+            var command = new Command("spec-pr");
+            var subCommands = new[] {
+                new Command(checkIfSpecInPublicRepoCommandName, "Check if API spec is in public repo") { typeSpecProjectPathOpt },
+                new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { typeSpecProjectPathOpt },
+                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, typeSpecProjectPathOpt, targetBranchOpt },
+                new Command(getPullRequestCommandName, "Get pull request details") { pullRequestNumberOpt, repoOwnerOpt, repoNameOpt }
+            };
+
+            foreach (var subCommand in subCommands)
+            {
+                subCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+                command.AddCommand(subCommand);
+            }
+            return command;
+        }
+
+        public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        {
+            var commandName = ctx.ParseResult.CommandResult.Command.Name;
+            var commandParser = ctx.ParseResult;
+            switch (commandName)
+            {
+                case checkIfSpecInPublicRepoCommandName:
+                    var isPublic = CheckIfSpecInPublicRepo(commandParser.GetValueForOption(typeSpecProjectPathOpt));
+                    logger.LogInformation($"Is spec in public repo: {isPublic}");
+                    return 0;
+                case getPullRequestForCurrentBranchCommandName:
+                    var pullRequestLink = await GetPullRequestForCurrentBranch(commandParser.GetValueForOption(typeSpecProjectPathOpt));
+                    logger.LogInformation($"Pull request link: {pullRequestLink}");
+                    return 0;
+                case createPullRequestCommandName:
+                    var title = commandParser.GetValueForOption(titleOpt);
+                    var description = commandParser.GetValueForOption(descriptionOpt);
+                    var typeSpecProject = commandParser.GetValueForOption(typeSpecProjectPathOpt);
+                    var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
+                    var createPullRequestResponse = await CreatePullRequest(title, description, typeSpecProject, targetBranch);
+                    logger.LogInformation($"Create pull request response: {createPullRequestResponse}");
+                    return 0;
+                case getPullRequestCommandName:
+                    var pullRequestNumber = commandParser.GetValueForOption(pullRequestNumberOpt);
+                    var repoOwner = commandParser.GetValueForOption(repoOwnerOpt);
+                    var repoName = commandParser.GetValueForOption(repoNameOpt);
+                    var pullRequestDetails = await GetPullRequest(pullRequestNumber, repoOwner, repoName);
+                    logger.LogInformation($"Pull request details: {pullRequestDetails}");
+                    return 0;
+                default:
+                    logger.LogError($"Unknown command: {commandName}");
+                    return 1;
+            }
         }
     }
 }

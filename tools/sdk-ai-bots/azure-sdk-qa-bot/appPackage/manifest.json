@@ -14,7 +14,7 @@
     "outline": "outline.png"
   },
   "name": {
-    "short": "Azure SDK Q&A Bot ${{APP_NAME_SUFFIX}}",
+    "short": "azbot-${{APP_NAME_SUFFIX}}",
     "full": "Azure SDK Q&A Bot ${{APP_NAME_SUFFIX}}"
   },
   "description": {

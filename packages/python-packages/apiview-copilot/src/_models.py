@@ -47,11 +47,15 @@ class Guideline(BaseModel):
     )
 
     # Relationship fields
-    related_guidelines: Optional[List[str]] = Field(
-        description="List of guideline IDs that are related to this guideline."
+    related_guidelines: List[str] = Field(
+        default_factory=list, description="List of guideline IDs that are related to this guideline."
     )
-    related_examples: Optional[List[str]] = Field(description="List of example IDs that are related to this guideline.")
-    related_memories: Optional[List[str]] = Field(description="List of memory IDs that are related to this guideline.")
+    related_examples: List[str] = Field(
+        default_factory=list, description="List of example IDs that are related to this guideline."
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="List of memory IDs that are related to this guideline."
+    )
 
 
 class ExampleType(str, Enum):
@@ -85,15 +89,19 @@ class Example(BaseModel):
     example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
 
     # Relationship fields
-    guideline_ids: Optional[List[str]] = Field(description="List of guideline IDs to which this example applies.")
-    memory_ids: Optional[List[str]] = Field(description="List of memory IDs to which this example applies.")
-
-    # Relationship fields
-    related_guidelines: Optional[List[str]] = Field(
-        description="List of guideline IDs that are related to this guideline."
+    guideline_ids: List[str] = Field(
+        default_factory=list, description="List of guideline IDs to which this example applies."
     )
-    related_examples: Optional[List[str]] = Field(description="List of example IDs that are related to this guideline.")
-    related_memories: Optional[List[str]] = Field(description="List of memory IDs that are related to this guideline.")
+    memory_ids: List[str] = Field(default_factory=list, description="List of memory IDs to which this example applies.")
+    related_guidelines: List[str] = Field(
+        default_factory=list, description="List of guideline IDs that are related to this example."
+    )
+    related_examples: List[str] = Field(
+        default_factory=list, description="List of example IDs that are related to this example."
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="List of memory IDs that are related to this example."
+    )
 
 
 class Memory(BaseModel):
@@ -118,10 +126,19 @@ class Memory(BaseModel):
     source: str = Field(description="The source of the memory, such as 'manual' or 'teams_conversation'.")
     tags: Optional[List[str]] = Field(
         None,
-        description="List of tags that classify the guideline.",
+        description="List of tags that classify the memory.",
     )
 
     # Relationship fields
+    related_guidelines: List[str] = Field(
+        default_factory=list, description="List of guideline IDs that are related to this memory."
+    )
+    related_examples: List[str] = Field(
+        default_factory=list, description="List of example IDs that are related to this memory."
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="List of memory IDs that are related to this memory."
+    )
 
 
 class ReviewResult(BaseModel):

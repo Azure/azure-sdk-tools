@@ -16,7 +16,7 @@ from collections import deque
 import copy
 import json
 import os
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -47,9 +47,14 @@ class SearchItem:
 
     def __init__(self, result: Dict):
         self.id = result.get("id")
-        self.text = result.get("chunk")
-        self.lang = result.get("lang")
+        self.kind = result.get("kind")
         self.title = result.get("title")
+        self.content = result.get("chunk")
+        self.language = result.get("language")
+        self.service = result.get("service")
+        self.is_exception = result.get("is_exception") or False
+        self.example_type = result.get("example_type")
+        self.source = result.get("source")
         self.score = result.get("@search.score")
         self.reranker_score = result.get("@search.reranker_score")
         self.captions = []
@@ -163,6 +168,8 @@ class ContextItem:
         self.service = getattr(result, "service", None)
         self.is_exception = getattr(result, "is_exception", None)
         self.examples = []
+        # FIXME: Score isn't present in guideline or memory... need to plumb through
+        self.score = getattr(result, "@search.score", None)
         for ex_id in getattr(result, "related_examples", []):
             # copy the example to a new object
             example = copy.deepcopy(examples.get(ex_id))
@@ -179,11 +186,32 @@ class ContextItem:
         """
         return id.replace("=html=", ".html#")
 
+    def _metadata_markdown(self) -> str:
+        """
+        Converts the metadata to a markdown string.
+        """
+        markdown = f"> id: {self.id}\n"
+        if self.score is not None:
+            markdown += f"> score: {self.score}\n"
+        if self.is_exception:
+            markdown += f"> exception: {self.is_exception}\n"
+        markdown += "\n"
+        return markdown
+
     def to_markdown(self) -> str:
         """
         Converts the context item to a markdown string.
         """
-        markdown = f"## {self.title} [id]({self.id})\n\n{self.content}\n\n"
+
+        markdown = self._metadata_markdown()
+
+        markdown += f"## {self.title}\n\n"
+
+        if self.is_exception:
+            markdown += f"**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
+
+        markdown += f"{self.content}\n\n"
+
         if self.examples:
             # collect good and bad examples separately
             good_examples = []
@@ -287,7 +315,7 @@ class SearchManager:
             guidelines.append(self._static_guidelines_map.get(id))
         return guidelines
 
-    def build_context(self, items: List[object]) -> Context:
+    def build_context(self, items: List[SearchItem]) -> Context:
         """
         Given a set of items (guidelines, examples, memories), resolve the knowledge graph by traversing
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
@@ -300,10 +328,10 @@ class SearchManager:
         examples_container = database.get_container_client("examples")
         memories_container = database.get_container_client("memories")
 
-        # Partition input items by kind
-        guidelines = {item["id"]: item for item in items if item.get("kind") == "guidelines"}
-        examples = {item["id"]: item for item in items if item.get("kind") == "examples"}
-        memories = {item["id"]: item for item in items if item.get("kind") == "memories"}
+        # Partition input items by kind using SearchItem attributes
+        guidelines = {item.id: item for item in items.results if item.kind == "guidelines"}
+        examples = {item.id: item for item in items.results if item.kind == "examples"}
+        memories = {item.id: item for item in items.results if item.kind == "memories"}
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set(guidelines.keys())
@@ -333,7 +361,8 @@ class SearchManager:
                         )
                     )
                 )
-            return results
+            # Convert dicts to SearchItem objects
+            return [SearchItem(r) for r in results]
 
         # BFT across all three entity types
         while guideline_queue or example_queue or memory_queue:
@@ -342,18 +371,18 @@ class SearchManager:
                 batch_ids = [guideline_queue.popleft() for _ in range(min(batch_size, len(guideline_queue)))]
                 new_guidelines = batch_query(guidelines_container, batch_ids)
                 for guideline in new_guidelines:
-                    gid = guideline["id"]
+                    gid = guideline.id
                     if gid in seen_guideline_ids:
                         continue
                     seen_guideline_ids.add(gid)
                     guidelines[gid] = guideline
 
                     # Queue up related examples and memories
-                    for ex_id in guideline.get("related_examples", []) or []:
+                    for ex_id in getattr(guideline, "related_examples", []) or []:
                         if ex_id not in seen_example_ids:
                             seen_example_ids.add(ex_id)
                             example_queue.append(ex_id)
-                    for mem_id in guideline.get("related_memories", []) or []:
+                    for mem_id in getattr(guideline, "related_memories", []) or []:
                         if mem_id not in seen_memory_ids:
                             seen_memory_ids.add(mem_id)
                             memory_queue.append(mem_id)
@@ -363,18 +392,18 @@ class SearchManager:
                 batch_ids = [example_queue.popleft() for _ in range(min(batch_size, len(example_queue)))]
                 new_examples = batch_query(examples_container, batch_ids)
                 for example in new_examples:
-                    ex_id = example["id"]
+                    ex_id = example.id
                     if ex_id in seen_example_ids:
                         continue
                     seen_example_ids.add(ex_id)
                     examples[ex_id] = example
 
                     # Queue up related guidelines and memories
-                    for gid in example.get("guideline_ids", []) or []:
+                    for gid in getattr(example, "guideline_ids", []) or []:
                         if gid not in seen_guideline_ids:
                             seen_guideline_ids.add(gid)
                             guideline_queue.append(gid)
-                    for mem_id in example.get("memory_ids", []) or []:
+                    for mem_id in getattr(example, "memory_ids", []) or []:
                         if mem_id not in seen_memory_ids:
                             seen_memory_ids.add(mem_id)
                             memory_queue.append(mem_id)
@@ -384,26 +413,26 @@ class SearchManager:
                 batch_ids = [memory_queue.popleft() for _ in range(min(batch_size, len(memory_queue)))]
                 new_memories = batch_query(memories_container, batch_ids)
                 for memory in new_memories:
-                    mem_id = memory["id"]
+                    mem_id = memory.id
                     if mem_id in seen_memory_ids:
                         continue
                     seen_memory_ids.add(mem_id)
                     memories[mem_id] = memory
 
                     # Queue up related guidelines and examples
-                    for gid in memory.get("related_guidelines", []) or []:
+                    for gid in getattr(memory, "related_guidelines", []) or []:
                         if gid not in seen_guideline_ids:
                             seen_guideline_ids.add(gid)
                             guideline_queue.append(gid)
-                    for ex_id in memory.get("related_examples", []) or []:
+                    for ex_id in getattr(memory, "related_examples", []) or []:
                         if ex_id not in seen_example_ids:
                             seen_example_ids.add(ex_id)
                             example_queue.append(ex_id)
 
-        # Convert dicts to model objects
-        final_guidelines = [Guideline(**v) for v in guidelines.values() if v is not None]
-        final_examples = [Example(**v) for v in examples.values() if v is not None]
-        final_memories = [Memory(**v) for v in memories.values() if v is not None]
+        # Convert SearchItem objects to model objects
+        final_guidelines = [Guideline(**vars(v)) for v in guidelines.values() if v is not None]
+        final_examples = [Example(**vars(v)) for v in examples.values() if v is not None]
+        final_memories = [Memory(**vars(v)) for v in memories.values() if v is not None]
 
         context = Context(guidelines=final_guidelines, examples=final_examples, memories=final_memories)
         return context

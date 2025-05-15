@@ -1,31 +1,28 @@
-import axios from "axios";
-import config from "../config.js";
+import axios from 'axios';
+import config from '../config.js';
+import { logger } from '../logging/logger.js';
 
 export interface RAGOptions {
-    endpoint: string;
-    apiKey: string;
-    tenantId: string;
+  endpoint: string;
+  apiKey: string;
+  tenantId: string;
 }
 
 interface RAGReference {
-    title: string;
-    source: string;
-    link: string;
-    content: string;
+  title: string;
+  source: string;
+  link: string;
+  content: string;
 }
 
 export interface RAGReply {
-    answer: string;
-    has_result: boolean;
-    references: RAGReference[];
+  answer: string;
+  has_result: boolean;
+  references: RAGReference[];
 }
 
-export async function getRAGReply(
-    question: string,
-    options: RAGOptions
-): Promise<RAGReply> {
-    // test format
-    const debugText = `
+// test format
+const debugText = `
 [DEBUG] reply with format:
     ???
 
@@ -34,7 +31,7 @@ export async function getRAGReply(
     \`\`\` javascript
     const code  = 2 * x;
     function test() {
-        console.log("test");
+        xxx("test");
     }
     \`\`\`
 
@@ -45,35 +42,39 @@ export async function getRAGReply(
 2. asdas dsdas
 *ffas aa*, **dasda asss**, _sdddas_, __dasdaaaaaa__
     `;
-    if (config.debug)
-        return {
-            answer: debugText,
-            has_result: true,
-            references: [],
-        };
 
+export async function getRAGReply(question: string, options: RAGOptions, meta?: object): Promise<RAGReply | undefined> {
+  if (config.debug)
+    return {
+      answer: debugText,
+      has_result: true,
+      references: [],
+    };
+
+  try {
     const response = await axios.post(
-        options.endpoint,
-        {
-            tenant_id: options.tenantId,
-            message: {
-                role: "user",
-                content: question,
-            },
+      options.endpoint,
+      {
+        tenant_id: options.tenantId,
+        message: {
+          role: 'user',
+          content: question,
         },
-        {
-            headers: {
-                "X-API-Key": options.apiKey,
-                "Content-Type": "application/json; charset=utf-8",
-            },
-        }
+      },
+      {
+        headers: {
+          'X-API-Key': options.apiKey,
+          'Content-Type': 'application/json; charset=utf-8',
+        },
+      }
     );
-
     if (response.status !== 200) {
-        throw new Error(
-            `Failed to fetch data from RAG backend. Status: ${response.status}`
-        );
+      logger.warn(`Failed to fetch data from RAG backend. Status: ${response.status}`, meta);
     }
-    console.log("🚀 ~ response.data:", response.data);
+    logger.info('Get response from RAG', response.data, meta);
     return response.data;
+  } catch (error) {
+    logger.warn('Failed to get reply from RAG:', error, meta);
+    return undefined;
+  }
 }

@@ -1,136 +1,165 @@
-import { Octokit } from "@octokit/rest";
-import { components } from "@octokit/openapi-types";
+import { Octokit } from '@octokit/rest';
+import { components } from '@octokit/openapi-types';
+import { logger } from '../logging/logger.js';
 
 export interface PRDetails {
-    comments: {
-        review: CommentEx[];
-        issue: CommentEx[];
-    };
-    reviews: {
-        state: string;
-        // TODO: check when it's null
-        reviewer?: string;
-    }[];
+  comments: {
+    review: CommentEx[];
+    issue: CommentEx[];
+  };
+  reviews: {
+    state: string;
+    // TODO: check when it's null
+    reviewer?: string;
+  }[];
+  basic: {
     labels: string[];
     title: string;
-    diff: string;
+  };
+  diff: string;
 }
 
-type User = components["schemas"]["nullable-simple-user"];
+type User = components['schemas']['nullable-simple-user'];
 
 interface CommentEx {
-    name: string;
-    type: string;
-    comment: string;
-}
-
-function getCommentWithUser(commentUser: User, commentBody: string): CommentEx {
-    return {
-        name: commentUser.login,
-        type: commentUser.type,
-        comment: commentBody,
-    };
+  name: string;
+  type: string;
+  comment: string;
 }
 
 export class GithubClient {
-    private readonly authToken?: string;
-    constructor(authToken?: string) {
-        this.authToken = authToken;
+  private readonly authToken?: string;
+  private readonly perPage = 100;
+  private readonly octokit: Octokit;
+  private logMeta?: object;
+
+  constructor(authToken?: string, logMeta?: object) {
+    this.logMeta = logMeta;
+    this.authToken = authToken;
+    this.octokit = new Octokit({ auth: this.authToken });
+  }
+
+  public async getPullRequestDetails(prUrl: string): Promise<PRDetails> {
+    // 1. Parse owner, repo, pull_number from URL
+    const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
+    if (!match) {
+      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, this.logMeta);
+      return { comments: { review: [], issue: [] }, reviews: [], basic: { labels: [], title: '' }, diff: '' };
     }
 
-    // TODO: refactor
-    public async getPullRequestDetails(prUrl: string): Promise<PRDetails> {
-        const octokit = new Octokit({ auth: this.authToken });
+    const [, owner, repo, pullNumberStr] = match;
+    const pullNumber = Number(pullNumberStr);
 
-        // 1. Parse owner, repo, pull_number from URL
-        const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
-        if (!match) {
-            throw new Error("Invalid PR URL");
-        }
-        const [, owner, repo, pull_number_str] = match;
-        const pull_number = Number(pull_number_str);
+    const [basicInfo, issueComments, reviewComments, reviews, diff] = await Promise.all([
+      this.tryGetBasicInfo(owner, repo, pullNumber, prUrl),
+      this.tryListIssueComments(owner, repo, pullNumber, prUrl),
+      this.tryListReviewComments(owner, repo, pullNumber, prUrl),
+      this.tryListReviews(owner, repo, pullNumber, prUrl),
+      this.tryGetPullDiff(owner, repo, pullNumber, prUrl),
+    ]);
 
-        // 2. Fetch basic PR to get head SHA and labels
-        const { data: pr } = await octokit.pulls.get({
-            owner,
-            repo,
-            pull_number,
-        });
-        const labels = pr.labels.map((lbl) => lbl.name);
-        const title = pr.title;
+    return {
+      comments: { review: reviewComments, issue: issueComments },
+      reviews,
+      basic: basicInfo,
+      diff,
+    };
+  }
 
-        // 3. Fetch issue comments (general comments)
-        const issueCommentsResponse = await octokit.issues.listComments({
-            owner,
-            repo,
-            issue_number: pull_number,
-            per_page: 100,
-        });
-        const issueComments = issueCommentsResponse.data
-            .filter((d) => d.user.type !== "Bot")
-            .map((d) => getCommentWithUser(d.user, d.body));
-        // 4. Fetch review comments (inline/code comments)
-        const reviewCommentsResponse = await octokit.pulls.listReviewComments({
-            owner,
-            repo,
-            pull_number,
-            per_page: 100,
-        });
-        const reviewComments = reviewCommentsResponse.data
-            .filter((d) => d.user.type !== "Bot")
-            .map((d) => getCommentWithUser(d.user, d.body));
+  private getCommentWithUser(commentUser: User, commentBody: string): CommentEx {
+    return { name: commentUser.login, type: commentUser.type, comment: commentBody };
+  }
 
-        // 6. Fetch reviews to get reviewers
-        const reviewsResponse = await octokit.pulls.listReviews({
-            owner,
-            repo,
-            pull_number,
-            per_page: 100,
-        });
-
-        const reviews = reviewsResponse.data.map((r) => ({
-            state: r.state,
-            reviewer: r.user?.login,
-        }));
-
-        // 7. Fetch PR diff
-        const diff = await this.getPullRequestDiff(
-            octokit,
-            owner,
-            repo,
-            pull_number
-        );
-
-        return {
-            comments: {
-                review: reviewComments,
-                issue: issueComments,
-            },
-            labels,
-            reviews,
-            title,
-            diff,
-        };
+  // TODO: add retry
+  private async tryGetBasicInfo(
+    owner: string,
+    repo: string,
+    id: number,
+    prUrl: string
+  ): Promise<{ labels: string[]; title: string } | undefined> {
+    try {
+      const parameters = { owner, repo, pull_number: id };
+      const response = await this.octokit.pulls.get(parameters);
+      const pr = response.data;
+      const labels = pr.labels.map((lbl) => lbl.name);
+      const title = pr.title;
+      return { labels, title };
+    } catch (error) {
+      console.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
+      return undefined;
     }
+  }
 
-    private async getPullRequestDiff(
-        octokit: Octokit,
-        owner: string,
-        repo: string,
-        pull_number: number
-    ) {
-        try {
-            const response = await octokit.rest.pulls.get({
-                owner,
-                repo,
-                pull_number,
-                mediaType: {
-                    format: "diff",
-                },
-            });
-            return response.data as unknown as string;
-        } catch (error) {
-            console.error(`Failed to get diff: ${error}`);
-        }
+  // TODO: add retry
+  private async tryListIssueComments(
+    owner: string,
+    repo: string,
+    id: number,
+    prUrl: string
+  ): Promise<CommentEx[] | undefined> {
+    try {
+      const parameters = { owner, repo, issue_number: id, per_page: this.perPage };
+      const response = await this.octokit.issues.listComments(parameters);
+      const comments = response.data
+        .filter((d) => d.user.type !== 'Bot')
+        .map((d) => this.getCommentWithUser(d.user, d.body));
+      return comments;
+    } catch (error) {
+      console.error(`Failed to list comments for pull request ${prUrl}: ${error}`);
+      return undefined;
     }
+  }
+
+  // TODO: add retry
+  private async tryListReviewComments(
+    owner: string,
+    repo: string,
+    id: number,
+    prUrl: string
+  ): Promise<CommentEx[] | undefined> {
+    try {
+      const parameters = { owner, repo, pull_number: id, per_page: this.perPage };
+      const response = await this.octokit.pulls.listReviewComments(parameters);
+      const comments = response.data
+        .filter((d) => d.user.type !== 'Bot')
+        .map((d) => this.getCommentWithUser(d.user, d.body));
+      return comments;
+    } catch (error) {
+      console.error(`Failed to list review comments for pull request ${prUrl}: ${error}`);
+      return undefined;
+    }
+  }
+  // TODO: add retry
+  private async tryListReviews(
+    owner: string,
+    repo: string,
+    id: number,
+    prUrl: string
+  ): Promise<{ state: string; reviewer?: string }[] | undefined> {
+    try {
+      const parameters = { owner, repo, pull_number: id, per_page: this.perPage };
+      const response = await this.octokit.pulls.listReviews(parameters);
+      const reviews = response.data.map((r) => ({
+        state: r.state,
+        reviewer: r.user?.login,
+      }));
+      return reviews;
+    } catch (error) {
+      console.error(`Failed to list reviews for pull request ${prUrl}: ${error}`);
+      return undefined;
+    }
+  }
+
+  // TODO: add retry
+  private async tryGetPullDiff(owner: string, repo: string, id: number, prUrl: string): Promise<string | undefined> {
+    try {
+      const parameters = { owner, repo, pull_number: id, mediaType: { format: 'diff' } };
+      const response = await this.octokit.rest.pulls.get(parameters);
+      const diff = response.data as unknown as string;
+      return diff;
+    } catch (error) {
+      console.error(`Failed to get diff for pull request ${prUrl}: ${error}`);
+      return undefined;
+    }
+  }
 }

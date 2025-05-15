@@ -5,6 +5,12 @@
     "resourceBaseName": {
       "value": "bot${{RESOURCE_SUFFIX}}"
     },
+    "azureComputerVisionEndpoint": {
+      "value": "${{AZURE_COMPUTER_VISION_ENDPOINT}}"
+    },
+    "azureComputerVisionApiKey": {
+      "value": "${{SECRET_AZURE_COMPUTER_VISION_API_KEY}}"
+    },
     "azureOpenAIKey": {
       "value": "${{SECRET_AZURE_OPENAI_API_KEY}}"
     },
@@ -15,10 +21,10 @@
       "value": "${{AZURE_OPENAI_DEPLOYMENT_NAME}}"
     },
     "webAppSKU": {
-      "value": "B1"
+      "value": "B3"
     },
     "botDisplayName": {
-      "value": "azure-sdk-qa-bot"
+      "value": "${{TEAMS_BOT_FULL_DISPLAY_NAME}}"
     }
   }
 }

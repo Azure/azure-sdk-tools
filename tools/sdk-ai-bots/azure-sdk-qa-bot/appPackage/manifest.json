@@ -14,8 +14,8 @@
     "outline": "outline.png"
   },
   "name": {
-    "short": "azbot-${{APP_NAME_SUFFIX}}",
-    "full": "Azure SDK Q&A Bot ${{APP_NAME_SUFFIX}}"
+    "short": "${{TEAMS_BOT_SHORT_DISPLAY_NAME}}",
+    "full": "${{TEAMS_BOT_FULL_DISPLAY_NAME}}"
   },
   "description": {
     "short": "A bot to help you with Azure SDK development.",

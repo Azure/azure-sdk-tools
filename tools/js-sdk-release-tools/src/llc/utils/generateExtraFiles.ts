@@ -8,5 +8,4 @@ export async function generateExtraFiles(packagePath: string, packageName: strin
     if(isRushRepo(sdkRepo)){
         await changeRushJson(sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
     }
-    
 }

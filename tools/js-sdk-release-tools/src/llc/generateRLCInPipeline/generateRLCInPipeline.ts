@@ -243,7 +243,7 @@ export async function generateRLCInPipeline(options: {
             execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
             logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
             execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
-        }else {
+        } else {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
             

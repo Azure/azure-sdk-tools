@@ -121,7 +121,7 @@ export async function generateMgmt(options: {
                 }
                 logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
                 execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
-            }else {
+            } else {
                 logger.info(`Start to run command: 'pnpm update'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
                 

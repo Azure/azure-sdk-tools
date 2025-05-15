@@ -34,7 +34,7 @@ export async function buildGeneratedCodes(sdkrepo: string, packagePath: string, 
         await generateChangelog(packagePath);
         logger.info(`Start to clean compiled outputs.`);
         execSync('rushx clean', {stdio: 'inherit'});
-    }else {
+    } else {
         logger.info(`Start to update.`);
         execSync('pnpm install', {stdio: 'inherit'});
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually`);

@@ -6,7 +6,7 @@ import { posix } from "path";
 import { isRushRepo } from "./rushUtils.js";
 
 // TODO: remove when emitter is ready
-export async function migratePackage(sdkRepo: string,packageDirectory: string): Promise<void> {
+export async function migratePackage(sdkRepo: string, packageDirectory: string): Promise<void> {
     const info = await getNpmPackageInfo(packageDirectory);
     // Note: bug in migration tool: failed to create review directory
     await ensureDir(posix.join(packageDirectory, 'review'));

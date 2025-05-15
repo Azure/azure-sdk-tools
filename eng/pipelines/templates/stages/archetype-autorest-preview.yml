@@ -251,6 +251,7 @@ stages:
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
       - task: PowerShell@2
         displayName: Create emitter-package-lock.json
+        continueOnError: true
         inputs:
           pwsh: true
           filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageLock.ps1

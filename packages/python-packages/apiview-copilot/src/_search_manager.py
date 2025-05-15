@@ -115,18 +115,19 @@ class Context:
     def __init__(
         self,
         *,
-        guidelines: List[Guideline] = None,
-        examples: List[Example] = None,
-        memories: List[Memory] = None,
+        guidelines: Dict[str, SearchItem] = None,
+        memories: Dict[str, SearchItem] = None,
+        examples: Dict[str, SearchItem] = None,
     ):
-        example_dict = {x.id: x for x in examples}
         self.items = []
-        for guideline in guidelines:
-            item = ContextItem(guideline, example_dict)
+        for guideline in guidelines.values():
+            item = ContextItem(guideline, examples=examples)
             self.items.append(item)
-        for memory in memories:
-            item = ContextItem(memory, example_dict)
+        for memory in memories.values():
+            item = ContextItem(memory, examples=examples)
             self.items.append(item)
+        self._normalize_scores()
+        self.items.sort(key=lambda x: x.normalized_score, reverse=True)
 
     def __iter__(self):
         """
@@ -144,6 +145,24 @@ class Context:
     def __repr__(self):
         return f"Context(items={len(self.items)}"
 
+    def _normalize_scores(self):
+        """
+        Normalizes the scores using Z-score normalization, then shifts/scales so the mean is 50.
+        """
+        scores = [item.score for item in self.items if item.score is not None]
+        if not scores:
+            return
+        mean = sum(scores) / len(scores)
+        std = (sum((s - mean) ** 2 for s in scores) / len(scores)) ** 0.5 if len(scores) > 1 else 1.0
+
+        # Z-score normalization, then shift so mean is 50
+        for item in self.items:
+            if item.score is not None:
+                z = (item.score - mean) / std if std > 0 else 0.0
+                item.normalized_score = round(z * 10 + 50, 1)  # 1 stddev = 10 points
+            else:
+                item.normalized_score = None
+
     def to_markdown(self) -> str:
         """
         Converts the context to a markdown string.
@@ -159,26 +178,27 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, result: Union[Guideline, Memory], examples: Dict[str, Example]):
-        self.id = self._process_id(result.id)
-        self.content = result.content
-        self.language = result.language
-        self.title = result.title
-        self.tags = result.tags
-        self.service = getattr(result, "service", None)
-        self.is_exception = getattr(result, "is_exception", None)
+    def __init__(self, item: SearchItem, *, examples: Dict[str, SearchItem]):
+        self.id = self._process_id(item.id)
+        self.content = item.content
+        self.language = item.language
+        self.title = item.title
+        self.service = getattr(item, "service", None)
+        self.is_exception = getattr(item, "is_exception", None)
         self.examples = []
-        # FIXME: Score isn't present in guideline or memory... need to plumb through
-        self.score = getattr(result, "@search.score", None)
-        for ex_id in getattr(result, "related_examples", []):
+        self.score = item.score
+        for ex_id in getattr(item, "related_examples", []):
             # copy the example to a new object
             example = copy.deepcopy(examples.get(ex_id))
             if example is not None:
+                # use the example's score if it's higher
+                if example.score > self.score:
+                    self.score = example.score
                 del example.id
                 del example.guideline_ids
                 self.examples.append(example)
             else:
-                print(f"WARNING: Example {ex_id} not found for guideline {result.id}. Skipping.")
+                print(f"WARNING: Example {ex_id} not found for guideline {item.id}. Skipping.")
 
     def _process_id(self, id: str) -> str:
         """
@@ -191,8 +211,8 @@ class ContextItem:
         Converts the metadata to a markdown string.
         """
         markdown = f"> id: {self.id}\n"
-        if self.score is not None:
-            markdown += f"> score: {self.score}\n"
+        if self.normalized_score is not None:
+            markdown += f"> score: {int(round(self.normalized_score))}\n"
         if self.is_exception:
             markdown += f"> exception: {self.is_exception}\n"
         markdown += "\n"
@@ -285,7 +305,7 @@ class SearchManager:
             return []
         return general_guidelines + language_guidelines
 
-    def search_all(self, query: str) -> SearchResult:
+    def search_all(self, query: str, *, top: int = 20) -> SearchResult:
         """
         Searches the unified index for the given query and returns the results as a SearchResult object.
         """
@@ -299,7 +319,7 @@ class SearchManager:
             query_type=QueryType.SEMANTIC,
             query_caption=QueryCaptionType.EXTRACTIVE,
             query_answer=QueryAnswerType.EXTRACTIVE,
-            top=10,
+            top=top,
             vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
         )
         return SearchResult(result)
@@ -429,10 +449,5 @@ class SearchManager:
                             seen_example_ids.add(ex_id)
                             example_queue.append(ex_id)
 
-        # Convert SearchItem objects to model objects
-        final_guidelines = [Guideline(**vars(v)) for v in guidelines.values() if v is not None]
-        final_examples = [Example(**vars(v)) for v in examples.values() if v is not None]
-        final_memories = [Memory(**vars(v)) for v in memories.values() if v is not None]
-
-        context = Context(guidelines=final_guidelines, examples=final_examples, memories=final_memories)
+        context = Context(guidelines=guidelines, examples=examples, memories=memories)
         return context

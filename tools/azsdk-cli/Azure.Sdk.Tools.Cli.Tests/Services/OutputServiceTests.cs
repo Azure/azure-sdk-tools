@@ -40,7 +40,7 @@ internal class OutputServiceTests
       ""message"": ""message2""
     }
   ],
-  ""suggestedfix"": ""a test suggested fix""
+  ""suggested_fix"": ""a test suggested fix""
 }";
 
         var output = new OutputService(OutputModes.Json);

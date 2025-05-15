@@ -15,7 +15,6 @@ public class AzureAgentService(IAzureService azureService, string? endpoint, str
     private readonly string model = model ?? "gpt-4o-mini";
 
     private AgentsClient client;
-    private readonly IAzureService azureService = azureService;
 
     private const string LogQueryPrompt = @"You are an assistant that analyzes Azure Pipelines failure logs.
 You will be provided with a log file from an Azure Pipelines build.

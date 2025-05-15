@@ -1,9 +1,8 @@
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LogAnalysisResponse()
+public class LogAnalysisResponse
 {
     [JsonPropertyName("summary")]
     public string Summary { get; set; } = string.Empty;
@@ -11,7 +10,7 @@ public class LogAnalysisResponse()
     [JsonPropertyName("errors")]
     public List<LogError> Errors { get; set; } = [];
 
-    [JsonPropertyName("suggestedfix")]
+    [JsonPropertyName("suggested_fix")]
     public string SuggestedFix { get; set; } = string.Empty;
 
     public override string ToString()

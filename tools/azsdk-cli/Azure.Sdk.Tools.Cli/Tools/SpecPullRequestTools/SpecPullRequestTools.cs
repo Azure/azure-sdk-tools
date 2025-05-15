@@ -9,9 +9,8 @@ using ModelContextProtocol.Server;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
-using Octokit;
 
-namespace AzureSDKDSpecTools.Tools
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Pull request tools")]
     [McpServerToolType]

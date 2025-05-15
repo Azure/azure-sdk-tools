@@ -35,16 +35,23 @@ class Guideline(BaseModel):
     id: str = Field(description="Unique identifier for the guideline.")
     title: str = Field(description="Short descriptive title of the guideline.")
     content: str = Field(description="Full text of the guideline.")
-    lang: Optional[str] = Field(
+
+    # Classification fields
+    language: Optional[str] = Field(
         None,
         description="If this guideline is specific to a language (e.g., 'python'). If omitted, the guideline is language-agnostic.",
     )
+    tags: Optional[List[str]] = Field(
+        None,
+        description="List of tags that classify the guideline.",
+    )
 
-    # reverse links
+    # Relationship fields
     related_guidelines: Optional[List[str]] = Field(
         description="List of guideline IDs that are related to this guideline."
     )
     related_examples: Optional[List[str]] = Field(description="List of example IDs that are related to this guideline.")
+    related_memories: Optional[List[str]] = Field(description="List of memory IDs that are related to this guideline.")
 
 
 class ExampleType(str, Enum):
@@ -58,13 +65,11 @@ class Example(BaseModel):
     """
 
     id: str = Field(description="Unique identifier for the example.")
-    guideline_ids: List[str] = Field(description="List of guideline IDs to which this example applies.")
-    content: str = Field(description="Code snippet demonstrating the example.")
-    explanation: str = Field(description="Explanation of why this is good/bad.")
-    example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
+    title: str = Field(description="Short descriptive title of the example.")
+    content: str = Field(description="Code snippet containing the example.")
 
     # Classification fields
-    lang: Optional[str] = Field(None, description="If this example is specific to a language (e.g., 'python').")
+    language: Optional[str] = Field(None, description="If this example is specific to a language (e.g., 'python').")
     service: Optional[str] = Field(
         None,
         description="If this example is specific to a service (e.g., 'azure-functions').",
@@ -73,6 +78,50 @@ class Example(BaseModel):
         False,
         description="Indicates if this example provides an exception to the guidelines rather than an amplification.",
     )
+    tags: Optional[List[str]] = Field(
+        None,
+        description="List of tags that classify the guideline.",
+    )
+    example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
+
+    # Relationship fields
+    guideline_ids: Optional[List[str]] = Field(description="List of guideline IDs to which this example applies.")
+    memory_ids: Optional[List[str]] = Field(description="List of memory IDs to which this example applies.")
+
+    # Relationship fields
+    related_guidelines: Optional[List[str]] = Field(
+        description="List of guideline IDs that are related to this guideline."
+    )
+    related_examples: Optional[List[str]] = Field(description="List of example IDs that are related to this guideline.")
+    related_memories: Optional[List[str]] = Field(description="List of memory IDs that are related to this guideline.")
+
+
+class Memory(BaseModel):
+    """
+    Represents a memory object in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the memory.")
+    title: str = Field(description="Short descriptive title of the memory.")
+    content: str = Field(description="Content of the memory.")
+
+    # Classification fields
+    language: Optional[str] = Field(None, description="If this memory is specific to a language (e.g., 'python').")
+    service: Optional[str] = Field(
+        None,
+        description="If this memory is specific to a service (e.g., 'azure-functions').",
+    )
+    is_exception: bool = Field(
+        False,
+        description="Indicates if this memory provides an exception to the guidelines rather than an amplification.",
+    )
+    source: str = Field(description="The source of the memory, such as 'manual' or 'teams_conversation'.")
+    tags: Optional[List[str]] = Field(
+        None,
+        description="List of tags that classify the guideline.",
+    )
+
+    # Relationship fields
 
 
 class ReviewResult(BaseModel):

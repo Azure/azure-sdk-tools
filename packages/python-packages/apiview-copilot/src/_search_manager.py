@@ -10,13 +10,13 @@ from azure.search.documents.models import (
 )
 from azure.identity import DefaultAzureCredential
 
-from src._models import Guideline, Example
+from src._models import Guideline, Example, Memory
 
 from collections import deque
 import copy
 import json
 import os
-from typing import List, Dict
+from typing import List, Dict, Union
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -112,11 +112,15 @@ class Context:
         *,
         guidelines: List[Guideline] = None,
         examples: List[Example] = None,
+        memories: List[Memory] = None,
     ):
         example_dict = {x.id: x for x in examples}
         self.items = []
         for guideline in guidelines:
             item = ContextItem(guideline, example_dict)
+            self.items.append(item)
+        for memory in memories:
+            item = ContextItem(memory, example_dict)
             self.items.append(item)
 
     def __iter__(self):
@@ -150,13 +154,16 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, result: Guideline, examples: Dict[str, Example]):
+    def __init__(self, result: Union[Guideline, Memory], examples: Dict[str, Example]):
         self.id = self._process_id(result.id)
         self.content = result.content
-        self.lang = result.lang
+        self.language = result.language
         self.title = result.title
+        self.tags = result.tags
+        self.service = getattr(result, "service", None)
+        self.is_exception = getattr(result, "is_exception", None)
         self.examples = []
-        for ex_id in result.related_examples or []:
+        for ex_id in getattr(result, "related_examples", []):
             # copy the example to a new object
             example = copy.deepcopy(examples.get(ex_id))
             if example is not None:
@@ -205,9 +212,9 @@ class SearchManager:
 
     def __init__(self, *, language: str, include_general_guidelines: bool = False):
         self.language = language
-        self.filter_expression = f"lang eq '{language}'"
+        self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
-            self.filter_expression += " or lang eq '' or lang eq null"
+            self.filter_expression += " or language eq '' or language eq null"
         self.static_guidelines = self._retrieve_static_guidelines(
             language, include_general_guidelines=include_general_guidelines
         )
@@ -250,41 +257,16 @@ class SearchManager:
             return []
         return general_guidelines + language_guidelines
 
-    def search_guidelines(self, query: str) -> SearchResult:
+    def search_all(self, query: str) -> SearchResult:
         """
-        Searches the guidelines index for the given query and
-        returns the results as a SearchResult object.
+        Searches the unified index for the given query and returns the results as a SearchResult object.
         """
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(
-            endpoint=SEARCH_ENDPOINT,
-            index_name="guidelines-index",
-            credential=CREDENTIAL,
-        )
+        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
         result = client.search(
             search_text=query,
             filter=self.filter_expression,
-            semantic_configuration_name="archagent-semantic-search-guidelines",
-            semantic_error_mode=SemanticErrorMode.FAIL,
-            query_type=QueryType.SEMANTIC,
-            query_caption=QueryCaptionType.EXTRACTIVE,
-            query_answer=QueryAnswerType.EXTRACTIVE,
-            top=10,
-            vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
-        )
-        return SearchResult(result)
-
-    def search_examples(self, query: str) -> SearchResult:
-        """
-        Searches the examples index for the given query and
-        returns the results as a SearchResult object.
-        """
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="examples-index", credential=CREDENTIAL)
-        result = client.search(
-            search_text=query,
-            filter=self.filter_expression,
-            semantic_configuration_name="archagent-semantic-search-examples",
+            semantic_configuration_name="semantic-search-config",
             semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,
             query_caption=QueryCaptionType.EXTRACTIVE,
@@ -305,35 +287,37 @@ class SearchManager:
             guidelines.append(self._static_guidelines_map.get(id))
         return guidelines
 
-    def build_context(self, guideline_results: List[SearchResult], example_results: List[SearchResult]) -> Context:
+    def build_context(self, items: List[object]) -> Context:
+        """
+        Given a set of items (guidelines, examples, memories), resolve the knowledge graph by traversing
+        all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
+        breadth-first traversal. Ensures the final context contains all linked guidelines, examples, and memories.
+        """
         self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
         client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
         database = client.get_database_client(COSMOS_DB_NAME)
         guidelines_container = database.get_container_client("guidelines")
         examples_container = database.get_container_client("examples")
+        memories_container = database.get_container_client("memories")
 
-        # initial ids from the search queries
-        starting_example_ids = list(set([x.id for x in example_results]))
-        starting_guideline_ids = list(set([x.id for x in guideline_results]))
+        # Partition input items by kind
+        guidelines = {item["id"]: item for item in items if item.get("kind") == "guidelines"}
+        examples = {item["id"]: item for item in items if item.get("kind") == "examples"}
+        memories = {item["id"]: item for item in items if item.get("kind") == "memories"}
 
-        # track processed IDs to avoid loops
-        seen_guideline_ids = set()
-        seen_example_ids = set()
+        # Track seen IDs to avoid cycles
+        seen_guideline_ids = set(guidelines.keys())
+        seen_example_ids = set(examples.keys())
+        seen_memory_ids = set(memories.keys())
 
-        # track the final results
-        final_guidelines = {}
-        final_examples = {}
-        for ex in starting_example_ids:
-            final_examples[ex] = None
+        # Queues for BFT
+        guideline_queue = deque(guidelines.keys())
+        example_queue = deque(examples.keys())
+        memory_queue = deque(memories.keys())
 
-        # queue for BFS traversal
-        queue = deque(starting_guideline_ids)
         batch_size = 50
 
-        def batch_query(container: CosmosClient, id_list: List[str]) -> List[object]:
-            """
-            Helper function to batch query the container.
-            """
+        def batch_query(container, id_list):
             results = []
             for i in range(0, len(id_list), batch_size):
                 batch = id_list[i : i + batch_size]
@@ -351,54 +335,75 @@ class SearchManager:
                 )
             return results
 
-        while queue:
-            batch_ids = list(
-                set([queue.popleft() for _ in range(min(batch_size, len(queue))) if _ not in seen_guideline_ids])
-            )
-            if not batch_ids:
-                continue
-
-            guidelines = batch_query(guidelines_container, batch_ids)
-            for guideline in guidelines:
-                gid = guideline["id"]
-                if gid in seen_guideline_ids:
-                    continue
-
-                seen_guideline_ids.add(gid)
-                final_guidelines[gid] = guideline
-
-                # queue up related guidelines
-                for rel in guideline.get("related_guidelines") or []:
-                    if rel not in seen_guideline_ids:
-                        queue.append(rel)
-
-                # now do the same for examples
-                for ex in guideline.get("related_examples") or []:
-                    try:
-                        if ex not in seen_example_ids:
-                            seen_example_ids.add(ex)
-                            final_examples[ex] = None
-                    except TypeError:
-                        # FIXME: This shouldn't happen once the data integrity is cleaned up
-                        print(f"WARNING: Examples for guideline {gid} is not a string! Skipping.")
+        # BFT across all three entity types
+        while guideline_queue or example_queue or memory_queue:
+            # Process guidelines
+            if guideline_queue:
+                batch_ids = [guideline_queue.popleft() for _ in range(min(batch_size, len(guideline_queue)))]
+                new_guidelines = batch_query(guidelines_container, batch_ids)
+                for guideline in new_guidelines:
+                    gid = guideline["id"]
+                    if gid in seen_guideline_ids:
                         continue
+                    seen_guideline_ids.add(gid)
+                    guidelines[gid] = guideline
 
-            # now resolve all examples
-            example_ids_to_lookup = [eid for eid, val in final_examples.items() if val is None]
-            examples = batch_query(examples_container, example_ids_to_lookup)
+                    # Queue up related examples and memories
+                    for ex_id in guideline.get("related_examples", []) or []:
+                        if ex_id not in seen_example_ids:
+                            seen_example_ids.add(ex_id)
+                            example_queue.append(ex_id)
+                    for mem_id in guideline.get("related_memories", []) or []:
+                        if mem_id not in seen_memory_ids:
+                            seen_memory_ids.add(mem_id)
+                            memory_queue.append(mem_id)
 
-            for ex in examples:
-                ex_id = ex["id"]
-                final_examples[ex_id] = ex
+            # Process examples
+            if example_queue:
+                batch_ids = [example_queue.popleft() for _ in range(min(batch_size, len(example_queue)))]
+                new_examples = batch_query(examples_container, batch_ids)
+                for example in new_examples:
+                    ex_id = example["id"]
+                    if ex_id in seen_example_ids:
+                        continue
+                    seen_example_ids.add(ex_id)
+                    examples[ex_id] = example
 
-                # queue up more related guidelines from the example
-                for gid in ex.get("guideline_ids", []):
-                    if gid not in seen_guideline_ids:
-                        queue.append(gid)
+                    # Queue up related guidelines and memories
+                    for gid in example.get("guideline_ids", []) or []:
+                        if gid not in seen_guideline_ids:
+                            seen_guideline_ids.add(gid)
+                            guideline_queue.append(gid)
+                    for mem_id in example.get("memory_ids", []) or []:
+                        if mem_id not in seen_memory_ids:
+                            seen_memory_ids.add(mem_id)
+                            memory_queue.append(mem_id)
 
-        # flatten the results to just the values
-        final_guidelines = [Guideline(**v) for v in final_guidelines.values() if v is not None]
-        final_examples = [Example(**v) for v in final_examples.values() if v is not None]
+            # Process memories
+            if memory_queue:
+                batch_ids = [memory_queue.popleft() for _ in range(min(batch_size, len(memory_queue)))]
+                new_memories = batch_query(memories_container, batch_ids)
+                for memory in new_memories:
+                    mem_id = memory["id"]
+                    if mem_id in seen_memory_ids:
+                        continue
+                    seen_memory_ids.add(mem_id)
+                    memories[mem_id] = memory
 
-        context = Context(guidelines=final_guidelines, examples=final_examples)
+                    # Queue up related guidelines and examples
+                    for gid in memory.get("related_guidelines", []) or []:
+                        if gid not in seen_guideline_ids:
+                            seen_guideline_ids.add(gid)
+                            guideline_queue.append(gid)
+                    for ex_id in memory.get("related_examples", []) or []:
+                        if ex_id not in seen_example_ids:
+                            seen_example_ids.add(ex_id)
+                            example_queue.append(ex_id)
+
+        # Convert dicts to model objects
+        final_guidelines = [Guideline(**v) for v in guidelines.values() if v is not None]
+        final_examples = [Example(**v) for v in examples.values() if v is not None]
+        final_memories = [Memory(**v) for v in memories.values() if v is not None]
+
+        context = Context(guidelines=final_guidelines, examples=final_examples, memories=final_memories)
         return context

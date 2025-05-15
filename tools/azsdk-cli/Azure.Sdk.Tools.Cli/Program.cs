@@ -36,9 +36,12 @@ public class Program
         // it doesn't recognize.
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+        // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
+        var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
+
         builder.Logging.AddConsole(consoleLogOptions =>
         {
-            consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Error;
+            consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
         // register common services

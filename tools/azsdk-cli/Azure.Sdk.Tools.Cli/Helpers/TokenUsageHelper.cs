@@ -55,9 +55,9 @@ public class TokenUsageHelper
         var models = string.Join(", ", Models);
         Console.WriteLine("----------------------------------------------");
         Console.WriteLine($"[{models}] Usage (cost / tokens):");
-        Console.WriteLine($"  Input: ${_inputCost} / {PromptTokens}");
+        Console.WriteLine($"  Input:  ${_inputCost} / {PromptTokens}");
         Console.WriteLine($"  Output: ${_outputCost} / {CompletionTokens}");
-        Console.WriteLine($"  Total: ${_totalCost} / {PromptTokens + CompletionTokens}");
+        Console.WriteLine($"  Total:  ${_totalCost} / {PromptTokens + CompletionTokens}");
         Console.WriteLine("----------------------------------------------");
     }
 

@@ -9,6 +9,8 @@ public interface IOutputService
     string ValidateAndFormat<T>(string response);
     void Output(object output);
     void Output(string output);
+    void OutputError(object output);
+    void OutputError(string output);
 }
 
 public class OutputService : IOutputService
@@ -57,5 +59,15 @@ public class OutputService : IOutputService
     public virtual void Output(string output)
     {
         Console.WriteLine(output);
+    }
+
+    public virtual void OutputError(object output)
+    {
+        OutputError(Format(output));
+    }
+
+    public virtual void OutputError(string output)
+    {
+        Console.Error.WriteLine(output);
     }
 }

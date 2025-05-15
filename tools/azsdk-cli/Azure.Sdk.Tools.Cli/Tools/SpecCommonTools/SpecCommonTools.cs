@@ -6,12 +6,13 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
+using Azure.Sdk.Tools.Cli.Services;
 
-namespace AzureSDKDSpecTools.Tools
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("This type contains tools to run various common tasks in specs repo")]
     [McpServerToolType]
-    public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger): MCPTool
+    public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger, IOutputService output) : MCPTool
     {
 
         static readonly string GET_CHANGED_TYPESPEC_PROJECT_SCRIPT = "eng/scripts/Get-TypeSpec-Folders.ps1";
@@ -24,21 +25,23 @@ namespace AzureSDKDSpecTools.Tools
         private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch to compare the changes") { IsRequired = true };
 
         [McpServerTool, Description("This tool returns list of TypeSpec projects modified in current branch")]
-        public List<string> GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
+        public string GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
         {
             var baseCommitSha = gitHelper.GetMergeBaseCommitSha(repoRootPath, targetBranch);
             if (string.IsNullOrEmpty(baseCommitSha))
             {
-                return [$"Failed to get merge base commit SHA for {repoRootPath}"];
+                List<string> _out = [$"Failed to get merge base commit SHA for {repoRootPath}"];
+                return output.Format(_out);
             }
 
             var scriptPath = Path.Combine(repoRootPath, GET_CHANGED_TYPESPEC_PROJECT_SCRIPT);
             if (!File.Exists(scriptPath))
             {
-                return [$"[{scriptPath}] path is not present"];
+                List<string> _out = [$"[{scriptPath}] path is not present"];
+                return output.Format(_out);
             }
 
-            logger.LogInformation($"Getting changed files in current branch with diff against commit SHA {baseCommitSha}");
+            logger.LogInformation("Getting changed files in current branch with diff against commit SHA {baseCommitSha}", baseCommitSha);
             try
             {
                 var processInfo = new ProcessStartInfo
@@ -56,31 +59,34 @@ namespace AzureSDKDSpecTools.Tools
                 process.WaitForExit();
                 if (process.ExitCode != 0)
                 {
-                    return [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {process.StandardError.ReadToEnd()}"];
+                    SetFailure(process.ExitCode);
+                    List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {process.StandardError.ReadToEnd()}"];
+                    return output.Format(_err);
                 }
-                var output = process.StandardOutput.ReadToEnd();
-                return output.Split(Environment.NewLine).Where(o => o.StartsWith("specification")).ToList();
+                var stdout = process.StandardOutput.ReadToEnd();
+                var _out = stdout.Split(Environment.NewLine).Where(o => o.StartsWith("specification")).ToList();
+                return output.Format(_out);
             }
             catch (Exception ex)
             {
-                return [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {ex.Message}"];
+                SetFailure();
+                return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {ex.Message}";
             }
         }
 
         public override Command GetCommand()
         {
             // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-            Command command = new Command("spec-tool");
+            Command command = new("spec-tool");
             var getModifiedProjectsCommand = new Command(getModifiedProjectsCommandName, "Get list of modified typespec projects") { repoRootOpt, targetBranchOpt };
-            getModifiedProjectsCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            getModifiedProjectsCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             command.AddCommand(getModifiedProjectsCommand);
             return command;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public override async Task<int> HandleCommand(System.CommandLine.Invocation.InvocationContext ctx, CancellationToken ct)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        public override async Task HandleCommand(System.CommandLine.Invocation.InvocationContext ctx, CancellationToken ct)
         {
+            await Task.CompletedTask;
             var command = ctx.ParseResult.CommandResult.Command.Name;
 
             switch (command)
@@ -89,12 +95,13 @@ namespace AzureSDKDSpecTools.Tools
                     var repoRootPath = ctx.ParseResult.GetValueForOption(repoRootOpt);
                     var targetBranch = ctx.ParseResult.GetValueForOption(targetBranchOpt);
                     var modifiedProjects = GetModifiedTypeSpecProjects(repoRootPath, targetBranch);
-                    logger.LogInformation($"Modified typespec projects: [{modifiedProjects}]");
-                    return 0;
+                    output.Output($"Modified typespec projects: [{modifiedProjects}]");
+                    return;
 
                 default:
-                    logger.LogError($"Unknown command: {command}");
-                    return 1;
+                    SetFailure();
+                    logger.LogError("Unknown command: {command}", command);
+                    return;
             }
         }
     }

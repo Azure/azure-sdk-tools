@@ -4,6 +4,7 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Text.Json;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -52,14 +53,14 @@ public class AzurePipelinesTool(
         // root command handler and print help text.
         foreach (var subCommand in new[] { pipelineRunCommand, analyzePipelineCommand })
         {
-            subCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             command.AddCommand(subCommand);
         }
 
         return command;
     }
 
-    public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         Initialize();
 
@@ -71,8 +72,8 @@ public class AzurePipelinesTool(
         {
             logger.LogInformation("Getting pipeline run {buildId} in project {project}...", buildId, project);
             var result = await GetPipelineRun(buildId, project);
+            ctx.ExitCode = ExitCode;
             output.Output(result);
-            return 0;
         }
         else if (cmd == analyzePipelineCommandName)
         {
@@ -81,12 +82,14 @@ public class AzurePipelinesTool(
             var aiEndpoint = ctx.ParseResult.GetValueForOption(aiEndpointOpt);
             var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
             var result = await AnalyzePipelineFailureLog(buildId, logId, project, aiEndpoint, aiModel);
+            ctx.ExitCode = ExitCode;
             output.Output(result);
-            return 0;
         }
-
-        logger.LogError("Command {cmd} not implemented", cmd);
-        return 1;
+        else
+        {
+            logger.LogError("Command {cmd} not implemented", cmd);
+            SetFailure();
+        }
     }
 
     private void Initialize()
@@ -104,7 +107,7 @@ public class AzurePipelinesTool(
     }
 
     [McpServerTool, Description("Gets details for a pipeline run")]
-    public async Task<string> GetPipelineRun(int buildId, string? _project = null)
+    public async Task<Build> GetPipelineRun(int buildId, string? _project = null)
     {
         // _project state changes to the last successful GET to the build api
         project ??= project ?? "public";
@@ -113,7 +116,7 @@ public class AzurePipelinesTool(
         {
             var build = await buildClient.GetBuildAsync(_project, buildId);
             project = _project;
-            return output.Format(build);
+            return build;
         }
         catch { }
 
@@ -122,7 +125,7 @@ public class AzurePipelinesTool(
             _project = _project == "public" ? "internal" : "public";
             var build = await buildClient.GetBuildAsync(_project, buildId);
             project = _project;
-            return output.Format(build);
+            return build;
         }
         catch { }
 
@@ -130,10 +133,10 @@ public class AzurePipelinesTool(
     }
 
     [McpServerTool, Description("Gets failures from non-test steps in a pipeline run")]
-    public async Task<string> GetPipelineFailures(int buildId)
+    public async Task<List<TimelineRecord>?> GetPipelineFailures(int buildId)
     {
         var failedNonTests = await GetPipelineFailuresTyped(buildId);
-        return output.Format(failedNonTests);
+        return failedNonTests;
     }
 
     public async Task<List<TimelineRecord>> GetPipelineFailuresTyped(int buildId)
@@ -148,7 +151,7 @@ public class AzurePipelinesTool(
         Include relevant data like test name and environment, error type, error messages, functions and error lines.
         Provide suggested next steps.
     ")]
-    public async Task<string> GetPipelineFailedTestResults(int buildId)
+    public async Task<List<object>> GetPipelineFailedTestResults(int buildId)
     {
         var results = new List<ShallowTestCaseResult>();
         var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId);
@@ -188,7 +191,7 @@ public class AzurePipelinesTool(
             }
         }
 
-        return output.Format(failedRunData);
+        return failedRunData;
     }
 
     [McpServerTool, Description(@"
@@ -196,16 +199,16 @@ public class AzurePipelinesTool(
         Find other log lines in addition to the final error that may be descriptive of the problem.
         For example, 'Powershell exited with code 1' is not an error message, but the error message may be in the logs above it.
     ")]
-    public async Task<string> GetPipelineFailureLog(int buildId, int logId, string? project = null)
+    public async Task<List<string>> GetPipelineFailureLog(int buildId, int logId, string? project = null)
     {
         project ??= project ?? "public";
         var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
-        var _out = new List<string>();
+        var output = new List<string>();
         foreach (var line in logContent)
         {
-            _out.Add(line);
+            output.Add(line);
         }
-        return output.Format(_out);
+        return output;
     }
 
     public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null, string? aiEndpoint = null, string? aiModel = null)
@@ -223,7 +226,17 @@ public class AzurePipelinesTool(
         var (response, usage) = await aiAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
         usage.LogCost();
 
-        return output.ValidateAndFormat<LogAnalysisResponse>(response);
+        try
+        {
+            return output.ValidateAndFormat<LogAnalysisResponse>(response);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError("Failed to deserialize log analysis response: {exception}", ex.Message);
+            logger.LogError("Response:\n{response}", response);
+            SetFailure();
+            return "Failed to deserialize log analysis response. Check the logs for more details.";
+        }
     }
 
     [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]

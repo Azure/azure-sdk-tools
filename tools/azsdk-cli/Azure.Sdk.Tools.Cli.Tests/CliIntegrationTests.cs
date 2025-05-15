@@ -34,6 +34,7 @@ internal class CliIntegrationTests
     private static readonly object[] HelloWorldArgs = new[]
     {
         new object[] { new[] { "hello-world", "HI. MY NAME IS" } },
+        new object[] { new[] { "hello-world", "HI. MY NAME IS" } },
     };
     [Test, TestCaseSource(nameof(HelloWorldArgs))]
     public async Task TestHelloWorldCLIOptions(string[] args)
@@ -49,10 +50,9 @@ internal class CliIntegrationTests
         Assert.That(exitCode, Is.EqualTo(0));
 
         var expected = @"
-Exit Code: 0
-Message: RESPONDING TO HI. MY NAME IS
+Message: RESPONDING TO 'HI. MY NAME IS' with SUCCESS: 0
 Result: null
-Duration: 0ms".TrimStart();
+Duration: 1ms".TrimStart();
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);

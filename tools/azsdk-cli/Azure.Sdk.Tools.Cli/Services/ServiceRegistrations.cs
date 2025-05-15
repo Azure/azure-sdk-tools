@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
+            services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
         }
     }
 }

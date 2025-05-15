@@ -226,17 +226,24 @@ public class AzurePipelinesTool(
         var (response, usage) = await aiAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
         usage.LogCost();
 
+        // Sometimes chat gpt likes to wrap the json in markdown
+        if (response.StartsWith("```json")
+            && response.EndsWith("```"))
+        {
+            response = response[7..^3].Trim();
+        }
+
         try
-        {
-            return output.ValidateAndFormat<LogAnalysisResponse>(response);
-        }
-        catch (JsonException ex)
-        {
-            logger.LogError("Failed to deserialize log analysis response: {exception}", ex.Message);
-            logger.LogError("Response:\n{response}", response);
-            SetFailure();
-            return "Failed to deserialize log analysis response. Check the logs for more details.";
-        }
+            {
+                return output.ValidateAndFormat<LogAnalysisResponse>(response);
+            }
+            catch (JsonException ex)
+            {
+                logger.LogError("Failed to deserialize log analysis response: {exception}", ex.Message);
+                logger.LogError("Response:\n{response}", response);
+                SetFailure();
+                return "Failed to deserialize log analysis response. Check the logs for more details.";
+            }
     }
 
     [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]

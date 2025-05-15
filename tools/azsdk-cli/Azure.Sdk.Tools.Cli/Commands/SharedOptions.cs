@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.AddOption(Format);
+            root.AddGlobalOption(Format);
 
             var parser = new Parser(root);
             var result = parser.Parse(args);

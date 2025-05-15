@@ -17,19 +17,13 @@ namespace AzureSDKDevToolsMCP.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> logger): MCPTool
+    public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger) : MCPTool
     {
-        private readonly ITypeSpecHelper _typeSpecHelper = _helper;
-#pragma warning disable CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
-        private readonly ILogger<SpecValidationTools> _logger = logger;
-#pragma warning restore CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
-
         // Commands
         private const string typespecValidationCommandName = "validate-typespec";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
-
 
         /// <summary>
         /// Validates the TypeSpec API specification.
@@ -38,9 +32,9 @@ namespace AzureSDKDevToolsMCP.Tools
         [McpServerTool, Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
         public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
-            _logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
+            logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
             var validationResults = new List<string>();
-            if (!_typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
+            if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
             {
                 validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
                 return validationResults;
@@ -49,21 +43,21 @@ namespace AzureSDKDevToolsMCP.Tools
             try
             {
                 var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
-                _logger.LogInformation($"Repo root path: {specRepoRootPath}");
+                logger.LogInformation($"Repo root path: {specRepoRootPath}");
 
                 // Run npm ci only if "node_modules/.bin/tsv" is not present to improve validation performance
                 if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
                 {
                     // Run npm ci
-                    _logger.LogInformation("Running npm ci");
+                    logger.LogInformation("Running npm ci");
                     RunNpmCi(specRepoRootPath);
-                    _logger.LogInformation("Completed running npm ci");
+                    logger.LogInformation("Completed running npm ci");
                 }
 
                 //Run TypeSpec validation
-                _logger.LogInformation("Running npx tsv to run the validation");
+                logger.LogInformation("Running npx tsv to run the validation");
                 ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                _logger.LogInformation("Completed running TypeSpec validation");
+                logger.LogInformation("Completed running TypeSpec validation");
             }
             catch (Exception ex)
             {
@@ -95,7 +89,7 @@ namespace AzureSDKDevToolsMCP.Tools
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
-            {                
+            {
                 var output = RunProcess("cmd.exe", $"/C npx tsv {typeSpecProjectRootPath}", specRepoRootPath);
                 validationResults.Add(output);
             }
@@ -106,7 +100,7 @@ namespace AzureSDKDevToolsMCP.Tools
             }
             return "TypeSpec validation completed successfully";
         }
-       
+
 
         private static string GetGitRepoRootPath(string typeSpecProjectRootPath)
         {
@@ -137,7 +131,7 @@ namespace AzureSDKDevToolsMCP.Tools
             {
                 Thread.Sleep(2000);
                 process.Refresh();
-                output.Append(process.StandardOutput.ReadToEnd());                
+                output.Append(process.StandardOutput.ReadToEnd());
             }
             output.Append(process.StandardOutput.ReadToEnd());
             if (process.ExitCode != 0)

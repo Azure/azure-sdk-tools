@@ -24,7 +24,7 @@
       "value": "B3"
     },
     "botDisplayName": {
-      "value": "azure-sdk-qa-bot"
+      "value": "${{TEAMS_BOT_FULL_DISPLAY_NAME}}"
     }
   }
 }

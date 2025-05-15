@@ -16,8 +16,8 @@ public class DefaultCommandResponse()
 
     public override string ToString()
     {
-        return $"Message: {Message}\n" +
-               $"Result: {Result?.ToString() ?? "null"}\n" +
+        return $"Message: {Message}" + Environment.NewLine +
+               $"Result: {Result?.ToString() ?? "null"}" + Environment.NewLine +
                $"Duration: {Duration}ms";
     }
 }

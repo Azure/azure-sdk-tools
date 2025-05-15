@@ -34,7 +34,6 @@ internal class CliIntegrationTests
     private static readonly object[] HelloWorldArgs = new[]
     {
         new object[] { new[] { "hello-world", "HI. MY NAME IS" } },
-        new object[] { new[] { "hello-world", "HI. MY NAME IS" } },
     };
     [Test, TestCaseSource(nameof(HelloWorldArgs))]
     public async Task TestHelloWorldCLIOptions(string[] args)
@@ -56,6 +55,8 @@ Duration: 1ms".TrimStart();
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
+
+        var input = output.Replace("\r", "");
 
         Assert.That(output, Is.EqualTo(expected));
     }

@@ -15,11 +15,11 @@ public class LogAnalysisResponse
 
     public override string ToString()
     {
-        return $"### Summary:\n" +
-               $"{Summary}\n" +
-               $"\n### Suggested Fix:\n" +
-               $"{SuggestedFix}\n" +
-               $"\n### Errors:\n{string.Join("\n", Errors.Select(e => $"{e.File}:{e.Line} - {e.Message}"))}\n";
+        return $"### Summary:" + Environment.NewLine +
+               $"{Summary}" + Environment.NewLine + Environment.NewLine +
+               $"### Suggested Fix:" + Environment.NewLine +
+               $"{SuggestedFix}" + Environment.NewLine +
+               $"{Environment.NewLine}### Errors:{Environment.NewLine}{string.Join(Environment.NewLine, Errors.Select(e => $"{e.File}:{e.Line} - {e.Message}"))}" + Environment.NewLine;
     }
 }
 

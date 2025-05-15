@@ -225,6 +225,28 @@ namespace IssueLabelerService
 
             return null;
         }
+
+        public async Task<List<string>> GenerateSubqueriesAsync(string subqueriesPrompt, string query, string modelName)
+        {
+            _logger.LogInformation($"Starting subquery generation for query: {query}");
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                _logger.LogWarning("Query is empty or null. Returning an empty list of subqueries.");
+                return new List<string>();
+            }
+            
+            _logger.LogInformation($"Instructions for subquery generation: {subqueriesPrompt}");
+
+            string response = await SendMessageQnaAsync(subqueriesPrompt, query, modelName);
+
+            var subqueries = response.Split('\n')
+                                    .Where(subquery => !string.IsNullOrWhiteSpace(subquery) && char.IsDigit(subquery.TrimStart()[0]))
+                                    .Select(subquery => subquery.Trim().Substring(2).Trim())
+                                    .ToList();
+
+            _logger.LogInformation($"Generated {subqueries.Count} subqueries: {string.Join(", ", subqueries)}");
+            return subqueries;
+        }
     }
 
     public class Issue

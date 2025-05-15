@@ -40,25 +40,63 @@ namespace IssueLabelerService
             double scoreThreshold = double.Parse(_config.ScoreThreshold);
             double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
-            var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
-            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
- 
-            if (docs.Count == 0 && issues.Count == 0)
+            //Subquery generation configurations
+            int subqueryCount = query.Length < 50 ? 3 : query.Length < 150 ? 5 : 7;
+            string countString = subqueryCount.ToString();
+            var replacementSubqueriesPrompt = new Dictionary<string, string>
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {docs.Count}, Issues: {issues.Count}.");
+                { "subqueryCount", countString },
+                { "query", query }
+            };
+
+            string subqueriesPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SubqueriesGenerationPrompt, replacementSubqueriesPrompt, _logger);
+
+            //Step 1: Generate sub-queries
+            var subqueries = await _ragService.GenerateSubqueriesAsync(subqueriesPrompt, query, modelName);
+
+            //Step 2: Retrieve results for sub-queries
+            var aggregatedIssues = new List<Issue>();
+            var aggregatedDocs = new List<Document>();
+            var uniqueIssues = new HashSet<string>();
+            var uniqueDocs = new HashSet<string>();
+
+            var subqueryTasks = subqueries.Select(async subquery =>
+            {
+                var subqueryIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, subquery, top, scoreThreshold, labels);
+                var subqueryDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, subquery, top, scoreThreshold, labels);
+                AddUniqueItems(subqueryIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
+                AddUniqueItems(subqueryDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
+                return (Issues: subqueryIssues, Docs: subqueryDocs);
+            });
+
+            var subqueryResults = await Task.WhenAll(subqueryTasks);
+
+            // Step 3: Retrieve results for the original query
+            var originalIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
+            var originalDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
+
+
+            // Step 4: Deduplicate original query results as they are added
+            AddUniqueItems(originalIssues,uniqueIssues,aggregatedIssues, issue => issue.Id);
+            AddUniqueItems(originalDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
+            var allIssues = aggregatedIssues.ToList();
+            var allDocs = aggregatedDocs.ToList();
+
+            // Step 5: Check if there are any results
+            if (allDocs.Count == 0 && allIssues.Count == 0)
+            {
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {allDocs.Count}, Issues: {allIssues.Count}.");
             }
 
-            double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
+            double highestScore = _ragService.GetHighestScore(allIssues, allDocs, issue.RepositoryName, issue.IssueNumber);
             bool solution = highestScore >= solutionThreshold;
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            // Format issues 
-            var printableIssues = string.Join("\n\n", issues.Select(issue =>
+            var printableIssues = string.Join("\n\n", allIssues.Select(issue =>
                 $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
 
-            // Format documents 
-            var printableDocs = string.Join("\n\n", docs.Select(doc =>
+            var printableDocs = string.Join("\n\n", allDocs.Select(doc =>
                 $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
 
             var replacementsUserPrompt = new Dictionary<string, string>
@@ -110,10 +148,26 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formatted_response}");
 
-            return new AnswerOutput {
-                Answer =  formatted_response, 
-                AnswerType = solution ? "solution" : "suggestion" 
+            return new AnswerOutput
+            {
+                Answer = formatted_response,
+                AnswerType = solution ? "solution" : "suggestion"
             };
+        }
+
+        private void AddUniqueItems<T, TKey>(
+        IEnumerable<T> items,
+        HashSet<TKey> uniqueSet,
+        List<T> aggregatedList,
+        Func<T, TKey> keySelector)
+        {
+            foreach (var item in items)
+            {
+                if (uniqueSet.Add(keySelector(item)))
+                {
+                    aggregatedList.Add(item);
+                }
+            }
         }
     }
 }

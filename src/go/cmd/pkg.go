@@ -58,8 +58,8 @@ type Pkg struct {
 func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
 	// ensure that all directories are using the same path separator
 	// character else the below call to strings.Cut() will fail
-	dir = strings.ReplaceAll(dir, "\\", "/")
-	moduleRoot = strings.ReplaceAll(moduleRoot, "\\", "/")
+	dir = filepath.ToSlash(dir)
+	moduleRoot = filepath.ToSlash(moduleRoot)
 
 	pk := &Pkg{
 		modulePath:  modulePath,

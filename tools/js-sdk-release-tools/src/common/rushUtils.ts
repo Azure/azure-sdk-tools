@@ -40,8 +40,8 @@ async function updateRushJson(projectItem: ProjectItem) {
 }
 
 async function packPackage(packageDirectory: string, packageName: string, rushxScript: string, sdkRepoRoot: string) {
-    const cwd = join(sdkRepoRoot);
-    if (isRushRepo(packageDirectory)) {
+    const cwd = join(packageDirectory);
+    if (isRushRepo(sdkRepoRoot)) {
         await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
     }else{
         await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);

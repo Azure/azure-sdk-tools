@@ -111,7 +111,7 @@ export async function generateMgmt(options: {
                 logger.info(`Start to run command: 'rush update'.`);
                 execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
     
-                await migratePackage(options.sdkRepo,packagePath);
+                // await migratePackage(options.sdkRepo,packagePath);
     
                 logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
@@ -125,7 +125,7 @@ export async function generateMgmt(options: {
                 logger.info(`Start to run command: 'pnpm update'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
                 
-                await migratePackage(options.sdkRepo,packagePath);
+                // await migratePackage(options.sdkRepo,packagePath);
                 
                 logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});

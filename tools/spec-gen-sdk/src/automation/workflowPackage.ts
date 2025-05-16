@@ -174,10 +174,11 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
-  context.sdkApiViewArtifactFolder = destination;
   const fileName = path.basename(pkg.apiViewArtifactPath);
-  context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
-  copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), path.join(destination, fileName));
+  const newApiViewArtifactPath = path.join(destination, fileName);
+  context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${newApiViewArtifactPath}`);
+  copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), newApiViewArtifactPath);
+  pkg.apiViewArtifactPath = newApiViewArtifactPath;
 };
 
 const fileInstallInstructionInput = 'installInstructionInput.json';

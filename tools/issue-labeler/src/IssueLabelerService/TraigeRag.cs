@@ -239,10 +239,12 @@ namespace IssueLabelerService
 
             string response = await SendMessageQnaAsync(subqueriesPrompt, query, modelName);
 
-            var subqueries = response.Split('\n')
-                                    .Where(subquery => !string.IsNullOrWhiteSpace(subquery) && char.IsDigit(subquery.TrimStart()[0]))
-                                    .Select(subquery => subquery.Trim().Substring(2).Trim())
-                                    .ToList();
+            var subqueries = response
+                .Split('\n')
+                .Select(line => line?.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line) && line.Length >= 2 && char.IsDigit(line[0]))
+                .Select(line => line.Substring(2).Trim())
+                .ToList();
 
             _logger.LogInformation($"Generated {subqueries.Count} subqueries: {string.Join(", ", subqueries)}");
             return subqueries;

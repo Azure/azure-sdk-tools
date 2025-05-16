@@ -37,19 +37,21 @@ namespace IssueLabelerService
             // Query + Filtering configurations
             string query = $"{issue.Title} {issue.Body}";
             int top = int.Parse(_config.SourceCount);
-            double scoreThreshold = double.Parse(_config.ScoreThreshold);
-            double solutionThreshold = double.Parse(_config.SolutionThreshold);
+            var scoreThreshold = double.Parse(_config.ScoreThreshold);
+            var solutionThreshold = double.Parse(_config.SolutionThreshold);
 
             //Subquery generation configurations
-            int subqueryCount = query.Length < 50 ? 3 : query.Length < 150 ? 5 : 7;
-            string countString = subqueryCount.ToString();
+            int minSubqueries = 3;
+            int maxSubqueries = 7;
+            int charsPerSubquery = 30;
+            string subqueryCount = Math.Max(minSubqueries, Math.Min(maxSubqueries, query.Length / charsPerSubquery)).ToString();
             var replacementSubqueriesPrompt = new Dictionary<string, string>
             {
-                { "subqueryCount", countString },
+                { "subqueryCount", subqueryCount },
                 { "query", query }
             };
 
-            string subqueriesPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SubqueriesGenerationPrompt, replacementSubqueriesPrompt, _logger);
+            var subqueriesPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SubqueriesGenerationPrompt, replacementSubqueriesPrompt, _logger);
 
             //Step 1: Generate sub-queries
             var subqueries = await _ragService.GenerateSubqueriesAsync(subqueriesPrompt, query, modelName);
@@ -60,16 +62,22 @@ namespace IssueLabelerService
             var uniqueIssues = new HashSet<string>();
             var uniqueDocs = new HashSet<string>();
 
-            var subqueryTasks = subqueries.Select(async subquery =>
-            {
-                var subqueryIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, subquery, top, scoreThreshold, labels);
-                var subqueryDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, subquery, top, scoreThreshold, labels);
-                AddUniqueItems(subqueryIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
-                AddUniqueItems(subqueryDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
-                return (Issues: subqueryIssues, Docs: subqueryDocs);
-            });
-
-            var subqueryResults = await Task.WhenAll(subqueryTasks);
+            await RetrieveAndAggregateSubqueryResults(
+                subqueries,
+                issueIndexName,
+                issueSemanticName,
+                issueFieldName,
+                documentIndexName,
+                documentSemanticName,
+                documentFieldName,
+                top,
+                scoreThreshold,
+                labels,
+                uniqueIssues,
+                aggregatedIssues,
+                uniqueDocs,
+                aggregatedDocs
+            );
 
             // Step 3: Retrieve results for the original query
             var originalIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
@@ -77,7 +85,7 @@ namespace IssueLabelerService
 
 
             // Step 4: Deduplicate original query results as they are added
-            AddUniqueItems(originalIssues,uniqueIssues,aggregatedIssues, issue => issue.Id);
+            AddUniqueItems(originalIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
             AddUniqueItems(originalDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
             var allIssues = aggregatedIssues.ToList();
             var allDocs = aggregatedDocs.ToList();
@@ -88,24 +96,12 @@ namespace IssueLabelerService
                 throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {allDocs.Count}, Issues: {allIssues.Count}.");
             }
 
-            double highestScore = _ragService.GetHighestScore(allIssues, allDocs, issue.RepositoryName, issue.IssueNumber);
-            bool solution = highestScore >= solutionThreshold;
+            var highestScore = _ragService.GetHighestScore(allIssues, allDocs, issue.RepositoryName, issue.IssueNumber);
+            var solution = highestScore >= solutionThreshold;
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            var printableIssues = string.Join("\n\n", allIssues.Select(issue =>
-                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
-
-            var printableDocs = string.Join("\n\n", allDocs.Select(doc =>
-                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
-
-            var replacementsUserPrompt = new Dictionary<string, string>
-            {
-                { "Title", issue.Title },
-                { "Description", issue.Body },
-                { "PrintableDocs", printableDocs },
-                { "PrintableIssues", printableIssues }
-            };
+            var (printableIssues, printableDocs, replacementsUserPrompt) = BuildUserPromptData(allIssues, allDocs, issue);
 
             string instructions, userPrompt;
             if (solution)
@@ -168,6 +164,54 @@ namespace IssueLabelerService
                     aggregatedList.Add(item);
                 }
             }
+        }
+
+        private async Task RetrieveAndAggregateSubqueryResults(
+            IEnumerable<string> subqueries,
+            string issueIndexName,
+            string issueSemanticName,
+            string issueFieldName,
+            string documentIndexName,
+            string documentSemanticName,
+            string documentFieldName,
+            int top,
+            double scoreThreshold,
+            Dictionary<string, string> labels,
+            HashSet<string> uniqueIssues,
+            List<Issue> aggregatedIssues,
+            HashSet<string> uniqueDocs,
+            List<Document> aggregatedDocs)
+        {
+            var subqueryTasks = subqueries.Select(async subquery =>
+            {
+                var subqueryIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, subquery, top, scoreThreshold, labels);
+                var subqueryDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, subquery, top, scoreThreshold, labels);
+                AddUniqueItems(subqueryIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
+                AddUniqueItems(subqueryDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
+            });
+            await Task.WhenAll(subqueryTasks);
+        }
+
+        private (string printableIssues, string printableDocs, Dictionary<string, string> replacementsUserPrompt) BuildUserPromptData(
+            List<Issue> allIssues,
+            List<Document> allDocs,
+            IssuePayload issue)
+        {
+            var printableIssues = string.Join("\n\n", allIssues.Select(issue =>
+                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
+
+            var printableDocs = string.Join("\n\n", allDocs.Select(doc =>
+                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
+
+            var replacementsUserPrompt = new Dictionary<string, string>
+            {
+                { "Title", issue.Title },
+                { "Description", issue.Body },
+                { "PrintableDocs", printableDocs },
+                { "PrintableIssues", printableIssues }
+            };
+            
+            return (printableIssues, printableDocs, replacementsUserPrompt);
         }
     }
 }

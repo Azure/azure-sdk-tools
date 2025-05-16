@@ -124,9 +124,7 @@ export async function generateMgmt(options: {
             } else {
                 logger.info(`Start to run command: 'pnpm update'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
-                
-                await migratePackage(options.sdkRepo,packagePath);
-                
+                                
                 logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');

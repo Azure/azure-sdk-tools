@@ -48,7 +48,11 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     public static final String MAVEN_KEY = "Maven";
-    public static final String MODULE_INFO_KEY = "module-info";    private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
+    public static final String MODULE_INFO_KEY = "module-info";
+
+    private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
+
+    // JavaParser is not thread-safe, so we need to use a ThreadLocal to ensure that each thread has its own instance.
     private static final ThreadLocal<JavaParserAdapter> JAVA_8_PARSER = ThreadLocal.withInitial(() -> 
         JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
             .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)

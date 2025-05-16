@@ -90,6 +90,9 @@ public class Main {
                     JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
                     // Load the schema from the classpath resource
                     URL resource = Main.class.getResource(Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    if (resource == null) {
+                        throw new IllegalStateException("Resource not found: " + Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    }
                     URI localResourceUri = resource.toURI();
                     JsonSchema schema = factory.getSchema(localResourceUri);
 

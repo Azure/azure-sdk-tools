@@ -732,7 +732,7 @@ public class JavaASTAnalyser implements Analyser {
         } else if (definition instanceof FieldDeclaration) {
             FieldDeclaration fieldDeclaration = (FieldDeclaration) definition;
             id = makeId(fieldDeclaration);
-            name = fieldDeclaration.getVariable(0).getNameAsString();
+            name = fieldDeclaration.toString();
         } else if (definition instanceof CallableDeclaration<?>) {
             CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) definition;
             id = makeId(callableDeclaration);

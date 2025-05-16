@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.*;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
@@ -87,7 +88,10 @@ public class Main {
                 System.out.println("  Validating the generated JSON file against the schema...");
                 try {
                     JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
-                    JsonSchema schema = factory.getSchema(new URL(Constants.APIVIEW_JSON_SCHEMA).toURI());
+                    // Load the schema from the classpath resource
+                    URL resource = Main.class.getResource(Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    URI localResourceUri = resource.toURI();
+                    JsonSchema schema = factory.getSchema(localResourceUri);
 
                     JsonNode jsonNode = new ObjectMapper().readTree(files[0]);
                     schema.initializeValidators();
@@ -98,9 +102,7 @@ public class Main {
                         System.out.println("    Validation failed. Errors:");
                         validationMessages.forEach(msg -> System.out.println("      " + msg.getMessage()));
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (URISyntaxException e) {
+                } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
             }

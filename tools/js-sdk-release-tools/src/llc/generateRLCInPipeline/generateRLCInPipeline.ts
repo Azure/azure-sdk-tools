@@ -38,6 +38,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -194,6 +196,12 @@ export async function generateRLCInPipeline(options: {
                 cmd += ` --multi-client=true`;
             }
 
+            if(options.apiVersion && options.apiVersion !== '') {
+                // for high level client, we will build a tag for the package
+                logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+                cmd += ` --tag=package-${options.apiVersion}`;
+            }
+
             logger.info(`Start to run command: ${cmd}.`);
             try {
                 execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath), timeout: defaultChildProcessTimeout});
@@ -243,7 +251,7 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
-            const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
+            const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
             outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;

@@ -1,30 +1,89 @@
 package com.azure.tools.apiview.processor.analysers;
 
-import com.azure.tools.apiview.processor.analysers.models.*;
+import com.azure.tools.apiview.processor.analysers.models.AnnotationRendererModel;
+import com.azure.tools.apiview.processor.analysers.models.AnnotationRule;
 import com.azure.tools.apiview.processor.analysers.util.APIListingValidator;
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
-import com.azure.tools.apiview.processor.model.*;
-import com.azure.tools.apiview.processor.model.maven.*;
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ReviewLine;
+import com.azure.tools.apiview.processor.model.ReviewToken;
+import com.azure.tools.apiview.processor.model.Spacing;
+import com.azure.tools.apiview.processor.model.TokenKind;
+import com.azure.tools.apiview.processor.model.maven.Dependency;
+import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.azure.tools.apiview.processor.model.traits.Parent;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.JavaParserAdapter;
 import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.ast.*;
-import com.github.javaparser.ast.body.*;
-import com.github.javaparser.ast.comments.*;
-import com.github.javaparser.ast.expr.*;
-import com.github.javaparser.ast.modules.*;
-import com.github.javaparser.ast.nodeTypes.*;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.ImportDeclaration;
+import com.github.javaparser.ast.Modifier;
+import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.AnnotationDeclaration;
+import com.github.javaparser.ast.body.AnnotationMemberDeclaration;
+import com.github.javaparser.ast.body.BodyDeclaration;
+import com.github.javaparser.ast.body.CallableDeclaration;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.comments.Comment;
+import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.ArrayInitializerExpr;
+import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.BooleanLiteralExpr;
+import com.github.javaparser.ast.expr.ClassExpr;
+import com.github.javaparser.ast.expr.DoubleLiteralExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
+import com.github.javaparser.ast.expr.IntegerLiteralExpr;
+import com.github.javaparser.ast.expr.LiteralStringValueExpr;
+import com.github.javaparser.ast.expr.LongLiteralExpr;
+import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.Name;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.NormalAnnotationExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
+import com.github.javaparser.ast.expr.StringLiteralExpr;
+import com.github.javaparser.ast.modules.ModuleDeclaration;
+import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
+import com.github.javaparser.ast.nodeTypes.NodeWithExtends;
+import com.github.javaparser.ast.nodeTypes.NodeWithImplements;
+import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
+import com.github.javaparser.ast.nodeTypes.NodeWithThrownExceptions;
+import com.github.javaparser.ast.nodeTypes.NodeWithTypeParameters;
 import com.github.javaparser.ast.stmt.Statement;
-import com.github.javaparser.ast.type.*;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.ReferenceType;
+import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.ast.type.TypeParameter;
+import com.github.javaparser.ast.type.WildcardType;
 import org.unbescape.html.HtmlEscape;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -32,12 +91,49 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.ANNOTATION_DEPRECATED;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.ANNOTATION_METADATA;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.ANNOTATION_RETENTION;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.ANNOTATION_SERVICE_METHOD;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.ANNOTATION_SUPPRESS_WARNINGS;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.ANNOTATION_TARGET;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JAVADOC_EXTRACT_LINKS;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.PROPERTY_MAVEN_DESCRIPTION;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.PROPERTY_MAVEN_NAME;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.PROPERTY_MODULE_EXPORTS;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.PROPERTY_MODULE_NAME;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.PROPERTY_MODULE_OPENS;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.PROPERTY_MODULE_REQUIRES;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getNodeFullyQualifiedName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.analysers.util.MiscUtils.upperCase;
-import static com.azure.tools.apiview.processor.model.TokenKind.*;
-import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
+import static com.azure.tools.apiview.processor.model.TokenKind.ANNOTATION_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.ANNOTATION_PARAMETER_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.COMMENT;
+import static com.azure.tools.apiview.processor.model.TokenKind.ENUM_CONSTANT;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTENDS_TYPE;
+import static com.azure.tools.apiview.processor.model.TokenKind.FIELD_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.IMPLEMENTS_TYPE;
+import static com.azure.tools.apiview.processor.model.TokenKind.JAVADOC;
+import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
+import static com.azure.tools.apiview.processor.model.TokenKind.METHOD_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.MODULE_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.MODULE_REFERENCE;
+import static com.azure.tools.apiview.processor.model.TokenKind.NUMBER;
+import static com.azure.tools.apiview.processor.model.TokenKind.PACKAGE_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.PARAMETER_NAME;
+import static com.azure.tools.apiview.processor.model.TokenKind.PARAMETER_TYPE;
+import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
+import static com.azure.tools.apiview.processor.model.TokenKind.RETURN_TYPE;
+import static com.azure.tools.apiview.processor.model.TokenKind.STRING_LITERAL;
+import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
+import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 
 public class JavaASTAnalyser implements Analyser {
 
@@ -51,8 +147,7 @@ public class JavaASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
-    private static final JavaParserAdapter JAVA_8_PARSER;
-    private static final JavaParserAdapter JAVA_11_PARSER;
+    private static final JavaParserAdapter JAVA_PARSER;
     static {
         /*
          For some annotations, we want to customise how they are displayed. Sometimes, we don't show them in any
@@ -72,12 +167,8 @@ public class JavaASTAnalyser implements Analyser {
         ANNOTATION_RULE_MAP.put(ANNOTATION_METADATA, new AnnotationRule().setShowProperties(true).setCondensed(true));
 
         // Configure JavaParser to use type resolution
-        JAVA_8_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
-            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)
-            .setDetectOriginalLineSeparator(false)));
-
-        JAVA_11_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
-            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
+        JAVA_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
+            .setLanguageLevel(null)
             .setDetectOriginalLineSeparator(false)));
     }
 
@@ -163,7 +254,7 @@ public class JavaASTAnalyser implements Analyser {
         MODULE_INFO,
         CLASS,
         PACKAGE,
-        POM;
+        POM
     }
 
     private static class ScanElement implements Comparable<ScanElement> {
@@ -227,9 +318,7 @@ public class JavaASTAnalyser implements Analyser {
         try {
             boolean isModuleInfo = path.endsWith("module-info.java");
 
-            CompilationUnit compilationUnit = isModuleInfo
-                ? JAVA_11_PARSER.parse(Files.newBufferedReader(path))
-                : JAVA_8_PARSER.parse(Files.newBufferedReader(path));
+            CompilationUnit compilationUnit = JAVA_PARSER.parse(loadAndPreprocessFile(path));
 
             compilationUnit.setStorage(path, StandardCharsets.UTF_8);
 
@@ -250,6 +339,34 @@ public class JavaASTAnalyser implements Analyser {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    private static String loadAndPreprocessFile(Path path) throws IOException {
+        byte[] rawFileBytes = Files.readAllBytes(path);
+        ByteArrayOutputStream processed = null;
+
+        int prev = 0;
+        for (int i = 0; i < rawFileBytes.length; i++) {
+            if (rawFileBytes[i] == '\r') {
+                if (processed == null) {
+                    // The processed file bytes will always be the same size or smaller than the raw file bytes as \r\n
+                    // is processed to be \n.
+                    processed = new ByteArrayOutputStream(rawFileBytes.length);
+                }
+
+                if (prev != i) {
+                    processed.write(rawFileBytes, prev, i - prev);
+                }
+                prev = i + 1;
+            }
+        }
+
+        if (processed == null) {
+            return new String(rawFileBytes, StandardCharsets.UTF_8);
+        }
+
+        processed.write(rawFileBytes, prev, rawFileBytes.length - prev);
+        return processed.toString(StandardCharsets.UTF_8.name());
     }
 
     private void processPackage(String packageName, List<ScanElement> scanElements) {
@@ -615,7 +732,7 @@ public class JavaASTAnalyser implements Analyser {
         } else if (definition instanceof FieldDeclaration) {
             FieldDeclaration fieldDeclaration = (FieldDeclaration) definition;
             id = makeId(fieldDeclaration);
-            name = fieldDeclaration.toString();
+            name = fieldDeclaration.getVariable(0).getNameAsString();
         } else if (definition instanceof CallableDeclaration<?>) {
             CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) definition;
             id = makeId(callableDeclaration);
@@ -1008,7 +1125,8 @@ public class JavaASTAnalyser implements Analyser {
             for (int i = 0; i < arguments.size(); i++) {
                 Expression argument = arguments.get(i);
                 if (argument instanceof StringLiteralExpr) {
-                    definitionLine.addToken(STRING_LITERAL, argument.toString(), Spacing.NO_SPACE);
+                    StringLiteralExpr expr = (StringLiteralExpr) argument ;
+                    definitionLine.addToken(STRING_LITERAL, "\"" + expr.getValue() + "\"", Spacing.NO_SPACE);
                 } else {
                     definitionLine.addToken(TEXT, argument.toString(), Spacing.NO_SPACE);
                 }
@@ -1020,7 +1138,7 @@ public class JavaASTAnalyser implements Analyser {
             return;
         } else if (expression instanceof StringLiteralExpr) {
             StringLiteralExpr stringLiteralExpr = (StringLiteralExpr) expression;
-            definitionLine.addToken(STRING_LITERAL, stringLiteralExpr.toString(), Spacing.NO_SPACE);
+            definitionLine.addToken(STRING_LITERAL, "\"" + stringLiteralExpr.getValue() + "\"", Spacing.NO_SPACE);
             return;
         } else if (expression instanceof ArrayInitializerExpr) {
             ArrayInitializerExpr arrayInitializerExpr = (ArrayInitializerExpr) expression;
@@ -1047,7 +1165,7 @@ public class JavaASTAnalyser implements Analyser {
         } else if (expression instanceof IntegerLiteralExpr ||
                    expression instanceof LongLiteralExpr ||
                    expression instanceof DoubleLiteralExpr) {
-            definitionLine.addToken(NUMBER, expression.toString(), Spacing.NO_SPACE);
+            definitionLine.addToken(NUMBER, ((LiteralStringValueExpr) expression).getValue(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof FieldAccessExpr) {
             FieldAccessExpr fieldAccessExpr = (FieldAccessExpr) expression;
@@ -1074,11 +1192,11 @@ public class JavaASTAnalyser implements Analyser {
 //            node.addToken(TEXT, expression.toString());
         } else if (expression instanceof NameExpr) {
             NameExpr nameExpr = (NameExpr) expression;
-            definitionLine.addToken(TYPE_NAME, nameExpr.toString(), Spacing.NO_SPACE);
+            definitionLine.addToken(TYPE_NAME, nameExpr.getName().getIdentifier(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof BooleanLiteralExpr) {
             BooleanLiteralExpr booleanLiteralExpr = (BooleanLiteralExpr) expression;
-            definitionLine.addToken(KEYWORD, booleanLiteralExpr.toString(), Spacing.NO_SPACE);
+            definitionLine.addToken(KEYWORD, String.valueOf(booleanLiteralExpr.getValue()), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof ObjectCreationExpr) {
             definitionLine.addToken(KEYWORD, "new")
@@ -1224,7 +1342,7 @@ public class JavaASTAnalyser implements Analyser {
             if (callableDeclaration.getNameAsString().equals("getLatest")) {
                 if (parentNode instanceof EnumDeclaration) {
                     EnumDeclaration d = (EnumDeclaration) parentNode;
-                    if (d.getImplementedTypes().stream().anyMatch(implementedType -> implementedType.getName().toString().equals("ServiceVersion"))) {
+                    if (d.getImplementedTypes().stream().anyMatch(implementedType -> implementedType.getName().getIdentifier().equals("ServiceVersion"))) {
                         m.getBody().flatMap(blockStmt -> blockStmt.getStatements().stream()
                                     .filter(Statement::isReturnStmt)
                                     .findFirst())
@@ -1310,7 +1428,7 @@ public class JavaASTAnalyser implements Analyser {
         SpacingState spacingBefore = spacingState;
 
         if (type.isPrimitiveType()) {
-            reviewLine.addToken(kind, type.asPrimitiveType().toString(), spacingState.getSpacing());
+            reviewLine.addToken(kind, type.asPrimitiveType().getType().asString(), spacingState.getSpacing());
         } else if (type.isVoidType()) {
             reviewLine.addToken(kind, "void", spacingState.getSpacing());
         } else if (type.isReferenceType()) {
@@ -1453,19 +1571,35 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void visitJavaDoc(JavadocComment javadoc, Parent parent, String targetLineId) {
-        String str = javadoc.toString();
+        // JavadocComment.getContent() returns a String which is the entirety of the Javadoc minus the first line '/**'
+        // and last line '*/'.
+        String str = javadoc.getContent();
         if (str == null || str.isEmpty()) {
             return;
         }
 
         String[] lines = str.split("\n");
-        if (lines.length == 0) {
-            return;
-        }
 
-        Stream.of(lines).forEach(line -> {
+        // Manually add the leading '/**'
+        parent.addChildLine("JAVADOC_LINE_" + JAVADOC_LINE_COUNT++)
+            .setRelatedToLine(targetLineId)
+            .addToken(new ReviewToken(JAVADOC, "/**").setDocumentation().setSkipDiff());
+
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+
+            if (!line.startsWith("*")) {
+                line = " *" + line;
+            } else {
+                line = " " + line;
+            }
+
             // we add a line id here so that each line of the javadoc can be commented on
-            final ReviewLine reviewLine = parent.addChildLine("JAVADOC_LINE_" + JAVADOC_LINE_COUNT++).setRelatedToLine(targetLineId);
+            final ReviewLine reviewLine = parent.addChildLine("JAVADOC_LINE_" + JAVADOC_LINE_COUNT++)
+                .setRelatedToLine(targetLineId);
 
             if (line.contains("&")) {
                 line = HtmlEscape.unescapeHtml(line);
@@ -1501,7 +1635,12 @@ public class JavaASTAnalyser implements Analyser {
             } else {
                 reviewLine.addToken(new ReviewToken(JAVADOC, line).setDocumentation().setSkipDiff());
             }
-        });
+        }
+
+        // Manually add the trailing '*/'
+        parent.addChildLine("JAVADOC_LINE_" + JAVADOC_LINE_COUNT++)
+            .setRelatedToLine(targetLineId)
+            .addToken(new ReviewToken(JAVADOC, " */").setDocumentation().setSkipDiff());
     }
 
     private static TokenKind getTokenKind(TypeDeclaration<?> typeDeclaration) {

@@ -7,9 +7,17 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using APIView.TreeToken;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace APIView.Model.V2
 {
+    public enum TokensFilter
+    {
+        All, // Grab all tokens
+        SkipDiff, // SkipDiff tokens
+        Outline // Take only keyword, typeNames, and memberNames tokens
+    }
+
     /// <summary>
     /// Review line object corresponds to each line displayed on API review. If an empty line is required then add a review line object without any token.
     /// </summary>
@@ -65,7 +73,7 @@ namespace APIView.Model.V2
             Tokens.Add(token);
         }
 
-        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4)
+        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4, TokensFilter filter = TokensFilter.All)
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
             {
@@ -75,36 +83,55 @@ namespace APIView.Model.V2
             //Add empty line in case of review line without tokens
             if (Tokens.Count == 0)
             {
-                sb.Append(Environment.NewLine);
+                if (filter != TokensFilter.Outline)
+                {
+                    sb.Append(Environment.NewLine);
+                }
                 return;
             }
-            //Add spaces for indentation
-            for (int i = 0; i < indent; i++)
+            var lineString = ToString(filter);
+            if (!(filter == TokensFilter.Outline && String.IsNullOrWhiteSpace(lineString)))
             {
-                for(int j = 0; j < lineIndentSpaces; j++)
+                //Add spaces for indentation
+                for (int i = 0; i < indent; i++)
                 {
-                    sb.Append(" ");
+                    for (int j = 0; j < lineIndentSpaces; j++)
+                    {
+                        sb.Append(" ");
+                    }
                 }
+
+                //Process all tokens
+                sb.Append(lineString);
+                sb.Append(Environment.NewLine);
             }
-            //Process all tokens
-            sb.Append(ToString(true));
-            
-            sb.Append(Environment.NewLine);
+
             foreach (var child in Children)
             {
-                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs, lineIndentSpaces);
+                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs, lineIndentSpaces, filter);
             }
         }
 
-        private string ToString(bool includeAllTokens)
+        private string ToString(TokensFilter filter)
         {
-            var filterdTokens = includeAllTokens ? Tokens: Tokens.Where(x => x.SkipDiff != true);
+            var filterdTokens = Tokens;
+            if (filter == TokensFilter.SkipDiff)
+            {
+                filterdTokens = Tokens.Where(x => x.SkipDiff != true).ToList();
+            }
+
             if (!filterdTokens.Any())
             {
                 return string.Empty;
             }
             StringBuilder sb = new();
             bool spaceAdded = false;
+
+            if (filter == TokensFilter.Outline && !(filterdTokens.Count >= 2 && filterdTokens[0].Kind == TokenKind.Keyword && filterdTokens[0].HasSuffixSpace))
+            {
+                return sb.ToString();
+            }
+
             foreach (var token in filterdTokens)
             {
                 sb.Append(token.HasPrefixSpace == true && !spaceAdded ? " " : string.Empty);
@@ -118,7 +145,7 @@ namespace APIView.Model.V2
         
         public override string ToString()
         {
-            return ToString(false);
+            return ToString(TokensFilter.SkipDiff);
         }
 
         public override bool Equals(object obj)

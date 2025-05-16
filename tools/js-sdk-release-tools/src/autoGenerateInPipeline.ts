@@ -51,7 +51,7 @@ async function automationGenerateInPipeline(
         if (enableApiVersionAndReleaseType && !skipGeneration) {
             if (sdkType !== SDKType.HighLevelClient && typespecProject ){
                 const absoluteSpecFolder = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
-                const tspDefDir = path.join(swaggerRepo, typespecProject);
+                const tspDefDir = path.join(absoluteSpecFolder, typespecProject);
                 trySpecifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
             }
             currAPIVersion = apiVersion;

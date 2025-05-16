@@ -5,7 +5,7 @@ import { generateMgmt } from './hlc/generateMgmt.js';
 import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules.js';
 import { logger } from './utils/logger.js';
 import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline.js';
-import { ModularClientPackageOptions, SDKType, RunModeType } from './common/types.js';
+import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
 import { trySpecifiyApiVersionToGenerateSDKByTypeSpec } from "./common/utils.js";
@@ -38,8 +38,8 @@ async function automationGenerateInPipeline(
         sdkReleaseType,
     } = await parseInputJson(inputJson);
 
-    const enableApiVersionAndReleaseType = runMode === RunModeType.Release || runMode === RunModeType.Local;
-    const local = runMode === RunModeType.Local;
+    const enableApiVersionAndReleaseType = runMode === RunMode.Release || runMode === RunMode.Local;
+    const local = runMode === RunMode.Local;
     let currAPIVersion ="";
     let currSDKReleaseType = "";
     let tag = "";

@@ -16,7 +16,7 @@ import {
     getNewVersion,
     getVersion,
     isBetaVersion,
-    getReleaseStatus
+    isStableSDKReleaseType
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
@@ -30,7 +30,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
     const apiVersionType = await getApiVersionType(packageFolderPath);
-    const isStableRelease = await getReleaseStatus(apiVersionType, options)
+    const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = getVersion(npmViewResult, "latest");

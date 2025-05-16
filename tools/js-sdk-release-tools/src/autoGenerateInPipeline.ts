@@ -49,7 +49,7 @@ async function automationGenerateInPipeline(
             await backupNodeModules(String(shell.pwd()));
         }
         if (enableApiVersionAndReleaseType && !skipGeneration) {
-            if (sdkType !== SDKType.HighLevelClient && typespecProject ){
+            if (typespecProject ){
                 const absoluteSpecFolder = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
                 const tspDefDir = path.join(swaggerRepo, typespecProject);
                 trySpecifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);

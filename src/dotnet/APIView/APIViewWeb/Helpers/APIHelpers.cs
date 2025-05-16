@@ -81,6 +81,12 @@ namespace APIViewWeb.Helpers
 
     }
 
+    public class CreateAPIRevisionAPIResponse
+    {
+        public string APIRevisionUrl { get; set; }
+        public List<string> ActionsTaken { get; set; } = new List<string>();
+    }
+
     public class LeanJsonResult : JsonResult
     {
         private readonly int _statusCode;

@@ -3,10 +3,8 @@
 
 package com.azure.tools.apiview.processor.diagnostics.rules.azure;
 
-import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.models.Constants;
 import com.azure.tools.apiview.processor.analysers.util.ASTUtils;
-import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
@@ -17,8 +15,6 @@ import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
-
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
 /**
  * Diagnostic rule that validates the Maven package name and description match the convention specified in the

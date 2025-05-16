@@ -7,10 +7,11 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.INFO;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
@@ -67,16 +68,16 @@ public class MissingEqualsAndHashCodeDiagnosticRule implements DiagnosticRule {
 
     private boolean isValidEqualsMethod(MethodDeclaration method) {
         return method.getNameAsString().equals("equals")
-                && method.isAnnotationPresent("Override")
-                && method.getParameters().size() == 1
-                && method.getParameters().get(0).getType().asString().equals("Object")
-                && method.getType().asString().equals("boolean");
+            && method.getParameters().size() == 1
+            && method.isAnnotationPresent("Override")
+            && method.getParameters().get(0).getType().asString().equals("Object")
+            && method.getType().asString().equals("boolean");
     }
 
     private boolean isValidHashCodeMethod(MethodDeclaration method) {
         return method.getNameAsString().equals("hashCode")
-                && method.isAnnotationPresent("Override")
-                && method.getParameters().isEmpty()
-                && method.getType().asString().equals("int");
+            && method.isAnnotationPresent("Override")
+            && method.getParameters().isEmpty()
+            && method.getType().asString().equals("int");
     }
 }

@@ -8,15 +8,12 @@ import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.body.TypeDeclaration;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
-
-import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
+import static com.azure.tools.apiview.processor.model.DiagnosticKind.INFO;
 
 public class ConsiderFinalClassDiagnosticRule implements DiagnosticRule {
     private final List<TypeDeclaration<?>> nonFinalTypes = new ArrayList<>();
@@ -49,10 +46,8 @@ public class ConsiderFinalClassDiagnosticRule implements DiagnosticRule {
         for (final TypeDeclaration<?> type : nonFinalTypes) {
             final String name = type.getNameAsString();
             if (!knownParentClasses.contains(name)) {
-                listing.addDiagnostic(new Diagnostic(
-                        INFO,
-                        makeId(type),
-                        "Consider making all classes final by default - only make non-final if subclassing is supported."));
+                listing.addDiagnostic(new Diagnostic(INFO, makeId(type),
+                    "Consider making all classes final by default - only make non-final if subclassing is supported."));
             }
         }
     }

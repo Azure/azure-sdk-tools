@@ -14,7 +14,7 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.ERROR;
 
 public abstract class FluentSetterReturnTypeDiagnosticRule implements DiagnosticRule {
-    private Predicate<TypeDeclaration<?>> isFluentType;
+    private final Predicate<TypeDeclaration<?>> isFluentType;
 
     public FluentSetterReturnTypeDiagnosticRule(Predicate<TypeDeclaration<?>> isFluentType) {
         this.isFluentType = isFluentType;

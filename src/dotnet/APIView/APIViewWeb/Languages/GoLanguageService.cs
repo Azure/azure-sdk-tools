@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
+using System.Text;
 
 namespace APIViewWeb
 {
@@ -50,18 +51,39 @@ namespace APIViewWeb
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;
                 processStartInfo.RedirectStandardOutput = true;
+                processStartInfo.UseShellExecute = false;
+                processStartInfo.CreateNoWindow = true;
 
-                using (var process = Process.Start(processStartInfo))
+                var output = new StringBuilder();
+                var error = new StringBuilder();
+
+                using (var process = new Process())
                 {
+                    process.StartInfo = processStartInfo;
+                    process.OutputDataReceived += (sender, args) =>
+                    {
+                        if (args.Data != null)
+                            output.AppendLine(args.Data);
+                    };
+
+                    process.ErrorDataReceived += (sender, args) =>
+                    {
+                        if (args.Data != null)
+                            error.AppendLine(args.Data);
+                    };
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
                     process.WaitForExit();
                     if (process.ExitCode != 0)
                     {
                         throw new InvalidOperationException(
                             "Processor failed: " + Environment.NewLine +
                             "stdout: " + Environment.NewLine +
-                            process.StandardOutput.ReadToEnd() + Environment.NewLine +
+                            output + Environment.NewLine +
                             "stderr: " + Environment.NewLine +
-                            process.StandardError.ReadToEnd() + Environment.NewLine);
+                            error + Environment.NewLine);
                     }
                 }
 

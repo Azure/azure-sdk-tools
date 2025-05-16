@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
@@ -88,10 +89,31 @@ namespace APIViewWeb
             {
                 WorkingDirectory = workingDirectory,
                 RedirectStandardError = true,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
-            using (var process = Process.Start(processStartInfo))
+
+            var output = new StringBuilder();
+            var error = new StringBuilder();
+
+            using (var process = new Process())
             {
+                process.StartInfo = processStartInfo;
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        error.AppendLine(args.Data);
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
                 process.WaitForExit(3 * 60 * 1000);
                 _telemetryClient.TrackEvent("Completed parsing python wheel. Exit code: " + process.ExitCode);
                 if (process.ExitCode != 0)

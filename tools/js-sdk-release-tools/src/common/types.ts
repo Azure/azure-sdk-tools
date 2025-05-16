@@ -10,7 +10,7 @@ export enum ApiVersionType {
     Preview = 'Preview'
 }
 
-export enum RunModeType {
+export enum RunMode {
     Release = 'release',
     Local = 'local',
     SpecPullRequest = 'spec-pull-request',

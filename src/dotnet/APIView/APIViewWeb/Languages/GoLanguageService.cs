@@ -44,61 +44,7 @@ namespace APIViewWeb
             archive.ExtractToDirectory(tempDirectory);
             var packageRootDirectory = originalFilePath.Replace(Extensions[0], "");
 
-            try
-            {
-                var arguments = GetProcessorArguments(packageRootDirectory, tempDirectory, tempDirectory);
-                var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
-                processStartInfo.WorkingDirectory = tempDirectory;
-                processStartInfo.RedirectStandardError = true;
-                processStartInfo.RedirectStandardOutput = true;
-                processStartInfo.UseShellExecute = false;
-                processStartInfo.CreateNoWindow = true;
-
-                var output = new StringBuilder();
-                var error = new StringBuilder();
-
-                using (var process = new Process())
-                {
-                    process.StartInfo = processStartInfo;
-                    process.OutputDataReceived += (sender, args) =>
-                    {
-                        if (args.Data != null)
-                            output.AppendLine(args.Data);
-                    };
-
-                    process.ErrorDataReceived += (sender, args) =>
-                    {
-                        if (args.Data != null)
-                            error.AppendLine(args.Data);
-                    };
-
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    process.WaitForExit();
-                    if (process.ExitCode != 0)
-                    {
-                        throw new InvalidOperationException(
-                            "Processor failed: " + Environment.NewLine +
-                            "stdout: " + Environment.NewLine +
-                            output + Environment.NewLine +
-                            "stderr: " + Environment.NewLine +
-                            error + Environment.NewLine);
-                    }
-                }
-
-                using (var codeFileStream = File.OpenRead(jsonFilePath))
-                {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
-                    codeFile.VersionString = VersionString;
-                    codeFile.Language = Name;
-                    return codeFile;
-                }
-            }
-            finally
-            {
-                Directory.Delete(tempDirectory, true);
-            }
+            return await RunParserProcess(packageRootDirectory, tempDirectory, jsonFilePath);
         }
     }
 }

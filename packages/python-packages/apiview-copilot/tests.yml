@@ -18,9 +18,14 @@ extends:
       displayName: Run Evals (AzureCLI@2)
       inputs:
         azureSubscription: azure-sdk-tests-playground   # your service connection
+        addSpnToEnvironment: true
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
+          az login --federated-token $idToken --service-principal -t '72f988bf-86f1-41af-91ab-2d7cd011db47' -u 'f850650c-1fcf-4489-b46f-71af2e30d360'
+
+          az account set --subscription 'faa080af-c1d8-40ad-9cce-e1a450ca5b57'
+
           # Verify account
           az account show
 

@@ -10,16 +10,24 @@ import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.*;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidationMessage;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class Main {
@@ -32,6 +40,7 @@ public class Main {
             System.exit(-1);
         }
 
+        long startMillis = System.currentTimeMillis();
         final String jarFiles = args[0];
         final String[] jarFilesArray = jarFiles.split(",");
 
@@ -40,7 +49,10 @@ public class Main {
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        for (int i = 0; i < 50; i++) {
+            Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        }
+        System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
     }
 
     /**

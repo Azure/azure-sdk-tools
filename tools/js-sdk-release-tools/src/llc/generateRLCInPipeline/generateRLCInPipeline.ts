@@ -154,6 +154,7 @@ export async function generateRLCInPipeline(options: {
                             
                             const autorestConfigFilterRegex = new RegExp(`require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`);
                             const autoRestConfigContent = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8');
+                            logger.info(`=========== in sdk repository: '${autoRestConfigContent}'.`);
                             const regexExecResult = autorestConfigFilterRegex.exec(autoRestConfigContent);
                             const requireFoundOnlyOne = regexExecResult && regexExecResult.length === 2;
 
@@ -236,7 +237,7 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to update rush.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
     
-            // await migratePackage(options.sdkRepo, packagePath);
+            await migratePackage(options.sdkRepo, packagePath);
     
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
@@ -246,14 +247,12 @@ export async function generateRLCInPipeline(options: {
         } else {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
-            
-            // await migratePackage(options.sdkRepo, packagePath);
-            
+                        
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
             execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
-            logger.info(`Start to run command 'pnpm pack --filter ${packageName}'.`);
-            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'pnpm pack '.`);
+            execSync(`pnpm build `, {stdio: 'inherit',cwd: packagePath});
         }
         
         if (!options.skipGeneration) {

@@ -38,24 +38,15 @@ async function automationGenerateInPipeline(
         sdkReleaseType,
     } = await parseInputJson(inputJson);
 
-    const enableApiVersionAndReleaseType = runMode === RunMode.Release || runMode === RunMode.Local;
     const local = runMode === RunMode.Local;
-    let currAPIVersion ="";
-    let currSDKReleaseType = "";
-    let tag = "";
-
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        if (enableApiVersionAndReleaseType && !skipGeneration) {
-            if (typespecProject ){
-                const absoluteSpecFolder = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
-                const tspDefDir = path.join(absoluteSpecFolder, typespecProject);
-                trySpecifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
-            }
-            currAPIVersion = apiVersion;
-            currSDKReleaseType = sdkReleaseType;
+        if (apiVersion && !skipGeneration && typespecProject) {
+            const absoluteSpecFolder = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
+            const tspDefDir = path.join(absoluteSpecFolder, typespecProject);
+            trySpecifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
         }
         switch (sdkType) {
             case SDKType.HighLevelClient:
@@ -70,8 +61,8 @@ async function automationGenerateInPipeline(
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
                     runningEnvironment: runningEnvironment,
-                    apiVersion: currAPIVersion,
-                    sdkReleaseType: currSDKReleaseType,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
@@ -89,8 +80,8 @@ async function automationGenerateInPipeline(
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
                     gitCommitId: gitCommitId,
-                    apiVersion: currAPIVersion,
-                    sdkReleaseType: currSDKReleaseType,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
 
@@ -109,8 +100,8 @@ async function automationGenerateInPipeline(
                     local,
                     // support MPG for now
                     versionPolicyName: 'management',
-                    apiVersion: currAPIVersion,
-                    sdkReleaseType: currSDKReleaseType,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];

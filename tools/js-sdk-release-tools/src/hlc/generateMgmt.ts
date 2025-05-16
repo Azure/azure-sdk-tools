@@ -30,13 +30,13 @@ export async function generateMgmt(options: {
     downloadUrlPrefix?: string;
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
-    apiVersion: string;
-    sdkReleaseType: string;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
     if (!options.skipGeneration) {
-        if(options.apiVersion !== '') {
+        if(options.apiVersion && options.apiVersion !== '') {
             // for high level client, we will build a tag for the package
             logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
             options.tag = `package-${options.apiVersion}`;

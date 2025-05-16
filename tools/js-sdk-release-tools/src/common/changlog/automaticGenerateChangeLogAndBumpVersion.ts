@@ -25,7 +25,7 @@ import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { tryGetNpmView } from '../npmUtils.js';
 
-export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string, sdkReleaseType: string }) {
+export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);

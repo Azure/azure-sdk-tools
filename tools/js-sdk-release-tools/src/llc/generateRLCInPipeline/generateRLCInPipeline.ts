@@ -38,8 +38,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
-    apiVersion: string;
-    sdkReleaseType: string;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -196,7 +196,7 @@ export async function generateRLCInPipeline(options: {
                 cmd += ` --multi-client=true`;
             }
 
-            if(options.apiVersion !== '') {
+            if(options.apiVersion && options.apiVersion !== '') {
                 // for high level client, we will build a tag for the package
                 logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
                 cmd += ` --tag=package-${options.apiVersion}`;

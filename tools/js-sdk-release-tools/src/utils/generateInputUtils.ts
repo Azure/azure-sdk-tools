@@ -1,5 +1,5 @@
 import path from "path";
-import { SDKType } from "../common/types.js";
+import { SDKType, RunMode } from "../common/types.js";
 import { loadTspConfig, isMgmtPackage } from "../common/utils.js";
 import { RunningEnvironment } from "./runningEnvironment.js";
 import { exists } from "fs-extra";
@@ -52,10 +52,10 @@ export async function parseInputJson(inputJson: any) {
     const typespecProjectFolder: string[] | string | undefined = inputJson['relatedTypeSpecProjectFolder'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
-    const autorestConfig: string | undefined = inputJson['autorestConfig'];
-    const apiVersion: string = inputJson['apiVersion'];
+    const autorestConfig: string | undefined = inputJson['autorestConfig'];    
     const runMode: string = inputJson['runMode'];
-    const sdkReleaseType: string = inputJson['sdkReleaseType'];
+    let apiVersion: string | undefined;
+    let sdkReleaseType: string |undefined;
     const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
     // TODO: consider remove it, since it's not defined in inputJson schema
     const skipGeneration: boolean | undefined = inputJson['skipGeneration'];
@@ -83,7 +83,12 @@ export async function parseInputJson(inputJson: any) {
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
-    if (apiVersion && apiVersion.toLowerCase().includes('preview') && sdkReleaseType.toLowerCase() === 'stable') {
+    if (runMode !== RunMode.Release && runMode !== RunMode.Local) {
+        apiVersion = inputJson['apiVersion'];
+        sdkReleaseType = inputJson['sdkReleaseType'];
+    }
+
+    if (apiVersion && apiVersion.toLowerCase().includes('preview') && sdkReleaseType && sdkReleaseType.toLowerCase() === 'stable') {
         throw new Error(`SDK release type must be set to 'beta' for the preview API specifications.`);
     }
 

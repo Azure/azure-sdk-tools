@@ -6,7 +6,7 @@ import {
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
 import * as fs from "fs";
-import { getReleaseStatus } from "../../utils/version.js";
+import { isStableSDKReleaseType } from "../../utils/version.js";
 import { getRandomInt } from "../utils/utils.js";
 import { ensureDir, remove, writeFile } from "fs-extra";
 import { stringify } from "yaml";
@@ -153,7 +153,7 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
 
 describe("getReleaseStatus", () => {
     test("apiVersion is stable, sdkReleaseType is stable", async () => {
-        const result = await getReleaseStatus("Preview", {
+        const result = await isStableSDKReleaseType("Preview", {
             apiVersion: "2023-10-01",
             sdkReleaseType: "stable",
         });
@@ -161,7 +161,7 @@ describe("getReleaseStatus", () => {
     });
 
     test("apiVersion is stable, sdkReleaseType is beta", async () => {
-        const result = await getReleaseStatus("Preview", {
+        const result = await isStableSDKReleaseType("Preview", {
             apiVersion: "2023-10-01",
             sdkReleaseType: "beta",
         });
@@ -169,7 +169,7 @@ describe("getReleaseStatus", () => {
     });
 
     test("apiVersion is preview, sdkReleaseType is stable", async () => {
-        const result = await getReleaseStatus("Stable", {
+        const result = await isStableSDKReleaseType("Stable", {
             apiVersion: "2023-10-01-preview",
             sdkReleaseType: "stable",
         });
@@ -177,7 +177,7 @@ describe("getReleaseStatus", () => {
     });
 
     test("apiVersion is preview, sdkReleaseType is beta", async () => {
-        const result = await getReleaseStatus("Stable", {
+        const result = await isStableSDKReleaseType("Stable", {
             apiVersion: "2023-10-01-preview",
             sdkReleaseType: "beta",
         });
@@ -185,7 +185,7 @@ describe("getReleaseStatus", () => {
     });
 
     test("apiVersion not be provided", async () => {
-        const result = await getReleaseStatus("Preview", {
+        const result = await isStableSDKReleaseType("Preview", {
             apiVersion: "",
             sdkReleaseType: "stable",
         });

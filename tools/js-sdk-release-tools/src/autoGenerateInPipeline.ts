@@ -8,6 +8,7 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
+import { generateCodeOwnersAndIgnoreLink } from './common/codeownersAndignorelink/generateCodeOwnersAndIgnoreLink.js';
 
 import shell from 'shelljs';
 import fs from 'fs';
@@ -39,9 +40,10 @@ async function automationGenerateInPipeline(
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
+        let changedPackagePaths: string[] = [];
         switch (sdkType) {
             case SDKType.HighLevelClient:
-                await generateMgmt({
+                changedPackagePaths = await generateMgmt({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: specFolder,
                     readmeMd: readmeMd!,
@@ -95,6 +97,13 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
+
+        await generateCodeOwnersAndIgnoreLink(sdkType, {
+            changedPackagePaths: changedPackagePaths!,
+            typespecProject: typespecProject,
+            typeSpecDirectory: specFolder,
+            sdkRepo: String(shell.pwd()),
+           });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);

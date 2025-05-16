@@ -4,7 +4,7 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Requested Reviews";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User) ?? new UserPreferenceModel();
+    var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User) ?? new UserPreferenceModel();
     TempData["UserPreference"] = userPreference;
 }
 <div class="mx-5 row">

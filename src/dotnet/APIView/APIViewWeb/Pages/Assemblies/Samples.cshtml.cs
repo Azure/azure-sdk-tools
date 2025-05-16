@@ -7,14 +7,12 @@ using ApiView;
 using APIView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
-using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos;
-using Octokit;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -23,7 +21,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly ISamplesRevisionsManager _samplesRevisionsManager;
         private readonly IReviewManager _reviewManager;
         private readonly ICommentsManager _commentsManager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
         private readonly IAuthorizationService _authorizationService;
 
         public ReviewListItemModel Review { get; private set; }
@@ -37,13 +35,13 @@ namespace APIViewWeb.Pages.Assemblies
             ISamplesRevisionsManager samplesRevisionsManager,
             IReviewManager reviewManager,
             ICommentsManager commentsManager,
-            UserPreferenceCache preferenceCache, 
+            UserProfileCache userProfileCache, 
             IAuthorizationService authorizationService)
         {
             _samplesRevisionsManager = samplesRevisionsManager;
             _reviewManager = reviewManager;
             _commentsManager = commentsManager;
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
             _authorizationService = authorizationService;
         }
 

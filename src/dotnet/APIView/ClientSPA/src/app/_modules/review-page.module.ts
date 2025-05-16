@@ -9,7 +9,6 @@ import { TreeSelectModule } from 'primeng/treeselect';
 import { ButtonModule } from 'primeng/button';
 import { UiScrollModule  } from 'ngx-ui-scroll' ;
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
-import { InputSwitchModule } from 'primeng/inputswitch';
 import { ReviewPageLayoutModule } from './shared/review-page-layout.module';
 
 const routes: Routes = [
@@ -28,7 +27,6 @@ const routes: Routes = [
     DialogModule,
     TreeSelectModule,
     ButtonModule,
-    InputSwitchModule,
     UiScrollModule,
     ReviewPageLayoutModule,
     RouterModule.forChild(routes),

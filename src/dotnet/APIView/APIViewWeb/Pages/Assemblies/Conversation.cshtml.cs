@@ -20,8 +20,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ISamplesRevisionsManager _samplesManager;
         private const string ENDPOINT_SETTING = "Endpoint";
-        private readonly IBlobCodeFileRepository _codeFileRepository;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
 
         public string Endpoint { get; }
         public ReviewListItemModel Review { get; private set; }
@@ -34,19 +33,17 @@ namespace APIViewWeb.Pages.Assemblies
         public HashSet<GithubUser> TaggableUsers { get; set; }
         public ConversationModel(
             IConfiguration configuration,
-            IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
             IReviewManager reviewManager,
             IAPIRevisionsManager apiRevisionsManager,
-            UserPreferenceCache preferenceCache,
+            UserProfileCache userProfileCache,
             ISamplesRevisionsManager samplesManager)
         {
-            _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
             _samplesManager = samplesManager;
         }
 

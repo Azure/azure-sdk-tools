@@ -24,8 +24,7 @@ namespace APIViewWeb.LeanControllers
         private readonly ICommentsManager _commentsManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IConfiguration _configuration;
-        public readonly UserPreferenceCache _preferenceCache;
-        private readonly ICosmosUserProfileRepository _userProfileRepository;
+        public readonly UserProfileCache _userProfileCache;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
         private readonly IWebHostEnvironment _env;
@@ -33,8 +32,8 @@ namespace APIViewWeb.LeanControllers
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
-            IConfiguration configuration, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub,
+            IConfiguration configuration, UserProfileCache userProfileCache,
+            IHubContext<SignalRHub> signalRHub,
             INotificationManager notificationManager, IWebHostEnvironment env)
         {
             _logger = logger;
@@ -43,8 +42,7 @@ namespace APIViewWeb.LeanControllers
             _commentsManager = commentManager;
             _codeFileRepository = codeFileRepository;
             _configuration = configuration;
-            _preferenceCache = preferenceCache;
-            _userProfileRepository = userProfileRepository;
+            _userProfileCache = userProfileCache;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
             _env = env;
@@ -84,7 +82,7 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApprovers(_configuration, _preferenceCache, _userProfileRepository, User, review);
+            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, User, review);
             return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 

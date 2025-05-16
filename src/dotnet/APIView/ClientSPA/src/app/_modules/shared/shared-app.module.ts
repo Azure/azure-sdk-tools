@@ -15,8 +15,6 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { SplitterModule } from 'primeng/splitter';
 import { SidebarModule } from 'primeng/sidebar';
 import { TimeagoModule } from 'ngx-timeago';
@@ -28,6 +26,7 @@ import { BadgeModule } from 'primeng/badge';
 import { SimplemdeModule } from 'ngx-simplemde';
 import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
 import { environment } from 'src/environments/environment';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
 const monacoEditorConfig: NgxMonacoEditorConfig = {
   baseUrl: environment.assetsPath 
@@ -61,6 +60,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     FormsModule,
     IconFieldModule,
     InputIconModule,
+    InputSwitchModule,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,
@@ -84,6 +84,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
     FormsModule,
     IconFieldModule,
     InputIconModule,
+    InputSwitchModule,
     FileUploadModule,
     ReactiveFormsModule,
     SelectButtonModule,

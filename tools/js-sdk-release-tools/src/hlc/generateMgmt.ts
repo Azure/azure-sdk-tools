@@ -133,8 +133,8 @@ export async function generateMgmt(options: {
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
                 }
-                logger.info(`Start to run command: 'pnpm pack --filter ${packageJson.name}'.`);
-                execSync(`pnpm pack --filter ${packageJson.name}`, {stdio: 'inherit'});
+                logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
+                execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
             }
             
             if (!options.skipGeneration) {

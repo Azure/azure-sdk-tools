@@ -228,7 +228,9 @@ public class JavaASTAnalyser implements Analyser {
             return Optional.of(new ScanElement(path, null, ScanElementType.POM));
         }
         try {
-            boolean isModuleInfo = path.endsWith("module-info.java");            CompilationUnit compilationUnit = isModuleInfo
+            boolean isModuleInfo = path.endsWith("module-info.java");
+
+            CompilationUnit compilationUnit = isModuleInfo
                 ? JAVA_11_PARSER.get().parse(Files.newBufferedReader(path))
                 : JAVA_8_PARSER.get().parse(Files.newBufferedReader(path));
 

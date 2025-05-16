@@ -188,5 +188,41 @@ namespace APIViewWeb.LeanControllers
 
             return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
         }
+
+
+        [Route("{reviewId}/outline")]
+        [HttpGet]
+        public async Task<ActionResult<string>> GetReviewOutlineAsync(string reviewId, [FromQuery] string activeApiRevisionId,
+        [FromQuery] string diffApiRevisionId = null)
+        {
+            var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
+            APIRevisionListItemModel diffAPIRevision = null;
+
+            if (activeAPIRevision.IsDeleted)
+            {
+                return new LeanJsonResult(null, StatusCodes.Status204NoContent);
+            }
+
+            if (!string.IsNullOrEmpty(diffApiRevisionId))
+            {
+                diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
+
+                if (diffAPIRevision.IsDeleted)
+                {
+                    return new LeanJsonResult(null, StatusCodes.Status204NoContent);
+                }
+            }
+
+            if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
+            {
+                var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
+                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+                var outline = activeRevisionReviewCodeFile.GetApiOutlineText();
+
+                return new LeanJsonResult(outline, StatusCodes.Status200OK);
+            }
+
+            return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
+        }
     }
 }

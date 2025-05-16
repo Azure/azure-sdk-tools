@@ -87,21 +87,19 @@ namespace IssueLabelerService
             // Step 4: Deduplicate original query results as they are added
             AddUniqueItems(originalIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
             AddUniqueItems(originalDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
-            var allIssues = aggregatedIssues.ToList();
-            var allDocs = aggregatedDocs.ToList();
 
             // Step 5: Check if there are any results
-            if (allDocs.Count == 0 && allIssues.Count == 0)
+            if (aggregatedDocs.Count == 0 && aggregatedIssues.Count == 0)
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {allDocs.Count}, Issues: {allIssues.Count}.");
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {aggregatedDocs.Count}, Issues: {aggregatedIssues.Count}.");
             }
 
-            var highestScore = _ragService.GetHighestScore(allIssues, allDocs, issue.RepositoryName, issue.IssueNumber);
+            var highestScore = _ragService.GetHighestScore(aggregatedIssues, aggregatedDocs, issue.RepositoryName, issue.IssueNumber);
             var solution = highestScore >= solutionThreshold;
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            var (printableIssues, printableDocs, replacementsUserPrompt) = BuildUserPromptData(allIssues, allDocs, issue);
+            var (printableIssues, printableDocs, replacementsUserPrompt) = BuildUserPromptData(aggregatedIssues, aggregatedDocs, issue);
 
             string instructions, userPrompt;
             if (solution)
@@ -152,10 +150,10 @@ namespace IssueLabelerService
         }
 
         private void AddUniqueItems<T, TKey>(
-        IEnumerable<T> items,
-        HashSet<TKey> uniqueSet,
-        List<T> aggregatedList,
-        Func<T, TKey> keySelector)
+            IEnumerable<T> items,
+            HashSet<TKey> uniqueSet,
+            List<T> aggregatedList,
+            Func<T, TKey> keySelector)
         {
             foreach (var item in items)
             {

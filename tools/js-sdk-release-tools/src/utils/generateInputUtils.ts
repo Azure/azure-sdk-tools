@@ -83,7 +83,7 @@ export async function parseInputJson(inputJson: any) {
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
-    if (runMode == RunMode.Release || runMode == RunMode.Local) {
+    if (runMode === RunMode.Release || runMode === RunMode.Local) {
         apiVersion = inputJson['apiVersion'];
         sdkReleaseType = inputJson['sdkReleaseType'];
     }

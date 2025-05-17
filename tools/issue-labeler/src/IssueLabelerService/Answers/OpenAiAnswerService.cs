@@ -57,10 +57,8 @@ namespace IssueLabelerService
             var subqueries = await _ragService.GenerateSubqueriesAsync(subqueriesPrompt, query, modelName);
 
             //Step 2: Retrieve results for sub-queries
-            var aggregatedIssues = new List<Issue>();
-            var aggregatedDocs = new List<Document>();
-            var uniqueIssues = new HashSet<string>();
-            var uniqueDocs = new HashSet<string>();
+            var uniqueIssues = new HashSet<Issue>(new IssueIdComparer());
+            var uniqueDocs = new HashSet<Document>(new DocumentUrlComparer());
 
             await RetrieveAndAggregateSubqueryResults(
                 subqueries,
@@ -74,9 +72,7 @@ namespace IssueLabelerService
                 scoreThreshold,
                 labels,
                 uniqueIssues,
-                aggregatedIssues,
-                uniqueDocs,
-                aggregatedDocs
+                uniqueDocs
             );
 
             // Step 3: Retrieve results for the original query
@@ -85,10 +81,14 @@ namespace IssueLabelerService
 
 
             // Step 4: Deduplicate original query results as they are added
-            AddUniqueItems(originalIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
-            AddUniqueItems(originalDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
+            foreach (var originalIssue in originalIssues)
+                uniqueIssues.Add(originalIssue);
+            foreach (var originalDoc in originalDocs)
+                uniqueDocs.Add(originalDoc);
 
             // Step 5: Check if there are any results
+            var aggregatedIssues = uniqueIssues.ToList();
+            var aggregatedDocs = uniqueDocs.ToList();
             if (aggregatedDocs.Count == 0 && aggregatedIssues.Count == 0)
             {
                 throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {aggregatedDocs.Count}, Issues: {aggregatedIssues.Count}.");
@@ -99,7 +99,7 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            var (printableIssues, printableDocs, replacementsUserPrompt) = BuildUserPromptData(aggregatedIssues, aggregatedDocs, issue);
+            var replacementsUserPrompt = BuildUserPromptData(aggregatedIssues, aggregatedDocs, issue);
 
             string instructions, userPrompt;
             if (solution)
@@ -175,22 +175,23 @@ namespace IssueLabelerService
             int top,
             double scoreThreshold,
             Dictionary<string, string> labels,
-            HashSet<string> uniqueIssues,
-            List<Issue> aggregatedIssues,
-            HashSet<string> uniqueDocs,
-            List<Document> aggregatedDocs)
+            HashSet<Issue> uniqueIssues,
+            HashSet<Document> uniqueDocs
+        )
         {
             var subqueryTasks = subqueries.Select(async subquery =>
             {
                 var subqueryIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, subquery, top, scoreThreshold, labels);
                 var subqueryDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, subquery, top, scoreThreshold, labels);
-                AddUniqueItems(subqueryIssues, uniqueIssues, aggregatedIssues, issue => issue.Id);
-                AddUniqueItems(subqueryDocs, uniqueDocs, aggregatedDocs, doc => doc.Url);
+                foreach (var subqueryIssue in subqueryIssues)
+                    uniqueIssues.Add(subqueryIssue);
+                foreach (var subqueryDoc in subqueryDocs)
+                    uniqueDocs.Add(subqueryDoc);
             });
             await Task.WhenAll(subqueryTasks);
         }
 
-        private (string printableIssues, string printableDocs, Dictionary<string, string> replacementsUserPrompt) BuildUserPromptData(
+        private Dictionary<string, string> BuildUserPromptData(
             List<Issue> allIssues,
             List<Document> allDocs,
             IssuePayload issue)
@@ -208,8 +209,20 @@ namespace IssueLabelerService
                 { "PrintableDocs", printableDocs },
                 { "PrintableIssues", printableIssues }
             };
-            
-            return (printableIssues, printableDocs, replacementsUserPrompt);
+
+            return replacementsUserPrompt ;
+        }
+
+        class IssueIdComparer : IEqualityComparer<Issue>
+        {
+            public bool Equals(Issue x, Issue y) => x.Id == y.Id;
+            public int GetHashCode(Issue obj) => obj.Id.GetHashCode();
+        }
+
+        class DocumentUrlComparer : IEqualityComparer<Document>
+        {
+            public bool Equals(Document x, Document y) => x.Url == y.Url;
+            public int GetHashCode(Document obj) => obj.Url.GetHashCode();
         }
     }
 }

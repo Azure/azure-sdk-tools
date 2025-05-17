@@ -41,7 +41,6 @@ export enum FailureType {
 export type WorkflowContext = SdkAutoContext & {
   stagedArtifactsFolder?: string;
   sdkArtifactFolder?: string;
-  sdkApiViewArtifactFolder?: string;
   isSdkConfigDuplicated?: boolean;
   specConfigPath?: string;
   pendingPackages: PackageData[];

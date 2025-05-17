@@ -58,6 +58,7 @@ namespace IssueLabelerService
         public string LabelUserPrompt => GetItem("LabelUserPrompt");
         public string LabelInstructions => GetItem("LabelInstructions");
         public string LabelNames => GetItem("LabelNames");
+        public string SubqueriesGenerationPrompt => GetItem("SubqueriesGenerationPrompt");
 
         public string GetItem(string name)
         {

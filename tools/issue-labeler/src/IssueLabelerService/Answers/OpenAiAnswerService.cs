@@ -37,37 +37,69 @@ namespace IssueLabelerService
             // Query + Filtering configurations
             string query = $"{issue.Title} {issue.Body}";
             int top = int.Parse(_config.SourceCount);
-            double scoreThreshold = double.Parse(_config.ScoreThreshold);
-            double solutionThreshold = double.Parse(_config.SolutionThreshold);
+            var scoreThreshold = double.Parse(_config.ScoreThreshold);
+            var solutionThreshold = double.Parse(_config.SolutionThreshold);
 
-            var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
-            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
- 
-            if (docs.Count == 0 && issues.Count == 0)
+            //Subquery generation configurations
+            int minSubqueries = 3;
+            int maxSubqueries = 7;
+            int charsPerSubquery = 30;
+            string subqueryCount = Math.Max(minSubqueries, Math.Min(maxSubqueries, query.Length / charsPerSubquery)).ToString();
+            var replacementSubqueriesPrompt = new Dictionary<string, string>
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {docs.Count}, Issues: {issues.Count}.");
+                { "subqueryCount", subqueryCount },
+                { "query", query }
+            };
+
+            var subqueriesPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SubqueriesGenerationPrompt, replacementSubqueriesPrompt, _logger);
+
+            //Step 1: Generate sub-queries
+            var subqueries = await _ragService.GenerateSubqueriesAsync(subqueriesPrompt, query, modelName);
+
+            //Step 2: Retrieve results for sub-queries
+            var uniqueIssues = new HashSet<Issue>(new IssueIdComparer());
+            var uniqueDocs = new HashSet<Document>(new DocumentUrlComparer());
+
+            await RetrieveAndAggregateSubqueryResults(
+                subqueries,
+                issueIndexName,
+                issueSemanticName,
+                issueFieldName,
+                documentIndexName,
+                documentSemanticName,
+                documentFieldName,
+                top,
+                scoreThreshold,
+                labels,
+                uniqueIssues,
+                uniqueDocs
+            );
+
+            // Step 3: Retrieve results for the original query
+            var originalIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
+            var originalDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
+
+
+            // Step 4: Deduplicate original query results as they are added
+            foreach (var originalIssue in originalIssues)
+                uniqueIssues.Add(originalIssue);
+            foreach (var originalDoc in originalDocs)
+                uniqueDocs.Add(originalDoc);
+
+            // Step 5: Check if there are any results
+            var aggregatedIssues = uniqueIssues.ToList();
+            var aggregatedDocs = uniqueDocs.ToList();
+            if (aggregatedDocs.Count == 0 && aggregatedIssues.Count == 0)
+            {
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {aggregatedDocs.Count}, Issues: {aggregatedIssues.Count}.");
             }
 
-            double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
-            bool solution = highestScore >= solutionThreshold;
+            var highestScore = _ragService.GetHighestScore(aggregatedIssues, aggregatedDocs, issue.RepositoryName, issue.IssueNumber);
+            var solution = highestScore >= solutionThreshold;
 
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            // Format issues 
-            var printableIssues = string.Join("\n\n", issues.Select(issue =>
-                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
-
-            // Format documents 
-            var printableDocs = string.Join("\n\n", docs.Select(doc =>
-                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
-
-            var replacementsUserPrompt = new Dictionary<string, string>
-            {
-                { "Title", issue.Title },
-                { "Description", issue.Body },
-                { "PrintableDocs", printableDocs },
-                { "PrintableIssues", printableIssues }
-            };
+            var replacementsUserPrompt = BuildUserPromptData(aggregatedIssues, aggregatedDocs, issue);
 
             string instructions, userPrompt;
             if (solution)
@@ -110,10 +142,87 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formatted_response}");
 
-            return new AnswerOutput {
-                Answer =  formatted_response, 
-                AnswerType = solution ? "solution" : "suggestion" 
+            return new AnswerOutput
+            {
+                Answer = formatted_response,
+                AnswerType = solution ? "solution" : "suggestion"
             };
+        }
+
+        private void AddUniqueItems<T, TKey>(
+            IEnumerable<T> items,
+            HashSet<TKey> uniqueSet,
+            List<T> aggregatedList,
+            Func<T, TKey> keySelector)
+        {
+            foreach (var item in items)
+            {
+                if (uniqueSet.Add(keySelector(item)))
+                {
+                    aggregatedList.Add(item);
+                }
+            }
+        }
+
+        private async Task RetrieveAndAggregateSubqueryResults(
+            IEnumerable<string> subqueries,
+            string issueIndexName,
+            string issueSemanticName,
+            string issueFieldName,
+            string documentIndexName,
+            string documentSemanticName,
+            string documentFieldName,
+            int top,
+            double scoreThreshold,
+            Dictionary<string, string> labels,
+            HashSet<Issue> uniqueIssues,
+            HashSet<Document> uniqueDocs
+        )
+        {
+            var subqueryTasks = subqueries.Select(async subquery =>
+            {
+                var subqueryIssues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, subquery, top, scoreThreshold, labels);
+                var subqueryDocs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, subquery, top, scoreThreshold, labels);
+                foreach (var subqueryIssue in subqueryIssues)
+                    uniqueIssues.Add(subqueryIssue);
+                foreach (var subqueryDoc in subqueryDocs)
+                    uniqueDocs.Add(subqueryDoc);
+            });
+            await Task.WhenAll(subqueryTasks);
+        }
+
+        private Dictionary<string, string> BuildUserPromptData(
+            List<Issue> allIssues,
+            List<Document> allDocs,
+            IssuePayload issue)
+        {
+            var printableIssues = string.Join("\n\n", allIssues.Select(issue =>
+                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
+
+            var printableDocs = string.Join("\n\n", allDocs.Select(doc =>
+                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
+
+            var replacementsUserPrompt = new Dictionary<string, string>
+            {
+                { "Title", issue.Title },
+                { "Description", issue.Body },
+                { "PrintableDocs", printableDocs },
+                { "PrintableIssues", printableIssues }
+            };
+
+            return replacementsUserPrompt ;
+        }
+
+        class IssueIdComparer : IEqualityComparer<Issue>
+        {
+            public bool Equals(Issue x, Issue y) => x.Id == y.Id;
+            public int GetHashCode(Issue obj) => obj.Id.GetHashCode();
+        }
+
+        class DocumentUrlComparer : IEqualityComparer<Document>
+        {
+            public bool Equals(Document x, Document y) => x.Url == y.Url;
+            public int GetHashCode(Document obj) => obj.Url.GetHashCode();
         }
     }
 }

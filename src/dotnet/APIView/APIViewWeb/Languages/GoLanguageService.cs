@@ -44,7 +44,8 @@ namespace APIViewWeb
             archive.ExtractToDirectory(tempDirectory);
             var packageRootDirectory = originalFilePath.Replace(Extensions[0], "");
 
-            return await RunParserProcess(packageRootDirectory, tempDirectory, jsonFilePath);
+            var arguments = GetProcessorArguments(packageRootDirectory, tempDirectory, tempDirectory);
+            return await RunParserProcess(packageRootDirectory, tempDirectory, jsonFilePath, arguments);
         }
     }
 }

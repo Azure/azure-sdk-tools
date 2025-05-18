@@ -59,7 +59,8 @@ namespace APIViewWeb
                 await stream.CopyToAsync(file);
             }
             var pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
-            return await RunParserProcess(originalName, pythonVenvPath, jsonFilePath);
+            var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
+            return await RunParserProcess(originalName, pythonVenvPath, jsonFilePath, arguments);
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
 using Microsoft.VisualStudio.Services.Common.CommandLine;
+using ThirdParty.Json.LitJson;
 
 namespace APIViewWeb
 {
@@ -44,7 +45,8 @@ namespace APIViewWeb
             {
                 await stream.CopyToAsync(file);
             }
-            return await RunParserProcess(originalName, tempDirectory, jsonFilePath);
+            var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
+            return await RunParserProcess(originalName, tempDirectory, jsonFilePath, arguments);
         }
 
         public string RunProcess(string workingDirectory, string processName, string arguments)
@@ -93,11 +95,10 @@ namespace APIViewWeb
             return processErrors;
         }
 
-        public async Task<CodeFile> RunParserProcess(string originalName, string tempDirectory, string jsonPath)
+        public async Task<CodeFile> RunParserProcess(string originalName, string tempDirectory, string jsonPath, string arguments)
         {
             try
             {
-                var arguments = GetProcessorArguments(originalName, tempDirectory, jsonPath);
                 var processErrors = RunProcess(tempDirectory, ProcessName, arguments);
 
                 _telemetryClient.TrackEvent($"Completed {Name} process run to parse " + originalName);

@@ -1,5 +1,9 @@
 # Release
 
+## 2025-05-19 - 0.7.1
+
+- Fixed a bug in processing breaking change suppressions
+
 ## 2025-05-16 - 0.7.0
 
 - Update apiViewArtifact to point to staged artifact location

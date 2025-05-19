@@ -26,11 +26,15 @@ extends:
           echo "##vso[task.setvariable variable=ARM_ID_TOKEN]$idToken" 
           echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
 
-          az login --service-principal -u $(ARM_CLIENT_ID) --tenant $(ARM_TENANT_ID) --allow-no-subscriptions --federated-token $(ARM_ID_TOKEN) 
-          
-          python packages/python-packages/apiview-copilot/evals/run.py
+          - bash: | 
 
-          exit $?
+            az login --service-principal -u $(ARM_CLIENT_ID) --tenant $(ARM_TENANT_ID) --allow-no-subscriptions --federated-token $(ARM_ID_TOEKN) 
+
+            displayName: 'Login Azure' 
+          
+            python packages/python-packages/apiview-copilot/evals/run.py
+
+            exit $?
       env:
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)

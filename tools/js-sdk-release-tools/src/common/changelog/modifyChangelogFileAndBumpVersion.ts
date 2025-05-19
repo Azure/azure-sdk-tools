@@ -3,7 +3,8 @@ import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent.js";
 
 import fs from 'fs';
 import * as path from 'path';
-
+import { getSDKType} from "../utils.js";
+import { SDKType } from "../types.js";
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');
 const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -11,16 +12,34 @@ const yyyy = todayDate.getFullYear();
 
 const date = yyyy + '-' + mm + '-' + dd;
 
-export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+export function getFirstReleaseContent(packageFolderPath: string, isStableRelease: boolean) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
+    const sdkType = getSDKType(packageFolderPath);
+    const firstBetaContent = `Initial release of the ${packageJsonData.name} package`;
+    const firstStableContent = `This is the first stable version with the package of ${packageJsonData.name}`;
+    const hlcClientContent = `The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).`
+    switch (sdkType) {
+        case SDKType.ModularClient:
+            return isStableRelease ? firstStableContent : firstBetaContent;
+        case SDKType.HighLevelClient:
+            return hlcClientContent;
+        case SDKType.RestLevelClient:
+            return isStableRelease ? firstStableContent : firstBetaContent;
+        default:
+            throw new Error(`Unsupported SDK type: ${sdkType}`);
+    }
+}
+
+export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
+    const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
     const content = `# Release History
     
 ## ${newVersion} (${date})
 
 ### Features Added
 
-The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
+${contentLog}
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);

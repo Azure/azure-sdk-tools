@@ -19,7 +19,7 @@ import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYam
 import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation } from "../../common/utils.js";
 import { remove } from 'fs-extra';
-import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { migratePackage } from "../../common/migration.js";
 import { isRushRepo } from "../../common/rushUtils.js";

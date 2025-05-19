@@ -4,7 +4,7 @@ import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from
 import { posix } from 'node:path';
 
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
-import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js';
+import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
 import { getGeneratedPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';

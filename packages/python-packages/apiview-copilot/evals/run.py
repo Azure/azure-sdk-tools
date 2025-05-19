@@ -15,6 +15,7 @@ os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from azure.identity import DefaultAzureCredential
 
 dotenv.load_dotenv()
 
@@ -512,6 +513,7 @@ if __name__ == "__main__":
                 target=review_apiview,
                 fail_on_evaluator_errors=True,
                 azure_ai_project=azure_ai_project,
+                credential=DefaultAzureCredential(),
             )
 
             run_result = record_run_result(result, rule_ids)

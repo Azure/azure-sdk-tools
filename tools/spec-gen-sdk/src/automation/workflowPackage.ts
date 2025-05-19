@@ -11,6 +11,7 @@ import {
 } from './workflow';
 import { getLanguageByRepoName } from './entrypoint';
 import { CommentCaptureTransport } from './logging';
+import { toolWarning } from '../utils/messageUtils';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
@@ -43,7 +44,6 @@ const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: Package
   }
 
   context.logger.log('section', 'Call BuildScript');
-
   await runSdkAutoCustomScript(context, runOptions, {
     cwd: context.config.localSdkRepoPath,
     fallbackName: 'Build',
@@ -77,7 +77,6 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
       statusContext: pkg
     });
     context.logger.remove(changeLogCaptureTransport);
-
     setSdkAutoStatus(pkg, result);
     if (result !== 'failed') {
       for (const changelog of pkg.changelogs) {
@@ -105,7 +104,7 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
     if (fs.existsSync(path.join(context.config.localSdkRepoPath, searchOption.searchFolder))) {
       folders.push(searchOption.searchFolder);
     } else {
-      context.logger.warn(`Skip artifact folder because it doesn't exist: ${searchOption.searchFolder}`);
+      context.logger.warn(toolWarning(`Skip artifact folder because it doesn't exist: ${searchOption.searchFolder}`));
     }
   }
 
@@ -138,11 +137,11 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   if (language.toLowerCase() === 'go') {
     serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, ""); // go uses relative path as package name
   }
-  context.services?.push(serviceName);
+  pkg.serviceName = serviceName;
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
-  context.sdkArtifactFolder = stagedArtifactsFolder;
+  context.stagedArtifactsFolder = stagedArtifactsFolder;
 
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 
@@ -175,10 +174,11 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
-  context.sdkApiViewArtifactFolder = destination;
   const fileName = path.basename(pkg.apiViewArtifactPath);
-  context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
-  copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), path.join(destination, fileName));
+  const newApiViewArtifactPath = path.join(destination, fileName);
+  context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${newApiViewArtifactPath}`);
+  copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), newApiViewArtifactPath);
+  pkg.apiViewArtifactPath = newApiViewArtifactPath;
 };
 
 const fileInstallInstructionInput = 'installInstructionInput.json';

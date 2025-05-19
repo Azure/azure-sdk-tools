@@ -1,24 +1,12 @@
 {
-    "status": "Error",
-    "violations": [
+    "comments": [
         {
-            "rule_ids": [
-                "python_design.html#python-client-naming",
-                "python_design.html#python-client-same-name-sync-async"
-            ],
-            "line_no": 6,
-            "bad_code": "class azure.healthinsights.clinicalmatching.ClinicalMatching(ClinicalMatchingClientOperationsMixin): implements ContextManager",
-            "suggestion": "Rename the sync client to 'ClinicalMatchingClient' so that it ends with 'Client' and matches the async client naming.",
-            "comment": "Service client types should have a 'Client' suffix and the sync and async clients should share the same name (see guidelines python_design.html#python-client-naming and python_design.html#python-client-same-name-sync-async)."
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-client-options-naming"
-            ],
-            "line_no": 70,
-            "bad_code": "options: Optional[CreateTrialsOptions] = None,",
-            "suggestion": "Remove the options bag parameter and expose the individual optional keyword arguments instead.",
-            "comment": "Using an options bag to group optional parameters violates the guideline (python_design.html#python-client-options-naming)."
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nOverview:\nThis API provides a clinical matching service intended for processing patient clinical data and matching it against clinical trial criteria. It facilitates the submission, evaluation, and management of trial matching requests and results, supporting both synchronous and asynchronous workflows via long-running operations and context management.\n\nAPI Version:\nClients accept an `api_version` parameter during initialization; however, no separate API Version object or explicit latest version is defined in this view.\n\nClient Classes:\nThe primary client classes are `ClinicalMatching` (synchronous) and `ClinicalMatchingClient` (asynchronous). Both expose methods including `__init__`, `begin_match_trials`, `create_trials`, `trials`, `erase_trials`, `close`, and `send_request`.\n\nModels and Support Classes:\nA comprehensive set of models is provided under the `azure.healthinsights.clinicalmatching.models` namespace. These models represent structures for trial matching data and clinical information, including types such as `TrialMatcherData`, `TrialMatcherResult`, and `TrialMatcherPatientResult`, as well as configuration types like `TrialMatcherModelConfiguration`. Additionally, several enums (for example, `AgeUnit`, `ClinicalDocumentType`, `JobStatus`, and others) and additional data classes cover clinical trial details, patient records and documents, geographic data, and other related clinical properties.\n\nStructure and Functionality:\nThe API is structured to support long-running operations using pollers (`LROPoller` and `AsyncLROPoller`) and integrates distributed tracing via the `distributed_trace` and `distributed_trace_async` decorators. It manages various input types (e.g., structured objects, JSON, and IO streams) through method overloads, providing flexibility for different client use cases while maintaining robust context management in both synchronous and asynchronous environments.",
+            "source": "summary"
         },
         {
             "rule_ids": [
@@ -26,35 +14,19 @@
             ],
             "line_no": 102,
             "bad_code": "def trials(",
-            "suggestion": "Rename the method to 'list_trials' and consider returning an ItemPaged type for consistency with listing operations.",
-            "comment": "Methods that enumerate resources should be prefixed with 'list_' (python_design.html#python-paged-prefix)."
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-client-service-verbs"
-            ],
-            "line_no": 108,
-            "bad_code": "def erase_trials(",
-            "suggestion": "Rename the method to 'delete_trials' to adhere to the preferred service verb usage.",
-            "comment": "Deletion operations should use the 'delete_' prefix rather than non-standard verbs like 'erase_' (python_design.html#python-client-service-verbs)."
+            "suggestion": "def list_trials(",
+            "comment": "Methods that enumerate resources should be prefixed with 'list_'.",
+            "source": "guideline"
         },
         {
             "rule_ids": [
                 "python_design.html#python-client-options-naming"
             ],
-            "line_no": 191,
-            "bad_code": "options: Optional[CreateTrialsOptions] = None,",
-            "suggestion": "Remove the options bag parameter and expose the individual optional keyword arguments instead.",
-            "comment": "Using an options bag to group optional parameters violates the guideline (python_design.html#python-client-options-naming)."
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-paged-prefix"
-            ],
-            "line_no": 223,
-            "bad_code": "def trials(",
-            "suggestion": "Rename the method to 'list_trials' and consider returning an ItemPaged type for consistency with listing operations.",
-            "comment": "Methods that enumerate resources should be prefixed with 'list_' (python_design.html#python-paged-prefix)."
+            "line_no": 187,
+            "bad_code": "async def create_trials(",
+            "suggestion": "async def create_trials(self, body: Union[TrialMatcherData, JSON, IO], *, unit: Optional[Union[str, AgeUnit]] = None, value: Optional[float] = None, language: Optional[str] = None, date: Optional[datetime] = None, **kwargs: Any) -> AsyncLROPoller[TrialMatcherResult]",
+            "comment": "Operation-specific options should be provided as individual keyword-only arguments instead of using an options bag in the async client.",
+            "source": "guideline"
         },
         {
             "rule_ids": [
@@ -62,8 +34,39 @@
             ],
             "line_no": 229,
             "bad_code": "async def erase_trials(",
-            "suggestion": "Rename the method to 'delete_trials' to adhere to the preferred service verb usage.",
-            "comment": "Deletion operations should use the 'delete_' prefix rather than non-standard verbs like 'erase_' (python_design.html#python-client-service-verbs)."
+            "suggestion": "async def delete_trials(",
+            "comment": "Deletion operations should use the 'delete_' verb rather than 'erase_' in the async client.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 998,
+            "bad_code": "ivar eligibilityCriteriaEvidence: Optional[str]",
+            "suggestion": "ivar eligibility_criteria_evidence: Optional[str]",
+            "comment": "The attribute name should use snake_case instead of camelCase to follow Python naming conventions and to match the __init__ parameter style.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 1000,
+            "bad_code": "ivar patientDataEvidence: Optional[ClinicalNoteEvidence]",
+            "suggestion": "ivar patient_data_evidence: Optional[ClinicalNoteEvidence]",
+            "comment": "Attribute names should use snake_case to maintain consistency and follow naming conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 1001,
+            "bad_code": "ivar patientInfoEvidence: Optional[ClinicalCodedElement]",
+            "suggestion": "ivar patient_info_evidence: Optional[ClinicalCodedElement]",
+            "comment": "Property names should use snake_case for consistency with Python naming conventions.",
+            "source": "merged"
         }
     ]
 }

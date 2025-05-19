@@ -1,5 +1,29 @@
 # Release
 
+## 2025-05-19 - 0.7.1
+
+- Fixed a bug in processing breaking change suppressions
+
+## 2025-05-16 - 0.7.0
+
+- Update apiViewArtifact to point to staged artifact location
+- Retire sdkApiViewArtifactFolder
+
+## 2025-05-06 - 0.6.1
+
+- Turned duplicated SDK config error into warning and continued SDK generation based on TypeSpecs
+- Assigned value to language while constructing PackageData object
+
+## 2025-05-02 - 0.6.0
+
+- Normalize the log message with prefixes
+- Report more info in the summary line of log for telemetry purpose
+- Removed unused codes
+
+## 2025-04-24 - 0.5.1
+
+- Move service name variable into the package object
+
 ## 2025-04-22 - 0.5.0
 
 - Output service names and artifact staging folder in execution report.

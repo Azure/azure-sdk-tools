@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Conditions: Issue has no labels
         ///             Issue has no assignee
         /// Resulting Actions:
-        ///    Query AI label service for label suggestions:
+        ///    Query AI Triage service:
         ///       IF labels were predicted:
         ///         - Assign returned labels to the issue
 
@@ -100,11 +100,31 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 if (issueEventPayload.Action == ActionConstants.Opened)
                 {
+                    // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission.
+                    // This piece is executed for every issue created that doesn't have labels or owners on it at the time of creation.
+                    bool isCustomerReported = false;
+                    bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, issueEventPayload.Issue.User.Login);
+                    if (!isMemberOfOrg)
+                    {
+                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueEventPayload.Repository.Id, issueEventPayload.Issue.User.Login);
+                        if (!hasAdminOrWritePermission)
+                        {
+                            gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
+                            gitHubEventClient.AddLabel(TriageLabelConstants.Question);
+                            isCustomerReported = true;
+                        }
+                    }
+
                     // If there are no labels and no assignees
                     if ((issueEventPayload.Issue.Labels.Count == 0) && (issueEventPayload.Issue.Assignee == null))
                     {
-                        IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(issueEventPayload);
-                        if (triageOutput.Labels.Count() > 0)
+                        // Query AI Triage and disable Answers if this is not a customer reported issue.
+                        IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(
+                            issueEventPayload, 
+                            true, 
+                            !isCustomerReported);
+
+                        if (triageOutput.Labels.Any())
                         {
                             // If labels were predicted, add them to the issue
                             foreach (string label in triageOutput.Labels)
@@ -221,8 +241,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             }
 
                             // The needs-team-attention label is only added when it can be determined
-                            // who this issue belongs to.
-                            if (addNeedsTeamAttention)
+                            // who this issue belongs to and it is not customer reported. 
+                            if (addNeedsTeamAttention && !isCustomerReported)
                             {
                                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                             }
@@ -253,19 +273,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         else
                         {
                             gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTriage);
-                        }
-
-                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission.
-                        // This piece is executed for every issue created that doesn't have labels or owners on it at the time of creation.
-                        bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, issueEventPayload.Issue.User.Login);
-                        if (!isMemberOfOrg)
-                        {
-                            bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueEventPayload.Repository.Id, issueEventPayload.Issue.User.Login);
-                            if (!hasAdminOrWritePermission)
-                            {
-                                gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
-                                gitHubEventClient.AddLabel(TriageLabelConstants.Question);
-                            }
                         }
                     }
                 }

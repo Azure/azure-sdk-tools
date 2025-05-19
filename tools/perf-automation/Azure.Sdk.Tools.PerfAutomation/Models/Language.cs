@@ -6,6 +6,7 @@
         JS,
         Net,
         Python,
-        Cpp
+        Cpp,
+        Rust
     }
 }

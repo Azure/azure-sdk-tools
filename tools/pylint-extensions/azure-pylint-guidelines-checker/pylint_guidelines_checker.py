@@ -2396,14 +2396,14 @@ class NonCoreNetworkImport(BaseChecker):
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
             return
         for import_, _ in node.names:
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from a blocked package."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
             return
         self._check_import(node.modname, node)
 
@@ -2758,7 +2758,11 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """
         for i in node:
             if isinstance(i, astroid.Raise):
-                self.check_for_logging(node, exception_name)
+                # If it is a bare raise, or explicitly raising the same exception as-is
+                # TODO: raise X from exception
+                if (isinstance(i.exc, astroid.Name) and i.exc.name == exception_name) or not i.exc:  #or (isinstance(i.cause, astroid.Name) and i.cause.name == exception_name):
+                    # Check if the exception is being logged
+                    self.check_for_logging(node, exception_name)
             # Check for any nested 'If' branches
             if isinstance(i, astroid.If):
                 self.check_for_raise(i.body, exception_name)
@@ -2784,7 +2788,21 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                         # 1. logger.debug(exception)
                         # 2. logger.debug(f"something {exception}")
                         # 3. logger.debug("Failed: %r", exception)
-                        
+
+                        # if we have exception.__name__ or str(exception) lets not raise an error
+                        for log_arg in j.value.args:
+                            # Check for calls like str(exception) or exception.__name__
+                            if isinstance(log_arg, astroid.Call) and isinstance(log_arg.func, astroid.Name) and log_arg.func.name == "str":
+                                for arg in log_arg.args:
+                                    if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                        # This is str(exception), which is fine
+                                        return
+                            
+                            # Check for attribute access like exception.__name__
+                            if isinstance(log_arg, astroid.Attribute) and isinstance(log_arg.expr, astroid.Name):
+                                if log_arg.expr.name == exception_name and log_arg.attrname == "__name__":
+                                    # This is exception.__name__, which is fine
+                                    return
                         
                         # Check for f-strings that might contain the exception
                         for log_arg in j.value.args:
@@ -3243,9 +3261,9 @@ class DoNotUseLoggingException(BaseChecker):
     priority = -1
     msgs = {
         "C4769": (
-            "Do not use Exception level logging. Use logging.error instead.",
+            "Do not use Exception level logging. This can cause sensitive information to get leaked.",
             "do-not-use-logging-exception",
-            "Do not use Exception level logging. Use logging.error instead.",
+            "Do not use Exception level logging. This can cause sensitive information to get leaked.",
         ),
     }
 

@@ -1,4 +1,0 @@
-The code snippet is written in Python. It defines a class named `BanoodleClient`, which contains an instance variable `name`.
-The class includes two method definitions: `new_banoodle`, which takes a string parameter `name` and accepts additional keyword
-arguments of any type, returning an instance of `BanoodleClient`; and `erase_banoodle`, which also takes a string parameter `name`
-and accepts additional keyword arguments of any type,but does not have a return type specified.

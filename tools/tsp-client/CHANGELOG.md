@@ -1,5 +1,9 @@
 # Release
 
+## 2025-05-01 - 0.21.0
+
+- Update `@typespec/compiler` dependency to `"1.0.0-rc.1 || >=1.0.0 <2.0.0"`.
+
 ## 2025-04-10 - 0.20.0
 
 - Support a `--trace` flag on the `init`, `update`, and `generate` commands to enable tracing when compiling.

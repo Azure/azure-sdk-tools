@@ -7,7 +7,9 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import supported_models, DEFAULT_MODEL
+from src._apiview_reviewer import (
+    DEFAULT_USE_RAG,
+)
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -45,48 +47,47 @@ helps[
 
 def local_review(
     language: str,
-    path: str,
-    model: str = DEFAULT_MODEL,
-    chunk_input: bool = False,
-    use_rag: bool = False,
-    general_review: bool = False,
+    target: str,
+    base: str = None,
+    use_rag: bool = DEFAULT_USE_RAG,
 ):
     """
     Generates a review using the locally installed code.
     """
     from src._apiview_reviewer import ApiViewReview
 
-    rg = ApiViewReview(
-        language=language, model=model, chunk_input=chunk_input, use_rag=use_rag
-    )
-    filename = os.path.splitext(os.path.basename(path))[0]
-
-    with open(path, "r") as f:
-        apiview = f.read()
-
-    if general_review is False:
-        review = rg.get_response(apiview)
-        output_path = os.path.join("scratch", "output", language)
-        os.makedirs(output_path, exist_ok=True)
-        output_file = os.path.join(output_path, f"{filename}.json")
-
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(review.model_dump_json(indent=4))
-
-        print(f"Review written to {output_file}")
-        print(f"Found {len(review.violations)} violations.")
+    if base is None:
+        filename = os.path.splitext(os.path.basename(target))[0]
     else:
-        review = rg.get_general_review_response(apiview)
+        target_name = os.path.splitext(os.path.basename(target))[0]
+        base_name = os.path.splitext(os.path.basename(base))[0]
+        # find the common prefix
+        common_prefix = os.path.commonprefix([target_name, base_name])
+        # strip the common prefix from both names
+        target_name = target_name[len(common_prefix) :]
+        base_name = base_name[len(common_prefix) :]
+        filename = f"{common_prefix}_{base_name}_{target_name}"
 
-        output_path = os.path.join("scratch", "output", language)
-        os.makedirs(output_path, exist_ok=True)
+    with open(target, "r", encoding="utf-8") as f:
+        target_apiview = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base_apiview = f.read()
+    else:
+        base_apiview = None
 
-        output_file = os.path.join(output_path, f"{filename}_general.json")
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(review.model_dump_json(indent=4))
+    reviewer = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
+    review = reviewer.run()
+    reviewer.close()
+    output_path = os.path.join("scratch", "output", language)
+    os.makedirs(output_path, exist_ok=True)
+    output_file = os.path.join(output_path, f"{filename}.json")
 
-        print(f"Review written to {output_file}")
-        print(f"Found {len(review.improvements)} improvements.")
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(review.model_dump_json(indent=4))
+
+    print(f"Review written to {output_file}")
+    print(f"Found {len(review.comments)} comments.")
 
 
 def create_test_case(
@@ -97,6 +98,9 @@ def create_test_case(
     test_file: str,
     overwrite: bool = False,
 ):
+    """
+    Creates or updates a test case for the APIView reviewer.
+    """
     with open(apiview_path, "r") as f:
         apiview_contents = f.read()
 
@@ -110,7 +114,7 @@ def create_test_case(
             guidelines.extend(json.loads(f.read()))
 
     context = ""
-    for violation in expected_contents["violations"]:
+    for violation in expected_contents["comments"]:
         for rule_id in violation["rule_ids"]:
             for rule in guidelines:
                 if rule["id"] == rule_id:
@@ -147,6 +151,9 @@ def create_test_case(
 
 
 def deconstruct_test_case(language: str, test_case: str, test_file: str):
+    """
+    Deconstructs a test case into its component APIView test and expected results file.
+    """
     test_cases = {}
     with open(test_file, "r") as f:
         for line in f:
@@ -160,34 +167,18 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
 
     apiview = test_cases[test_case].get("query", "")
     expected = test_cases[test_case].get("response", "")
-    deconstructed_apiview = (
-        pathlib.Path(__file__).parent
-        / "evals"
-        / "tests"
-        / language
-        / f"{test_case}.txt"
-    )
-    deconstructed_expected = (
-        pathlib.Path(__file__).parent
-        / "evals"
-        / "tests"
-        / language
-        / f"{test_case}.json"
-    )
+    deconstructed_apiview = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.txt"
+    deconstructed_expected = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.json"
     with open(deconstructed_apiview, "w") as f:
         f.write(apiview)
 
     with open(deconstructed_expected, "w") as f:
-        # sort violations by line number
+        # sort comments by line number
         expected = json.loads(expected)
-        expected["violations"] = sorted(
-            expected["violations"], key=lambda x: x["line_no"]
-        )
+        expected["comments"] = sorted(expected["comments"], key=lambda x: x["line_no"])
         f.write(json.dumps(expected, indent=4))
 
-    print(
-        f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}."
-    )
+    print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
 
 
 def deploy_flask_app(
@@ -201,44 +192,33 @@ def deploy_flask_app(
     deploy_app_to_azure(app_name, resource_group, subscription_id)
 
 
-def generate_review_from_app(language: str, path: str):
+def generate_review_from_app(language: str, target: str, base: Optional[str] = None):
     """Generates a review using the deployed Flask app."""
-    from scripts.remove_review import generate_remote_review
+    from scripts.remote_review import generate_remote_review
 
-    response = asyncio.run(generate_remote_review(path, language))
-    # attempt to JSON decode the string
-    try:
-        response = json.loads(response)
+    # Read the file content
+    with open(target, "r", encoding="utf-8") as f:
+        target = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base = f.read()
+    else:
+        base = None
+
+    response = asyncio.run(generate_remote_review(target=target, base=base, language=language))
+
+    # response is already a dict, no need to parse it
+    if isinstance(response, dict):
         pprint(response, indent=2)
-    except json.JSONDecodeError:
+    else:
+        # Handle error responses which are strings
         print(response)
-
-
-def search_examples(path: str, language: str):
-    """Search the examples-index for a query."""
-    from scripts.search_examples import search_examples
-
-    results = search_examples(path, language)
-    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
-
-
-def search_guidelines(
-    language: str, text: Optional[str] = None, path: Optional[str] = None
-):
-    """Search the guidelines-index for a query."""
-    from scripts.search_guidelines import search_guidelines
-
-    if (path and text) or (not path and not text):
-        raise ValueError("Provide one of `--path` or `--text`.")
-    results = search_guidelines(path or text, language)
-    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
 
 
 def search_knowledge_base(
     language: str,
     text: Optional[str] = None,
     path: Optional[str] = None,
-    index: List[str] = ["examples", "guidelines"],
     markdown: bool = False,
 ):
     """
@@ -253,11 +233,8 @@ def search_knowledge_base(
     if path:
         with open(path, "r") as f:
             query = f.read()
-    if "examples" in index:
-        examples = search.search_examples(query=query)
-    if "guidelines" in index:
-        guidelines = search.search_guidelines(query=query)
-    context = search.build_context(guidelines, examples)
+    results = search.search_all(query=query)
+    context = search.build_context(results)
     if markdown:
         md = context.to_markdown()
         print(md)
@@ -290,8 +267,6 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
-            g.command("examples", "search_examples")
-            g.command("guidelines", "search_guidelines")
             g.command("kb", "search_knowledge_base")
         return OrderedDict(self.command_table)
 
@@ -307,26 +282,21 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
-                "model",
-                type=str,
-                help="The model to use for the review",
-                options_list=("--model", "-m"),
-                choices=supported_models,
-            )
-            ac.argument(
-                "chunk_input",
-                action="store_true",
-                help="Chunk the input into smaller sections (currently, by class).",
-            )
-            ac.argument(
                 "use_rag",
                 action="store_true",
                 help="Use RAG pattern to generate the review.",
             )
             ac.argument(
-                "general_review",
-                action="store_true",
-                help="Run general review against general language guidance.",
+                "target",
+                type=str,
+                help="The path to the APIView file to review.",
+                options_list=("--target", "-t"),
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file to compare against. If omitted, copilot will review the entire target APIView.",
+                options_list=("--base", "-b"),
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
@@ -353,12 +323,8 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "eval deconstruct") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
-            ac.argument(
-                "test_case", type=str, help="The specific test case to deconstruct."
-            )
-            ac.argument(
-                "test_file", type=str, help="The full path to the JSONL test file."
-            )
+            ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
+            ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
         with ArgumentsContext(self, "app deploy") as ac:
             ac.argument(
                 "app_name",

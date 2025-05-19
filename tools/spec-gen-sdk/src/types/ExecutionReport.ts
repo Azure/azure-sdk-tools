@@ -6,16 +6,18 @@ export const executionReportSchema = requireJsonc(__dirname + '/ExecutionReportS
 
 export type ExecutionReport = {
   packages: PackageReport[];
-  services?: string[];
   executionResult: SDKAutomationState;
   fullLogPath: string;
   filteredLogPath?: string;
   vsoLogPath?: string;
+  stagedArtifactsFolder?: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
+  isSdkConfigDuplicated?: boolean;
 };
 
 export type PackageReport = {
+  serviceName?: string;
   packageName?: string;
   result: SDKAutomationState;
   artifactPaths?: string[];

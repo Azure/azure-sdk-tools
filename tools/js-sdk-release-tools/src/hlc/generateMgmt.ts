@@ -4,7 +4,7 @@ import {execSync} from "child_process";
 import fs from "fs";
 import * as path from "path";
 import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git.js";
-import {generateChangelogAndBumpVersion} from "../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import {generateChangelogAndBumpVersion} from "../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import {Changelog} from "../changelog/changelogGenerator.js";
 import {changeRushJson} from "../utils/changeRushJson.js";
 import {modifyOrGenerateCiYml} from "../utils/changeCiYaml.js";
@@ -16,6 +16,7 @@ import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
 import { migratePackage } from "../common/migration.js";
+import { isRushRepo } from "../common/rushUtils.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -68,8 +69,9 @@ export async function generateMgmt(options: {
             const packageName = packageJson.name;
 
             if (!options.skipGeneration) {
-                changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
-
+                if (isRushRepo(options.sdkRepo)) {
+                    changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
+                }
                 // change configuration to skip build test, sample
                 changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Hlc);
 
@@ -104,21 +106,35 @@ export async function generateMgmt(options: {
                     outputPackageInfo.path.push(file);
                 }
             }
-
-            logger.info(`Start to run command: 'rush update'.`);
-            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-            
-            await migratePackage(packagePath);
-            
-            logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-            execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
-            logger.info('Start to generate changelog and bump version...');
             let changelog: Changelog | undefined;
-            if (!options.skipGeneration) {
-                changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+            if (isRushRepo(options.sdkRepo)) {
+                logger.info(`Start to run command: 'rush update'.`);
+                execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+    
+                await migratePackage(options.sdkRepo,packagePath);
+    
+                logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+                logger.info('Start to generate changelog and bump version...');
+                if (!options.skipGeneration) {
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+                }
+                logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
+                execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            } else {
+                logger.info(`Start to run command: 'pnpm update'.`);
+                execSync('pnpm install', {stdio: 'inherit'});
+                                
+                logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+                logger.info('Start to generate changelog and bump version...');
+                if (!options.skipGeneration) {
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+                }
+                logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
+                execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
             }
-            logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
-            execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
             }

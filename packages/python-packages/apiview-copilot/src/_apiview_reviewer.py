@@ -85,6 +85,7 @@ class ApiViewReview:
         base: Optional[str],
         *,
         language: str,
+        outline: Optional[str] = None,
         use_rag: bool = DEFAULT_USE_RAG,
     ):
         self.target = self._unescape(target)
@@ -99,7 +100,7 @@ class ApiViewReview:
         static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
-        self.outline = None
+        self.outline = outline
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):
@@ -260,7 +261,7 @@ class ApiViewReview:
 
             # Prepare context for guideline tasks
             if self.use_rag:
-                context = self._retrieve_and_resolve_guidelines(str(section))
+                context = self._retrieve_context(str(section))
                 if context:
                     context_string = context.to_markdown()
                 else:
@@ -559,29 +560,21 @@ class ApiViewReview:
         }
         return language_pretty_names.get(self.language, self.language.capitalize())
 
-    def _retrieve_and_resolve_guidelines(self, query: str) -> List[object] | None:
+    def _retrieve_context(self, query: str) -> List[object] | None:
         try:
             """
-            Given a code query, searches the examples index for relevant examples
-            and the guidelines index for relevant guidelines based on a structural
-            description of the code. Then, it resolves the two sets of results.
+            Given a code query, searches the unified index for relevant guidelines,
+            memories and examples.
             """
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
 
             # search the examples index directly with the code snippet
-            example_results = self.search.search_examples(query)
-
-            # use a prompt to convert the code snippet to text
-            # then do a hybrid search of the guidelines index against this description
-            prompt = os.path.join(_PROMPTS_FOLDER, "code_to_text.prompty")
-            response = self._run_prompt(prompt, inputs={"question": query})
-            guideline_results = self.search.search_guidelines(response)
-
-            context = self.search.build_context(guideline_results, example_results)
+            results = self.search.search_all(query=query)
+            context = self.search.build_context(results)
             return context
         except Exception as e:
             # Log search errors
-            logger.error(f"Error retrieving guidelines: {str(e)}")
+            logger.error(f"Error retrieving context: {str(e)}")
             # Return empty context as fallback
             return None
 

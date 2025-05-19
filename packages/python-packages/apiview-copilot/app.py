@@ -43,7 +43,9 @@ def api_reviewer(language: str):
         data = request.get_json()
 
         target_apiview = data.get("target", None)
+        target_id = data.get("target_id", None)
         base_apiview = data.get("base", None)
+        outline = data.get("outline", None)
 
         if not target_apiview:
             logger.warning("No API content provided in the request")
@@ -52,7 +54,7 @@ def api_reviewer(language: str):
         logger.info(f"Processing {language} API review")
 
         # Create reviewer and get response
-        reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview)
+        reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview, outline=outline)
         result = reviewer.run()
         reviewer.close()
 
@@ -63,6 +65,9 @@ def api_reviewer(language: str):
                 logger.error(f"Error log contents:\n{error_message}")
 
         logger.info("API review completed successfully")
+
+        # TODO: Add logic to post comments to the target_id, if provided
+
         return jsonify(json.loads(result.model_dump_json()))
 
     except Exception as e:

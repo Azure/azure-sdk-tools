@@ -1,5 +1,9 @@
 # Release
 
+## 2025-05-19 - 0.7.1
+
+- Fix the judgment logic after reading sdk-suppressions
+
 ## 2025-05-16 - 0.7.0
 
 - Update apiViewArtifact to point to staged artifact location

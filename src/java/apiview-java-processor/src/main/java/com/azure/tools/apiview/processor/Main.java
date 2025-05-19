@@ -50,9 +50,7 @@ public class Main {
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        for (int i = 0; i < 50; i++) {
-            Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
-        }
+        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
     }
 

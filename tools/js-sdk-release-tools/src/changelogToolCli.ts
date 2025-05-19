@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { generateChangelogAndBumpVersion } from "./common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import { generateChangelogAndBumpVersion } from "./common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { logger } from "./utils/logger.js";
 
 const changelogToolCli = async (options: {

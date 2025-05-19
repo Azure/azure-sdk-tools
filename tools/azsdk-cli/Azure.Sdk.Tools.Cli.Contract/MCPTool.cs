@@ -1,11 +1,5 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Contract
 {
@@ -16,14 +10,21 @@ namespace Azure.Sdk.Tools.Cli.Contract
     ///     - route registration/disambiguation
     ///     - compilation trim avoidance for reflection-included MCP tools
     /// </summary>
-    public abstract class MCPTool : MCPToolInterface
+    public abstract class MCPTool
     {
-        public MCPTool() {}
+        public MCPTool() { }
 
         public Command? Command;
 
+        public int ExitCode { get; set; } = 0;
+
+        public void SetFailure(int exitCode = 1)
+        {
+            ExitCode = exitCode;
+        }
+
         public abstract Command GetCommand();
 
-        public abstract Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct);
+        public abstract Task HandleCommand(InvocationContext ctx, CancellationToken ct);
     }
 }

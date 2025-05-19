@@ -51,8 +51,20 @@ public class JavaASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
-    private static final JavaParserAdapter JAVA_8_PARSER;
-    private static final JavaParserAdapter JAVA_11_PARSER;
+
+    // JavaParser is not thread-safe, so we need to use a ThreadLocal to ensure that each thread has its own instance.
+    private static final ThreadLocal<JavaParserAdapter> JAVA_8_PARSER = ThreadLocal.withInitial(() -> 
+        JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
+            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)
+            .setDetectOriginalLineSeparator(false)))
+    );
+    
+    private static final ThreadLocal<JavaParserAdapter> JAVA_11_PARSER = ThreadLocal.withInitial(() -> 
+        JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
+            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
+            .setDetectOriginalLineSeparator(false)))
+    );
+    
     static {
         /*
          For some annotations, we want to customise how they are displayed. Sometimes, we don't show them in any
@@ -70,15 +82,6 @@ public class JavaASTAnalyser implements Analyser {
 
         // we always want @Metadata annotations to be fully expanded, but in a condensed form
         ANNOTATION_RULE_MAP.put(ANNOTATION_METADATA, new AnnotationRule().setShowProperties(true).setCondensed(true));
-
-        // Configure JavaParser to use type resolution
-        JAVA_8_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
-            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)
-            .setDetectOriginalLineSeparator(false)));
-
-        JAVA_11_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
-            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
-            .setDetectOriginalLineSeparator(false)));
     }
 
 
@@ -125,7 +128,7 @@ public class JavaASTAnalyser implements Analyser {
          * Finally, tokenize each file.
          */
         // a set of all elements discovered before we begin processing them
-        Set<ScanElement> scanElements = allFiles.stream()
+        Set<ScanElement> scanElements = allFiles.parallelStream()
                 .filter(this::filterFilePaths)
                 .map(this::scanForTypes)
                 .filter(Optional::isPresent)
@@ -228,8 +231,8 @@ public class JavaASTAnalyser implements Analyser {
             boolean isModuleInfo = path.endsWith("module-info.java");
 
             CompilationUnit compilationUnit = isModuleInfo
-                ? JAVA_11_PARSER.parse(Files.newBufferedReader(path))
-                : JAVA_8_PARSER.parse(Files.newBufferedReader(path));
+                ? JAVA_11_PARSER.get().parse(Files.newBufferedReader(path))
+                : JAVA_8_PARSER.get().parse(Files.newBufferedReader(path));
 
             compilationUnit.setStorage(path, StandardCharsets.UTF_8);
 

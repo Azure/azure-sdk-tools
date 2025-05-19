@@ -56,7 +56,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             relativePackageDirToSdkRoot
         );
 
-        const artifactPath = await createArtifact(packageDirectory, rushxScript);
+        const artifactPath = await createArtifact(packageDirectory, rushxScript, options.sdkRepoRoot);
         const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
         packageResult.artifacts.push(relativeArtifactPath);
 

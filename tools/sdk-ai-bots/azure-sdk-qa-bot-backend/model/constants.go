@@ -6,6 +6,6 @@ var KeywordReplaceMap = map[string]string{
 	"tcgc": "typespec-client-generator-core",
 }
 
-const RerankScoreLowRelevanceThreshold = 1.5
+const RerankScoreLowRelevanceThreshold = 2
 const RerankScoreRelevanceThreshold = 3
 const RerankScoreHighRelevanceThreshold = 4

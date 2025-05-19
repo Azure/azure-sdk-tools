@@ -5,3 +5,7 @@ var KeywordReplaceMap = map[string]string{
 	"oa3":  "openapi3",
 	"tcgc": "typespec-client-generator-core",
 }
+
+const RerankScoreLowRelevanceThreshold = 1.5
+const RerankScoreRelevanceThreshold = 3
+const RerankScoreHighRelevanceThreshold = 4

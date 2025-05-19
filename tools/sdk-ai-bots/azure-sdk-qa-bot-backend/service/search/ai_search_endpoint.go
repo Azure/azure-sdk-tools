@@ -67,11 +67,10 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		Select: "title, context_id",
 		VectorQueries: []model.VectorQuery{
 			{
-				Text:       query,
-				K:          k,
-				Fields:     "text_vector, title_vector",
-				Kind:       "text",
-				Exhaustive: true,
+				Text:   query,
+				K:      k,
+				Fields: "text_vector, title_vector",
+				Kind:   "text",
 			},
 		},
 		QueryType:             "semantic",

@@ -39,29 +39,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             await Task.CompletedTask;
         }
 
-        [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
-        public DefaultCommandResponse EchoFail(string message)
-        {
-            logger.LogError("Echoing message: {message}", message);
-            SetFailure(1);
-
-            return new()
-            {
-                Message = $"RESPONDING TO '{message}' with FAIL: {ExitCode}",
-                Duration = 1,
-            };
-        }
-
         [McpServerTool(Name = "hello-world-success"), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
-            logger.LogInformation("Echoing message: {message}", message);
-
-            return new()
+            try
             {
-                Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
-                Duration = 1
-            };
+                logger.LogInformation("Echoing message: {message}", message);
+
+                return new()
+                {
+                    Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
+                    Duration = 1
+                };
+            }
+            catch(Exception ex)
+            {
+                logger.LogError("Exception during echo: {ex}", ex);
+                SetFailure();
+                return new()
+                {
+                    Message = $"Failed to echo message: {ex.Message}",
+                    Duration = 1
+                };
+            }
         }
     }
     #endif

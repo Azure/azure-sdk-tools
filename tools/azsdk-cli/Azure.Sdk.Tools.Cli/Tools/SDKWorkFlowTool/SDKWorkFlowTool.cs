@@ -41,8 +41,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> workItemIdOpt = new(["--workitem-id"], "SDK release plan work item id") { IsRequired = true };
         private readonly Option<int> pipelineRunIdOpt = new(["--pipeline-run"], "SDK generation pipeline run id") { IsRequired = true };
 
+        #pragma warning disable MCP001
         [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
+        #pragma warning restore MCP00
         {
             var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);
             return output.Format(response);
@@ -151,13 +153,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
         public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullrequestNumber, int workItemId)
         {
-            var response = new GenericResponse()
-            {
-                Status = "Success"
-            };
-
             try
             {
+                var response = new GenericResponse()
+                {
+                    Status = "Success"
+                };
                 if (!DevOpsService.IsSDKGenerationSupported(language))
                 {
                     response.Details.Add($"SDK generation is currently not supported by agent for {language}");
@@ -219,9 +220,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
-                response.Details.Add($"Failed to run pipeline to generate SDK, Details: {ex.Message}");
-                response.Status = "Failed";
-                return output.Format(response);
+                var errorResponse = new GenericResponse();
+                errorResponse.Details.Add($"Failed to run pipeline to generate SDK, Details: {ex.Message}");
+                errorResponse.Status = "Failed";
+                return output.Format(errorResponse);
             }
         }
 
@@ -233,22 +235,25 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("Get SDK generation pipeline run details and status for a given pipeline build ID")]
         public async Task<string> GetPipelineRunStatus(int buildId)
         {
-            var response = new GenericResponse();
+                
             try
             {
+                var response = new GenericResponse();
                 var pipeline = await devopsService.GetPipelineRun(buildId);
                 if (pipeline != null)
                 {
                     response.Status = pipeline.Result?.ToString() ?? "Not available";
                     response.Details.Add($"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}");
                 }
+                return output.Format(response);
             }
             catch (Exception ex)
             {
-                response.Status = "Failed";
-                response.Details.Add($"Failed to get pipeline run with id {buildId}. Error: {ex.Message}");
+                var errorResponse = new GenericResponse();
+                errorResponse.Status = "Failed";
+                errorResponse.Details.Add($"Failed to get pipeline run with id {buildId}. Error: {ex.Message}");
+                return output.Format(errorResponse);
             }
-            return output.Format(response);
         }
 
         /// <summary>

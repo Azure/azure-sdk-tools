@@ -109,34 +109,51 @@ public class AzurePipelinesTool(
     [McpServerTool, Description("Gets details for a pipeline run")]
     public async Task<Build> GetPipelineRun(int buildId, string? _project = null)
     {
-        // _project state changes to the last successful GET to the build api
-        project ??= project ?? "public";
-
         try
         {
-            var build = await buildClient.GetBuildAsync(_project, buildId);
-            project = _project;
-            return build;
-        }
-        catch { }
+            // _project state changes to the last successful GET to the build api
+            project ??= project ?? "public";
 
-        try
+            try
+            {
+                var build = await buildClient.GetBuildAsync(_project, buildId);
+                project = _project;
+                return build;
+            }
+            catch { }
+
+            try
+            {
+                _project = _project == "public" ? "internal" : "public";
+                var build = await buildClient.GetBuildAsync(_project, buildId);
+                project = _project;
+                return build;
+            }
+            catch { }
+
+            throw new Exception($"Failed to find build {buildId} in project 'public' or 'internal'");
+        }
+        catch (Exception ex)
         {
-            _project = _project == "public" ? "internal" : "public";
-            var build = await buildClient.GetBuildAsync(_project, buildId);
-            project = _project;
-            return build;
+            SetFailure();
+            throw new Exception($"Failed to get pipeline run {buildId} in project {_project}: {ex.Message}");
         }
-        catch { }
-
-        throw new Exception($"Failed to find build {buildId} in project 'public' or 'internal'");
     }
 
     [McpServerTool, Description("Gets failures from non-test steps in a pipeline run")]
     public async Task<List<TimelineRecord>?> GetPipelineFailures(int buildId)
     {
-        var failedNonTests = await GetPipelineFailuresTyped(buildId);
-        return failedNonTests;
+        try
+        {
+            var failedNonTests = await GetPipelineFailuresTyped(buildId);
+            return failedNonTests;
+        }
+        catch (Exception ex)
+        {
+            SetFailure();
+            logger.LogError($"Encountered an unexpected exception while attempting to get Pipeline Failures. {ex.Message}");
+            return new List<TimelineRecord> {};
+        }
     }
 
     public async Task<List<TimelineRecord>> GetPipelineFailuresTyped(int buildId)
@@ -153,45 +170,54 @@ public class AzurePipelinesTool(
     ")]
     public async Task<List<object>> GetPipelineFailedTestResults(int buildId)
     {
-        var results = new List<ShallowTestCaseResult>();
-        var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId);
-        results.AddRange(testRuns);
-        while (testRuns.ContinuationToken != null)
+        try
         {
-            var nextResults = await testClient.GetTestResultsByPipelineAsync(project, buildId, continuationToken: testRuns.ContinuationToken);
-            results.AddRange(nextResults);
-            testRuns.ContinuationToken = nextResults.ContinuationToken;
-        }
-
-        var failedRuns = results.Where(
-            r => r.Outcome == TestOutcome.Failed.ToString()
-            || r.Outcome == TestOutcome.Aborted.ToString())
-        .Select(r => r.RunId)
-        .Distinct()
-        .ToList();
-
-        var failedRunData = new List<object>();
-
-        foreach (var runId in failedRuns)
-        {
-            var testCases = await testClient.GetTestResultsAsync(
-                            project, runId, outcomes: [TestOutcome.Failed, TestOutcome.Aborted]);
-
-            foreach (var tc in testCases)
+            var results = new List<ShallowTestCaseResult>();
+            var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId);
+            results.AddRange(testRuns);
+            while (testRuns.ContinuationToken != null)
             {
-                failedRunData.Add(new
-                {
-                    RunId = runId,
-                    tc.TestCaseTitle,
-                    tc.ErrorMessage,
-                    tc.StackTrace,
-                    tc.Outcome,
-                    tc.Url
-                });
+                var nextResults = await testClient.GetTestResultsByPipelineAsync(project, buildId, continuationToken: testRuns.ContinuationToken);
+                results.AddRange(nextResults);
+                testRuns.ContinuationToken = nextResults.ContinuationToken;
             }
-        }
 
-        return failedRunData;
+            var failedRuns = results.Where(
+                r => r.Outcome == TestOutcome.Failed.ToString()
+                || r.Outcome == TestOutcome.Aborted.ToString())
+            .Select(r => r.RunId)
+            .Distinct()
+            .ToList();
+
+            var failedRunData = new List<object>();
+
+            foreach (var runId in failedRuns)
+            {
+                var testCases = await testClient.GetTestResultsAsync(
+                                project, runId, outcomes: [TestOutcome.Failed, TestOutcome.Aborted]);
+
+                foreach (var tc in testCases)
+                {
+                    failedRunData.Add(new
+                    {
+                        RunId = runId,
+                        tc.TestCaseTitle,
+                        tc.ErrorMessage,
+                        tc.StackTrace,
+                        tc.Outcome,
+                        tc.Url
+                    });
+                }
+            }
+
+            return failedRunData;
+        }
+        catch(Exception e)
+        {
+            SetFailure();
+            logger.LogError("Failed to get pipeline failed test results: {exception}", e.Message);
+            return new List<object>();
+        }
     }
 
     [McpServerTool, Description(@"
@@ -201,14 +227,23 @@ public class AzurePipelinesTool(
     ")]
     public async Task<List<string>> GetPipelineFailureLog(int buildId, int logId, string? project = null)
     {
-        project ??= project ?? "public";
-        var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
-        var output = new List<string>();
-        foreach (var line in logContent)
+        try
         {
-            output.Add(line);
+            project ??= project ?? "public";
+            var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
+            var output = new List<string>();
+            foreach (var line in logContent)
+            {
+                output.Add(line);
+            }
+            return output;
         }
-        return output;
+        catch (Exception ex)
+        {
+            SetFailure();
+            logger.LogError("Failed to get pipeline failure log: {exception}", ex.Message);
+            return new List<string>();
+        }
     }
 
     public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null, string? aiEndpoint = null, string? aiModel = null)
@@ -249,7 +284,15 @@ public class AzurePipelinesTool(
     [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]
     public async Task<string> AnalyzePipelineFailureLog(int buildId, int logId, string? project = null)
     {
-        return await AnalyzePipelineFailureLog(buildId, logId, project, null, null);
+        try
+        {
+            return await AnalyzePipelineFailureLog(buildId, logId, project, null, null);
+        }
+        catch(Exception ex)
+        {
+            SetFailure();
+            return $"Unexpected exception while Analyzing Pipeline Failure. {ex.Message}";
+        }
     }
 
     public bool IsTestStep(string stepName)

@@ -2,7 +2,7 @@
 
 ## 2025-05-19 - 0.7.1
 
-- Fix the judgment logic after reading sdk-suppressions
+- Fixed a bug in processing breaking change suppressions
 
 ## 2025-05-16 - 0.7.0
 

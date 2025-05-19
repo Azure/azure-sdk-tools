@@ -8,8 +8,6 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
-import { trySpecifiyApiVersionToGenerateSDKByTypeSpec } from "./common/utils.js";
-
 import shell from 'shelljs';
 import fs from 'fs';
 
@@ -42,11 +40,6 @@ async function automationGenerateInPipeline(
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
-        }
-        if (apiVersion && !skipGeneration && typespecProject) {
-            const absoluteSpecFolder = path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder)
-            const tspDefDir = path.join(absoluteSpecFolder, typespecProject);
-            trySpecifiyApiVersionToGenerateSDKByTypeSpec(tspDefDir, apiVersion);
         }
         switch (sdkType) {
             case SDKType.HighLevelClient:

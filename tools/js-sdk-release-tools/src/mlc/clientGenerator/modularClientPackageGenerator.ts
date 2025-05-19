@@ -6,7 +6,7 @@ import { posix } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, trySpecifiyApiVersionToGenerateSDKByTypeSpec } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
@@ -31,7 +31,9 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await remove(packageDirectory);
-
+        if (options.apiVersion) {
+            trySpecifiyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
+        }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
 

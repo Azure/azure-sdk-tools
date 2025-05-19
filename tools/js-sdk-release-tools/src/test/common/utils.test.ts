@@ -82,6 +82,26 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
         }
     });
 
+    test("tspconfig.yaml does not exist", async () => {
+        const tempSpecFolder = path.join(
+            __dirname,
+            `tmp/spec-${getRandomInt(10000)}`,
+        );
+        try {
+            await ensureDir(tempSpecFolder);            
+            expect(() =>
+                trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+                    tempSpecFolder,
+                    "2023-10-01",
+                ),
+            ).toThrow(
+                `tspconfig.yaml does not exist in ${tempSpecFolder}, skip updating tspconfig.yaml.`,
+            );
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
+
     test("not found @azure-tools/typespec-ts options in tspconfig.yaml", async () => {
         const fakeTspConfig = {
             options: {

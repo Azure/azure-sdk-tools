@@ -64,7 +64,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		Search: query,
 		Count:  false,
 		Top:    k,
-		Select: "title, context_id",
+		Select: "title, context_id, chunk, header_1, header_2, header_3, chunk_id, ordinal_position",
 		VectorQueries: []model.VectorQuery{
 			{
 				Text:   query,

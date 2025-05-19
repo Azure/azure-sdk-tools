@@ -110,7 +110,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			log.Printf("Skipping result with low score: %s, score: %f", result.Title, result.RerankScore)
 			continue
 		}
-		if result.RerankScore >= model.RerankScoreHighRelevanceThreshold {
+		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
 			needCompleteResults = append(needCompleteResults, result)
 			log.Printf("Adding result with high score: %s, score: %f", result.Title, result.RerankScore)
 			continue
@@ -120,7 +120,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	}
 	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
 		log.Printf("No results found with high relevance score, using normal results")
-		supplyNum := 3
+		supplyNum := 5
 		if len(normalResult) < supplyNum {
 			supplyNum = len(normalResult)
 		}
@@ -155,7 +155,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	chunks := make([]string, 0)
 	var chunkTitles []string
 	for _, result := range mergedChunks {
-		chunk := processChunk(result)
+		chunk := processDocument(result)
 		chunkTitles = append(chunkTitles, result.Title)
 		chunks = append(chunks, chunk)
 	}
@@ -262,11 +262,22 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 	return nil, nil
 }
 
-func processChunk(result model.Index) string {
-	chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
+func processDocument(result model.Index) string {
+	chunk := fmt.Sprintf("- document_category: %s\n", result.ContextID)
 	chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
 	chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
 	chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
 	chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
+	return chunk
+}
+
+func processChunk(result model.Index) string {
+	chunk := fmt.Sprintf("- document_category: %s\n", result.ContextID)
+	chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
+	chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
+	chunk += fmt.Sprintf("- chunk_header_1: %s\n", result.Header1)
+	chunk += fmt.Sprintf("- chunk_header_2: %s\n", result.Header2)
+	chunk += fmt.Sprintf("- chunk_header_3: %s\n", result.Header3)
+	chunk += fmt.Sprintf("- chunk_content: %s\n", result.Chunk)
 	return chunk
 }

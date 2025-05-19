@@ -22,7 +22,7 @@ import { getversionDate } from "../../utils/version.js";
 import { ApiVersionType, SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
-import { lastStableNpmViewParameter, tryCreateLastStableNpmView, tryGetNpmView } from '../npmUtils.js';
+import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -50,6 +50,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
         try {
             shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
             shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+            // TODO: consider get all npm package from github instead
             shell.exec(`npm pack ${packageName}@${stableVersion}`, { silent: true });
             const files = shell.ls('*.tgz');
             shell.exec(`tar -xzf ${files[0]}`);
@@ -64,7 +65,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packageFolderPath);
-                const lastStableApiView: lastStableNpmViewParameter = {
+                const lastestStableApiView: NpmViewParameters = {
                     file: "ApiView",
                     version: stableVersion,
                     packageName: packageName,
@@ -74,13 +75,13 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 }
                 if (!fs.existsSync(apiMdFileNPM)) {
                     fs.mkdirSync(path.join(npmPackageRoot, "review"));
-                    await tryCreateLastStableNpmView(lastStableApiView);
+                    await tryCreateLastestStableNpmViewFromGithub(lastestStableApiView);
                 }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
-                const lastStableChangelog: lastStableNpmViewParameter = {
+                const lastStableChangelog: NpmViewParameters = {
                     file: "CHANGELOG.md",
                     version: stableVersion,
                     packageName: packageName,
@@ -93,6 +94,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
                     shell.cd(path.join(packageFolderPath, 'changelog-temp', 'next'));
+                    // TODO: consider get all npm package from github instead
                     shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true });
                     const files = shell.ls('*.tgz');
                     shell.exec(`tar -xzf ${files[0]}`);
@@ -103,7 +105,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     const nextDate = getversionDate(npmViewResult, nextVersion);
                     if (latestDate && nextDate && latestDate <= nextDate) {
                         const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
-                        const lastNextChangelog: lastStableNpmViewParameter = {
+                        const latestNextChangelog: NpmViewParameters = {
                             file: "CHANGELOG.md",
                             version: nextVersion,
                             packageName: packageName,
@@ -111,7 +113,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                             sdkRootPath: jsSdkRepoPath,
                             npmPackagePath: npmPackageRoot,
                         }
-                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, lastNextChangelog);
+                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, latestNextChangelog);
                         logger.info('Keep previous preview changelog.');
                     }
                 }

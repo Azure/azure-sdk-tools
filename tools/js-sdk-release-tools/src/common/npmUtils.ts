@@ -46,7 +46,8 @@ export async function tryGetNpmView(packageName: string): Promise<{ [id: string]
         return undefined;
     }
 }
-export interface lastStableNpmViewParameter {
+
+export interface NpmViewParameters {
     file: "ApiView" | "CHANGELOG.md";
     version: string;
     packageFolderPath: string;
@@ -55,7 +56,8 @@ export interface lastStableNpmViewParameter {
     npmPackagePath: string;
 }
 
-export function tryCreateLastStableNpmView(lastStableNpmViewParameter: lastStableNpmViewParameter) {
+// TODO: refactor this function to support praparing files from github in general way
+export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmViewParameters) {
     const {
         file,
         version,
@@ -63,7 +65,7 @@ export function tryCreateLastStableNpmView(lastStableNpmViewParameter: lastStabl
         packageName,
         sdkRootPath,
         npmPackagePath
-    } = lastStableNpmViewParameter;
+    } = NpmViewParameters;
     let sdkFilePath = "";
     let targetFilePath = "";
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);

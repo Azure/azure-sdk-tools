@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             Id,
             "McpServerTool methods must wrap body in try/catch, see the README within the tools directory for examples",
-            "Method '{0}' must have its entire body inside try {{ }} catch(Exception)",
+            "Method '{0}' must have its entire body inside try{{}}catch(Exception)",
             "Reliability",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -40,11 +40,12 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         {
             var md = (MethodDeclarationSyntax)ctx.Node;
 
-            // 1) does this method have [McpServerTool]
+            // confirm that the method is marked with the correct attribute
             bool hasAttr = md.AttributeLists
                 .SelectMany(a => a.Attributes)
                 .Any(a => a.Name.ToString().Contains("McpServerTool"));
 
+            // if it doesn't, just return
             if (!hasAttr)
                 return;
 
@@ -52,11 +53,11 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             if (body == null)
                 return;
 
-            // check that there is one statement surrounding the body. todo: is this too restrictive?
+            // check that there is one statement surrounding the body
             var stmts = body.Statements;
             if (stmts.Count != 1 || !(stmts[0] is TryStatementSyntax tryStmt))
             {
-                Report();
+                ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
                 return;
             }
 
@@ -64,10 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             bool hasExCatch = tryStmt.Catches
                 .Any(c => c.Declaration?.Type.ToString() == "Exception");
             if (!hasExCatch)
-                Report();
-
-            void Report() => ctx.ReportDiagnostic(
-                Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
         }
     }
 }

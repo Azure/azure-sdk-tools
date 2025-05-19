@@ -17,6 +17,7 @@ import com.networknt.schema.ValidationMessage;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
@@ -49,7 +50,9 @@ public class Main {
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        for (int i = 0; i < 50; i++) {
+            Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        }
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
     }
 
@@ -97,7 +100,13 @@ public class Main {
                 System.out.println("  Validating the generated JSON file against the schema...");
                 try {
                     JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
-                    JsonSchema schema = factory.getSchema(new URL(Constants.APIVIEW_JSON_SCHEMA).toURI());
+                    // Load the schema from the classpath resource
+                    URL resource = Main.class.getResource(Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    if (resource == null) {
+                        throw new IllegalStateException("Resource not found: " + Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    }
+                    URI localResourceUri = resource.toURI();
+                    JsonSchema schema = factory.getSchema(localResourceUri);
 
                     JsonNode jsonNode = new ObjectMapper().readTree(files[0]);
                     schema.initializeValidators();
@@ -108,9 +117,7 @@ public class Main {
                         System.out.println("    Validation failed. Errors:");
                         validationMessages.forEach(msg -> System.out.println("      " + msg.getMessage()));
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (URISyntaxException e) {
+                } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
             }

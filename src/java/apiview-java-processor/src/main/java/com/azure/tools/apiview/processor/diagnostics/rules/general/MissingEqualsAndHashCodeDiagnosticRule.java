@@ -4,6 +4,7 @@ import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 
@@ -57,27 +58,33 @@ public class MissingEqualsAndHashCodeDiagnosticRule implements DiagnosticRule {
     }
 
     private boolean hasValidEqualsMethod(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMethods().stream()
-                .anyMatch(this::isValidEqualsMethod);
+        return typeDeclaration.getMembers().stream()
+            .filter(BodyDeclaration::isMethodDeclaration)
+            .map(BodyDeclaration::asMethodDeclaration)
+            .anyMatch(this::isValidEqualsMethod);
     }
 
     private boolean hasValidHashCodeMethod(TypeDeclaration<?> typeDeclaration) {
         return typeDeclaration.getMethods().stream()
-                .anyMatch(this::isValidHashCodeMethod);
+            .filter(BodyDeclaration::isMethodDeclaration)
+            .map(BodyDeclaration::asMethodDeclaration)
+            .anyMatch(this::isValidHashCodeMethod);
     }
 
     private boolean isValidEqualsMethod(MethodDeclaration method) {
-        return method.getNameAsString().equals("equals")
-            && method.getParameters().size() == 1
-            && method.isAnnotationPresent("Override")
-            && method.getParameters().get(0).getType().asString().equals("Object")
-            && method.getType().asString().equals("boolean");
+        return method.getParameters().size() == 1
+            && "equals".equals(method.getNameAsString())
+            && method.getType().isPrimitiveType()
+            && "boolean".equals(method.getType().asString())
+            && "Object".equals(method.getParameter(0).getType().asString())
+            && method.isAnnotationPresent("Override");
     }
 
     private boolean isValidHashCodeMethod(MethodDeclaration method) {
-        return method.getNameAsString().equals("hashCode")
-            && method.isAnnotationPresent("Override")
-            && method.getParameters().isEmpty()
-            && method.getType().asString().equals("int");
+        return method.getParameters().isEmpty()
+            && "hashCode".equals(method.getNameAsString())
+            && method.getType().isPrimitiveType()
+            && "int".equals(method.getType().asString())
+            && method.isAnnotationPresent("Override");
     }
 }

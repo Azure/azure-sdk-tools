@@ -107,7 +107,6 @@ export const generateReport = (context: WorkflowContext) => {
     filteredLogPath: context.filteredLogFileName,
     stagedArtifactsFolder: context.stagedArtifactsFolder,
     sdkArtifactFolder: context.sdkArtifactFolder,
-    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder,
     ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})
   };
 

@@ -4,7 +4,7 @@ import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from
 import { posix } from 'node:path';
 
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
-import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js';
+import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
 import { getGeneratedPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
@@ -56,7 +56,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             relativePackageDirToSdkRoot
         );
 
-        const artifactPath = await createArtifact(packageDirectory, rushxScript);
+        const artifactPath = await createArtifact(packageDirectory, rushxScript, options.sdkRepoRoot);
         const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
         packageResult.artifacts.push(relativeArtifactPath);
 

@@ -215,29 +215,10 @@ def generate_review_from_app(language: str, target: str, base: Optional[str] = N
         print(response)
 
 
-def search_examples(path: str, language: str):
-    """Search the examples-index for a query."""
-    from scripts.search_examples import search_examples
-
-    results = search_examples(path, language)
-    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
-
-
-def search_guidelines(language: str, text: Optional[str] = None, path: Optional[str] = None):
-    """Search the guidelines-index for a query."""
-    from scripts.search_guidelines import search_guidelines
-
-    if (path and text) or (not path and not text):
-        raise ValueError("Provide one of `--path` or `--text`.")
-    results = search_guidelines(path or text, language)
-    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
-
-
 def search_knowledge_base(
     language: str,
     text: Optional[str] = None,
     path: Optional[str] = None,
-    index: List[str] = ["examples", "guidelines"],
     markdown: bool = False,
 ):
     """
@@ -252,11 +233,8 @@ def search_knowledge_base(
     if path:
         with open(path, "r") as f:
             query = f.read()
-    if "examples" in index:
-        examples = search.search_examples(query=query)
-    if "guidelines" in index:
-        guidelines = search.search_guidelines(query=query)
-    context = search.build_context(guidelines, examples)
+    results = search.search_all(query=query)
+    context = search.build_context(results)
     if markdown:
         md = context.to_markdown()
         print(md)
@@ -289,8 +267,6 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
-            g.command("examples", "search_examples")
-            g.command("guidelines", "search_guidelines")
             g.command("kb", "search_knowledge_base")
         return OrderedDict(self.command_table)
 

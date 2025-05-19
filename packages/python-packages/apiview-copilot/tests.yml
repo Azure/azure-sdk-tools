@@ -17,24 +17,16 @@ extends:
     - task: AzureCLI@2
       displayName: Run Evals (AzureCLI@2)
       inputs:
-        addSpnToEnvironment: true 
         azureSubscription: azure-sdk-tests-playground
         scriptType: bash
         scriptLocation: inlineScript
-        inlineScript: | 
-          echo "##vso[task.setvariable variable=ARM_CLIENT_ID]$servicePrincipalId"  
-          echo "##vso[task.setvariable variable=ARM_ID_TOKEN]$idToken" 
-          echo "##vso[task.setvariable variable=ARM_TENANT_ID]$tenantId"
-
-          - bash: | 
-
-            az login --service-principal -u $(ARM_CLIENT_ID) --tenant $(ARM_TENANT_ID) --allow-no-subscriptions --federated-token $(ARM_ID_TOEKN) 
-
-            displayName: 'Login Azure' 
+        inlineScript: |
+          # Verify account
+          az account show
           
-            python packages/python-packages/apiview-copilot/evals/run.py
-
-            exit $?
+          python packages/python-packages/apiview-copilot/evals/run.py
+          
+          exit $?
       env:
         AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
         AZURE_OPENAI_API_KEY: $(python-openai-key)

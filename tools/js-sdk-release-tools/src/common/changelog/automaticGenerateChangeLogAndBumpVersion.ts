@@ -15,21 +15,22 @@ import {
     bumpPreviewVersion,
     getNewVersion,
     getVersion,
-    isBetaVersion
+    isBetaVersion,
+    isStableSDKReleaseType
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
-import { ApiVersionType, SDKType } from "../types.js"
+import { SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
 
-export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
+export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = await getApiVersionType(packageFolderPath);
-    const isStableRelease = ApiType != ApiVersionType.Preview;
+    const apiVersionType = await getApiVersionType(packageFolderPath);
+    const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = getVersion(npmViewResult, "latest");

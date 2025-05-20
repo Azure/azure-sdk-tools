@@ -9,6 +9,7 @@ import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
+import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
 
 
@@ -303,6 +304,37 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
             configPath: typeSpecDirectory,
         });
     return options
+}
+
+export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: string, apiVersion: string) {
+    const tspConfigPath = path.join(typeSpecDirectory, 'tspconfig.yaml');
+    if (!fs.existsSync(tspConfigPath)) {
+        throw new Error(`Failed to find tspconfig.yaml in ${typeSpecDirectory}.`);
+    }
+
+    const tspConfigContent = fs.readFileSync(tspConfigPath, 'utf8');
+
+    let tspConfig;
+    try {
+        tspConfig = yamlLoad(tspConfigContent);
+    } catch (error) {
+        throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
+    }    
+
+    const emitterOptions = tspConfig.options?.[emitterName];
+    if (!emitterOptions) {
+        throw new Error(`Failed to find ${emitterName} options in tspconfig.yaml.`);
+    }
+
+    const apiVersionInTspConfig = emitterOptions['api-version'];
+    if (apiVersionInTspConfig !== apiVersion) {
+        logger.warn(`The specified api-version ${apiVersion} is going to override ${apiVersionInTspConfig} in tspconfig.yaml`);
+        emitterOptions['api-version'] = apiVersion;
+        const updatedTspConfigContent = dump(tspConfig);
+        fs.writeFileSync(tspConfigPath, updatedTspConfigContent, 'utf8');
+    }
+
+    logger.info(`Use api-version: ${apiVersion} to generate SDK.`);
 }
 
 // Get the spec repo where the project is defined to set into tsp-location.yaml

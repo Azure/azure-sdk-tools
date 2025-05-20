@@ -6,7 +6,7 @@ import { posix } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
@@ -31,7 +31,9 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await remove(packageDirectory);
-
+        if (options.apiVersion) {
+            specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
+        }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
 
@@ -41,7 +43,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
         // TODO: to be compatible with current tool, input relative generated package dir
-        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot);
+        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);

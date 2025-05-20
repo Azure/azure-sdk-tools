@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LogAnalysisResponse
+public class LogAnalysisResponse : Response
 {
     [JsonPropertyName("summary")]
     public string Summary { get; set; } = string.Empty;
@@ -15,11 +15,12 @@ public class LogAnalysisResponse
 
     public override string ToString()
     {
-        return $"### Summary:" + Environment.NewLine +
-               $"{Summary}" + Environment.NewLine + Environment.NewLine +
-               $"### Suggested Fix:" + Environment.NewLine +
-               $"{SuggestedFix}" + Environment.NewLine +
-               $"{Environment.NewLine}### Errors:{Environment.NewLine}{string.Join(Environment.NewLine, Errors.Select(e => $"{e.File}:{e.Line} - {e.Message}"))}" + Environment.NewLine;
+        var output = $"### Summary:" + Environment.NewLine +
+                     $"{Summary}" + Environment.NewLine + Environment.NewLine +
+                     $"### Suggested Fix:" + Environment.NewLine +
+                     $"{SuggestedFix}" + Environment.NewLine +
+                     $"{Environment.NewLine}### Errors:{Environment.NewLine}{string.Join(Environment.NewLine, Errors.Select(e => $"{e.File}:{e.Line} - {e.Message}"))}" + Environment.NewLine;
+        return ToString(output);
     }
 }
 

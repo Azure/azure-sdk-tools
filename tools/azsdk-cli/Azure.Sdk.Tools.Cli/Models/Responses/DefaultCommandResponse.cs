@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class DefaultCommandResponse()
+public class DefaultCommandResponse : Response
 {
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;

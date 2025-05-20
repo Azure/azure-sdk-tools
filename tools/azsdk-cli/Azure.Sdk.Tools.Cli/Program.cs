@@ -76,21 +76,11 @@ public class Program
         }
 
         var toolTypes = SharedOptions.GetFilteredToolTypes(args);
-        if (toolTypes.Count == 0)
-        {
-            builder.Services
-                .AddMcpServer()
-                .WithStdioServerTransport()
-                .WithToolsFromAssembly();
-        }
-        else
-        {
 
-            builder.Services
-                .AddMcpServer()
-                .WithStdioServerTransport()
-                .WithTools(toolTypes);
-        }
+        builder.Services
+            .AddMcpServer()
+            .WithStdioServerTransport()
+            .WithTools(toolTypes);
 
         return builder;
     }

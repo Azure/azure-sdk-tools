@@ -32,7 +32,7 @@
     "devDependencies": {
         "@autorest/codemodel": "^4.19.3",
         "@autorest/extension-base": "^3.5.0",
-        "@azure-tools/codegen": "^2.9.2",
+        "@azure-tools/codegen": "^3.0.283",
         "@types/jest": "^29.5.13",
         "@types/node": "^22.7.5",
         "@typescript-eslint/eslint-plugin": "^8.18.2",

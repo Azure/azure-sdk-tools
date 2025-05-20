@@ -34,7 +34,7 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		return fmt.Errorf("message content is empty")
 	}
 	if req.TopK == nil {
-		topK := 10
+		topK := 20
 		req.TopK = &topK
 	}
 	if req.PromptTemplate == nil {
@@ -102,10 +102,36 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	}
 	log.Printf("Search operation took: %v", time.Since(searchStart))
 
+	// filter unrelevant results
+	needCompleteResults := make([]model.Index, 0)
+	normalResult := make([]model.Index, 0)
+	for _, result := range results {
+		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s, score: %f", result.Title, result.RerankScore)
+			continue
+		}
+		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
+			needCompleteResults = append(needCompleteResults, result)
+			log.Printf("Adding result with high score: %s, score: %f", result.Title, result.RerankScore)
+			continue
+		}
+		log.Printf("Result: %s, score: %f", result.Title, result.RerankScore)
+		normalResult = append(normalResult, result)
+	}
+	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
+		log.Printf("No results found with high relevance score, using normal results")
+		supplyNum := 5
+		if len(normalResult) < supplyNum {
+			supplyNum = len(normalResult)
+		}
+		needCompleteResults = normalResult[:supplyNum]
+		normalResult = normalResult[supplyNum:]
+	}
+
 	chunkProcessStart := time.Now()
 	files := make(map[string]bool)
 	mergedChunks := make([]model.Index, 0)
-	for _, result := range results {
+	for _, result := range needCompleteResults {
 		if files[result.Title] {
 			continue
 		}
@@ -114,9 +140,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			Title:     result.Title,
 			ContextID: result.ContextID,
 		})
-		if len(files) == 3 {
-			break
-		}
 	}
 	var wg sync.WaitGroup
 	wg.Add(len(mergedChunks))
@@ -130,19 +153,17 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	wg.Wait()
 
 	chunks := make([]string, 0)
-	chunkLength := 0
 	var chunkTitles []string
 	for _, result := range mergedChunks {
-		chunk := fmt.Sprintf("- document_dir: %s\n", result.ContextID)
-		chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
-		chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
-		chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
-		chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
+		chunk := processDocument(result)
 		chunkTitles = append(chunkTitles, result.Title)
-		chunkLength += len(chunk)
-		if chunkLength > 100000 {
-			break
+		chunks = append(chunks, chunk)
+	}
+	for _, result := range normalResult {
+		if files[result.Title] {
+			continue
 		}
+		chunk := processChunk(result)
 		chunks = append(chunks, chunk)
 	}
 	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
@@ -239,4 +260,24 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 		return result, nil
 	}
 	return nil, nil
+}
+
+func processDocument(result model.Index) string {
+	chunk := fmt.Sprintf("- document_category: %s\n", result.ContextID)
+	chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
+	chunk += fmt.Sprintf("- document_title: %s\n", result.Header1)
+	chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
+	chunk += fmt.Sprintf("- document_content: %s\n", result.Chunk)
+	return chunk
+}
+
+func processChunk(result model.Index) string {
+	chunk := fmt.Sprintf("- document_category: %s\n", result.ContextID)
+	chunk += fmt.Sprintf("- document_filename: %s\n", result.Title)
+	chunk += fmt.Sprintf("- document_link: %s\n", model.GetIndexLink(result))
+	chunk += fmt.Sprintf("- chunk_header_1: %s\n", result.Header1)
+	chunk += fmt.Sprintf("- chunk_header_2: %s\n", result.Header2)
+	chunk += fmt.Sprintf("- chunk_header_3: %s\n", result.Header3)
+	chunk += fmt.Sprintf("- chunk_content: %s\n", result.Chunk)
+	return chunk
 }

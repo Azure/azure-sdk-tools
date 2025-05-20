@@ -35,6 +35,7 @@ type QueryIndexResponse struct {
 
 type Index struct {
 	Score           float64 `json:"@search.score"`
+	RerankScore     float64 `json:"@search.rerankerScore"`
 	ChunkID         string  `json:"chunk_id"`
 	ParentID        string  `json:"parent_id"`
 	Chunk           string  `json:"chunk"`

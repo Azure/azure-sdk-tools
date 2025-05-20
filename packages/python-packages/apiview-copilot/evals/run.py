@@ -15,7 +15,7 @@ os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
-from azure.identity import DefaultAzureCredential
+from azure.identity import AzurePipelineCredential
 
 dotenv.load_dotenv()
 
@@ -492,7 +492,6 @@ if __name__ == "__main__":
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
-            print(f"endpoint: {os.environ['AZURE_OPENAI_ENDPOINT']}")
             result = evaluate(
                 data=str(file),
                 evaluators={
@@ -513,7 +512,7 @@ if __name__ == "__main__":
                 target=review_apiview,
                 fail_on_evaluator_errors=True,
                 azure_ai_project=azure_ai_project,
-                credential=DefaultAzureCredential(exclude_managed_identity_credential=True),
+                credential=AzurePipelineCredential()
             )
 
             run_result = record_run_result(result, rule_ids)

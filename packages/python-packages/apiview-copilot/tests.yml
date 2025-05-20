@@ -38,4 +38,3 @@ extends:
         AZURE_FOUNDRY_RESOURCE_GROUP: openai-shared
         AZURE_FOUNDRY_PROJECT_NAME: apiview-ai
         OPENAI_API_VERSION: 2025-03-01-preview
-        AZURE_AUTHORITY_HOST: "https://login.microsoftonline.com/2f4a9838-26b7-47ee-be60-ccc1fdec5953"

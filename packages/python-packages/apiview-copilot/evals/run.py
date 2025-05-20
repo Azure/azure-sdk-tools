@@ -488,7 +488,10 @@ if __name__ == "__main__":
             "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
             "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
         }
-
+        service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+        client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+        tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+        system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
@@ -512,7 +515,12 @@ if __name__ == "__main__":
                 target=review_apiview,
                 fail_on_evaluator_errors=True,
                 azure_ai_project=azure_ai_project,
-                credential=AzurePipelinesCredential()
+                credential=AzurePipelinesCredential(
+                    service_connection_id=service_connection_id,
+                    client_id=client_id,
+                    tenant_id=tenant_id,
+                    system_access_token=system_access_token,
+                )
             )
 
             run_result = record_run_result(result, rule_ids)

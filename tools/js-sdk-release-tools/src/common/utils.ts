@@ -307,7 +307,7 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
     
     const tspConfigPath = path.join(typeSpecDirectory, 'tspconfig.yaml');
     if (!fs.existsSync(tspConfigPath)) {
-        throw new Error(`tspconfig.yaml does not exist in ${typeSpecDirectory}, skip updating tspconfig.yaml.`);
+        throw new Error(`Failed to find tspconfig.yaml in ${typeSpecDirectory}.`);
     }
 
     const tspConfigContent = fs.readFileSync(tspConfigPath, 'utf8');

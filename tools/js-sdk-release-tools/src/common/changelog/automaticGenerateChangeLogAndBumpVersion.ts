@@ -148,7 +148,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             }
         } finally {
             shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
-            shell.rm('-r', `${path.join(packageFolderPath, '.tmp-breaking-change-detect')}`);
+            shell.rm('-r', `${path.join(packageFolderPath, '~/.tmp-breaking-change-detect')}`);
             shell.cd(jsSdkRepoPath);
         }
     }

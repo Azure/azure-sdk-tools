@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
     resolveOptions,
-    trySpecifiyApiVersionToGenerateSDKByTypeSpec,
+    specifyApiVersionToGenerateSDKByTypeSpec,
 } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
@@ -66,7 +66,7 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
                 },
             );
             const expectedVersion = "2023-10-01";
-            trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+            specifyApiVersionToGenerateSDKByTypeSpec(
                 tempSpecFolder,
                 expectedVersion,
             );
@@ -90,12 +90,12 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
         try {
             await ensureDir(tempSpecFolder);            
             expect(() =>
-                trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+                specifyApiVersionToGenerateSDKByTypeSpec(
                     tempSpecFolder,
                     "2023-10-01",
                 ),
             ).toThrow(
-                `tspconfig.yaml does not exist in ${tempSpecFolder}, skip updating tspconfig.yaml.`,
+                `Failed to find tspconfig.yaml in ${tempSpecFolder}.`,
             );
         } finally {
             await remove(tempSpecFolder);
@@ -125,7 +125,7 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
                 },
             );
             expect(() =>
-                trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+                specifyApiVersionToGenerateSDKByTypeSpec(
                     tempSpecFolder,
                     "2023-10-01",
                 ),
@@ -160,7 +160,7 @@ describe("specifiyApiVersionToGenerateSDKByTypeSpec", () => {
                 },
             );
             expect(() =>
-                trySpecifiyApiVersionToGenerateSDKByTypeSpec(
+                specifyApiVersionToGenerateSDKByTypeSpec(
                     tempSpecFolder,
                     "2023-10-01",
                 ),

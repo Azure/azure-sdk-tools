@@ -300,11 +300,6 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
 }
 
 export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: string, apiVersion: string) {
-    if (apiVersion === '') {
-        logger.warn(`No api-version is provided, skip updating tspconfig.yaml.`);
-        return;
-    }
-    
     const tspConfigPath = path.join(typeSpecDirectory, 'tspconfig.yaml');
     if (!fs.existsSync(tspConfigPath)) {
         throw new Error(`Failed to find tspconfig.yaml in ${typeSpecDirectory}.`);

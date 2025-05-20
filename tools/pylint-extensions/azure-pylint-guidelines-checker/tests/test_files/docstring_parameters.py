@@ -44,7 +44,7 @@ class MyClass():  # @
         """
 
 
-from typing import Dict
+from typing import Dict, NoReturn
 
 
 # test_docstring_property_decorator

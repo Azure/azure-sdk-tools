@@ -1,13 +1,13 @@
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.json.JsonProviders;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.azure.tools.apiview.processor.model.traits.Parent;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,7 +16,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.APIVIEW_JSON_SCHEMA;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_DIAGNOSTICS;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_LANGUAGE;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_LANGUAGE_VARIANT;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_PACKAGE_NAME;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_PACKAGE_VERSION;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_PARSER_VERSION;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.JSON_NAME_REVIEW_LINES;
 
 public class APIListing implements Parent, JsonSerializable<APIListing> {
     private static final String parserVersion = "29";
@@ -156,7 +163,14 @@ public class APIListing implements Parent, JsonSerializable<APIListing> {
             .writeEndObject();
     }
 
-    public void toFile(File outputFile, boolean gzipOutput) {
+    /**
+     * Writes the {@link APIListing} to the {@code outputFile} and returns the raw JSON.
+     *
+     * @param outputFile The file to write.
+     * @param gzipOutput Whether the output needs to be GZIP'd.
+     * @return The raw JSON bytes for other final checks.
+     */
+    public byte[] toFile(File outputFile, boolean gzipOutput) {
         try {
             // Write out to the filesystem, make the file if it doesn't exist
             if (!outputFile.exists()) {
@@ -165,14 +179,18 @@ public class APIListing implements Parent, JsonSerializable<APIListing> {
                 }
             }
 
-            OutputStream fileStream = Files.newOutputStream(outputFile.toPath());
-            OutputStream outputStream = gzipOutput ? new GZIPOutputStream(fileStream) : fileStream;
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
-            try (JsonWriter jsonWriter = JsonProviders.createWriter(writer)) {
-                toJson(jsonWriter);
+            byte[] rawJsonBytes = toJsonBytes();
+
+            if (!gzipOutput) {
+                Files.write(outputFile.toPath(), rawJsonBytes);
+            } else {
+                new GZIPOutputStream(Files.newOutputStream(outputFile.toPath()))
+                    .write(rawJsonBytes);
             }
+
+            return rawJsonBytes;
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
         }
     }
 }

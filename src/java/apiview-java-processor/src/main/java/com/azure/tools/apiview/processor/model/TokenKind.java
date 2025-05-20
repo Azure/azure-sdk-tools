@@ -1,7 +1,8 @@
 
 package com.azure.tools.apiview.processor.model;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 public enum TokenKind {
     TEXT(StructuredTokenKind.TEXT),
@@ -54,21 +55,31 @@ public enum TokenKind {
     COMMENT(StructuredTokenKind.COMMENT, RenderClass.COMMENT);
 
     private final StructuredTokenKind structuredTokenKind;
-    private Set<RenderClass> renderClasses;
+    private final Set<RenderClass> renderClasses;
     private final String typeDeclarationString;
 
-    TokenKind(StructuredTokenKind structuredTokenKind, RenderClass... renderClasses) {
-        this(structuredTokenKind, null, renderClasses);
+    TokenKind(StructuredTokenKind structuredTokenKind) {
+        this.structuredTokenKind = structuredTokenKind;
+        this.renderClasses = EnumSet.noneOf(RenderClass.class);
+        this.typeDeclarationString = null;
     }
 
-    TokenKind(StructuredTokenKind structuredTokenKind, String typeDeclarationString, RenderClass... renderClasses) {
+    TokenKind(StructuredTokenKind structuredTokenKind, RenderClass renderClass) {
+        this.structuredTokenKind = structuredTokenKind;
+        this.renderClasses = EnumSet.of(renderClass);
+        this.typeDeclarationString = null;
+    }
+
+    TokenKind(StructuredTokenKind structuredTokenKind, RenderClass renderClass1, RenderClass renderClass2) {
+        this.structuredTokenKind = structuredTokenKind;
+        this.renderClasses = EnumSet.of(renderClass1, renderClass2);
+        this.typeDeclarationString = null;
+    }
+
+    TokenKind(StructuredTokenKind structuredTokenKind, String typeDeclarationString, RenderClass renderClass) {
         this.structuredTokenKind = structuredTokenKind;
         this.typeDeclarationString = typeDeclarationString;
-
-        if (renderClasses != null) {
-            this.renderClasses = new LinkedHashSet<>();
-            this.renderClasses.addAll(Arrays.asList(renderClasses));
-        }
+        this.renderClasses = EnumSet.of(renderClass);
     }
 
     public StructuredTokenKind getStructuredTokenKind() {

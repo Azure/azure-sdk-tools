@@ -17,7 +17,7 @@ param (
 )
 
 $packageJson = Get-Content $PackageJsonPath | ConvertFrom-Json -AsHashtable
-
+Write-Host ($packageJson | ConvertTo-Json)
 # If we provide OverridesPath, use that to load a hashtable of version overrides
 $overrides = [ordered]@{}
 
@@ -37,6 +37,7 @@ if ($OverridesPath) {
 $devDependencies = [ordered]@{}
 
 $possiblyPinnedPackages = $packageJson['azure-sdk/emitter-package-json-pinning'] ?? $packageJson.peerDependencies.Keys;
+Write-Host "Possibly pinned packages: $possiblyPinnedPackages"
 
 foreach ($package in $possiblyPinnedPackages | Sort-Object) {
     $pinnedVersion = $packageJson.devDependencies[$package]

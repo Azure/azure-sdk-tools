@@ -1,4 +1,5 @@
 from ._base_node import NodeEntityBase, get_qualified_name
+import re
 
 
 class KeyNode(NodeEntityBase):
@@ -6,7 +7,12 @@ class KeyNode(NodeEntityBase):
 
     def __init__(self, namespace, parent_node, name, type_data):
         super().__init__(namespace, parent_node, type_data)
+        # Process the type to remove ForwardRef wrappers for TypedDict keys
         self.type = get_qualified_name(type_data, namespace)
+        # Further process any remaining ForwardRef in the string output
+        # Handle both formats: ForwardRef('Type') and ForwardRef['Type']
+        self.type = re.sub(r'ForwardRef\([\'"]([\w.]+)[\'"]\)', r'\1', self.type)
+        self.type = re.sub(r'ForwardRef\[[\'"]([^\'"]*)[\'"]\]', r'\1', self.type)
         self.name = f'"{name}"'
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()

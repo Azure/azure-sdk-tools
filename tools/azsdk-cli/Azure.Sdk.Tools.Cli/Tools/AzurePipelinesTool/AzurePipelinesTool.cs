@@ -182,7 +182,7 @@ public class AzurePipelinesTool(
     }
 
     [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]
-    public async Task<string> AnalyzePipelineFailureLog(string project, int buildId, int logId)
+    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLog(string project, int buildId, int logId)
     {
         project ??= project ?? "public";
 
@@ -193,26 +193,31 @@ public class AzurePipelinesTool(
         var filename = $"{session}.txt";
 
         using var stream = new MemoryStream(logBytes);
-        var (response, usage) = await azureAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
+        var (result, usage) = await azureAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
         usage.LogCost();
 
         // Sometimes chat gpt likes to wrap the json in markdown
-        if (response.StartsWith("```json")
-            && response.EndsWith("```"))
+        if (result.StartsWith("```json")
+            && result.EndsWith("```"))
         {
-            response = response[7..^3].Trim();
+            result = result[7..^3].Trim();
         }
 
         try
         {
-            return output.ValidateAndFormat<LogAnalysisResponse>(response);
+            return JsonSerializer.Deserialize<LogAnalysisResponse>(result);
         }
         catch (JsonException ex)
         {
             logger.LogError("Failed to deserialize log analysis response: {exception}", ex.Message);
-            logger.LogError("Response:\n{response}", response);
+            logger.LogError("Response:\n{result}", result);
+
             SetFailure();
-            return "Failed to deserialize log analysis response. Check the logs for more details.";
+
+            return new LogAnalysisResponse()
+            {
+                ResponseError = "Failed to deserialize log analysis response. Check the logs for more details.",
+            };
         }
     }
 
@@ -238,7 +243,7 @@ public class AzurePipelinesTool(
 
         return new AnalyzePipelineResponse()
         {
-            FailedTasks = failedTasks,
+            FailedTasks = taskAnalysis,
             FailedTests = failedTests
         };
     }

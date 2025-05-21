@@ -5,15 +5,29 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public class Response : JsonConverter<Response>
 {
-    [JsonPropertyName("error")]
+    [JsonPropertyName("response_error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ResponseError { get; set; }
 
+    [JsonPropertyName("response_errors")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string> ResponseErrors { get; set; }
+
     protected string ToString(string value)
     {
+        List<string> errors = [];
         if (!string.IsNullOrEmpty(ResponseError))
         {
-            return "[ERROR] " + ResponseError;
+            errors.Add("[ERROR] " + ResponseError);
+        }
+        foreach (var error in ResponseErrors ?? [])
+        {
+            errors.Add("[ERROR] " + error);
+        }
+
+        if (errors.Count > 0)
+        {
+            value = string.Join(Environment.NewLine, errors) + Environment.NewLine;
         }
 
         return value;

@@ -120,3 +120,11 @@ def function_foo(self, x, y):
     :rtype: :class:`azure.core.credentials.AccessToken`
     """
     print("hello")
+
+
+# test_docstring_noreturn
+def function_foo() -> NoReturn:
+    """
+    This function never returns.
+    """
+    raise ValueError("This function never returns")

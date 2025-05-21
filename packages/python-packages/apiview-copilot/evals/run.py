@@ -39,6 +39,9 @@ weights: dict[str, float] = {
 }
 
 
+def in_ci():
+    return os.getenv("TF_BUILD", False)
+
 
 class CustomAPIViewEvaluator:
     """Evaluator for comparing expected and actual APIView comments."""
@@ -390,8 +393,7 @@ def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) ->
     """Establish the current results as the new baseline."""
 
     # only ask if we're not in CI
-    in_ci = os.getenv('TF_BUILD', False)
-    if in_ci is False:
+    if in_ci() is False:
         establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
         if establish_baseline.lower() == "y":
             for name, result in all_results.items():
@@ -468,7 +470,7 @@ if __name__ == "__main__":
         "--test-file",
         "-t",
         type=str,
-        default="data.jsonl",
+        default="reviews.jsonl",
         help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()
@@ -489,10 +491,22 @@ if __name__ == "__main__":
             "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
             "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
         }
-        service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-        client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-        tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-        system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+        if in_ci():
+            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+            system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+            kwargs = {
+                "credential": AzurePipelinesCredential(
+                    service_connection_id=service_connection_id,
+                    client_id=client_id,
+                    tenant_id=tenant_id,
+                    system_access_token=system_access_token,
+                )
+            }
+        else:
+            kwargs = {}
+
         run_results = []
         for run in range(args.num_runs):
             print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
@@ -516,12 +530,7 @@ if __name__ == "__main__":
                 target=review_apiview,
                 fail_on_evaluator_errors=True,
                 azure_ai_project=azure_ai_project,
-                credential=AzurePipelinesCredential(
-                    service_connection_id=service_connection_id,
-                    client_id=client_id,
-                    tenant_id=tenant_id,
-                    system_access_token=system_access_token,
-                )
+                **kwargs
             )
 
             run_result = record_run_result(result, rule_ids)

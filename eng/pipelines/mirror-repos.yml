@@ -139,6 +139,10 @@ jobs:
             TargetRepos:
               Azure/azure-mcp-pr:
 
+          microsoft/mcp:
+            TargetRepos:
+              microsoft/mcp-pr:
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)

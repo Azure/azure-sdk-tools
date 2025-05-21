@@ -5,13 +5,16 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public class AnalyzePipelineResponse : Response
 {
     [JsonPropertyName("failed_tests")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<FailedTestRunResponse> FailedTests { get; set; } = [];
 
     [JsonPropertyName("failed_tasks")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<LogAnalysisResponse> FailedTasks { get; set; } = [];
 
     [JsonPropertyName("pipeline_url")]
-    public string PipelineUrl { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string PipelineUrl { get; set; }
 
     public override string ToString()
     {

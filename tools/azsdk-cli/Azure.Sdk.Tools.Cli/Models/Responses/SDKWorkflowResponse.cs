@@ -7,9 +7,11 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public class GenericResponse
 {
     [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string Status { get; set; }
 
     [JsonPropertyName("details")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string> Details { get; set; } = [];
 
     public override string ToString()

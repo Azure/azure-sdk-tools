@@ -8,19 +8,19 @@ public class FailedTestRunResponse : Response
     public int RunId { get; set; } = 0;
 
     [JsonPropertyName("test_case_title")]
-    public string TestCaseTitle { get; set; } = string.Empty;
+    public string TestCaseTitle { get; set; }
 
     [JsonPropertyName("error_message")]
-    public string ErrorMessage { get; set; } = string.Empty;
+    public string ErrorMessage { get; set; }
 
     [JsonPropertyName("stack_trace")]
-    public string StackTrace { get; set; } = string.Empty;
+    public string StackTrace { get; set; }
 
     [JsonPropertyName("outcome")]
-    public string Outcome { get; set; } = string.Empty;
+    public string Outcome { get; set; }
 
     [JsonPropertyName("url")]
-    public string Url { get; set; } = string.Empty;
+    public string Url { get; set; }
 
     public override string ToString()
     {

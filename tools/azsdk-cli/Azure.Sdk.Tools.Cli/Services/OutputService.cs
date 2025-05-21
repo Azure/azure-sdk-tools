@@ -38,7 +38,7 @@ public class OutputService : IOutputService
             return response.ToString();
         }
 
-        return JsonSerializer.Serialize(response, response.GetType(), serializerOptions);
+        return JsonSerializer.Serialize(response, serializerOptions);
     }
 
     public string ValidateAndFormat<T>(string response)

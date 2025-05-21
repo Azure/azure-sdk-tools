@@ -70,9 +70,7 @@ Duration: 1ms".TrimStart();
         var exitCode = await cmd.InvokeAsync(["hello-world", "HI. MY NAME IS", "--fail"]);
         Assert.That(exitCode, Is.EqualTo(1));
 
-        var expected = @"
-[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1
-".TrimStart();
+        var expected = "[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1";
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);

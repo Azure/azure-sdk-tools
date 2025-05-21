@@ -143,6 +143,7 @@ class CustomAPIViewEvaluator:
                     "exceptions": exceptions,
                     "language": language,
                 },
+                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
             )
             comment["valid"] = "true" in response.lower()
 

@@ -330,3 +330,13 @@ AliasNewType = NewType('AliasNewType', Dict[str, str])
 @runtime_checkable
 class SomeProtocolDecorator(Protocol):
     pass
+
+class ChildWithInheritedIvars(FakeObject):
+    """Child class that inherits ivars from parent
+    
+    :ivar str child_name: Child-specific name
+    """
+    
+    def __init__(self, name: str, age: int, union: Union[bool, PetEnumPy3MetaclassAlt], child_name: str):
+        super().__init__(name, age, union)
+        self.child_name = child_name

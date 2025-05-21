@@ -10,6 +10,7 @@
 from ._models import (
     AliasNewType,
     AliasUnion,
+    ChildWithInheritedIvars,
     ClassWithDecorators,
     ClassWithIvarsAndCvars,
     DocstringClass,
@@ -42,6 +43,7 @@ from ._dataclasses import (
 __all__ = (
     "AliasNewType",
     "AliasUnion",
+    "ChildWithInheritedIvars",
     "ClassWithDecorators",
     "ClassWithIvarsAndCvars",
     "DataClassSimple",

@@ -8,6 +8,7 @@ from apistub.nodes import ClassNode
 from apistubgentest.models import (
     AliasNewType,
     AliasUnion,
+    ChildWithInheritedIvars,
     ClassWithDecorators,
     ClassWithIvarsAndCvars,
     FakeTypedDict,
@@ -605,3 +606,30 @@ class TestClassParsing:
         assert metadata["RelatedToLine"] == 0
         # class type with no defined body
         assert metadata["IsContextEndLine"] == 0
+        
+    def test_inherited_ivars(self):
+        obj = ChildWithInheritedIvars
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        expected = [
+            "class ChildWithInheritedIvars(FakeObject):",
+            "ivar PUBLIC_CONST = SOMETHING",  # From parent
+            "ivar age: int",  # From parent
+            "ivar child_name: str",  # Own ivar
+            "ivar name: str",  # From parent 
+            "ivar union: Union[bool, PetEnumPy3MetaclassAlt]",  # From parent
+        ]
+        _check_all(actuals, expected, obj)
+        
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 3
+        assert metadata["IsContextEndLine"] == 2

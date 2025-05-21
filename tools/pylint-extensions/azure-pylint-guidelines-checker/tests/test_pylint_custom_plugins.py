@@ -151,6 +151,13 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
 
+    def test_ignores_validate_multiapi_args_decorator(self, setup):
+        func_node_a = setup.body[3].body[19]
+        func_node_b = setup.body[3].body[20]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(func_node_a)
+            self.checker.visit_asyncfunctiondef(func_node_b)
+            
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_implementation.html#distributed-tracing"
         config = Configuration()

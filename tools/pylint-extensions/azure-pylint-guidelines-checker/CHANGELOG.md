@@ -1,5 +1,9 @@
 # Release History
 
+## 0.5.7 (Unreleased)
+- Fixed false positives in the distributed tracing decorator pylint rule when using `validate_multiapi_args` decorator
+- Improved decorator detection for the distributed tracing linter rule
+
 ## 0.5.6 (2025-04-23)
 - Documentation updates and fixing checkers
 

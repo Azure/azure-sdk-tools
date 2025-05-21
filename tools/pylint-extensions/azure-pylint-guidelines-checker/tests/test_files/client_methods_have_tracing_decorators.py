@@ -90,6 +90,15 @@ class SomeClient():  # @
     async def do_thing(self, some, **kwargs):  # @
         pass
 
+    # test_ignores_validate_multiapi_args
+    @validate_multiapi_args
+    def multiapi_method(self, **kwargs):  # @
+        pass
+
+    @validate_multiapi_args
+    async def multiapi_method_async(self, **kwargs):  # @
+        pass
+
 
 # test_ignores_non_client_method
 class SomethingElse():  # @
@@ -99,3 +108,10 @@ class SomethingElse():  # @
     @classmethod
     async def do_thing(self, some, **kwargs):  # @
         pass
+
+
+# Simulate validate_multiapi_args decorator
+def validate_multiapi_args(func):
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper

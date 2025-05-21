@@ -445,7 +445,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         "AsyncARMPipelineClient",
     ]
     ignore_functions = ["send_request"]
-    ignore_decorators = {"typing.overload", "builtins.classmethod"}
+    ignore_decorators = {"typing.overload", "builtins.classmethod", "validate_multiapi_args"}
 
     def __init__(self, linter=None):
         super(ClientMethodsHaveTracingDecorators, self).__init__(linter)
@@ -471,15 +471,24 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                     and not node.name.startswith("_")
                     and node.parent.name not in self.ignore_clients
                 ):
+                    # Skip check if the method has tracing decorator or has one of the ignore decorators
+                    decorator_names = node.decoratornames()
+                    
+                    # Check if any decorator name is in the ignore list
+                    should_ignore = any(
+                        deco_name in self.ignore_decorators or deco_name.split(".")[-1] in self.ignore_decorators
+                        for deco_name in decorator_names
+                    )
+                    
+                    # Check if the method has the tracing decorator
+                    has_tracing = "azure.core.tracing.decorator.distributed_trace" in decorator_names
+                    
                     if (
                         node.args.kwarg
                         and node.name not in self.ignore_functions
                         and not node.name.endswith("client")
-                        and not self.ignore_decorators.intersection(
-                            node.decoratornames()
-                        )
-                        and "azure.core.tracing.decorator.distributed_trace"
-                        not in node.decoratornames()
+                        and not should_ignore
+                        and not has_tracing
                     ):
                         self.add_message(
                             msgid="client-method-missing-tracing-decorator",
@@ -510,15 +519,24 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                     and not node.name.startswith("_")
                     and node.parent.name not in self.ignore_clients
                 ):
+                    # Skip check if the method has tracing decorator or has one of the ignore decorators
+                    decorator_names = node.decoratornames()
+                    
+                    # Check if any decorator name is in the ignore list
+                    should_ignore = any(
+                        deco_name in self.ignore_decorators or deco_name.split(".")[-1] in self.ignore_decorators
+                        for deco_name in decorator_names
+                    )
+                    
+                    # Check if the method has the tracing decorator
+                    has_tracing = "azure.core.tracing.decorator_async.distributed_trace_async" in decorator_names
+                    
                     if (
                         node.args.kwarg
                         and node.name not in self.ignore_functions
                         and not node.name.endswith("client")
-                        and not self.ignore_decorators.intersection(
-                            node.decoratornames()
-                        )
-                        and "azure.core.tracing.decorator_async.distributed_trace_async"
-                        not in node.decoratornames()
+                        and not should_ignore
+                        and not has_tracing
                     ):
                         self.add_message(
                             msgid="client-method-missing-tracing-decorator-async",

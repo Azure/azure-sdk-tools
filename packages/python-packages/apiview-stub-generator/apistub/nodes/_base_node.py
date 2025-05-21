@@ -109,6 +109,7 @@ def get_qualified_name(obj, namespace: str) -> str:
                 else:
                     args.append(value)
             elif forward_ref_regex.match(arg_string):
+                # Extract the actual type name without the ForwardRef wrapper
                 value = forward_ref_regex.search(arg_string).group(1)
                 args.append(value)
             else:

@@ -10,7 +10,7 @@ Your task is to:
 The question must be classified into one of these categories:
 
 - **branded**: Questions from internal Azure users about TypeSpec, identified by:
-    - Mentions of Azure-specific concepts: Azure, ARM(Azure Resource Manager), data plane, management (mgmt) plane and so on
+    - Mentions of Azure-specific concepts: Azure, ARM(Azure Resource Manager), data plane, management (mgmt) plane, TCGC(typespec-client-generator-core) and so on
     - Discussion of Azure service specifications
     - Questions about Azure-specific TypeSpec extensions
 

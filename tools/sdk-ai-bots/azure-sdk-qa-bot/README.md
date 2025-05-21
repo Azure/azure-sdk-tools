@@ -3,8 +3,14 @@
 This app template is built on top of [Teams AI library](https://aka.ms/teams-ai-library).
 It showcases a bot app that responds to user questions like ChatGPT. This enables your users to talk with the AI bot in Teams.
 
+## Naming
+
+- botDisplayName: The name displayed in Teams channel
+- TEAMS_BOT_SHORT_DISPLAY_NAME: The name displayed when you @ the bot
+
 ## TODO
 
+- [ ] Decide the scope of links to support
 - [x] Refactor code, messy for now, since I reuse the template or samples directly
 - [x] Remove `Create IcM` button
 - [x] Hide `reference` button when there's no reference

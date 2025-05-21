@@ -1,30 +1,33 @@
-import { TeamsAdapter } from "@microsoft/teams-ai";
+import { TeamsAdapter } from '@microsoft/teams-ai';
 
 // This bot's main dialog.
-import config from "./config";
+import config from './config.js';
+import { LogMiddleware } from './middleware/LogMiddleware.js';
+import { logger } from './logging/logger.js';
+import { getTurnContextLogMeta } from './logging/utils.js';
 
 const adapter = new TeamsAdapter(config);
+adapter.use(new LogMiddleware());
 
 // Catch-all for errors.
 const onTurnErrorHandler = async (context, error) => {
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
-  console.error(`\n [onTurnError] unhandled error: ${error}`);
+  logger.error(`\n [onTurnError] unhandled error: ${error}`, getTurnContextLogMeta(context));
 
   // Only send error message for user messages, not for other message types so the bot doesn't spam a channel or chat.
-  if (context.activity.type === "message") {
+  if (context.activity.type === 'message') {
     // Send a trace activity, which will be displayed in Bot Framework Emulator
     await context.sendTraceActivity(
-      "OnTurnError Trace",
+      'OnTurnError Trace',
       `${error}`,
-      "https://www.botframework.com/schemas/error",
-      "TurnError"
+      'https://www.botframework.com/schemas/error',
+      'TurnError'
     );
 
     // Send a message to the user
-    await context.sendActivity("The bot encountered an error or bug.");
-    await context.sendActivity("To continue to run this bot, please fix the bot source code.");
+    await context.sendActivity('The bot encountered an internal error or bug.');
   }
 };
 

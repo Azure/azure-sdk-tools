@@ -16,17 +16,17 @@ var AOAI_CHAT_COMPLETIONS_API_KEY string
 var API_KEY string
 
 const (
-	AOAI_CHAT_COMPLETIONS_MODEL    = "gpt-4o"
-	AOAI_CHAT_COMPLETIONS_ENDPOINT = "https://typespecaicent1405101257.openai.azure.com"
+	AOAI_CHAT_COMPLETIONS_MODEL    = "gpt-4.1"
+	AOAI_CHAT_COMPLETIONS_ENDPOINT = "https://UxAutoTestEast.openai.azure.com"
 	AI_SEARCH_BASE_URL             = "https://typspehelper4search.search.windows.net"
-	AI_SEARCH_INDEX                = "typespec-knowledge-v2"
+	AI_SEARCH_INDEX                = "typespec-knowledge"
 	STORAGE_BASE_URL               = "https://typespechelper4storage.blob.core.windows.net"
 	STORAGE_KNOWLEDGE_CONTAINER    = "knowledge"
 	STORAGE_FEEDBACK_CONTAINER     = "feedback"
 )
 
 func InitOpenAIClient() {
-	endpoint := "https://typespecaicent1405101257.openai.azure.com"
+	endpoint := AOAI_CHAT_COMPLETIONS_ENDPOINT
 	keyCredential := azcore.NewKeyCredential(AOAI_CHAT_COMPLETIONS_API_KEY)
 	client, err := azopenai.NewClientWithKeyCredential(endpoint, keyCredential, nil)
 	if err != nil {

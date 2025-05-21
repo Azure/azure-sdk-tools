@@ -4,6 +4,12 @@
 param resourceBaseName string
 
 @secure()
+param azureComputerVisionApiKey string
+
+@secure()
+param azureComputerVisionEndpoint string
+
+@secure()
 param azureOpenAIKey string
 
 @secure()
@@ -29,17 +35,20 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' 
 
 // Compute resources for your Web App
 resource serverfarm 'Microsoft.Web/serverfarms@2021-02-01' = {
-  kind: 'app'
+  kind: 'linux'
   location: location
   name: serverfarmsName
   sku: {
     name: webAppSKU
   }
+  properties: {
+    reserved: true
+  }
 }
 
 // Web App that hosts your bot
 resource webApp 'Microsoft.Web/sites@2021-02-01' = {
-  kind: 'app'
+  kind: 'app,linux'
   location: location
   name: webAppName
   properties: {
@@ -47,14 +56,11 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
     httpsOnly: true
     siteConfig: {
       alwaysOn: true
+      linuxFxVersion: 'NODE|20-lts'
       appSettings: [
         {
           name: 'WEBSITE_RUN_FROM_PACKAGE'
           value: '1' // Run Azure App Service from a package file
-        }
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~18' // Set NodeJS version to 18.x for your site
         }
         {
           name: 'RUNNING_ON_AZURE'
@@ -84,8 +90,20 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'AZURE_OPENAI_DEPLOYMENT_NAME'
           value: azureOpenAIDeploymentName
         }
+        {
+          name: 'AZURE_COMPUTER_VISION_ENDPOINT'
+          value: azureComputerVisionEndpoint
+        }
+        {
+          name: 'AZURE_COMPUTER_VISION_API_KEY'
+          value: azureComputerVisionApiKey
+        }
       ]
       ftpsState: 'FtpsOnly'
+      httpLoggingEnabled: true
+      detailedErrorLoggingEnabled: true
+      requestTracingEnabled: true
+      logsDirectorySizeLimit: 35
     }
   }
   identity: {
@@ -93,6 +111,76 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
     userAssignedIdentities: {
       '${identity.id}': {}
     }
+  }
+}
+
+// Create Log Analytics Workspace
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+  name: '${resourceBaseName}-law'
+  location: location
+  properties: {
+    retentionInDays: 30
+  }
+}
+
+// Diagnostic settings for App Service
+resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: '${webApp.name}-diagnostic'
+  scope: webApp
+  properties: {
+    workspaceId: logAnalytics.id
+    logs: [
+      {
+        category: 'AppServiceHTTPLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AppServiceConsoleLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AppServiceAppLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AppServiceAuditLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AppServicePlatformLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
   }
 }
 

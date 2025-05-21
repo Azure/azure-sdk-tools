@@ -60,7 +60,7 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 
 CREDENTIAL = DefaultAzureCredential()
 
-DEFAULT_USE_RAG = False
+DEFAULT_USE_RAG = True
 
 
 # create enum for the ReviewMode

@@ -115,19 +115,53 @@ class Context:
     def __init__(
         self,
         *,
-        guidelines: Dict[str, SearchItem] = None,
-        memories: Dict[str, SearchItem] = None,
-        examples: Dict[str, SearchItem] = None,
+        guidelines: Dict[str, object] = None,
+        memories: Dict[str, object] = None,
+        examples: Dict[str, object] = None,
+        scores: Optional[dict] = None,
     ):
         self.items = []
+        scores = scores or {}
+        # Propagate scores from examples to guidelines/memories if needed
+        # First, collect example scores
+        example_scores = {ex_id: scores.get(ex_id) for ex_id in (examples or {})}
+
+        # For guidelines, use their own score, or the max score of their related examples
         for guideline in guidelines.values():
-            item = ContextItem(guideline, examples=examples)
+            score = scores.get(getattr(guideline, "id", None))
+            related_exs = getattr(guideline, "related_examples", [])
+            related_scores = [
+                example_scores.get(ex_id) for ex_id in related_exs if example_scores.get(ex_id) is not None
+            ]
+            if related_scores:
+                max_related = max(related_scores)
+                if score is None or (max_related is not None and max_related > score):
+                    score = max_related
+            item = ContextItem(guideline, examples=examples, score=score)
             self.items.append(item)
+
+        # For memories, use their own score, or the max score of their related examples
         for memory in memories.values():
-            item = ContextItem(memory, examples=examples)
+            score = scores.get(getattr(memory, "id", None))
+            related_exs = getattr(memory, "related_examples", [])
+            related_scores = [
+                example_scores.get(ex_id) for ex_id in related_exs if example_scores.get(ex_id) is not None
+            ]
+            if related_scores:
+                max_related = max(related_scores)
+                if score is None or (max_related is not None and max_related > score):
+                    score = max_related
+            item = ContextItem(memory, examples=examples, score=score)
             self.items.append(item)
         self._normalize_scores()
-        self.items.sort(key=lambda x: x.normalized_score, reverse=True)
+        # Only sort items with a valid normalized_score, put None scores at the end
+        self.items.sort(
+            key=lambda x: (
+                x.normalized_score is not None,
+                x.normalized_score if x.normalized_score is not None else float("-inf"),
+            ),
+            reverse=True,
+        )
 
     def __iter__(self):
         """
@@ -178,24 +212,25 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, item: SearchItem, *, examples: Dict[str, SearchItem]):
+    def __init__(self, item, *, examples: Dict[str, object], score=None):
         self.id = self._process_id(item.id)
-        self.content = item.content
-        self.language = item.language
-        self.title = item.title
+        self.content = getattr(item, "content", getattr(item, "text", None))
+        self.language = getattr(item, "language", None)
+        self.title = getattr(item, "title", None)
         self.service = getattr(item, "service", None)
         self.is_exception = getattr(item, "is_exception", None)
         self.examples = []
-        self.score = item.score
+        self.score = score
         for ex_id in getattr(item, "related_examples", []):
-            # copy the example to a new object
-            example = copy.deepcopy(examples.get(ex_id))
+            example = copy.deepcopy(examples.get(ex_id)) if examples else None
             if example is not None:
                 # use the example's score if it's higher
-                if example.score > self.score:
+                if hasattr(example, "score") and example.score and (self.score is None or example.score > self.score):
                     self.score = example.score
-                del example.id
-                del example.guideline_ids
+                if hasattr(example, "id"):
+                    del example.id
+                if hasattr(example, "guideline_ids"):
+                    del example.guideline_ids
                 self.examples.append(example)
             else:
                 print(f"WARNING: Example {ex_id} not found for guideline {item.id}. Skipping.")
@@ -246,13 +281,11 @@ class ContextItem:
                 markdown += "### GOOD Examples\n\n"
                 for example in good_examples:
                     markdown += f"```python\n{example.content}\n```\n\n"
-                    markdown += f"{example.explanation}\n\n"
 
             if bad_examples:
                 markdown += "### BAD Examples\n\n"
                 for example in bad_examples:
                     markdown += f"```python\n{example.content}\n```\n\n"
-                    markdown += f"{example.explanation}\n\n"
         return markdown
 
 
@@ -352,11 +385,13 @@ class SearchManager:
         guidelines = {item.id: item for item in items.results if item.kind == "guidelines"}
         examples = {item.id: item for item in items.results if item.kind == "examples"}
         memories = {item.id: item for item in items.results if item.kind == "memories"}
+        # Save scores for each id
+        scores = {item.id: item.score for item in items.results if hasattr(item, "score")}
 
         # Track seen IDs to avoid cycles
-        seen_guideline_ids = set(guidelines.keys())
-        seen_example_ids = set(examples.keys())
-        seen_memory_ids = set(memories.keys())
+        seen_guideline_ids = set()
+        seen_example_ids = set()
+        seen_memory_ids = set()
 
         # Queues for BFT
         guideline_queue = deque(guidelines.keys())
@@ -381,8 +416,15 @@ class SearchManager:
                         )
                     )
                 )
-            # Convert dicts to SearchItem objects
-            return [SearchItem(r) for r in results]
+            # Determine which model to use based on the container
+            if container.container_link.endswith("/guidelines"):
+                return [Guideline.model_validate(r) for r in results]
+            elif container.container_link.endswith("/examples"):
+                return [Example.model_validate(r) for r in results]
+            elif container.container_link.endswith("/memories"):
+                return [Memory.model_validate(r) for r in results]
+            else:
+                return results
 
         # BFT across all three entity types
         while guideline_queue or example_queue or memory_queue:
@@ -400,11 +442,9 @@ class SearchManager:
                     # Queue up related examples and memories
                     for ex_id in getattr(guideline, "related_examples", []) or []:
                         if ex_id not in seen_example_ids:
-                            seen_example_ids.add(ex_id)
                             example_queue.append(ex_id)
                     for mem_id in getattr(guideline, "related_memories", []) or []:
                         if mem_id not in seen_memory_ids:
-                            seen_memory_ids.add(mem_id)
                             memory_queue.append(mem_id)
 
             # Process examples
@@ -421,11 +461,9 @@ class SearchManager:
                     # Queue up related guidelines and memories
                     for gid in getattr(example, "guideline_ids", []) or []:
                         if gid not in seen_guideline_ids:
-                            seen_guideline_ids.add(gid)
                             guideline_queue.append(gid)
                     for mem_id in getattr(example, "memory_ids", []) or []:
                         if mem_id not in seen_memory_ids:
-                            seen_memory_ids.add(mem_id)
                             memory_queue.append(mem_id)
 
             # Process memories
@@ -442,12 +480,10 @@ class SearchManager:
                     # Queue up related guidelines and examples
                     for gid in getattr(memory, "related_guidelines", []) or []:
                         if gid not in seen_guideline_ids:
-                            seen_guideline_ids.add(gid)
                             guideline_queue.append(gid)
                     for ex_id in getattr(memory, "related_examples", []) or []:
                         if ex_id not in seen_example_ids:
-                            seen_example_ids.add(ex_id)
                             example_queue.append(ex_id)
 
-        context = Context(guidelines=guidelines, examples=examples, memories=memories)
+        context = Context(guidelines=guidelines, examples=examples, memories=memories, scores=scores)
         return context

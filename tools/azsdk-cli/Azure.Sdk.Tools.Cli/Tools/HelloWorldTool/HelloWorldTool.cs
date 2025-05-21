@@ -37,15 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
         {
             string input = ctx.ParseResult.GetValueForArgument(_inputArg);
             var fail = ctx.ParseResult.GetValueForOption(failOpt);
-            DefaultCommandResponse result = new();
-            if (fail)
-            {
-                result = EchoFail(input);
-            }
-            else
-            {
-                result = EchoSuccess(input);
-            }
+            var result = fail ? EchoFail(input) : EchoSuccess(input);
             ctx.ExitCode = ExitCode;
             output.Output(result);
             await Task.CompletedTask;

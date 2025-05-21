@@ -13,19 +13,17 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class RequestedReviews: PageModel
     {
-        private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
 
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ApprovedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
 
-        public RequestedReviews(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionsManager, UserPreferenceCache cache)
+        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, UserProfileCache userProfileCache)
         {
-            _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
-            _preferenceCache = cache;
+            _userProfileCache = userProfileCache;
         }
 
         public async Task<IActionResult> OnGetAsync()

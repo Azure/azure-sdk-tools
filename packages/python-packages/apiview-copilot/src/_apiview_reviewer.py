@@ -60,7 +60,13 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 
 CREDENTIAL = DefaultAzureCredential()
 
-DEFAULT_USE_RAG = True
+
+class ApiViewContextMode:
+    STATIC = "static"
+    RAG = "rag"
+
+
+DEFAULT_CONTEXT_MODE = ApiViewContextMode.RAG
 
 
 # create enum for the ReviewMode
@@ -86,7 +92,7 @@ class ApiViewReview:
         *,
         language: str,
         outline: Optional[str] = None,
-        use_rag: bool = DEFAULT_USE_RAG,
+        mode: str = DEFAULT_CONTEXT_MODE,
     ):
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
@@ -94,7 +100,7 @@ class ApiViewReview:
             self.base = None
         self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
-        self.use_rag = use_rag
+        self.context_mode = mode
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
         static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
@@ -260,7 +266,7 @@ class ApiViewReview:
                 break
 
             # Prepare context for guideline tasks
-            if self.use_rag:
+            if self.context_mode == ApiViewContextMode.RAG:
                 context = self._retrieve_context(str(section))
                 if context:
                     context_string = context.to_markdown()

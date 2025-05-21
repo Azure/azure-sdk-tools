@@ -480,7 +480,7 @@ class ApiViewReview:
         """
 
         def execute_prompt() -> str:
-            return prompty.execute(prompt_path, inputs=inputs)
+            return prompty.execute(prompt_path, inputs=inputs, configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")})
 
         def on_retry(exception, attempt, max_attempts):
             logger.warning(

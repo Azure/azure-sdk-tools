@@ -467,7 +467,7 @@ if __name__ == "__main__":
         "--test-file",
         "-t",
         type=str,
-        default="reviews.jsonl",
+        default="data.jsonl",
         help="Only run a particular jsonl test file, takes the name or path to the file. Defaults to all.",
     )
     args = parser.parse_args()

@@ -47,7 +47,9 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
             // if it doesn't, just return
             if (!hasAttr)
+            {
                 return;
+            }
 
             var body = md.Body;
             if (body == null)

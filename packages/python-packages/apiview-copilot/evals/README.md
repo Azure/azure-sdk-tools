@@ -19,6 +19,12 @@ This directory contains the evaluation testing for APIView Copilot.
 
 ## Running Evaluations
 
+### In DevOps pipeline
+
+Evals runs can be triggered by the [tools - apiview-copilot - tests](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7662&_a=summary) pipeline. Results of the run can be found on the Evaluation tab in the Azure AI Foundry portal for the `apiview-ai` project. 
+
+### Locally
+
 Running evaluations will run evals on test files for the language given and give the choice to record the baseline (aka write the results to `evals/results/language`). 
 
 The main evaluation script is `run.py`. Here are the common ways to use it:

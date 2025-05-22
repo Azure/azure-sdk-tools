@@ -42,6 +42,7 @@ interface SdkAutoOptions {
   headBranch?: string;
   runEnv: 'local' | 'azureDevOps' | 'test';
   version: string;
+  skipSdkGenFromOpenapi?: string;
 }
 
 export type SdkAutoContext = {

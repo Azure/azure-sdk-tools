@@ -174,8 +174,15 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     message = configWarning("No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.");
     context.logger.warn(message);
   } else {
-    context.logger.info(`SDK to generate:${context.config.sdkName}, configPath: ${enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath}`);
-    context.specConfigPath = enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath;
+    if (twoConfigProvided && !enabledSdkForTspConfig && context.config.skipSdkGenFromOpenapi === "true") {
+      context.status = 'notEnabled';
+      message = configWarning(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. ` +
+          `This typespec project will be skipped from SDK generation. Refer to contoso sample project in spec repo to add the right emitter config in the 'tspconfig.yaml' file`);
+      context.logger.warn(message);
+    }else {
+      context.logger.info(`SDK to generate:${context.config.sdkName}, configPath: ${enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath}`);
+      context.specConfigPath = enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath;
+    }
   }
   context.logger.log('endsection', 'Validate SDK configuration');
 };

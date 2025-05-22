@@ -211,13 +211,10 @@ class ApiViewReview:
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
-        # Outline prompt is always based on self.target
-        outline_prompt_file = "generate_outline.prompty"
-        outline_content = self.target
-
         # Set up progress tracking
         print("Processing sections: ", end="", flush=True)
-        total_prompts = 1 + (len(sections_to_process) * 2) + 1  # 1 for summary, 1 for outline, 2 for each section
+
+        total_prompts = 1 + (len(sections_to_process) * 2)  # 1 for summary, 2 for each section
         prompt_status = [self.PENDING] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation
@@ -247,19 +244,7 @@ class ApiViewReview:
             status_array=prompt_status,
         )
 
-        # 2. Outline task (always based on self.target)
-        all_futures[outline_tag] = self.executor.submit(
-            self._execute_prompt_task,
-            prompt_path=os.path.join(_PROMPTS_FOLDER, outline_prompt_file),
-            inputs={
-                "content": outline_content,
-            },
-            task_name=outline_tag,
-            status_idx=1,
-            status_array=prompt_status,
-        )
-
-        # 3. Guideline and generic tasks for each section
+        # 2. Guideline and generic tasks for each section
         for idx, (section_idx, section) in enumerate(sections_to_process):
             # First check if cancellation is requested
             if cancel_event.is_set():
@@ -290,7 +275,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=(idx * 2) + 2,
+                status_idx=(idx * 2) + 1,
                 status_array=prompt_status,
             )
 
@@ -306,12 +291,13 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=generic_key,
-                status_idx=(idx * 2) + 3,
+                status_idx=(idx * 2) + 2,
                 status_array=prompt_status,
             )
 
         # Process results as they complete
         try:
+
             # Process summary result
             summary_response = all_futures[summary_tag].result()
             if summary_response:
@@ -323,11 +309,6 @@ class ApiViewReview:
                     comment=summary_response,
                     source="summary",
                 )
-
-            # Process outline result
-            outline_response = all_futures[outline_tag].result()
-            if outline_response:
-                self.outline = outline_response
 
             # Process each section's results
             section_results = {}
@@ -433,7 +414,7 @@ class ApiViewReview:
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
-        filter_prompt_file = "final_comment_filter_single.prompty"
+        filter_prompt_file = "final_comment_filter.prompty"
         filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
 
         print(f"Filtering comments...")

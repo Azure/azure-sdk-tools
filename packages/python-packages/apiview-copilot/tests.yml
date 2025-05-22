@@ -39,3 +39,6 @@ extends:
         AZURE_FOUNDRY_PROJECT_NAME: apiview-ai
         OPENAI_API_VERSION: 2025-03-01-preview
         SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        AZURE_SEARCH_NAME: archagent-search
+        AZURE_COSMOS_ACC_NAME: archagent-cosmos
+        AZURE_COSMOS_DB_NAME: archagent-db

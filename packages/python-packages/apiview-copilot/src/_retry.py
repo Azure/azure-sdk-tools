@@ -55,7 +55,7 @@ def retry_with_backoff(
             # Check if this is a non-retryable exception
             if isinstance(e, non_retryable_exceptions):
                 if logger:
-                    print(f"Non-retryable error in {description}: {str(e)}")
+                    logger.error(f"Non-retryable error in {description}: {str(e)}")
                 if on_failure:
                     return on_failure(e, attempt)
                 raise  # Re-raise non-retryable exceptions immediately
@@ -63,7 +63,7 @@ def retry_with_backoff(
             # Check if this is a retryable exception
             if not isinstance(e, retry_exceptions):
                 if logger:
-                    print(f"Unhandled error in {description}: {str(e)}")
+                    logger.error(f"Unhandled error in {description}: {str(e)}")
                 if on_failure:
                     return on_failure(e, attempt)
                 raise  # Re-raise exceptions that don't match retry_exceptions
@@ -71,7 +71,7 @@ def retry_with_backoff(
             # This is a retryable exception
             error_msg = f"Error in {description}, attempt {attempt+1}/{max_retries}: {str(e)}"
             if logger:
-                print(error_msg)
+                logger.error(error_msg)
 
         # Check for 'Retry-After' header if the exception has it
         retry_after = None

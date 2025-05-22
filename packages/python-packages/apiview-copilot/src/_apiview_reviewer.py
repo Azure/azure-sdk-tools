@@ -179,7 +179,7 @@ class ApiViewReview:
         except Exception as e:
             status_array[status_idx] = self.FAILURE
             print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
-            print(f"Error executing {task_name}: {str(e)}")
+            logger.error(f"Error executing {task_name}: {str(e)}")
             return None
 
     def _generate_comments(self):
@@ -350,7 +350,7 @@ class ApiViewReview:
                                 comment["source"] = section_type
                             section_results[section_idx]["comments"].extend(result["comments"])
                 except Exception as e:
-                    print(f"Error processing {key}: {str(e)}")
+                    logger.error(f"Error processing {key}: {str(e)}")
 
             print()  # Add newline after progress indicator
 
@@ -415,14 +415,14 @@ class ApiViewReview:
                 merge_results = json.loads(response)
                 result_comments = merge_results.get("comments", [])
                 if len(result_comments) != 1:
-                    print(f"Error merging comments for line {line_no}: {merge_results}")
+                    logger.error(f"Error merging comments for line {line_no}: {merge_results}")
                     continue
                 merged_comment = result_comments[0]
                 merged_comment["source"] = "merged"
                 merged_comment_obj = Comment(**merged_comment)
                 unique_comments.append(merged_comment_obj)
             except Exception as e:
-                print(f"Error processing deduplication for line {line_no}: {str(e)}")
+                logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
 
         # Update the comments list with the unique comments
         self.results.comments = unique_comments
@@ -461,7 +461,7 @@ class ApiViewReview:
                 else:
                     discard_comments.append(response_json)
             except Exception as e:
-                print(f"Error filtering comment at index {idx}: {str(e)}")
+                logger.error(f"Error filtering comment at index {idx}: {str(e)}")
 
         # Update the results with the filtered comments
         print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
@@ -498,7 +498,7 @@ class ApiViewReview:
             )
 
         def on_failure(exception, attempt):
-            print(
+            logger.error(
                 f"Failed to execute prompt {os.path.basename(prompt_path)} "
                 f"after {attempt} attempts: {str(exception)}"
             )
@@ -591,7 +591,7 @@ class ApiViewReview:
             return context
         except Exception as e:
             # Log search errors
-            print(f"Error retrieving guidelines: {str(e)}")
+            logger.error(f"Error retrieving guidelines: {str(e)}")
             # Return empty context as fallback
             return None
 

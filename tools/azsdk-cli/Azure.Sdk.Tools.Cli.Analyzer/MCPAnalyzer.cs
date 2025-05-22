@@ -69,7 +69,9 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             bool hasExCatch = tryStmt.Catches
                 .Any(c => c.Declaration?.Type.ToString() == "Exception");
             if (!hasExCatch)
+            {
                 ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
+            }
         }
     }
 }

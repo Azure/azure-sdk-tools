@@ -51,7 +51,9 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
             var body = md.Body;
             if (body == null)
+            {
                 return;
+            }
 
             // check that there is one statement surrounding the body
             var stmts = body.Statements;

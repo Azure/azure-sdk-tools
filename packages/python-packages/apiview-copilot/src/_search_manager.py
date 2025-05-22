@@ -245,11 +245,11 @@ class ContextItem:
         """
         Converts the metadata to a markdown string.
         """
-        markdown = f"> id: {self.id}\n"
+        markdown = f"> **id:** {self.id}<br>"
         if self.normalized_score is not None:
-            markdown += f"> score: {int(round(self.normalized_score))}\n"
+            markdown += f"**score:** {int(round(self.normalized_score))}<br>"
         if self.is_exception:
-            markdown += f"> exception: {self.is_exception}\n"
+            markdown += f"> **exception:** {self.is_exception}<br>"
         markdown += "\n"
         return markdown
 

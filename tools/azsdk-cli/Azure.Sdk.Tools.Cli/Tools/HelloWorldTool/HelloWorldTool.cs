@@ -44,31 +44,51 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
         }
 
         [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
-        #pragma warning disable MCP001
         public DefaultCommandResponse EchoFail(string message)
         {
-            logger.LogError("Echoing message: {message}", message);
-            SetFailure(1);
-
-            return new()
+            try
             {
-                ResponseError = $"RESPONDING TO '{message}' with FAIL: {ExitCode}",
-            };
+
+                logger.LogError("Echoing message: {message}", message);
+                SetFailure(1);
+
+                return new()
+                {
+                    ResponseError = $"RESPONDING TO '{message}' with FAIL: {ExitCode}",
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while echoing message: {message}", message);
+                return new()
+                {
+                    ResponseError = $"Error occurred while processing '{message}': {ex.Message}"
+                };
+            }
         }
 
 
         [McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
-            #pragma warning restore MCP001
-
-            logger.LogInformation("Echoing message: {message}", message);
-
-            return new()
+            try
             {
-                Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
-                Duration = 1
-            };
+                logger.LogInformation("Echoing message: {message}", message);
+
+                return new()
+                {
+                    Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
+                    Duration = 1
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while echoing message: {message}", message);
+                return new()
+                {
+                    ResponseError = $"Error occurred while processing '{message}': {ex.Message}"
+                };
+            }
         }
     }
     #endif

@@ -19,11 +19,14 @@ public class AnalyzePipelineResponse : Response
     public override string ToString()
     {
         var output = $"Failed Tests" + Environment.NewLine +
-                     "--------------------------------------------------------------------------------" + Environment.NewLine +
-                     FailedTests.ToString() + Environment.NewLine +
-                     $"Failed Tasks" + Environment.NewLine +
-                     "--------------------------------------------------------------------------------" + Environment.NewLine +
-                     FailedTasks.ToString() + Environment.NewLine;
+                     "--------------------------------------------------------------------------------" + Environment.NewLine;
+        output += string.Join(Environment.NewLine, FailedTests.Select(t => t.ToString())) + Environment.NewLine;
+
+        output += "--------------------------------------------------------------------------------" + Environment.NewLine +
+                  $"Failed Tasks" + Environment.NewLine +
+                  "--------------------------------------------------------------------------------" + Environment.NewLine;
+        output += string.Join(Environment.NewLine, FailedTasks.Select(t => t.ToString())) + Environment.NewLine;
+
         return ToString(output);
     }
 }

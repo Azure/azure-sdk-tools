@@ -11,3 +11,4 @@ python-dotenv==1.0.1
 pydantic==2.10.6
 pyyaml==6.0.2
 pytest==7.4.2
+uvicorn[standard]==0.29.0

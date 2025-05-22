@@ -69,7 +69,7 @@ namespace AzureSDKDevToolsMCP.Tools
             }
             catch (Exception ex)
             {
-                logger.LogError($"Unhandled exception: {ex.Message}");
+                logger.LogError($"Unhandled exception: {ex}");
                 SetFailure();
                 return new List<string> { $"Unhandled exception: {ex.Message}" };
             }

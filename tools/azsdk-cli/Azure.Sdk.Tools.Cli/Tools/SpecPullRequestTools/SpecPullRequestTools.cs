@@ -44,18 +44,35 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("Connect to GitHub using personal access token.")]
         public async Task<string> GetGitHubUserDetails()
         {
-            var user = await gitHubService.GetGitUserDetails();
-            return user != null
-                ? output.Format($"Connected to GitHub as {user.Login}")
-                : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
+            try
+            {
+                var user = await gitHubService.GetGitUserDetails();
+                return user != null
+                    ? output.Format($"Connected to GitHub as {user.Login}")
+                    : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
+            }
+            catch(Exception ex)
+            {
+                SetFailure();
+                return output.Format($"Failed to connect to GitHub. Unhandled error: {ex.Message}");
+            }
+
         }
 
         [McpServerTool, Description("Check if TypeSpec project is in public repo. Provide absolute path to TypeSpec project root as param.")]
         public string CheckIfSpecInPublicRepo(string typeSpecProjectPath)
         {
-            var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-            var isPublicRepo = typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath);
-            return output.Format(isPublicRepo);
+            try
+            {
+                var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+                var isPublicRepo = typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath);
+                return output.Format(isPublicRepo);
+            }
+            catch (Exception ex)
+            {
+                SetFailure();
+                return output.Format($"Unexpected failure occurred. Error: {ex.Message}");
+            }
         }
 
         [McpServerTool, Description("Get pull request link for current branch in the repo. Provide absolute path to TypeSpec project root as param. This tool call GetPullRequest to get pull request details.")]
@@ -98,34 +115,43 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("Create pull request for spec changes. Provide title, description and absolute path to TypeSpec project root as params. Creates a pull request for committed changes in the current branch.")]
         public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main")
         {
-            List<string> results = [];
             try
             {
-                var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-                var headBranchName = gitHelper.GetBranchName(repoRootPath);
-                if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
+                List<string> results = [];
+                try
                 {
-                    SetFailure();
-                    results.Add("Failed to create pull request. Pull request can not be created for changes in main branch. Select the GitHub branch for your spec changes using `git checkout <branch name>'");
+                    var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+                    var headBranchName = gitHelper.GetBranchName(repoRootPath);
+                    if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
+                    {
+                        SetFailure();
+                        results.Add("Failed to create pull request. Pull request can not be created for changes in main branch. Select the GitHub branch for your spec changes using `git checkout <branch name>'");
+                        return results;
+                    }
+
+                    //Get repo details like target owner, head owner, repo name
+                    var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
+
+                    var headBranch = $"{headRepoOwner}:{headBranchName}";
+                    logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
+                    logger.LogInformation($"Creating pull request in {REPO_OWNER}:{REPO_NAME}");
+                    //Create pull request
+                    var createResponseList = await gitHubService.CreatePullRequest(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
+                    results.AddRange(createResponseList);
                     return results;
                 }
-
-                //Get repo details like target owner, head owner, repo name
-                var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
-
-                var headBranch = $"{headRepoOwner}:{headBranchName}";
-                logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
-                logger.LogInformation($"Creating pull request in {REPO_OWNER}:{REPO_NAME}");
-                //Create pull request
-                var createResponseList = await gitHubService.CreatePullRequest(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
-                results.AddRange(createResponseList);
-                return results;
+                catch (Exception ex)
+                {
+                    SetFailure();
+                    results.Add($"Failed to create a pull request, Error: {ex.Message}");
+                    return results;
+                }
             }
             catch (Exception ex)
             {
+                logger.LogError($"Unexpected exception occurred: {ex.Message}");
                 SetFailure();
-                results.Add($"Failed to create a pull request, Error: {ex.Message}");
-                return results;
+                return new List<string> { $"Unhandled exception: {ex.Message}" };
             }
         }
 

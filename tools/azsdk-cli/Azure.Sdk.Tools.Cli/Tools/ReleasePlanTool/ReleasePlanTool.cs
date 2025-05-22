@@ -33,9 +33,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlan(string pullRequestLink)
         {
-            List<string> releasePlanList = [];
             try
             {
+                List<string> releasePlanList = [];
                 var releasePlan = await devOpsService.GetReleasePlan(pullRequestLink);
                 var _out = releasePlan == null ? "Failed to get release plan details." :
                     $"Release Plan: {JsonSerializer.Serialize(releasePlan)}";

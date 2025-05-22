@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Contrac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Tests", "Azure.Sdk.Tools.Cli.Tests\Azure.Sdk.Tools.Cli.Tests.csproj", "{97D903D8-ADC9-4C01-8922-9ADB9137B584}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Analyzer", "Azure.Sdk.Tools.Cli.Analyzer\Azure.Sdk.Tools.Cli.Analyzer.csproj", "{BC20D79B-D515-4A14-BACA-8809949A4D08}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{97D903D8-ADC9-4C01-8922-9ADB9137B584}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97D903D8-ADC9-4C01-8922-9ADB9137B584}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97D903D8-ADC9-4C01-8922-9ADB9137B584}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC20D79B-D515-4A14-BACA-8809949A4D08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC20D79B-D515-4A14-BACA-8809949A4D08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC20D79B-D515-4A14-BACA-8809949A4D08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC20D79B-D515-4A14-BACA-8809949A4D08}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,9 +1,4 @@
-import {
-  resolvePath,
-  getDirectoryPath,
-  ResolveCompilerOptionsOptions,
-  formatDiagnostic,
-} from "@typespec/compiler";
+import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
 import {
   ModuleResolutionResult,
   resolveModule,
@@ -18,6 +13,8 @@ export interface TspLocation {
   commit: string;
   repo: string;
   additionalDirectories?: string[];
+  entrypointFile?: string;
+  emitterPackageJsonPath?: string;
 }
 
 export function resolveTspConfigUrl(configUrl: string): {
@@ -47,18 +44,32 @@ export function resolveTspConfigUrl(configUrl: string): {
   }
 }
 
-export async function discoverMainFile(srcDir: string): Promise<string> {
+export async function discoverEntrypointFile(
+  srcDir: string,
+  specifiedEntrypointFile?: string,
+): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`);
-  let entryTsp = "";
+  let entryTsp: string | undefined = undefined;
   const files = await readdir(srcDir, { recursive: true });
-  for (const file of files) {
-    if (file.includes("client.tsp") || file.includes("main.tsp")) {
-      entryTsp = file;
-      Logger.debug(`Found entry file: ${entryTsp}`);
-      return entryTsp;
+
+  function findEntrypoint(name: string): string | undefined {
+    return files.find((file) => file.endsWith(name)) ?? undefined;
+  }
+  if (specifiedEntrypointFile) {
+    entryTsp = findEntrypoint(specifiedEntrypointFile);
+    if (!entryTsp) {
+      throw new Error(
+        `Couldn't find the entrypoint file specified in tsp-location.yaml: "${specifiedEntrypointFile}". Please verify that the entrypoint file name is correct.`,
+      );
+    }
+  } else {
+    entryTsp = findEntrypoint("client.tsp") ?? findEntrypoint("main.tsp");
+    if (!entryTsp) {
+      throw new Error(`No main.tsp or client.tsp found`);
     }
   }
-  throw new Error(`No main.tsp or client.tsp found`);
+  Logger.debug(`Found entry file: ${entryTsp}`);
+  return entryTsp;
 }
 
 export async function compileTsp({
@@ -67,15 +78,18 @@ export async function compileTsp({
   resolvedMainFilePath,
   additionalEmitterOptions,
   saveInputs,
+  trace,
 }: {
   emitterPackage: string;
   outputPath: string;
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-}): Promise<boolean> {
+  trace?: string[];
+}): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
-  const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
+  const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
+    await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
   const overrideOptions: Record<string, Record<string, string>> = {
@@ -99,6 +113,7 @@ export async function compileTsp({
     outputDir,
     emit: [emitterPackage],
     options: overrideOptions,
+    trace: trace,
   };
   Logger.info(`Compiling tsp using ${emitterPackage}...`);
   const [options, diagnostics] = await resolveCompilerOptions(NodeHost, {
@@ -107,6 +122,18 @@ export async function compileTsp({
     overrides,
   });
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
+
+  const cliOptions = Object.entries(options.options?.[emitterPackage] ?? {})
+    .map(([key, value]) => {
+      if (typeof value === "object") {
+        value = JSON.stringify(value);
+      }
+      return `--option ${key}=${value}`;
+    })
+    .join(" ");
+
+  const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
+
   if (diagnostics.length > 0) {
     let errorDiagnostic = false;
     // This should not happen, but if it does, we should log it.
@@ -122,7 +149,7 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      return false;
+      return [false, exampleCmd];
     }
   }
 
@@ -142,11 +169,11 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      return false;
+      return [false, exampleCmd];
     }
   }
   Logger.success("generation complete");
-  return true;
+  return [true, exampleCmd];
 }
 
 export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {

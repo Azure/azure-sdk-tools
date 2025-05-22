@@ -14,6 +14,8 @@ from ._client import (
     Python2TypeHintClient,
     Python3TypeHintClient,
     SpecialArgsClient,
+    module_func,
+    another_func,
 )
 
 __version__ = VERSION

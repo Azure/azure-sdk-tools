@@ -11,13 +11,12 @@
 ################
 # Automation
 ################
-/.github/CODEOWNERS                    @azure/azure-sdk-eng
+/.github/CODEOWNERS                    @azure/azure-sdk-eng @jsquire
 
 ###########
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-
 /.config/1espt/                        @benbp @weshaggard
 
 ###########
@@ -26,54 +25,53 @@
 /eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio @weshaggard
 
 ###########
-# GitHub Tools
-###########
-/tools/github/                        @jsquire @ronniegeraghty
-
-###########
 # Eng Sys Tools
 ###########
-/tools/                                @azure/azure-sdk-eng
-/tools/codeowners-utils/               @JimSuplizio
-/tools/github-event-processor/         @JimSuplizio @benbp @jsquire @ronniegeraghty
-/tools/github-team-user-store/         @JimSuplizio @weshaggard
-/tools/js-sdk-release-tools/           @qiaozha @MaryGao
-/tools/mock-service-host/              @raych1 @tadelesh
-/tools/perf-automation/                @mikeharder @benbp
-/tools/pipeline-generator/             @weshaggard @benbp
-/tools/pipeline-witness/               @hallipr
-/tools/sdk-ai-bots/                    @raych1
-/tools/sdk-testgen/                    @lirenhe @tadelesh
-/tools/test-proxy/                     @scbedd @mikeharder @benbp
-/tools/tsp-client/                     @catalinaperalta
-/tools/webhook-router/                 @praveenkuttappan @weshaggard
+/tools/                                 @azure/azure-sdk-eng
+/tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
+/tools/codeowners-utils/                @JimSuplizio
+/tools/github/                          @jsquire @ronniegeraghty
+/tools/github-event-processor/          @JimSuplizio @benbp @jsquire @ronniegeraghty
+/tools/github-team-user-store/          @JimSuplizio @weshaggard
+/tools/issue-labeler/                   @jsquire @jeo02
+/tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
+/tools/perf-automation/                 @mikeharder @benbp
+/tools/perf-automation/**/*Rust*.cs     @gearama @heaths @LarryOsterman @RickWinter
+/tools/pipeline-generator/              @weshaggard @benbp
+/tools/pipeline-witness/                @hallipr
+/tools/sdk-ai-bots/                     @raych1
+/tools/sdk-testgen/                     @lirenhe @tadelesh
+/tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
+/tools/test-proxy/                      @scbedd @mikeharder @benbp
+/tools/tsp-client/                      @catalinaperalta
+/tools/typespec-bump-deps/              @weidongxu-microsoft
 
 ###########
 # Stress
 ###########
-/eng/common/scripts/stress-testing/    @benbp @ckairen @richardpark-msft
-/tools/stress-cluster/                 @benbp @ckairen @richardpark-msft
+/eng/common/scripts/stress-testing/     @benbp @ckairen @richardpark-msft
+/tools/stress-cluster/                  @benbp @ckairen @richardpark-msft
 
 ###########
 # .NET Client Tools
 ###########
-/src/dotnet/Azure.ClientSdk.Analyzers  @jsquire @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @m-nash
-/src/dotnet/APIView                    @chidozieononiwu
+/src/dotnet/Azure.ClientSdk.Analyzers/  @jsquire @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @m-nash
+/src/dotnet/APIView/                    @chidozieononiwu
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                          @chidozieononiwu
-/tools/apiview/emitters/typespec-apiview @tjprescott
-/tools/apiview/parsers/cpp-api-parser    @LarryOsterman
-/tools/apiview/parsers/csharp-api-parser @christothes
-/tools/apiview/parsers/js-api-parser     @maorleger
-/src/swift                               @tjprescott
-/src/java/apiview-java-processor         @JonathanGiles
-/src/go                                  @jhendrixMSFT @chlowell @RickWinter
+/tools/apiview/                           @chidozieononiwu
+/tools/apiview/emitters/typespec-apiview/ @tjprescott
+/tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
+/tools/apiview/parsers/csharp-api-parser/ @christothes
+/tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
+/src/swift/                               @tjprescott
+/src/java/apiview-java-processor/         @JonathanGiles
+/src/go/                                  @jhendrixMSFT @chlowell @RickWinter
 
 
 ###########
 # Pylint checkers
 ###########
-/tools/pylint-extensions/azure-pylint-guidelines-checker @l0lawrence
+/tools/pylint-extensions/azure-pylint-guidelines-checker/ @l0lawrence

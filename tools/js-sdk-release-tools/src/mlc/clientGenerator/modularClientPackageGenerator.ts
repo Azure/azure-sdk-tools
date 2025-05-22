@@ -1,14 +1,14 @@
-import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types';
-import { buildPackage, createArtifact } from '../../common/rushUtils';
-import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
-import { join, normalize, posix, relative } from 'node:path';
+import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types.js';
+import { buildPackage, createArtifact } from '../../common/rushUtils.js';
+import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
+import { posix } from 'node:path';
 
-import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
-import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion';
-import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
-import { getGeneratedPackageDirectory } from '../../common/utils';
-import { getNpmPackageInfo } from '../../common/npmUtils';
-import { logger } from '../../utils/logger';
+import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
+import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
+import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec } from '../../common/utils.js';
+import { getNpmPackageInfo } from '../../common/npmUtils.js';
+import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
 import unixify from 'unixify';
 
@@ -21,19 +21,21 @@ import unixify from 'unixify';
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
-    const rushScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
-    const rushxScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
+    const rushScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
+    const rushxScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
 
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
-        const packageJsonPath = join(packageDirectory, 'package.json');
+        const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await remove(packageDirectory);
-
+        if (options.apiVersion) {
+            specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
+        }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
-        const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
+        const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
 
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
@@ -41,7 +43,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
         // TODO: to be compatible with current tool, input relative generated package dir
-        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot);
+        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
@@ -56,7 +58,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             relativePackageDirToSdkRoot
         );
 
-        const artifactPath = await createArtifact(packageDirectory, rushxScript);
+        const artifactPath = await createArtifact(packageDirectory, rushxScript, options.sdkRepoRoot);
         const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
         packageResult.artifacts.push(relativeArtifactPath);
 

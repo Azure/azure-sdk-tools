@@ -2,11 +2,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights.DataContracts;
 using APIViewWeb.Helpers;
 using System.Collections.Generic;
@@ -61,7 +59,7 @@ namespace APIViewWeb.Controllers
             int pullRequestNumber = 0,
             string codeFile = null,
             string baselineCodeFile = null,
-            bool commentOnPR = true,
+            bool commentOnPR = false,
             string language = null,
             string project = "internal")
         {
@@ -80,7 +78,7 @@ namespace APIViewWeb.Controllers
                     repoName: repoName, packageName: packageName,
                     prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    commentOnPR: commentOnPR, language: language, project: project);
+                    language: language, project: project);
 
                 return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
             }
@@ -100,7 +98,6 @@ namespace APIViewWeb.Controllers
             string hostName,
             string codeFileName = null,
             string baselineCodeFileName = null,
-            bool commentOnPR = true,
             string language = null,
             string project = "internal")
         {
@@ -118,7 +115,7 @@ namespace APIViewWeb.Controllers
                 packageName: packageName, originalFileName: originalFileName,
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-                project: project);
+                project: project, language: language);
 
             if (codeFile.PackageName != null && (packageName ==  null || packageName != codeFile.PackageName))
             {
@@ -145,7 +142,7 @@ namespace APIViewWeb.Controllers
                 if (baselineStream.Length > 0)
                 {
                     baselineStream.Position = 0;
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream);
                 }
                 if (codeFile != null)
                 {
@@ -163,11 +160,6 @@ namespace APIViewWeb.Controllers
                     // Update pull request metadata in DB
                     await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
                     pullRequests = (await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
-                }
-                //Generate combined single comment to update on PR or add a comment stating no API changes.            
-                if (commentOnPR)
-                {
-                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
                 }
             }
             catch (OverflowException exception)

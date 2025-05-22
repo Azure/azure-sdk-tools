@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.ApplicationInsights;
 using Azure.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewIntegrationTests
 {
@@ -63,6 +64,7 @@ namespace APIViewIntegrationTests
             services.AddSingleton<LanguageService, JavaLanguageService>();
             services.AddSingleton<LanguageService, PythonLanguageService>();
             services.AddSingleton<LanguageService, JavaScriptLanguageService>();
+            services.AddSingleton<LanguageService, RustLanguageService>();
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
@@ -93,8 +95,8 @@ namespace APIViewIntegrationTests
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
-            BlobCodeFileRepository = new BlobCodeFileRepository(_config, memoryCache);
-            var blobOriginalsRepository = new BlobOriginalsRepository(_config);
+            BlobCodeFileRepository = new BlobCodeFileRepository(blobServiceClient, memoryCache, Mock.Of<ILogger<BlobCodeFileRepository>>());
+            var blobOriginalsRepository = new BlobOriginalsRepository(blobServiceClient, Mock.Of<ILogger<BlobOriginalsRepository>>());
 
             var authorizationServiceMoq = new Mock<IAuthorizationService>();
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
@@ -119,16 +121,15 @@ namespace APIViewIntegrationTests
                  notificationManager: notificationManager, options: options.Object);
 
             CodeFileManager = new CodeFileManager(
-            languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
-            originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+                languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
+                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
 
             APIRevisionManager = new APIRevisionsManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object);
-
+                telemetryClient: telemetryClient.Object, configuration: _config);
 
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,

@@ -98,6 +98,26 @@ Describe "AssetsModuleTests" {
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
             Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
         }
+        It "Should fail to restore an invalid tag" {
+            $recordingJson = [PSCustomObject]@{
+                AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                AssetsRepoPrefixPath = "pull/scenarios"
+                AssetsRepoId         = ""
+                TagPrefix            = "main"
+                Tag                  = "python/tables_fc54d0INVALID"
+            }
+            $files = @(
+                "assets.json"
+            )
+            $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files
+            $assetsFile = Join-Path $testFolder "assets.json"
+            $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+
+            $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+            Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+
+            $LASTEXITCODE | Should -Be 1
+        }
         AfterEach {
             Remove-Test-Folder $testFolder
         }
@@ -164,7 +184,7 @@ Describe "AssetsModuleTests" {
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
-    
+
                 # Create a new file and verify
                 Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
@@ -174,7 +194,7 @@ Describe "AssetsModuleTests" {
                 # Delete a file
                 $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
                 Remove-Item -Path $fileToRemove
-    
+
                 # Reset answering Y and they should all go back to original restore
                 $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder -WriteOutput "Y"
@@ -211,7 +231,7 @@ Describe "AssetsModuleTests" {
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file1.txt" -ExpectedVersion 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file3.txt" -ExpectedVersion 1
-    
+
                 # Create two new files and verify
                 Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -Version 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
@@ -223,7 +243,7 @@ Describe "AssetsModuleTests" {
                 # Delete a file
                 $fileToRemove = Join-Path -Path $localAssetsFilePath -ChildPath "file2.txt"
                 Remove-Item -Path $fileToRemove
-    
+
                 # Reset answering N and they should remain changed as per the previous changes
                 $CommandArgs = "reset --assets-json-path $assetsJsonRelativePath"
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder -WriteOutput "N"
@@ -252,6 +272,7 @@ Describe "AssetsModuleTests" {
                     AssetsRepo           = "Azure/azure-sdk-assets-integration"
                     AssetsRepoPrefixPath = "pull/scenarios"
                     AssetsRepoId         = ""
+                    Dotenv               = $true
                     TagPrefix            = "language/tables"
                     Tag                  = "python/tables_fc54d0"
                 }
@@ -446,9 +467,9 @@ Describe "AssetsModuleTests" {
                         TagPrefix            = $created_tag_prefix
                         Tag                  = ""
                     }
-    
+
                     $assetsJsonRelativePath = Join-Path "sdk" "keyvault" "azure-keyvault-keys" "assets.json"
-    
+
                     $files = @(
                         $assetsJsonRelativePath
                     )
@@ -457,16 +478,16 @@ Describe "AssetsModuleTests" {
                     $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
                     Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                     $LASTEXITCODE | Should -Be 0
-    
+
                     $localAssetsFilePath = Join-Path $testFolder ".assets"
                     $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory)[0].FullName
                     mkdir -p $(Join-Path $assetsFolder $creationPath)
-    
+
                     # Create new files. These are in a predictable location with predicatable content so we can generate the same SHA twice in a row.
                     Edit-FileVersion -FilePath $assetsFolder -FileName $file1 -Version 1
                     Edit-FileVersion -FilePath $assetsFolder -FileName $file2 -Version 1
                     Edit-FileVersion -FilePath $assetsFolder -FileName $file3 -Version 1
-                    
+
                     # Push the changes
                     $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
                     Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
@@ -489,13 +510,13 @@ Describe "AssetsModuleTests" {
                     Edit-FileVersion -FilePath $newAssetsFolder -FileName $file1 -Version 1
                     Edit-FileVersion -FilePath $newAssetsFolder -FileName $file2 -Version 1
                     Edit-FileVersion -FilePath $newAssetsFolder -FileName $file3 -Version 1
-                    
+
                     $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
                     Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $newTestFolder
                     $LASTEXITCODE | Should -Be 0
-                    
+
                     $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $newAssetsFile
-    
+
                     $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
                     $exists | Should -Be $true
                 }
@@ -544,7 +565,7 @@ Describe "AssetsModuleTests" {
                 Edit-FileVersion -FilePath $assetsFolder -FileName $file1 -Version 3
                 Edit-FileVersion -FilePath $assetsFolder -FileName $file2 -Version 3
                 Edit-FileVersion -FilePath $assetsFolder -FileName $file3 -Version 3
-                
+
                 # now lets restore again
                 $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
@@ -592,7 +613,7 @@ Describe "AssetsModuleTests" {
                 Edit-FileVersion -FilePath $assetsFolder -FileName $file1 -Version 3
                 Edit-FileVersion -FilePath $assetsFolder -FileName $file2 -Version 3
                 Edit-FileVersion -FilePath $assetsFolder -FileName $file3 -Version 3
-               
+
                 # now lets modify the targeted tag. this simulates a user checking out a different branch or commit in their language repo
                 $assetsJsonLocation = Join-Path $testFolder $assetsJsonRelativePath
                 $recordingJson.Tag = "python/tables_fc54d0"

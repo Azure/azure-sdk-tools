@@ -1,6 +1,10 @@
 import {
-  AliasStatementNode,
   Namespace,
+  Program,
+} from "@typespec/compiler";
+import {
+  Node,
+  AliasStatementNode,
   ModelStatementNode,
   OperationStatementNode,
   InterfaceStatementNode,
@@ -8,7 +12,6 @@ import {
   NamespaceStatementNode,
   ModelExpressionNode,
   IntersectionExpressionNode,
-  ProjectionModelExpressionNode,
   SyntaxKind,
   BaseNode,
   IdentifierNode,
@@ -22,19 +25,15 @@ import {
   UnionExpressionNode,
   UnionVariantNode,
   AugmentDecoratorStatementNode,
-  Program,
-  Node,
-  visitChildren,
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
-  Directive,
   DirectiveExpressionNode,
   StringLiteralNode,
   ObjectLiteralNode,
   ConstStatementNode,
-} from "@typespec/compiler";
-
+  visitChildren
+} from "@typespec/compiler/ast";
 export class NamespaceModel {
   kind = SyntaxKind.NamespaceStatement;
   name: string;
@@ -46,7 +45,6 @@ export class NamespaceModel {
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
-    | ProjectionModelExpressionNode
     | EnumStatementNode
     | ScalarStatementNode
     | UnionStatementNode
@@ -58,7 +56,6 @@ export class NamespaceModel {
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
-    | ProjectionModelExpressionNode
     | EnumStatementNode
     | ScalarStatementNode
     | UnionStatementNode
@@ -71,14 +68,22 @@ export class NamespaceModel {
 
   constructor(name: string, ns: Namespace, program: Program) {
     this.name = name;
-    this.node = ns.node;
+    this.node = ns.node!; // Assuming ns.node is never undefined
 
     // Gather operations
     for (const [opName, op] of ns.operations) {
-      this.operations.set(opName, op.node);
+      if (op.node) {
+        this.operations.set(opName, op.node);
+      } else {
+        throw new Error(`Operation node for ${opName} is undefined.`);
+      }
     }
     for (const [intName, int] of ns.interfaces) {
-      this.operations.set(intName, int.node);
+      if (int.node) {
+        this.operations.set(intName, int.node);
+      } else {
+        throw new Error(`Interface node for ${intName} is undefined.`);
+      }
     }
 
     // Gather models and resources
@@ -101,13 +106,25 @@ export class NamespaceModel {
       }
     }
     for (const [enumName, en] of ns.enums) {
-      this.models.set(enumName, en.node);
+      if (en.node) {
+        this.models.set(enumName, en.node);
+      } else {
+        throw new Error(`Enum node for ${enumName} is undefined.`);
+      }
     }
     for (const [unionName, un] of ns.unions) {
-      this.models.set(unionName, un.node);
+      if (un.node) {
+        this.models.set(unionName, un.node);
+      } else {
+        throw new Error(`Union node for ${unionName} is undefined.`);
+      }
     }
     for (const [scalarName, sc] of ns.scalars) {
-      this.models.set(scalarName, sc.node);
+      if (sc.node) {
+        this.models.set(scalarName, sc.node);
+      } else {
+        throw new Error(`Scalar node for ${scalarName} is undefined.`);
+      }
     }
 
     // Gather aliases
@@ -120,7 +137,7 @@ export class NamespaceModel {
       this.augmentDecorators.push(augment);
     }
 
-    // collect contants
+    // collect constants
     for (const constant of findNodes(SyntaxKind.ConstStatement, program, ns)) {
       this.constants.push(constant);
     }

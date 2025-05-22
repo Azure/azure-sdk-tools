@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, Output, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, Output, ViewChild, ChangeDetectorRef, Input } from '@angular/core';
 
 import { FirstReleaseApproval, Review, SelectItemModel } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
@@ -7,6 +7,8 @@ import { Table, TableFilterEvent, TableLazyLoadEvent, TableRowSelectEvent } from
 import { MenuItem, SortEvent } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 import { CookieService } from 'ngx-cookie-service';
+import { UserProfile } from 'src/app/_models/userProfile';
+import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
 
 @Component({
   selector: 'app-reviews-list',
@@ -14,6 +16,7 @@ import { CookieService } from 'ngx-cookie-service';
   styleUrls: ['./reviews-list.component.scss']
 })
 export class ReviewsListComponent implements OnInit, AfterViewInit {
+  @Input() userProfile: UserProfile | undefined;
   @Output() reviewEmitter : EventEmitter<Review> = new EventEmitter<Review>();
   @ViewChild("reviewsTable") reviewsTable!: Table;
   @ViewChild("firstReleaseApprovalAllCheck") firstReleaseApprovalAllCheck!: ElementRef<HTMLInputElement>;
@@ -62,9 +65,8 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
       const filtersAsStrings = this.cookieService.get("reviewFilters");
       this.filters = JSON.parse(filtersAsStrings);
     }
-
     this.loadReviews(0, this.pageSize * 2, true, this.filters); // Initial load of 2 pages
-    this.createLanguageFilters();
+    this.languages = getSupportedLanguages();
     this.createContextMenuItems();
   }
 
@@ -123,24 +125,6 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
   createContextMenuItems() {
     this.contextMenuItems = [
       { label: 'View', icon: 'pi pi-folder-open', command: () => this.viewReview(this.selectedReview) },
-    ];
-  }
-
-  createLanguageFilters() {
-    this.languages = [
-        { label: "C", data: "C" },
-        { label: "C#", data: "C#" },
-        { label: "C++", data: "C++" },
-        { label: "Go", data: "Go" },
-        { label: "Java", data: "Java" },
-        { label: "JavaScript", data: "JavaScript" },
-        { label: "Json", data: "Json" },
-        { label: "Kotlin", data: "Kotlin" },
-        { label: "Python", data: "Python" },
-        { label: "Swagger", data: "Swagger" },
-        { label: "Swift", data: "Swift" },
-        { label: "TypeSpec", data: "TypeSpec" },
-        { label: "Xml", data: "Xml" }
     ];
   }
 

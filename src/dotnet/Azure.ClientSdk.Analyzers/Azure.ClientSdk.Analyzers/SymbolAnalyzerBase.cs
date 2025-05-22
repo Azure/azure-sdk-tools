@@ -10,6 +10,7 @@ namespace Azure.ClientSdk.Analyzers
     {
         private const string ClientOptionsSuffix = "ClientOptions";
         private const string ClientsOptionsSuffix = "ClientsOptions";
+        private const string AzureCoreClientOptions = "Azure.Core.ClientOptions";
 
         public abstract SymbolKind[] SymbolKinds { get; }
         public abstract void Analyze(ISymbolAnalysisContext context);
@@ -20,16 +21,8 @@ namespace Azure.ClientSdk.Analyzers
         {
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             context.EnableConcurrentExecution();
-            context.RegisterCompilationStartAction(CompilationStart);
             context.RegisterSymbolAction(c => Analyze(new RoslynSymbolAnalysisContext(c)), SymbolKinds);
         }
-
-#pragma warning disable RS1012 // Start action has no registered actions.
-        protected virtual void CompilationStart(CompilationStartAnalysisContext context)
-        {
-            ClientOptionsType = context.Compilation.GetTypeByMetadataName("Azure.Core.ClientOptions");
-        }
-#pragma warning restore RS1012 // Start action has no registered actions.
 
         protected bool IsPublicApi(ISymbol symbol)
         {
@@ -53,7 +46,9 @@ namespace Azure.ClientSdk.Analyzers
             ITypeSymbol baseType = typeSymbol.BaseType;
             while (baseType != null) 
             {
-                if (SymbolEqualityComparer.Default.Equals(baseType, ClientOptionsType))
+                // validate if the base type is Azure.Core.ClientOptions
+                var fullName = $"{baseType.ContainingNamespace.GetFullNamespaceName()}.{baseType.Name}";
+                if ($"{fullName}".Equals(AzureCoreClientOptions))
                 {
                     return typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.Name.EndsWith(ClientsOptionsSuffix);
                 }

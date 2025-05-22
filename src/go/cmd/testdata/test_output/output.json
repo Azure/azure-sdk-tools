@@ -1,0 +1,3038 @@
+{
+  "Diagnostics": [
+    {
+      "Level": 1,
+      "TargetId": "test_output.Enum",
+      "Text": "Alias for subpackage.Enum"
+    },
+    {
+      "Level": 1,
+      "TargetId": "test_output.InterfaceA",
+      "Text": "Alias for subpackage.Interface"
+    },
+    {
+      "Level": 1,
+      "TargetId": "test_output.StructA",
+      "Text": "Alias for subpackage.StructA"
+    },
+    {
+      "Level": 1,
+      "TargetId": "test_output.StructB",
+      "Text": "Alias for subpackage.StructB"
+    },
+    {
+      "Level": 1,
+      "TargetId": "test_output.StructEmpty",
+      "Text": "Alias for subpackage.StructEmpty"
+    },
+    {
+      "Level": 1,
+      "TargetId": "test_output.Unimplementable",
+      "Text": "Alias for subpackage.Unimplementable"
+    },
+    {
+      "Level": 1,
+      "TargetId": "test_output/subpackage.Unimplementable",
+      "Text": "Applications can't implement this interface"
+    }
+  ],
+  "Language": "Go",
+  "Name": "test_output",
+  "Navigation": [
+    {
+      "ChildItems": [
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.Enum",
+          "Tags": {
+            "TypeKind": "struct"
+          },
+          "Text": "Enum"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.Enum2",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "Enum2"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.Enum3",
+          "Tags": {
+            "TypeKind": "struct"
+          },
+          "Text": "Enum3"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.InterfaceA",
+          "Tags": {
+            "TypeKind": "interface"
+          },
+          "Text": "InterfaceA"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.String",
+          "Tags": {
+            "TypeKind": "enum"
+          },
+          "Text": "String"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.StructA",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructA"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.StructB",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructB"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.StructEmpty",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructEmpty"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output.Unimplementable",
+          "Tags": {
+            "TypeKind": "interface"
+          },
+          "Text": "Unimplementable"
+        }
+      ],
+      "NavigationId": "test_output",
+      "Tags": {
+        "TypeKind": "namespace"
+      },
+      "Text": "test_output"
+    },
+    {
+      "ChildItems": [
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-Bar",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "Bar"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-Foo",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "Foo"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-GenericFunction",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "GenericFunction"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-GenericFunctionTwoConstraints",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "GenericFunctionTwoConstraints"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-NewEnum",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "NewEnum"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-NewEnumPointer",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "NewEnumPointer"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.Enum",
+          "Tags": {
+            "TypeKind": "struct"
+          },
+          "Text": "Enum"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.Interface",
+          "Tags": {
+            "TypeKind": "interface"
+          },
+          "Text": "Interface"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.String",
+          "Tags": {
+            "TypeKind": "enum"
+          },
+          "Text": "String"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructA",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructA"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructB",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructB"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructC",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructC"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructEmpty",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructEmpty"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructGeneric",
+          "Tags": {
+            "TypeKind": "class"
+          },
+          "Text": "StructGeneric"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.Unimplementable",
+          "Tags": {
+            "TypeKind": "interface"
+          },
+          "Text": "Unimplementable"
+        }
+      ],
+      "NavigationId": "test_output/subpackage",
+      "Tags": {
+        "TypeKind": "namespace"
+      },
+      "Text": "test_output/subpackage"
+    }
+  ],
+  "PackageName": "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output",
+  "PackageVersion": "",
+  "ParserVersion": "0.1",
+  "ReviewLines": [
+    {
+      "Children": [
+        {
+          "Children": [
+            {
+              "LineId": "test_output.InterfaceA-MethodNoReturn",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "MethodNoReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output.InterfaceA-MethodOneReturn",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "MethodOneReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()"
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output.InterfaceA-MethodTwoReturns",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "MethodTwoReturns",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            }
+          ],
+          "LineId": "test_output.InterfaceA",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.InterfaceA",
+              "Value": "InterfaceA"
+            },
+            {
+              "Kind": 2,
+              "Value": "interface",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "Children": [
+            {
+              "Tokens": []
+            }
+          ],
+          "LineId": "test_output.Unimplementable",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Unimplementable",
+              "Value": "Unimplementable"
+            },
+            {
+              "Kind": 2,
+              "Value": "interface",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "Children": [
+            {
+              "Children": [
+                {
+                  "LineId": "test_output.Enum2_1",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum2_1",
+                      "NavigationDisplayName": "Enum2_1",
+                      "Value": "Enum2_1"
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "*",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum2",
+                      "Value": "Enum2",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\u0026Enum2{}",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "LineId": "test_output.Enum2_2",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum2_2",
+                      "NavigationDisplayName": "Enum2_2",
+                      "Value": "Enum2_2"
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "*",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum2",
+                      "Value": "Enum2",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\u0026Enum2{}",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "Tokens": []
+                },
+                {
+                  "LineId": "test_output-PossibleEnum2Values",
+                  "Tokens": [
+                    {
+                      "Kind": 2,
+                      "Value": "func"
+                    },
+                    {
+                      "Kind": 3,
+                      "Value": "PossibleEnum2Values",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "()"
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "[",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "]",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum2",
+                      "Value": "Enum2",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                }
+              ],
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "var",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output.Enum2",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Enum2",
+              "Value": "Enum2",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output.StructA-Exported",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "Exported",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "        ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output.StructA-ExportedAsWell",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "ExportedAsWell",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "  ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output.StructA-N",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "N",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "               ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "int",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            },
+            {
+              "LineId": "test_output-(StructA) MethodNoReturn",
+              "RelatedToLine": "test_output.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MethodNoReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output-(s *StructA) MethodTwoReturns",
+              "RelatedToLine": "test_output.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MethodTwoReturns",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output-(s *StructA) UnmarshalJSON",
+              "RelatedToLine": "test_output.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "UnmarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output-(s StructA) MarshalJSON",
+              "RelatedToLine": "test_output.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output-(s StructA) MethodOneReturn",
+              "RelatedToLine": "test_output.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MethodOneReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output.StructA",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.StructA",
+              "Value": "StructA",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output.StructB",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.StructB",
+              "Value": "StructB",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output-(s *StructEmpty) UnmarshalJSON",
+              "RelatedToLine": "test_output.StructEmpty",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructEmpty",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "UnmarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output-(s StructEmpty) MarshalJSON",
+              "RelatedToLine": "test_output.StructEmpty",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructEmpty",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output.StructEmpty",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.StructEmpty",
+              "Value": "StructEmpty",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output-(Enum) Method",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "Enum",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "Method",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            },
+            {
+              "Children": [
+                {
+                  "LineId": "test_output.EnumValue",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.EnumValue",
+                      "NavigationDisplayName": "EnumValue",
+                      "Value": "EnumValue"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"EnumValue\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "Tokens": []
+                },
+                {
+                  "LineId": "test_output-PossibleEnumValues",
+                  "Tokens": [
+                    {
+                      "Kind": 2,
+                      "Value": "func"
+                    },
+                    {
+                      "Kind": 3,
+                      "Value": "PossibleEnumValues",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "()"
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "[",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "]",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                }
+              ],
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "const",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Children": [
+                {
+                  "LineId": "test_output.EnumValue2",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.EnumValue2",
+                      "NavigationDisplayName": "EnumValue2",
+                      "Value": "EnumValue2"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"EnumValue2\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                }
+              ],
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "var",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output.Enum",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Enum",
+              "Value": "Enum"
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "LineId": "test_output.Enum3",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Enum3",
+              "Value": "Enum3"
+            },
+            {
+              "Kind": 3,
+              "Value": "int",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output.String",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output.String",
+                  "NavigationDisplayName": "String",
+                  "Value": "String"
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "="
+                },
+                {
+                  "Kind": 5,
+                  "Value": "subpackage.String",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "const",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        }
+      ],
+      "LineId": "test_output",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "package"
+        },
+        {
+          "Kind": 0,
+          "NavigationDisplayName": "test_output",
+          "Value": "test_output",
+          "HasSuffixSpace": false
+        }
+      ]
+    },
+    {
+      "IsContextEndLine": true,
+      "Tokens": [
+        {
+          "Kind": 0,
+          "SkipDiff": true,
+          "Value": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+          "HasSuffixSpace": false
+        }
+      ]
+    },
+    {
+      "Children": [
+        {
+          "Children": [
+            {
+              "LineId": "test_output/subpackage.Interface-MethodNoReturn",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "MethodNoReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage.Interface-MethodOneReturn",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "MethodOneReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()"
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage.Interface-MethodTwoReturns",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "MethodTwoReturns",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            }
+          ],
+          "LineId": "test_output/subpackage.Interface",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.Interface",
+              "Value": "Interface"
+            },
+            {
+              "Kind": 2,
+              "Value": "interface",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "Children": [
+            {
+              "Tokens": []
+            }
+          ],
+          "LineId": "test_output/subpackage.Unimplementable",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.Unimplementable",
+              "Value": "Unimplementable"
+            },
+            {
+              "Kind": 2,
+              "Value": "interface",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output/subpackage.StructA-Exported",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "Exported",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "        ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage.StructA-ExportedAsWell",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "ExportedAsWell",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "  ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage.StructA-N",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "N",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "               ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "int",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            },
+            {
+              "LineId": "test_output/subpackage-NewStructA",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "NewStructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()"
+                },
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructA",
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-NewStructAWithString",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "NewStructAWithString",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 4,
+                  "Value": "s"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructA",
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(StructA) MethodNoReturn",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MethodNoReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(s *StructA) MethodTwoReturns",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MethodTwoReturns",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(s *StructA) UnmarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "UnmarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(s StructA) MarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(s StructA) MethodOneReturn",
+              "RelatedToLine": "test_output/subpackage.StructA",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MethodOneReturn",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "string",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output/subpackage.StructA",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructA",
+              "Value": "StructA",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output/subpackage.StructB",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructB",
+              "Value": "StructB",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "Interface",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "Value": "StructA",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage.StructC-Field",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "Field",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "  ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructB",
+                  "Value": "StructB",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            },
+            {
+              "LineId": "test_output/subpackage-NewStructC",
+              "RelatedToLine": "test_output/subpackage.StructC",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "NewStructC",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 4,
+                  "Value": "b"
+                },
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructB",
+                  "Value": "StructB",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructC",
+                  "Value": "StructC",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output/subpackage.StructC",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructC",
+              "Value": "StructC",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output/subpackage-(s *StructEmpty) UnmarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructEmpty",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "*",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructEmpty",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "UnmarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(s StructEmpty) MarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructEmpty",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructEmpty",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "MarshalJSON",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "byte",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output/subpackage.StructEmpty",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructEmpty",
+              "Value": "StructEmpty",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output/subpackage.StructGeneric-Value",
+              "Tokens": [
+                {
+                  "Kind": 0,
+                  "Value": "Value",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 0,
+                  "SkipDiff": true,
+                  "Value": "  ",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "T",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            },
+            {
+              "LineId": "test_output/subpackage-NewStructGeneric",
+              "RelatedToLine": "test_output/subpackage.StructGeneric",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "NewStructGeneric",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 4,
+                  "Value": "T"
+                },
+                {
+                  "Kind": 2,
+                  "Value": "any",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 4,
+                  "Value": "t"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "T",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructGeneric",
+                  "Value": "StructGeneric",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "T",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "LineId": "test_output/subpackage-(s StructGeneric[int]) Method",
+              "RelatedToLine": "test_output/subpackage.StructGeneric",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "StructGeneric",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "[",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "int",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "]",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "Method",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "int",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ","
+                },
+                {
+                  "Kind": 3,
+                  "Value": "error",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output/subpackage.StructGeneric",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type"
+            },
+            {
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructGeneric",
+              "Value": "StructGeneric",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "T any",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 2,
+              "Value": "struct",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output/subpackage-(Enum) Method",
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "func"
+                },
+                {
+                  "Kind": 0,
+                  "Value": "(",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 3,
+                  "Value": "Enum",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": ")"
+                },
+                {
+                  "Kind": 3,
+                  "Value": "Method",
+                  "HasSuffixSpace": false
+                },
+                {
+                  "Kind": 1,
+                  "Value": "()",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Tokens": []
+            },
+            {
+              "Children": [
+                {
+                  "LineId": "test_output/subpackage.EnumA",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.EnumA",
+                      "NavigationDisplayName": "EnumA",
+                      "Value": "EnumA"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"A\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "LineId": "test_output/subpackage.EnumB",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.EnumB",
+                      "NavigationDisplayName": "EnumB",
+                      "Value": "EnumB"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"B\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "LineId": "test_output/subpackage.EnumCD",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.EnumCD",
+                      "NavigationDisplayName": "EnumCD",
+                      "Value": "EnumCD"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"CD\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "Tokens": []
+                },
+                {
+                  "LineId": "test_output/subpackage-PossibleEnumValues",
+                  "Tokens": [
+                    {
+                      "Kind": 2,
+                      "Value": "func"
+                    },
+                    {
+                      "Kind": 3,
+                      "Value": "PossibleEnumValues",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "()"
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "[",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 1,
+                      "Value": "]",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                }
+              ],
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "const",
+                  "HasSuffixSpace": false
+                }
+              ]
+            },
+            {
+              "Children": [
+                {
+                  "LineId": "test_output/subpackage.EnumC",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.EnumC",
+                      "NavigationDisplayName": "EnumC",
+                      "Value": "EnumC"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"C\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                },
+                {
+                  "LineId": "test_output/subpackage.EnumD",
+                  "Tokens": [
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.EnumD",
+                      "NavigationDisplayName": "EnumD",
+                      "Value": "EnumD"
+                    },
+                    {
+                      "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
+                      "Value": "Enum",
+                      "HasSuffixSpace": false
+                    },
+                    {
+                      "HasPrefixSpace": true,
+                      "Kind": 1,
+                      "Value": "="
+                    },
+                    {
+                      "Kind": 5,
+                      "Value": "\"D\"",
+                      "HasSuffixSpace": false
+                    }
+                  ]
+                }
+              ],
+              "Tokens": [
+                {
+                  "Kind": 2,
+                  "Value": "var",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "LineId": "test_output/subpackage.Enum",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "type",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.Enum",
+              "Value": "Enum"
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "Children": [
+            {
+              "LineId": "test_output/subpackage.String",
+              "Tokens": [
+                {
+                  "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.String",
+                  "NavigationDisplayName": "String",
+                  "Value": "String"
+                },
+                {
+                  "HasPrefixSpace": true,
+                  "Kind": 1,
+                  "Value": "="
+                },
+                {
+                  "Kind": 5,
+                  "Value": "\"string\"",
+                  "HasSuffixSpace": false
+                }
+              ]
+            }
+          ],
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "const",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
+        },
+        {
+          "LineId": "test_output/subpackage-Bar",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "func"
+            },
+            {
+              "Kind": 3,
+              "Value": "Bar",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "()",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 1,
+              "Value": "(",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "string",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ","
+            },
+            {
+              "Kind": 3,
+              "Value": "error",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "LineId": "test_output/subpackage-Foo",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "func"
+            },
+            {
+              "Kind": 3,
+              "Value": "Foo",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "a"
+            },
+            {
+              "Kind": 3,
+              "NavigateToId": "test_output/subpackage.StructA",
+              "Value": "StructA",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "LineId": "test_output/subpackage-GenericFunction",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "func"
+            },
+            {
+              "Kind": 3,
+              "Value": "GenericFunction",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "T"
+            },
+            {
+              "Kind": 2,
+              "Value": "any",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "t"
+            },
+            {
+              "Kind": 3,
+              "Value": "T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")"
+            },
+            {
+              "Kind": 3,
+              "Value": "T",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "LineId": "test_output/subpackage-GenericFunctionTwoConstraints",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "func"
+            },
+            {
+              "Kind": 3,
+              "Value": "GenericFunctionTwoConstraints",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "[",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "T"
+            },
+            {
+              "Kind": 3,
+              "NavigateToId": "test_output/subpackage.Interface",
+              "Value": "Interface",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ","
+            },
+            {
+              "Kind": 4,
+              "Value": "U"
+            },
+            {
+              "Kind": 2,
+              "Value": "any",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "]",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "(",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 4,
+              "Value": "t"
+            },
+            {
+              "Kind": 3,
+              "Value": "T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ","
+            },
+            {
+              "Kind": 4,
+              "Value": "u"
+            },
+            {
+              "Kind": 3,
+              "Value": "U",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasSuffixSpace": false
+            },
+            {
+              "HasPrefixSpace": true,
+              "Kind": 1,
+              "Value": "(",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ","
+            },
+            {
+              "Kind": 3,
+              "Value": "U",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "LineId": "test_output/subpackage-NewEnum",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "func"
+            },
+            {
+              "Kind": 3,
+              "Value": "NewEnum",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "()"
+            },
+            {
+              "Kind": 3,
+              "NavigateToId": "test_output/subpackage.Enum",
+              "Value": "Enum",
+              "HasSuffixSpace": false
+            }
+          ]
+        },
+        {
+          "LineId": "test_output/subpackage-NewEnumPointer",
+          "Tokens": [
+            {
+              "Kind": 2,
+              "Value": "func"
+            },
+            {
+              "Kind": 3,
+              "Value": "NewEnumPointer",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": "()"
+            },
+            {
+              "Kind": 1,
+              "Value": "*",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "NavigateToId": "test_output/subpackage.Enum",
+              "Value": "Enum",
+              "HasSuffixSpace": false
+            }
+          ]
+        }
+      ],
+      "LineId": "test_output/subpackage",
+      "Tokens": [
+        {
+          "Kind": 2,
+          "Value": "package"
+        },
+        {
+          "Kind": 0,
+          "NavigationDisplayName": "test_output/subpackage",
+          "Value": "test_output/subpackage",
+          "HasSuffixSpace": false
+        }
+      ]
+    },
+    {
+      "IsContextEndLine": true,
+      "Tokens": []
+    }
+  ]
+}

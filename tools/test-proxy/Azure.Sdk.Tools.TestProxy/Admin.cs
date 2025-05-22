@@ -64,14 +64,23 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async Task RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
+        public async Task RemoveSanitizers()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+
+            // Originally, this list was parsed using [FromBody], which was implicitly case insensitive. Need to maintain for compat.
+            var sanitizerList = await HttpRequestInteractions.GetBody<RemoveSanitizerList>(Request, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             var removedSanitizers = new List<string>();
 
-            if (sanitizerList.Sanitizers.Count == 0)
+            // - body may be empty
+            // - body may actually pass an empty list. handle both.
+            if ((sanitizerList?.Sanitizers ?? new List<string>()).Count == 0)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "At least one sanitizerId for removal must be provided.");
             }
@@ -197,10 +206,10 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        [AllowEmptyBody]
-        public void SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
+        public async Task SetRecordingOptions()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var options = await HttpRequestInteractions.GetBody<Dictionary<string, object>>(Request);
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 

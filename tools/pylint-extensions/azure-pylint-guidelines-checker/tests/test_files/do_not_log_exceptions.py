@@ -1,4 +1,5 @@
-from plugin import logger
+import logging
+logger = logging.getLogger(__name__)
 
 
 # test_logging_levels_logged_str_exception
@@ -6,7 +7,7 @@ def test_logging_levels_logged_str_exception():
     try:  # @
         add = 1 + 2
     except Exception as ex:
-        logger.error("Error" + str(ex))  # @
+        logger.error("Error" + str(ex), exc_info=logger.isEnabledFor(logging.DEBUG),)  # @
         logger.warning(str(ex))
         logger.info(str(ex))
         logger.debug(str(ex))

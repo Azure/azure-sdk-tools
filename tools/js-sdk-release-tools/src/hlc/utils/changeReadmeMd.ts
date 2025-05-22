@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import {isBetaVersion} from "../../utils/version";
+import {isBetaVersion} from "../../utils/version.js";
 
 export function changeReadmeMd(packageFolderPath: string) {
     let isPreview = false;

@@ -20,7 +20,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -184,22 +183,28 @@ namespace Azure.Sdk.Tools.TestProxy
                 else
                 {
                     // Create directories above file if they don't already exist
-                    var directory = Path.GetDirectoryName(recordingSession.Path);
-                    if (!String.IsNullOrEmpty(directory))
-                    {
-                        Directory.CreateDirectory(directory);
-                    }
-
-                    using var stream = System.IO.File.Create(recordingSession.Path);
-                    var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
-                    var writer = new Utf8JsonWriter(stream, options);
-                    recordingSession.Session.Serialize(writer);
-                    writer.Flush();
-                    stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+                    WriteToDisk(recordingSession);
                 }
             }
 
             DebugLogger.LogTrace($"RECORD STOP END {id}.");
+        }
+
+        public void WriteToDisk(ModifiableRecordSession recordingSession)
+        {
+            // Create directories above file if they don't already exist
+            var directory = Path.GetDirectoryName(recordingSession.Path);
+            if (!String.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            using var stream = System.IO.File.Create(recordingSession.Path);
+            var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
+            var writer = new Utf8JsonWriter(stream, options);
+            recordingSession.Session.Serialize(writer);
+            writer.Flush();
+            stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
         }
 
         /// <summary>
@@ -296,7 +301,6 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
-
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
 
@@ -532,7 +536,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
-            
+
             RecordEntry noBodyEntry = RecordingHandler.CreateNoBodyRecordEntry(incomingRequest);
             session.AuditLog.Enqueue(new AuditLogItem(recordingId, noBodyEntry.RequestUri, noBodyEntry.RequestMethod.ToString()));
 
@@ -591,6 +595,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         outgoingResponse.ContentLength = bodyData.Length;
                     }
                     session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Beginning body write for {recordingId}."));
+
                     await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
                 }
 
@@ -1038,7 +1043,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     foreach (var sanitizer in sanitizers)
                     {
                         session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
-                        await SanitizerRegistry.Register(session, sanitizer, shouldLock: false);
+                        registrations.Add(await SanitizerRegistry.Register(session, sanitizer, shouldLock: false));
                     }
                 }
                 finally
@@ -1049,7 +1054,7 @@ namespace Azure.Sdk.Tools.TestProxy
             else
             {
                 await SanitizerRegistry.SessionSanitizerLock.WaitAsync();
-                try { 
+                try {
                     foreach (var sanitizer in sanitizers)
                     {
                         registrations.Add(await SanitizerRegistry.Register(sanitizer, shouldLock: false));
@@ -1202,6 +1207,12 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var contextDirectory = await Store.GetPath(assetsPath);
 
+                if (Path.IsPathFullyQualified(file)) {
+                    throw new HttpException(
+                        HttpStatusCode.BadRequest,
+                        $"The path provided in the recording file value {file} is fully qualified. This is not allowed when an assets.json is provided."
+                    );
+                }
                 path = Path.Join(contextDirectory, file);
             }
             // otherwise, it's a basic restore like we're used to
@@ -1250,14 +1261,14 @@ namespace Azure.Sdk.Tools.TestProxy
             //    https://portal.azure.com/
             //    http://localhost:8080
             //    http://user:pass@localhost:8080/ <-- this should be EXTREMELY rare given it's extremely insecure
-            // 
+            //
             // The value from rawTarget is the _exact_ "rest of the URI" WITHOUT auto-decoding (as specified above) and could look like:
             //    ///request
             //    /hello/world?query=blah
             //    ""
             //    //hello/world
             //
-            // We cannot use a URIBuilder to combine the hostValue and the rawTarget, as doing so results in auto-decoding of escaped 
+            // We cannot use a URIBuilder to combine the hostValue and the rawTarget, as doing so results in auto-decoding of escaped
             // characters that will BREAK the request that we actually wish to make.
             //
             // Given these limitations, and safe in the knowledge of both sides of this operation. We trim the trailing / off of the host,

@@ -1,0 +1,39 @@
+# Enable merging of main into release branches for easier updating of infrastructure without updating the specs themselves.
+
+trigger: none
+pr: none
+
+parameters:
+  - name: BranchToMergeTo
+    type: string
+    default: release-<name>
+  - name: Repo
+    type: string
+    default: Azure/azure-rest-api-specs
+  - name: BranchToMergeFrom
+    type: string
+    default: main
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+jobs:
+  - job: MergeReleaseBranch
+    displayName: Merge '${{ parameters.BranchToMergeFrom }}' into '${{ parameters.BranchToMergeTo }}'
+
+    steps:
+    - template: ./templates/steps/sync-repo-merge-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        EnableAutoMerge: false
+        Repos:
+          ${{ parameters.Repo }}:
+            Branch: ${{ parameters.BranchToMergeFrom }}
+            TargetBranches:
+              ${{ parameters.BranchToMergeTo }}:
+                  Theirs: '@("**")'
+                  Ours: '@("specification")'
+                  Merge: '@("specification/common-types")'
+                  AcceptTheirsForFinalMerge: true
+

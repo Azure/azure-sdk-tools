@@ -1,5 +1,26 @@
 # Release History
 
+## Version 0.3.18 (2025-04-02)
+Updated the default mapping path from "apiview_mapping_python.json" to "apiview-properties.json" to align with TCGC mapping file, and additionally check the old default file name if the new default is not found.
+
+## Version 0.3.17 (2025-03-25)
+Fixed issue with azure-core dependency conflict when running the stub generator on azure-core by moving necessary core files into an internal vendor folder.
+Fixed bug where package namespace was not being discovered correctly due to missing checks for init extension file format.
+
+## Version 0.3.16 (2025-03-03)
+Fixed emty package name issue when running parser against pacakge source path instead of wheel. PKG_INFO is not available in this case.
+
+## Version 0.3.15 (2025-02-28)
+Fixed issue where module-level overloads were not being parsed.
+Added support for parsing pyproject.toml-managed packages.
+Updated RelatedToLine for empty lines to show in the diff.
+
+## Version 0.3.14 (2025-02-22)
+Update for tree token style parser.
+
+## Version 0.3.13 (2025-01-13)
+Fix bug with missing optional dependencies.
+
 ## Version 0.3.12 (2024-02-27)
 Add support for Cross Language Package ID.
 

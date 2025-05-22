@@ -45,7 +45,7 @@ namespace CSharpAPIParserTests
         {
             new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 9},
             new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 15},
-            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0", 27},
+            new object[] { coreCodeFile, "Azure.Core", "1.44.1.0", 27},
         };
 
         [Theory]
@@ -364,6 +364,27 @@ namespace Microsoft.Extensions.Azure {
             var methodLine = classLine.Children.Where(lines => lines.LineId == "Azure.Core.Expressions.DataFactory.DataFactoryElement<T>.FromKeyVaultSecret(Azure.Core.Expressions.DataFactory.DataFactoryKeyVaultSecret)").FirstOrDefault();
             Assert.NotNull(methodLine);
             Assert.Equal("public static DataFactoryElement<string?> FromKeyVaultSecret(DataFactoryKeyVaultSecret secret);", methodLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void VerifySkippedAttributes()
+        {
+            var serviceBusAssembly = Assembly.Load("Azure.Messaging.ServiceBus");
+            var dllStream = serviceBusAssembly.GetFile("Azure.Messaging.ServiceBus.dll");
+            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            var line = codeFile.ReviewLines.Where(l => l.LineId == "Microsoft.Extensions.Azure").FirstOrDefault();
+            Assert.NotNull(line);
+            var classLine = line.Children?.Where(l => l.LineId == "Microsoft.Extensions.Azure.ServiceBusClientBuilderExtensions").FirstOrDefault();
+            Assert.NotNull(classLine);
+            var methodLine = classLine.Children?.Where(l => l.LineId.Contains("Microsoft.Extensions.Azure.ServiceBusClientBuilderExtensions.AddServiceBusClient")).FirstOrDefault();
+            Assert.NotNull(methodLine);
+
+            bool isRequiresUnreferencedCodePresent = classLine.Children?.Any(l => l.Tokens.Any(t => t.Value == "RequiresUnreferencedCodeAttribute")) ?? false;
+            bool isRequiresDynamicCode = classLine.Children?.Any(l => l.Tokens.Any(t => t.Value == "RequiresDynamicCode")) ?? false;
+            Assert.False(isRequiresUnreferencedCodePresent);
+            Assert.False(isRequiresDynamicCode);
         }
     }
 }

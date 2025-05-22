@@ -24,9 +24,14 @@ export interface CodeFile {
   /** Language variant is applicable only for java variants */
   LanguageVariant?: "None" | "Spring" | "Android";
   CrossLanguagePackageId?: string;
-  ReviewLines: ReviewLine[];
+  ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
-  Diagnostics?: CodeDiagnostic[];
+  Diagnostics?: Array<CodeDiagnostic>;
+  /**
+   * Navigation items are used to create a tree view in the navigation panel. Each navigation item is linked to a review line ID. This is optional.
+   * If navigation items are not provided then navigation panel will be automatically generated using the review lines. Navigation items should be provided only if you want to customize the navigation panel.
+   */
+  Navigation?: Array<NavigationItem>;
 }
 
 /** ReviewLine object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token. */
@@ -40,12 +45,12 @@ export interface ReviewLine {
   LineId?: string;
   CrossLanguageId?: string;
   /** list of tokens that constructs a line in API review */
-  Tokens: ReviewToken[];
+  Tokens: Array<ReviewToken>;
   /**
    * Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line.
    * Similarly all method level code lines are added as children of it's class code line.
    */
-  Children?: ReviewLine[];
+  Children?: Array<ReviewLine>;
   /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
   IsHidden?: boolean;
   /** Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context. */
@@ -77,6 +82,8 @@ export interface ReviewToken {
   IsDeprecated?: boolean;
   /** Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name */
   HasSuffixSpace?: boolean;
+  /** Set this to true if there is a prefix space required before current token. For e.g, space before token for = */
+  HasPrefixSpace?: boolean;
   /** Set isDocumentation to true if current token is part of documentation */
   IsDocumentation?: boolean;
   /** Language specific style css class names */
@@ -93,6 +100,13 @@ export interface CodeDiagnostic {
   Text: string;
   Level: CodeDiagnosticLevel;
   HelpLinkUri?: string;
+}
+
+export interface NavigationItem {
+  Text: string;
+  NavigationId: string;
+  ChildItems: Array<NavigationItem>;
+  Tags: Record<string, string>;
 }
 
 export enum TokenKind {

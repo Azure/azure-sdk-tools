@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
-using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -42,6 +41,7 @@ namespace APIViewWeb.Managers
         /// <param name="baselineCodeFileName"></param>
         /// <param name="baselineStream"></param>
         /// <param name="project"></param>
+        /// <param name="language"></param>
         /// <returns></returns>
         public async Task<CodeFile> GetCodeFileAsync(string repoName,
             string buildId,
@@ -52,55 +52,51 @@ namespace APIViewWeb.Managers
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
             MemoryStream baselineStream = null,
-            string project = "public"
+            string project = "public",
+            string language = null
             )
         {
-            Stream stream = null;
             CodeFile codeFile = null;
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
-                try
-                {
-                    codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream);
-                }
-                finally
-                {
-                    stream?.Dispose();
-                }                
+                using var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
+                codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream, language: language);
             }
             else
             {
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
-                var archive = new ZipArchive(stream);
-                try
-                {
-                    foreach (var entry in archive.Entries)
-                    {
-                        var fileName = Path.GetFileName(entry.Name);
-                        if (fileName == originalFileName)
-                        {
-                            await entry.Open().CopyToAsync(originalFileStream);
-                        }
+                using var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
+                using var archive = new ZipArchive(stream);
 
-                        if (fileName == codeFileName)
-                        {
-                            var language = LanguageServiceHelpers.GetLanguageFromRepoName(repoName);
-                            codeFile = await CodeFile.DeserializeAsync(entry.Open(), doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
-                        }
-                        else if (fileName == baselineCodeFileName)
-                        {
-                            await entry.Open().CopyToAsync(baselineStream);
-                        }
+                if (!string.IsNullOrEmpty(originalFileName))
+                {
+                    var entry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name) == originalFileName);
+                    if (entry != null)
+                    {
+                        using var entryStream = entry.Open();
+                        await entryStream.CopyToAsync(originalFileStream);
                     }
                 }
-                finally
-                {                   
-                    archive?.Dispose();
-                    stream?.Dispose();
+                    
+                if (!string.IsNullOrEmpty(baselineCodeFileName))
+                {
+                    var entry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name) == baselineCodeFileName);
+                    if (entry != null)
+                    {
+                        using var entryStream = entry.Open();
+                        await entryStream.CopyToAsync(baselineStream);
+                    }
                 }
-                
+
+                if (!string.IsNullOrEmpty(codeFileName))
+                {
+                    var entry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name) == codeFileName);
+                    if (entry != null)
+                    {
+                        using var entryStream = entry.Open();
+                        codeFile = await CodeFile.DeserializeAsync(entryStream);
+                    }
+                }
             }
 
             return codeFile;
@@ -147,7 +143,7 @@ namespace APIViewWeb.Managers
             Stream fileStream = null,
             string language = null)
         {
-            var languageService = _languageServices.FirstOrDefault(s => (language != null ? s.Name == language : s.IsSupportedFile(originalName)));
+            var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices) ?? _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             if (fileStream != null)
             {
                 await fileStream.CopyToAsync(memoryStream);
@@ -205,7 +201,8 @@ namespace APIViewWeb.Managers
                 return false;
             }
 
-            if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFileA.CodeFile.Language, _languageServices);
+            if (languageService.UsesTreeStyleParser)
             {
                 return CodeFileHelpers.AreCodeFilesSame(codeFileA.CodeFile, codeFileB.CodeFile);
             }

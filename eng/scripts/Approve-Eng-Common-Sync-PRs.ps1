@@ -1,9 +1,15 @@
+#!/usr/bin/env pwsh
+
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
   [Parameter(Mandatory = $true)]
-  [string] $engCommonSyncPRNumber
-
+  [string] $ToolsPRNumber
 )
+
+$PSNativeCommandUseErrorActionPreference = $true
+
+. "${PSScriptRoot}/../common/scripts/logging.ps1"
+. "${PSScriptRoot}/../common/scripts/Helpers/git-helpers.ps1"
 
 gh auth status
 
@@ -12,53 +18,73 @@ if ($LASTEXITCODE -ne 0) {
   exit 1
 }
 
+$ToolsRepo = "Azure/azure-sdk-tools"
+
 $ghloggedInUser = (gh api user -q .login)
-$engCommonToolsBranch = gh pr view $engCommonSyncPRNumber -R Azure/azure-sdk-tools --json "headRefName" --jq ".headRefName"
+# Get a temp access token from the logged in az cli user for azure devops resource
+$jwt_accessToken = (az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv)
+$headers = @{ Authorization = "Bearer $jwt_accessToken" }
 
-if (!$engCommonToolsBranch) {
-  Write-Error "Didn't find branch for PR $engCommonSyncPRNumber in Azure/azure-sdk-tools"
-  exit 1
-} 
+$checks = gh pr checks $ToolsPRNumber -R $ToolsRepo --json "name,link" | ConvertFrom-Json
+$syncChecks = $checks | Where-Object { $_.name -match "azure-sdk-tools - sync - [^(]*$" }
+$prList = @()
 
-# needs to remain in sync with \eng\pipelines\templates\stages\archetype-sdk-tool-repo-sync.yml
-$engCommonSyncBranch = "sync-eng/common-${engCommonToolsBranch}-${engCommonSyncPRNumber}"
+foreach ($check in $syncChecks) {
+  Write-Host "Gathering PRs from check [$($check.name)]'$($check.link)'"
 
-# needs to remain in sync with  \eng\pipelines\eng-common-sync.yml
-$repos = @(
-  "azure-sdk",
-  "azure-sdk-for-android",
-  "azure-sdk-for-c",
-  "azure-sdk-for-cpp",
-  "azure-sdk-for-go",
-  "azure-sdk-for-ios",
-  "azure-sdk-for-java",
-  "azure-sdk-for-js",
-  "azure-sdk-for-net",
-  "azure-sdk-for-python",
-  "azure-sdk-for-rust",
-  "azure-rest-api-specs"
-)
+  $devOpsBuild = $check.link -replace "_build/results\?buildId=(\d+)", "_apis/build/builds/`$1/artifacts?artifactName=pullrequestdata"
+  try {
+    $response = Invoke-RestMethod $devOpsBuild -Headers $headers
+    $artifactDownload = $response.resource.downloadUrl
+    $PrsCreatedContent = Invoke-RestMethod $artifactDownload.Replace("format=zip","format=file&subPath=/PRsCreated.txt") -headers $headers
+    if ($PrsCreatedContent) {
+      $PrsCreatedContent = $PrsCreatedContent.Split("`n") | Where-Object { $_ }
+      foreach ($line in $PrsCreatedContent) {
+        $repoOwner, $repoName, $Number = $line.Trim().Split(";")
+        $prList += @{ RepoOwner = $repoOwner; RepoName = $repoName; Number = $Number; Repo = "$repoOwner/$repoName" }
+      }
+    }
+  } catch {
+    Write-Host "Failed while processing '$devOpsBuild'. $_"
+    continue
+  }
+}
 
-foreach ($repo in $repos)
-{
-  $prstate = gh pr view $engCommonSyncBranch -R Azure/$repo --json "url,state,mergeable,mergeStateStatus,reviews" | ConvertFrom-Json
+function getPRState($pr) {
+  $prFields = "number,url,state,headRefOid,mergeable,mergeStateStatus,reviews"
+  return gh pr view $pr.Number -R $pr.Repo --json $prFields | ConvertFrom-Json
+}
+
+foreach ($pr in $prList) {
+  $prstate = getPRState $pr
 
   Write-Host "$($prstate.url) - " -NoNewline
   if ($prstate.state -eq "MERGED") {
     Write-Host "MERGED"
     continue
   }
-  
-  if ($prstate.reviews.author.login -notcontains $ghloggedInUser) {
-    gh pr review $engCommonSyncBranch -R Azure/$repo --approve
-    # Refresh after approval
-    $prstate = gh pr view $engCommonSyncBranch -R Azure/$repo --json "url,state,mergeable,mergeStateStatus,reviews" | ConvertFrom-Json
+
+  $commitDateString = (gh pr view $ToolsPRNumber -R $ToolsRepo --json "commits" --jq ".commits[-1].committedDate")
+  $latestCommitDate = ([datetime]$commitDateString).ToUniversalTime()
+  $approvalAfterCommit = $prstate.reviews | Where-Object { $_.state -eq "APPROVED" -and $_.submittedAt -gt $latestCommitDate }
+
+  if (!$approvalAfterCommit -or $prstate.reviews.author.login -notcontains $ghloggedInUser) {
+    gh pr review $pr.Number -R $pr.Repo --approve
+    # Refresh after re-approval
+    $prstate = getPRState $pr
   }
   else {
     Write-Host "Already approved"
   }
 
+  if ($prstate.mergeStateStatus -eq "BLOCKED") {
+    $resolved = TryResolveAIReviewThreads -repoOwner $pr.RepoOwner -repoName $pr.RepoName -prNumber $prstate.number
+    if ($resolved) {
+      $prstate = getPRState $pr
+    }
+  }
+
   if ($prstate.mergeStateStatus -ne "CLEAN") {
-    Write-Host "****PR is not mergeable [$($prstate.mergeStateStatus)] and may need to be manually merged"
+    Write-Host "****PR $($prstate.url) is not mergeable [state: $($prstate.mergeStateStatus)] and may need to be manually merged"
   }
 }

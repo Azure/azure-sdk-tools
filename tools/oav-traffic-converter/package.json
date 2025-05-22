@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/azure-sdk-tools.git"
+    "url": "git+https://github.com/Azure/azure-sdk-tools.git"
   },
   "dependencies": {
     "@types/node": "^7.0.5",
@@ -25,10 +25,10 @@
   "author": "azure-sdk",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/azure-sdk-tools/issues"
+    "url": "https://github.com/Azure/azure-sdk-tools/issues"
   },
   "bin": {
     "oavc":"./build/cli.js"
   },
-  "homepage": "https://github.com/azure-sdk-tools/tools/oav-traffic-converter"
+  "homepage": "https://github.com/Azure/azure-sdk-tools/tools/oav-traffic-converter"
 }

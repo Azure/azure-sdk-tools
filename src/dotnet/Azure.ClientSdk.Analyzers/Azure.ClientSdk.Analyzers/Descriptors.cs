@@ -134,7 +134,7 @@ namespace Azure.ClientSdk.Analyzers
         public static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(
             nameof(AZC0030),
             "Improper model name suffix",
-            "Model name '{0}' ends with '{1}'. Suggest to rename it to {2} or any other appropriate name.",
+            "Model name '{0}' ends with '{1}'. {2}",
             DiagnosticCategory.Naming,
             DiagnosticSeverity.Warning,
             true,
@@ -259,6 +259,15 @@ namespace Azure.ClientSdk.Analyzers
             "{0} is defined in assembly {1} and is marked internal without a [Friend] attribute.",
             "Naming",
             DiagnosticSeverity.Warning, true);
-      #endregion
+
+        public static DiagnosticDescriptor AZC0150 = new DiagnosticDescriptor(
+            id: "AZC0150",
+            title: "Use ModelReaderWriter overloads with ModelReaderWriterContext",
+            messageFormat: "Use the overload of ModelReaderWriter.{0} that accepts ModelReaderWriterContext as the last parameter for AOT compatibility",
+            category: DiagnosticCategory.Usage,
+            defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true,
+            description: "For AOT compatibility, all invocations of ModelReaderWriter.Read and ModelReaderWriter.Write should use the overload that accepts a ModelReaderWriterContext parameter.");
+        #endregion
     }
 }

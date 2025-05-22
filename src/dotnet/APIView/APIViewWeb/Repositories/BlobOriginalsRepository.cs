@@ -7,36 +7,62 @@ using System.Threading.Tasks;
 using APIViewWeb.Repositories;
 using Azure.Identity;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.Configuration;
+using Azure;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
     public class BlobOriginalsRepository : IBlobOriginalsRepository
     {
-        private BlobContainerClient _container;
+        private readonly BlobContainerClient _container;
+        private readonly ILogger<BlobOriginalsRepository> _logger;
+
+        public BlobOriginalsRepository(BlobServiceClient blobServiceClient, ILogger<BlobOriginalsRepository> logger)
+        {
+            _container = blobServiceClient.GetBlobContainerClient("originals");
+            _logger = logger;
+        }
 
         public string GetContainerUrl() => _container.Uri.ToString();
 
-        public BlobOriginalsRepository(IConfiguration configuration)
-        {
-            var serviceClient = new BlobServiceClient(new Uri(configuration["StorageAccountUrl"]), new DefaultAzureCredential());
-            _container = serviceClient.GetBlobContainerClient("originals");
-        }
-
         public async Task<Stream> GetOriginalAsync(string codeFileId)
         {
-            var info = await GetBlobClient(codeFileId).DownloadAsync();
-            return info.Value.Content;
+            try
+            {
+                var info = await GetBlobClient(codeFileId).DownloadAsync();
+                return info.Value.Content;
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error retrieving original with ID {CodeFileId}", codeFileId);
+                throw;
+            }
         }
 
         public async Task UploadOriginalAsync(string codeFileId, Stream stream)
         {
-            await GetBlobClient(codeFileId).UploadAsync(stream);
+            try
+            {
+                await GetBlobClient(codeFileId).UploadAsync(stream);
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error uploading original with ID {CodeFileId}", codeFileId);
+                throw;
+            }
         }
 
         public async Task DeleteOriginalAsync(string codeFileId)
         {
-            await GetBlobClient(codeFileId).DeleteAsync();
+            try
+            {
+                await GetBlobClient(codeFileId).DeleteAsync();
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error deleting original with ID {CodeFileId}", codeFileId);
+                throw;
+            }
         }
 
         private BlobClient GetBlobClient(string codeFileId)

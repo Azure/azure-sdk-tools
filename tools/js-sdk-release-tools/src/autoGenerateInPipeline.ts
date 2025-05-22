@@ -1,24 +1,22 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
-import { generateMgmt } from './hlc/generateMgmt';
-import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules';
-import { logger } from './utils/logger';
-import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline';
-import { ModularClientPackageOptions, SDKType } from './common/types';
-import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
-import { parseInputJson } from './utils/generateInputUtils';
-
-const shell = require('shelljs');
-const fs = require('fs');
+import { generateMgmt } from './hlc/generateMgmt.js';
+import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules.js';
+import { logger } from './utils/logger.js';
+import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline.js';
+import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
+import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
+import { parseInputJson } from './utils/generateInputUtils.js';
+import shell from 'shelljs';
+import fs from 'fs';
 
 async function automationGenerateInPipeline(
     inputJsonPath: string,
     outputJsonPath: string,
     use: string | undefined,
     typespecEmitter: string | undefined,
-    sdkGenerationType: string | undefined,
-    local: boolean
+    sdkGenerationType: string | undefined
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
@@ -32,9 +30,13 @@ async function automationGenerateInPipeline(
         skipGeneration,
         runningEnvironment,
         typespecProject,
-        autorestConfig
+        autorestConfig,        
+        apiVersion,
+        runMode,
+        sdkReleaseType,
     } = await parseInputJson(inputJson);
 
+    const local = runMode === RunMode.Local;
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
@@ -51,7 +53,9 @@ async function automationGenerateInPipeline(
                     swaggerRepoUrl: repoHttpsUrl,
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
-                    runningEnvironment: runningEnvironment
+                    runningEnvironment: runningEnvironment,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
@@ -68,13 +72,15 @@ async function automationGenerateInPipeline(
                     sdkGenerationType: sdkGenerationType === 'command' ? 'command' : 'script',
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
-                    gitCommitId: gitCommitId
+                    gitCommitId: gitCommitId,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
 
             case SDKType.ModularClient: {
                 const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
-                const sdkRepoRoot = String(shell.pwd());
+                const sdkRepoRoot = String(shell.pwd()).replaceAll('\\', '/');
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
                 const options: ModularClientPackageOptions = {
@@ -86,8 +92,10 @@ async function automationGenerateInPipeline(
                     repoUrl,
                     local,
                     // support MPG for now
-                    versionPolicyName: 'management'
-                };
+                    versionPolicyName: 'management',
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
+                };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;
@@ -121,9 +129,9 @@ const optionDefinitions = [
     // do NOT set to true in sdk automation pipeline 
     { name: 'local', type: Boolean, defaultValue: false }
 ];
-const commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local ?? false).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

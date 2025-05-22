@@ -1,111 +1,129 @@
 param(
-  $PRDataArtifactPath,
-  $AuthToken,
-  $ShouldMerge
+  [string]$PRDataArtifactPath,
+  # @('Azure;azure-sdk-for-net;1', ...)
+  [array]$PRDataInline,
+  [string]$AuthToken,
+  [switch]$SkipMerge
 )
 
-. "${PSScriptRoot}\..\common\scripts\logging.ps1"
+. "${PSScriptRoot}/../common/scripts/common.ps1"
 
-$ReadyForMerge = $true
-$mergablePRs = @()
-$headers = @{ "Content-Type" = "text/json" }
-$RetryCount = 5
+function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) {
+  # Setup GH_TOKEN for the gh cli commands
+  if ($ghToken) {
+    $env:GH_TOKEN = $ghToken
+  }
 
-if ($null -eq $ShouldMerge) {
-  $ShouldMerge = $null -ne $AuthToken;
+  $prList = @()
+  if ($prFile) {
+    foreach ($line in (Get-Content $prFile)) {
+      $repoOwner, $repoName, $Number = $line.Split(";")
+      $prList += @{ RepoOwner = $repoOwner; RepoName = $repoName; Number = $Number }
+    }
+  }
+  foreach ($line in $prs) {
+    $repoOwner, $repoName, $Number = $line.Split(";")
+    $prList += @{ RepoOwner = $repoOwner; RepoName = $repoName; Number = $Number }
+  }
+
+  $mergeable = ProcessPRMergeStatuses -prData $prList -noMerge:$noMerge
+
+  if ($noMerge) {
+    LogInfo "Skipping merge of $($mergeable.Length) PRs."
+    return
+  }
+
+  MergePRs $mergeable
 }
 
-if ($AuthToken) {
-  $headers += @{
-    Authorization = "bearer $AuthToken"
+function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
+  for ($retry = 1; $retry -le 5; $retry++) {
+    $currPRSet = $prData
+    $prData = @()
+    foreach ($pr in $currPRSet) {
+      $prData += GetOrSetMergeablePR -repoOwner $pr.RepoOwner -repoName $pr.RepoName -prNumber $pr.Number
+    }
+
+    if ($noMerge -or $prData.Retry -notcontains $true) {
+      break
+    }
+
+    $sleep = [Math]::Pow(2, $retry)
+    LogInfo "Some PRs were not in a mergeable state, retrying after $sleep seconds..."
+    Start-Sleep -Seconds $sleep
+  }
+
+  if ($prData.Block -contains $true) {
+    LogError "The following sync PRs are not able to be merged. Investigate and then retry running this job to auto-merge them again"
+    $prData | Where-Object { $_.Block } | ForEach-Object { LogInfo $_.Url }
+    exit 1
+  }
+
+  return $prData
+}
+
+function MergePRs([array]$toMerge) {
+  foreach ($pr in $toMerge) {
+    LogInfo "Merging $($pr.Url) at $($pr.HeadSHA)"
+    gh pr merge $pr.Url --squash --match-head-commit $pr.HeadSHA
+    if ($LASTEXITCODE) {
+      LogError "Failed to merge [$($pr.Url)]. See above logs for details."
+      exit $LASTEXITCODE
+    }
   }
 }
 
-$PRData = Get-Content $PRDataArtifactPath
-# Confirm Mergability
+function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prNumber, [switch]$SkipResolveReviews) {
+  $prUrl = "https://github.com/${repoOwner}/${repoName}/pull/${prNumber}"
 
-do 
-{
-  $unMergablePRs = @()
-  foreach ($prDataLine in $PRData)
-  {
-    $repoOwner, $repoName, $prNumber = $prDataLine.Split(";")
-
-    $prApiUrl = "https://api.github.com/repos/${repoOwner}/${repoName}/pulls/${prNumber}"
-    $prUrl = "https://github.com/${repoOwner}/${repoName}/pull/${prNumber}"
-    
-    try
-    {
-      $response = Invoke-RestMethod -Headers $headers $prApiUrl
-      if ($response.merged) {
-        Write-Host "${prUrl} is merged."
-      }
-      elseif ($response.state -eq "closed") {
-        LogWarning "${prUrl} is closed. Please investigate why was not merged."
-        $ReadyForMerge = $false
-      }
-      elseif ($response.mergeable -and $response.mergeable_state -eq "clean") {
-        Write-Host "${prUrl} is ready to merge."
-
-        $mergablePRs += @{ Url = $prApiUrl; HeadSHA = $response.head.sha }
-      }
-      elseif ($response.mergeable_state -ne "clean") {
-        LogWarning "${prUrl} is blocked ($($response.mergeable_state)). Please ensure all checks are green and reviewers have approved."
-        $ReadyForMerge = $false
-        $unMergablePRs += $prDataLine
-      }
-      else {
-        LogWarning "${prUrl} is in an unknown state please contact engineering system team to understand the state."
-        LogWarning $response
-        $ReadyForMerge = $false
-        $unMergablePRs += $prDataLine
-      }
-    }
-    catch {
-      LogError "Invoke-RestMethod ${prApiUrl} failed with exception:`n$_"
-      exit 1
+  function _pr([switch]$block, [switch]$retry, [string]$headSha) {
+    return @{
+      Block     = $retry.ToBool() -or $block.ToBool();
+      Retry     = $retry.ToBool();
+      Url       = $prUrl;
+      HeadSHA   = $headSha;
+      RepoOwner = $repoOwner;
+      RepoName  = $repoName;
+      Number    = $prNumber;
     }
   }
 
-  $RetryCount--
-  if (($unMergablePRs.Count -gt 0) -and ($RetryCount -gt 0) -and $ShouldMerge)
-  {
-    $PRData = $unMergablePRs
-    Start-Sleep -Seconds 30
-    LogDebug "Retrying merging for unmergable Prs"
-    $ReadyForMerge = $true
+  $result = gh pr view $prUrl --json "url,mergeable,state,mergeStateStatus,headRefOid"
+  if ($LASTEXITCODE) {
+    LogWarning "Failure looking up ${prUrl} ($LASTEXITCODE)."
+    return (_pr -retry)
   }
-}
-while (($unMergablePRs.Count -gt 0) -and ($RetryCount -gt 0) -and $ShouldMerge)
+  $pullRequest = $result | ConvertFrom-Json
 
-
-if (!$ReadyForMerge) {
-  LogError "At least one sync PR is not able to be merged please investigate and then retry running this job to auto-merge them again"
-  exit 1
-}
-
-if ($ReadyForMerge -and $ShouldMerge)
-{
-  # Merge Pull Requests
-  foreach ($mergablePRObj in $mergablePRs)
-  {
-    $mergablePR = $mergablePRObj.Url
-    $mergeApiUrl = $mergablePR + "/merge"
-
-    Write-Host $mergablePRObj.HeadSHA
-    $data = @{
-      sha = $mergablePRObj.HeadSHA
-      merge_method = "squash"
-    }
-
-    # Merge Pull Request
-    try {
-      Write-Host "Merging $mergablePR"
-      $response = Invoke-RestMethod -Method Put -Headers $headers $mergeApiUrl -Body ($data | ConvertTo-Json)
-    }
-    catch {
-      LogError "Invoke-RestMethod [$mergeApiUrl] failed with exception:`n$_"
-      exit 1
-    }
+  if ($pullRequest.state -eq "MERGED") {
+    LogInfo "${prUrl} is merged."
+    return
   }
+  if ($pullRequest.state -eq "CLOSED") {
+    LogWarning "${prUrl} is closed. Investigate why it was not merged."
+    return (_pr -block -headSha $pullRequest.headRefOid)
+  }
+  if ($pullRequest.mergeable -eq "MERGEABLE" -and $pullRequest.mergeStateStatus -ieq "CLEAN") {
+    LogInfo "${prUrl} is ready to merge."
+    return (_pr -headSha $pullRequest.headRefOid)
+  }
+  if ($pullRequest.mergeStateStatus -ieq "BLOCKED" -and !$SkipResolveReviews) {
+    $threads = GetUnresolvedAIReviewThreads -repoOwner $repoOwner -repoName $repoName -prNumber $prNumber
+    if ($threads) {
+      LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure all outstanding PR review conversations are resolved."
+      return (_pr -retry -headSha $pullRequest.headRefOid)
+    }
+    LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure PR has been approved after the latest commit."
+    return (_pr -retry -headSha $pullRequest.headRefOid)
+  }
+  if ($pullRequest.mergeStateStatus -ine "CLEAN") {
+    LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure all checks are green and reviewers have approved the latest commit."
+    return (_pr -retry -headSha $pullRequest.headRefOid)
+  }
+
+  LogWarning ($pullRequest | ConvertTo-Json -Depth 100)
+  LogWarning "${prUrl} is unmergeable with state '$($pullRequest.mergeStateStatus)'. Contact the engineering system team for assistance."
+  return (_pr -retry -headSha $pullRequest.headRefOid)
 }
+
+Main -prFile $PRDataArtifactPath -prs $PRDataInline -ghToken $AuthToken -noMerge:$SkipMerge

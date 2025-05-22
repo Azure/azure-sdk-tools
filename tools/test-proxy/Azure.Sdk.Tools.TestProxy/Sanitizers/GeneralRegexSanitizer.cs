@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers

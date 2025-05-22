@@ -1,3 +1,16 @@
+# 2.0.6
+
+- support `@deprecated` tag
+
+# 2.0.5
+
+- skip diff for @azure\* and tslib dependencies
+- Support re-exported enums
+
+# 2.0.4
+
+- update models from latest CodeFile schemas
+
 # 2.0.3
 
 - add `SkipDiff: true` for dependency header line

@@ -1,0 +1,9 @@
+Package parsed using Swift APIView (version 0.3.0)
+
+
+package InitializersTestFile.swifttxt {
+    public class InitializersTestClass {
+        public init(withThrowable: String) throws
+        public init?(withFailable: String)
+    }
+}

@@ -6,9 +6,10 @@ import { AzureCoreTestLibrary } from "@azure-tools/typespec-azure-core/testing";
 import { ApiViewTestLibrary } from "../src/testing/index.js";
 import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
-import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
 import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
+import { CodeFile } from "../src/schemas.js";
+import { reviewLineText } from "../src/util.js";
 
 export async function createApiViewTestHost() {
   return createTestHost({
@@ -40,44 +41,43 @@ export async function diagnosticsFor(code: string, options: ApiViewEmitterOption
   const outPath = resolvePath("/apiview.json");
   const diagnostics = await runner.diagnose(code, {
     noEmit: false,
-    emitters: { "@azure-tools/typespec-apiview": { ...options, "output-file": outPath } },
+    emit: ["@azure-tools/typespec-apiview"],
+    options: {
+      "@azure-tools/typespec-apiview": {
+        ...options,
+        "output-file": outPath,  
+      }
+    },
     miscOptions: { "disable-linter": true },
   });
   return diagnostics;
 }
 
-export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {
+export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<CodeFile> {
   const runner = await createApiViewTestRunner({withVersioning: true});
   const outPath = resolvePath("/apiview.json");
   await runner.compile(code, {
     noEmit: false,
-    emitters: { "@azure-tools/typespec-apiview": { ...options, "output-file": outPath } },
+    emit: ["@azure-tools/typespec-apiview"],
+    options: {
+      "@azure-tools/typespec-apiview": {
+        ...options,
+        "output-file": outPath,  
+      }
+    },
     miscOptions: { "disable-linter": true },
   });
 
   const jsonText = runner.fs.get(outPath)!;
-  const apiview = JSON.parse(jsonText) as ApiViewDocument;
+  const apiview = JSON.parse(jsonText) as CodeFile;
   return apiview;
 }
 
-export function apiViewText(apiview: ApiViewDocument): string[] {
-  const vals = new Array<string>;
-  for (const token of apiview.Tokens) {
-    switch (token.Kind) {
-      case ApiViewTokenKind.Newline:
-        vals.push("\n");
-        break;
-      default:
-        if (token.Value !== undefined) {
-          vals.push(token.Value);
-        }
-        break;
-    }
-  }
-  return vals.join("").split("\n");
+export function apiViewText(apiview: CodeFile): string[] {
+  return apiview.ReviewLines.map(l => reviewLineText(l, 0)).join("\n").split("\n");
 }
 
-function getIndex(lines: string[]): number {
+function getBaseIndent(lines: string[]): number {
   for (const line of lines) {
     if (line.trim() !== "") {
       return line.length - line.trimStart().length;
@@ -89,15 +89,27 @@ function getIndex(lines: string[]): number {
 /** Eliminates leading indentation and blank links that can mess with comparisons */
 function trimLines(lines: string[]): string[] {
   const trimmed: string[] = [];
-  const indent = getIndex(lines);
+  const indent = getBaseIndent(lines);
+  
+  // if first line is blank, skip it
+  if (lines[0].trim() === "") {
+    lines = lines.slice(1);
+  }
+
   for (const line of lines) {
-    if (line.trim() === '') {
-      // skip blank lines
-      continue;
+    if (line.trim() === "") {
+      // ensure blank lines are compared consistently
+      trimmed.push("");
     } else {
       // remove any leading indentation
       trimmed.push(line.substring(indent));
     }
+  }
+
+  // if last line is blank, skip it
+  const lastLine = trimmed.pop();
+  if (lastLine && lastLine.trim() !== "") {
+    trimmed.push(lastLine)
   }
   return trimmed;
 }
@@ -106,9 +118,8 @@ function trimLines(lines: string[]): string[] {
 export function compare(expect: string, lines: string[], offset: number) {
   // split the input into lines and ignore leading or trailing empty lines.
   const expectedLines = trimLines(expect.split("\n"));
-  const checkLines = trimLines(lines.slice(offset));
-  strictEqual(expectedLines.length, checkLines.length);
-  for (let x = 0; x < checkLines.length; x++) {
-    strictEqual(expectedLines[x], checkLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
+  const actualLines = trimLines(lines.slice(offset));
+  for (let x = 0; x < actualLines.length; x++) {
+    strictEqual(actualLines[x], expectedLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${actualLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
   }
 }

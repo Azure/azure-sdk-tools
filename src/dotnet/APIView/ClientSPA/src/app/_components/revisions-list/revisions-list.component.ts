@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
-import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
+import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
@@ -11,7 +11,6 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -22,13 +21,13 @@ import { environment } from 'src/environments/environment';
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
   @Input() revisionSidePanel : boolean = false;
+  @Input() userProfile: UserProfile | undefined;
 
   @Output() apiRevisionsEmitter : EventEmitter<APIRevision[]> = new EventEmitter<APIRevision[]>();
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
   assetsPath : string = environment.assetsPath;
-  userProfile : UserProfile | undefined;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
   profilePageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Profile/";
   revisions : APIRevision[] = [];
@@ -75,21 +74,18 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private apiRevisionsService: APIRevisionsService, private userProfileService: UserProfileService,
+  constructor(private apiRevisionsService: APIRevisionsService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
     private route: ActivatedRoute, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.createRevisionFilters();
     this.createLanguageFilters();
-    this.createContextMenuItems();
     this.setDetailsIcons();
-    this.loadAPIRevisions(0, this.pageSize * 2, true);
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
-      });
-    this.createRevisionFormGroup();
+    if (!this.review) {
+      this.loadAPIRevisions(0, this.pageSize * 2, true);
+      this.createRevisionFormGroup();
+    }
   }
 
   ngAfterOnit() {
@@ -106,8 +102,8 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       }
       else {
         this.loadAPIRevisions(0, this.pageSize * 2, true);
-        this.createRevisionFormGroup();
       }
+      this.createRevisionFormGroup();
       this.showSelectionActions = false;
       this.showDiffButton = false;
     }
@@ -172,18 +168,19 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.createRevisionForm.get('filePath')?.disable();
   }
 
-  createContextMenuItems() {
+  createContextMenuItems(apiRevision: APIRevision) {
+    const disableDeleteOrRestore  = (apiRevision.apiRevisionType == "manual" && apiRevision.createdBy == this.userProfile?.userName) ? false : true;
     if (this.showDeletedAPIRevisions)
     {
       this.contextMenuItems = [
-        { label: 'Restore', icon: 'pi pi-folder-open', command: () => this.viewRevision(this.selectedRevision) }
+        { label: 'Restore', icon: 'pi pi-folder-open', disabled: disableDeleteOrRestore, command: () => this.viewRevision(this.selectedRevision) }
       ];
     }
     else 
     {
       this.contextMenuItems = [
         { label: 'View', icon: 'pi pi-folder-open', command: () => this.viewRevision(this.selectedRevision) },
-        { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => this.deleteRevision(this.selectedRevision) }
+        { label: 'Delete', icon: 'pi pi-fw pi-times', disabled: disableDeleteOrRestore, command: () => this.deleteRevision(this.selectedRevision) }
       ];
     }
   }
@@ -373,7 +370,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   set showDeletedAPIRevisions(value: boolean) {
     this._showDeletedAPIRevisions = value;
     this.updateAPIRevisoinsListDetails();
-    this.createContextMenuItems();
   }
 
   get showAPIRevisionsAssignedToMe(): boolean {
@@ -435,7 +431,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * @param event the Filter event
    */
   onSort(event: SortEvent) {
-      this.loadAPIRevisions(0, this.pageSize, true, null, event.field, event.order);
+    this.loadAPIRevisions(0, this.pageSize, true, null, event.field, event.order);
   }
 
   // Show or hide the sidebar for creating a review
@@ -452,6 +448,10 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   onFileSelect(event: FileSelectEvent) {
     const uploadFile = event.currentFiles[0];
     this.createRevisionForm.get('selectedFile')?.setValue(uploadFile);
+  }
+
+  onContextMenuSelect(event : TableContextMenuSelectEvent) {
+    this.createContextMenuItems(event.data);
   }
 
   // Fire API request to create the review

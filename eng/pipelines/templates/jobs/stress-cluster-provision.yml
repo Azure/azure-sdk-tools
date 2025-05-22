@@ -17,12 +17,12 @@ jobs:
       name: azsdk-pool-mms-ubuntu-2204-general
       vmImage: ubuntu-22.04
     steps:
-      - pwsh: |
-          $subscriptionConfiguration = @'
-            $(sub-config-azure-cloud-test-resources)
-          '@ | ConvertFrom-Json -AsHashtable;
-
-          tools/stress-cluster/cluster/provision.ps1 `
+      - task: AzureCLI@2
+        displayName: Provision Stress Cluster
+        inputs:
+          azureSubscription: azure-sdk-tests-public
+          scriptType: pscore
+          scriptPath: $(System.DefaultWorkingDirectory)/tools/stress-cluster/cluster/provision.ps1
+          arguments:
             -WhatIf:$${{ parameters.WhatIf }} `
-            -Environment ${{ parameters.Environment }} `
-            @subscriptionConfiguration
+            -Environment ${{ parameters.Environment }}

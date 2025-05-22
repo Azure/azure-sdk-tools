@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.SignalR;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
+using APIViewWeb.Helpers;
+using APIView.Model.V2;
+using APIView.TreeToken;
 
 namespace APIViewUnitTests
 {
@@ -99,6 +102,220 @@ namespace APIViewUnitTests
 
             //Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task TestCodeFileConversion()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "Azure.Template.cpp.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+
+            codeFileB = new CodeFile();
+            filePath = Path.Combine("SampleTestFiles", "Azure.Template.cpp_new.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+
+            codeFileA.ConvertToTreeTokenModel();
+            bool result = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task TestCodeFileComparisonWithSkippedLines()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "app-conf.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+
+            filePath = Path.Combine("SampleTestFiles", "app-conf_without_skip_diff.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.True(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.False(FindAnyDiffLine(diff));
+        }
+
+        private bool FindAnyDiffLine(List<ReviewLine> lines)
+        {
+            if(lines == null || lines.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var line in lines)
+            {
+                if (line.DiffKind != DiffKind.NoneDiff || FindAnyDiffLine(line.Children))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [Fact]
+        public async Task TestCodeFileComparisonWithChangeInSkippedLines()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "app-conf.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+
+            filePath = Path.Combine("SampleTestFiles", "app-conf-change-in-skipped-diff.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.True(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.False(FindAnyDiffLine(diff));
+        }
+
+        [Fact]
+        public async Task VerifyPythonDiff()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+            filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python_diff.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.False(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.True(FindAnyDiffLine(diff));
+
+            //Verify first line in diff view is the global text
+            Assert.True(diff.First().LineId == "GLOBAL");
+
+            //Verify that last line of namespace line's children is empty line
+            var namespaceLine = diff.First(l=>l.LineId == "azure.schemaregistry");
+            Assert.Equal("namespace azure.schemaregistry", namespaceLine.ToString());
+            var lastClass = namespaceLine.Children.Last();
+            Assert.True(lastClass.Children.Last().Tokens.Count == 0);
+
+        }
+
+        [Fact]
+        public async Task VerifyPythonGroupedDiff()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python-with-overload_relatedto-NEW.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+            filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python-with-overload_relatedto-OLD.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.False(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.True(FindAnyDiffLine(diff));
+
+            //Verify first line in diff view is the global text
+            Assert.True(diff.First().LineId == "GLOBAL");
+
+            //Verify that last line of namespace line's children is empty line
+            var namespaceLine = diff.First(l => l.LineId == "azure.schemaregistry");
+            Assert.Equal("namespace azure.schemaregistry", namespaceLine.ToString());
+
+            // Make sure first 3 lines under schema registry with LineID are  "{def azure.schemaregistry.foo(}"
+            int i = 0, line = 0;
+            while (line < namespaceLine.Children.Count && i < 3)
+            {
+                if (!string.IsNullOrEmpty(namespaceLine.Children[line].LineId))
+                {
+                    Assert.True(namespaceLine.Children[line].ToString() == "def azure.schemaregistry.foo(");
+                    i++;
+                }
+                line++;
+            }
+        }
+
+        [Fact]
+        public async Task VerifyJavaDiffInContextEnd()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "azure-storage-file-share_active.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+            filePath = Path.Combine("SampleTestFiles", "azure-storage-file-share_baseline.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.False(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.True(FindAnyDiffLine(diff));
+
+            //Verify that all added or removed class or start of context has a corresponding end of context marked as added or removed.
+            foreach (var namespaceLine in diff.Where(l => l.Tokens.Any(t=>t.Value == "package")))
+            {
+                bool foundAddedContext = false;
+                bool foundRemovedContext = false;
+                string previousLineId = "";
+                foreach(var objectDefLine in namespaceLine.Children)
+                {
+                    //If previous line is start of context and added line then current line should also be marked as added
+                    if (foundAddedContext)
+                    {
+                        Assert.True(objectDefLine.DiffKind == DiffKind.Added && objectDefLine.RelatedToLine == previousLineId);
+                        foundAddedContext = false;
+                        foundRemovedContext = false;
+                        previousLineId = "";
+                        continue;
+                    }
+
+                    if (foundRemovedContext)
+                    {
+                        Assert.True(objectDefLine.DiffKind == DiffKind.Removed);
+                        foundAddedContext = false;
+                        foundRemovedContext = false;
+                        previousLineId = "";
+                        continue;
+                    }
+
+                    if (objectDefLine.DiffKind == DiffKind.Added && objectDefLine.IsContextEndLine != true)
+                    {
+                        foundAddedContext = true;
+                        foundRemovedContext = false;
+                        previousLineId = objectDefLine.LineId;
+                    }
+
+                    if (objectDefLine.DiffKind == DiffKind.Removed && objectDefLine.IsContextEndLine != true)
+                    {
+                        foundAddedContext = false;
+                        foundRemovedContext = true;
+                        previousLineId = objectDefLine.LineId;
+                    }
+                }
+            }
         }
     }
 }

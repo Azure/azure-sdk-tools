@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Azure.ClientSdk.Analyzers.ModelName;
 using Xunit;
 
 using VerifyCS = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<
@@ -9,7 +8,7 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class AZC0030Tests
     {
-        private const string diagnosticId = "AZC0030";
+        private const string DiagnosticId = "AZC0030";
 
         [Fact]
         public async Task GoodSuffix()
@@ -37,7 +36,8 @@ namespace Azure.ResourceManager
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 36).WithArguments("ResponseParameters", "Parameters", "'ResponseContent' or 'ResponsePatch'");
+            var expectedMessage = $"Suggest to rename it to 'ResponseContent' or 'ResponsePatch' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(4, 18, 4, 36).WithArguments("ResponseParameters", "Parameters", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -55,7 +55,8 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 28).WithArguments("DiskOption", "Option", "'DiskConfig'");
+            var expectedMessage = $"Suggest to rename it to 'DiskConfig' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(4, 18, 4, 28).WithArguments("DiskOption", "Option", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -72,7 +73,8 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(6, 22, 6, 32).WithArguments("DiskOption", "Option", "'DiskConfig'");
+            var expectedMessage = $"Suggest to rename it to 'DiskConfig' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(6, 22, 6, 32).WithArguments("DiskOption", "Option", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -93,7 +95,8 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(6, 22, 6, 39).WithArguments("CreationResponses", "Responses", "'CreationResults'");
+            var expectedMessage = $"Suggest to rename it to 'CreationResults' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(6, 22, 6, 39).WithArguments("CreationResponses", "Responses", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
     }

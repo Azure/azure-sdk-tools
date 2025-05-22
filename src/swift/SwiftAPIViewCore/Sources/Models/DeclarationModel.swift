@@ -122,6 +122,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
     /// Used for most declaration types that have members
     convenience init(from decl: SyntaxProtocol, parent: Linkable?) {
         let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
+
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
         self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .struct)
     }
@@ -147,16 +148,29 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
         self.extensions = []
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        for child in childNodes {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
+        for (idx, child) in childNodes.enumerated() {
             switch child.kind {
             case .attributeList:
+                // Ensure declarations that have an attributeList have a blank line,
+                // unless it is the first child
+                a.blankLines(set: a.currentParent?.children.count ?? 0 == 0 ? 0 : 1)
                 // attributes on declarations should have newlines
                 let obj = AttributeListSyntax(child)!
-                for attr in obj.children(viewMode: .sourceAccurate) {
-                    attr.tokenize(apiview: a, parent: parent)
+                let children = obj.children(viewMode: .sourceAccurate)
+                for attr in children {
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
-                    a.lineIdMarker(definitionId: "\(definitionId!).\(attrText)")
+                    a.lineMarker("\(definitionId!).\(attrText)")
+                    a.currentLine.relatedToLine = definitionId
+                    attr.tokenize(apiview: a, parent: parent)
+                    a.blankLines(set: 0)
+                }
+            case .precedenceGroupAttributeList:
+                let obj = PrecedenceGroupAttributeListSyntax(child)!
+                a.indent {
+                    for item in obj.children(viewMode: .sourceAccurate) {
+                        item.tokenize(apiview: a, parent: nil)
+                    }
                     a.blankLines(set: 0)
                 }
             case .token:
@@ -164,21 +178,23 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                     // render as the correct APIView token type
                     switch self.kind {
                     case .class:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .enum:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .method:
-                        a.member(name: name, definitionId: definitionId)
+                        a.lineMarker(definitionId)
+                        a.member(name: name)
                     case .package:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .protocol:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .struct:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .unknown:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .variable:
-                        a.member(name: name, definitionId: definitionId)
+                        a.lineMarker(definitionId)
+                        a.member(name: name)
                     }
                 } else {
                     child.tokenize(apiview: a, parent: nil)
@@ -189,21 +205,12 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
             }
         }
         if !extensions.isEmpty {
-            a.blankLines(set: 1)
-            for ext in extensions {
-                ext.tokenize(apiview: a, parent: self)
-                a.blankLines(set: 1)
-            }
+            extensions.tokenize(apiview: a, parent: self)
         }
     }
 
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
-        let navigationId = parent != nil ? "\(parent!.name).\(name)" : name
-        a.add(token: NavigationToken(name: name, navigationId: navigationId, typeKind: kind.navigationSymbol, members: []))
-    }
-
     func shouldShow() -> Bool {
-        let publicModifiers = APIViewModel.publicModifiers
+        let publicModifiers = CodeModel.publicModifiers
         guard let parentDecl = (parent as? DeclarationModel) else {
             return publicModifiers.contains(self.accessLevel)
         }

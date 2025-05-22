@@ -15,17 +15,17 @@ import {
     RuleMessageKind,
     detectBreakingChangesBetweenPackages,
     patchRoutes,
-    patchUnionType,
+    patchTypeAlias,
     patchFunction,
 } from "typescript-codegen-breaking-change-detector";
 
-import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
-import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
+import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration.js";
+import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration.js";
 import { join } from "path";
-import { SDKType } from "../common/types";
-import { logger } from "../utils/logger";
-import { TSExportedMetaData } from "./extractMetaData";
-import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
+import { SDKType } from "../common/types.js";
+import { logger } from "../utils/logger.js";
+import { TSExportedMetaData } from "./extractMetaData.js";
+import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor.js";
 import { Node, SyntaxKind } from "ts-morph";
 
 export interface ChangelogItem {
@@ -1223,7 +1223,7 @@ export const changelogGenerator = (
 
         const typeAliasNames = new Set([...Object.keys(metaDataOld.typeAlias), ...Object.keys(metadataNew.typeAlias)]);
         const typeAliasPairs = [...typeAliasNames].reduce((pairs, typeAliasName) => {
-            pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.CurrentToBaseline));
+            pairs.push(...patchTypeAlias(typeAliasName, astContext, AssignDirection.CurrentToBaseline));
             return pairs;
         }, new Array<DiffPair>());
         handleAddedRemovedTypeAliasDiffPairs(typeAliasPairs, changLog);
@@ -1231,7 +1231,7 @@ export const changelogGenerator = (
         // NOTE: handle type alias's type change case in simple way for now, and exclude intersection type, since already handled
         // TODO: handle type alias's type change case in a general way
         const typeAliasPairsReverse = [...typeAliasNames].reduce((pairs, typeAliasName) => {
-            pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
+            pairs.push(...patchTypeAlias(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
             return pairs;
         }, new Array<DiffPair>());
         

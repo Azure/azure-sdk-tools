@@ -376,7 +376,7 @@ export function findFunctionBreakingChanges(source: FunctionDeclaration, target:
 }
 
 export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, target: TypeAliasDeclaration): DiffPair[] {
-  if (source.getType().isAssignableTo(target.getType())) return [];
+  if (source.getType().isAssignableTo(target.getType()) && target.getType().isAssignableTo(source.getType())) return [];
 
   let sourceNameNode: NameNode = { name: source.getName(), node: source };
   let targetNameNode: NameNode = { name: target.getName(), node: target };

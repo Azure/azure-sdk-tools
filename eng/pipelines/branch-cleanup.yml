@@ -46,10 +46,10 @@ parameters:
 - name: DailyBranchRepos
   type: object
   default:
-    - Azure/azure-docs-sdk-dotnet
-    - Azure/azure-docs-sdk-java
     - MicrosoftDocs/azure-docs-sdk-node
     - MicrosoftDocs/azure-docs-sdk-python
+    - MicrosoftDocs/azure-docs-sdk-java
+    - MicrosoftDocs/azure-docs-sdk-net
 
 - name: RestAPISpecsDocsRepos
   type: object
@@ -62,6 +62,7 @@ jobs:
     pool:
       name: azsdk-pool-mms-ubuntu-2204-general
       vmImage: ubuntu-22.04
+    timeoutInMinutes: 120
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml
@@ -130,7 +131,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -146,7 +147,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs-pr"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -175,12 +176,9 @@ jobs:
             pwsh: true
             workingDirectory: $(System.DefaultWorkingDirectory)
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-            # TODO: 00a0dc86-3419-4dd5-b119-e83edaf17e7e needs to be skipped because it's the default
-            # branch for the repository. This will be removed once the default branch has been changed
-            # to main
             arguments: >
               -RepoId "${{ repo }}"
-              -BranchRegex "^(result_)?(?!00a0dc86-3419-4dd5-b119-e83edaf17e7e)([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
+              -BranchRegex "^(result_)?([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
               -LastCommitOlderThan ((Get-Date).AddDays(-14))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

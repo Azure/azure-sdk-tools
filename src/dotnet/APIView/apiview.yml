@@ -4,13 +4,16 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20240828.2'
+    default: '1.0.0-dev.20250301.1'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.3'
+    default: '@azure-tools/ts-genapi@2.0.5'
+  - name: RustAPIParser
+    type: string
+    default: '@azure-tools/rust-genapi@1.1.0'
   - name: JavaScriptArtifactRegistry
     type: string
-    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
 
 trigger:
   branches:
@@ -234,15 +237,15 @@ extends:
                   DOTNET_CLI_TELEMETRY_OPTOUT: 1
                   DOTNET_MULTILEVEL_LOOKUP: 0
 
-              #- task: GoTool@0
-              #  inputs:
-              #    version: '$(GoVersion)'
-              #  displayName: "Use Go $(GoVersion)"
-              #
-              #- script: |
-              #    go test ./... -v
-              #  workingDirectory: $(GoParserPackagePath)
-              #  displayName: 'Test Go parser'
+              - task: GoTool@0
+                inputs:
+                 version: '$(GoVersion)'
+                displayName: "Use Go $(GoVersion)"
+              
+              - script: |
+                 go test ./... -v
+                workingDirectory: $(GoParserPackagePath)
+                displayName: 'Test Go parser'
 
               #- task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
               #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
@@ -323,6 +326,13 @@ extends:
 
           jobs:
             - job: Publish_to_Staging
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               displayName: Publish to Staging
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
@@ -330,11 +340,6 @@ extends:
                 os: linux
 
               steps:
-              - checkout: self
-
-              - download: current
-                artifact: APIView
-                timeoutInMinutes: 5
 
               - task: FileTransform@1
                 displayName: 'Update Angular Config for Environment'
@@ -354,9 +359,12 @@ extends:
                   InlineScript: |
                     @echo off
                     echo Installing .NET tool
+                    call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     echo Installing JavaScript parser
-                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}  
+                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                    echo Installing Rust parser
+                    call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
@@ -377,6 +385,13 @@ extends:
             - deployment: Publish_Test_UI
               displayName: Publish Test UI
               environment: 'package-publish'
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -386,11 +401,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-                    - checkout: self
-
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
 
                     - task: FileTransform@1
                       displayName: 'Update Angular Config for Environment'
@@ -408,9 +418,12 @@ extends:
                         InlineScript: |
                           @echo off
                           echo Installing .NET tool
+                          call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
-                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                          echo Installing Rust parser
+                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
@@ -430,6 +443,13 @@ extends:
             - deployment: Publish_to_Prod
               displayName: Publish to Prod
               environment: 'package-publish'
+              templateContext:
+                type: releaseJob
+                isProduction: true
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -439,11 +459,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-                    - checkout: self
-
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
 
                     - task: FileTransform@1
                       displayName: 'Update Angular Config for Environment'
@@ -466,8 +481,11 @@ extends:
                         InlineScript: |
                           @echo off
                           echo Installing .NET tool
+                          call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
-                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                          echo Installing Rust parser
+                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

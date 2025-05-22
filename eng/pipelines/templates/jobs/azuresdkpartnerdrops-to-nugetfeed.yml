@@ -1,11 +1,3 @@
-
-resources:
-  repositories:
-    - repository: azure-sdk-build-tools
-      type: git
-      name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20241025.1
-
 parameters:
   - name: BuildToolsRepoPath
     type: string
@@ -32,75 +24,113 @@ parameters:
     type: boolean
     default: true
 
-variables:
-  - template: /eng/pipelines/templates/variables/globals.yml
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Deploy
 
-jobs:
-  - job: AzurePartnerDropsToNuget
-    pool:
-      name: azsdk-pool-mms-win-2022-general
-      vmImage: windows-2022
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
 
-    steps:
-      - checkout: self
-      - checkout: azure-sdk-build-tools
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
 
-      - task: AzurePowerShell@5
-        displayName: 'Copy from azuresdkpartnerdrops'
-        condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
-        inputs:
-          azureSubscription: 'azuresdkpartnerdrops - Storage Partner Drops'
-          ScriptType: 'InlineScript'
-          azurePowerShellVersion: LatestVersion 
-          pwsh: true
-          Inline: |
-            echo "azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true"
-            azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
-            $copiedFiles = (dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName })
-            echo "Copied files: $copiedFiles"
-            if (!$copiedFiles) { 
-              echo "Failed to copy any files from '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' please double check they exist"
-              exit 1
-            }            
-        env: 
-          AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'     
 
-      - ${{ if eq(parameters.ShouldSign, true) }}:
-        - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
-          parameters:
-            PackagesPath: ${{ parameters.ArtifactsPath }}
-            BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
+        jobs:
+          - job: SigningAndSymbols
+            displayName: Signing and Symbols
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
 
-      - ${{ if eq(parameters.ShouldPublish, true) }}:
-        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
-          parameters:
-            BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
-            PackagesPath: ${{ parameters.ArtifactsPath }}
-            StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  displayName: Publish to packages artifact
+                  condition: succeededOrFailed()
+                  artifactName: packages
+                  targetPath: ${{ parameters.ArtifactsPath }}
 
-        - task: NuGetToolInstaller@1
-          displayName: 'Use NuGet ${{ parameters.NugetVersion }}'
-          inputs:
-            versionSpec: ${{ parameters.NugetVersion }}
+            steps:
+              - checkout: self
+              - checkout: azure-sdk-build-tools
 
-        - ${{ if ne(parameters.DevOpsFeedID, '') }}:
-          - task: NuGetCommand@2
-            displayName: 'Publish to DevOps Feed'
-            inputs:
-              command: push
-              packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
-              publishVstsFeed: ${{ parameters.DevOpsFeedID }}
+              - task: AzurePowerShell@5
+                displayName: 'Copy from azuresdkpartnerdrops'
+                condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
+                inputs:
+                  azureSubscription: 'azuresdkpartnerdrops - Storage Partner Drops'
+                  ScriptType: 'InlineScript'
+                  azurePowerShellVersion: LatestVersion 
+                  pwsh: true
+                  Inline: |
+                    echo "azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true"
+                    azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
+                    $copiedFiles = (dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName })
+                    echo "Copied files: $copiedFiles"
+                    if (!$copiedFiles) { 
+                      echo "Failed to copy any files from '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' please double check they exist"
+                      exit 1
+                    }            
+                env: 
+                  AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'     
 
-        - ${{ if eq(parameters.DevOpsFeedID, '') }}:
-          - task: NuGetCommand@2
-            displayName: 'Publish to Nuget'
-            inputs:
-              command: push
-              packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
-              nuGetFeedType: external
-              publishFeedCredentials: Nuget.org
+              - ${{ if eq(parameters.ShouldSign, true) }}:
+                - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
+                  parameters:
+                    PackagesPath: ${{ parameters.ArtifactsPath }}
+                    BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
 
-      - publish: '${{ parameters.ArtifactsPath }}'
-        displayName: Upload Packages to Artifacts
-        artifact: packages
-        condition: succeeded()
+              - ${{ if eq(parameters.ShouldPublish, true) }}:
+                - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
+                  parameters:
+                    BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
+                    PackagesPath: ${{ parameters.ArtifactsPath }}
+                    StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
+        
+          - ${{ if eq(parameters.ShouldPublish, true) }}:
+            - deployment: PublishPackage
+              displayName: Publish package to Nuget.org and DevOps Feed
+              condition: and(succeeded(), ne(variables['Skip.PublishPackage'], 'true'))
+              environment: package-publish
+              dependsOn: SigningAndSymbols
+
+              pool:
+                name: azsdk-pool-mms-ubuntu-2004-general
+                image: azsdk-pool-mms-ubuntu-2004-1espt
+                os: linux
+
+              templateContext:
+                type: releaseJob  # Required, this indicates this deployment job is a release job
+                isProduction: true  # Required, must be 'true' or 'false'
+                inputs:  # All input build artifacts must be declared here
+                  - input: pipelineArtifact  # Required, type of the input artifact
+                    artifactName: packages  # Required, name of the pipeline artifact
+                    targetPath: ${{parameters.ArtifactsPath}}  # Optional, specifies where the artifact is downloaded to
+
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                      - ${{ if ne(parameters.DevOpsFeedID, '') }}:
+                        - task: 1ES.PublishNuget@1
+                          displayName: Publish to DevOps Feed
+                          inputs:
+                            packageParentPath: '${{ parameters.ArtifactsPath }}'
+                            packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+                            publishVstsFeed: ${{ parameters.DevOpsFeedID }}
+
+                      - ${{ if eq(parameters.DevOpsFeedID, '') }}:
+                        - task: 1ES.PublishNuget@1
+                          displayName: Publish to Nuget
+                          inputs:
+                            packageParentPath: '${{ parameters.ArtifactsPath }}'
+                            packagesToPush: '${{ parameters.ArtifactsPath }}/**/*.nupkg;!${{ parameters.ArtifactsPath }}/**/*.symbols.nupkg'
+                            nuGetFeedType: external
+                            publishFeedCredentials: Nuget.org
+

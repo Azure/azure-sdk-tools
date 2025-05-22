@@ -303,9 +303,14 @@ p-contextmenusub {
     }
 }
 
-.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text, .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
-    text-decoration: none;
+.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
     color: var(--base-text-color);
+    padding: 0.2rem 0.25rem;
+
+    .p-menuitem-text, .p-menuitem-icon {
+        text-decoration: none;
+        color: var(--base-text-color);
+    }
 }
 
 .p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {
@@ -522,6 +527,14 @@ p-contextmenusub {
     border: none;
     background: var(--base-fg-color);
     color: var(--base-text-color);
+}
+
+.p-inputgroup-addon {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-top: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .p-inputswitch {

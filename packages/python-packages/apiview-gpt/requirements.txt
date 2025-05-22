@@ -1,4 +1,0 @@
-openai
-langchain
-pydantic
-flask

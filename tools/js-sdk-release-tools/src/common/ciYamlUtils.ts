@@ -1,11 +1,12 @@
-import { NpmPackageInfo, VersionPolicyName } from './types';
-import { basename, join, posix, resolve } from 'path';
-import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils';
+import { NpmPackageInfo, VersionPolicyName } from './types.js';
+import { dirname, posix } from 'path';
+import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils.js';
 import { parse, stringify } from 'yaml';
 import { readFile, writeFile } from 'fs/promises';
 
-import { existsAsync } from './utils';
-import { logger } from '../utils/logger';
+import { existsAsync } from './utils.js';
+import { logger } from '../utils/logger.js';
+import { fileURLToPath } from 'url';
 
 interface ArtifactInfo {
     name: string;
@@ -82,7 +83,7 @@ async function updateManagementPlaneCiYaml(
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciMgmtPath) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
-    writeCiYaml(ciMgmtPath, parsed);
+    await writeCiYaml(ciMgmtPath, parsed);
 }
 
 function getArtifact(npmPackageInfo: NpmPackageInfo): ArtifactInfo {
@@ -98,12 +99,14 @@ async function createManagementPlaneCiYaml(
     npmPackageInfo: NpmPackageInfo
 ): Promise<void> {
     const artifact = getArtifact(npmPackageInfo);
-    const templatePath = join(__dirname, 'ciYamlTemplates/ci.mgmt.template.yml');
+    // Use two ways to get the dirname to avoid failures caused by node version issues.
+    const __dirname = import.meta.dirname || dirname(fileURLToPath(import.meta.url));
+    const templatePath = posix.join(__dirname, 'ciYamlTemplates/ci.mgmt.template.yml');
     const template = await readFile(templatePath, { encoding: 'utf-8' });
     const parsed = parse(template.toString());
     parsed.trigger.paths.include = [packageDirToSdkRoot, ciMgmtPath];
     parsed.pr.paths.include = [packageDirToSdkRoot, ciMgmtPath];
-    parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot;
+    parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot.split('/')[1];
     parsed.extends.parameters.Artifacts = [artifact];
 
     await writeCiYaml(ciMgmtPath, parsed);
@@ -112,7 +115,7 @@ async function createManagementPlaneCiYaml(
 async function writeCiYaml(ciMgmtPath: string, config: any) {
     const content = comment + stringify(config);
     await writeFile(ciMgmtPath, content, { encoding: 'utf-8', flush: true });
-    logger.info(`Created Management CI file '${resolve(ciMgmtPath)}' with content: \n${content}`);
+    logger.info(`Created Management CI file '${posix.resolve(ciMgmtPath)}' with content: \n${content}`);
 }
 
 async function createOrUpdateDataPlaneCiYaml(

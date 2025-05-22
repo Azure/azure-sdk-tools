@@ -1,0 +1,2479 @@
+Package parsed using Swift APIView (version 0.3.0)
+
+
+package AzureCommunicationCalling {
+	open class AcceptCallOptions: CallOptions {
+		public init()
+		@available(*, deprecated, message: "Use IncomingVideoOptions and OutgoingVideoOptions instead") open var videoOptions: VideoOptions?
+	}
+	
+	open class AcceptTeamsCallOptions: CallOptions {
+		public init()
+	}
+	
+	open class AddPhoneNumberOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var alternateCallerId: UnsafeMutablePointer<Int32>
+	}
+	
+	open class AddTeamsParticipantOptions: NSObject {
+		public init(threadId: String)
+		open func dealloc()
+		open var threadId: String { get }
+	}
+	
+	open class AdmitAllParticipantsResult: NSObject {
+		open func dealloc()
+		open var successCount: Int32 { get }
+		open var failureCount: Int32 { get }
+	}
+	
+	open class AdmitParticipantsResult: NSObject {
+		open func dealloc()
+		open var successCount: Int32 { get }
+		open var failedParticipants: [RemoteParticipant] { get }
+	}
+	
+	public struct AudioIssues: OptionSet, @unchecked Sendable {
+		public init(rawValue: Int)
+		public static var noLocalAudio: AudioIssues { get }
+		public static var noRemoteAudio: AudioIssues { get }
+		public static var echo: AudioIssues { get }
+		public static var audioNoise: AudioIssues { get }
+		public static var lowVolume: AudioIssues { get }
+		public static var audioStoppedUnexpectedly: AudioIssues { get }
+		public static var distortedSpeech: AudioIssues { get }
+		public static var audioInterruption: AudioIssues { get }
+		public static var otherIssues: AudioIssues { get }
+	}
+	
+	@available(*, deprecated, message: "Use IncomingAudioOptions and OutgoingAudioOptions instead")
+	open class AudioOptions: NSObject {
+		public init()
+		open func dealloc()
+		@available(*, deprecated, message: "Deprecated use muted property in OutgoingAudioOptions instead") open var muted: Bool
+	}
+	
+	public enum AudioStreamBufferDuration: Int, @unchecked Sendable {
+		case ms10 = 0
+		case ms20 = 1
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamBufferDuration {
+		public var value: Swift.Int { get }
+		public var timeInterval: Foundation.TimeInterval { get }
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamBufferDuration: Swift.CaseIterable {
+		public static var allCases: [AzureCommunicationCalling.AudioStreamBufferDuration] { get }
+		public typealias AllCases = [AzureCommunicationCalling.AudioStreamBufferDuration]
+	}
+	
+	public enum AudioStreamChannelMode: Int, @unchecked Sendable {
+		case mono = 0
+		case stereo = 1
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamChannelMode {
+		public var channelCount: Swift.UInt32 { get }
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamChannelMode: Swift.CaseIterable {
+		public static var allCases: [AzureCommunicationCalling.AudioStreamChannelMode] { get }
+		public typealias AllCases = [AzureCommunicationCalling.AudioStreamChannelMode]
+	}
+	
+	public enum AudioStreamFormat: Int, @unchecked Sendable {
+		case pcm16Bit = 0
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamFormat {
+		public var bytesPerSample: Swift.Int { get }
+	}
+	
+	public enum AudioStreamSampleRate: Int, @unchecked Sendable {
+		case hz16000 = 0
+		case hz22050 = 1
+		case hz24000 = 2
+		case hz32000 = 3
+		case hz44100 = 4
+		case hz48000 = 5
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamSampleRate {
+		public var valueInHz: Swift.Int { get }
+	}
+	
+	extension AzureCommunicationCalling.AudioStreamSampleRate: Swift.CaseIterable {
+		public static var allCases: [AzureCommunicationCalling.AudioStreamSampleRate] { get }
+		public typealias AllCases = [AzureCommunicationCalling.AudioStreamSampleRate]
+	}
+	
+	public enum AudioStreamState: Int, @unchecked Sendable {
+		case started = 0
+		case stopped = 1
+	}
+	
+	open class AudioStreamStateChangedEventArgs: NSObject {
+		open func dealloc()
+		open var stream: CallAudioStream { get }
+		open var message: String { get }
+	}
+	
+	public enum AudioStreamType: Int, @unchecked Sendable {
+		case remoteIncoming = 1
+		case rawIncoming = 2
+		case localOutgoing = 3
+		case virtualOutgoing = 4
+	}
+	
+	open class BackgroundBlurEffect: VideoEffect {
+		public init()
+	}
+	
+	open class BackgroundReplacementEffect: VideoEffect {
+		public init()
+		open var buffer: Data
+	}
+	
+	open class Call: CommonCall {
+		@available(*, deprecated, message: "Use isOutgoingAudioMuted instead.") open var isMuted: Bool { get }
+		@available(*, deprecated, message: "Use outgoingVideoStreams instead") open var localVideoStreams: [LocalVideoStream] { get }
+		weak open var delegate: CallDelegate?
+		open var events: CallEvents { get }
+		
+		@available(*, deprecated, message: "Use muteOutgoingAudio instead.")
+		open func mute(completionHandler: @escaping (Error?) -> Void)
+		
+		@available(*, deprecated, message: "Use muteOutgoingAudio instead.")
+		open func mute() async throws
+		
+		@available(*, deprecated, message: "Use unmuteOutgoingAudio instead.")
+		open func unmute(completionHandler: @escaping (Error?) -> Void)
+		
+		@available(*, deprecated, message: "Use unmuteOutgoingAudio instead.")
+		open func unmute() async throws
+		open func add(participant: Any) throws -> RemoteParticipant?
+		open func add(participant: Any!, options: AddPhoneNumberOptions?) throws -> RemoteParticipant?
+	}
+	
+	open class CallAgent: CommonCallAgent {
+		open var calls: [Call] { get }
+		weak open var delegate: CallAgentDelegate?
+		open var events: CallAgentEvents { get }
+		open func startCall(participants: [Any], completionHandler: @escaping (Call?, Error?) -> Void)
+		open func startCall(participants: [Any]) async throws -> Call
+		open func startCall(participants: [Any], options: StartCallOptions?, completionHandler: @escaping (Call?, Error?) -> Void)
+		open func startCall(participants: [Any], options: StartCallOptions?) async throws -> Call
+		open func join(with: JoinMeetingLocator, completionHandler: @escaping (Call?, Error?) -> Void)
+		open func join(with: JoinMeetingLocator) async throws -> Call
+		open func join(with: JoinMeetingLocator, joinCallOptions: JoinCallOptions?, completionHandler: @escaping (Call?, Error?) -> Void)
+		open func join(with: JoinMeetingLocator, joinCallOptions: JoinCallOptions?) async throws -> Call
+	}
+	
+	public protocol CallAgentDelegate: NSObjectProtocol {
+		optional func callAgent(_: CallAgent, didUpdateCalls: CallsUpdatedEventArgs)
+		optional func callAgent(_: CallAgent, didRecieveIncomingCall: IncomingCall)
+	}
+	
+	open class CallAgentEvents: NSObject {
+		open var onCallsUpdated: ((CallsUpdatedEventArgs) -> Void)?
+		open var onIncomingCall: ((IncomingCall) -> Void)?
+		open func removeAll()
+	}
+	
+	open class CallAgentOptions: CommonCallAgentOptions {
+		public init()
+		open var displayName: String
+		open var emergencyCallOptions: EmergencyCallOptions?
+		open var pushNotificationTtl: TimeInterval
+	}
+	
+	open class CallAudioStream: NSObject {
+		open func dealloc()
+		open var type: AudioStreamType { get }
+		open var state: AudioStreamState { get }
+		open var direction: StreamDirection { get }
+	}
+	
+	open class CallCaptions: NSObject {
+		open func dealloc()
+		open var supportedSpokenLanguages: [String] { get }
+		open var isEnabled: Bool { get }
+		open var type: CaptionsType { get }
+		open var activeSpokenLanguage: String { get }
+		open func startCaptions(options: StartCaptionsOptions?, completionHandler: @escaping (Error?) -> Void)
+		open func startCaptions(options: StartCaptionsOptions?) async throws
+		open func stopCaptions(completionHandler: @escaping (Error?) -> Void)
+		open func stopCaptions() async throws
+		open func set(spokenLanguage: String, completionHandler: @escaping (Error?) -> Void)
+		open func set(spokenLanguage: String) async throws
+	}
+	
+	open class CallClient: NSObject {
+		public init()
+		public init(options: CallClientOptions)
+		open func dealloc()
+		open var debugInfo: CallDebugInfo { get }
+		open func dispose()
+		open func createCallAgent(userCredential: Any!, completionHandler: @escaping (CallAgent?, Error?) -> Void)
+		open func createCallAgent(userCredential: Any!) async throws -> CallAgent
+		open func createCallAgent(userCredential: Any!, options: CallAgentOptions?, completionHandler: @escaping (CallAgent?, Error?) -> Void)
+		open func createCallAgent(userCredential: Any!, options: CallAgentOptions?) async throws -> CallAgent
+		open func createTeamsCallAgent(userCredential: Any!, completionHandler: @escaping (TeamsCallAgent?, Error?) -> Void)
+		open func createTeamsCallAgent(userCredential: Any!) async throws -> TeamsCallAgent
+		open func createTeamsCallAgent(userCredential: Any!, options: TeamsCallAgentOptions, completionHandler: @escaping (TeamsCallAgent?, Error?) -> Void)
+		open func createTeamsCallAgent(userCredential: Any!, options: TeamsCallAgentOptions) async throws -> TeamsCallAgent
+		open class func getCXProviderInstance() -> CXProvider?
+		open class func reportIncomingCall(with: PushNotificationInfo, callKitOptions: CallKitOptions, completionHandler: @escaping (Error?) -> Void)
+		open class func reportIncomingCall(with: PushNotificationInfo, callKitOptions: CallKitOptions) async throws
+		open func getDeviceManager(completionHandler: @escaping (DeviceManager?, Error?) -> Void)
+		open func getDeviceManager() async throws -> DeviceManager
+	}
+	
+	extension AzureCommunicationCalling.CallClient {
+		public func feature<F>(_: AzureCommunicationCalling.CallClientFeatureFactory<F>) -> F where F: AzureCommunicationCalling.CallClientFeature
+	}
+	
+	open class CallClientFeature: NSObject {
+		open func dealloc()
+		open var name: String { get }
+	}
+	
+	@_hasMissingDesignatedInitializers
+	public class CallClientFeatureFactory<T> where T: AzureCommunicationCalling.CallClientFeature {}
+	
+	open class CallClientOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var diagnostics: CallDiagnosticsOptions?
+		open var network: CallNetworkOptions?
+	}
+	
+	open class CallDebugInfo: NSObject {
+		open func dealloc()
+		open var supportFiles: [URL] { get }
+	}
+	
+	public protocol CallDelegate: NSObjectProtocol {
+		optional func call(_: Call, didChangeId: PropertyChangedEventArgs)
+		optional func call(_: Call, didUpdateStartTime: PropertyChangedEventArgs)
+		optional func call(_: Call, didChangeState: PropertyChangedEventArgs)
+		optional func call(_: Call, didChangeRole: PropertyChangedEventArgs)
+		optional func call(_: Call, didUpdateRemoteParticipant: ParticipantsUpdatedEventArgs)
+		
+		@available(*, deprecated, message: "Use didChangeState on VideoStream types instead.")
+		optional func call(_: Call, didUpdateLocalVideoStreams: LocalVideoStreamsUpdatedEventArgs)
+		
+		@available(*, deprecated, message: "Use call(_:didUpdateOutgoingAudioState:) instead.")
+		optional func call(_: Call, didChangeMuteState: PropertyChangedEventArgs)
+		optional func call(_: Call, didUpdateOutgoingAudioState: PropertyChangedEventArgs)
+		optional func call(_: Call, didGetMutedByOthers: PropertyChangedEventArgs)
+		optional func call(_: Call, didUpdateIncomingAudioState: PropertyChangedEventArgs)
+		optional func call(_: Call, didChangeTotalParticipantCount: PropertyChangedEventArgs)
+	}
+	
+	open class CallDiagnosticsOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var appName: String
+		open var appVersion: String
+		open var tags: [String]
+	}
+	
+	public enum CallDirection: Int, @unchecked Sendable {
+		case outgoing = 1
+		case incoming = 2
+	}
+	
+	open class CallEndReason: NSObject {
+		open func dealloc()
+		open var code: Int32 { get }
+		open var subcode: Int32 { get }
+	}
+	
+	open class CallEvents: NSObject {
+		open var onIdChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onStartTimeUpdated: ((PropertyChangedEventArgs) -> Void)?
+		open var onStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onRoleChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onRemoteParticipantsUpdated: ((ParticipantsUpdatedEventArgs) -> Void)?
+		@available(*, deprecated, message: "Use onStateChanged in VideoStream types instead") open var onLocalVideoStreamsUpdated: ((LocalVideoStreamsUpdatedEventArgs) -> Void)?
+		@available(*, deprecated, message: "Use OnOutgoingAudioStateChanged instead") open var onIsMutedChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onOutgoingAudioStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onMutedByOthers: ((PropertyChangedEventArgs) -> Void)?
+		open var onIncomingAudioStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onTotalParticipantCountChanged: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class CallEventsOptions: NSObject {
+		public init()
+		open func dealloc()
+		weak open var callDelegate: CallDelegate?
+		weak open var callEvents: CallEvents?
+	}
+	
+	open class CallFeature: NSObject {
+		open func dealloc()
+		open var name: String { get }
+	}
+	
+	@_hasMissingDesignatedInitializers
+	public class CallFeatureFactory<T> where T: AzureCommunicationCalling.CallFeature {}
+	
+	public struct CallIssues: OptionSet, @unchecked Sendable {
+		public init(rawValue: Int)
+		public static var cannotJoin: CallIssues { get }
+		public static var cannotInvite: CallIssues { get }
+		public static var hadToRejoin: CallIssues { get }
+		public static var endedUnexpectedly: CallIssues { get }
+		public static var otherIssues: CallIssues { get }
+	}
+	
+	open class CallKitOptions: NSObject {
+		public init(with: CXProviderConfiguration)
+		open var providerConfiguration: CXProviderConfiguration { get }
+		open var provideRemoteInfo: ((ACSCallerInfo) -> CallKitRemoteInfo?)?
+		open var configureAudioSession: (() -> Error?)?
+		open var isCallHoldSupported: Bool
+	}
+	
+	open class CallKitRemoteInfo: NSObject {
+		open var handle: CXHandle?
+		open var displayName: String?
+	}
+	
+	open class CallLobby: NSObject {
+		open func dealloc()
+		open var participants: [RemoteParticipant] { get }
+		weak open var delegate: CallLobbyDelegate?
+		open var events: CallLobbyEvents { get }
+		open func admitAll(completionHandler: @escaping (AdmitAllParticipantsResult?, Error?) -> Void)
+		open func admitAll() async throws -> AdmitAllParticipantsResult
+		open func admit(identifiers: [Any], completionHandler: @escaping (AdmitParticipantsResult?, Error?) -> Void)
+		open func admit(identifiers: [Any]) async throws -> AdmitParticipantsResult
+		open func reject(identifier: Any, completionHandler: @escaping (Error?) -> Void)
+		open func reject(identifier: Any) async throws
+	}
+	
+	public protocol CallLobbyDelegate: NSObjectProtocol {
+		optional func callLobby(_: CallLobby, didUpdateLobbyParticipants: ParticipantsUpdatedEventArgs)
+	}
+	
+	open class CallLobbyEvents: NSObject {
+		open var onLobbyParticipantsUpdated: ((ParticipantsUpdatedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class CallNetworkOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var proxyUrl: String
+		open var iceServers: [IceServer]
+	}
+	
+	open class CallOptions: NSObject {
+		open func dealloc()
+		open var incomingVideoOptions: IncomingVideoOptions?
+		open var outgoingVideoOptions: OutgoingVideoOptions?
+		open var incomingAudioOptions: IncomingAudioOptions?
+		open var outgoingAudioOptions: OutgoingAudioOptions?
+		open var callKitRemoteInfo: CallKitRemoteInfo?
+	}
+	
+	public enum CallParticipantRole: Int, @unchecked Sendable {
+		case uninitialized = 0
+		case attendee = 1
+		case consumer = 2
+		case presenter = 3
+		case organizer = 4
+		case coOrganizer = 5
+	}
+	
+	public enum CallState: Int, @unchecked Sendable {
+		case none = 0
+		case earlyMedia = 1
+		case connecting = 3
+		case ringing = 4
+		case connected = 5
+		case localHold = 6
+		case disconnecting = 7
+		case disconnected = 8
+		case inLobby = 9
+		case remoteHold = 10
+	}
+	
+	open class CallSurvey: NSObject {
+		open func dealloc()
+		open var overallScore: CallSurveyScore
+		open var audioScore: CallSurveyScore
+		open var videoScore: CallSurveyScore
+		open var screenShareScore: CallSurveyScore
+		open var overallIssues: CallIssues
+		open var audioIssues: AudioIssues
+		open var videoIssues: VideoIssues
+		open var screenShareIssues: ScreenShareIssues
+	}
+	
+	open class CallSurveyRatingScale: NSObject {
+		public init()
+		open func dealloc()
+		open var lowerBound: Int32
+		open var upperBound: Int32
+		open var lowScoreThreshold: Int32
+	}
+	
+	open class CallSurveyResult: NSObject {
+		open func dealloc()
+		open var surveyId: String { get }
+		open var callId: String { get }
+		open var anonymizedParticipantId: String { get }
+	}
+	
+	open class CallSurveyScore: NSObject {
+		public init()
+		open func dealloc()
+		open var score: Int32
+		open var scale: CallSurveyRatingScale
+	}
+	
+	open class CallVideoStream: NSObject {
+		open func dealloc()
+		open var type: VideoStreamType { get }
+		open var sourceType: VideoStreamSourceType { get }
+		open var state: VideoStreamState { get }
+		open var direction: StreamDirection { get }
+		@available(*, deprecated, message: "Use sourceType instead") open var mediaStreamType: MediaStreamType { get }
+		open var id: Int32 { get }
+	}
+	
+	open class CallerInfo: NSObject {
+		open func dealloc()
+		open var displayName: String { get }
+		open var identifier: Any { get }
+	}
+	
+	public struct CallingCommunicationErrors: OptionSet, @unchecked Sendable {
+		public init(rawValue: Int)
+		public static var noAudioPermission: CallingCommunicationErrors { get }
+		public static var noVideoPermission: CallingCommunicationErrors { get }
+		public static var noAudioAndVideoPermission: CallingCommunicationErrors { get }
+		public static var receivedInvalidPushNotificationPayload: CallingCommunicationErrors { get }
+		public static var failedToProcessPushNotificationPayload: CallingCommunicationErrors { get }
+		public static var invalidGuidGroupId: CallingCommunicationErrors { get }
+		public static var invalidPushNotificationDeviceRegistrationToken: CallingCommunicationErrors { get }
+		public static var multipleRenderersNotSupported: CallingCommunicationErrors { get }
+		public static var multipleViewsNotSupported: CallingCommunicationErrors { get }
+		public static var invalidLocalVideoStreamForVideoOptions: CallingCommunicationErrors { get }
+		public static var noMultipleConnectionsWithSameIdentity: CallingCommunicationErrors { get }
+		public static var invalidServerCallId: CallingCommunicationErrors { get }
+		public static var localVideoStreamSwitchSourceFailure: CallingCommunicationErrors { get }
+		public static var incomingCallAlreadyUnplaced: CallingCommunicationErrors { get }
+		public static var invalidMeetingLink: CallingCommunicationErrors { get }
+		public static var participantAddedToUnconnectedCall: CallingCommunicationErrors { get }
+		public static var participantAlreadyAddedToCall: CallingCommunicationErrors { get }
+		public static var callFeatureExtensionNotFound: CallingCommunicationErrors { get }
+		public static var displayNameLengthLongerThanSupported: CallingCommunicationErrors { get }
+		public static var failedToHangupForEveryone: CallingCommunicationErrors { get }
+		public static var invalidParticipantAddedToCall: CallingCommunicationErrors { get }
+		public static var featureExtensionNotFound: CallingCommunicationErrors { get }
+		public static var videoEffectNotSupported: CallingCommunicationErrors { get }
+		public static var failedToSendRawAudioBuffer: CallingCommunicationErrors { get }
+		public static var cannotMuteVirtualAudioStream: CallingCommunicationErrors { get }
+		public static var duplicateDeviceId: CallingCommunicationErrors { get }
+		public static var delegateIsRequired: CallingCommunicationErrors { get }
+		public static var virtualDeviceNotStarted: CallingCommunicationErrors { get }
+		public static var invalidVideoStreamCombination: CallingCommunicationErrors { get }
+		public static var noMultipleConnectionsWithDifferentClouds: CallingCommunicationErrors { get }
+		public static var noActiveAudioStreamToStop: CallingCommunicationErrors { get }
+		public static var invalidVideoFormat: CallingCommunicationErrors { get }
+		public static var invalidBuffer: CallingCommunicationErrors { get }
+		public static var rawVideoFrameNotSent: CallingCommunicationErrors { get }
+		public static var unsupportedVideoStreamResolution: CallingCommunicationErrors { get }
+		public static var captionsFailedToStart: CallingCommunicationErrors { get }
+		public static var captionsDisabledByConfigurations: CallingCommunicationErrors { get }
+		public static var captionsPolicyDisabled: CallingCommunicationErrors { get }
+		public static var captionsNotActive: CallingCommunicationErrors { get }
+		public static var captionsRequestedLanguageNotSupported: CallingCommunicationErrors { get }
+		public static var failedToSetCaptionLanguage: CallingCommunicationErrors { get }
+		public static var setCaptionLanguageDisabled: CallingCommunicationErrors { get }
+		public static var setCaptionLanguageTeamsPremiumLicenseNeeded: CallingCommunicationErrors { get }
+		public static var captionsFailedToSetSpokenLanguage: CallingCommunicationErrors { get }
+		public static var captionsSetSpokenLanguageDisabled: CallingCommunicationErrors { get }
+		public static var getCaptionsFailedCallStateNotConnected: CallingCommunicationErrors { get }
+		public static var getCaptionsFailed: CallingCommunicationErrors { get }
+		public static var spotlightDisabledByConfigurations: CallingCommunicationErrors { get }
+		public static var maxSpotlightReached: CallingCommunicationErrors { get }
+		public static var spotlightParticipantEmptyList: CallingCommunicationErrors { get }
+		public static var signalingOperationFailed: CallingCommunicationErrors { get }
+		public static var proxyNotAvailableForTeams: CallingCommunicationErrors { get }
+		public static var muteOthersForbidden: CallingCommunicationErrors { get }
+		public static var muteOthersInternalServerError: CallingCommunicationErrors { get }
+		public static var muteOthersNotFound: CallingCommunicationErrors { get }
+		public static var lobbyDisabledByConfigurations: CallingCommunicationErrors { get }
+		public static var lobbyConversationTypeNotSupported: CallingCommunicationErrors { get }
+		public static var lobbyMeetingRoleNotAllowed: CallingCommunicationErrors { get }
+		public static var lobbyParticipantNotExist: CallingCommunicationErrors { get }
+		public static var removeParticipantOperationFailure: CallingCommunicationErrors { get }
+		public static var musicModeNotEnabled: CallingCommunicationErrors { get }
+		public static var lobbyAdmitOperationFailure: CallingCommunicationErrors { get }
+		public static var failedToSetMediaProxy: CallingCommunicationErrors { get }
+		public static var invalidTokenProvider: CallingCommunicationErrors { get }
+		public static var mediaStatisticsInvalidReportInterval: CallingCommunicationErrors { get }
+		public static var dataChannelFailedToStart: CallingCommunicationErrors { get }
+		public static var dataChannelSenderClosed: CallingCommunicationErrors { get }
+		public static var dataChannelRandomIdNotAvailable: CallingCommunicationErrors { get }
+		public static var dataChannelMessageSizeOverLimit: CallingCommunicationErrors { get }
+		public static var dataChannelMessageFailureForBandwidth: CallingCommunicationErrors { get }
+		public static var dataChannelMessageFailureForTrafficLimit: CallingCommunicationErrors { get }
+		public static var captionsFailedToStop: CallingCommunicationErrors { get }
+		public static var muteOthersNotSupported: CallingCommunicationErrors { get }
+		public static var callClientFeatureExtensionNotFound: CallingCommunicationErrors { get }
+		public static var teamsForLifeMeetingJoinNotSupported: CallingCommunicationErrors { get }
+		public static var switchSourceBlocked: CallingCommunicationErrors { get }
+		public static var surveyRatingScaleOutOfBounds: CallingCommunicationErrors { get }
+		public static var surveyRatingScaleInvalidThreshold: CallingCommunicationErrors { get }
+		public static var surveyScoreOutOfBounds: CallingCommunicationErrors { get }
+		public static var surveyDoubleSubmissionNotAllowed: CallingCommunicationErrors { get }
+		public static var realTimeTextContentTooLong: CallingCommunicationErrors { get }
+	}
+	
+	open class CallsUpdatedEventArgs: NSObject {
+		open func dealloc()
+		open var addedCalls: [Call] { get }
+		open var removedCalls: [Call] { get }
+	}
+	
+	public enum CameraFacing: Int, @unchecked Sendable {
+		case unknown = 0
+		case external = 1
+		case front = 2
+		case back = 3
+		case panoramic = 4
+		case leftFront = 5
+		case rightFront = 6
+	}
+	
+	open class CapabilitiesCallFeature: CallFeature {
+		open var capabilities: [ParticipantCapability] { get }
+		weak open var delegate: CapabilitiesCallFeatureDelegate?
+		open var events: CapabilitiesCallFeatureEvents { get }
+	}
+	
+	public protocol CapabilitiesCallFeatureDelegate: NSObjectProtocol {
+		optional func capabilitiesCallFeature(_: CapabilitiesCallFeature, didChangeCapabilities: CapabilitiesChangedEventArgs)
+	}
+	
+	open class CapabilitiesCallFeatureEvents: NSObject {
+		open var onCapabilitiesChanged: ((CapabilitiesChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class CapabilitiesChangedEventArgs: NSObject {
+		open func dealloc()
+		open var changedCapabilities: [ParticipantCapability] { get }
+		open var reason: CapabilitiesChangedReason { get }
+	}
+	
+	public enum CapabilitiesChangedReason: Int, @unchecked Sendable {
+		case roleChanged = 0
+		case userPolicyChanged = 1
+		case meetingDetailsChanged = 2
+	}
+	
+	public enum CapabilityResolutionReason: Int, @unchecked Sendable {
+		case capable = 0
+		case callTypeRestricted = 1
+		case userPolicyRestricted = 2
+		case roleRestricted = 3
+		case meetingRestricted = 4
+		case featureNotSupported = 5
+		case notInitialized = 6
+		case notCapable = 7
+		case explicitConsentRequired = 8
+	}
+	
+	open class CaptionsCallFeature: CallFeature {
+		weak open var delegate: CaptionsCallFeatureDelegate?
+		open var events: CaptionsCallFeatureEvents { get }
+		open func getCaptions(completionHandler: @escaping (CallCaptions?, Error?) -> Void)
+		open func getCaptions() async throws -> CallCaptions
+	}
+	
+	public protocol CaptionsCallFeatureDelegate: NSObjectProtocol {
+		optional func captionsCallFeature(_: CaptionsCallFeature, didChangeActiveCaptionsType: PropertyChangedEventArgs)
+	}
+	
+	open class CaptionsCallFeatureEvents: NSObject {
+		open var onActiveCaptionsTypeChanged: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	public enum CaptionsResultType: Int, @unchecked Sendable {
+		case partial = 0
+		case final = 1
+	}
+	
+	public enum CaptionsType: Int, @unchecked Sendable {
+		case teamsCaptions = 0
+		case communicationCaptions = 1
+	}
+	
+	open class CommonCall: NSObject {
+		open func dealloc()
+		open var type: CommunicationCallType { get }
+		open var remoteParticipants: [RemoteParticipant] { get }
+		open var id: String { get }
+		open var startTime: Date { get }
+		open var state: CallState { get }
+		open var callEndReason: CallEndReason { get }
+		open var direction: CallDirection { get }
+		open var isOutgoingAudioMuted: Bool { get }
+		open var isIncomingAudioMuted: Bool { get }
+		open var callerInfo: CallerInfo { get }
+		open var callLobby: CallLobby { get }
+		open var activeIncomingAudioStream: IncomingAudioStream { get }
+		open var activeOutgoingAudioStream: OutgoingAudioStream { get }
+		open var callParticipantRole: CallParticipantRole { get }
+		open var outgoingVideoStreams: [OutgoingVideoStream] { get }
+		open var totalParticipantCount: Int32 { get }
+		open var systemAudioBuffer: Data
+		open var liveOutgoingAudioFilters: LiveOutgoingAudioFilters { get }
+		open func dispose()
+		open func getServerCallId(completionHandler: @escaping (String?, Error?) -> Void)
+		open func getServerCallId() async throws -> String
+		open func startAudio(stream: CallAudioStream, completionHandler: @escaping (Error?) -> Void)
+		open func startAudio(stream: CallAudioStream) async throws
+		open func stopAudio(stream: CallAudioStream, completionHandler: @escaping (Error?) -> Void)
+		open func stopAudio(stream: CallAudioStream) async throws
+		open func muteAllRemoteParticipants(completionHandler: @escaping (Error?) -> Void)
+		open func muteAllRemoteParticipants() async throws
+		open func muteIncomingAudio(completionHandler: @escaping (Error?) -> Void)
+		open func muteIncomingAudio() async throws
+		open func unmuteIncomingAudio(completionHandler: @escaping (Error?) -> Void)
+		open func unmuteIncomingAudio() async throws
+		open func unmuteOutgoingAudio(completionHandler: @escaping (Error?) -> Void)
+		open func unmuteOutgoingAudio() async throws
+		open func muteOutgoingAudio(completionHandler: @escaping (Error?) -> Void)
+		open func muteOutgoingAudio() async throws
+		open func sendDtmf(tone: DtmfTone, completionHandler: @escaping (Error?) -> Void)
+		open func sendDtmf(tone: DtmfTone) async throws
+		open func startVideo(stream: OutgoingVideoStream, completionHandler: @escaping (Error?) -> Void)
+		open func startVideo(stream: OutgoingVideoStream) async throws
+		open func stopVideo(stream: OutgoingVideoStream, completionHandler: @escaping (Error?) -> Void)
+		open func stopVideo(stream: OutgoingVideoStream) async throws
+		open func hangUp(options: HangUpOptions?, completionHandler: @escaping (Error?) -> Void)
+		open func hangUp(options: HangUpOptions?) async throws
+		open func remove(participant: RemoteParticipant, completionHandler: @escaping (Error?) -> Void)
+		open func remove(participant: RemoteParticipant) async throws
+		open func hold(completionHandler: @escaping (Error?) -> Void)
+		open func hold() async throws
+		open func resume(completionHandler: @escaping (Error?) -> Void)
+		open func resume() async throws
+		open func startSystemAudioSharing(completionHandler: @escaping (Error?) -> Void)
+		open func startSystemAudioSharing() async throws
+		open func stopSystemAudioSharing(completionHandler: @escaping (Error?) -> Void)
+		open func stopSystemAudioSharing() async throws
+		open func set(videoConstraints: VideoConstraints)
+	}
+	
+	extension AzureCommunicationCalling.CommonCall {
+		public func feature<TCallFeature>(_: AzureCommunicationCalling.CallFeatureFactory<TCallFeature>) -> TCallFeature where TCallFeature: AzureCommunicationCalling.CallFeature
+	}
+	
+	open class CommonCallAgent: NSObject {
+		open func dealloc()
+		open var type: CommunicationCallType { get }
+		open func dispose()
+		open func unregisterPushNotification(completionHandler: @escaping (Error?) -> Void)
+		open func unregisterPushNotification() async throws
+		open func registerPushNotifications(deviceToken: Data, completionHandler: @escaping (Error?) -> Void)
+		open func registerPushNotifications(deviceToken: Data) async throws
+		open func handlePush(notification: PushNotificationInfo, completionHandler: @escaping (Error?) -> Void)
+		open func handlePush(notification: PushNotificationInfo) async throws
+	}
+	
+	open class CommonCallAgentOptions: NSObject {
+		open func dealloc()
+		open var disableInternalPushForIncomingCall: Bool
+		open var callKitOptions: CallKitOptions?
+	}
+	
+	open class CommonIncomingCall: NSObject {
+		open func dealloc()
+		open var type: CommunicationCallType { get }
+		open var callEndReason: CallEndReason? { get }
+		open var callerInfo: CallerInfo { get }
+		open var id: String { get }
+		open var isVideoEnabled: Bool { get }
+		open func reject(completionHandler: @escaping (Error?) -> Void)
+		open func reject() async throws
+	}
+	
+	public enum CommunicationCallType: Int, @unchecked Sendable {
+		case call = 0
+		case teamsCall = 1
+	}
+	
+	open class CommunicationCaptions: CallCaptions {
+		weak open var delegate: CommunicationCaptionsDelegate?
+		open var events: CommunicationCaptionsEvents { get }
+	}
+	
+	public protocol CommunicationCaptionsDelegate: NSObjectProtocol {
+		optional func communicationCaptions(_: CommunicationCaptions, didChangeActiveSpokenLanguageState: PropertyChangedEventArgs)
+		optional func communicationCaptions(_: CommunicationCaptions, didChangeCaptionsEnabledState: PropertyChangedEventArgs)
+		optional func communicationCaptions(_: CommunicationCaptions, didReceiveCaptions: CommunicationCaptionsReceivedEventArgs)
+	}
+	
+	open class CommunicationCaptionsEvents: NSObject {
+		open var onActiveSpokenLanguageChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onCaptionsEnabledChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onCaptionsReceived: ((CommunicationCaptionsReceivedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class CommunicationCaptionsReceivedEventArgs: NSObject {
+		open func dealloc()
+		open var speaker: CallerInfo { get }
+		open var resultType: CaptionsResultType { get }
+		open var timestamp: Date { get }
+		open var spokenText: String { get }
+		open var spokenLanguage: String { get }
+	}
+	
+	open class ContentSharingCallFeature: CallFeature {
+		open var state: ContentSharingState { get }
+		open var type: ContentSharingType { get }
+		open var contentSharingInfo: ContentSharingInfo { get }
+		weak open var delegate: ContentSharingCallFeatureDelegate?
+		open var events: ContentSharingCallFeatureEvents { get }
+	}
+	
+	public protocol ContentSharingCallFeatureDelegate: NSObjectProtocol {
+		optional func ContentSharingCallFeature(_: ContentSharingCallFeature, didChangeContentSharing: PropertyChangedEventArgs)
+		optional func remoteParticipant(_: ContentSharingCallFeature, didChangeState: PropertyChangedEventArgs)
+	}
+	
+	open class ContentSharingCallFeatureEvents: NSObject {
+		open var onContentSharingInfoChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class ContentSharingInfo: NSObject {
+		open func dealloc()
+	}
+	
+	public enum ContentSharingState: Int, @unchecked Sendable {
+		case started = 0
+		case stopped = 1
+	}
+	
+	public enum ContentSharingType: Int, @unchecked Sendable {
+		case none = 0
+		case powerpoint = 1
+	}
+	
+	open class CreateViewOptions: NSObject {
+		public init(scalingMode: ScalingMode)
+		open func dealloc()
+		open var scalingMode: ScalingMode
+	}
+	
+	open class DataChannelCallFeature: CallFeature {
+		open var isActive: Bool { get }
+		weak open var delegate: DataChannelCallFeatureDelegate?
+		open var events: DataChannelCallFeatureEvents { get }
+		open func getDataChannelSender(options: DataChannelSenderOptions) -> DataChannelSender
+	}
+	
+	public protocol DataChannelCallFeatureDelegate: NSObjectProtocol {
+		optional func dataChannelCallFeature(_: DataChannelCallFeature, didActiveChange: PropertyChangedEventArgs)
+		optional func dataChannelCallFeature(_: DataChannelCallFeature, didCreateReceiver: DataChannelReceiverCreatedEventArgs)
+	}
+	
+	open class DataChannelCallFeatureEvents: NSObject {
+		open var onActiveChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onReceiverCreated: ((DataChannelReceiverCreatedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class DataChannelMessage: NSObject {
+		open func dealloc()
+		open var sequenceNumber: Int64 { get }
+		open var data: Data { get }
+	}
+	
+	public enum DataChannelPriority: Int, @unchecked Sendable {
+		case normal = 0
+		case high = 1
+	}
+	
+	open class DataChannelReceiver: NSObject {
+		open func dealloc()
+		open var channelId: Int32 { get }
+		weak open var delegate: DataChannelReceiverDelegate?
+		open var events: DataChannelReceiverEvents { get }
+		open var senderIdentifier: Any { get }
+		open func receiveMessage() -> DataChannelMessage?
+	}
+	
+	open class DataChannelReceiverCreatedEventArgs: NSObject {
+		open func dealloc()
+		open var receiver: DataChannelReceiver { get }
+	}
+	
+	public protocol DataChannelReceiverDelegate: NSObjectProtocol {
+		optional func dataChannelReceiver(_: DataChannelReceiver, didReceiveMessage: PropertyChangedEventArgs)
+		optional func dataChannelReceiver(_: DataChannelReceiver, didClose: PropertyChangedEventArgs)
+	}
+	
+	open class DataChannelReceiverEvents: NSObject {
+		open var onMessageReceived: ((PropertyChangedEventArgs) -> Void)?
+		open var onClosed: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	public enum DataChannelReliability: Int, @unchecked Sendable {
+		case lossy = 0
+		case durable = 1
+	}
+	
+	open class DataChannelSender: NSObject {
+		open func dealloc()
+		open var channelId: Int32 { get }
+		open var maxMessageSizeInBytes: Int32 { get }
+		open func sendMessage(data: Data)
+		open func close()
+		open func setParticipants(participants: [Any])
+	}
+	
+	open class DataChannelSenderOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var channelId: Int32
+		open var bitrateInKbps: Int32
+		open var priority: DataChannelPriority
+		open var reliability: DataChannelReliability
+		open var participants: [Any] { get }
+	}
+	
+	open class DeviceManager: NSObject {
+		open func dealloc()
+		open var cameras: [VideoDeviceInfo] { get }
+		weak open var delegate: DeviceManagerDelegate?
+		open var events: DeviceManagerEvents { get }
+	}
+	
+	public protocol DeviceManagerDelegate: NSObjectProtocol {
+		optional func deviceManager(_: DeviceManager, didUpdateCameras: VideoDevicesUpdatedEventArgs)
+	}
+	
+	open class DeviceManagerEvents: NSObject {
+		open var onCamerasUpdated: ((VideoDevicesUpdatedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	public enum DevicePermissionType: Int, @unchecked Sendable {
+		case camera = 0
+		case microphone = 1
+	}
+	
+	open class DiagnosticFlagChangedEventArgs: NSObject {
+		open func dealloc()
+		open var value: Bool { get }
+		open var name: String { get }
+	}
+	
+	public enum DiagnosticQuality: Int, @unchecked Sendable {
+		case unknown = 0
+		case good = 1
+		case poor = 2
+		case bad = 3
+	}
+	
+	open class DiagnosticQualityChangedEventArgs: NSObject {
+		open func dealloc()
+		open var value: DiagnosticQuality { get }
+		open var name: String { get }
+	}
+	
+	open class DominantSpeakersCallFeature: CallFeature {
+		open var dominantSpeakersInfo: DominantSpeakersInfo { get }
+		weak open var delegate: DominantSpeakersCallFeatureDelegate?
+		open var events: DominantSpeakersCallFeatureEvents { get }
+	}
+	
+	public protocol DominantSpeakersCallFeatureDelegate: NSObjectProtocol {
+		optional func dominantSpeakersCallFeature(_: DominantSpeakersCallFeature, didChangeDominantSpeakers: PropertyChangedEventArgs)
+	}
+	
+	open class DominantSpeakersCallFeatureEvents: NSObject {
+		open var onDominantSpeakersChanged: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class DominantSpeakersInfo: NSObject {
+		open func dealloc()
+		open var lastUpdated: Date { get }
+		open var speakers: [Any] { get }
+	}
+	
+	public enum DtmfTone: Int, @unchecked Sendable {
+		case zero = 0
+		case one = 1
+		case two = 2
+		case three = 3
+		case four = 4
+		case five = 5
+		case six = 6
+		case seven = 7
+		case eight = 8
+		case nine = 9
+		case star = 10
+		case pound = 11
+		case A = 12
+		case B = 13
+		case C = 14
+		case D = 15
+		case flash = 16
+	}
+	
+	open class EmergencyCallOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var countryCode: String
+	}
+	
+	open class EndpointDetails: NSObject {
+		open func dealloc()
+		open var participantId: String { get }
+	}
+	
+	open class Features: NSObject {}
+	
+	extension AzureCommunicationCalling.Features {
+		public static var recording: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.RecordingCallFeature>
+		public static var transcription: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.TranscriptionCallFeature>
+		public static var captions: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.CaptionsCallFeature>
+		public static var dominantSpeakers: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.DominantSpeakersCallFeature>
+		public static var localUserDiagnostics: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.LocalUserDiagnosticsCallFeature>
+		public static var dataChannel: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.DataChannelCallFeature>
+		public static var raisedHands: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.RaiseHandCallFeature>
+		public static var localVideoEffects: AzureCommunicationCalling.LocalVideoStreamFeatureFactory<AzureCommunicationCalling.LocalVideoEffectsFeature>
+		public static var mediaStatistics: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.MediaStatisticsCallFeature>
+		public static var spotlight: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.SpotlightCallFeature>
+		public static var survey: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.SurveyCallFeature>
+		public static var preCallDiagnostics: AzureCommunicationCalling.CallClientFeatureFactory<AzureCommunicationCalling.PreCallDiagnosticsCallClientFeature>
+		public static var capabilities: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.CapabilitiesCallFeature>
+		public static var remoteUserDiagnostics: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.RemoteUserDiagnosticsCallFeature>
+		public static var reactions: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.ReactionsCallFeature>
+		public static var realTimeText: AzureCommunicationCalling.CallFeatureFactory<AzureCommunicationCalling.RealTimeTextCallFeature>
+	}
+	
+	open class GroupCallLocator: JoinMeetingLocator {
+		public init(groupId: UUID)
+		open var groupId: UUID { get }
+	}
+	
+	open class GroupChatCallLocator: JoinMeetingLocator {
+		public init(threadId: String)
+		open var threadId: String { get }
+	}
+	
+	open class HangUpOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var forEveryone: Bool
+	}
+	
+	open class IceServer: NSObject {
+		public init()
+		open func dealloc()
+		open var urls: [String]
+		open var realm: String
+		open var tcpPort: Int32
+		open var udpPort: Int32
+		open var username: String
+		open var password: String
+	}
+	
+	open class IncomingAudioOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var muted: Bool
+		open var stream: IncomingAudioStream?
+	}
+	
+	open class IncomingAudioStatistics: NSObject {
+		open func dealloc()
+		open var codecName: String { get }
+	}
+	
+	extension AzureCommunicationCalling.IncomingAudioStatistics {
+		public var jitterInMs: Swift.Float? { get }
+		public var packetCount: Swift.Int32? { get }
+		public var packetsLostPerSecond: Swift.Int32? { get }
+		public var streamId: Swift.Int32? { get }
+	}
+	
+	open class IncomingAudioStream: CallAudioStream {}
+	
+	open class IncomingCall: CommonIncomingCall {
+		weak open var delegate: IncomingCallDelegate?
+		open var events: IncomingCallEvents { get }
+		open func accept(options: AcceptCallOptions, completionHandler: @escaping (Call?, Error?) -> Void)
+		open func accept(options: AcceptCallOptions) async throws -> Call
+	}
+	
+	public protocol IncomingCallDelegate: NSObjectProtocol {
+		optional func incomingCall(_: IncomingCall, didEnd: PropertyChangedEventArgs)
+	}
+	
+	open class IncomingCallEvents: NSObject {
+		open var onCallEnded: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class IncomingDataChannelStatistics: NSObject {
+		open func dealloc()
+	}
+	
+	extension AzureCommunicationCalling.IncomingDataChannelStatistics {
+		public var jitterInMs: Swift.Float? { get }
+		public var packetCount: Swift.Int32? { get }
+	}
+	
+	open class IncomingMediaStatistics: NSObject {
+		open func dealloc()
+		open var audio: [IncomingAudioStatistics] { get }
+		open var video: [IncomingVideoStatistics] { get }
+		open var screenShare: [IncomingScreenShareStatistics] { get }
+		open var dataChannel: [IncomingDataChannelStatistics] { get }
+		open var transport: IncomingTransportStatistics { get }
+	}
+	
+	open class IncomingMixedAudioEventArgs: NSObject {
+		open func dealloc()
+		open var streamProperties: RawIncomingAudioStreamProperties { get }
+		open var audioBuffer: RawAudioBuffer { get }
+	}
+	
+	open class IncomingReaction: NSObject {
+		open func dealloc()
+		open var type: ReactionType { get }
+		open var participantIdentifier: Any { get }
+	}
+	
+	open class IncomingScreenShareStatistics: NSObject {
+		open func dealloc()
+		open var codecName: String { get }
+		open var participantIdentifier: Any { get }
+	}
+	
+	extension AzureCommunicationCalling.IncomingScreenShareStatistics {
+		public var bitrateInBps: Swift.Int32? { get }
+		public var jitterInMs: Swift.Float? { get }
+		public var packetCount: Swift.Int32? { get }
+		public var packetsLostPerSecond: Swift.Int32? { get }
+		public var streamId: Swift.Int32? { get }
+		public var frameRate: Swift.Float? { get }
+		public var frameWidth: Swift.Int32? { get }
+		public var frameHeight: Swift.Int32? { get }
+		public var totalFreezeDurationInMs: Swift.Int32? { get }
+	}
+	
+	open class IncomingTransportStatistics: NSObject {
+		open func dealloc()
+	}
+	
+	extension AzureCommunicationCalling.IncomingTransportStatistics {
+		public var availableBitrateInBps: Swift.Int32? { get }
+	}
+	
+	open class IncomingUnmixedAudioEventArgs: NSObject {
+		open func dealloc()
+		open var audioBuffer: [RawAudioBuffer] { get }
+		open var remoteParticipantIds: [String] { get }
+		open var streamProperties: RawIncomingAudioStreamProperties { get }
+	}
+	
+	open class IncomingVideoConstraints: NSObject {
+		public init()
+		open func dealloc()
+		open var maxHeight: Int32
+		open var maxWidth: Int32
+	}
+	
+	open class IncomingVideoOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var streamType: VideoStreamType
+		open var constraints: IncomingVideoConstraints?
+	}
+	
+	open class IncomingVideoStatistics: NSObject {
+		open func dealloc()
+		open var codecName: String { get }
+		open var participantIdentifier: Any { get }
+	}
+	
+	extension AzureCommunicationCalling.IncomingVideoStatistics {
+		public var bitrateInBps: Swift.Int32? { get }
+		public var jitterInMs: Swift.Float? { get }
+		public var packetCount: Swift.Int32? { get }
+		public var packetsLostPerSecond: Swift.Int32? { get }
+		public var streamId: Swift.Int32? { get }
+		public var frameRate: Swift.Float? { get }
+		public var frameWidth: Swift.Int32? { get }
+		public var frameHeight: Swift.Int32? { get }
+		public var totalFreezeDurationInMs: Swift.Int32? { get }
+	}
+	
+	open class IncomingVideoStream: CallVideoStream {
+		open var participantSourceId: String { get }
+	}
+	
+	open class JoinCallOptions: CallOptions {
+		public init()
+		@available(*, deprecated, message: "Use IncomingVideoOptions and OutgoingVideoOptions instead") open var videoOptions: VideoOptions?
+		@available(*, deprecated, message: "Use incomingAudioOptions and outgoingAudioOptions instead.") open var audioOptions: AudioOptions?
+		open var callEventsOptions: CallEventsOptions?
+	}
+	
+	open class JoinMeetingLocator: NSObject {
+		open func dealloc()
+	}
+	
+	open class JoinTeamsCallOptions: CallOptions {
+		public init()
+		open var teamsCallEventsOptions: TeamsCallEventsOptions?
+	}
+	
+	open class JoinTeamsMeetingLocator: JoinMeetingLocator {}
+	
+	open class LiveOutgoingAudioFilters: NSObject {
+		open func dealloc()
+		open var noiseSuppressionMode: NoiseSuppressionMode
+		open var musicModeEnabled: Bool
+		open var acousticEchoCancellationEnabled: Bool
+	}
+	
+	open class LocalOutgoingAudioStream: OutgoingAudioStream {
+		public init()
+		weak open var delegate: LocalOutgoingAudioStreamDelegate?
+		open var events: LocalOutgoingAudioStreamEvents { get }
+	}
+	
+	public protocol LocalOutgoingAudioStreamDelegate: NSObjectProtocol {
+		optional func localAudioStream(_: LocalOutgoingAudioStream, didChangeState: AudioStreamStateChangedEventArgs)
+	}
+	
+	open class LocalOutgoingAudioStreamEvents: NSObject {
+		open var onStateChanged: ((AudioStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class LocalUserDiagnosticsCallFeature: CallFeature {
+		open var networkDiagnostics: NetworkDiagnostics { get }
+		open var mediaDiagnostics: MediaDiagnostics { get }
+	}
+	
+	open class LocalVideoEffectsFeature: LocalVideoStreamFeature {
+		weak open var delegate: LocalVideoEffectsFeatureDelegate?
+		open var events: LocalVideoEffectsFeatureEvents { get }
+		open func isSupported(effect: VideoEffect) -> Bool
+		open func enable(effect: VideoEffect)
+		open func disable(effect: VideoEffect)
+	}
+	
+	public protocol LocalVideoEffectsFeatureDelegate: NSObjectProtocol {
+		optional func localVideoEffectsFeature(_: LocalVideoEffectsFeature, didEnableVideoEffect: VideoEffectEnabledEventArgs)
+		optional func localVideoEffectsFeature(_: LocalVideoEffectsFeature, didDisableVideoEffect: VideoEffectDisabledEventArgs)
+		optional func localVideoEffectsFeature(_: LocalVideoEffectsFeature, didReceiveVideoEffectError: VideoEffectErrorEventArgs)
+	}
+	
+	open class LocalVideoEffectsFeatureEvents: NSObject {
+		open var onVideoEffectEnabled: ((VideoEffectEnabledEventArgs) -> Void)?
+		open var onVideoEffectDisabled: ((VideoEffectDisabledEventArgs) -> Void)?
+		open var onVideoEffectError: ((VideoEffectErrorEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class LocalVideoStream: OutgoingVideoStream {
+		public init(camera: VideoDeviceInfo)
+		open var source: VideoDeviceInfo { get }
+		@available(*, deprecated, message: "Use state property instead") open var isSending: Bool { get }
+		weak open var delegate: LocalVideoStreamDelegate?
+		open var events: LocalVideoStreamEvents { get }
+		open func switchSource(camera: VideoDeviceInfo, completionHandler: @escaping (Error?) -> Void)
+		open func switchSource(camera: VideoDeviceInfo) async throws
+	}
+	
+	extension AzureCommunicationCalling.LocalVideoStream {
+		public func feature<TLocalVideoStreamFeature>(_: AzureCommunicationCalling.LocalVideoStreamFeatureFactory<TLocalVideoStreamFeature>) -> TLocalVideoStreamFeature where TLocalVideoStreamFeature: AzureCommunicationCalling.LocalVideoStreamFeature
+	}
+	
+	public protocol LocalVideoStreamDelegate: NSObjectProtocol {
+		optional func localVideoStream(_: LocalVideoStream, didChangeState: VideoStreamStateChangedEventArgs)
+	}
+	
+	open class LocalVideoStreamEvents: NSObject {
+		open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class LocalVideoStreamFeature: NSObject {
+		open func dealloc()
+		open var name: String { get }
+	}
+	
+	@_hasMissingDesignatedInitializers
+	public class LocalVideoStreamFeatureFactory<T> where T: AzureCommunicationCalling.LocalVideoStreamFeature {}
+	
+	@available(*, deprecated, message: "Use VideoStreamStateChangedEventArgs instead")
+	open class LocalVideoStreamsUpdatedEventArgs: NSObject {
+		open func dealloc()
+		open var addedStreams: [LocalVideoStream] { get }
+		open var removedStreams: [LocalVideoStream] { get }
+	}
+	
+	open class LoweredHandChangedEventArgs: NSObject {
+		open func dealloc()
+		open var identifier: Any { get }
+	}
+	
+	open class MediaDiagnosticValues: NSObject {
+		open func dealloc()
+		open var lastUpdated: Date { get }
+	}
+	
+	extension AzureCommunicationCalling.MediaDiagnosticValues {
+		public var isSpeakerNotFunctioning: Swift.Bool? { get }
+		public var isSpeakerBusy: Swift.Bool? { get }
+		public var isSpeakerMuted: Swift.Bool? { get }
+		public var isSpeakerVolumeZero: Swift.Bool? { get }
+		public var isNoSpeakerDevicesAvailable: Swift.Bool? { get }
+		public var isSpeakingWhileMicrophoneIsMuted: Swift.Bool? { get }
+		public var isNoMicrophoneDevicesAvailable: Swift.Bool? { get }
+		public var isMicrophoneBusy: Swift.Bool? { get }
+		public var isCameraFreeze: Swift.Bool? { get }
+		public var isCameraStartFailed: Swift.Bool? { get }
+		public var isCameraStartTimedOut: Swift.Bool? { get }
+		public var isMicrophoneNotFunctioning: Swift.Bool? { get }
+		public var isMicrophoneMutedUnexpectedly: Swift.Bool? { get }
+		public var isCameraPermissionDenied: Swift.Bool? { get }
+		public var isUnmixedAudioUnavailable: Swift.Bool? { get }
+	}
+	
+	open class MediaDiagnostics: NSObject {
+		open func dealloc()
+		open var latest: MediaDiagnosticValues { get }
+		weak open var delegate: MediaDiagnosticsDelegate?
+		open var events: MediaDiagnosticsEvents { get }
+	}
+	
+	public protocol MediaDiagnosticsDelegate: NSObjectProtocol {
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsSpeakerNotFunctioning: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsSpeakerBusy: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsSpeakerMuted: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsSpeakerVolumeZero: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsNoSpeakerDevicesAvailable: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsSpeakingWhileMicrophoneIsMuted: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsNoMicrophoneDevicesAvailable: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsMicrophoneBusy: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsCameraFrozen: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsCameraStartFailed: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsCameraStartTimedOut: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsMicrophoneNotFunctioning: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsMicrophoneMutedUnexpectedly: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsCameraPermissionDenied: DiagnosticFlagChangedEventArgs)
+		optional func mediaDiagnostics(_: MediaDiagnostics, didChangeIsUnmixedAudioUnavailable: DiagnosticFlagChangedEventArgs)
+	}
+	
+	open class MediaDiagnosticsEvents: NSObject {
+		open var onIsSpeakerNotFunctioningChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsSpeakerBusyChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsSpeakerMutedChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsSpeakerVolumeZeroChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsNoSpeakerDevicesAvailableChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsSpeakingWhileMicrophoneIsMutedChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsNoMicrophoneDevicesAvailableChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsMicrophoneBusyChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsCameraFrozenChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsCameraStartFailedChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsCameraStartTimedOutChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsMicrophoneNotFunctioningChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsMicrophoneMutedUnexpectedlyChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsCameraPermissionDeniedChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsUnmixedAudioUnavailableChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class MediaStatisticsCallFeature: CallFeature {
+		open var reportIntervalInSeconds: Int32 { get }
+		weak open var delegate: MediaStatisticsCallFeatureDelegate?
+		open var events: MediaStatisticsCallFeatureEvents { get }
+		open func updateReportInterval(inSeconds: Int32) throws
+	}
+	
+	public protocol MediaStatisticsCallFeatureDelegate: NSObjectProtocol {
+		optional func mediaStatisticsCallFeature(_: MediaStatisticsCallFeature, didReceiveReport: MediaStatisticsReportReceivedEventArgs)
+	}
+	
+	open class MediaStatisticsCallFeatureEvents: NSObject {
+		open var onReportReceived: ((MediaStatisticsReportReceivedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class MediaStatisticsReport: NSObject {
+		open func dealloc()
+		open var outgoingStatistics: OutgoingMediaStatistics { get }
+		open var incomingStatistics: IncomingMediaStatistics { get }
+		open var lastUpdated: Date { get }
+	}
+	
+	open class MediaStatisticsReportReceivedEventArgs: NSObject {
+		open func dealloc()
+		open var report: MediaStatisticsReport { get }
+	}
+	
+	@available(*, deprecated, message: "Use VideoStreamSourceType instead")
+	public enum MediaStreamType: Int, @unchecked Sendable {
+		case video = 1
+		case screenSharing = 2
+	}
+	
+	open class NetworkDiagnosticValues: NSObject {
+		open func dealloc()
+		open var lastUpdated: Date { get }
+	}
+	
+	extension AzureCommunicationCalling.NetworkDiagnosticValues {
+		public var isNetworkUnavailable: Swift.Bool? { get }
+		public var isNetworkRelaysUnreachable: Swift.Bool? { get }
+		public var networkReconnectionQuality: AzureCommunicationCalling.DiagnosticQuality { get }
+		public var networkSendQuality: AzureCommunicationCalling.DiagnosticQuality { get }
+		public var networkReceiveQuality: AzureCommunicationCalling.DiagnosticQuality { get }
+	}
+	
+	open class NetworkDiagnostics: NSObject {
+		open func dealloc()
+		open var latest: NetworkDiagnosticValues { get }
+		weak open var delegate: NetworkDiagnosticsDelegate?
+		open var events: NetworkDiagnosticsEvents { get }
+	}
+	
+	public protocol NetworkDiagnosticsDelegate: NSObjectProtocol {
+		optional func networkDiagnostics(_: NetworkDiagnostics, didChangeIsNetworkUnavailable: DiagnosticFlagChangedEventArgs)
+		optional func networkDiagnostics(_: NetworkDiagnostics, didChangeIsNetworkRelaysUnreachable: DiagnosticFlagChangedEventArgs)
+		optional func networkDiagnostics(_: NetworkDiagnostics, didChangeNetworkReconnectionQuality: DiagnosticQualityChangedEventArgs)
+		optional func networkDiagnostics(_: NetworkDiagnostics, didChangeNetworkReceiveQuality: DiagnosticQualityChangedEventArgs)
+		optional func networkDiagnostics(_: NetworkDiagnostics, didChangeNetworkSendQuality: DiagnosticQualityChangedEventArgs)
+	}
+	
+	open class NetworkDiagnosticsEvents: NSObject {
+		open var onIsNetworkUnavailableChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onIsNetworkRelaysUnreachableChanged: ((DiagnosticFlagChangedEventArgs) -> Void)?
+		open var onNetworkReconnectionQualityChanged: ((DiagnosticQualityChangedEventArgs) -> Void)?
+		open var onNetworkReceiveQualityChanged: ((DiagnosticQualityChangedEventArgs) -> Void)?
+		open var onNetworkSendQualityChanged: ((DiagnosticQualityChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	public enum NoiseSuppressionMode: Int, @unchecked Sendable {
+		case off = 0
+		case auto = 1
+		case low = 2
+		case high = 3
+	}
+	
+	open class OutgoingAudioFilters: NSObject {
+		public init()
+		open func dealloc()
+		open var analogAutomaticGainControlEnabled: Bool
+		open var digitalAutomaticGainControlEnabled: Bool
+		open var noiseSuppressionMode: NoiseSuppressionMode
+		open var musicModeEnabled: Bool
+		open var acousticEchoCancellationEnabled: Bool
+	}
+	
+	open class OutgoingAudioOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var muted: Bool
+		open var filters: OutgoingAudioFilters?
+		open var stream: OutgoingAudioStream?
+	}
+	
+	open class OutgoingAudioStatistics: NSObject {
+		open func dealloc()
+		open var codecName: String { get }
+	}
+	
+	extension AzureCommunicationCalling.OutgoingAudioStatistics {
+		public var bitrateInBps: Swift.Int32? { get }
+		public var jitterInMs: Swift.Float? { get }
+		public var packetCount: Swift.Int32? { get }
+		public var streamId: Swift.Int32? { get }
+		public var roundTripTimeInMs: Swift.Int32? { get }
+	}
+	
+	open class OutgoingAudioStream: CallAudioStream {
+		open var volumeLevel: Float { get }
+	}
+	
+	open class OutgoingDataChannelStatistics: NSObject {
+		open func dealloc()
+	}
+	
+	extension AzureCommunicationCalling.OutgoingDataChannelStatistics {
+		public var packetCount: Swift.Int32? { get }
+		public var roundTripTimeInMs: Swift.Int32? { get }
+	}
+	
+	open class OutgoingMediaStatistics: NSObject {
+		open func dealloc()
+		open var audio: [OutgoingAudioStatistics] { get }
+		open var video: [OutgoingVideoStatistics] { get }
+		open var screenShare: [OutgoingScreenShareStatistics] { get }
+		open var dataChannel: [OutgoingDataChannelStatistics] { get }
+		open var transport: OutgoingTransportStatistics { get }
+	}
+	
+	open class OutgoingReaction: NSObject {
+		public init(type: ReactionType)
+		open func dealloc()
+		open var type: ReactionType { get }
+	}
+	
+	open class OutgoingScreenShareStatistics: NSObject {
+		open func dealloc()
+		open var codecName: String { get }
+	}
+	
+	extension AzureCommunicationCalling.OutgoingScreenShareStatistics {
+		public var bitrateInBps: Swift.Int32? { get }
+		public var packetCount: Swift.Int32? { get }
+		public var frameRate: Swift.Float? { get }
+		public var frameWidth: Swift.Int32? { get }
+		public var frameHeight: Swift.Int32? { get }
+		public var streamId: Swift.Int32? { get }
+		public var roundTripTimeInMs: Swift.Int32? { get }
+	}
+	
+	open class OutgoingTransportStatistics: NSObject {
+		open func dealloc()
+	}
+	
+	extension AzureCommunicationCalling.OutgoingTransportStatistics {
+		public var availableBitrateInBps: Swift.Int32? { get }
+	}
+	
+	open class OutgoingVideoConstraints: NSObject {
+		public init()
+		open func dealloc()
+		open var maxHeight: Int32
+		open var maxWidth: Int32
+		open var maxFrameRate: Int32
+		open var maxBitRate: Int32
+	}
+	
+	open class OutgoingVideoOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var streams: [OutgoingVideoStream]
+		open var constraints: OutgoingVideoConstraints?
+	}
+	
+	open class OutgoingVideoStatistics: NSObject {
+		open func dealloc()
+		open var codecName: String { get }
+	}
+	
+	extension AzureCommunicationCalling.OutgoingVideoStatistics {
+		public var bitrateInBps: Swift.Int32? { get }
+		public var packetCount: Swift.Int32? { get }
+		public var frameRate: Swift.Float? { get }
+		public var frameWidth: Swift.Int32? { get }
+		public var frameHeight: Swift.Int32? { get }
+		public var streamId: Swift.Int32? { get }
+		public var roundTripTimeInMs: Swift.Int32? { get }
+	}
+	
+	open class OutgoingVideoStream: CallVideoStream {}
+	
+	open class ParticipantCapability: NSObject {
+		open func dealloc()
+		open var type: ParticipantCapabilityType { get }
+		open var isAllowed: Bool { get }
+		open var reason: CapabilityResolutionReason { get }
+	}
+	
+	public enum ParticipantCapabilityType: Int, @unchecked Sendable {
+		case turnVideoOn = 0
+		case unmuteMicrophone = 1
+		case shareScreen = 2
+		case removeParticipant = 3
+		case hangUpForEveryone = 4
+		case addTeamsUser = 5
+		case addCommunicationUser = 6
+		case addPhoneNumber = 7
+		case manageLobby = 8
+		case spotlightParticipant = 9
+		case removeParticipantSpotlight = 10
+		case blurBackground = 11
+		case customBackground = 12
+		case startLiveCaptions = 13
+		case raiseHand = 14
+		case muteOthers = 15
+	}
+	
+	public enum ParticipantState: Int, @unchecked Sendable {
+		case idle = 0
+		case earlyMedia = 1
+		case connecting = 2
+		case connected = 3
+		case hold = 4
+		case inLobby = 5
+		case disconnected = 6
+		case ringing = 7
+	}
+	
+	open class ParticipantsUpdatedEventArgs: NSObject {
+		open func dealloc()
+		open var addedParticipants: [RemoteParticipant] { get }
+		open var removedParticipants: [RemoteParticipant] { get }
+	}
+	
+	open class PowerPointInfo: ContentSharingInfo {
+		open var slideIndex: Int32 { get }
+		open var isPrivateViewingEnabled: Bool { get }
+	}
+	
+	open class PreCallDiagnostics: NSObject {
+		open func dealloc()
+		open var mediaStatisticsReport: MediaStatisticsReport { get }
+	}
+	
+	open class PreCallDiagnosticsCallClientFeature: CallClientFeature {
+		weak open var delegate: PreCallDiagnosticsCallClientFeatureDelegate?
+		open var events: PreCallDiagnosticsCallClientFeatureEvents { get }
+		open func devicePermissions() -> [NSNumber]
+		open func startTest(_: Any!, withCompletionHandler: ((Error?) -> Void)? = nil)
+		open func startTest(_: Any!) async throws
+		open func setInitializationOptionsIfNotExists()
+	}
+	
+	public protocol PreCallDiagnosticsCallClientFeatureDelegate: NSObjectProtocol {
+		optional func diagnosticsCallClientFeature(_: PreCallDiagnosticsCallClientFeature, didDiagnosticsReady: PreCallDiagnosticsReadyEventArgs)
+	}
+	
+	open class PreCallDiagnosticsCallClientFeatureEvents: NSObject {
+		open var onDiagnosticsReady: ((PreCallDiagnosticsReadyEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class PreCallDiagnosticsReadyEventArgs: NSObject {
+		open func dealloc()
+		open var diagnostics: PreCallDiagnostics { get }
+	}
+	
+	open class PropertyChangedEventArgs: NSObject {
+		open func dealloc()
+	}
+	
+	public enum PushNotificationEventType: Int, @unchecked Sendable {
+		case incomingCall = 107
+		case incomingGroupCall = 109
+		case incomingPstnCall = 111
+		case stopRinging = 110
+	}
+	
+	open class PushNotificationInfo: NSObject {
+		open func dealloc()
+		open var fromDisplayName: String { get }
+		open var incomingWithVideo: Bool { get }
+		open var eventType: PushNotificationEventType { get }
+		open var from: Any { get }
+		open var to: Any { get }
+		open var callId: UUID { get }
+		open class func fromDictionary(_: [AnyHashable: Any]) -> PushNotificationInfo
+	}
+	
+	open class RaiseHandCallFeature: CallFeature {
+		open var raisedHands: [RaisedHand] { get }
+		weak open var delegate: RaiseHandCallFeatureDelegate?
+		open var events: RaiseHandCallFeatureEvents { get }
+		open func raiseHand(completionHandler: @escaping (Error?) -> Void)
+		open func raiseHand() async throws
+		open func lowerHand(completionHandler: @escaping (Error?) -> Void)
+		open func lowerHand() async throws
+		open func lowerAllHands(completionHandler: @escaping (Error?) -> Void)
+		open func lowerAllHands() async throws
+		open func lowerHands(participants: [Any], completionHandler: @escaping (Error?) -> Void)
+		open func lowerHands(participants: [Any]) async throws
+	}
+	
+	public protocol RaiseHandCallFeatureDelegate: NSObjectProtocol {
+		optional func raiseHandCallFeature(_: RaiseHandCallFeature, didRaiseHand: RaisedHandChangedEventArgs)
+		optional func raiseHandCallFeature(_: RaiseHandCallFeature, didLowerHand: LoweredHandChangedEventArgs)
+	}
+	
+	open class RaiseHandCallFeatureEvents: NSObject {
+		open var onHandRaised: ((RaisedHandChangedEventArgs) -> Void)?
+		open var onHandLowered: ((LoweredHandChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RaisedHand: NSObject {
+		open func dealloc()
+		open var order: Int32 { get }
+		open var identifier: Any { get }
+	}
+	
+	open class RaisedHandChangedEventArgs: NSObject {
+		open func dealloc()
+		open var identifier: Any { get }
+	}
+	
+	open class RawAudioBuffer: NSObject {
+		public init()
+		open func dealloc()
+		open var timestampInTicks: Int64
+		open func dispose()
+		open var buffer: AVAudioBuffer?
+	}
+	
+	open class RawAudioStreamOptions: NSObject {
+		open func dealloc()
+	}
+	
+	open class RawAudioStreamProperties: NSObject {
+		open func dealloc()
+		open var sampleRate: AudioStreamSampleRate
+		open var channelMode: AudioStreamChannelMode
+		open var format: AudioStreamFormat
+	}
+	
+	open class RawIncomingAudioStream: IncomingAudioStream {
+		public init(options: RawIncomingAudioStreamOptions)
+		weak open var delegate: RawIncomingAudioStreamDelegate?
+		open var events: RawIncomingAudioStreamEvents { get }
+	}
+	
+	public protocol RawIncomingAudioStreamDelegate: NSObjectProtocol {
+		optional func rawIncomingAudioStream(_: RawIncomingAudioStream, didReceiveMixedAudioBuffer: IncomingMixedAudioEventArgs)
+		optional func rawIncomingAudioStream(_: RawIncomingAudioStream, didReceiveUnmixedAudioBuffer: IncomingUnmixedAudioEventArgs)
+		optional func rawIncomingAudioStream(_: RawIncomingAudioStream, didChangeState: AudioStreamStateChangedEventArgs)
+	}
+	
+	open class RawIncomingAudioStreamEvents: NSObject {
+		open var onMixedAudioBufferReceived: ((IncomingMixedAudioEventArgs) -> Void)?
+		open var onUnmixedAudioBufferReceived: ((IncomingUnmixedAudioEventArgs) -> Void)?
+		open var onStateChanged: ((AudioStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RawIncomingAudioStreamOptions: RawAudioStreamOptions {
+		public init()
+		open var properties: RawIncomingAudioStreamProperties
+		open var receiveUnmixedAudio: Bool
+	}
+	
+	open class RawIncomingAudioStreamProperties: RawAudioStreamProperties {
+		public init()
+	}
+	
+	open class RawIncomingVideoStream: IncomingVideoStream {
+		weak open var delegate: RawIncomingVideoStreamDelegate?
+		open var events: RawIncomingVideoStreamEvents { get }
+		open func start()
+		open func stop()
+	}
+	
+	public protocol RawIncomingVideoStreamDelegate: NSObjectProtocol {
+		optional func rawIncomingVideoStream(_: RawIncomingVideoStream, didReceiveRawVideoFrame: RawVideoFrameReceivedEventArgs)
+		optional func rawIncomingVideoStream(_: RawIncomingVideoStream, didChangeState: VideoStreamStateChangedEventArgs)
+	}
+	
+	open class RawIncomingVideoStreamEvents: NSObject {
+		open var onRawVideoFrameReceived: ((RawVideoFrameReceivedEventArgs) -> Void)?
+		open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RawOutgoingAudioStream: OutgoingAudioStream {
+		public init(options: RawOutgoingAudioStreamOptions)
+		open var expectedBufferSizeInBytes: Int64 { get }
+		open var properties: RawOutgoingAudioStreamProperties { get }
+		weak open var delegate: RawOutgoingAudioStreamDelegate?
+		open var events: RawOutgoingAudioStreamEvents { get }
+		open func send(buffer: RawAudioBuffer, completionHandler: @escaping (Error?) -> Void)
+		open func send(buffer: RawAudioBuffer) async throws
+	}
+	
+	public protocol RawOutgoingAudioStreamDelegate: NSObjectProtocol {
+		optional func rawOutgoingAudioStream(_: RawOutgoingAudioStream, didChangeState: AudioStreamStateChangedEventArgs)
+	}
+	
+	open class RawOutgoingAudioStreamEvents: NSObject {
+		open var onStateChanged: ((AudioStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RawOutgoingAudioStreamOptions: RawAudioStreamOptions {
+		public init()
+		open var properties: RawOutgoingAudioStreamProperties
+	}
+	
+	open class RawOutgoingAudioStreamProperties: RawAudioStreamProperties {
+		public init()
+		open var bufferDuration: AudioStreamBufferDuration
+	}
+	
+	open class RawOutgoingVideoStream: OutgoingVideoStream {
+		open var format: VideoStreamFormat { get }
+		open var timestampInTicks: Int64 { get }
+		open func send(frame: RawVideoFrame, completionHandler: @escaping (Error?) -> Void)
+		open func send(frame: RawVideoFrame) async throws
+	}
+	
+	open class RawOutgoingVideoStreamOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var formats: [VideoStreamFormat]
+	}
+	
+	open class RawVideoFrame: NSObject {
+		open func dealloc()
+		open var type: RawVideoFrameType { get }
+		open var streamFormat: VideoStreamFormat
+		open var timestampInTicks: Int64
+		open func dispose()
+	}
+	
+	open class RawVideoFrameBuffer: RawVideoFrame {
+		public init()
+		open var buffer: CVPixelBuffer
+	}
+	
+	open class RawVideoFrameReceivedEventArgs: NSObject {
+		open func dealloc()
+		open var frame: RawVideoFrame { get }
+		open var videoStreamId: Int32 { get }
+	}
+	
+	public enum RawVideoFrameType: Int, @unchecked Sendable {
+		case buffer = 0
+		case texture = 1
+	}
+	
+	open class ReactionReceivedEventArgs: NSObject {
+		open func dealloc()
+		open var reaction: IncomingReaction { get }
+	}
+	
+	public struct ReactionType: Hashable, Equatable, RawRepresentable, @unchecked Sendable {
+		public init(_: Int)
+		public init(rawValue: Int)
+	}
+	
+	extension ReactionType {
+		public static let like: ReactionType
+		public static let heart: ReactionType
+		public static let laugh: ReactionType
+		public static let surprised: ReactionType
+		public static let applause: ReactionType
+	}
+	
+	open class ReactionsCallFeature: CallFeature {
+		weak open var delegate: ReactionsCallFeatureDelegate?
+		open var events: ReactionsCallFeatureEvents { get }
+		open func send(reaction: OutgoingReaction, completionHandler: @escaping (Error?) -> Void)
+		open func send(reaction: OutgoingReaction) async throws
+	}
+	
+	public protocol ReactionsCallFeatureDelegate: NSObjectProtocol {
+		optional func reactionFeature(_: ReactionsCallFeature, didReceiveReaction: ReactionReceivedEventArgs)
+	}
+	
+	open class ReactionsCallFeatureEvents: NSObject {
+		open var onReactionReceived: ((ReactionReceivedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RealTimeTextCallFeature: CallFeature {
+		weak open var delegate: RealTimeTextCallFeatureDelegate?
+		open var events: RealTimeTextCallFeatureEvents { get }
+		open func send(text: String) throws
+		open func send(text: String, finalized: Bool) throws
+	}
+	
+	public protocol RealTimeTextCallFeatureDelegate: NSObjectProtocol {
+		optional func realTimeTextCallFeature(_: RealTimeTextCallFeature, didReceiveInfo: RealTimeTextInfoReceivedEventArgs)
+	}
+	
+	open class RealTimeTextCallFeatureEvents: NSObject {
+		open var onInfoReceived: ((RealTimeTextInfoReceivedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RealTimeTextInfo: NSObject {
+		open func dealloc()
+		open var sender: CallerInfo { get }
+		open var sequenceId: Int32 { get }
+		open var text: String { get }
+		open var resultType: RealTimeTextResultType { get }
+		open var receivedTime: Date { get }
+		open var updatedTime: Date { get }
+		open var isLocal: Bool { get }
+	}
+	
+	open class RealTimeTextInfoReceivedEventArgs: NSObject {
+		open func dealloc()
+		open var info: RealTimeTextInfo { get }
+	}
+	
+	public enum RealTimeTextResultType: Int, @unchecked Sendable {
+		case partial = 0
+		case final = 1
+	}
+	
+	open class RecordingCallFeature: CallFeature {
+		open var isRecordingActive: Bool { get }
+		open var recordings: [RecordingInfo] { get }
+		open var isTeamsConsentRequired: Bool { get }
+		weak open var delegate: RecordingCallFeatureDelegate?
+		open var events: RecordingCallFeatureEvents { get }
+		open func grantTeamsConsent(completionHandler: @escaping (Error?) -> Void)
+		open func grantTeamsConsent() async throws
+	}
+	
+	public protocol RecordingCallFeatureDelegate: NSObjectProtocol {
+		optional func recordingCallFeature(_: RecordingCallFeature, didChangeRecordingState: PropertyChangedEventArgs)
+		optional func recordingCallFeature(_: RecordingCallFeature, didUpdateRecording: RecordingUpdatedEventArgs)
+	}
+	
+	open class RecordingCallFeatureEvents: NSObject {
+		open var onIsRecordingActiveChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onRecordingUpdated: ((RecordingUpdatedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RecordingInfo: NSObject {
+		open func dealloc()
+		open var state: RecordingState { get }
+	}
+	
+	public enum RecordingState: Int, @unchecked Sendable {
+		case started = 0
+		case paused = 1
+		case ended = 2
+	}
+	
+	open class RecordingUpdatedEventArgs: NSObject {
+		open func dealloc()
+		open var updatedRecording: RecordingInfo { get }
+	}
+	
+	open class RemoteDiagnosticFlagChangedEventArgs: NSObject {
+		open func dealloc()
+		open var value: Bool { get }
+		open var name: String { get }
+		open var participantSourceId: String { get }
+		open var participantIdentifier: Any { get }
+	}
+	
+	open class RemoteIncomingAudioStream: IncomingAudioStream {
+		public init()
+		weak open var delegate: RemoteIncomingAudioStreamDelegate?
+		open var events: RemoteIncomingAudioStreamEvents { get }
+	}
+	
+	public protocol RemoteIncomingAudioStreamDelegate: NSObjectProtocol {
+		optional func remoteAudioStream(_: RemoteIncomingAudioStream, didChangeState: AudioStreamStateChangedEventArgs)
+	}
+	
+	open class RemoteIncomingAudioStreamEvents: NSObject {
+		open var onStateChanged: ((AudioStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RemoteNetworkDiagnostics: NSObject {
+		open func dealloc()
+		weak open var delegate: RemoteNetworkDiagnosticsDelegate?
+		open var events: RemoteNetworkDiagnosticsEvents { get }
+	}
+	
+	public protocol RemoteNetworkDiagnosticsDelegate: NSObjectProtocol {
+		optional func remoteNetworkDiagnostics(_: RemoteNetworkDiagnostics, didChangeIsNetworkUnavailable: RemoteDiagnosticFlagChangedEventArgs)
+	}
+	
+	open class RemoteNetworkDiagnosticsEvents: NSObject {
+		open var onIsNetworkUnavailableChanged: ((RemoteDiagnosticFlagChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RemoteParticipant: NSObject {
+		open func dealloc()
+		open var displayName: String { get }
+		open var callParticipantRole: CallParticipantRole { get }
+		open var isMuted: Bool { get }
+		open var isSpeaking: Bool { get }
+		open var callEndReason: CallEndReason { get }
+		open var state: ParticipantState { get }
+		@available(*, deprecated, message: "Use IncomingVideoStreams getter instead") open var videoStreams: [RemoteVideoStream] { get }
+		open var incomingVideoStreams: [IncomingVideoStream] { get }
+		open var endpointDetails: [EndpointDetails] { get }
+		weak open var delegate: RemoteParticipantDelegate?
+		open var events: RemoteParticipantEvents { get }
+		open func mute(completionHandler: @escaping (Error?) -> Void)
+		open func mute() async throws
+		open var identifier: Any { get }
+	}
+	
+	public protocol RemoteParticipantDelegate: NSObjectProtocol {
+		optional func remoteParticipant(_: RemoteParticipant, didChangeState: PropertyChangedEventArgs)
+		optional func remoteParticipant(_: RemoteParticipant, didChangeMuteState: PropertyChangedEventArgs)
+		optional func remoteParticipant(_: RemoteParticipant, didChangeSpeakingState: PropertyChangedEventArgs)
+		optional func remoteParticipant(_: RemoteParticipant, didChangeDisplayName: PropertyChangedEventArgs)
+		optional func remoteParticipant(_: RemoteParticipant, didChangeRole: PropertyChangedEventArgs)
+		
+		@available(*, deprecated, message: "Use remoteParticipant(_:didChangeVideoStreamState:)) instead")
+		optional func remoteParticipant(_: RemoteParticipant, didUpdateVideoStreams: RemoteVideoStreamsEventArgs)
+		optional func remoteParticipant(_: RemoteParticipant, didChangeVideoStreamState: VideoStreamStateChangedEventArgs)
+	}
+	
+	open class RemoteParticipantEvents: NSObject {
+		open var onStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onIsMutedChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onIsSpeakingChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onDisplayNameChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onRoleChanged: ((PropertyChangedEventArgs) -> Void)?
+		@available(*, deprecated, message: "Use remoteParticipant(_:didChangeVideoStreamState:)) instead") open var onVideoStreamsUpdated: ((RemoteVideoStreamsEventArgs) -> Void)?
+		open var onVideoStreamStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class RemoteUserDiagnosticsCallFeature: CallFeature {
+		open var remoteNetworkDiagnostics: RemoteNetworkDiagnostics { get }
+	}
+	
+	open class RemoteVideoStream: IncomingVideoStream {
+		@available(*, deprecated, message: "Use state property instead") open var isAvailable: Bool { get }
+		weak open var delegate: RemoteVideoStreamDelegate?
+		open var events: RemoteVideoStreamEvents { get }
+	}
+	
+	public protocol RemoteVideoStreamDelegate: NSObjectProtocol {
+		optional func remoteVideoStream(_: RemoteVideoStream, didChangeState: VideoStreamStateChangedEventArgs)
+	}
+	
+	open class RemoteVideoStreamEvents: NSObject {
+		open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	@available(*, deprecated, message: "Use VideoStreamStateChangedEventArgs instead")
+	open class RemoteVideoStreamsEventArgs: NSObject {
+		open func dealloc()
+		open var addedRemoteVideoStreams: [RemoteVideoStream] { get }
+		open var removedRemoteVideoStreams: [RemoteVideoStream] { get }
+	}
+	
+	public protocol RendererDelegate: NSObjectProtocol {
+		func videoStreamRenderer(didFailToStart: VideoStreamRenderer)
+		optional func videoStreamRenderer(didRenderFirstFrame: VideoStreamRenderer)
+	}
+	
+	open class RendererView {
+		open func dispose()
+		open func isRendering() -> Bool
+	}
+	
+	open class RoomCallLocator: JoinMeetingLocator {
+		public init(roomId: String)
+		open var roomId: String { get }
+	}
+	
+	public var SWIFT_TYPEDEFS: Int32 { get
+	
+	public enum ScalingMode: Int, @unchecked Sendable {
+		case crop = 1
+		case fit = 2
+	}
+	
+	public struct ScreenShareIssues: OptionSet, @unchecked Sendable {
+		public init(rawValue: Int)
+		public static var noContentLocal: ScreenShareIssues { get }
+		public static var noContentRemote: ScreenShareIssues { get }
+		public static var cannotPresent: ScreenShareIssues { get }
+		public static var lowQuality: ScreenShareIssues { get }
+		public static var freezes: ScreenShareIssues { get }
+		public static var stoppedUnexpectedly: ScreenShareIssues { get }
+		public static var largeDelay: ScreenShareIssues { get }
+		public static var otherIssues: ScreenShareIssues { get }
+	}
+	
+	open class ScreenShareOutgoingVideoStream: RawOutgoingVideoStream {
+		public init(videoStreamOptions: RawOutgoingVideoStreamOptions)
+		weak open var delegate: ScreenShareOutgoingVideoStreamDelegate?
+		open var events: ScreenShareOutgoingVideoStreamEvents { get }
+	}
+	
+	public protocol ScreenShareOutgoingVideoStreamDelegate: NSObjectProtocol {
+		optional func screenShareOutgoingVideoStream(_: ScreenShareOutgoingVideoStream, didChangeState: VideoStreamStateChangedEventArgs)
+		optional func screenShareOutgoingVideoStream(_: ScreenShareOutgoingVideoStream, didChangeFormat: VideoStreamFormatChangedEventArgs)
+	}
+	
+	open class ScreenShareOutgoingVideoStreamEvents: NSObject {
+		open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?
+		open var onFormatChanged: ((VideoStreamFormatChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class SpotlightCallFeature: CallFeature {
+		open var maxSpotlightedParticipants: Int32 { get }
+		open var spotlightedParticipants: [SpotlightedParticipant] { get }
+		weak open var delegate: SpotlightCallFeatureDelegate?
+		open var events: SpotlightCallFeatureEvents { get }
+		open func cancelAllSpotlights(completionHandler: @escaping (Error?) -> Void)
+		open func cancelAllSpotlights() async throws
+		open func spotlight(identifiers: [Any], completionHandler: @escaping (Error?) -> Void)
+		open func spotlight(identifiers: [Any]) async throws
+		open func cancelSpotlights(identifiers: [Any], completionHandler: @escaping (Error?) -> Void)
+		open func cancelSpotlights(identifiers: [Any]) async throws
+	}
+	
+	public protocol SpotlightCallFeatureDelegate: NSObjectProtocol {
+		optional func spotlightCallFeature(_: SpotlightCallFeature, didChangeSpotlight: SpotlightChangedEventArgs)
+	}
+	
+	open class SpotlightCallFeatureEvents: NSObject {
+		open var onSpotlightChanged: ((SpotlightChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class SpotlightChangedEventArgs: NSObject {
+		open func dealloc()
+		open var added: [SpotlightedParticipant] { get }
+		open var removed: [SpotlightedParticipant] { get }
+	}
+	
+	open class SpotlightedParticipant: NSObject {
+		open func dealloc()
+		open var identifier: Any { get }
+	}
+	
+	open class StartCallOptions: CallOptions {
+		public init()
+		@available(*, deprecated, message: "Use IncomingVideoOptions and OutgoingVideoOptions instead") open var videoOptions: VideoOptions?
+		@available(*, deprecated, message: "Use incomingAudioOptions and outgoingAudioOptions instead.") open var audioOptions: AudioOptions?
+		open var alternateCallerId: UnsafeMutablePointer<Int32>
+		open var callEventsOptions: CallEventsOptions?
+	}
+	
+	open class StartCaptionsOptions: NSObject {
+		public init()
+		open func dealloc()
+		open var spokenLanguage: String
+	}
+	
+	open class StartTeamsCallOptions: CallOptions {
+		public init()
+		open var teamsCallEventsOptions: TeamsCallEventsOptions?
+	}
+	
+	open class StartTeamsGroupCallOptions: StartTeamsCallOptions {
+		public init(threadId: String)
+		open var threadId: String { get }
+	}
+	
+	public enum StreamDirection: Int, @unchecked Sendable {
+		case incoming = 0
+		case outgoing = 1
+	}
+	
+	public struct StreamSize {
+		public init()
+		public init(width: Int32, height: Int32)
+		public var width: Int32
+		public var height: Int32
+	}
+	
+	open class SurveyCallFeature: CallFeature {
+		open func startSurvey(completionHandler: @escaping (CallSurvey?, Error?) -> Void)
+		open func startSurvey() async throws -> CallSurvey
+		open func submit(survey: CallSurvey, completionHandler: @escaping (CallSurveyResult?, Error?) -> Void)
+		open func submit(survey: CallSurvey) async throws -> CallSurveyResult
+	}
+	
+	open class TeamsCall: CommonCall {
+		open var callInfo: TeamsCallInfo { get }
+		weak open var delegate: TeamsCallDelegate?
+		open var events: TeamsCallEvents { get }
+		open func add(participant: Any, options: AddTeamsParticipantOptions) throws -> RemoteParticipant?
+		open func add(participant: Any!, options: AddTeamsParticipantOptions) throws -> RemoteParticipant?
+		open func add(participant: Any!, options: AddTeamsParticipantOptions) throws -> RemoteParticipant?
+		open func add(phoneNumber: Any!, options: AddTeamsParticipantOptions) throws -> RemoteParticipant?
+	}
+	
+	open class TeamsCallAgent: CommonCallAgent {
+		open var calls: [TeamsCall] { get }
+		weak open var delegate: TeamsCallAgentDelegate?
+		open var events: TeamsCallAgentEvents { get }
+		open func startCall(participant: Any, options: StartTeamsCallOptions, completionHandler: @escaping (TeamsCall?, Error?) -> Void)
+		open func startCall(participant: Any, options: StartTeamsCallOptions) async throws -> TeamsCall
+		open func startCall(participant: Any, completionHandler: @escaping (TeamsCall?, Error?) -> Void)
+		open func startCall(participant: Any) async throws -> TeamsCall
+		open func join(with: JoinTeamsMeetingLocator, joinTeamsCallOptions: JoinTeamsCallOptions, completionHandler: @escaping (TeamsCall?, Error?) -> Void)
+		open func join(with: JoinTeamsMeetingLocator, joinTeamsCallOptions: JoinTeamsCallOptions) async throws -> TeamsCall
+		open func join(with: JoinTeamsMeetingLocator, completionHandler: @escaping (TeamsCall?, Error?) -> Void)
+		open func join(with: JoinTeamsMeetingLocator) async throws -> TeamsCall
+	}
+	
+	public protocol TeamsCallAgentDelegate: NSObjectProtocol {
+		optional func teamsCallAgent(_: TeamsCallAgent, didUpdateCalls: TeamsCallsUpdatedEventArgs)
+		optional func teamsCallAgent(_: TeamsCallAgent, didRecieveIncomingCall: TeamsIncomingCall)
+	}
+	
+	open class TeamsCallAgentEvents: NSObject {
+		open var onCallsUpdated: ((TeamsCallsUpdatedEventArgs) -> Void)?
+		open var onIncomingCall: ((TeamsIncomingCall) -> Void)?
+		open func removeAll()
+	}
+	
+	open class TeamsCallAgentOptions: CommonCallAgentOptions {
+		public init()
+	}
+	
+	public protocol TeamsCallDelegate: NSObjectProtocol {
+		optional func teamsCall(_: TeamsCall, didChangeId: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didUpdateStartTime: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didChangeState: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didChangeRole: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didUpdateRemoteParticipant: ParticipantsUpdatedEventArgs)
+		optional func teamsCall(_: TeamsCall, didUpdateOutgoingAudioState: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didGetMutedByOthers: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didUpdateIncomingAudioState: PropertyChangedEventArgs)
+		optional func teamsCall(_: TeamsCall, didChangeTotalParticipantCount: PropertyChangedEventArgs)
+	}
+	
+	open class TeamsCallEvents: NSObject {
+		open var onIdChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onStartTimeUpdated: ((PropertyChangedEventArgs) -> Void)?
+		open var onStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onRoleChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onRemoteParticipantsUpdated: ((ParticipantsUpdatedEventArgs) -> Void)?
+		open var onOutgoingAudioStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onMutedByOthers: ((PropertyChangedEventArgs) -> Void)?
+		open var onIncomingAudioStateChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onTotalParticipantCountChanged: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class TeamsCallEventsOptions: NSObject {
+		public init()
+		open func dealloc()
+		weak open var teamsCallDelegate: TeamsCallDelegate?
+		weak open var teamsCallEvents: TeamsCallEvents?
+	}
+	
+	open class TeamsCallInfo: NSObject {
+		open func dealloc()
+		open var meetingThreadId: String { get }
+	}
+	
+	open class TeamsCallsUpdatedEventArgs: NSObject {
+		open func dealloc()
+		open var addedCalls: [TeamsCall] { get }
+		open var removedCalls: [TeamsCall] { get }
+	}
+	
+	open class TeamsCaptions: CallCaptions {
+		open var activeCaptionLanguage: String { get }
+		open var supportedCaptionLanguages: [String] { get }
+		weak open var delegate: TeamsCaptionsDelegate?
+		open var events: TeamsCaptionsEvents { get }
+		open func set(captionLanguage: String, completionHandler: @escaping (Error?) -> Void)
+		open func set(captionLanguage: String) async throws
+	}
+	
+	public protocol TeamsCaptionsDelegate: NSObjectProtocol {
+		optional func teamsCaptions(_: TeamsCaptions, didChangeCaptionsEnabledState: PropertyChangedEventArgs)
+		optional func teamsCaptions(_: TeamsCaptions, didChangeActiveSpokenLanguageState: PropertyChangedEventArgs)
+		optional func teamsCaptions(_: TeamsCaptions, didChangeActiveCaptionLanguageState: PropertyChangedEventArgs)
+		optional func teamsCaptions(_: TeamsCaptions, didReceiveCaptions: TeamsCaptionsReceivedEventArgs)
+	}
+	
+	open class TeamsCaptionsEvents: NSObject {
+		open var onCaptionsEnabledChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onActiveSpokenLanguageChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onActiveCaptionLanguageChanged: ((PropertyChangedEventArgs) -> Void)?
+		open var onCaptionsReceived: ((TeamsCaptionsReceivedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class TeamsCaptionsReceivedEventArgs: NSObject {
+		open func dealloc()
+		open var speaker: CallerInfo { get }
+		open var spokenText: String { get }
+		open var spokenLanguage: String { get }
+		open var captionText: String { get }
+		open var captionLanguage: String { get }
+		open var resultType: CaptionsResultType { get }
+		open var timestamp: Date { get }
+	}
+	
+	open class TeamsIncomingCall: CommonIncomingCall {
+		open var callInfo: TeamsCallInfo { get }
+		weak open var delegate: TeamsIncomingCallDelegate?
+		open var events: TeamsIncomingCallEvents { get }
+		open func accept(options: AcceptTeamsCallOptions, completionHandler: @escaping (TeamsCall?, Error?) -> Void)
+		open func accept(options: AcceptTeamsCallOptions) async throws -> TeamsCall
+	}
+	
+	public protocol TeamsIncomingCallDelegate: NSObjectProtocol {
+		optional func teamsIncomingCall(_: TeamsIncomingCall, didEnd: PropertyChangedEventArgs)
+	}
+	
+	open class TeamsIncomingCallEvents: NSObject {
+		open var onCallEnded: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class TeamsMeetingCoordinatesLocator: JoinTeamsMeetingLocator {
+		public init(withThreadId: String, organizerId: UUID, tenantId: UUID, messageId: String)
+		open var threadId: String { get }
+		open var organizerId: UUID { get }
+		open var tenantId: UUID { get }
+		open var messageId: String { get }
+	}
+	
+	open class TeamsMeetingIdLocator: JoinTeamsMeetingLocator {
+		public init(with: String, passcode: String)
+		open var meetingId: String { get }
+		open var passcode: String { get }
+	}
+	
+	open class TeamsMeetingLinkLocator: JoinTeamsMeetingLocator {
+		public init(meetingLink: String)
+		open var meetingLink: String { get }
+	}
+	
+	open class TranscriptionCallFeature: CallFeature {
+		open var isTranscriptionActive: Bool { get }
+		open var isTeamsConsentRequired: Bool { get }
+		weak open var delegate: TranscriptionCallFeatureDelegate?
+		open var events: TranscriptionCallFeatureEvents { get }
+		open func grantTeamsConsent(completionHandler: @escaping (Error?) -> Void)
+		open func grantTeamsConsent() async throws
+	}
+	
+	public protocol TranscriptionCallFeatureDelegate: NSObjectProtocol {
+		optional func transcriptionCallFeature(_: TranscriptionCallFeature, didChangeTranscriptionState: PropertyChangedEventArgs)
+	}
+	
+	open class TranscriptionCallFeatureEvents: NSObject {
+		open var onIsTranscriptionActiveChanged: ((PropertyChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	open class VideoConstraints: NSObject {
+		public init()
+		open func dealloc()
+		open var incomingVideoConstraints: IncomingVideoConstraints?
+		open var outgoingVideoConstraints: OutgoingVideoConstraints?
+	}
+	
+	open class VideoDeviceInfo: NSObject {
+		open func dealloc()
+		open var name: String { get }
+		open var id: String { get }
+		open var cameraFacing: CameraFacing { get }
+		open var deviceType: VideoDeviceType { get }
+	}
+	
+	public enum VideoDeviceType: Int, @unchecked Sendable {
+		case unknown = 0
+		case usbCamera = 1
+		case captureAdapter = 2
+		case virtual = 3
+	}
+	
+	open class VideoDevicesUpdatedEventArgs: NSObject {
+		open func dealloc()
+		open var addedVideoDevices: [VideoDeviceInfo] { get }
+		open var removedVideoDevices: [VideoDeviceInfo] { get }
+	}
+	
+	open class VideoEffect: NSObject {
+		open func dealloc()
+		open var name: String { get }
+	}
+	
+	open class VideoEffectDisabledEventArgs: NSObject {
+		open func dealloc()
+		open var videoEffectName: String { get }
+	}
+	
+	open class VideoEffectEnabledEventArgs: NSObject {
+		open func dealloc()
+		open var videoEffectName: String { get }
+	}
+	
+	open class VideoEffectErrorEventArgs: NSObject {
+		open func dealloc()
+		open var videoEffectName: String { get }
+		open var code: String { get }
+		open var message: String { get }
+	}
+	
+	public struct VideoIssues: OptionSet, @unchecked Sendable {
+		public init(rawValue: Int)
+		public static var noVideoReceived: VideoIssues { get }
+		public static var noVideoSent: VideoIssues { get }
+		public static var lowQuality: VideoIssues { get }
+		public static var freezes: VideoIssues { get }
+		public static var stoppedUnexpectedly: VideoIssues { get }
+		public static var darkVideoReceived: VideoIssues { get }
+		public static var audioVideoOutOfSync: VideoIssues { get }
+		public static var otherIssues: VideoIssues { get }
+	}
+	
+	@available(*, deprecated, message: "Use incomingVideoOptions and outgoingVideoOptions instead")
+	open class VideoOptions: NSObject {
+		public init(localVideoStreams: [LocalVideoStream])
+		open func dealloc()
+		open var localVideoStreams: [LocalVideoStream] { get }
+	}
+	
+	open class VideoStreamFormat: NSObject {
+		public init()
+		open func dealloc()
+		open var width: Int32
+		open var height: Int32
+		open var resolution: VideoStreamResolution
+		open var pixelFormat: VideoStreamPixelFormat
+		open var framesPerSecond: Float
+		open var stride1: Int32
+		open var stride2: Int32
+		open var stride3: Int32
+	}
+	
+	open class VideoStreamFormatChangedEventArgs: NSObject {
+		open func dealloc()
+		open var format: VideoStreamFormat { get }
+	}
+	
+	public enum VideoStreamPixelFormat: Int, @unchecked Sendable {
+		case bgrx = 0
+		case bgr24 = 1
+		case rgbx = 2
+		case rgba = 3
+		case nv12 = 4
+		case i420 = 5
+	}
+	
+	open class VideoStreamRenderer: NSObject {
+		open var size: StreamSize { get }
+		unowned (unsafe) open var delegate: RendererDelegate?
+		public init(localVideoStream: ACSLocalVideoStream) throws
+		public init(remoteVideoStream: ACSRemoteVideoStream) throws
+		open func createView() throws -> RendererView
+		open func createView(withOptions: ACSCreateViewOptions?) throws -> RendererView
+		open func dispose()
+	}
+	
+	public enum VideoStreamResolution: Int, @unchecked Sendable {
+		case unknown = 0
+		case p1080 = 1
+		case p720 = 2
+		case p540 = 3
+		case p480 = 4
+		case p360 = 5
+		case p270 = 6
+		case p240 = 7
+		case p108 = 8
+		case fullHd = 9
+		case hd = 10
+		case vga = 11
+		case qvga = 12
+	}
+	
+	public enum VideoStreamSourceType: Int, @unchecked Sendable {
+		case video = 1
+		case screenSharing = 2
+	}
+	
+	public enum VideoStreamState: Int, @unchecked Sendable {
+		case available = 0
+		case started = 1
+		case stopping = 2
+		case stopped = 3
+		case notAvailable = 4
+	}
+	
+	open class VideoStreamStateChangedEventArgs: NSObject {
+		open func dealloc()
+		open var stream: CallVideoStream { get }
+		open var message: String { get }
+	}
+	
+	public enum VideoStreamType: Int, @unchecked Sendable {
+		case remoteIncoming = 1
+		case rawIncoming = 2
+		case localOutgoing = 3
+		case virtualOutgoing = 4
+		case screenShareOutgoing = 5
+	}
+	
+	open class VirtualOutgoingVideoStream: RawOutgoingVideoStream {
+		public init(videoStreamOptions: RawOutgoingVideoStreamOptions)
+		weak open var delegate: VirtualOutgoingVideoStreamDelegate?
+		open var events: VirtualOutgoingVideoStreamEvents { get }
+	}
+	
+	public protocol VirtualOutgoingVideoStreamDelegate: NSObjectProtocol {
+		optional func virtualOutgoingVideoStream(_: VirtualOutgoingVideoStream, didChangeState: VideoStreamStateChangedEventArgs)
+		optional func virtualOutgoingVideoStream(_: VirtualOutgoingVideoStream, didChangeFormat: VideoStreamFormatChangedEventArgs)
+	}
+	
+	open class VirtualOutgoingVideoStreamEvents: NSObject {
+		open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?
+		open var onFormatChanged: ((VideoStreamFormatChangedEventArgs) -> Void)?
+		open func removeAll()
+	}
+	
+	public typealias char16_t = uint_least16_t
+	
+	public typealias char32_t = uint_least32_t
+	
+	public typealias swift_double2 = SIMD2<Double>
+	
+	public typealias swift_double3 = SIMD3<Double>
+	
+	public typealias swift_double4 = SIMD4<Double>
+	
+	public typealias swift_float2 = SIMD2<Float>
+	
+	public typealias swift_float3 = SIMD3<Float>
+	
+	public typealias swift_float4 = SIMD4<Float>
+	
+	public typealias swift_int2 = SIMD2<Int32>
+	
+	public typealias swift_int3 = SIMD3<Int32>
+	
+	public typealias swift_int4 = SIMD4<Int32>
+	
+	public typealias swift_uint2 = SIMD2<UInt32>
+	
+	public typealias swift_uint3 = SIMD3<UInt32>
+	
+	public typealias swift_uint4 = SIMD4<UInt32>
+}

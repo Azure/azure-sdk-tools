@@ -76,6 +76,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         #region push, reset, restore, and other asset repo implementations
         /// <summary>
+        /// Set the GitHandler exception mode.
+        ///
+        /// When false: unrecoverable git exceptions will print the error, and early exit
+        /// When true: unrecoverable git exceptions will log, then be rethrown for the Exception middleware to handle and return as a valid non-successful http response.
+        /// </summary>
+        /// <param name="throwOnException"></param>
+        public void SetStoreExceptionMode(bool throwOnException)
+        {
+            this.GitHandler.ThrowOnException = throwOnException;
+        }
+
+        /// <summary>
         /// Given a config, locate the cloned assets.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
@@ -392,13 +404,30 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private void SetOrigin(GitAssetsConfiguration config)
         {
             var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-            GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+
+            // in cases of failure to initialize a real git repo. we need to NOT run git remote set-url
+            if (config.IsAssetsRepoInitialized())
+            {
+                GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+            }
+            else
+            {
+                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+            }
         }
 
         private void HideOrigin(GitAssetsConfiguration config)
         {
             var publicOrigin = GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false);
-            GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+            
+            if (config.IsAssetsRepoInitialized())
+            {
+                GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+            }
+            else
+            {
+                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+            }
         }
 
         /// <summary>
@@ -593,7 +622,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
                         // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
                         GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
+                        GitHandler.Run("config --local core.safecrlf false", config);
                         GitHandler.Run($"sparse-checkout init", config);
+
                     }
                     catch (GitProcessException e)
                     {
@@ -807,13 +838,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // we deliberately do an extremely stripped down version parse and update here. We do this primarily to maintain
                 // any comments left in the assets.json though maintaining attribute ordering is also nice. To do this, we read all the file content, then
                 // simply replace the existing Tag value with the new one, then write the content back to the json file.
-
                 var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation.ToString())).Tag;
                 var content = await File.ReadAllTextAsync(config.AssetsJsonLocation.ToString());
                 if (String.IsNullOrWhiteSpace(currentSHA))
                 {
-                    string pattern = @"""Tag"":\s*""\s*""";
-                    content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);
+                    // we can only do the tag replacement if we HAVE a Tag property in the json
+                    if (content.Contains("\"Tag\""))
+                    {
+                        string pattern = @"""Tag"":\s*""\s*""";
+                        content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);
+                    }
+                    // if not we just have to reserialize the entire thing. This edge case is not worth the amount of extra code
+                    // necessary to maintain the cohesion of the tag file.
+                    else
+                    {
+                        content = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+                    }
                 }
                 else
                 {

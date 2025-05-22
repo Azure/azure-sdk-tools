@@ -33,7 +33,7 @@ var ErrNoPackages = errors.New("no packages found")
 type Pkg struct {
 	modulePath  string
 	c           content
-	diagnostics []Diagnostic
+	diagnostics []CodeDiagnostic
 	files       map[string][]byte
 	fs          *token.FileSet
 	p           *ast.Package
@@ -56,10 +56,15 @@ type Pkg struct {
 //   - modulePath is the import path of the module containing the package
 //   - moduleRoot is the root directory of the module on disk i.e., the directory containing its go.mod
 func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
+	// ensure that all directories are using the same path separator
+	// character else the below call to strings.Cut() will fail
+	dir = filepath.ToSlash(dir)
+	moduleRoot = filepath.ToSlash(moduleRoot)
+
 	pk := &Pkg{
 		modulePath:  modulePath,
 		c:           newContent(),
-		diagnostics: []Diagnostic{},
+		diagnostics: []CodeDiagnostic{},
 		types:       map[string]typeDef{},
 	}
 	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
@@ -156,9 +161,9 @@ func (p *Pkg) indexFile(f *ast.File) {
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
 				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t, imports)
 				if in.Sealed {
-					p.diagnostics = append(p.diagnostics, Diagnostic{
+					p.diagnostics = append(p.diagnostics, CodeDiagnostic{
 						TargetID: in.ID(),
-						Level:    DiagnosticLevelInfo,
+						Level:    CodeDiagnosticLevelInfo,
 						Text:     sealedInterface,
 					})
 				}
@@ -196,8 +201,8 @@ func (p *Pkg) indexFile(f *ast.File) {
 				for _, t := range s.AnonymousFields {
 					// if t contains "." it must be exported
 					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {
-						p.diagnostics = append(p.diagnostics, Diagnostic{
-							Level:    DiagnosticLevelError,
+						p.diagnostics = append(p.diagnostics, CodeDiagnostic{
+							Level:    CodeDiagnosticLevelError,
 							TargetID: s.ID(),
 							Text:     embedsUnexportedStruct + t,
 						})
@@ -265,10 +270,10 @@ func (pkg Pkg) translateType(oriVal string, imports map[string]string) string {
 				result += "..."
 				now = ""
 			} else {
-				now = now + "."
+				now += "."
 			}
 		default:
-			now = now + string(ch)
+			now += string(ch)
 		}
 	}
 	if now != "" {
@@ -325,15 +330,18 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	if def != (typeDef{}) {
 		a.Package.types[a.Name] = def
 	}
-	level := DiagnosticLevelInfo
+	level := CodeDiagnosticLevelInfo
 	originalName := a.QualifiedName
 	// if the definition is in the same module as the alias, strip the module path from the diagnostic message
 	if _, after, found := strings.Cut(a.QualifiedName, a.Package.modulePath); found {
 		// after is e.g. "/internal/log.Event" or ".StatusType"
 		originalName = after[1:]
 	} else {
-		level = DiagnosticLevelWarning
+		level = CodeDiagnosticLevelWarning
 	}
+	// Index() may have recorded the alias as a SimpleType we're about to replace with something more
+	// detailed, so we remove that SimpleType to avoid displaying it as a duplicate type in the review
+	delete(a.Package.c.SimpleTypes, a.Name)
 	var t TokenMaker
 	if def.n == nil || def.p == nil {
 		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)
@@ -365,8 +373,8 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 				}
 
 				// no alias, add a diagnostic
-				a.Package.diagnostics = append(a.Package.diagnostics, Diagnostic{
-					Level:    DiagnosticLevelError,
+				a.Package.diagnostics = append(a.Package.diagnostics, CodeDiagnostic{
+					Level:    CodeDiagnosticLevelError,
 					TargetID: t.ID(),
 					Text:     missingAliasFor + fieldTypeName,
 				})
@@ -381,7 +389,7 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	}
 
 	if t != nil {
-		a.Package.diagnostics = append(a.Package.diagnostics, Diagnostic{
+		a.Package.diagnostics = append(a.Package.diagnostics, CodeDiagnostic{
 			Level:    level,
 			TargetID: t.ID(),
 			Text:     aliasFor + originalName,

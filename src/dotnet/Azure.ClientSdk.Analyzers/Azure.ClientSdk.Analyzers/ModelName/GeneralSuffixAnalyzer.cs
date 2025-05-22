@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -17,33 +16,14 @@ namespace Azure.ClientSdk.Analyzers.ModelName
     {
         private static readonly ImmutableHashSet<string> reservedNames = ImmutableHashSet.Create("ErrorResponse");
 
-        // Avoid to use suffixes "Request(s)", "Parameter(s)", "Option(s)", "Response(s)", "Collection"
-        private static readonly string[] generalSuffixes = new string[] { "Request", "Requests", "Response", "Responses", "Parameter", "Parameters", "Option", "Options", "Collection" };
+        // Avoid to use suffixes "Request(s)", "Parameter(s)", "Option", "Response(s)", "Collection"
+        private static readonly string[] generalSuffixes = new string[] { "Request", "Requests", "Response", "Responses", "Parameter", "Parameters", "Option", "Collection" };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Descriptors.AZC0030); } }
 
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context)
         {
             if (reservedNames.Contains(symbol.Name))
-                return true;
-
-            // skip property bag classes which have `Options` suffix and don't have serialization
-            if (symbol.Name.EndsWith("Options") && !SupportSerialization(symbol))
-                return true;
-
-            return false;
-        }
-
-        private bool SupportSerialization(INamedTypeSymbol symbol)
-        {
-            // if it has serialization method: `IUtf8JsonSerializable.Write`, e.g. ": IUtf8JsonSerializable"
-            if (symbol.Interfaces.Any(i => i.Name is "IUtf8JsonSerializable"))
-                return true;
-
-            // if it has deserialization method: static <T> Deserialize<T>(JsonElement element)
-            if (symbol.GetMembers($"Deserialize{symbol.Name}").Any(m => m is IMethodSymbol methodSymbol &&
-                methodSymbol is { IsStatic: true, ReturnType: INamedTypeSymbol symbol, Parameters.Length: 1 } &&
-                methodSymbol.Parameters[0].Type.Name is "JsonElement"))
                 return true;
 
             return false;
@@ -54,8 +34,9 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         {
             var name = typeSymbol.Name;
             var suggestedName = GetSuggestedName(name, suffix);
+            var additionalMessage = $"Suggest to rename it to {suggestedName} or any other appropriate name.";
             return Diagnostic.Create(Descriptors.AZC0030, context.Symbol.Locations[0],
-                new Dictionary<string, string> { { "SuggestedName", suggestedName } }.ToImmutableDictionary(), name, suffix, suggestedName);
+                new Dictionary<string, string> { { "SuggestedName", suggestedName } }.ToImmutableDictionary(), name, suffix, additionalMessage);
         }
 
         private string GetSuggestedName(string originalName, string suffix)
@@ -65,7 +46,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             {
                 "Request" or "Requests" => $"'{nameWithoutSuffix}Content'",
                 "Parameter" or "Parameters" => $"'{nameWithoutSuffix}Content' or '{nameWithoutSuffix}Patch'",
-                "Option" or "Options" => $"'{nameWithoutSuffix}Config'",
+                "Option" => $"'{nameWithoutSuffix}Config'",
                 "Response" => $"'{nameWithoutSuffix}Result'",
                 "Responses" => $"'{nameWithoutSuffix}Results'",
                 "Collection" => $"'{nameWithoutSuffix}Group' or '{nameWithoutSuffix}List'",

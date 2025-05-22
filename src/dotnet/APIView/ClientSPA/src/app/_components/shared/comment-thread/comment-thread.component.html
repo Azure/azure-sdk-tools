@@ -20,7 +20,7 @@
                 <div *ngIf="comment.isInEditMode" class="mt-2 p-2 edit-editor-container">
                     <app-editor [content]="comment.commentText" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>
                     <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
-                        <button type="button" class="btn btn-sm btn-outline-success editor-action-btn" [disabled]="getEditorContent(comment.id).length === 0" (click)="saveCommentAction($event)">Save</button>
+                        <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="getEditorContent(comment.id).length === 0" (click)="saveCommentAction($event)">Save</button>
                         <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
                     </div>
                 </div>
@@ -38,7 +38,7 @@
                         </ng-template>
                     </p-menu>
                     <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
-                        <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active">{{comment.upvotes.length}}</span>
+                        <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
                         <ng-template #noUpVotes>
                             <span class="bi bi-hand-thumbs-up"></span>
                         </ng-template>
@@ -53,7 +53,7 @@
     <div *ngIf="(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom mt-2 p-2 reply-editor-container">
         <app-editor editorId="replyEditor" [style]="{ width: '100%'}"></app-editor>
         <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
-            <button type="button" class="btn btn-sm btn-outline-success editor-action-btn" [disabled]="getEditorContent('replyEditor').length === 0" (click)="saveCommentAction($event)">Add comment</button>
+            <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="getEditorContent('replyEditor').length === 0" (click)="saveCommentAction($event)">Add comment</button>
             <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
             <button 
                 type="button" 
@@ -62,7 +62,11 @@
                 data-bs-toggle="button" 
                 [attr.aria-pressed]="allowAnyOneToResolve" 
                 (click)="toggleAllowAnyOneToResolve()">
-                Allow Anyone To Resolve
+                <i *ngIf="allowAnyOneToResolve; else resolutionLocked" class="bi bi-check-square"></i>
+                <ng-template #resolutionLocked>
+                    <i class="bi bi-square"></i>
+                </ng-template>
+                Allow anyone to resolve
             </button>
         </div>
     </div>

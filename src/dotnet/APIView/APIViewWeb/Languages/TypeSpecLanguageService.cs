@@ -3,10 +3,8 @@
 
 using System;
 using System.IO;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
@@ -21,7 +19,7 @@ namespace APIViewWeb
 
         public override string Name { get; } = "TypeSpec";
         public override string [] Extensions { get; } = { ".tsp", ".cadl" };
-        public override string VersionString { get; } = "0";
+        public override string VersionString { get; } = "0.5.0";
         public override string ProcessName => throw new NotImplementedException();
 
         public TypeSpecLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
@@ -32,7 +30,7 @@ namespace APIViewWeb
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            return await CodeFile.DeserializeAsync(stream, true, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
+            return await CodeFile.DeserializeAsync(stream);
         }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
@@ -40,6 +38,11 @@ namespace APIViewWeb
             throw new NotImplementedException();
         }
         public override bool CanUpdate(string versionString)
+        {
+            return false;
+        }
+
+        public override bool CanConvert(string versionString)
         {
             return false;
         }

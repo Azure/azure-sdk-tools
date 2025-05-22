@@ -8,6 +8,7 @@
 
 class NodeIndex:
     """Maintains name to navigation ID"""
+
     def __init__(self):
         self.index = {}
 
@@ -24,4 +25,3 @@ class NodeIndex:
         if node and hasattr(node, "namespace_id"):
             return node.namespace_id
         return None
-

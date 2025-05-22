@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,6 +24,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Attachment = Microsoft.TeamFoundation.Build.WebApi.Attachment;
 using Timeline = Microsoft.TeamFoundation.Build.WebApi.Timeline;
 
 namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
@@ -898,6 +900,70 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             }
 
             return build;
+        }
+
+        internal async Task AddAdditionalBuildTagsAsync(string account, Guid projectId, int buildId)
+        {
+            this.logger.LogInformation("Processing build {BuildId} for AdditionalTags attachments", buildId);
+
+            const string attachmentType = "AdditionalTags";
+
+            HashSet<string> additionalTags = [];
+
+            List<Attachment> attachments = await this.buildClient.GetAttachmentsAsync(projectId, buildId, attachmentType);
+
+            IEnumerable<string> attachmentLinks = attachments
+                .Select(x => x.Links?.Links?.TryGetValue("self", out var value) == true ? value : null)
+                .OfType<ReferenceLink>()
+                .Select(x => x.Href)
+                .Where(x => !string.IsNullOrEmpty(x));
+
+            foreach (string attachmentLink in attachmentLinks)
+            {
+                Match match = Regex.Match(attachmentLink, @"https://dev.azure.com/[\w-]+/[\w-]+/_apis/build/builds/\d+/(?<timelineId>[\w-]+)/(?<recordId>[\w-]+)/attachments/[\w\.]+/(?<name>.+)");
+
+                if (!match.Success ||
+                    !Guid.TryParse(match.Groups["timelineId"].Value, out Guid timelineId) ||
+                    !Guid.TryParse(match.Groups["recordId"].Value, out Guid recordId))
+                {
+                    // retries won't help here, so we log and continue
+                    this.logger.LogWarning("Unable to parse attachment link {AttachmentLink}", attachmentLink);
+                    continue;
+                }
+
+                string name = match.Groups["name"].Value;
+
+                this.logger.LogInformation("Downloading AdditionalTags attachment {TimelineId}/{RecordId}/{Name} for build {BuildId}", timelineId, recordId, name, buildId);
+
+                using Stream contentStream = await this.buildClient.GetAttachmentAsync(
+                    projectId,
+                    buildId,
+                    timelineId,
+                    recordId,
+                    attachmentType,
+                    match.Groups["name"].Value);
+
+                using StreamReader reader = new (contentStream);
+                var content = reader.ReadToEnd();
+
+                try
+                {
+                    string[] tags = JsonConvert.DeserializeObject<string[]>(content);
+                    additionalTags.UnionWith(tags);
+                }
+                catch(Exception ex)
+                {
+                    // retries won't help here, so we log and continue
+                    this.logger.LogError(ex, "Error parsing AdditionalTags attachment {TimelineId}/{RecordId}/{Name} for build {BuildId}", timelineId, recordId, name, buildId);
+                    continue;
+                }
+            }
+
+            if (additionalTags.Count != 0)
+            {
+                this.logger.LogInformation("Adding tags {Tags} to build {BuildId}", JsonConvert.SerializeObject(additionalTags), buildId);
+                await this.buildClient.AddBuildTagsAsync(additionalTags, projectId, buildId);
+            }
         }
     }
 }

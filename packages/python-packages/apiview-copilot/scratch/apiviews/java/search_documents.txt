@@ -1,0 +1,467 @@
+maven { 
+	parent : com.azure:azure-client-sdk-parent:1.7.0 
+	properties : com.azure:azure-search-documents-search:1.0.0-beta.1 
+	name : Microsoft Azure SDK for Search 
+	description : This package contains Microsoft Azure Search client library. 
+	dependencies { 
+		// compile scope 
+		com.azure:azure-core 1.55.3 
+		com.azure:azure-core-http-netty 1.15.11 
+	} 
+} 
+module com.azure.search.documents.search { 
+	requires transitive com.azure.core;
+	exports com.azure.search.documents.search;
+	exports com.azure.search.documents.search.models;
+	opens com.azure.search.documents.search.models to com.azure.core;
+} 
+package com.azure.search.documents.search { 
+	@ServiceClient(builder  =  SearchClientBuilder, isAsync  =  true) 
+	public final class SearchAsyncClient { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		// Service Methods: 
+		@Generated public Mono<LookupDocument> get(String key, String indexName) 
+		@Generated public Mono<LookupDocument> get(String key, String indexName, List<String> selectedFields) 
+		@Generated public Mono<AutocompleteResult> autocompleteGet(String searchText, String suggesterName, String indexName) 
+		@Generated public Mono<AutocompleteResult> autocompleteGet(String searchText, String suggesterName, String indexName, AutocompleteMode autocompleteMode, String filter, Boolean useFuzzyMatching, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> searchFields, Integer top) 
+		@Generated public Mono<Response<BinaryData>> autocompleteGetWithResponse(String searchText, String suggesterName, String indexName, RequestOptions requestOptions) 
+		@Generated public Mono<AutocompleteResult> autocompletePost(String indexName, AutocompleteRequest autocompleteRequest) 
+		@Generated public Mono<Response<BinaryData>> autocompletePostWithResponse(String indexName, BinaryData autocompleteRequest, RequestOptions requestOptions) 
+		@Generated public Mono<Integer> count(String indexName) 
+		@Generated public Mono<Response<BinaryData>> countWithResponse(String indexName, RequestOptions requestOptions) 
+		@Generated public Mono<IndexDocumentsResult> index(String indexName, IndexBatch batch) 
+		@Generated public Mono<Response<BinaryData>> indexWithResponse(String indexName, BinaryData batch, RequestOptions requestOptions) 
+		@Generated public Mono<SearchDocumentsResult> searchGet(String indexName) 
+		@Generated public Mono<SearchDocumentsResult> searchGet(String indexName, String searchText, Boolean includeTotalResultCount, List<String> facets, String filter, List<String> highlightFields, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, QueryType queryType, List<String> scoringParameters, String scoringProfile, List<String> searchFields, SearchMode searchMode, ScoringStatistics scoringStatistics, String sessionId, List<String> select, Integer skip, Integer top, String semanticConfiguration, SemanticErrorMode semanticErrorHandling, Integer semanticMaxWaitInMilliseconds, QueryAnswerType answers, QueryCaptionType captions, String semanticQuery) 
+		@Generated public Mono<Response<BinaryData>> searchGetWithResponse(String indexName, RequestOptions requestOptions) 
+		@Generated public Mono<SearchDocumentsResult> searchPost(String indexName, SearchRequest searchRequest) 
+		@Generated public Mono<Response<BinaryData>> searchPostWithResponse(String indexName, BinaryData searchRequest, RequestOptions requestOptions) 
+		@Generated public Mono<SuggestDocumentsResult> suggestGet(String searchText, String suggesterName, String indexName) 
+		@Generated public Mono<SuggestDocumentsResult> suggestGet(String searchText, String suggesterName, String indexName, String filter, Boolean useFuzzyMatching, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, List<String> searchFields, List<String> select, Integer top) 
+		@Generated public Mono<Response<BinaryData>> suggestGetWithResponse(String searchText, String suggesterName, String indexName, RequestOptions requestOptions) 
+		@Generated public Mono<SuggestDocumentsResult> suggestPost(String indexName, SuggestRequest suggestRequest) 
+		@Generated public Mono<Response<BinaryData>> suggestPostWithResponse(String indexName, BinaryData suggestRequest, RequestOptions requestOptions) 
+		@Generated public Mono<Response<BinaryData>> getWithResponse(String key, String indexName, RequestOptions requestOptions) 
+	} 
+	@ServiceClient(builder  =  SearchClientBuilder) 
+	public final class SearchClient { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		// Service Methods: 
+		@Generated public LookupDocument get(String key, String indexName) 
+		@Generated public LookupDocument get(String key, String indexName, List<String> selectedFields) 
+		@Generated public AutocompleteResult autocompleteGet(String searchText, String suggesterName, String indexName) 
+		@Generated public AutocompleteResult autocompleteGet(String searchText, String suggesterName, String indexName, AutocompleteMode autocompleteMode, String filter, Boolean useFuzzyMatching, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> searchFields, Integer top) 
+		@Generated public Response<BinaryData> autocompleteGetWithResponse(String searchText, String suggesterName, String indexName, RequestOptions requestOptions) 
+		@Generated public AutocompleteResult autocompletePost(String indexName, AutocompleteRequest autocompleteRequest) 
+		@Generated public Response<BinaryData> autocompletePostWithResponse(String indexName, BinaryData autocompleteRequest, RequestOptions requestOptions) 
+		@Generated public int count(String indexName) 
+		@Generated public Response<BinaryData> countWithResponse(String indexName, RequestOptions requestOptions) 
+		@Generated public IndexDocumentsResult index(String indexName, IndexBatch batch) 
+		@Generated public Response<BinaryData> indexWithResponse(String indexName, BinaryData batch, RequestOptions requestOptions) 
+		@Generated public SearchDocumentsResult searchGet(String indexName) 
+		@Generated public SearchDocumentsResult searchGet(String indexName, String searchText, Boolean includeTotalResultCount, List<String> facets, String filter, List<String> highlightFields, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, QueryType queryType, List<String> scoringParameters, String scoringProfile, List<String> searchFields, SearchMode searchMode, ScoringStatistics scoringStatistics, String sessionId, List<String> select, Integer skip, Integer top, String semanticConfiguration, SemanticErrorMode semanticErrorHandling, Integer semanticMaxWaitInMilliseconds, QueryAnswerType answers, QueryCaptionType captions, String semanticQuery) 
+		@Generated public Response<BinaryData> searchGetWithResponse(String indexName, RequestOptions requestOptions) 
+		@Generated public SearchDocumentsResult searchPost(String indexName, SearchRequest searchRequest) 
+		@Generated public Response<BinaryData> searchPostWithResponse(String indexName, BinaryData searchRequest, RequestOptions requestOptions) 
+		@Generated public SuggestDocumentsResult suggestGet(String searchText, String suggesterName, String indexName) 
+		@Generated public SuggestDocumentsResult suggestGet(String searchText, String suggesterName, String indexName, String filter, Boolean useFuzzyMatching, String highlightPostTag, String highlightPreTag, Double minimumCoverage, List<String> orderBy, List<String> searchFields, List<String> select, Integer top) 
+		@Generated public Response<BinaryData> suggestGetWithResponse(String searchText, String suggesterName, String indexName, RequestOptions requestOptions) 
+		@Generated public SuggestDocumentsResult suggestPost(String indexName, SuggestRequest suggestRequest) 
+		@Generated public Response<BinaryData> suggestPostWithResponse(String indexName, BinaryData suggestRequest, RequestOptions requestOptions) 
+		@Generated public Response<BinaryData> getWithResponse(String key, String indexName, RequestOptions requestOptions) 
+	} 
+	@ServiceClientBuilder(serviceClients  =  { SearchClient, SearchAsyncClient }) 
+	public final class SearchClientBuilder implements HttpTrait<SearchClientBuilder> , ConfigurationTrait<SearchClientBuilder> , TokenCredentialTrait<SearchClientBuilder> , KeyCredentialTrait<SearchClientBuilder> , EndpointTrait<SearchClientBuilder> { 
+		@Generated public SearchClientBuilder() 
+		@Generated @Override public SearchClientBuilder addPolicy(HttpPipelinePolicy customPolicy) 
+		@Generated @Override public SearchClientBuilder clientOptions(ClientOptions clientOptions) 
+		@Generated @Override public SearchClientBuilder configuration(Configuration configuration) 
+		@Generated @Override public SearchClientBuilder credential(TokenCredential tokenCredential) 
+		@Generated @Override public SearchClientBuilder credential(KeyCredential keyCredential) 
+		@Generated @Override public SearchClientBuilder endpoint(String endpoint) 
+		@Generated @Override public SearchClientBuilder httpClient(HttpClient httpClient) 
+		@Generated @Override public SearchClientBuilder httpLogOptions(HttpLogOptions httpLogOptions) 
+		@Generated @Override public SearchClientBuilder pipeline(HttpPipeline pipeline) 
+		@Generated @Override public SearchClientBuilder retryOptions(RetryOptions retryOptions) 
+		@Generated public SearchClientBuilder retryPolicy(RetryPolicy retryPolicy) 
+		@Generated public SearchClientBuilder serviceVersion(SearchServiceVersion serviceVersion) 
+		@Generated public SearchAsyncClient buildAsyncClient() 
+		@Generated public SearchClient buildClient() 
+	} 
+	public enum SearchServiceVersion implements ServiceVersion { 
+		V2024_07_01("2024-07-01"); 
+		public static SearchServiceVersion getLatest(// returns V2024_07_01 ) 
+		@Override public String getVersion() 
+	} 
+} 
+package com.azure.search.documents.search.models { 
+	@Immutable
+	public final class AutocompleteItem implements JsonSerializable<AutocompleteItem> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public static AutocompleteItem fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getQueryPlusText() 
+		@Generated public String getText() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class AutocompleteMode extends ExpandableStringEnum<AutocompleteMode> { 
+		@Generated public static final AutocompleteMode ONE_TERM = fromString("oneTerm"); 
+		@Generated public static final AutocompleteMode TWO_TERMS = fromString("twoTerms"); 
+		@Generated public static final AutocompleteMode ONE_TERM_WITH_CONTEXT = fromString("oneTermWithContext"); 
+		@Deprecated @Generated public AutocompleteMode() 
+		@Generated public static AutocompleteMode fromString(String name) 
+		@Generated public static Collection<AutocompleteMode> values() 
+	} 
+	@Fluent
+	public final class AutocompleteRequest implements JsonSerializable<AutocompleteRequest> { 
+		@Generated public AutocompleteRequest(String searchText, String suggesterName) 
+		@Generated public AutocompleteMode getAutocompleteMode() 
+		@Generated public AutocompleteRequest setAutocompleteMode(AutocompleteMode autocompleteMode) 
+		@Generated public String getFilter() 
+		@Generated public AutocompleteRequest setFilter(String filter) 
+		@Generated public static AutocompleteRequest fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getHighlightPostTag() 
+		@Generated public AutocompleteRequest setHighlightPostTag(String highlightPostTag) 
+		@Generated public String getHighlightPreTag() 
+		@Generated public AutocompleteRequest setHighlightPreTag(String highlightPreTag) 
+		@Generated public Double getMinimumCoverage() 
+		@Generated public AutocompleteRequest setMinimumCoverage(Double minimumCoverage) 
+		@Generated public String getSearchFields() 
+		@Generated public AutocompleteRequest setSearchFields(String searchFields) 
+		@Generated public String getSearchText() 
+		@Generated public String getSuggesterName() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+		@Generated public Integer getTop() 
+		@Generated public AutocompleteRequest setTop(Integer top) 
+		@Generated public Boolean isUseFuzzyMatching() 
+		@Generated public AutocompleteRequest setUseFuzzyMatching(Boolean useFuzzyMatching) 
+	} 
+	@Immutable
+	public final class AutocompleteResult implements JsonSerializable<AutocompleteResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Double getCoverage() 
+		@Generated public static AutocompleteResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public List<AutocompleteItem> getResults() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Immutable
+	public final class FacetResult implements JsonSerializable<FacetResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public Long getCount() 
+		@Generated public static FacetResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Fluent
+	public final class IndexAction implements JsonSerializable<IndexAction> { 
+		@Generated public IndexAction() 
+		@Generated public IndexActionType getActionType() 
+		@Generated public IndexAction setActionType(IndexActionType actionType) 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public IndexAction setAdditionalProperties(Map<String, BinaryData> additionalProperties) 
+		@Generated public static IndexAction fromJson(JsonReader jsonReader) throws IOException
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class IndexActionType extends ExpandableStringEnum<IndexActionType> { 
+		@Generated public static final IndexActionType UPLOAD = fromString("upload"); 
+		@Generated public static final IndexActionType MERGE = fromString("merge"); 
+		@Generated public static final IndexActionType MERGE_OR_UPLOAD = fromString("mergeOrUpload"); 
+		@Generated public static final IndexActionType DELETE = fromString("delete"); 
+		@Deprecated @Generated public IndexActionType() 
+		@Generated public static IndexActionType fromString(String name) 
+		@Generated public static Collection<IndexActionType> values() 
+	} 
+	@Immutable
+	public final class IndexBatch implements JsonSerializable<IndexBatch> { 
+		@Generated public IndexBatch(List<IndexAction> actions) 
+		@Generated public List<IndexAction> getActions() 
+		@Generated public static IndexBatch fromJson(JsonReader jsonReader) throws IOException
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Immutable
+	public final class IndexDocumentsResult implements JsonSerializable<IndexDocumentsResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public static IndexDocumentsResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public List<IndexingResult> getResults() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Immutable
+	public final class IndexingResult implements JsonSerializable<IndexingResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public String getErrorMessage() 
+		@Generated public static IndexingResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getKey() 
+		@Generated public int getStatusCode() 
+		@Generated public boolean isSucceeded() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Immutable
+	public final class LookupDocument implements JsonSerializable<LookupDocument> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public static LookupDocument fromJson(JsonReader jsonReader) throws IOException
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Immutable
+	public final class QueryAnswerResult implements JsonSerializable<QueryAnswerResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public static QueryAnswerResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getHighlights() 
+		@Generated public String getKey() 
+		@Generated public Double getScore() 
+		@Generated public String getText() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class QueryAnswerType extends ExpandableStringEnum<QueryAnswerType> { 
+		@Generated public static final QueryAnswerType NONE = fromString("none"); 
+		@Generated public static final QueryAnswerType EXTRACTIVE = fromString("extractive"); 
+		@Deprecated @Generated public QueryAnswerType() 
+		@Generated public static QueryAnswerType fromString(String name) 
+		@Generated public static Collection<QueryAnswerType> values() 
+	} 
+	@Immutable
+	public final class QueryCaptionResult implements JsonSerializable<QueryCaptionResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public static QueryCaptionResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getHighlights() 
+		@Generated public String getText() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class QueryCaptionType extends ExpandableStringEnum<QueryCaptionType> { 
+		@Generated public static final QueryCaptionType NONE = fromString("none"); 
+		@Generated public static final QueryCaptionType EXTRACTIVE = fromString("extractive"); 
+		@Deprecated @Generated public QueryCaptionType() 
+		@Generated public static QueryCaptionType fromString(String name) 
+		@Generated public static Collection<QueryCaptionType> values() 
+	} 
+	public final class QueryType extends ExpandableStringEnum<QueryType> { 
+		@Generated public static final QueryType SIMPLE = fromString("simple"); 
+		@Generated public static final QueryType FULL = fromString("full"); 
+		@Generated public static final QueryType SEMANTIC = fromString("semantic"); 
+		@Deprecated @Generated public QueryType() 
+		@Generated public static QueryType fromString(String name) 
+		@Generated public static Collection<QueryType> values() 
+	} 
+	public final class ScoringStatistics extends ExpandableStringEnum<ScoringStatistics> { 
+		@Generated public static final ScoringStatistics LOCAL = fromString("local"); 
+		@Generated public static final ScoringStatistics GLOBAL = fromString("global"); 
+		@Deprecated @Generated public ScoringStatistics() 
+		@Generated public static ScoringStatistics fromString(String name) 
+		@Generated public static Collection<ScoringStatistics> values() 
+	} 
+	@Immutable
+	public final class SearchDocumentsResult implements JsonSerializable<SearchDocumentsResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public List<QueryAnswerResult> getAnswers() 
+		@Generated public Long getCount() 
+		@Generated public Double getCoverage() 
+		@Generated public Map<String, List<FacetResult>> getFacets() 
+		@Generated public static SearchDocumentsResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getNextLink() 
+		@Generated public SearchRequest getNextPageParameters() 
+		@Generated public List<SearchResult> getResults() 
+		@Generated public SemanticErrorReason getSemanticPartialResponseReason() 
+		@Generated public SemanticSearchResultsType getSemanticPartialResponseType() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class SearchMode extends ExpandableStringEnum<SearchMode> { 
+		@Generated public static final SearchMode ANY = fromString("any"); 
+		@Generated public static final SearchMode ALL = fromString("all"); 
+		@Deprecated @Generated public SearchMode() 
+		@Generated public static SearchMode fromString(String name) 
+		@Generated public static Collection<SearchMode> values() 
+	} 
+	@Fluent
+	public final class SearchRequest implements JsonSerializable<SearchRequest> { 
+		@Generated public SearchRequest() 
+		@Generated public QueryAnswerType getAnswers() 
+		@Generated public SearchRequest setAnswers(QueryAnswerType answers) 
+		@Generated public QueryCaptionType getCaptions() 
+		@Generated public SearchRequest setCaptions(QueryCaptionType captions) 
+		@Generated public List<String> getFacets() 
+		@Generated public SearchRequest setFacets(List<String> facets) 
+		@Generated public String getFilter() 
+		@Generated public SearchRequest setFilter(String filter) 
+		@Generated public static SearchRequest fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getHighlightFields() 
+		@Generated public SearchRequest setHighlightFields(String highlightFields) 
+		@Generated public String getHighlightPostTag() 
+		@Generated public SearchRequest setHighlightPostTag(String highlightPostTag) 
+		@Generated public String getHighlightPreTag() 
+		@Generated public SearchRequest setHighlightPreTag(String highlightPreTag) 
+		@Generated public Boolean isIncludeTotalResultCount() 
+		@Generated public SearchRequest setIncludeTotalResultCount(Boolean includeTotalResultCount) 
+		@Generated public Double getMinimumCoverage() 
+		@Generated public SearchRequest setMinimumCoverage(Double minimumCoverage) 
+		@Generated public String getOrderBy() 
+		@Generated public SearchRequest setOrderBy(String orderBy) 
+		@Generated public QueryType getQueryType() 
+		@Generated public SearchRequest setQueryType(QueryType queryType) 
+		@Generated public List<String> getScoringParameters() 
+		@Generated public SearchRequest setScoringParameters(List<String> scoringParameters) 
+		@Generated public String getScoringProfile() 
+		@Generated public SearchRequest setScoringProfile(String scoringProfile) 
+		@Generated public ScoringStatistics getScoringStatistics() 
+		@Generated public SearchRequest setScoringStatistics(ScoringStatistics scoringStatistics) 
+		@Generated public String getSearchFields() 
+		@Generated public SearchRequest setSearchFields(String searchFields) 
+		@Generated public SearchMode getSearchMode() 
+		@Generated public SearchRequest setSearchMode(SearchMode searchMode) 
+		@Generated public String getSearchText() 
+		@Generated public SearchRequest setSearchText(String searchText) 
+		@Generated public String getSelect() 
+		@Generated public SearchRequest setSelect(String select) 
+		@Generated public String getSemanticConfiguration() 
+		@Generated public SearchRequest setSemanticConfiguration(String semanticConfiguration) 
+		@Generated public SemanticErrorMode getSemanticErrorHandling() 
+		@Generated public SearchRequest setSemanticErrorHandling(SemanticErrorMode semanticErrorHandling) 
+		@Generated public Integer getSemanticMaxWaitInMilliseconds() 
+		@Generated public SearchRequest setSemanticMaxWaitInMilliseconds(Integer semanticMaxWaitInMilliseconds) 
+		@Generated public String getSemanticQuery() 
+		@Generated public SearchRequest setSemanticQuery(String semanticQuery) 
+		@Generated public String getSessionId() 
+		@Generated public SearchRequest setSessionId(String sessionId) 
+		@Generated public Integer getSkip() 
+		@Generated public SearchRequest setSkip(Integer skip) 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+		@Generated public Integer getTop() 
+		@Generated public SearchRequest setTop(Integer top) 
+		@Generated public VectorFilterMode getVectorFilterMode() 
+		@Generated public SearchRequest setVectorFilterMode(VectorFilterMode vectorFilterMode) 
+		@Generated public List<VectorQuery> getVectorQueries() 
+		@Generated public SearchRequest setVectorQueries(List<VectorQuery> vectorQueries) 
+	} 
+	@Immutable
+	public final class SearchResult implements JsonSerializable<SearchResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public List<QueryCaptionResult> getCaptions() 
+		@Generated public static SearchResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public Map<String, List<String>> getHighlights() 
+		@Generated public Double getRerankerScore() 
+		@Generated public double getScore() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class SemanticErrorMode extends ExpandableStringEnum<SemanticErrorMode> { 
+		@Generated public static final SemanticErrorMode PARTIAL = fromString("partial"); 
+		@Generated public static final SemanticErrorMode FAIL = fromString("fail"); 
+		@Deprecated @Generated public SemanticErrorMode() 
+		@Generated public static SemanticErrorMode fromString(String name) 
+		@Generated public static Collection<SemanticErrorMode> values() 
+	} 
+	public final class SemanticErrorReason extends ExpandableStringEnum<SemanticErrorReason> { 
+		@Generated public static final SemanticErrorReason MAX_WAIT_EXCEEDED = fromString("maxWaitExceeded"); 
+		@Generated public static final SemanticErrorReason CAPACITY_OVERLOADED = fromString("capacityOverloaded"); 
+		@Generated public static final SemanticErrorReason TRANSIENT = fromString("transient"); 
+		@Deprecated @Generated public SemanticErrorReason() 
+		@Generated public static SemanticErrorReason fromString(String name) 
+		@Generated public static Collection<SemanticErrorReason> values() 
+	} 
+	public final class SemanticSearchResultsType extends ExpandableStringEnum<SemanticSearchResultsType> { 
+		@Generated public static final SemanticSearchResultsType BASE_RESULTS = fromString("baseResults"); 
+		@Generated public static final SemanticSearchResultsType RERANKED_RESULTS = fromString("rerankedResults"); 
+		@Deprecated @Generated public SemanticSearchResultsType() 
+		@Generated public static SemanticSearchResultsType fromString(String name) 
+		@Generated public static Collection<SemanticSearchResultsType> values() 
+	} 
+	@Immutable
+	public final class SuggestDocumentsResult implements JsonSerializable<SuggestDocumentsResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Double getCoverage() 
+		@Generated public static SuggestDocumentsResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public List<SuggestResult> getResults() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	@Fluent
+	public final class SuggestRequest implements JsonSerializable<SuggestRequest> { 
+		@Generated public SuggestRequest(String searchText, String suggesterName) 
+		@Generated public String getFilter() 
+		@Generated public SuggestRequest setFilter(String filter) 
+		@Generated public static SuggestRequest fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getHighlightPostTag() 
+		@Generated public SuggestRequest setHighlightPostTag(String highlightPostTag) 
+		@Generated public String getHighlightPreTag() 
+		@Generated public SuggestRequest setHighlightPreTag(String highlightPreTag) 
+		@Generated public Double getMinimumCoverage() 
+		@Generated public SuggestRequest setMinimumCoverage(Double minimumCoverage) 
+		@Generated public String getOrderBy() 
+		@Generated public SuggestRequest setOrderBy(String orderBy) 
+		@Generated public String getSearchFields() 
+		@Generated public SuggestRequest setSearchFields(String searchFields) 
+		@Generated public String getSearchText() 
+		@Generated public String getSelect() 
+		@Generated public SuggestRequest setSelect(String select) 
+		@Generated public String getSuggesterName() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+		@Generated public Integer getTop() 
+		@Generated public SuggestRequest setTop(Integer top) 
+		@Generated public Boolean isUseFuzzyMatching() 
+		@Generated public SuggestRequest setUseFuzzyMatching(Boolean useFuzzyMatching) 
+	} 
+	@Immutable
+	public final class SuggestResult implements JsonSerializable<SuggestResult> { 
+		// This class does not have any public constructors, and is not able to be instantiated using 'new'. 
+		@Generated public Map<String, BinaryData> getAdditionalProperties() 
+		@Generated public static SuggestResult fromJson(JsonReader jsonReader) throws IOException
+		@Generated public String getText() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+	} 
+	public final class VectorFilterMode extends ExpandableStringEnum<VectorFilterMode> { 
+		@Generated public static final VectorFilterMode POST_FILTER = fromString("postFilter"); 
+		@Generated public static final VectorFilterMode PRE_FILTER = fromString("preFilter"); 
+		@Deprecated @Generated public VectorFilterMode() 
+		@Generated public static VectorFilterMode fromString(String name) 
+		@Generated public static Collection<VectorFilterMode> values() 
+	} 
+	@Fluent
+	public class VectorQuery implements JsonSerializable<VectorQuery> { 
+		@Generated public VectorQuery() 
+		@Generated public Boolean isExhaustive() 
+		@Generated public VectorQuery setExhaustive(Boolean exhaustive) 
+		@Generated public String getFields() 
+		@Generated public VectorQuery setFields(String fields) 
+		@Generated public static VectorQuery fromJson(JsonReader jsonReader) throws IOException
+		@Generated public VectorQueryKind getKind() 
+		@Generated public Integer getKNearestNeighbors() 
+		@Generated public VectorQuery setKNearestNeighbors(Integer kNearestNeighbors) 
+		@Generated public Double getOversampling() 
+		@Generated public VectorQuery setOversampling(Double oversampling) 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+		@Generated public Double getWeight() 
+		@Generated public VectorQuery setWeight(Double weight) 
+	} 
+	public final class VectorQueryKind extends ExpandableStringEnum<VectorQueryKind> { 
+		@Generated public static final VectorQueryKind VECTOR = fromString("vector"); 
+		@Generated public static final VectorQueryKind TEXT = fromString("text"); 
+		@Deprecated @Generated public VectorQueryKind() 
+		@Generated public static VectorQueryKind fromString(String name) 
+		@Generated public static Collection<VectorQueryKind> values() 
+	} 
+	@Fluent
+	public final class VectorizableTextQuery extends VectorQuery { 
+		@Generated public VectorizableTextQuery(String text) 
+		@Generated @Override public VectorizableTextQuery setExhaustive(Boolean exhaustive) 
+		@Generated @Override public VectorizableTextQuery setFields(String fields) 
+		@Generated public static VectorizableTextQuery fromJson(JsonReader jsonReader) throws IOException
+		@Generated @Override public VectorQueryKind getKind() 
+		@Generated @Override public VectorizableTextQuery setKNearestNeighbors(Integer kNearestNeighbors) 
+		@Generated @Override public VectorizableTextQuery setOversampling(Double oversampling) 
+		@Generated public String getText() 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+		@Generated @Override public VectorizableTextQuery setWeight(Double weight) 
+	} 
+	@Fluent
+	public final class VectorizedQuery extends VectorQuery { 
+		@Generated public VectorizedQuery(List<Double> vector) 
+		@Generated @Override public VectorizedQuery setExhaustive(Boolean exhaustive) 
+		@Generated @Override public VectorizedQuery setFields(String fields) 
+		@Generated public static VectorizedQuery fromJson(JsonReader jsonReader) throws IOException
+		@Generated @Override public VectorQueryKind getKind() 
+		@Generated @Override public VectorizedQuery setKNearestNeighbors(Integer kNearestNeighbors) 
+		@Generated @Override public VectorizedQuery setOversampling(Double oversampling) 
+		@Generated @Override public JsonWriter toJson(JsonWriter jsonWriter) throws IOException
+		@Generated public List<Double> getVector() 
+		@Generated @Override public VectorizedQuery setWeight(Double weight) 
+	} 
+} 

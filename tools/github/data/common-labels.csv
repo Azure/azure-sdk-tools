@@ -1,6 +1,8 @@
 AAD,,e99695
 ACS,,e99695
+AI Agents,,e99695
 AI Model Inference,,e99695
+AI Projects,,e99695
 AKS,,e99695
 API Management,,e99695
 APIChange,This PR contains an addition or change to the API signature and must be reviewed by an architect.,d8f74c
@@ -19,11 +21,13 @@ Alerts Management,,e99695
 Analysis Services,,e99695
 App Configuration,Azure.ApplicationModel.Configuration,e99695
 App Services,,e99695
+Arize AI,,e99695
 Attestation,,e99695
 Authentication,,e99695
 Authorization,,e99695
 Automation,,e99695
 Azure Arc Enabled Servers,,e99695
+Azure Projects,,e99695
 Azure Stack,,e99695
 Azure.Core,,e99695
 Azure.Identity,,e99695
@@ -111,6 +115,7 @@ Data Migration,,e99695
 Data Share,,e99695
 DataBox,,e99695
 DataBox Edge,,e99695
+Database Watcher,,e99695
 Defender ESAM,,e99695
 Dev Spaces,,e99695
 Device Update,,e99695
@@ -120,6 +125,7 @@ Devtestlab,,e99695
 Digital Twins,,e99695
 Do Not Merge,,b60205
 Docs,,e99695
+Durable Task Scheduler,,e99695
 EngSys,This issue is impacting the engineering system.,e99695
 Epic,,3E4B9E
 Event Grid,,e99695
@@ -142,6 +148,7 @@ Kusto,,e99695
 LLC,,e99695
 LOUIS,,e99695
 Lab Services,,e99695
+LambdaTest HyperExecute,,e99695
 Logic App,,e99695
 MQ,"This issue is part of a ""milestone of quality"" initiative.",7365c9
 Machine Learning,,e99695
@@ -183,18 +190,22 @@ Network - Virtual Network,,e99695
 Network - Virtual Network NAT,,e99695
 Network - Virtual WAN,,e99695
 Notification Hub,,e99695
+Online Experimentation,,e99695
 OpenAI,,e99695
 Operations Management,,e99695
 Operator Nexus - Network Cloud,,e99695
 Peering,,e99695
+Pinecone,,e99695
 Policy,,e99695
 Policy Insights,,e99695
 PostgreSQL,,e99695
 PowerBI,,e99695
+PureStorage,,e99695
 Purview,,e99695
 Quantum,,e99695
 Quota,Quota Service,e99695
 Recovery Services Backup,,e99695
+Recovery Services Data-Replication,,e99695
 Recovery Services Site-Recovery,,e99695
 Redis Cache,,e99695
 Relay,,e99695
@@ -212,6 +223,7 @@ SQL - VM,,e99695
 Scheduler,,e99695
 Schema Registry,,e99695
 Search,,e99695
+Secret Store Extension,,e99695
 Security,,e99695
 SecurityInsights,,e99695
 Server Management,,e99695
@@ -235,6 +247,7 @@ VideoAnalyzer,Azure Video Analyzer,e99695
 Visual Studio,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695
+Weights & Biases,,e99695
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49

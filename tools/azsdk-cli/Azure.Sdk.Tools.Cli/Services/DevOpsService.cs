@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<ReleasePlan> GetReleasePlan(int releasePlanId)
         {
-            // First find the API sepc work item
+            // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
             var releasePlanWorkItems = await FetchWorkItems(query);
             if (releasePlanWorkItems.Count == 0)

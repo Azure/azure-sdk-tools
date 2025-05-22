@@ -20,19 +20,27 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false,
         };
 
-        public static string GetOutputFormat(string[] args)
+        public static Option<bool> Debug = new(["--debug"], () => false)
+        {
+            Description = "Enable debug logging",
+            IsRequired = false,
+        };
+
+        public static (string, bool) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand
             {
                 TreatUnmatchedTokensAsErrors = false
             };
             root.AddGlobalOption(Format);
+            root.AddGlobalOption(Debug);
 
             var parser = new Parser(root);
             var result = parser.Parse(args);
 
-            var raw = result.GetValueForOption(Format);
-            return raw?.ToLowerInvariant();
+            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
+            var debug = result.GetValueForOption(Debug);
+            return (raw, debug);
         }
 
         public static string[] GetToolsFromArgs(string[] args)

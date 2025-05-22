@@ -16,6 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
             rootCommand.AddOption(SharedOptions.ToolOption);
 
+            rootCommand.AddGlobalOption(SharedOptions.Debug);
+
             SharedOptions.Format.AddValidator(result =>
             {
                 var value = result.GetValueForOption(SharedOptions.Format);
@@ -24,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     result.ErrorMessage = $"Invalid output format '{value}'. Supported formats are: plain, json";
                 }
             });
-            rootCommand.AddOption(SharedOptions.Format);
+            rootCommand.AddGlobalOption(SharedOptions.Format);
 
             var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 

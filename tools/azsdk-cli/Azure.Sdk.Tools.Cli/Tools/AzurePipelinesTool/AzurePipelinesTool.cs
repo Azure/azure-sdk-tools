@@ -124,6 +124,8 @@ public class AzurePipelinesTool(
     [McpServerTool, Description("Gets details for a pipeline run")]
     public async Task<Build> GetPipelineRun(string? project, int buildId)
     {
+        logger.LogDebug("Getting pipeline run for {project} {buildId}", project, buildId);
+
         try
         {
             var build = await buildClient.GetBuildAsync(project ?? "public", buildId);
@@ -143,12 +145,14 @@ public class AzurePipelinesTool(
     [McpServerTool, Description("Gets failures from tasks (non-test failures) in a pipeline run")]
     public async Task<List<TimelineRecord>?> GetPipelineTaskFailures(string project, int buildId)
     {
+        logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
         var timeline = await buildClient.GetBuildTimelineAsync(project, buildId);
         var failedNonTests = timeline.Records.Where(
                                 r => r.Result == TaskResult.Failed
                                 && r.RecordType == "Task"
                                 && !IsTestStep(r.Name))
                             .ToList();
+        logger.LogDebug("Found {count} failed tasks", failedNonTests.Count);
         return failedNonTests;
     }
 
@@ -159,6 +163,7 @@ public class AzurePipelinesTool(
     ")]
     public async Task<List<FailedTestRunResponse>> GetPipelineFailedTestResults(string project, int buildId)
     {
+        logger.LogDebug("Getting pipeline failed test results for {project} {buildId}", project, buildId);
         var results = new List<ShallowTestCaseResult>();
         var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId);
         results.AddRange(testRuns);
@@ -175,6 +180,8 @@ public class AzurePipelinesTool(
         .Select(r => r.RunId)
         .Distinct()
         .ToList();
+
+        logger.LogDebug("Getting test results for {count} failed test runs", failedRuns.Count);
 
         var failedRunData = new List<FailedTestRunResponse>();
 
@@ -201,15 +208,19 @@ public class AzurePipelinesTool(
     }
 
     [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]
-    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLog(string project, int buildId, int logId)
+    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLog(string? project, int buildId, int logId)
     {
-        project ??= project ?? "public";
+        project ??= "public";
+
+        logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
 
         var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
         var logText = string.Join("\n", logContent);
         var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);
         var session = $"{project}-{buildId}-{logId}";
         var filename = $"{session}.txt";
+
+        logger.LogDebug("Analyzing pipeline failure log {filename} with AI agent", filename);
 
         using var stream = new MemoryStream(logBytes);
         var (result, _usage) = await azureAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");

@@ -19,7 +19,7 @@ To deal with this, an analyzer exists for this project that will ensure that any
 
 To get around this warning, a user only needs to ensure that the **entire body** of the method is wrapped in a try/catch block. The catch block should return a response that is appropriate for the method being called.
 
-See examples in `SpecPullRequestTools.GetGitHubUserDetails` and `SpecPullREquestTools.GenerateSDK`.
+See examples in `SpecPullRequestTools.GetGitHubUserDetails` and `SpecPullRequestTools.GenerateSDK`.
 
 ## To quickly dev loop on just your class.
 

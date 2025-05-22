@@ -17,18 +17,18 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ISamplesRevisionsManager _samplesRevisionsManager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
 
         public RevisionsPageModel(
             IReviewManager manager,
             IAPIRevisionsManager reviewRevisionsManager,
             ISamplesRevisionsManager samplesRevisionsManager,
-            UserPreferenceCache preferenceCache)
+            UserProfileCache userProfileCache)
         {
             _reviewManager = manager;
             _apiRevisionsManager = reviewRevisionsManager;
             _samplesRevisionsManager = samplesRevisionsManager;
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
         }
 
         public ReviewListItemModel Review { get; set; }

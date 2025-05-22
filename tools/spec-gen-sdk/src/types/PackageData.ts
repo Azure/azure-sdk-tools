@@ -177,7 +177,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
   let parseSuppressionLinesErrors: string[] = [];
   let sdkSuppressionFilePath: string | undefined = undefined;
 
-  const packageTSForReadmeMdKey = result.typespecProject ? result.typespecProject[0] : result.readmeMd ? `${context.config.sdkName == 'azure-sdk-for-go' ? 'specification/' : ''}${result.readmeMd[0]}` : null;
+  const packageTSForReadmeMdKey = result.typespecProject ? `${result.typespecProject[0]}/tspconfig.yaml` : result.readmeMd ? result.readmeMd[0] : null;
   const suppressionContent = packageTSForReadmeMdKey ? suppressionContentList?.get(packageTSForReadmeMdKey) : undefined;
   if ((suppressionContent !== undefined) && !isBetaMgmtSdk) {
     if (breakingChangeItems && breakingChangeItems.length > 0) {

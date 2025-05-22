@@ -23,9 +23,8 @@ def search_knowledge_base(
     if path:
         with open(path, "r") as f:
             query = f.read()
-    examples = search.search_examples(query=query)
-    guidelines = search.search_guidelines(query=query)
-    context = search.build_context(guidelines, examples)
+    results = search.search_all(query=query)
+    context = search.build_context(results)
     return context
 
 

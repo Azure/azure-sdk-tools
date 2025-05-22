@@ -182,15 +182,9 @@ public class ReviewLine implements Parent, JsonSerializable<ReviewLine> {
 
     @Override
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
-        jsonWriter.writeStartObject();
-
-        if (lineId != null) {
-            jsonWriter.writeStringField(JSON_LINE_ID, lineId);
-        }
-
-        if (crossLanguageId != null) {
-            jsonWriter.writeStringField(JSON_CROSS_LANGUAGE_ID, crossLanguageId);
-        }
+        jsonWriter.writeStartObject()
+            .writeStringField(JSON_LINE_ID, lineId)
+            .writeStringField(JSON_CROSS_LANGUAGE_ID, crossLanguageId);
 
         if (!tokens.isEmpty()) {
             jsonWriter.writeArrayField(JSON_NAME_TOKENS, tokens, JsonWriter::writeJson);

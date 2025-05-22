@@ -9,15 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using APIViewWeb.Managers;
 using APIViewWeb.Helpers;
-using Microsoft.VisualStudio.Services.Common;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.LeanModels;
 using System.Text;
 using APIViewWeb.Managers.Interfaces;
-using System.IO;
-using ApiView;
-using Microsoft.AspNetCore.Http;
+using APIViewWeb.DTOs;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -26,7 +23,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IHubContext<SignalRHub> _notificationHubContext;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
         public readonly IUserProfileManager _userProfileManager;
         private readonly ICodeFileManager _codeFileManager;
 
@@ -34,12 +31,12 @@ namespace APIViewWeb.Pages.Assemblies
         public const string _defaultSortField = "LastUpdatedOn";
 
         public IndexPageModel(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionsManager, IUserProfileManager userProfileManager,
-            UserPreferenceCache preferenceCache, IHubContext<SignalRHub> notificationHub, ICodeFileManager codeFileManager)
+            UserProfileCache userProfileCache, IHubContext<SignalRHub> notificationHub, ICodeFileManager codeFileManager)
         {
             _notificationHubContext = notificationHub;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
             _userProfileManager = userProfileManager;
             _codeFileManager = codeFileManager;
         }
@@ -60,7 +57,7 @@ namespace APIViewWeb.Pages.Assemblies
             IEnumerable<string> status, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
             await _userProfileManager.SetUserEmailIfNullOrEmpty(User);
-            var userPreference = await _preferenceCache.GetUserPreferences(User);
+            var userPreference = (await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin())).Preferences;
             var spaUrl = "https://spa." + Request.Host.ToString();
             if (userPreference.UseBetaIndexPage == true)
             {
@@ -160,11 +157,11 @@ namespace APIViewWeb.Pages.Assemblies
                 isClosed = null;
             }
 
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel {
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceDto: new UserPreferenceDto {
                 Language = languages,
                 State = state,
                 Status = status
-            }, User);
+            });
 
             bool? isApproved = null;
             // Resolve Approval State

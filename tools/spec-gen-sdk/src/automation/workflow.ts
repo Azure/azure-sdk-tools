@@ -41,7 +41,6 @@ export enum FailureType {
 export type WorkflowContext = SdkAutoContext & {
   stagedArtifactsFolder?: string;
   sdkArtifactFolder?: string;
-  sdkApiViewArtifactFolder?: string;
   isSdkConfigDuplicated?: boolean;
   specConfigPath?: string;
   pendingPackages: PackageData[];
@@ -275,7 +274,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
       sdkSuppressionFilesParseErrorTotal.push(message);
       continue;
     }
-    if (suppressionFileParseResult) {
+    if (!suppressionFileParseResult) {
       message = configWarning(`Ignore the suppressions as the file at ${sdkSuppressionFilePath} is empty.`);
       context.logger.warn(message);
       sdkSuppressionFilesParseErrorTotal.push(message);

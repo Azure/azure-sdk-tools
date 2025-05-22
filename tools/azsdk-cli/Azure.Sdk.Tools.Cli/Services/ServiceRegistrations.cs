@@ -14,14 +14,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         public static void RegisterCommonServices(IServiceCollection services)
         {
             services.AddSingleton<IAzureService, AzureService>();
-            services.AddSingleton<IAIAgentService, AIAgentService>();
+            services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
+            services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
         }
-
-
     }
 }

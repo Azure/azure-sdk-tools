@@ -68,6 +68,10 @@ export class ReviewsService {
     return this.http.get<Review>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
   }
 
+  getAllowedApprovers() : Observable<string[]> {
+    return this.http.get<string[]>(this.baseUrl + `/allowedApprovers`, { withCredentials: true });
+  }
+
   getPreferredApprovers(reviewId: string) : Observable<string[]> {
     return this.http.get<string[]>(this.baseUrl + `/${reviewId}/preferredApprovers`, { withCredentials: true });
   }

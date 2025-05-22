@@ -37,9 +37,14 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		topK := 20
 		req.TopK = &topK
 	}
-	if req.PromptTemplate == nil {
-		defaultTemplate := "default.md"
-		req.PromptTemplate = &defaultTemplate
+	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
+	if hasConfig {
+		if req.Sources == nil {
+			req.Sources = tenantConfig.Sources
+		}
+		if req.PromptTemplate == nil {
+			req.PromptTemplate = &tenantConfig.PromptTemplate
+		}
 	}
 	return nil
 }
@@ -79,8 +84,12 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
 		log.Printf("category: %v, question: %v", intentResult.Category, intentResult.Question)
-		if len(req.Sources) == 0 && intentResult.Category == model.QuestionCategory_Unbranded {
-			req.Sources = []model.Source{model.Source_TypeSpec}
+		if len(req.Sources) == 0 {
+			if intentResult.Category == model.QuestionCategory_Unbranded {
+				req.Sources = []model.Source{model.Source_TypeSpec}
+			} else {
+				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecAzure, model.Source_AzureRestAPISpec}
+			}
 		}
 		if len(intentResult.Question) > 0 {
 			userMessage = intentResult.Question
@@ -167,14 +176,12 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		chunks = append(chunks, chunk)
 	}
 	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
-	log.Printf("documents: %v", chunkTitles)
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, *req.PromptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	log.Println(fmt.Printf("message: %s, prompt:\n%v", userMessage, promptStr[:1000]))
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
 	completionStart := time.Now()
@@ -195,14 +202,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
 
 	for _, choice := range resp.Choices {
-		if choice.Message != nil && choice.Message.Content != nil {
-			fmt.Fprintf(os.Stderr, "Content[%d]: %s\n", *choice.Index, *choice.Message.Content)
-		}
-
-		if choice.FinishReason != nil {
-			// this choice's conversation is complete.
-			fmt.Fprintf(os.Stderr, "Finish reason[%d]: %s\n", *choice.Index, *choice.FinishReason)
-		}
 		answer, err := promptParser.ParseResponse(*choice.Message.Content, *req.PromptTemplate)
 		if err != nil {
 			log.Printf("ERROR: %s", err)

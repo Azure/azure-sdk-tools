@@ -11,7 +11,7 @@
     {
         ViewData["Title"] = Model.userProfile.UserName;
     }
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
 
     List<string> themes = new List<string>()
     {
@@ -22,7 +22,7 @@
     string[] Languages = LanguageServiceHelpers.SupportedLanguages;
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     var theme = userPreference.Theme ?? "light-theme";
-    var useBetaIndexPage = userPreference.UseBetaIndexPage ?? false;
+    var useBetaIndexPage = userPreference.UseBetaIndexPage;
 }
 <div class="container py-2 mb-5">
     @if(Model.userProfile == null) 
@@ -62,7 +62,7 @@
                             <select multiple name="Languages" id="approvable-language-select" aria-label="Approvable Language Select">
                                 @foreach (string language in Languages)
                                 {
-                                    <option value="@language" selected="@(Model.userProfile.Languages.Contains(language) ? true : false)">@language</option>
+                                    <option value="@language" selected="@(Model.userProfile.Preferences.ApprovedLanguages.Contains(language) ? true : false)">@language</option>
                                 }
                             </select>
                         </div>

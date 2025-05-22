@@ -31,13 +31,21 @@ export async function generateMgmt(options: {
     downloadUrlPrefix?: string;
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
     if (!options.skipGeneration) {
+        if(options.apiVersion && options.apiVersion !== '') {
+            // for high level client, we will build a tag for the package
+            logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+            options.tag = `package-${options.apiVersion}`;
+        }
+
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
-        if (options.tag) {
+        if (options.tag && options.tag !== '') {
             cmd += ` --tag=${options.tag}`;
         }
 
@@ -117,7 +125,7 @@ export async function generateMgmt(options: {
                 execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
-                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
                 }
                 logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
                 execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
@@ -129,7 +137,7 @@ export async function generateMgmt(options: {
                 execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
-                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
                 }
                 logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
                 execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});

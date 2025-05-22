@@ -1,5 +1,9 @@
 # Release
 
+## 2025-05-20 - 0.7.2
+
+- Corrected the key in the suppression files map
+
 ## 2025-05-19 - 0.7.1
 
 - Fixed a bug in processing breaking change suppressions

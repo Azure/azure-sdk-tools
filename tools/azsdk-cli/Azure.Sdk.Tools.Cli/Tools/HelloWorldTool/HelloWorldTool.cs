@@ -22,10 +22,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             Arity = ArgumentArity.ExactlyOne
         };
 
+        private readonly Option<bool> failOpt = new(["--fail"], () => false, "Force failure");
+
         public override Command GetCommand()
         {
             Command command = new("hello-world");
             command.AddArgument(_inputArg);
+            command.AddOption(failOpt);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -33,35 +36,39 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             string input = ctx.ParseResult.GetValueForArgument(_inputArg);
-            var result = EchoSuccess(input);
+            var fail = ctx.ParseResult.GetValueForOption(failOpt);
+            var result = fail ? EchoFail(input) : EchoSuccess(input);
             ctx.ExitCode = ExitCode;
             output.Output(result);
             await Task.CompletedTask;
         }
 
-        [McpServerTool(Name = "hello-world-success"), Description("Echoes the message back to the client")]
+        [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
+        #pragma warning disable MCP001
+        public DefaultCommandResponse EchoFail(string message)
+        {
+            logger.LogError("Echoing message: {message}", message);
+            SetFailure(1);
+
+            return new()
+            {
+                ResponseError = $"RESPONDING TO '{message}' with FAIL: {ExitCode}",
+            };
+        }
+
+
+        [McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
-            try
-            {
-                logger.LogInformation("Echoing message: {message}", message);
+            #pragma warning restore MCP001
 
-                return new()
-                {
-                    Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
-                    Duration = 1
-                };
-            }
-            catch(Exception ex)
+            logger.LogInformation("Echoing message: {message}", message);
+
+            return new()
             {
-                logger.LogError("Exception during echo: {ex}", ex);
-                SetFailure();
-                return new()
-                {
-                    Message = $"Failed to echo message: {ex.Message}",
-                    Duration = 1
-                };
-            }
+                Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
+                Duration = 1
+            };
         }
     }
     #endif

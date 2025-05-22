@@ -15,7 +15,7 @@ def _zip_current_repo(output_filename: str):
     """Zip the current repository."""
     print("Zipping the current repository...")
     folders_to_keep = ["src", "guidelines", "prompts", "metadata"]
-    files_to_keep = ["app.py", "requirements.txt"]
+    files_to_keep = ["app.py", "requirements.txt", "startup.txt"]
     with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for root, _, files in os.walk("."):
             for file in files:
@@ -80,6 +80,29 @@ def deploy_app_to_azure(
         if os.path.exists(zip_file):
             os.remove(zip_file)
             print(f"Temporary zip file {zip_file} removed.")
+
+    # After deployment, set the startup command from startup.txt
+    startup_file = "startup.txt"
+    if os.path.exists(startup_file):
+        with open(startup_file, "r") as f:
+            startup_command = f.read().strip()
+        print(f"Setting Azure App Service startup command to: {startup_command}")
+        cmd = [
+            "az.cmd",
+            "webapp",
+            "config",
+            "set",
+            "--resource-group",
+            resource_group,
+            "--name",
+            app_name,
+            "--startup-file",
+            startup_command,
+            "--subscription",
+            subscription_id,
+        ]
+        print("Running command:", " ".join(cmd))
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 if __name__ == "__main__":

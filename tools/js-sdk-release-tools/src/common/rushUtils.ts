@@ -43,7 +43,7 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     const cwd = join(packageDirectory);
     if (isRushRepo(sdkRepoRoot)) {
         await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
-    }else{
+    } else {
         await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);
     }
     logger.info(`Pack '${packageName}' successfully.`);
@@ -80,7 +80,7 @@ export async function buildPackage(
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
 
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
-    if (isRushRepo(options.sdkRepoRoot)){
+    if (isRushRepo(options.sdkRepoRoot)) {
         await updateRushJson({
             packageName: name,
             projectFolder: unixify(relativePackageDirectoryToSdkRoot),
@@ -102,12 +102,12 @@ export async function buildPackage(
         logger.info(`Start to build package '${name}'.`);
         await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
     }
-    
+
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
     logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);    
+    await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
 
@@ -140,9 +140,14 @@ export async function formatSdk(packageDirectory: string) {
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
     const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
-    
-    await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
-    logger.info(`format sdk successfully.`);
+
+    try {
+        await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
+        logger.info(`format sdk successfully.`);
+    } catch (error) {
+        logger.warning(`Failed to format code due to: ${(error as Error)?.stack ?? error}`);
+    }
+
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
@@ -154,7 +159,7 @@ export async function tryTestPackage(packageDirectory: string, rushxScript: stri
     try {
         if (isRushRepo(sdkRepoRoot)) {
             await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300, true);
-        }else{
+        } else {
             await runCommand(`pnpm`, ['run', 'test:node'], options, true, 300, true);
         }
         logger.info(`tested package successfully.`);

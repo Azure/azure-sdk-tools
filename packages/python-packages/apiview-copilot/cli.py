@@ -7,14 +7,11 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import (
-    DEFAULT_USE_RAG,
-)
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from typing import Optional, List
+from typing import Optional
 
 helps[
     "review"
@@ -49,7 +46,7 @@ def local_review(
     language: str,
     target: str,
     base: str = None,
-    use_rag: bool = DEFAULT_USE_RAG,
+    mode: str = None,
 ):
     """
     Generates a review using the locally installed code.
@@ -76,7 +73,14 @@ def local_review(
     else:
         base_apiview = None
 
-    reviewer = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
+    from src._apiview_reviewer import DEFAULT_CONTEXT_MODE
+
+    reviewer = ApiViewReview(
+        target=target_apiview,
+        base=base_apiview,
+        language=language,
+        mode=mode or DEFAULT_CONTEXT_MODE,
+    )
     review = reviewer.run()
     reviewer.close()
     output_path = os.path.join("scratch", "output", language)
@@ -282,9 +286,11 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
-                "use_rag",
-                action="store_true",
-                help="Use RAG pattern to generate the review.",
+                "mode",
+                type=str,
+                choices=["rag", "static"],
+                default=None,
+                help="Context mode: 'rag' (default) for retrieval-augmented generation, or 'static' for static guidelines only.",
             )
             ac.argument(
                 "target",

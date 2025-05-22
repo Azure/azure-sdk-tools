@@ -1,4 +1,4 @@
-import yargs from "yargs/yargs";
+import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { getRepository } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';

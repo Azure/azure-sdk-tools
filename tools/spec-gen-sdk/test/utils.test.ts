@@ -3,6 +3,7 @@ import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } fr
 import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
 import path from 'path';
 import fs from 'fs';
+import { describe, it, expect } from 'vitest';
 
 // To invoke these tests, run `npm run test-utils` from the "private/openapi-sdk-automation" directory.
 describe('parseSemverVersionString', () => {

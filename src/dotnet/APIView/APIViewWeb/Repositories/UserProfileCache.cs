@@ -6,8 +6,6 @@ using System.Threading;
 using Microsoft.Extensions.Primitives;
 using APIViewWeb.Managers;
 using APIViewWeb.DTOs;
-using APIViewWeb.LeanModels;
-using System.Collections.Generic;
 
 namespace APIViewWeb.Repositories
 {
@@ -25,7 +23,7 @@ namespace APIViewWeb.Repositories
 
         public async Task UpdateUserProfileAsync(string userName, string email = null, UserPreferenceDto userPreferenceDto = null)
         {
-            UserProfileModel existingUserProfile = await _userProfileManager.TryGetUserProfileByNameAsync(userName);
+            UserProfileModel existingUserProfile = await GetUserProfileAsync(userName, createIfNotExist: false);
             if (email != null)
             {
                 existingUserProfile.Email = email;
@@ -58,7 +56,7 @@ namespace APIViewWeb.Repositories
 
         public async Task UpdateUserProfileAsync(string userName, string email = null, UserPreferenceModel userPreferenceModel = null)
         {
-            UserProfileModel existingUserProfile = await _userProfileManager.TryGetUserProfileByNameAsync(userName);
+            UserProfileModel existingUserProfile = await GetUserProfileAsync(userName, createIfNotExist: false);
             if (email != null)
             {
                 existingUserProfile.Email = email;
@@ -71,7 +69,7 @@ namespace APIViewWeb.Repositories
             UpdateCache(existingUserProfile, userName);
         }
 
-        public async Task<UserProfileModel> GetUserProfileAsync(string userName, bool createIfNotExist = false)
+        public async Task<UserProfileModel> GetUserProfileAsync(string userName, bool createIfNotExist = true)
         {
             if (_cache.TryGetValue(userName, out UserProfileModel _profile))
             {
@@ -80,10 +78,7 @@ namespace APIViewWeb.Repositories
             else
             {
                 var profile = await _userProfileManager.TryGetUserProfileByNameAsync(userName, createIfNotExist: createIfNotExist);
-                if (profile != default(UserProfileModel))
-                {
-                    UpdateCache(profile, userName);
-                }
+                UpdateCache(profile, userName);
                 return profile;
             }
         }

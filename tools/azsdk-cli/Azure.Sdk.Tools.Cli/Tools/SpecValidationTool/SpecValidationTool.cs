@@ -125,18 +125,29 @@ namespace AzureSDKDevToolsMCP.Tools
                 CreateNoWindow = true,
                 WorkingDirectory = workingDirectory
             };
-            using var process = Process.Start(processInfo) ?? throw new Exception($"Failed to start the process: {args}");
-            StringBuilder output = new ();
-            while (!process.HasExited)
+            var output = new StringBuilder();
+            using (var process = new Process())
             {
-                Thread.Sleep(2000);
-                process.Refresh();
-                output.Append(process.StandardOutput.ReadToEnd());
-            }
-            output.Append(process.StandardOutput.ReadToEnd());
-            if (process.ExitCode != 0)
-            {
-                output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
+                process.StartInfo = processInfo;
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit(100000);
+                if (process.ExitCode != 0)
+                {
+                    output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
+                }
             }
             return output.ToString();
         }

@@ -83,7 +83,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IDevOpsService
     {
-        public Task<ReleasePlan> GetReleasePlan(int workItemId);
+        public Task<ReleasePlan> GetReleasePlan(int releasePlanId);
+        public Task<ReleasePlan> GetReleasePlanForWorkItem(int workItemId);
         public Task<ReleasePlan> GetReleasePlan(string pullRequestUrl);
         public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
         public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
@@ -99,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
 
-        public async Task<ReleasePlan> GetReleasePlan(int workItemId)
+        public async Task<ReleasePlan> GetReleasePlanForWorkItem(int workItemId)
         {
             _logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await _connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
@@ -110,6 +111,18 @@ namespace Azure.Sdk.Tools.Cli.Services
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
             return releasePlan;
+        }
+
+        public async Task<ReleasePlan> GetReleasePlan(int releasePlanId)
+        {
+            // First find the API spec work item
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
+            var releasePlanWorkItems = await FetchWorkItems(query);
+            if (releasePlanWorkItems.Count == 0)
+            {
+                throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
+            }
+            return MapWorkItemToReleasePlan(releasePlanWorkItems[0]);
         }
 
         private static ReleasePlan MapWorkItemToReleasePlan(WorkItem workItem)
@@ -124,7 +137,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ProductTreeId = workItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKReleaseMonth = workItem.Fields.TryGetValue("Custom.SDKReleaseMonth", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsManagementPlane = workItem.Fields.TryGetValue("Custom.MgmtScope", out value) ? value?.ToString() == "Yes" : false,
-                IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false
+                IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false,
+                ReleasePlanLink = workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ReleasePlanId = workItem.Fields.TryGetValue("Custom.ReleasePlanID", out value) ? int.Parse(value?.ToString() ?? "0") : 0,
+                SDKReleaseType = workItem.Fields.TryGetValue("Custom.SDKtypetobereleased", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
             // Get sdk generation status if it was already run for current release plan

@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<bool> IsDiffMergeable(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
         {
-            logger.LogInformation("Comparing the headbranch against target branch");
+            logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
             logger.LogInformation($"Comparison: {comparison.Status}");
             return comparison?.MergeBaseCommit != null;

@@ -90,6 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
         public Task<Build> GetPipelineRun(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRun(int buildId, string language, int workItemId);
+        public Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
     }
 
     public class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -341,26 +342,30 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        private async Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
+        public async Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
         {
             // Adds SDK generation and pull request link in release plan work item.
             try
             {
-                if (string.IsNullOrEmpty(language) || workItemId == 0 || string.IsNullOrEmpty(sdkGenerationPipelineUrl))
+                if (string.IsNullOrEmpty(language) || workItemId == 0 || (string.IsNullOrEmpty(sdkGenerationPipelineUrl) && string.IsNullOrEmpty(sdkPullRequestUrl)))
                 {
-                    _logger.LogError("Language, work item ID and SDK generation pipeline URL are required to add SDK generation info to work item.");
+                    _logger.LogError("Please provide the language, work item ID, and either the SDK generation pipeline URL or the SDK pull request URL to add SDK info to a work item.");
                     return false;
                 }
+
+                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 // Add work item as child of release plan work item
-                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                if (string.IsNullOrEmpty(sdkGenerationPipelineUrl))
                 {
-                     new JsonPatchOperation
-                     {
-                          Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                          Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
-                          Value = sdkGenerationPipelineUrl
-                     }
-                };
+                    jsonLinkDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
+                            Value = sdkGenerationPipelineUrl
+                        });
+                }
+                
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
                     jsonLinkDocument.Add(
@@ -524,9 +529,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             return $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
         }
 
-        private static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
+        public static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
         {
-            Regex regex = new Regex("https:\\/\\/github.com\\/Azure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
+            Regex regex = new Regex("https:\\/\\/github.com\\/[A|a]zure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
             var match = regex.Match(sdkGenerationSummary);
             return match.Success ? match.Value : string.Empty;
         }

@@ -296,6 +296,67 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        private string GetRepoName(string language)
+        {
+            return language.ToLower() switch
+            {
+                "python" => "azure-sdk-for-python",
+                ".net" => "azure-sdk-for-net",
+                "javascript" => "azure-sdk-for-js",
+                "java" => "azure-sdk-for-java",
+                "go" => "azure-sdk-for-go",
+                _ => ""
+            };
+        }
+
+        [McpServerTool, Description("Link SDK pull request to release plan work item")]
+        public async Task<string> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0)
+        {
+            try
+            {
+                // work item Id or release plan Id is required to link SDK pull request to release plan
+                if (workItemId == 0 && releasePlanId == 0)
+                {
+                    return "Either work item ID or release plan ID is required to link SDK pull request to release plan.";
+                }
+
+                // Verify language and get repo name
+                var repoName = GetRepoName(language);
+                if (string.IsNullOrEmpty(repoName))
+                {
+                    return "Unsupported language to link pull request. Supported languages: [.NET, Python, Java, JavaScript, Go]";
+                }
+
+                // Verify SDK pull request URL
+                if(string.IsNullOrEmpty(pullRequestUrl))
+                {
+                    return "SDK pull request URL is required to link it to release plan.";
+                }
+
+                // Parse just the pull request link from input
+                var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pullRequestUrl);
+                if (!parsedLink.Contains(repoName))
+                {
+                    return $"Invalid pull request link. Provide a pull request link in SDK repo {repoName}";
+                }
+                
+                // Add PR to release plan
+                var releasePlan = workItemId == 0? await devopsService.GetReleasePlan(releasePlanId) : await devopsService.GetReleasePlanForWorkItem(workItemId);
+                if (releasePlan == null || releasePlan.WorkItemId == 0)
+                {
+                    return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";
+                }
+
+                await devopsService.AddSdkInfoInReleasePlan(releasePlan.WorkItemId, language, "", parsedLink);
+                return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}";
+            }
+            catch(Exception ex)
+            {
+                SetFailure();
+                return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";
+            }
+        }
+
         public override Command GetCommand()
         {
             var command = new Command("spec-workflow");

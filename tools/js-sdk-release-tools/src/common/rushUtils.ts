@@ -145,7 +145,7 @@ export async function formatSdk(packageDirectory: string) {
         await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
         logger.info(`format sdk successfully.`);
     } catch (error) {
-        logger.warn(`Fail to format codes due to:  ${(error as Error)?.stack ?? error}`);
+        logger.warn(`Failed to format code due to: ${(error as Error)?.stack ?? error}`);
     }
 
 }

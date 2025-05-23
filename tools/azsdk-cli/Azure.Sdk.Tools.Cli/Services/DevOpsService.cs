@@ -117,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<ReleasePlan> GetReleasePlan(int releasePlanId)
         {
             // First find the API spec work item
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
             var releasePlanWorkItems = await FetchWorkItems(query);
             if (releasePlanWorkItems.Count == 0)
             {
@@ -146,12 +146,12 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Get sdk generation status if it was already run for current release plan
             var sdkGenPipelineFields = workItem.Fields.Keys.Where(k => k.StartsWith("Custom.SDKGenerationPipelineFor"));
-            var sdkGenerationInfoList = releasePlan.SDKGenerationInfos;
+            var sdkGenerationInfoList = releasePlan.SDKInfo;
             if (sdkGenPipelineFields.Any())
             {
                 foreach (var fieldName in sdkGenPipelineFields)
                 {
-                    var sdkGenPipelineInfo = new SDKGenerationInfo()
+                    var sdkGenPipelineInfo = new SDKInfo()
                     {
                         GenerationPipelineUrl = workItem.Fields[fieldName]?.ToString() ?? string.Empty,
                         Language = MapLanguageIdToName(fieldName.Replace("Custom.SDKGenerationPipelineFor", ""))
@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     var language = MapLanguageIdToName(fieldName.Replace("Custom.SDKPullRequestFor", ""));
                     if (!sdkGenerationInfoList.Any(s => s.Language.Equals(language)))
                         sdkGenerationInfoList.Add(
-                            new SDKGenerationInfo()
+                            new SDKInfo()
                             {
                                 Language = language
                             }
@@ -328,6 +328,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ".net" => "Dotnet",
                 "csharp" => "Dotnet",
                 "js" => "JavaScript",
+                "python" => "Python",
+                "java" => "Java",
+                "go" => "Go",
                 _ => language
             };
         }
@@ -501,13 +504,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (contentStream != null)
                 {
                     var content = new StreamReader(contentStream);
-                    var pullrequestUrl = ParseSDKPullRequestUrl(content.ReadToEnd());
+                    var pullRequestUrl = ParseSDKPullRequestUrl(content.ReadToEnd());
                     if (workItemId != 0)
                     {
                         _logger.LogInformation("Adding SDK pull request to release plan");
-                        await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullrequestUrl);
+                        await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl);
                     }
-                    return pullrequestUrl;
+                    return pullRequestUrl;
                 }
             }
 

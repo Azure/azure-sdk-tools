@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev:local": "cross-env NODE_ENV=local npx tsx --watch src/server.ts"
+    "dev:local": "cross-env NODE_ENV=local tsx --watch src/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,19 +15,17 @@
     "@azure/identity": "^4.10.0",
     "@octokit/rest": "^21.1.1",
     "axios": "^1.9.0",
-    "cross-env": "^7.0.3",
-    "dotenv": "^16.5.0",
     "express": "^4.19.2",
-    "form-data": "^4.0.2",
-    "got": "^14.4.7",
-    "multer": "^2.0.0",
-    "vitest": "^3.1.4",
     "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.2",
     "@types/multer": "^1.4.12",
     "dotenv-cli": "^8.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.5.0",
+    "vitest": "^3.1.4",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

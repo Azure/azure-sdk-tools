@@ -227,7 +227,6 @@ namespace APIView.DIff
                     // equal lines
                 lineA++;
                 lineB++;
-
                 }
                 else
                 {
@@ -428,14 +427,18 @@ namespace APIView.DIff
             {
                 // mark as inserted lines.
                 while (lowerB < upperB)
-                dataB.Modified[lowerB++] = true;
+                {
+                    dataB.Modified[lowerB++] = true;
+                }
 
             }
             else if (lowerB == upperB)
             {
                 // mark as deleted lines.
                 while (lowerA < upperA)
-                dataA.Modified[lowerA++] = true;
+                {
+                    dataA.Modified[lowerA++] = true;
+                }
 
             }
             else

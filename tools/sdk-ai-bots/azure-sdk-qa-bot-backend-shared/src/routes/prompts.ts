@@ -7,7 +7,7 @@ import { applyDotEnv } from '../utils/env.js';
 
 interface PreprocessRequestBody {
   text: string;
-  images: string[];
+  images?: string[];
 }
 
 interface PreprocessWarning {
@@ -35,7 +35,7 @@ router.post('/preprocess', authApiKey, async (req: Request, res: Response) => {
   const body = req.body as PreprocessRequestBody;
   const inlineLinkUrls = body.text ? body.text.match(urlRegex)?.map((link) => new URL(link)) || [] : [];
   const linkContents = await linkContentExtractor.extract(inlineLinkUrls);
-  const imageUrls = body.images.map((url) => new URL(url));
+  const imageUrls = body.images?.map((url) => new URL(url)) || [];
   const imageContents = await imageContentExtractor.extract(imageUrls);
   const prompt = promptGenerator.generate(undefined, body.text, imageContents, linkContents);
   const warnings: PreprocessWarning[] = [

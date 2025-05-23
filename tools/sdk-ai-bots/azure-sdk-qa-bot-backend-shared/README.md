@@ -12,3 +12,41 @@
 
 1. Install `REST Client` extension
 1. Replace the `YOUR_API_KEY` in [preprocess request sample](./sample/preprocess.http) and click `Send Request`
+1. Check [test](./src/test/test.e2e.test.ts) for more cases
+
+## Request
+
+### body
+
+```ts
+interface PreprocessRequestBody {
+  text: string;
+  images?: string[];
+}
+```
+
+### headers
+
+```ts
+interface Headers {
+  'x-api-key': string
+}
+```
+
+## Response
+
+### body
+
+```ts
+
+interface PreprocessWarning {
+  id: string;
+  warning: string;
+}
+
+interface PreprocessResult {
+  text: string;
+  // if there's warnings, it indicates some links are failed to parse
+  warnings?: PreprocessWarning[];
+}
+```

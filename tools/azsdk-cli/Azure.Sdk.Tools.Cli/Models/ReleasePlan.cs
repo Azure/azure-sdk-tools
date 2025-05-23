@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         public bool IsTestReleasePlan { get; set; } = false;
         public int ReleasePlanId { get; set; }
         public string SDKReleaseType { get; set; } = string.Empty;
-        public List<SDKGenerationInfo> SDKGenerationInfos { get; set; } = [];
+        public List<SDKInfo> SDKInfo { get; set; } = [];
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         }
     }
 
-    public class SDKGenerationInfo
+    public class SDKInfo
     {
         public string Language { get; set; } = string.Empty;
         public string GenerationPipelineUrl { get; set; } = string.Empty;

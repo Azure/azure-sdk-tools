@@ -1,5 +1,11 @@
 # Release
 
+## 2025-05-22 - 0.8.0
+
+- Added a parameter to optionally skip SDK generation from OpenAPI specs
+- Reported 'NotEnabled' status when both SDK configuration files are provided but the language emitter isn't enabled in tspconfig
+- Migrated test framework to vitest and added more tests for workflow
+
 ## 2025-05-20 - 0.7.2
 
 - Corrected the key in the suppression files map

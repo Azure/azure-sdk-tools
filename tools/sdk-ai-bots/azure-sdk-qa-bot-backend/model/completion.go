@@ -3,15 +3,19 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot     TenantID = "azure_sdk_qa_bot"
-	TenantID_TypeSpecExtension TenantID = "typespec_extension"
+	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot"
+	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
+	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
 )
 
 type Source string
 
 const (
-	Source_TypeSpec      Source = "typespec_docs"
-	Source_TypeSpecAzure Source = "typespec_azure_docs"
+	Source_TypeSpec              Source = "typespec_docs"
+	Source_TypeSpecAzure         Source = "typespec_azure_docs"
+	Source_AzureRestAPISpec      Source = "azure_rest_api_specs_wiki"
+	Source_AzureSDKForPython     Source = "azure_sdk_for_python_docs"
+	Source_AzureSDKForPythonWiki Source = "azure_sdk_for_python_wiki"
 )
 
 type Role string

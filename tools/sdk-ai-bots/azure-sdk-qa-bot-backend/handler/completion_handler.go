@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
+	"log"
+
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/agent"
 	"github.com/gin-gonic/gin"
@@ -24,6 +27,13 @@ func CompletionHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
+	}
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		log.Printf("Failed to marshal response: %v\n", err)
+	} else {
+		log.Printf("Request: %+v\n", req)
+		log.Printf("Response: %s\n", jsonResp)
 	}
 	c.JSON(200, &resp)
 }

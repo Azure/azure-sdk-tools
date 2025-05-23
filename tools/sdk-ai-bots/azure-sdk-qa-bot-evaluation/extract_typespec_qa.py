@@ -80,11 +80,11 @@ class ChannelQAParser(QAParser):
                     continue
                 
                 # Detect Question and Answer sections
-                if line.startswith('## Question'):
+                if line.startswith('## question') | line.startswith('## Question'):
                     in_question_section = True
                     in_answer_section = False
                     continue
-                elif line.startswith('## Answer'):
+                elif line.startswith('## answer') | line.startswith('## Answer'):
                     in_question_section = False
                     in_answer_section = True
                     continue
@@ -121,7 +121,7 @@ def get_parser_for_file(file_path: str) -> QAParser:
     else:
         raise ValueError(f"Unknown file type: {file_path}")
 
-async def call_completion_api(question: str, sources: List[str]) -> Dict[str, Any]:
+async def call_completion_api(question: str) -> Dict[str, Any]:
     """Call the completion API endpoint."""
     api_url = "http://localhost:8088/completion"
     headers = {
@@ -133,9 +133,7 @@ async def call_completion_api(question: str, sources: List[str]) -> Dict[str, An
         "message": {
             "role": "user",
             "content": question
-        },
-        "with_full_context": True,
-        "sources": sources,
+        }
     }
 
     async with aiohttp.ClientSession() as session:
@@ -145,12 +143,12 @@ async def call_completion_api(question: str, sources: List[str]) -> Dict[str, An
             else:
                 raise Exception(f"API request failed with status {resp.status}")
 
-async def process_qa_pair(question: str, ground_truth: str, sources: List[str]) -> Dict[str, Any]:
+async def process_qa_pair(question: str, ground_truth: str) -> Dict[str, Any]:
     """Process a single Q&A pair and generate test case."""
     start_time = time.time()
     
     try:
-        api_response = await call_completion_api(question, sources)
+        api_response = await call_completion_api(question)
         latency = time.time() - start_time
         
         return {
@@ -165,20 +163,24 @@ async def process_qa_pair(question: str, ground_truth: str, sources: List[str]) 
         print(f"Error processing question '{question}': {str(e)}")
         return None
 
-async def process_file(input_file: str, output_file: str, sources: List[str]) -> None:
+async def process_file(input_file: str, output_file: str) -> None:
     """Process a single input file"""
     print(f"Processing file: {input_file}")
     try:
         parser = get_parser_for_file(input_file)
         qa_pairs = await parser.parse(input_file)
-        print(f"Found {len(qa_pairs)} Q&A pairs in {input_file}")
+        total_pairs = len(qa_pairs)
+        print(f"Found {total_pairs} Q&A pairs in {input_file}")
         
-        for question, answer in qa_pairs:
-            result = await process_qa_pair(question, answer, sources)
+        for idx, (question, answer) in enumerate(qa_pairs, 1):
+            print(f"Processing Q&A pair {idx}/{total_pairs} ({idx/total_pairs*100:.1f}%)...")
+            result = await process_qa_pair(question, answer)
             if result:
                 with open(output_file, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(result, ensure_ascii=False) + '\n')
-            await asyncio.sleep(1)
+                print(f"✓ Successfully processed and saved Q&A pair {idx}/{total_pairs}")
+            else:
+                print(f"✗ Failed to process Q&A pair {idx}/{total_pairs}")
             
     except Exception as e:
         print(f"Error processing file {input_file}: {str(e)}")
@@ -190,8 +192,6 @@ async def main():
     
     # Process each subdirectory in data folder
     for data_folder in ['channel', 'github']:
-        if data_folder == 'channel':
-            sources = ['typespec_docs', 'typespec_azure_docs']
         folder_path = data_dir / data_folder
         if not folder_path.exists():
             continue
@@ -201,7 +201,7 @@ async def main():
         
         # Process all markdown files in the folder
         for file_path in folder_path.glob('*.md'):
-            await process_file(str(file_path), str(output_file), sources)
+            await process_file(str(file_path), str(output_file))
             
     print("Processing complete. Results written to output directory.")
 

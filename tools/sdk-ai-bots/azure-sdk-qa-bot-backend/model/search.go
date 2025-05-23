@@ -60,6 +60,12 @@ func GetIndexLink(chunk Index) string {
 		return "https://typespec.io/docs/" + path
 	case Source_TypeSpecAzure:
 		return "https://azure.github.io/typespec-azure/docs/" + path
+	case Source_AzureRestAPISpec:
+		return "https://github.com/Azure/azure-rest-api-specs/wiki/" + path
+	case Source_AzureSDKForPython:
+		return "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/" + path
+	case Source_AzureSDKForPythonWiki:
+		return "https://github.com/Azure/azure-sdk-for-python/wiki/" + path
 	default:
 		return ""
 	}

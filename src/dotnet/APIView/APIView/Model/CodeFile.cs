@@ -158,14 +158,14 @@ namespace ApiView
         /// <summary>
         /// Generates an abridged text representation of API surface
         /// </summary>
-        public string GetApiOutlineText(bool skipDocs = true)
+        public List<(string lineText, string lineId)> GetApiOutlineText(bool skipDocs = true)
         {
-            StringBuilder sb = new();
+            List<(string lineText, string lineId)> builder = new List<(string lineText, string lineId)>();
             foreach (var line in ReviewLines)
             {
-                line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language), TokensFilter.Outline);
+                line.AppendApiTextToBuilder(builder, 0, skipDocs, GetIndentationForLanguage(Language), TokensFilter.Outline);
             }
-            return sb.ToString();
+            return builder;
         }
 
         /// <summary>

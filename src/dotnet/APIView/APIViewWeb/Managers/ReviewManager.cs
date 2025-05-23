@@ -342,6 +342,7 @@ namespace APIViewWeb.Managers
 
             var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
             var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
+            var activeApiOutline = activeCodeFile.CodeFile.GetApiOutlineText();
 
             var url = $"https://apiview-gpt.azurewebsites.net/{LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language)}";
             var client = new HttpClient();
@@ -349,6 +350,7 @@ namespace APIViewWeb.Managers
             var payload = new Dictionary<string, object>
             {
                 { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
+                { "outline", String.Join("\\n", activeApiOutline.Select(item => item.lineText.Trim())) },
             };
 
             if (!String.IsNullOrEmpty(diffApiRevisionId))

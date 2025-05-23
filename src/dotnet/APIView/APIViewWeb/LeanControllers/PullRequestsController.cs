@@ -3,7 +3,6 @@ using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static MongoDB.Libmongocrypt.CryptContext;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -20,6 +18,7 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
         private readonly IEnumerable<LanguageService> _languageServices;
 
         string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };
@@ -28,6 +27,7 @@ namespace APIViewWeb.LeanControllers
             ILogger<PullRequestsController> logger, IPullRequestManager pullRequestManager,
             IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
+            _logger = logger;
             _pullRequestManager = pullRequestManager;
             _configuration = configuration;
             _languageServices = languageServices;

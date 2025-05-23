@@ -243,10 +243,9 @@ namespace ApiView
                         break;
                     case CodeFileTokenKind.TypeName:
                         token = ReviewToken.CreateTypeNameToken(oldToken.Value, false);
-                        if (currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value.ToLower()
+                        if (currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value.ToLower() == className))
 {
-    == className))
-                            token.RenderClasses.Add(className);
+    token.RenderClasses.Add(className);
 }
                         className = "";
                         break;

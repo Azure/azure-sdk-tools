@@ -64,8 +64,8 @@ namespace ApiView
                 {
                     stack.Push(subNamespace);
                 }
-                }
-                }
+            }
+        }
 
         public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, List<DependencyInfo> dependencies)
         {
@@ -90,12 +90,12 @@ namespace ApiView
                     {
                         BuildType(builder, namedTypeSymbol, navigationItems, false);
                     }
-                    }
+                }
                 else
                 {
                     BuildNamespace(builder, namespaceSymbol, navigationItems);
                 }
-                }
+            }
 
             NavigationItem assemblyNavigationItem = new NavigationItem()
             {
@@ -136,13 +136,14 @@ namespace ApiView
                     if (attribute.ConstructorArguments.Length > 0)
                     {
                         var param = attribute.ConstructorArguments[0].Value.ToString();
-                var firstComma = param.IndexOf(',');
-                param = firstComma > 0 ? param[..firstComma] : param;
-                builder.Append(new CodeFileToken(param, CodeFileTokenKind.Text)
-                {
-                // allow assembly to have a comment
-                DefinitionId = attribute.AttributeClass.Name
-            }
+                        var firstComma = param.IndexOf(',');
+                        param = firstComma > 0 ? param[..firstComma] : param;
+                        builder.Append(new CodeFileToken(param, CodeFileTokenKind.Text)
+                        {
+                            // allow assembly to have a comment
+                            DefinitionId = attribute.AttributeClass.Name
+                        });
+                    }
                     builder.NewLine();
                 }
                 builder.NewLine();
@@ -159,10 +160,10 @@ namespace ApiView
                 foreach (DependencyInfo dependency in dependencies)
                 {
                     builder.Append(new CodeFileToken(dependency.Name, CodeFileTokenKind.Text)
-                {
-                    // allow dependency to be commentable
-                DefinitionId = dependency.Name
-                }
+                    {
+                        // allow dependency to be commentable
+                        DefinitionId = dependency.Name
+                    });
                     // don't include the version in the API sign-off diffs
                     builder.Append(null, CodeFileTokenKind.SkipDiffRangeStart);
                     builder.Append($"-{dependency.Version}", CodeFileTokenKind.Text);
@@ -171,8 +172,8 @@ namespace ApiView
                 }
 
                 builder.NewLine();
-                }
-                }
+            }
+        }
 
         private void BuildNamespace(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationItems)
         {
@@ -212,7 +213,7 @@ namespace ApiView
             {
                 builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
             }
-            }
+        }
 
         private void BuildNamespaceName(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol)
         {
@@ -222,7 +223,7 @@ namespace ApiView
                 builder.Punctuation(SyntaxKind.DotToken);
             }
             NodeFromSymbol(builder, namespaceSymbol);
-            }
+        }
 
         private bool HasAnyPublicTypes(INamespaceSymbol subNamespaceSymbol)
         {
@@ -267,27 +268,27 @@ namespace ApiView
             switch (namedType.TypeKind)
             {
                 case TypeKind.Class:
-                BuildClassModifiers(builder, namedType);
-                builder.Keyword(SyntaxKind.ClassKeyword);
-                break;
+                    BuildClassModifiers(builder, namedType);
+                    builder.Keyword(SyntaxKind.ClassKeyword);
+                    break;
                 case TypeKind.Delegate:
-                builder.Keyword(SyntaxKind.DelegateKeyword);
-                break;
+                    builder.Keyword(SyntaxKind.DelegateKeyword);
+                    break;
                 case TypeKind.Enum:
-                builder.Keyword(SyntaxKind.EnumKeyword);
-                break;
+                    builder.Keyword(SyntaxKind.EnumKeyword);
+                    break;
                 case TypeKind.Interface:
-                builder.Keyword(SyntaxKind.InterfaceKeyword);
-                break;
+                    builder.Keyword(SyntaxKind.InterfaceKeyword);
+                    break;
                 case TypeKind.Struct:
-                if (namedType.IsReadOnly)
-                {
-                    builder.Keyword(SyntaxKind.ReadOnlyKeyword);
-                builder.Space();
-                }
+                    if (namedType.IsReadOnly)
+                    {
+                        builder.Keyword(SyntaxKind.ReadOnlyKeyword);
+                        builder.Space();
+                    }
                     builder.Keyword(SyntaxKind.StructKeyword);
                     break;
-                }
+            }
 
             builder.Space();
 
@@ -339,7 +340,7 @@ namespace ApiView
             {
                 builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
             }
-            }
+        }
 
         private void BuildDocumentation(CodeFileTokensBuilder builder, ISymbol symbol)
         {
@@ -356,7 +357,7 @@ namespace ApiView
                 builder.NewLine();
             }
             builder.Append(null, CodeFileTokenKind.DocumentRangeEnd);
-            }
+        }
 
         private static void BuildClassModifiers(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
         {
@@ -377,7 +378,7 @@ namespace ApiView
                 builder.Keyword(SyntaxKind.SealedKeyword);
                 builder.Space();
             }
-            }
+        }
 
         private void BuildBaseType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType)
         {
@@ -413,13 +414,13 @@ namespace ApiView
                 }
 
                 DisplayName(builder, typeInterface);
-                }
+            }
 
             if (!first)
             {
                 builder.Space();
             }
-            }
+        }
 
         private static void CloseBrace(CodeFileTokensBuilder builder)
         {
@@ -458,7 +459,7 @@ namespace ApiView
             {
                 builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
             }
-            }
+        }
 
         private void BuildAttributes(CodeFileTokensBuilder builder, ImmutableArray<AttributeData> attributes)
         {
@@ -466,11 +467,11 @@ namespace ApiView
             foreach (var attribute in attributes)
             {
                 if ((!IsAccessible(attribute.AttributeClass) &&
-                    attribute.AttributeClass.Name != "FriendAttribute" &&
+                    attribute.AttributeClass.Name != "FriendAttribute" && 
                     attribute.AttributeClass.ContainingNamespace.ToString() != "System.Diagnostics.CodeAnalysis")
                     || IsSkippedAttribute(attribute.AttributeClass))
                 {
-                continue;
+                    continue;
                 }
                 builder.WriteIndent();
                 if(attribute.AttributeClass.DeclaredAccessibility == Accessibility.Internal || attribute.AttributeClass.DeclaredAccessibility == Accessibility.Friend)
@@ -495,21 +496,21 @@ namespace ApiView
                         if (!first)
                         {
                             builder.Punctuation(SyntaxKind.CommaToken);
-                    builder.Space();
+                            builder.Space();
                         }
                         else
                         {
                             first = false;
                         }
                         BuildTypedConstant(builder, argument);
-                        }
+                    }
 
                     foreach (var argument in attribute.NamedArguments)
                     {
                         if (!first)
                         {
                             builder.Punctuation(SyntaxKind.CommaToken);
-                        builder.Space();
+                            builder.Space();
                         }
                         else
                         {
@@ -520,14 +521,14 @@ namespace ApiView
                         builder.Punctuation(SyntaxKind.EqualsToken);
                         builder.Space();
                         BuildTypedConstant(builder, argument.Value);
-                        }
+                    }
 
                     builder.Punctuation(SyntaxKind.CloseParenToken);
-                        }
+                }
                 builder.Punctuation(SyntaxKind.CloseBracketToken);
                 builder.NewLine();
-                        }
-                        }
+            }
+        }
 
         private bool IsSkippedAttribute(INamedTypeSymbol attributeAttributeClass)
         {
@@ -541,11 +542,11 @@ namespace ApiView
                 case "EditorBrowsableAttribute":
                 case "NullableAttribute":
                 case "NullableContextAttribute":
-                return true;
+                    return true;
                 default:
-                return false;
+                    return false;
             }
-            }
+        }
 
         private bool IsHiddenFromIntellisense(ISymbol member) =>
             member.GetAttributes().Any(d => d.AttributeClass?.Name == "EditorBrowsableAttribute"
@@ -583,7 +584,7 @@ namespace ApiView
                     if (!first)
                     {
                         builder.Punctuation(SyntaxKind.CommaToken);
-                builder.Space();
+                        builder.Space();
                     }
                     else
                     {
@@ -591,16 +592,16 @@ namespace ApiView
                     }
 
                     BuildTypedConstant(builder, value);
-                    }
+                }
                 builder.Punctuation("}");
-                    }
+            }
             else
             {
                 if (typedConstant.Value is string s)
                 {
                     builder.Append(
-                    ObjectDisplay.FormatLiteral(s, ObjectDisplayOptions.UseQuotes | ObjectDisplayOptions.EscapeNonPrintableCharacters),
-                    CodeFileTokenKind.StringLiteral);
+                        ObjectDisplay.FormatLiteral(s, ObjectDisplayOptions.UseQuotes | ObjectDisplayOptions.EscapeNonPrintableCharacters),
+                        CodeFileTokenKind.StringLiteral);
                 }
                 else
                 {
@@ -608,8 +609,8 @@ namespace ApiView
                         ObjectDisplay.FormatPrimitive(typedConstant.Value, ObjectDisplayOptions.None),
                         CodeFileTokenKind.Literal);
                 }
-                }
-                }
+            }
+        }
 
         private void NodeFromSymbol(CodeFileTokensBuilder builder, ISymbol symbol)
         {
@@ -639,24 +640,24 @@ namespace ApiView
                 for (int i = 0; i < parts.Length; i++)
                 {
                     // Skip internal setters
-                if (parts[i].Kind == SymbolDisplayPartKind.Keyword && parts[i].ToString() == "internal")
-                {
-                    while (i < parts.Length && parts[i].ToString() != "}")
+                    if (parts[i].Kind == SymbolDisplayPartKind.Keyword && parts[i].ToString() == "internal")
                     {
-                        i++;
-                    }
+                        while (i < parts.Length && parts[i].ToString() != "}")
+                        {
+                            i++;
+                        }
                     }
                     builder.Append(MapToken(definedSymbol, parts[i]));
-                    }
-                    }
+                }
+            }
             else
             {
                 foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
                 {
                     builder.Append(MapToken(definedSymbol, symbolDisplayPart));
                 }
-                }
-                }
+            }
+        }
 
         private bool NeedsAccessibility(ISymbol symbol)
         {
@@ -688,23 +689,23 @@ namespace ApiView
                 case SymbolDisplayPartKind.ErrorTypeName:
                 case SymbolDisplayPartKind.InterfaceName:
                 case SymbolDisplayPartKind.StructName:
-                kind = CodeFileTokenKind.TypeName;
-                break;
+                    kind = CodeFileTokenKind.TypeName;
+                    break;
                 case SymbolDisplayPartKind.Keyword:
-                kind = CodeFileTokenKind.Keyword;
-                break;
+                    kind = CodeFileTokenKind.Keyword;
+                    break;
                 case SymbolDisplayPartKind.LineBreak:
-                kind = CodeFileTokenKind.Newline;
-                break;
+                    kind = CodeFileTokenKind.Newline;
+                    break;
                 case SymbolDisplayPartKind.StringLiteral:
-                kind = CodeFileTokenKind.StringLiteral;
-                break;
+                    kind = CodeFileTokenKind.StringLiteral;
+                    break;
                 case SymbolDisplayPartKind.Punctuation:
-                kind = CodeFileTokenKind.Punctuation;
-                break;
+                    kind = CodeFileTokenKind.Punctuation;
+                    break;
                 case SymbolDisplayPartKind.Space:
-                kind = CodeFileTokenKind.Whitespace;
-                break;
+                    kind = CodeFileTokenKind.Whitespace;
+                    break;
                 case SymbolDisplayPartKind.PropertyName:
                 case SymbolDisplayPartKind.EventName:
                 case SymbolDisplayPartKind.FieldName:
@@ -713,11 +714,11 @@ namespace ApiView
                 case SymbolDisplayPartKind.EnumMemberName:
                 case SymbolDisplayPartKind.ExtensionMethodName:
                 case SymbolDisplayPartKind.ConstantName:
-                kind = CodeFileTokenKind.MemberName;
-                break;
+                    kind = CodeFileTokenKind.MemberName;
+                    break;
                 default:
-                kind = CodeFileTokenKind.Text;
-                break;
+                    kind = CodeFileTokenKind.Text;
+                    break;
             }
 
             string navigateToId = null;
@@ -744,13 +745,13 @@ namespace ApiView
             switch (accessibility)
             {
                 case Accessibility.ProtectedAndInternal:
-                return Accessibility.Internal;
+                    return Accessibility.Internal;
                 case Accessibility.ProtectedOrInternal:
-                return Accessibility.Protected;
+                    return Accessibility.Protected;
                 default:
-                return accessibility;
+                    return accessibility;
             }
-            }
+        }
 
         private bool IsAccessible(ISymbol s)
         {
@@ -759,13 +760,13 @@ namespace ApiView
                 case Accessibility.Protected:
                 case Accessibility.ProtectedOrInternal:
                 case Accessibility.Public:
-                return true;
+                    return true;
                 case Accessibility.Internal:
-                return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute");
+                    return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute");
                 default:
-                return IsAccessibleExplicitInterfaceImplementation(s);
+                    return IsAccessibleExplicitInterfaceImplementation(s);
             }
-            }
+        }
 
         private bool IsAccessibleExplicitInterfaceImplementation(ISymbol s)
         {

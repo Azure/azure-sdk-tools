@@ -47,9 +47,9 @@ namespace RandomNamespace
         public void [||]Foo(int b)
         {
             if (b == 0)
-{
-    throw new ArgumentException(nameof(b));
-}
+            {
+                throw new ArgumentException(nameof(b));
+            }
             int a = 2 + b;
         }
     }
@@ -65,9 +65,9 @@ namespace RandomNamespace
         public void Foo(int b)
         {
             if (b == 0)
-{
-    throw new ArgumentException(nameof(b));
-}
+            {
+                throw new ArgumentException(nameof(b));
+            }
             using DiagnosticScope scope = _clientDiagnostics.CreateScope($""{nameof(MyClass)}.{nameof(Foo)}"");
             scope.Start();
             try
@@ -149,9 +149,9 @@ namespace RandomNamespace
         public async Task [||]FooAsync(int b)
         {
             if (b == 0)
-{
-    throw new ArgumentException(nameof(b));
-}
+            {
+                throw new ArgumentException(nameof(b));
+            }
             int a = 2 + b;
         }
     }
@@ -170,9 +170,9 @@ namespace RandomNamespace
         public async Task [||]FooAsync(int b)
         {
             if (b == 0)
-{
-    throw new ArgumentException(nameof(b));
-}
+            {
+                throw new ArgumentException(nameof(b));
+            }
             using DiagnosticScope scope = _clientDiagnostics.CreateScope($""{nameof(MyClass)}.{nameof(Foo)}"");
             scope.Start();
             try

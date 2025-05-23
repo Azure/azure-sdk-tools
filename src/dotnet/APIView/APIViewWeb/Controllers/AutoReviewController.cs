@@ -87,8 +87,11 @@ namespace APIViewWeb.Controllers
                 if (!string.IsNullOrEmpty(packageVersion))
                 {
                     var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
-                    if (apiRevisions.Any())
+                    if (apiRevisions.Any()
+{
+    )
                         apiRevision = apiRevisions.FirstOrDefault();
+}
                 }
 
                 if (apiRevision == null)

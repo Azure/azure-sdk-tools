@@ -419,7 +419,9 @@ namespace APIViewWeb.Managers
                 }
                 var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
                 if (languageService == null)
-                    continue;
+{
+    continue;
+}
 
                 // If review is updated using devops pipeline then batch process update review requests
                 if (languageService.IsReviewGenByPipeline)

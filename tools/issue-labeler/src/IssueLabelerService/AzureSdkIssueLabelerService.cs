@@ -115,8 +115,11 @@ namespace IssueLabelerService
 
         public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)
         {
-            if (string.IsNullOrEmpty(template))
+            if (string.IsNullOrEmpty(template)
+{
+    )
                 return string.Empty;
+}
 
             string result = template;
 

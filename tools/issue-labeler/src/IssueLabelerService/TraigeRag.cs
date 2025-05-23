@@ -100,10 +100,12 @@ namespace IssueLabelerService
             }
 
             if(structure != null)
-                options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+{
+    options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
                     jsonSchemaFormatName: "IssueOutput",
                     jsonSchema: structure
                 );
+}
 
             ChatCompletion answers = await chatClient.CompleteChatAsync(
                 [

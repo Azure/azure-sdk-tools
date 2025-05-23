@@ -39,7 +39,9 @@ namespace Azure.SDK.ChangelogGen
                 }
 
                 if (context.LogSettings)
-                    Logger.Log("Generating Changelog based on following settings: \n" + context.ToString());
+{
+    Logger.Log("Generating Changelog based on following settings: \n" + context.ToString());
+}
 
                 Logger.Warning("Please make sure followings (local branch and tags) are up-to-date: \n" +
                         $"  1. Api File: {context.ApiFile}\n" +
@@ -143,8 +145,11 @@ namespace Azure.SDK.ChangelogGen
             string curVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(curAutorestMd, out string specPath));
             string baselineVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(baseAutorestMd, out _));
 
-            if (!string.IsNullOrEmpty(specPath))
+            if (!string.IsNullOrEmpty(specPath)
+{
+    )
                 source = specPath;
+}
             if (string.Equals(curVersionTag, baselineVersionTag, StringComparison.OrdinalIgnoreCase))
             {
                 Logger.Log($"No change found in Spec Tag: {baselineVersionTag} -> {curVersionTag}\n" +

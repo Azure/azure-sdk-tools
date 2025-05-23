@@ -19,14 +19,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static byte[] ReadAllBytes(Stream s)
         {
-            if (s is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> seg))
+            if (s is MemoryStream ms && ms.TryGetBuffer(out ArraySegment<byte> seg)
+{
+    )
                 return seg.AsSpan(seg.Offset, seg.Count).ToArray();
+}
 
             using var copy = new MemoryStream();
 
             int first = s.ReadByte();
             if (first == -1)
-                return Array.Empty<byte>();
+{
+    return Array.Empty<byte>();
+}
 
             copy.WriteByte((byte)first);
             s.CopyTo(copy);
@@ -60,14 +65,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 // 1. a delimiter line means the next lines are headers
                 if (atLineStart && b == DASH && i + 1 < src.Length && src[i + 1] == DASH)
-                    inHeaders = true;
+{
+    inHeaders = true;
+}
 
                 // 2. inside headers, look ahead for the pattern LF LF
                 if (inHeaders && b == LF && i + 1 < src.Length && src[i + 1] == LF)
                 {
                     // we’re on the *first* LF of LF LF
                     // ensure we output CR LF CR LF
-                    if (w == 0 || dst[w - 1] != CR) dst[w++] = CR;
+                    if (w == 0 || dst[w - 1] != CR)
+{
+    dst[w++] = CR;
+}
                     dst[w++] = LF;   // current LF
                     dst[w++] = CR;   // injected CR before second LF
                     dst[w++] = LF;   // second LF
@@ -78,16 +88,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
 
                 // 3. bare LF at end of a non‑blank header line
-                if (inHeaders && b == LF && (w == 0 || dst[w - 1] != CR))
+                if (inHeaders && b == LF && (w == 0 || dst[w - 1] != CR)
+{
+    )
                     dst[w++] = CR;
+}
 
                 dst[w++] = b;
                 atLineStart = b == LF;
 
                 // 4. CR LF CR LF already correct → leave header mode
                 if (inHeaders && atLineStart &&
-                    i + 1 < src.Length && (src[i + 1] == CR || src[i + 1] == LF))
+                    i + 1 < src.Length && (src[i + 1] == CR || src[i + 1] == LF)
+{
+    )
                     inHeaders = false;
+}
             }
 
             var fixedBytes = w == src.Length ? src : dst.AsSpan(0, w).ToArray();
@@ -114,7 +130,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
                 int idx = raw.AsSpan().IndexOf(crlf);
-                if (idx == -1) throw new InvalidDataException("Multipart body missing CRLF.");
+                if (idx == -1)
+{
+    throw new InvalidDataException("Multipart body missing CRLF.");
+}
 
                 boundary = Encoding.ASCII.GetString(raw, 2, idx - 2); // skip leading "--"
             }
@@ -127,11 +146,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             out string boundary)
         {
             boundary = null;
-            if (!headers.TryGetValue("Content-Type", out var v)) return false;
+            if (!headers.TryGetValue("Content-Type", out var v)
+{
+    ) return false;
+}
 
-            if (!MediaTypeHeaderValue.TryParse(v[0], out var mt)) return false;
-            if (!mt.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase))
+            if (!MediaTypeHeaderValue.TryParse(v[0], out var mt)
+{
+    ) return false;
+}
+            if (!mt.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase)
+{
+    )
                 return false;
+}
 
             boundary = mt.Boundary.Value?.Trim('"');
             return !string.IsNullOrEmpty(boundary);
@@ -142,12 +170,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             while (true)
             {
                 int idx = text.IndexOf('\n');
-                if (idx == -1) break;
+                if (idx == -1)
+{
+    break;
+}
                 idx += 1;                            // keep '\n'
                 w.WriteStringValue(text[..idx]);
                 text = text[idx..];
             }
-            if (!text.IsEmpty) w.WriteStringValue(text);
+            if (!text.IsEmpty)
+{
+    w.WriteStringValue(text);
+}
         }
 
         public static void DumpAscii(ReadOnlySpan<byte> bytes, int count = 256)

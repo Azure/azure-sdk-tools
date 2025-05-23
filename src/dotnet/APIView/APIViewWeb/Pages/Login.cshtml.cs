@@ -12,7 +12,9 @@ namespace APIViewWeb.Pages
         public IActionResult OnGetAsync()
         {
             if (User.Identity.IsAuthenticated)
-                return Redirect(ReturnUrl);
+{
+    return Redirect(ReturnUrl);
+}
 
             return Page();
         }

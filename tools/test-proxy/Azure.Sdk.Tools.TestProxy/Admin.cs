@@ -278,7 +278,10 @@ namespace Azure.Sdk.Tools.TestProxy
                                 {
                                     throw e.InnerException;
                                 }
-                                else throw;
+                                else
+{
+    throw;
+}
                             }
                             break;
                         default:
@@ -318,7 +321,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     throw e.InnerException;
                 }
-                else throw;
+                else
+{
+    throw;
+}
             }
         }
     }

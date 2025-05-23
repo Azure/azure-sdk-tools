@@ -19,8 +19,10 @@ namespace APIView.Model
         { 
             get 
             { 
-                if (this.IsRoot) 
-                    return 0;
+                if (this.IsRoot)
+{
+    return 0;
+}
                 return Parent.Level + 1;
             }
         }

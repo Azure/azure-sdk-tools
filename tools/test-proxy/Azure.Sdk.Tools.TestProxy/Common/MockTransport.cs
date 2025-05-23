@@ -68,8 +68,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         private async Task ProcessCore(HttpMessage message)
         {
-            if (!(message.Request is MockRequest request))
+            if (!(message.Request is MockRequest request)
+{
+    )
                 throw new InvalidOperationException("the request is not compatible with the transport");
+}
 
             lock (_syncObj)
             {

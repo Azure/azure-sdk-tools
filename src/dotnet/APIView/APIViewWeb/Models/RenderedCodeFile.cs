@@ -116,7 +116,9 @@ namespace APIViewWeb.Models
                             lineClass.Add($"lvl_{node.Level}_child_{node.PositionAmongSiblings}");
 
                         if (node.Level > 1)
-                            lineClass.Add("d-none");
+{
+    lineClass.Add("d-none");
+}
 
                         var lineClasses = String.Join(' ', lineClass);
 
@@ -200,7 +202,9 @@ namespace APIViewWeb.Models
                         lineClass.Add($"lvl_{level}_child_{node.PositionAmongSiblings}");
 
                     if (level > 1)
-                        lineClass.Add("d-none");
+{
+    lineClass.Add("d-none");
+}
 
                     var lineClasses = String.Join(' ', lineClass);
 
@@ -240,7 +244,9 @@ namespace APIViewWeb.Models
                 {
                     var node = enumerator.Current;
                     if (node.WasDetachedLeafParent)
-                        continue;
+{
+    continue;
+}
 
                     if (node.Data.Kind == DiffLineKind.Added || node.Data.Kind == DiffLineKind.Removed)
                     {
@@ -307,18 +313,27 @@ namespace APIViewWeb.Models
             switch (renderType)
             {
                 case RenderType.Text:
-                    if (RenderResultText.Equals(default(RenderResult)))
+                    if (RenderResultText.Equals(default(RenderResult)
+{
+    ))
                         _ = RenderText(showDocumentation, skipDiff);
+}
                     renderResult = RenderResultText;
                     break;
                 case RenderType.ReadOnly:
-                    if (RenderResultReadOnly.Equals(default(RenderResult)))
+                    if (RenderResultReadOnly.Equals(default(RenderResult)
+{
+    ))
                         _ = RenderReadOnly(showDocumentation);
+}
                     renderResult = RenderResultReadOnly;
                     break;
                 default:
-                    if (RenderResult.Equals(default(RenderResult)))
+                    if (RenderResult.Equals(default(RenderResult)
+{
+    ))
                         _ = Render(showDocumentation);
+}
                     renderResult = RenderResult;
                     break;
             }

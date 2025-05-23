@@ -74,7 +74,9 @@ namespace Azure.SDK.ChangelogGen.Report
             {
                 var found = to.Groups.FirstOrDefault(g => g.Name == fromGroup.Name);
                 if (found != null)
-                    to.Groups.Remove(found);
+{
+    to.Groups.Remove(found);
+}
             }
             to.Groups.AddRange(this.Groups);
         }
@@ -118,7 +120,9 @@ namespace Azure.SDK.ChangelogGen.Report
         public static List<Release> FromChangelog(string changelog)
         {
             if (changelog == null)
-                throw new ArgumentNullException(nameof(changelog));
+{
+    throw new ArgumentNullException(nameof(changelog));
+}
 
             List<Release> releases = new List<Release>();
             var lines = changelog.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
@@ -129,10 +133,15 @@ namespace Azure.SDK.ChangelogGen.Report
                 i++;
 
             if (i >= lines.Length)
-                return releases;
+{
+    return releases;
+}
 
-            if (!TryParseReleaseTitle(lines[i], out Release? firstRelease))
+            if (!TryParseReleaseTitle(lines[i], out Release? firstRelease)
+{
+    )
                 throw new InvalidOperationException("Can't find first release info in changelog: " + lines[i]);
+}
             Release curRelease = firstRelease!;
 
             ReleaseNoteGroup curGroup = new ReleaseNoteGroup("");

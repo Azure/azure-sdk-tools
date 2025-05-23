@@ -216,7 +216,9 @@ namespace APIViewWeb.Managers
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
         {
             if (!_isGitClientAvailable)
-                return false;
+{
+    return false;
+}
 
             var repoInfo = prModel.RepoName.Split("/");
             var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);

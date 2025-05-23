@@ -114,8 +114,11 @@ namespace SwaggerApiParser
                                             param = schemaCache.GetParameterFromCache(referencePath, referencePath, false);
                                         }
 
-                                        if (param != null && param.IsRefObject())
+                                        if (param != null && param.IsRefObject()
+{
+    )
                                             referencePath = param.@ref;
+}
                                     }
                                     while (param != null && param.IsRefObject());
                                 }
@@ -182,8 +185,11 @@ namespace SwaggerApiParser
                             {
                                 resp = (Response)schemaCache.GetResponseFromCache(response.@ref, swaggerFilePath);
                                 // Update reference path if referenced object is in another swagger file
-                                if (response.IsRefObject() && !response.@ref.StartsWith("#"))
+                                if (response.IsRefObject()
+{
+    && !response.@ref.StartsWith("#"))
                                     referencePath = response.@ref;
+}
                             }
 
                             if (resp == null)
@@ -205,8 +211,11 @@ namespace SwaggerApiParser
                                         resp = schemaCache.GetResponseFromCache(referencePath, referencePath, false);
                                     }
 
-                                    if (resp != null && resp.IsRefObject())
+                                    if (resp != null && resp.IsRefObject()
+{
+    )
                                         referencePath = resp.@ref;
+}
                                 }
                                 while (resp != null && resp.IsRefObject());
                             }
@@ -238,8 +247,11 @@ namespace SwaggerApiParser
                                         schema.originalRef = referencePath;
                                     }
 
-                                    if (schema != null && schema.IsRefObject())
+                                    if (schema != null && schema.IsRefObject()
+{
+    )
                                         referencePath = schema.@ref;
+}
                                 }
                                 while (schema != null && schema.IsRefObject());
                             }

@@ -17,7 +17,9 @@ namespace SwaggerApiParser.Specs
             ret.AddRange(TokenSerializer.KeyValueTokens("type", type, true, context.IteratorPath.CurrentNextPath("type")));
 
             if (description != null)
-                ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("description")));
+{
+    ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("description")));
+}
             
             return ret.ToArray();
         }

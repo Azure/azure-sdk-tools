@@ -19,10 +19,14 @@ namespace SwaggerApiParser.SwaggerApiView
         {
             List<string> ret = new List<string>();
             if (this.required)
-                ret.Add("required");
+{
+    ret.Add("required");
+}
 
             if (this.allowEmptyValue)
-                ret.Add("allowEmptyValue");
+{
+    ret.Add("allowEmptyValue");
+}
 
             ret.AddRange(base.GetKeywords());
             return ret;

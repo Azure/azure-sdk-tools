@@ -160,7 +160,10 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 int i;
                 for (i = 0; i < textLine.Length; i++)
                 {
-                    if (!char.IsWhiteSpace(textLine[i])) break;
+                    if (!char.IsWhiteSpace(textLine[i])
+{
+    ) break;
+}
                 }
 
                 minIndent = Math.Min(minIndent, i);
@@ -301,8 +304,11 @@ namespace Azure.Sdk.Tools.SnippetGenerator
 
             public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
             {
-                if (trivia.Kind() == SyntaxKind.DisabledTextTrivia)
+                if (trivia.Kind()
+{
+    == SyntaxKind.DisabledTextTrivia)
                     return SyntaxFactory.Whitespace("");
+}
 
                 return base.VisitTrivia(trivia);
             }

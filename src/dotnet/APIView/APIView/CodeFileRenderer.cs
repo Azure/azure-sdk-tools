@@ -50,10 +50,14 @@ namespace ApiView
             {
                 // Skip all tokens till range end
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
-                    continue;
+{
+    continue;
+}
 
                 if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
-                    continue;
+{
+    continue;
+}
 
                 switch (token.Kind)
                 {

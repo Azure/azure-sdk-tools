@@ -244,7 +244,9 @@ namespace APIViewWeb
                             // Name space has mix of details namespace and classes
                             // API View should skip those sub details namespaces also
                             if (member.kind == NamespaceDeclKind)
-                                continue;
+{
+    continue;
+}
 
                             builder.IncrementIndent();
                             ProcessNode(member, currentNamespaceMembers, nameSpace);
@@ -394,7 +396,9 @@ namespace APIViewWeb
                     foreach (var childNode in node.inner)
                     {
                         if (childNode.kind == CxxRecordDeclKind && childNode.name == node.name)
-                            continue;
+{
+    continue;
+}
 
                         // add public or protected access specifier
                         if (childNode.kind == AccessSpecDeclKind)
@@ -1020,7 +1024,9 @@ namespace APIViewWeb
 
                         var parentNode = astnodeStack.Count > 0 ? astnodeStack.Pop() : astRoot;
                         if (parentNode.inner == null)
-                            parentNode.inner = new List<CppAstNode>();
+{
+    parentNode.inner = new List<CppAstNode>();
+}
 
                         parentNode.inner.Add(node);
                         patternStack.Push(prefix);
@@ -1036,7 +1042,9 @@ namespace APIViewWeb
                             var newLinePrefix = line.Substring(0, line.IndexOf(ParseNodeKind(line)));
                             //Should not skip new line if it is at parent level or sibling
                             if (newLinePrefix.Length <= prefix.Length)
-                                break;
+{
+    break;
+}
                             line = reader.ReadLine();
                         }
                         continue;

@@ -75,7 +75,10 @@ namespace APIViewWeb.Managers
         {
             var file = await _sampleFilesRepository.GetUsageSampleAsync(fileId);
 
-            if (file == null) return null;
+            if (file == null)
+{
+    return null;
+}
 
             var reader = new StreamReader(file);
             var htmlString = reader.ReadToEnd();

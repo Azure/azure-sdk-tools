@@ -44,8 +44,11 @@ namespace SwaggerApiParser.SwaggerApiView
                 stream,
                 JsonSerializerOptions);
 
-            if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
+            if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language)
+{
+    )
                 hasSections = true;
+}
 
             // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time

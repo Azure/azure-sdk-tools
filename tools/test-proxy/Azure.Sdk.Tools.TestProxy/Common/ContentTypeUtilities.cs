@@ -26,16 +26,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             boundary = null;
 
-            if (!headers.TryGetValue("Content-Type", out var values))
+            if (!headers.TryGetValue("Content-Type", out var values)
+{
+    )
                 return false;
+}
 
             var ct = values[0];
-            if (!ct.StartsWith("multipart/mixed", StringComparison.OrdinalIgnoreCase))
+            if (!ct.StartsWith("multipart/mixed", StringComparison.OrdinalIgnoreCase)
+{
+    )
                 return false;
+}
 
             const string key = "boundary=";
             var idx = ct.IndexOf(key, StringComparison.OrdinalIgnoreCase);
-            if (idx == -1) return false;
+            if (idx == -1)
+{
+    return false;
+}
 
             boundary = ct[(idx + key.Length)..]   // everything after “boundary=”
                          .Trim()                  // strip spaces

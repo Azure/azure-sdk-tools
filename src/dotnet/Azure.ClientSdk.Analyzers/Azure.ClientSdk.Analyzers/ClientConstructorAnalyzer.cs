@@ -38,7 +38,10 @@ namespace Azure.ClientSdk.Analyzers
                     if (IsClientOptionsParameter(lastParameter))
                     {
                         // Allow optional options parameters
-                        if (lastParameter.IsOptional) continue;
+                        if (lastParameter.IsOptional)
+{
+    continue;
+}
 
                         // When there are static properties in client, there would be static constructor implicitly added
                         var nonOptionsMethod = FindMethod(

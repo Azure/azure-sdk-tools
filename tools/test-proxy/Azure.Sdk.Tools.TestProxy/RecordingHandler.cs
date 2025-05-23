@@ -899,7 +899,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     else
                     {
                         bool isChainValid = certificateChain.Build(cert);
-                        if (!isChainValid) return false;
+                        if (!isChainValid)
+{
+    return false;
+}
                         var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
                             .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
 

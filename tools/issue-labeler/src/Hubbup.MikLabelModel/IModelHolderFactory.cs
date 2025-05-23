@@ -32,8 +32,11 @@ namespace IssueLabeler.Shared.Models
 
         public IModelHolder CreateModelHolder(string owner, string repo)
         {
-            if (!IsConfigured(repo))
+            if (!IsConfigured(repo)
+{
+    )
                 return null;
+}
             return _models.TryGetValue((owner, repo), out IModelHolder modelHolder) ?
                 modelHolder :
                _models.GetOrAdd((owner, repo), InitFor(repo));

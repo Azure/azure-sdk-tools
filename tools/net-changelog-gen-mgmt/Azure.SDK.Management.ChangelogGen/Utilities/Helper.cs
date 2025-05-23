@@ -100,7 +100,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
             string[] segs = fileKey.Split('\\', '/');
 
             if (segs.Length == 0)
-                throw new ArgumentNullException(nameof(fileKey));
+{
+    throw new ArgumentNullException(nameof(fileKey));
+}
 
             Tree cur = tree;
             for (int i = 0; i < segs.Length - 1; i++)
@@ -141,15 +143,21 @@ namespace Azure.SDK.ChangelogGen.Utilities
         public static MethodInfo[] GetMethods(this Type type, BindingFlags flags, bool includePropertyMethod)
         {
             if (includePropertyMethod)
-                return type.GetMethods(flags);
+{
+    return type.GetMethods(flags);
+}
             else
-                return type.GetMethods(flags).Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_")).ToArray();
+{
+    return type.GetMethods(flags).Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_")).ToArray();
+}
         }
 
         public static string ToFriendlyString(this PropertyInfo pi)
         {
             if (pi == null)
-                throw new ArgumentNullException(nameof(pi));
+{
+    throw new ArgumentNullException(nameof(pi));
+}
 
             var indexParameters = pi.GetIndexParameters();
             if (indexParameters.Length > 0)
@@ -165,7 +173,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
         public static string ToFriendlyString(this MethodInfo mi)
         {
             if (mi == null)
-                throw new ArgumentNullException(nameof(mi));
+{
+    throw new ArgumentNullException(nameof(mi));
+}
 
             var genericArguments = mi.GetGenericArguments();
             var genericPart = genericArguments.Length == 0 ? "" : $"<{string.Join(", ", genericArguments.Select(g => g.Name))}>";
@@ -179,21 +189,27 @@ namespace Azure.SDK.ChangelogGen.Utilities
         public static string ToFriendlyString(this Type type, bool fullName = false)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type));
+{
+    throw new ArgumentNullException(nameof(type));
+}
 
             var gtp = type.GetGenericArguments();
             var genericPart = gtp.Length == 0 ? "" : $"<{string.Join(", ", gtp.Select(t => t.ToFriendlyString(fullName)))}>";
             string name = (fullName && type.FullName != null) ? type.FullName : type.Name;
             int index = name.IndexOf('`');
             if (index >= 0)
-                name = name[..index];
+{
+    name = name[..index];
+}
             return $"{name}{genericPart}";
         }
 
         public static string ToFriendlyString(this ConstructorInfo ci)
         {
             if (ci == null)
-                throw new ArgumentNullException(nameof(ci));
+{
+    throw new ArgumentNullException(nameof(ci));
+}
 
             var paramList = ci.GetParameters();
 
@@ -229,7 +245,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
             {
                 FencedCodeBlock? fcb = b as FencedCodeBlock;
                 if (fcb == null)
-                    return false;
+{
+    return false;
+}
                 return (fcb.Info == "yaml" && string.IsNullOrEmpty(fcb.Arguments));
             }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList();
 

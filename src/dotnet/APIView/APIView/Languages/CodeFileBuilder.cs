@@ -315,7 +315,10 @@ namespace ApiView
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
             {
-                if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)) continue;
+                if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)
+{
+    ) continue;
+}
                 if (member is IMethodSymbol method)
                 {
                     if (method.MethodKind == MethodKind.PropertyGet ||
@@ -393,7 +396,10 @@ namespace ApiView
 
             foreach (var typeInterface in namedType.Interfaces)
             {
-                if (!IsAccessible(typeInterface)) continue;
+                if (!IsAccessible(typeInterface)
+{
+    ) continue;
+}
 
                 if (!first)
                 {

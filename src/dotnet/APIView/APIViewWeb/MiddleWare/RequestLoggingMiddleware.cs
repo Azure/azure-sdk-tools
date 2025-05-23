@@ -113,7 +113,10 @@ namespace APIViewWeb.MiddleWare
 
         private string MaskSensitiveData(string body)
         {
-            if (string.IsNullOrWhiteSpace(body)) return body;
+            if (string.IsNullOrWhiteSpace(body)
+{
+    ) return body;
+}
 
             try
             {

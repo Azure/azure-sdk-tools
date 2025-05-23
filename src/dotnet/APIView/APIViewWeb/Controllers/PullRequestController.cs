@@ -234,8 +234,11 @@ namespace APIViewWeb.Controllers
             // If a revision already exists for PR then just update the code file for that revision.
             if (revisionAlreadyExistsForPR(prModel, false))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName))
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName)
+{
+    )
                     return;
+}
             }
 
             //Create new API revision if PR has API changes            
@@ -262,13 +265,19 @@ namespace APIViewWeb.Controllers
             bool createNewModifiedRevision = true;
             if (revisionAlreadyExistsForPR(prModel, true))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, baselineMemoryStream, baselineCodeFile, originalFileName))
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, baselineMemoryStream, baselineCodeFile, originalFileName)
+{
+    )
                     createNewBaselineRevision = false;
+}
             }
             if (revisionAlreadyExistsForPR(prModel, false))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName))
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName)
+{
+    )
                     createNewModifiedRevision = false;
+}
             }
 
             // Create baseline revision
@@ -337,14 +346,20 @@ namespace APIViewWeb.Controllers
                 var value = queryParam.Value.ToString();
                 if (queryParam.Key == "filePath")
                 {
-                    if (!VALID_EXTENSIONS.Any(e => value.EndsWith(e)))
+                    if (!VALID_EXTENSIONS.Any(e => value.EndsWith(e)
+{
+    ))
                         return false;
+}
                 }
 
                 if (queryParam.Key == "repoName")
                 {
-                    if (!value.Contains("/"))
+                    if (!value.Contains("/")
+{
+    )
                         return false;
+}
                 }
             }
             return true;

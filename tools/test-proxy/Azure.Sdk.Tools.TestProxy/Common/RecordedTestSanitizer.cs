@@ -64,7 +64,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public virtual string SanitizeTextBody(string contentType, string body)
         {
             if (JsonPathSanitizers.Count == 0)
-                return body;
+{
+    return body;
+}
             try
             {
                 JToken jsonO;

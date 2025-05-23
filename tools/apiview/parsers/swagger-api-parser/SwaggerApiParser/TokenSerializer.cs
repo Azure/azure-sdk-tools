@@ -398,7 +398,9 @@ namespace SwaggerApiParser
                     var isCollapsible = IsCurObjCollapsible(property.Name);
                     // Write the property name
                     if (!excludeJsonPunctuations)
-                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+{
+    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+}
                     
                     var propertyType = isCollapsible ? CodeFileTokenKind.TypeName : CodeFileTokenKind.MemberName;
                     this.Writer.Write(propertyType, property.Name);
@@ -424,7 +426,9 @@ namespace SwaggerApiParser
                         if (property.Name != values.Last().Name)
                         {
                             if (!excludeJsonPunctuations)
-                                this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+{
+    this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+}
 
                             if (multiLine) { this.Writer.WriteLine(); }
                         }
@@ -440,7 +444,9 @@ namespace SwaggerApiParser
                         if (property.Name != values.Last().Name)
                         {
                             if (!excludeJsonPunctuations)
-                                this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+{
+    this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+}
 
                             if (multiLine) { this.Writer.WriteLine(); }
                         }
@@ -517,13 +523,17 @@ namespace SwaggerApiParser
                     break;
                 case JsonValueKind.String:
                     if (!excludeJsonPunctuations)
-                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+{
+    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+}
                     this.Writer.Write(CodeFileTokenKind.StringLiteral, value.GetString());
                     this.iteratorPath.Add(value.GetString());
                     this.Writer.AnnotateDefinition(this.iteratorPath.CurrentPath());
                     this.iteratorPath.Pop();
                     if (!excludeJsonPunctuations)
-                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+{
+    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+}
                     break;
                 default:
                     throw new InvalidOperationException($"Expected a literal JSON element, not {value.ValueKind}.");

@@ -105,7 +105,9 @@ namespace Azure.SDK.ChangelogGen
             string changelogContent = File.ReadAllText(ChangeLogMdFile);
             this.ReleasesInChangelog = Release.FromChangelog(changelogContent);
             if (this.ReleasesInChangelog.Count == 0)
-                throw new InvalidDataException("No release found in changelog.md. At least one Release (Unreleased) expected");
+{
+    throw new InvalidDataException("No release found in changelog.md. At least one Release (Unreleased) expected");
+}
             if (this.ReleasesInChangelog[0].ReleaseDate != "Unreleased")
             {
                 if (this.ReleasesInChangelog[0].Version != this.ReleaseVersion)

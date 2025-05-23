@@ -32,7 +32,10 @@ public static class TaskExtensions
                 break;
             }
 
-            if (pending.Count < concurrencyLimit) continue;
+            if (pending.Count < concurrencyLimit)
+{
+    continue;
+}
 
             var completed = await Task.WhenAny(pending);
             pending.Remove(completed);

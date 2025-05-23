@@ -26,7 +26,9 @@ namespace APIViewWeb.Pages
                 await _authorizationService.AuthorizeAsync(User, null, Startup.RequireOrganizationPolicy);
 
             if (authorizationResult.Succeeded)
-                return Redirect(ReturnUrl);
+{
+    return Redirect(ReturnUrl);
+}
 
             return Page();
         }

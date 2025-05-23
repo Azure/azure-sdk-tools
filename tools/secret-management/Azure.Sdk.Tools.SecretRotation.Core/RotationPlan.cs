@@ -117,11 +117,17 @@ public class RotationPlan
             var state = RotationState.UpToDate;
 
             if (minExpirationDate == null || minExpirationDate <= invocationTime)
-                state = RotationState.Expired;
+{
+    state = RotationState.Expired;
+}
             else if (minExpirationDate <= warningThresholdDate)
-                state = RotationState.Warning;
+{
+    state = RotationState.Warning;
+}
             else if (minExpirationDate <= rotationThresholdDate)
-                state = RotationState.Rotate;
+{
+    state = RotationState.Rotate;
+}
 
             bool anyRequireRevocation = rotationArtifacts.Any(state => state.RevokeAfterDate <= invocationTime);
 

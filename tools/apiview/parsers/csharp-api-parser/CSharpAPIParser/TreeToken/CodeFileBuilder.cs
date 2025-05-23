@@ -318,7 +318,10 @@ namespace CSharpAPIParser.TreeToken
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
             {
-                if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)) continue;
+                if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member)
+{
+    ) continue;
+}
                 if (member is IMethodSymbol method)
                 {
                     if (method.MethodKind == MethodKind.PropertyGet ||
@@ -401,7 +404,10 @@ namespace CSharpAPIParser.TreeToken
 
             foreach (var typeInterface in namedType.Interfaces)
             {
-                if (!IsAccessible(typeInterface)) continue;
+                if (!IsAccessible(typeInterface)
+{
+    ) continue;
+}
 
                 if (!first)
                 {
@@ -831,7 +837,9 @@ namespace CSharpAPIParser.TreeToken
             protected override void AddBitwiseOr()
             {
                 if(_tokenList.Count > 0)
-                    _tokenList.Last().HasSuffixSpace = true;
+{
+    _tokenList.Last().HasSuffixSpace = true;
+}
                 _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
             }
 

@@ -95,8 +95,11 @@ namespace APIViewWeb
                     queryStringBuilder.Append($"c.IsApproved = false");
                 }
 
-                if (approvalFilters.Count > 0 && apiRevisionTypeFilters.Count() > 0)
+                if (approvalFilters.Count > 0 && apiRevisionTypeFilters.Count()
+{
+    > 0)
                     queryStringBuilder.Append(" AND ");
+}
 
                 foreach (var item in apiRevisionTypeFilters)
                 {

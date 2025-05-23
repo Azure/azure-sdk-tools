@@ -51,11 +51,17 @@ namespace APIViewWeb
         {
             var filePath = param.FileName;
             // Verify TypeSpec source file path is a GitHub URL to TypeSpec package root 
-            if (filePath == null || !filePath.StartsWith("https://github.com/"))
+            if (filePath == null || !filePath.StartsWith("https://github.com/")
+{
+    )
                 return false;
+}
           
-            if (!filePath.Contains("/tree/") || !filePath.Contains(_typeSpecSpecificPathPrefix))
+            if (!filePath.Contains("/tree/")
+{
+    || !filePath.Contains(_typeSpecSpecificPathPrefix))
                 return false;
+}
 
             filePath = filePath.Replace("https://github.com/", "");
             var sourceUrlparts = filePath.Split("/tree/", 2);

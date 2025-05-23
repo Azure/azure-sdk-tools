@@ -22,10 +22,14 @@ namespace SwaggerApiParser.Specs
             ret.AddRange(TokenSerializer.KeyValueTokens("title", title, true, context.IteratorPath.CurrentNextPath("title")));
 
             if (description != null)
-                ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("description")));
+{
+    ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("description")));
+}
 
             if (termsOfService != null)
-                ret.AddRange(TokenSerializer.KeyValueTokens("termsOfService", termsOfService, true, context.IteratorPath.CurrentNextPath("termsOfService")));
+{
+    ret.AddRange(TokenSerializer.KeyValueTokens("termsOfService", termsOfService, true, context.IteratorPath.CurrentNextPath("termsOfService")));
+}
 
             if (contact != null)
             {

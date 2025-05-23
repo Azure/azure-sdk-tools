@@ -33,15 +33,23 @@ namespace Azure.SDK.ChangelogGen
 
             ReleaseNoteGroup featureAddedGroup = new ReleaseNoteGroup("Features Added");
             if (SpecVersionChange != null)
-                featureAddedGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
+{
+    featureAddedGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
+}
             if (featureAddedGroup.Notes.Count > 0)
-                report.Groups.Add(featureAddedGroup);
+{
+    report.Groups.Add(featureAddedGroup);
+}
 
             ReleaseNoteGroup othersGroup = new ReleaseNoteGroup("Other Changes");
             if (AzureCoreVersionChange != null)
-                othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
+{
+    othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
+}
             if (AzureResourceManagerVersionChange != null)
-                othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
+{
+    othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
+}
 
             var nonbreaking = ApiChange?.GetNonBreakingChanges().Where(b => filter.Count == 0 || filter.Contains(b.ChangeCatogory)).ToList();
             if (nonbreaking != null && nonbreaking.Count > 0)
@@ -49,7 +57,9 @@ namespace Azure.SDK.ChangelogGen
                 othersGroup.Notes.AddRange(nonbreaking.OrderBy(b => $"{b.ChangeCatogory}/{b.Target}").Select(b => new ReleaseNote(b.Description, PREFIX)));
             }
             if(othersGroup.Notes.Count > 0)
-                report.Groups.Add(othersGroup);
+{
+    report.Groups.Add(othersGroup);
+}
 
             return report;
         }

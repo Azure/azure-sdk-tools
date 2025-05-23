@@ -11,7 +11,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
         private static IEnumerable<string> GetTagsInBatch(Dictionary<string, object> config)
         {
             if (config == null)
-                throw new ArgumentNullException(nameof(config));
+{
+    throw new ArgumentNullException(nameof(config));
+}
 
             if (config.TryGetValue("batch", out object? value) && value is IEnumerable<object> batch)
             {
@@ -20,8 +22,11 @@ namespace Azure.SDK.ChangelogGen.Utilities
                     if (obj is Dictionary<object, object> dict)
                     {
                         string tag = GetTagInDefault(dict.ToDictionary(kv => kv.Key.ToString() ?? "", kv => kv.Value));
-                        if (!string.IsNullOrEmpty(tag))
+                        if (!string.IsNullOrEmpty(tag)
+{
+    )
                             yield return tag;
+}
                     }
                 }
             }
@@ -30,21 +35,31 @@ namespace Azure.SDK.ChangelogGen.Utilities
         private static string GetTagInDefault(Dictionary<string, object> config)
         {
             if (config == null)
-                throw new ArgumentNullException(nameof(config));
+{
+    throw new ArgumentNullException(nameof(config));
+}
 
-            if (config.TryGetValue("tag", out object? value) && value is string tag)
+            if (config.TryGetValue("tag", out object? value)
+{
+    && value is string tag)
                 return tag;
+}
             return "";
         }
 
         private static IEnumerable<string> GetTags(Dictionary<string, object> config)
         {
             if (config == null)
-                throw new ArgumentNullException(nameof(config));
+{
+    throw new ArgumentNullException(nameof(config));
+}
 
             string tag = GetTagInDefault(config);
-            if (!string.IsNullOrEmpty(tag))
+            if (!string.IsNullOrEmpty(tag)
+{
+    )
                 yield return tag;
+}
             foreach (string tagInBatch in GetTagsInBatch(config))
                 yield return tagInBatch;
         }
@@ -56,12 +71,21 @@ namespace Azure.SDK.ChangelogGen.Utilities
             const string SPEC_PREFIX_TREE = @"https://github.com/Azure/azure-rest-api-specs/tree/";
             const string SPEC_RAW_PREFIX = @"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/";
             string webPath = "";
-            if (require.StartsWith(SPEC_RAW_PREFIX, StringComparison.OrdinalIgnoreCase))
+            if (require.StartsWith(SPEC_RAW_PREFIX, StringComparison.OrdinalIgnoreCase)
+{
+    )
                 webPath = require;
-            else if (require.StartsWith(SPEC_PREFIX_BLOB, StringComparison.OrdinalIgnoreCase))
+}
+            else if (require.StartsWith(SPEC_PREFIX_BLOB, StringComparison.OrdinalIgnoreCase)
+{
+    )
                 webPath = string.Concat(SPEC_RAW_PREFIX, require.AsSpan(SPEC_PREFIX_BLOB.Length));
-            else if (require.StartsWith(SPEC_PREFIX_TREE, StringComparison.OrdinalIgnoreCase))
+}
+            else if (require.StartsWith(SPEC_PREFIX_TREE, StringComparison.OrdinalIgnoreCase)
+{
+    )
                 webPath = string.Concat(SPEC_RAW_PREFIX, require.AsSpan(SPEC_PREFIX_TREE.Length));
+}
 
             string specReadme = "";
             if (!string.IsNullOrEmpty(webPath))
@@ -119,7 +143,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
             }
 
             if (tags == null || tags.Count == 0)
-                throw new InvalidOperationException("Failed to retrieve Tag from spec readme.md or autorest.md");
+{
+    throw new InvalidOperationException("Failed to retrieve Tag from spec readme.md or autorest.md");
+}
 
             return tags;
         }

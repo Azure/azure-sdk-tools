@@ -16,12 +16,18 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
     {
         public static string GetFileOrUrlContents(string fileOrUrl)
         {
-            if (fileOrUrl.StartsWith("https"))
+            if (fileOrUrl.StartsWith("https")
+{
+    )
                 return GetUrlContents(fileOrUrl);
+}
 
             string fullPath = Path.GetFullPath(fileOrUrl);
-            if (File.Exists(fullPath))
+            if (File.Exists(fullPath)
+{
+    )
                 return File.ReadAllText(fullPath);
+}
 
             throw new ArgumentException(
                 "The path provided is neither local path nor https link. " +

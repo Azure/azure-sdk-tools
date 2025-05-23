@@ -45,11 +45,17 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.AddRange(info.TokenSerialize(context));
             ret.Add(TokenSerializer.FoldableContentEnd());
 
-            if (!String.IsNullOrEmpty(host))
+            if (!String.IsNullOrEmpty(host)
+{
+    )
                 ret.AddRange(TokenSerializer.KeyValueTokens("host", host, true, context.IteratorPath.CurrentNextPath("host")));
+}
 
-            if (!String.IsNullOrEmpty(basePath))
+            if (!String.IsNullOrEmpty(basePath)
+{
+    )
                 ret.AddRange(TokenSerializer.KeyValueTokens("basePath", basePath, true, context.IteratorPath.CurrentNextPath("basePath")));
+}
 
             if (schemes != null && schemes.Count > 0)
             {

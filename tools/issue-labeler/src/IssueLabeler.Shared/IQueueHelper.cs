@@ -105,17 +105,21 @@ namespace IssueLabeler.Shared
                     //}
                     // Delete the message
                     if (shouldDelete && !isMissingAreaLabel)
-                        await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
+{
+    await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
+}
                 }
                 else
                 {
                     // Update the message contents - was missing repo info
                     if (shouldUpdate)
-                        await _queueClient.UpdateMessageAsync(message.MessageId,
+{
+    await _queueClient.UpdateMessageAsync(message.MessageId,
                                 message.PopReceipt,
                                 "Updated contents",
                                 TimeSpan.FromSeconds(60.0)  // Make it invisible for another 60 seconds
                             );
+}
                 }
             }
         }

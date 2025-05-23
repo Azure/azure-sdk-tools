@@ -95,7 +95,9 @@ namespace APIViewWeb.Managers
             var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
 
             if (apiRevisionType != APIRevisionType.All)
-                apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
+{
+    apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
+}
 
             if (!string.IsNullOrEmpty(packageVersion))
             {                
@@ -202,23 +204,40 @@ namespace APIViewWeb.Managers
                 },
             };
 
-            if (!String.IsNullOrEmpty(reviewId))
+            if (!String.IsNullOrEmpty(reviewId)
+{
+    )
                 apiRevision.ReviewId = reviewId;
+}
 
-            if (!String.IsNullOrEmpty(packageName))
+            if (!String.IsNullOrEmpty(packageName)
+{
+    )
                 apiRevision.PackageName = packageName;
+}
 
-            if (!String.IsNullOrEmpty(language))
+            if (!String.IsNullOrEmpty(language)
+{
+    )
                 apiRevision.Language = language;
+}
 
-            if (!String.IsNullOrEmpty(language))
+            if (!String.IsNullOrEmpty(language)
+{
+    )
                 apiRevision.Language = language;
+}
 
-            if (!String.IsNullOrEmpty(label))
+            if (!String.IsNullOrEmpty(label)
+{
+    )
                 apiRevision.Label = label;
+}
 
             if (prNumber != null)
-                apiRevision.PullRequestNo = prNumber;
+{
+    apiRevision.PullRequestNo = prNumber;
+}
 
             return apiRevision;
         }
@@ -376,8 +395,11 @@ namespace APIViewWeb.Managers
                             if (RevisionARootNode != null && RevisionBRootNode != null)
                             {
                                 var diffSectionRoot = ComputeSectionDiff(before: RevisionARootNode, after: RevisionBRootNode, beforeFile: RevisionACodeFile, afterFile: RevisionBCodeFile);
-                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot)
+{
+    )
                                     lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+}
                             }
                         }
                     });
@@ -405,8 +427,11 @@ namespace APIViewWeb.Managers
                             if (RevisionARootNode != null && RevisionBRootNode != null)
                             {
                                 var diffSectionRoot = ComputeSectionDiff(before: RevisionBRootNode, after: RevisionARootNode, beforeFile: RevisionBCodeFile, afterFile: RevisionACodeFile);
-                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot)
+{
+    )
                                     lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+}
                             }
                         }
                     });
@@ -672,8 +697,11 @@ namespace APIViewWeb.Managers
                 var reviewFilePath = entry.FullName;
                 var reviewDetails = reviewFilePath.Split("/");
 
-                if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json"))
+                if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json")
+{
+    )
                     continue;
+}
 
                 var reviewId = reviewDetails[1];
                 var apiRevisionId = reviewDetails[2];
@@ -910,7 +938,9 @@ namespace APIViewWeb.Managers
             // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
             // without any API changes.
             if (revision.IsReleased)
-                return revision;
+{
+    return revision;
+}
 
             if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
             {

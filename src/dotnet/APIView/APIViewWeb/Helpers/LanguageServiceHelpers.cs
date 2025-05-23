@@ -27,17 +27,29 @@ namespace APIViewWeb.Helpers
 
         public static string MapLanguageAlias(string language)
         {
-            if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
+            if (language.Equals("net", StringComparison.OrdinalIgnoreCase)
+{
+    || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
                 return "C#";
+}
 
-            if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase))
+            if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase)
+{
+    )
                 return "C++";
+}
 
-            if (language.Equals("js", StringComparison.OrdinalIgnoreCase))
+            if (language.Equals("js", StringComparison.OrdinalIgnoreCase)
+{
+    )
                 return "JavaScript";
+}
 
-            if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
+            if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase)
+{
+    )
                 return "TypeSpec";
+}
 
             return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
         }
@@ -46,24 +58,51 @@ namespace APIViewWeb.Helpers
         {
             var result = String.Empty;
 
-            if (repoName.EndsWith("-net"))
+            if (repoName.EndsWith("-net")
+{
+    )
                 result = "C#";
-            if (repoName.EndsWith("-c"))
+}
+            if (repoName.EndsWith("-c")
+{
+    )
                 result = "C";
-            if (repoName.EndsWith("-cpp"))
+}
+            if (repoName.EndsWith("-cpp")
+{
+    )
                 result = "C++";
-            if (repoName.EndsWith("-go"))
+}
+            if (repoName.EndsWith("-go")
+{
+    )
                 result = "Go";
-            if (repoName.EndsWith("-java"))
+}
+            if (repoName.EndsWith("-java")
+{
+    )
                 result = "Java";
-            if (repoName.EndsWith("-js"))
+}
+            if (repoName.EndsWith("-js")
+{
+    )
                 result = "JavaScript";
-            if (repoName.EndsWith("-python"))
+}
+            if (repoName.EndsWith("-python")
+{
+    )
                 result = "Python";
-            if (repoName.EndsWith("-ios"))
+}
+            if (repoName.EndsWith("-ios")
+{
+    )
                 result = "Swift";
-            if(repoName.EndsWith("-rust"))
+}
+            if(repoName.EndsWith("-rust")
+{
+    )
                 result = "Rust";
+}
 
             return result;
         }

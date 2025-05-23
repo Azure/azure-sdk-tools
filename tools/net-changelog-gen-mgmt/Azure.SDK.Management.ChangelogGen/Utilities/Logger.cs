@@ -32,9 +32,13 @@ namespace Azure.SDK.ChangelogGen.Utilities
             {
                 Console.ForegroundColor = color;
                 if (args != null && args.Length > 0)
-                    Console.WriteLine(message, args);
+{
+    Console.WriteLine(message, args);
+}
                 else
-                    Console.WriteLine(message);
+{
+    Console.WriteLine(message);
+}
             }
             finally
             {

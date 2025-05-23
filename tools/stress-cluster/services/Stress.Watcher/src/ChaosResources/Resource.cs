@@ -66,7 +66,10 @@ namespace Stress.Watcher
                     break;
                 }
             }
-            if (isInvalidSpec) return null;
+            if (isInvalidSpec)
+{
+    return null;
+}
 
             string testInstance = null;
             foreach (PropertyInfo property in this.GetType().GetProperties()) {

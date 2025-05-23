@@ -120,9 +120,18 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         public override bool Equals(object obj)
         {
             // @formatter:off
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (ReferenceEquals(null, obj)
+{
+    ) return false;
+}
+            if (ReferenceEquals(this, obj)
+{
+    ) return true;
+}
+            if (obj.GetType()
+{
+    != this.GetType()) return false;
+}
             return Equals((CodeownersEntry)obj);
             // @formatter:on
         }

@@ -58,7 +58,9 @@ namespace SwaggerApiParser.Specs
         {
             List<string> keywords = new List<string>();
             if (this.readOnly)
-                keywords.Add("readOnly");
+{
+    keywords.Add("readOnly");
+}
 
             if (this.maxProperties != null)
                 keywords.Add($"maxProperties : {this.maxProperties}");

@@ -334,10 +334,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private bool AreHeadersModified(SortedDictionary<string, string[]> dict1, SortedDictionary<string, string[]> dict2)
         {
             if (dict1 == null || dict2 == null)
-                return !(dict1 == dict2);
+{
+    return !(dict1 == dict2);
+}
 
             if (dict1.Count != dict2.Count)
-                return true;
+{
+    return true;
+}
 
             return !dict1.All(kvp => dict2.TryGetValue(kvp.Key, out var value) && kvp.Value.SequenceEqual(value));
         }
@@ -351,10 +355,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private bool IsBodyModified(byte[] array1, byte[] array2)
         {
             if (array1 == null && array2 == null)
-                return false;
+{
+    return false;
+}
 
             if (array1 == null || array2 == null)
-                return true;
+{
+    return true;
+}
 
             return !array1.SequenceEqual(array2);
         }

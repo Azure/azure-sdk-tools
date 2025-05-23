@@ -157,8 +157,11 @@ namespace APIView.DIff
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DiffHunk))
+            if (!(obj is DiffHunk)
+{
+    )
                 return false;
+}
             return ((DiffHunk)obj) == this;
         }
 
@@ -175,7 +178,9 @@ namespace APIView.DIff
         public override string ToString()
         {
             if (IsEmpty)
-                return "[Hunk: Empty]";
+{
+    return "[Hunk: Empty]";
+}
             return string.Format("[Hunk: InsertStart={0}, RemoveStart={1}, Removed={2}, Inserted={3}]", InsertStart, RemoveStart, Removed, Inserted);
         }
     }
@@ -308,7 +313,9 @@ namespace APIView.DIff
                         x = downVector[downOffset + k - 1] + 1;
                         // a step to the right
                         if (k < downK + D && downVector[downOffset + k + 1] >= x)
-                            x = downVector[downOffset + k + 1];
+{
+    x = downVector[downOffset + k + 1];
+}
                         // down
                     }
                     y = x - k;
@@ -352,7 +359,9 @@ namespace APIView.DIff
                         x = upVector[upOffset + k + 1] - 1;
                         // left
                         if (k > upK - D && upVector[upOffset + k - 1] < x)
-                            x = upVector[upOffset + k - 1];
+{
+    x = upVector[upOffset + k - 1];
+}
                         // up
                     }
                     // if

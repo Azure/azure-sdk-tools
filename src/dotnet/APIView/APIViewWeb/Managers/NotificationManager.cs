@@ -56,7 +56,10 @@ namespace APIViewWeb.Managers
         {
             foreach (string username in comment.TaggedUsers)
             {
-                if(string.IsNullOrEmpty(username)) continue;
+                if(string.IsNullOrEmpty(username)
+{
+    ) continue;
+}
                 var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
                 var user = await _userProfileRepository.TryGetUserProfileAsync(username);
                 await SendUserEmailsAsync(review, user, GetCommentTagHtmlContent(comment, review));
@@ -272,8 +275,11 @@ namespace APIViewWeb.Managers
 
         private async Task<string> GetEmailAddress(string username)
         {
-            if (string.IsNullOrEmpty(username))
+            if (string.IsNullOrEmpty(username)
+{
+    )
                 return "";
+}
             var user = await _userProfileRepository.TryGetUserProfileAsync(username);
             return user.Email;
         }

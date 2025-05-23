@@ -55,7 +55,10 @@ namespace APIViewWeb.Helpers
             Dictionary<string, string> relatedLineMap = new Dictionary<string, string>();
             foreach (var reviewLine in reviewLines)
             {
-                if (reviewLine.IsDocumentation) continue;
+                if (reviewLine.IsDocumentation)
+{
+    continue;
+}
                 nodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLine,
                     parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, prevNodeHashId: nodeHashId, relatedLineMap: relatedLineMap);
                 idx++;
@@ -104,7 +107,10 @@ namespace APIViewWeb.Helpers
             string childNodeHashId = "";
             foreach (var childLine in reviewLine.Children)
             {
-                if (childLine.IsDocumentation) continue;
+                if (childLine.IsDocumentation)
+{
+    continue;
+}
 
                 childNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: childLine,
                     parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, prevNodeHashId: childNodeHashId, relatedLineMap: relatedLineMap, indent: indent + 1);
@@ -146,7 +152,9 @@ namespace APIViewWeb.Helpers
             NavigationTreeNode navTreeNode = null;
             //Generate navigation node only from active revision
             if (!reviewLine.IsActiveRevisionLine)
-                return navTreeNode;
+{
+    return navTreeNode;
+}
             var navToken = reviewLine.Tokens.FirstOrDefault(t => !string.IsNullOrEmpty(t.NavigationDisplayName));
             if (navToken != null && reviewLine.IsHidden != true)
             {
@@ -325,8 +333,11 @@ namespace APIViewWeb.Helpers
 
         private static void InsertCodePanelRowData(CodePanelData codePanelData, CodePanelRowData rowData, string nodeIdHashed, CodePanelRowData commentsForRow = null)
         {
-            if (!codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
+            if (!codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed)
+{
+    )
                 codePanelData.NodeMetaDataObj[nodeIdHashed] = new CodePanelNodeMetaData();
+}
 
             if (rowData.Type == CodePanelRowDatatype.Documentation)
             {
@@ -362,7 +373,9 @@ namespace APIViewWeb.Helpers
         private static void AddDiagnosticRow(CodePanelData codePanelData, CodeFile codeFile, string nodeId, string nodeIdHashed)
         {
             if (codeFile.Diagnostics == null || codeFile.Diagnostics.Length == 0)
-                return;
+{
+    return;
+}
 
             var diagnostics = codeFile.Diagnostics.Where(d => d.TargetId == nodeId);
             foreach (var diagnostic in diagnostics)
@@ -391,14 +404,20 @@ namespace APIViewWeb.Helpers
             var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
             var filteredLinesB = reviewLinesB.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
 
-            if (filteredLinesA.Count() != filteredLinesB.Count())
+            if (filteredLinesA.Count()
+{
+    != filteredLinesB.Count())
                 return false;
+}
 
             //Verify if child lines matches
             for (int i = 0; i < filteredLinesA.Count(); i++)
             {
-                if (!filteredLinesA[i].ToString().Equals(filteredLinesB[i].ToString()) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
+                if (!filteredLinesA[i].ToString()
+{
+    .Equals(filteredLinesB[i].ToString()) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
                     return false;
+}
             }
             return true;
         }
@@ -446,8 +465,11 @@ namespace APIViewWeb.Helpers
 
             foreach (var line in interleavedLines)
             {
-                if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()))
+                if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()
+{
+    ))
                     continue;
+}
 
 
                 // Current node is not in both revisions. Mark current node as added or removed and then go to next sibling.
@@ -490,7 +512,9 @@ namespace APIViewWeb.Helpers
 
                 var activeLine = activeLines.FirstOrDefault(l => l.LineId == line.LineId && l.Processed == false && l.Equals(line));
                 if (activeLine == null)
-                    activeLine = line;
+{
+    activeLine = line;
+}
                 //current node is present in both trees. Compare child nodes recursively
                 var diffLine = diffLines.FirstOrDefault(l => l.LineId == line.LineId && l.Processed == false && l.Equals(line));
                 var diffLineChildren = diffLine != null ? diffLine.Children : new List<ReviewLine>();
@@ -501,7 +525,9 @@ namespace APIViewWeb.Helpers
                 resultLines.Add(activeLine);
                 activeLine.Processed = true;
                 if (diffLine != null)
-                    diffLine.Processed = true;
+{
+    diffLine.Processed = true;
+}
             }
             return resultLines;
         }
@@ -512,7 +538,9 @@ namespace APIViewWeb.Helpers
             foreach (var child in line.Children)
             {
                 if (!child.IsDocumentation)
-                    MarkTreeNodeAsModified(child, diffKind);
+{
+    MarkTreeNodeAsModified(child, diffKind);
+}
             }
         }
         /***
@@ -522,7 +550,9 @@ namespace APIViewWeb.Helpers
         private static void CollectDocumentationLines(CodePanelData codePanelData, List<ReviewLine> reviewLines, Dictionary<string,List<CodePanelRowData>> documentationRowMap, int indent, string parentNodeIdHash, bool enableSkipDiff = false)
         {
             if (reviewLines?.Count == 0)
-                return;
+{
+    return;
+}
 
             List<CodePanelRowData> docRows = [];
             // Collect all documentation line and then add it as related documentation line for the first code line after documentation so it will be correctly liked on review page.
@@ -550,7 +580,9 @@ namespace APIViewWeb.Helpers
                 idx++;
                 // Recursively process child node lines
                 if (line.Children.Count > 0)
-                    CollectDocumentationLines(codePanelData, line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
+{
+    CollectDocumentationLines(codePanelData, line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
+}
             }
         }
 
@@ -565,7 +597,9 @@ namespace APIViewWeb.Helpers
             {
                 // Remapping of node hash ID is required only for code line
                 if (line.IsDocumentation)
-                    continue;
+{
+    continue;
+}
 
                 var diffKind = line.DiffKind;
                 line.DiffKind = DiffKind.NoneDiff;
@@ -652,8 +686,11 @@ namespace APIViewWeb.Helpers
                 node.Data.Icon = node.Data.Kind;
             }
 
-            if (nodeIdMap.ContainsKey(navItem.NavigationId))
+            if (nodeIdMap.ContainsKey(navItem.NavigationId)
+{
+    )
                 node.Data.NodeIdHashed = nodeIdMap[navItem.NavigationId];
+}
 
             foreach (var childItem in navItem.ChildItems)
             {

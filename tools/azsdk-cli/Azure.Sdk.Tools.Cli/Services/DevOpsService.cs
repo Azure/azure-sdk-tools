@@ -107,7 +107,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             var workItem = await _connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
             if (workItem?.Id == null)
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
-            _logger.LogInformation($"Release plan work item: [{JsonSerializer.Serialize(workItem)}]");
             var releasePlan = MapWorkItemToReleasePlan(workItem);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;

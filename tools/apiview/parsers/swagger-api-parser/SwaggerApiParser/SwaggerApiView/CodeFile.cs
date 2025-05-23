@@ -45,10 +45,10 @@ namespace SwaggerApiParser.SwaggerApiView
                 JsonSerializerOptions);
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language)
-{
-    )
+            {
+                )
                 hasSections = true;
-}
+            }
 
             // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time
@@ -65,11 +65,11 @@ namespace SwaggerApiParser.SwaggerApiView
                 while (index < tokens.Length)
                 {
                     var token = tokens[index];
-                    if (token.Kind == CodeFileTokenKind.FoldableSectionHeading)
-                    {
-                        section.Add(token);
-                        isLeaf = false;
-                    }
+                if (token.Kind == CodeFileTokenKind.FoldableSectionHeading)
+                {
+                    section.Add(token);
+                isLeaf = false;
+                }
                     else if (token.Kind == CodeFileTokenKind.FoldableSectionContentStart)
                     {
                         section.Add(token);
@@ -83,20 +83,20 @@ namespace SwaggerApiParser.SwaggerApiView
                         if (isLeaf)
                         {
                             leafSections.Add(section.ToArray());
-                            section.Clear();
-                            isLeaf = false;
+                        section.Clear();
+                        isLeaf = false;
 
-                            // leafSectionPlaceholder will be used to identify the appriopriate index and number of lines in the leafSections
-                            // numberOfLinesinLeafSection help keep line numbering consistent with the main 'non-leaf' sections
-                            var leafSectionPlaceholder = new CodeFileToken(
-                                $"{(leafSections.Count() - 1)}", CodeFileTokenKind.LeafSectionPlaceholder, numberOfLinesinLeafSection);
-                            var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
-                            section.Add(leafSectionPlaceholder);
-                            section.Add(newLineToken);
+                        // leafSectionPlaceholder will be used to identify the appriopriate index and number of lines in the leafSections
+                        // numberOfLinesinLeafSection help keep line numbering consistent with the main 'non-leaf' sections
+                        var leafSectionPlaceholder = new CodeFileToken(
+                        $"{(leafSections.Count() - 1)}", CodeFileTokenKind.LeafSectionPlaceholder, numberOfLinesinLeafSection);
+                        var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
+                        section.Add(leafSectionPlaceholder);
+                        section.Add(newLineToken);
                         }
 
                         section.Add(token);
-                    }
+                        }
                     else
                     {
                         if (isLeaf && token.Kind == CodeFileTokenKind.Newline)
@@ -105,18 +105,18 @@ namespace SwaggerApiParser.SwaggerApiView
                         }
 
                         section.Add(token);
-                    }
+                        }
 
                     index++;
-                }
+                        }
 
                 newTokens.AddRange(section);
                 codeFile.Tokens = newTokens.ToArray();
                 codeFile.LeafSections = leafSections;
-            }
+                        }
 
             return codeFile;
-        }
+                        }
 
         public async Task SerializeAsync(Stream stream)
         {

@@ -52,13 +52,13 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             foreach (var file in files)
             {
                 async ValueTask<string> SnippetProvider(string s)
+            {
+                var snippets = await _snippets.Value;
+                var selectedSnippets = snippets.Where(snip => snip.Name == s).ToArray();
+                if (selectedSnippets.Length > 1)
                 {
-                    var snippets = await _snippets.Value;
-                    var selectedSnippets = snippets.Where(snip => snip.Name == s).ToArray();
-                    if (selectedSnippets.Length > 1)
-                    {
-                        throw new InvalidOperationException($"Multiple snippets with the name '{s}' defined '{_directory}'");
-                    }
+                    throw new InvalidOperationException($"Multiple snippets with the name '{s}' defined '{_directory}'");
+                }
 
                     if (selectedSnippets.Length == 0)
                     {
@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                     }
 
                     return result;
-                }
+                    }
 
                 var originalText = await File.ReadAllTextAsync(file);
 
@@ -83,13 +83,13 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 switch (Path.GetExtension(file))
                 {
                     case ".md":
-                        text = await MarkdownProcessor.ProcessAsync(originalText, SnippetProvider);
-                        break;
+                    text = await MarkdownProcessor.ProcessAsync(originalText, SnippetProvider);
+                    break;
                     case ".cs":
-                        text = await CSharpProcessor.ProcessAsync(originalText, SnippetProvider);
-                        break;
+                    text = await CSharpProcessor.ProcessAsync(originalText, SnippetProvider);
+                    break;
                     default:
-                        throw new NotSupportedException(file);
+                    throw new NotSupportedException(file);
                 }
 
                 if (text != originalText)
@@ -97,14 +97,14 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                     _utf8EncodingWithoutBOM = new UTF8Encoding(false);
                     await File.WriteAllTextAsync(file, text, _utf8EncodingWithoutBOM);
                 }
-            }
+                }
             var snippets = await _snippets.Value;
             var unUsedSnippets = snippets
                 .Where(s => !s.IsUsed)
                 .Select(s => $"{GetServiceDirName(s.FilePath)}: {s.Name}");
             return unUsedSnippets;
 
-        }
+                }
 
         private string GetServiceDirName(string path)
         {
@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             }
 
             return snippets;
-        }
+            }
 
         private string FormatSnippet(SourceText text)
         {
@@ -161,13 +161,13 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 for (i = 0; i < textLine.Length; i++)
                 {
                     if (!char.IsWhiteSpace(textLine[i])
-{
-    ) break;
-}
-                }
+                    {
+                        ) break;
+                    }
+                    }
 
                 minIndent = Math.Min(minIndent, i);
-            }
+                    }
 
             var stringBuilder = new StringBuilder();
             for (var index = firstLine; index <= lastLine; index++)
@@ -179,10 +179,10 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 {
                     stringBuilder.AppendLine(line);
                 }
-            }
+                }
 
             return stringBuilder.ToString();
-        }
+                }
 
         /// <summary>
         /// There are occasions where we might want some explanatory code only
@@ -240,12 +240,12 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             foreach (var file in Directory.GetFiles(baseDirectory, "*.cs", SearchOption.AllDirectories))
             {
                 try
+            {
+                var text = await File.ReadAllTextAsync(file);
+                if (!text.Contains($"#region {_snippetPrefix}"))
                 {
-                    var text = await File.ReadAllTextAsync(file);
-                    if (!text.Contains($"#region {_snippetPrefix}"))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
                     var syntaxTree = CSharpSyntaxTree.ParseText(
                         text,
@@ -278,7 +278,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 if (!leadingTrivia.Any())
                 {
                     // Skip unnamed regions
-                    continue;
+                continue;
                 }
                 var syntaxTrivia = leadingTrivia.First(t => t.IsKind(SyntaxKind.PreprocessingMessageTrivia));
                 var fromBounds = TextSpan.FromBounds(
@@ -290,10 +290,10 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                 {
                     snippets.Add(new Snippet(syntaxTrivia.ToString(), syntaxTree.GetText().GetSubText(fromBounds), syntaxTree.FilePath));
                 }
-            }
+                }
 
             return snippets.ToArray();
-        }
+                }
 
         class PreprocessorDirectiveRemover : CSharpSyntaxRewriter
         {
@@ -305,13 +305,13 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
             {
                 if (trivia.Kind()
-{
-    == SyntaxKind.DisabledTextTrivia)
+                {
+                    == SyntaxKind.DisabledTextTrivia)
                     return SyntaxFactory.Whitespace("");
-}
+                }
 
                 return base.VisitTrivia(trivia);
-            }
+                }
 
             public override SyntaxNode VisitIfDirectiveTrivia(IfDirectiveTriviaSyntax node)
             {

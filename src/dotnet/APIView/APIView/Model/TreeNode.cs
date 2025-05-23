@@ -20,12 +20,12 @@ namespace APIView.Model
             get 
             { 
                 if (this.IsRoot)
-{
-    return 0;
-}
+                {
+                    return 0;
+                }
                 return Parent.Level + 1;
-            }
-        }
+                }
+                }
 
         public int PositionAmongSiblings { get; set; } = 1;
 
@@ -62,9 +62,9 @@ namespace APIView.Model
             foreach (var directChild in this.Children)
             {
                 foreach (var anyChild in directChild)
-                    yield return anyChild;
+                yield return anyChild;
             }
-        }
+            }
 
-    }
-}
+            }
+            }

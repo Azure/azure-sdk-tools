@@ -35,13 +35,13 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     var lastParameter = constructor.Parameters.LastOrDefault();
 
-                    if (IsClientOptionsParameter(lastParameter))
-                    {
-                        // Allow optional options parameters
-                        if (lastParameter.IsOptional)
-                        {
-                            continue;
-                        }
+                if (IsClientOptionsParameter(lastParameter))
+                {
+                    // Allow optional options parameters
+                if (lastParameter.IsOptional)
+                {
+                    continue;
+                }
 
                         // When there are static properties in client, there would be static constructor implicitly added
                         var nonOptionsMethod = FindMethod(
@@ -51,7 +51,7 @@ namespace Azure.ClientSdk.Analyzers
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First()), constructor);
                         }
-                    }
+                        }
                     else
                     {
                         var optionsMethod = FindMethod(
@@ -61,9 +61,9 @@ namespace Azure.ClientSdk.Analyzers
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First()), constructor);
                         }
-                    }
-                }
-            }
-        }
-    }
-}
+                        }
+                        }
+                        }
+                        }
+                        }
+                        }

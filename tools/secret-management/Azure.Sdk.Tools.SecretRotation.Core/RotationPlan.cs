@@ -61,7 +61,7 @@ public class RotationPlan
         if (onlyRotateExpiring)
         {
             this.logger.LogInformation("'{PlanName}' should be rotated if it expires on or before {ShouldRotateDate}",
-                Name, shouldRotateDate);
+            Name, shouldRotateDate);
         }
 
         SecretState currentState = await PrimaryStore.GetCurrentStateAsync();
@@ -73,8 +73,8 @@ public class RotationPlan
         if (onlyRotateExpiring && currentState.ExpirationDate > shouldRotateDate)
         {
             this.logger.LogInformation(
-                "Skipping rotation of plan '{PlanName}' because it expires after {ShouldRotateDate}", Name,
-                shouldRotateDate);
+            "Skipping rotation of plan '{PlanName}' because it expires after {ShouldRotateDate}", Name,
+            shouldRotateDate);
         }
         else
         {
@@ -82,7 +82,7 @@ public class RotationPlan
         }
 
         await RevokeRotationArtifactsAsync(whatIf);
-    }
+        }
 
     public async Task<RotationPlanStatus> GetStatusAsync()
     {
@@ -102,7 +102,7 @@ public class RotationPlan
                 {
                     secondaryStoreStates.Add(await secondaryStore.GetCurrentStateAsync());
                 }
-            }
+                }
 
             SecretState[] allStates = secondaryStoreStates.Prepend(primaryStoreState).ToArray();
 
@@ -117,17 +117,17 @@ public class RotationPlan
             var state = RotationState.UpToDate;
 
             if (minExpirationDate == null || minExpirationDate <= invocationTime)
-{
-    state = RotationState.Expired;
-}
+            {
+                state = RotationState.Expired;
+            }
             else if (minExpirationDate <= warningThresholdDate)
-{
-    state = RotationState.Warning;
-}
+            {
+                state = RotationState.Warning;
+            }
             else if (minExpirationDate <= rotationThresholdDate)
-{
-    state = RotationState.Rotate;
-}
+            {
+                state = RotationState.Rotate;
+            }
 
             bool anyRequireRevocation = rotationArtifacts.Any(state => state.RevokeAfterDate <= invocationTime);
 
@@ -180,7 +180,7 @@ public class RotationPlan
         await WriteValueToPostPrimaryStoresAsync(newValue, currentState, whatIf);
 
         await MarkRotationCompleteAsync(newValue, currentState, invocationTime, whatIf);
-    }
+        }
 
     private async Task WriteValueToPrimaryAsync(SecretValue newValue, SecretState currentState, DateTimeOffset invocationTime,
         bool whatIf)
@@ -193,12 +193,12 @@ public class RotationPlan
         {
             // Primary only has to support write when it's not also origin.
             throw new RotationException(
-                $"Rotation plan '{Name}' uses separate Primary and Origin stores, but its primary store type '{OriginStore.GetType()}' does not support CanWrite");
+            $"Rotation plan '{Name}' uses separate Primary and Origin stores, but its primary store type '{OriginStore.GetType()}' does not support CanWrite");
         }
 
         // New value along with the datetime when old values should be revoked
         await PrimaryStore.WriteSecretAsync(newValue, currentState, revokeAfterDate, whatIf);
-    }
+        }
 
     private async Task MarkRotationCompleteAsync(SecretValue newValue, SecretState currentState, DateTimeOffset invocationTime,
         bool whatIf)
@@ -210,11 +210,11 @@ public class RotationPlan
         if (!PrimaryStore.CanAnnotate)
         {
             throw new RotationException(
-                $"Rotation plan '{Name}' uses the store type '{PrimaryStore.GetType()}' which does not support CanAnnotate");
+            $"Rotation plan '{Name}' uses the store type '{PrimaryStore.GetType()}' which does not support CanAnnotate");
         }
 
         await PrimaryStore.MarkRotationCompleteAsync(newValue, revokeAfterDate, whatIf);
-    }
+        }
 
 
     private async Task WriteValueToPrePrimaryStoresAsync(SecretValue newValue, SecretState currentState, bool whatIf)
@@ -224,7 +224,7 @@ public class RotationPlan
             // secondaries don't store revocation dates.
             await secondaryStore.WriteSecretAsync(newValue, currentState, null, whatIf);
         }
-    }
+        }
 
     private async Task WriteValueToPostPrimaryStoresAsync(SecretValue newValue, SecretState currentState, bool whatIf)
     {
@@ -233,7 +233,7 @@ public class RotationPlan
             // secondaries don't store revocation dates.
             await secondaryStore.WriteSecretAsync(newValue, currentState, null, whatIf);
         }
-    }
+        }
 
     private async Task<SecretValue> OriginateNewValueAsync(string operationId,
         DateTimeOffset invocationTime,
@@ -262,7 +262,7 @@ public class RotationPlan
             .ToArray();
 
         foreach (SecretState rotationArtifact in rotationArtifacts.Where(
-                     state => state.RevokeAfterDate < invocationTime))
+            state => state.RevokeAfterDate < invocationTime))
         {
             this.logger.LogInformation(
                 "Revoking secret operation id '{OperationId}' and revoke after date {RevokeAfterDate}",
@@ -275,9 +275,9 @@ public class RotationPlan
                 if (revocationAction != null)
                 {
                     this.logger.LogInformation("Processing revocation action for store '{StateStore}'", stateStore.Name);
-                    await revocationAction();
+                await revocationAction();
                 }
-            }
-        }
-    }
-}
+                }
+                }
+                }
+                }

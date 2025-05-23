@@ -42,21 +42,21 @@ namespace APIViewWeb.Controllers
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
+            {
+                using var memoryStream = new MemoryStream();
+                var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
+                runAnalysis: false, memoryStream: memoryStream);
+
+                (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
+                if (apiRevision != null)
                 {
-                    using var memoryStream = new MemoryStream();
-                    var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
-                        runAnalysis: false, memoryStream: memoryStream);
+                    apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+                var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
 
-                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
-                    if (apiRevision != null)
-                    {
-                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
-                        var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
-
-                        if (apiRevision.IsApproved)
-                        {
-                            return Ok(reviewUrl);
-                        }
+                if (apiRevision.IsApproved)
+                {
+                    return Ok(reviewUrl);
+                }
                         else if (review.IsApproved)
                         {
                             return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
@@ -65,12 +65,12 @@ namespace APIViewWeb.Controllers
                         {
                             return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
                         }
-                    }
+                        }
                 };
-            }
+                        }
             // Return internal server error for any unknown error
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
-        }
+                        }
     
         public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null, string packageVersion = null)
         {
@@ -87,11 +87,11 @@ namespace APIViewWeb.Controllers
                 if (!string.IsNullOrEmpty(packageVersion))
                 {
                     var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
-                    if (apiRevisions.Any()
-{
-    )
-                        apiRevision = apiRevisions.FirstOrDefault();
-}
+                if (apiRevisions.Any()
+                {
+                    )
+                apiRevision = apiRevisions.FirstOrDefault();
+                }
                 }
 
                 if (apiRevision == null)
@@ -118,10 +118,10 @@ namespace APIViewWeb.Controllers
                     }
                     // Return 202 to indicate package name is not approved
                     return StatusCode(statusCode: StatusCodes.Status202Accepted);
-                }
-            }
+                    }
+                    }
             return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
-        }
+                    }
 
         // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
         // regular CI pipeline will not send this flag in request
@@ -168,10 +168,10 @@ namespace APIViewWeb.Controllers
                 {
                     return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
                 }
-            }
+                }
             // Return internal server error for any unknown error
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
-        }
+                }
 
         private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false)
         {
@@ -188,25 +188,25 @@ namespace APIViewWeb.Controllers
                 {
                     apiRevisions = apiRevisions.OrderByDescending(r => r.CreatedOn);
 
-                    // Delete pending apiRevisions if it is not in approved state before adding new revision
-                    // This is to keep only one pending revision since last approval or from initial review revision
-                    var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
-                    if (automaticRevisions.Any())
-                    {
-                        var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
-                        var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
-                        var comments = await _commentsManager.GetCommentsAsync(review.Id);
+                // Delete pending apiRevisions if it is not in approved state before adding new revision
+                // This is to keep only one pending revision since last approval or from initial review revision
+                var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
+                if (automaticRevisions.Any())
+                {
+                    var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
+                var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
+                var comments = await _commentsManager.GetCommentsAsync(review.Id);
 
-                        while (
-                            automaticRevisionsQueue.Any() &&
-                            !latestAutomaticAPIRevision.IsApproved &&
-                            !latestAutomaticAPIRevision.IsReleased &&
-                            !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
-                            !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
-                        {
-                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
-                            latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
-                        }
+                while (
+                    automaticRevisionsQueue.Any() &&
+                    !latestAutomaticAPIRevision.IsApproved &&
+                    !latestAutomaticAPIRevision.IsReleased &&
+                    !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
+                    !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                {
+                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
+                latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
+            }
 
                         // We should compare against only latest revision when calling this API from scheduled CI runs
                         // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
@@ -220,17 +220,17 @@ namespace APIViewWeb.Controllers
                                 {
                                     return (review, approvedAPIRevision);
                                 }
-                            }
-                        }
+                                }
+                                }
 
                         if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile))
                         {
                             apiRevision = latestAutomaticAPIRevision;
                             createNewRevision = false;
                         }
-                    }
-                }
-            }
+                        }
+                        }
+                        }
             else
             {
                 review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
@@ -250,12 +250,12 @@ namespace APIViewWeb.Controllers
                         if (apiRev.IsApproved && await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
                         {
                             await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(user: User, id: review.Id, apiRevision: apiRevision, notes: $"Approval Copied over from Revision with Id : {apiRev.Id}", approver: apiRev.Approvers.LastOrDefault());
-                            break;
-                        }    
-                    }
-                }
-            }
+                break;
+                        }
+                        }
+                        }
+                        }
             return (review, apiRevision);
-        }
-    }
-}
+                        }
+                        }
+                        }

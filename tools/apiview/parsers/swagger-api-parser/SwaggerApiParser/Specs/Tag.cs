@@ -23,9 +23,9 @@ namespace SwaggerApiParser.Specs
             ret.AddRange(TokenSerializer.KeyValueTokens("name", name, true, context.IteratorPath.CurrentNextPath("name")));
 
             if (description != null)
-{
-    ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("name")));
-}
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("description", description, true, context.IteratorPath.CurrentNextPath("name")));
+            }
 
             if (externalDocs != null)
             {
@@ -39,6 +39,6 @@ namespace SwaggerApiParser.Specs
 
             Utils.SerializePatternedObjects(patternedObjects, ret);
             return ret.ToArray();
-        }
-    }
-}
+            }
+            }
+            }

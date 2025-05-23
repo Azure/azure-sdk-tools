@@ -74,9 +74,9 @@ namespace APIViewWeb.Managers
                     if (entry != null)
                     {
                         using var entryStream = entry.Open();
-                        await entryStream.CopyToAsync(originalFileStream);
+                    await entryStream.CopyToAsync(originalFileStream);
                     }
-                }
+                    }
                     
                 if (!string.IsNullOrEmpty(baselineCodeFileName))
                 {
@@ -84,9 +84,9 @@ namespace APIViewWeb.Managers
                     if (entry != null)
                     {
                         using var entryStream = entry.Open();
-                        await entryStream.CopyToAsync(baselineStream);
+                    await entryStream.CopyToAsync(baselineStream);
                     }
-                }
+                    }
 
                 if (!string.IsNullOrEmpty(codeFileName))
                 {
@@ -94,13 +94,13 @@ namespace APIViewWeb.Managers
                     if (entry != null)
                     {
                         using var entryStream = entry.Open();
-                        codeFile = await CodeFile.DeserializeAsync(entryStream);
+                    codeFile = await CodeFile.DeserializeAsync(entryStream);
                     }
-                }
-            }
+                    }
+                    }
 
             return codeFile;
-        }
+                    }
 
         /// <summary>
         /// Create Code File
@@ -162,7 +162,7 @@ namespace APIViewWeb.Managers
                 runAnalysis);
             }
             return codeFile;
-        }
+            }
 
         /// <summary>
         /// Create Code File
@@ -186,7 +186,7 @@ namespace APIViewWeb.Managers
             }
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
             return reviewCodeFileModel;
-        }
+            }
 
         /// <summary>
         /// Compare two CodeFiles
@@ -212,7 +212,7 @@ namespace APIViewWeb.Managers
                 var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
                 return codeFileATextLines.SequenceEqual(codeFileBTextLines);
             }
-        }
+            }
 
         public bool AreCodeFilesTheSame(CodeFile codeFileA, CodeFile codeFileB)
         {
@@ -224,19 +224,19 @@ namespace APIViewWeb.Managers
             bool result = true;
 
             if (codeFileA.Tokens == null || codeFileB.Tokens == null || !codeFileA.Tokens.SequenceEqual(codeFileB.Tokens)
-{
-    )
+            {
+                )
                 result = false;
-}
+            }
 
             if (codeFileA.LeafSections == null || codeFileB.LeafSections == null || !codeFileA.LeafSections.SequenceEqual(codeFileB.LeafSections)
-{
-    )
+            {
+                )
                 result = false;
-}
+            }
 
             return result;
-        }
+            }
 
         private static void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)
         {

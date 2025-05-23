@@ -57,14 +57,14 @@ namespace APIViewWeb.Managers
             foreach (string username in comment.TaggedUsers)
             {
                 if(string.IsNullOrEmpty(username)
-{
-    ) continue;
-}
+            {
+                ) continue;
+            }
                 var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
                 var user = await _userProfileRepository.TryGetUserProfileAsync(username);
                 await SendUserEmailsAsync(review, user, GetCommentTagHtmlContent(comment, review));
             } 
-        }
+            }
 
         public async Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers)
         {
@@ -74,9 +74,9 @@ namespace APIViewWeb.Managers
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
                 await SendUserEmailsAsync(apiRevision, reviewerProfile,
-                    GetApproverReviewHtmlContent(userProfile, apiRevision));
+                GetApproverReviewHtmlContent(userProfile, apiRevision));
             }
-        }
+            }
 
         public async Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user)
         {
@@ -103,7 +103,7 @@ namespace APIViewWeb.Managers
                 }
 
                 await UnsubscribeAsync(review, user);
-            }
+                }
             else
             {
                 if (state == false)
@@ -112,8 +112,8 @@ namespace APIViewWeb.Managers
                 }
 
                 await SubscribeAsync(review, user);
-            }
-        }
+                }
+                }
 
         /// <summary>
         /// Subscribe to Review
@@ -130,7 +130,7 @@ namespace APIViewWeb.Managers
                 review.Subscribers.Add(email);
                 await _reviewRepository.UpsertReviewAsync(review);
             }
-        }
+            }
 
         /// <summary>
         /// Unsubscribe from Review
@@ -146,7 +146,7 @@ namespace APIViewWeb.Managers
                 review.Subscribers.Remove(email);
                 await _reviewRepository.UpsertReviewAsync(review);
             }
-        }
+            }
 
         public static string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue(ClaimConstants.Email);
@@ -209,7 +209,7 @@ namespace APIViewWeb.Managers
             }
 
             await SendEmail(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
-        }
+            }
         private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
             var initiatingUserEmail = GetUserEmail(user);
@@ -220,14 +220,14 @@ namespace APIViewWeb.Managers
                 foreach (var username in notifiedUsers)
                 {
                     var email = await GetEmailAddress(username);
-                    if (string.IsNullOrEmpty(email))
-                    {
-                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.Id}. Not sending email.");
-                        continue;
-                    }
+                if (string.IsNullOrEmpty(email))
+                {
+                    _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.Id}. Not sending email.");
+                continue;
+                }
                     notifiedEmails.Add(email);
                 }
-            }           
+                }
             var subscribers = review.Subscribers.ToList()
                     .Where(e => e != initiatingUserEmail && !notifiedEmails.Contains(e)) // don't include the initiating user and tagged users in the comment
                     .ToList();
@@ -261,7 +261,7 @@ namespace APIViewWeb.Managers
                 {
                     _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");
                 }
-            }
+                }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
@@ -276,13 +276,12 @@ namespace APIViewWeb.Managers
         private async Task<string> GetEmailAddress(string username)
         {
             if (string.IsNullOrEmpty(username)
-{
-    )
+            {
+                )
                 return "";
-}
+            }
             var user = await _userProfileRepository.TryGetUserProfileAsync(username);
             return user.Email;
-        }
-    }
-}
-
+            }
+            }
+            }

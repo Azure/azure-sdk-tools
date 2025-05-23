@@ -19,7 +19,7 @@ public static class TaskExtensions
             }
 
             return results.ToArray();
-        }
+            }
 
         var pending = new List<Task<T>>();
 
@@ -33,19 +33,19 @@ public static class TaskExtensions
             }
 
             if (pending.Count < concurrencyLimit)
-{
-    continue;
-}
+            {
+                continue;
+            }
 
             var completed = await Task.WhenAny(pending);
             pending.Remove(completed);
             results.Add(await completed);
-        }
+            }
 
         results.AddRange(await Task.WhenAll(pending));
 
         return results.ToArray();
-    }
+            }
 
     public static Task<TResult[]> LimitConcurrencyAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Task<TResult>> taskFactory, int concurrencyLimit = 1, CancellationToken cancellationToken = default)
     {

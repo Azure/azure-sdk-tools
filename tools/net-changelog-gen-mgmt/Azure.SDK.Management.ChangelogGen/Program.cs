@@ -39,9 +39,9 @@ namespace Azure.SDK.ChangelogGen
                 }
 
                 if (context.LogSettings)
-{
-    Logger.Log("Generating Changelog based on following settings: \n" + context.ToString());
-}
+                {
+                    Logger.Log("Generating Changelog based on following settings: \n" + context.ToString());
+                }
 
                 Logger.Warning("Please make sure followings (local branch and tags) are up-to-date: \n" +
                         $"  1. Api File: {context.ApiFile}\n" +
@@ -117,7 +117,7 @@ namespace Azure.SDK.ChangelogGen
                 {
                     Logger.Log("Skip update changelog.md file");
                 }
-            }
+                }
             catch (Exception e)
             {
                 Logger.Error("Error occurs when generating changelog: \n" + e.Message);
@@ -138,7 +138,7 @@ namespace Azure.SDK.ChangelogGen
                 Logger.Log($"version change detected for {name}: {baseVersion} -> {curVersion}");
                 return svc;
             }
-        }
+            }
 
         private static StringValueChange? CompareSpecVersionTag(string curAutorestMd, string baseAutorestMd, string source)
         {
@@ -146,14 +146,14 @@ namespace Azure.SDK.ChangelogGen
             string baselineVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(baseAutorestMd, out _));
 
             if (!string.IsNullOrEmpty(specPath)
-{
-    )
+            {
+                )
                 source = specPath;
-}
+            }
             if (string.Equals(curVersionTag, baselineVersionTag, StringComparison.OrdinalIgnoreCase))
             {
                 Logger.Log($"No change found in Spec Tag: {baselineVersionTag} -> {curVersionTag}\n" +
-                    $"Tag parsed from {source}");
+                $"Tag parsed from {source}");
                 return null;
             }
             else
@@ -162,7 +162,7 @@ namespace Azure.SDK.ChangelogGen
                 return new StringValueChange(curVersionTag, baselineVersionTag,
                     $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'. Tag detail available at {source}");
             }
-        }
+            }
 
         public static ChangeSet CompareApi(string curApiFileContent, string baselineApiFileContent)
         {

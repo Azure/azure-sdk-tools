@@ -19,18 +19,18 @@ namespace SwaggerApiParser.SwaggerApiView
         {
             List<string> ret = new List<string>();
             if (this.required)
-{
-    ret.Add("required");
-}
+            {
+                ret.Add("required");
+            }
 
             if (this.allowEmptyValue)
-{
-    ret.Add("allowEmptyValue");
-}
+            {
+                ret.Add("allowEmptyValue");
+            }
 
             ret.AddRange(base.GetKeywords());
             return ret;
-        }
+            }
 
         public String GetTypeFormat()
         {
@@ -50,7 +50,7 @@ namespace SwaggerApiParser.SwaggerApiView
             }
 
             return ret;
-        }
+            }
 
         public bool IsRefObj()
         {
@@ -89,8 +89,8 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
             }
             return ret.ToArray();
-        }
-    }
+            }
+            }
 
     public class SwaggerApiViewOperationParameters : List<SwaggerApiViewParameter>, ITokenSerializable
     {
@@ -122,7 +122,7 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.Add(TokenSerializer.FoldableContentEnd());
 
             return ret.ToArray();
-        }
+            }
 
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
@@ -146,7 +146,7 @@ namespace SwaggerApiParser.SwaggerApiView
             }
             context.IteratorPath.Pop();
             return ret.ToArray();
-        }
+            }
 
         private CodeFileToken[] TokenSerializeTableRows(SerializeContext context)
         {
@@ -159,7 +159,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 if (context.definitionsNames.Contains(parameterType))
                 {
                     var navigateToId = $"{context.IteratorPath.rootPath()}-Definitions-{parameterType}";
-                    ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
+                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
                 }
                 else
                 {
@@ -168,8 +168,8 @@ namespace SwaggerApiParser.SwaggerApiView
                 
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(", ", parameter.GetKeywords()), CodeFileTokenKind.Literal) }));
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.description, CodeFileTokenKind.Literal) }));
-            }
+                }
             return ret.ToArray();
-        }
-    }
-}
+                }
+                }
+                }

@@ -96,32 +96,32 @@ namespace APIViewWeb
                 }
 
                 if (approvalFilters.Count > 0 && apiRevisionTypeFilters.Count()
-{
-    > 0)
+                {
+                    > 0)
                     queryStringBuilder.Append(" AND ");
-}
+                }
 
                 foreach (var item in apiRevisionTypeFilters)
                 {
                     switch (item)
                     {
                         case "Manual":
-                            queryStringBuilder.Append($"c.APIRevisionType = 'Manual'");
-                            break;
-                        case "Automatic":
-                            queryStringBuilder.Append($"c.APIRevisionType = 'Automatic'");
-                            break;
-                        case "PullRequest":
-                            queryStringBuilder.Append($"c.APIRevisionType = 'PullRequest'");
-                            break;
+                    queryStringBuilder.Append($"c.APIRevisionType = 'Manual'");
+                    break;
+                    case "Automatic":
+                    queryStringBuilder.Append($"c.APIRevisionType = 'Automatic'");
+                    break;
+                    case "PullRequest":
+                    queryStringBuilder.Append($"c.APIRevisionType = 'PullRequest'");
+                    break;
                     }
                     if (item != apiRevisionTypeFilters.Last())
                     {
                         queryStringBuilder.Append(" OR ");
                     }
-                }
+                    }
                 queryStringBuilder.Append(")");
-            }
+                    }
 
             int totalCount = 0;
             var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder})";
@@ -135,14 +135,14 @@ namespace APIViewWeb
             switch (filterAndSortParams.SortField)
             {
                 case "createdOn":
-                    queryStringBuilder.Append($" ORDER BY c.CreatedOn");
-                    break;
+                queryStringBuilder.Append($" ORDER BY c.CreatedOn");
+                break;
                 case "lastUpdatedOn":
-                    queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
-                    break;
+                queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
+                break;
                 default:
-                    queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
-                    break;
+                queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
+                break;
             }
 
             if (filterAndSortParams.SortOrder == 1)
@@ -175,23 +175,23 @@ namespace APIViewWeb
                 if (revisionIdsNotYetIncluded.Any())
                 {
                     var revisionsNotYetIncludedAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(revisionIdsNotYetIncluded);
-                    var revisionIdsNotYetIncludedQuery = $"SELECT * FROM Revisions c WHERE c.id IN {revisionsNotYetIncludedAsQueryStr}";
-                    QueryDefinition revisionIdsNotYetIncludedQueryDefinition = new QueryDefinition(revisionIdsNotYetIncludedQuery);
-                    using FeedIterator<APIRevisionListItemModel> revisionsNotYetIncludedFeedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(revisionIdsNotYetIncludedQueryDefinition);
-                    var revisionsNotYetIncluded = new List<APIRevisionListItemModel>();
-                    while (revisionsNotYetIncludedFeedIterator.HasMoreResults)
-                    {
-                        FeedResponse<APIRevisionListItemModel> response = await revisionsNotYetIncludedFeedIterator.ReadNextAsync();
-                        revisionsNotYetIncluded.AddRange(response);
-                    }
+                var revisionIdsNotYetIncludedQuery = $"SELECT * FROM Revisions c WHERE c.id IN {revisionsNotYetIncludedAsQueryStr}";
+                QueryDefinition revisionIdsNotYetIncludedQueryDefinition = new QueryDefinition(revisionIdsNotYetIncludedQuery);
+                using FeedIterator<APIRevisionListItemModel> revisionsNotYetIncludedFeedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(revisionIdsNotYetIncludedQueryDefinition);
+                var revisionsNotYetIncluded = new List<APIRevisionListItemModel>();
+                while (revisionsNotYetIncludedFeedIterator.HasMoreResults)
+                {
+                    FeedResponse<APIRevisionListItemModel> response = await revisionsNotYetIncludedFeedIterator.ReadNextAsync();
+                revisionsNotYetIncluded.AddRange(response);
+                }
                     revisions.AddRange(revisionsNotYetIncluded);
                     totalCount += revisionsNotYetIncluded.Count();
                 }
-            }
+                }
 
             var noOfItemsRead = pageParams.NoOfItemsRead + revisions.Count();
             return new PagedList<APIRevisionListItemModel>((IEnumerable<APIRevisionListItemModel>)revisions, noOfItemsRead, totalCount, pageParams.PageSize);
-        }
+                }
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb for a given reviewId
@@ -210,7 +210,7 @@ namespace APIViewWeb
                 revisions.AddRange(response);
             }
             return revisions;
-        }
+            }
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb
@@ -258,7 +258,7 @@ namespace APIViewWeb
                 revisions.AddRange(response);
             }
             return revisions;
-        }
+            }
 
         /// <summary>
         /// Get APIRevisions assigned to a user for review
@@ -279,7 +279,7 @@ namespace APIViewWeb
             }
 
             return apiRevisions.OrderByDescending(r => r.LastUpdatedOn);
-        }
+            }
 
         /// <summary>
         /// Get ReviewIds for review that are linked by crossLanguagePackageId
@@ -299,6 +299,6 @@ namespace APIViewWeb
                 reviewIds.AddRange(result.Resource);
             }
             return reviewIds;
-        }
-    }
-}
+            }
+            }
+            }

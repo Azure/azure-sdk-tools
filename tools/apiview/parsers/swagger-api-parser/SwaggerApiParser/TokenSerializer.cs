@@ -26,7 +26,7 @@ namespace SwaggerApiParser
             {
                 this.paths.AddLast(path);
             }
-        }
+            }
 
         public string rootPath()
         {
@@ -47,7 +47,7 @@ namespace SwaggerApiParser
             {
                 this.Add(node);
             }
-        }
+            }
 
         public void PopMulti(int number)
         {
@@ -55,7 +55,7 @@ namespace SwaggerApiParser
             {
                 this.Pop();
             }
-        }
+            }
 
         public void Pop()
         {
@@ -123,7 +123,7 @@ namespace SwaggerApiParser
             }
 
             return ret.ToArray();
-        }
+            }
 
         public static CodeFileToken[] TokenSerializeJsonToCodeLines(JsonElement jsonElement)
         {
@@ -198,20 +198,20 @@ namespace SwaggerApiParser
                         foreach (var item in (IEnumerable)value)
                         {
                             var child = TokenSerializer.TokenSerialize(item, new SerializeContext(indent: context.indent + 1, context.IteratorPath));
-                            ret.AddRange(child);
+                        ret.AddRange(child);
                         }
-                    }
-                }
+                        }
+                        }
                 else
                 {
                     ret.Add(NewLine());
                     var child = TokenSerializer.TokenSerialize(value, new SerializeContext(indent: context.indent + 1, context.IteratorPath));
                     ret.AddRange(child);
                 }
-            }
+                }
 
             return ret.ToArray();
-        }
+                }
 
         public static CodeFileToken[] TokenSerializeAsTableFormat(int rowCount, int columnCount, IEnumerable<String> columnNames, CodeFileToken[] rows, string tableDefinitionId)
         {
@@ -279,7 +279,7 @@ namespace SwaggerApiParser
             }
 
             return ret.ToArray();
-        }
+            }
 
         public static CodeFileToken FoldableParentToken(String value)
         {
@@ -352,23 +352,23 @@ namespace SwaggerApiParser
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
-                    VisitObject(element, scopeStart, scopeEnd, excludeJsonPunctuations);
-                    break;
+                VisitObject(element, scopeStart, scopeEnd, excludeJsonPunctuations);
+                break;
                 case JsonValueKind.Array:
-                    VisitArray(element, excludeJsonPunctuations: excludeJsonPunctuations);
-                    break;
+                VisitArray(element, excludeJsonPunctuations: excludeJsonPunctuations);
+                break;
                 case JsonValueKind.False:
                 case JsonValueKind.Null:
                 case JsonValueKind.Number:
                 case JsonValueKind.String:
                 case JsonValueKind.True:
                 case JsonValueKind.Undefined:
-                    VisitLiteral(element, excludeJsonPunctuations: excludeJsonPunctuations);
-                    break;
+                VisitLiteral(element, excludeJsonPunctuations: excludeJsonPunctuations);
+                break;
                 default:
-                    break;
+                break;
             }
-        }
+            }
 
         /// <summary>
         /// Generate the listing for an object.
@@ -398,9 +398,9 @@ namespace SwaggerApiParser
                     var isCollapsible = IsCurObjCollapsible(property.Name);
                     // Write the property name
                     if (!excludeJsonPunctuations)
-{
-    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
-}
+                    {
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    }
                     
                     var propertyType = isCollapsible ? CodeFileTokenKind.TypeName : CodeFileTokenKind.MemberName;
                     this.Writer.Write(propertyType, property.Name);
@@ -426,15 +426,15 @@ namespace SwaggerApiParser
                         if (property.Name != values.Last().Name)
                         {
                             if (!excludeJsonPunctuations)
-{
-    this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
-}
+                            {
+                                this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                            }
 
                             if (multiLine) { this.Writer.WriteLine(); }
-                        }
+                                }
 
                         this.Writer.Write(CodeFileTokenKind.FoldableSectionHeading, null);
-                    }
+                            }
                     else
                     {
                         var punctuation = excludeJsonPunctuations ? ": " : "\": ";
@@ -444,19 +444,19 @@ namespace SwaggerApiParser
                         if (property.Name != values.Last().Name)
                         {
                             if (!excludeJsonPunctuations)
-{
-    this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
-}
+                            {
+                                this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                            }
 
                             if (multiLine) { this.Writer.WriteLine(); }
-                        }
-                    }
+                                }
+                                }
 
                     // Remove the property from the current path
                     this.iteratorPath.Pop();
-                }
-            }
-        }
+                            }
+                            }
+                            }
 
         private static bool IsCurObjCollapsible(string propertyName)
         {
@@ -487,16 +487,16 @@ namespace SwaggerApiParser
                     if (fencepost.RequiresSeparator)
                     {
                         this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
-                        if (multiLine) { this.Writer.WriteLine(); }
-                    }
+                    if (multiLine) { this.Writer.WriteLine(); }
+                        }
 
                     this.iteratorPath.Add(index.ToString());
                     Visit(child, excludeJsonPunctuations: excludeJsonPunctuations);
                     this.iteratorPath.Pop();
                     index++;
-                }
-            }
-        }
+                    }
+                    }
+                    }
 
         /// <summary>
         /// Generate the listing for a literal value.
@@ -507,38 +507,38 @@ namespace SwaggerApiParser
             switch (value.ValueKind)
             {
                 case JsonValueKind.Null:
-                    this.Writer.Write(CodeFileTokenKind.Keyword, "null");
-                    break;
+                this.Writer.Write(CodeFileTokenKind.Keyword, "null");
+                break;
                 case JsonValueKind.Undefined:
-                    this.Writer.Write(CodeFileTokenKind.Keyword, "undefined");
-                    break;
+                this.Writer.Write(CodeFileTokenKind.Keyword, "undefined");
+                break;
                 case JsonValueKind.True:
-                    this.Writer.Write(CodeFileTokenKind.Keyword, "true");
-                    break;
+                this.Writer.Write(CodeFileTokenKind.Keyword, "true");
+                break;
                 case JsonValueKind.False:
-                    this.Writer.Write(CodeFileTokenKind.Keyword, "false");
-                    break;
+                this.Writer.Write(CodeFileTokenKind.Keyword, "false");
+                break;
                 case JsonValueKind.Number:
-                    this.Writer.Write(CodeFileTokenKind.Literal, value.GetDouble().ToString());
-                    break;
+                this.Writer.Write(CodeFileTokenKind.Literal, value.GetDouble().ToString());
+                break;
                 case JsonValueKind.String:
-                    if (!excludeJsonPunctuations)
-{
-    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
-}
+                if (!excludeJsonPunctuations)
+                {
+                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                }
                     this.Writer.Write(CodeFileTokenKind.StringLiteral, value.GetString());
                     this.iteratorPath.Add(value.GetString());
                     this.Writer.AnnotateDefinition(this.iteratorPath.CurrentPath());
                     this.iteratorPath.Pop();
                     if (!excludeJsonPunctuations)
-{
-    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
-}
+                    {
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    }
                     break;
                 default:
                     throw new InvalidOperationException($"Expected a literal JSON element, not {value.ValueKind}.");
-            }
-        }
+                    }
+                    }
 
         private bool AlwaysMultiLine(JsonElement element)
         {
@@ -560,16 +560,16 @@ namespace SwaggerApiParser
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
-                    int properties = 0;
-                    foreach (JsonProperty property in element.EnumerateObject())
-                    {
-                        if (property.Value.ValueKind == JsonValueKind.Array ||
-                            property.Value.ValueKind == JsonValueKind.Object ||
-                            !FitsOnOneLine(property.Value) ||
-                            properties++ > maxObjectProperties)
-                        {
-                            return false;
-                        }
+                int properties = 0;
+                foreach (JsonProperty property in element.EnumerateObject())
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Array ||
+                        property.Value.ValueKind == JsonValueKind.Object ||
+                        !FitsOnOneLine(property.Value) ||
+                        properties++ > maxObjectProperties)
+                {
+                return false;
+                    }
                     }
 
                     return true;
@@ -582,9 +582,9 @@ namespace SwaggerApiParser
                             !FitsOnOneLine(value) ||
                             values++ > maxArrayElements)
                         {
-                            return false;
+                        return false;
                         }
-                    }
+                        }
 
                     return true;
                 case JsonValueKind.String:
@@ -596,8 +596,8 @@ namespace SwaggerApiParser
                 case JsonValueKind.Undefined:
                 default:
                     return true;
-            }
-        }
+                        }
+                        }
 
         /// <summary>
         /// Get a string in a JSON document. 
@@ -623,10 +623,10 @@ namespace SwaggerApiParser
                 {
                     return null;
                 }
-            }
+                }
 
             return element.ValueKind == JsonValueKind.String ? element.GetString() : null;
-        }
+                }
 
         /// <summary>
         /// Comparer to sort the operations within a path.  It puts

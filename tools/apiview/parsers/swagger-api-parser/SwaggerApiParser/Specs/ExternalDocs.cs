@@ -16,18 +16,18 @@ namespace SwaggerApiParser.Specs
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
             if (description != null)
-{
-    ret.AddRange(TokenSerializer.KeyValueTokens("description", description));
-}
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("description", description));
+            }
 
             if (url != null)
-{
-    ret.AddRange(TokenSerializer.KeyValueTokens("url", url));
-}
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("url", url));
+            }
 
             Utils.SerializePatternedObjects(patternedObjects, ret);
 
             return ret.ToArray();
-        }
-    }
-}
+            }
+            }
+            }

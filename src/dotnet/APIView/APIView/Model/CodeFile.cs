@@ -84,11 +84,11 @@ namespace ApiView
                 while (index < tokens.Length)
                 {
                     var token = tokens[index];
-                    if (token.Kind == CodeFileTokenKind.FoldableSectionHeading)
-                    {
-                        section.Add(token);
-                        isLeaf = false;
-                    }
+                if (token.Kind == CodeFileTokenKind.FoldableSectionHeading)
+                {
+                    section.Add(token);
+                isLeaf = false;
+                }
                     else if (token.Kind == CodeFileTokenKind.FoldableSectionContentStart)
                     {
                         section.Add(token);
@@ -102,19 +102,19 @@ namespace ApiView
                         if (isLeaf)
                         {
                             leafSections.Add(section.ToArray());
-                            section.Clear();
-                            isLeaf = false;
+                        section.Clear();
+                        isLeaf = false;
 
-                            // leafSectionPlaceholder will be used to identify the appriopriate index and number of lines in the leafSections
-                            // numberOfLinesinLeafSection help keep line numbering consistent with the main 'non-leaf' sections
-                            var leafSectionPlaceholder = new CodeFileToken(
-                                $"{(leafSections.Count() - 1)}", CodeFileTokenKind.LeafSectionPlaceholder, numberOfLinesinLeafSection);
-                            var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
-                            section.Add(leafSectionPlaceholder);
-                            section.Add(newLineToken);
+                        // leafSectionPlaceholder will be used to identify the appriopriate index and number of lines in the leafSections
+                        // numberOfLinesinLeafSection help keep line numbering consistent with the main 'non-leaf' sections
+                        var leafSectionPlaceholder = new CodeFileToken(
+                        $"{(leafSections.Count() - 1)}", CodeFileTokenKind.LeafSectionPlaceholder, numberOfLinesinLeafSection);
+                        var newLineToken = new CodeFileToken("", CodeFileTokenKind.Newline);
+                        section.Add(leafSectionPlaceholder);
+                        section.Add(newLineToken);
                         }
                         section.Add(token);
-                    }
+                        }
                     else
                     {
                         if (isLeaf && token.Kind == CodeFileTokenKind.Newline)
@@ -128,15 +128,15 @@ namespace ApiView
                         }
 
                         section.Add(token);
-                    }
+                        }
                     index++;
-                }
+                        }
                 newTokens.AddRange(section);
                 codeFile.Tokens = newTokens.ToArray();
                 codeFile.LeafSections = leafSections;
-            }
+                        }
             return codeFile;
-        }
+                        }
 
         public async Task SerializeAsync(Stream stream)
         {
@@ -155,7 +155,7 @@ namespace ApiView
                 line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language));
             }
             return sb.ToString();
-        }
+            }
 
         /// <summary>
         /// Generates an abridged text representation of API surface
@@ -168,7 +168,7 @@ namespace ApiView
                 line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language), TokensFilter.Outline);
             }
             return sb.ToString();
-        }
+            }
 
         public static int GetIndentationForLanguage(string language)
         {
@@ -176,11 +176,11 @@ namespace ApiView
             {
                 case "C++":
                 case "C":
-                    return 2;
+                return 2;
                 default:
-                    return 4;
+                return 4;
             }
-        }
+            }
 
         public void ConvertToTreeTokenModel()
         {
@@ -227,9 +227,9 @@ namespace ApiView
                         token = ReviewToken.CreateKeywordToken(oldToken.Value, false);
                         var keywordValue = oldToken.Value.ToLower();
                         if (keywordValue == "class" || keywordValue == "enum" || keywordValue == "struct" || keywordValue == "interface" || keywordValue == "type" || keywordValue == "namespace")
-                {
-                    className = keywordValue;
-                }
+                        {
+                            className = keywordValue;
+                        }
                         break;
                     case CodeFileTokenKind.Comment:
                         token = ReviewToken.CreateCommentToken(oldToken.Value, false); 
@@ -243,9 +243,9 @@ namespace ApiView
                     case CodeFileTokenKind.TypeName:
                         token = ReviewToken.CreateTypeNameToken(oldToken.Value, false);
                         if (currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value.ToLower() == className))
-                {
-                    token.RenderClasses.Add(className);
-                }
+                        {
+                            token.RenderClasses.Add(className);
+                        }
                         className = "";
                         break;
                     case CodeFileTokenKind.MemberName:
@@ -274,7 +274,7 @@ namespace ApiView
                         if (currentLineTokens.Count > 0)
                         {
                             while (parent != null && parent.Indent >= reviewLine.Indent)
-                                parent = parent.parentLine;
+                            parent = parent.parentLine;
                         }
                         else
                         {
@@ -323,22 +323,22 @@ namespace ApiView
                         break;
                     case CodeFileTokenKind.LineIdMarker:
                         if (string.IsNullOrEmpty(reviewLine.LineId))
-                {
-                    reviewLine.LineId = oldToken.Value;
-                }
+                        {
+                            reviewLine.LineId = oldToken.Value;
+                        }
                         break;
                     default:
                         Console.WriteLine($"Unsupported token kind to convert to new model, Kind: {oldToken.Kind}, value: {oldToken.Value}, Line Id: {oldToken.DefinitionId}"); 
                         break;
-                }
+                        }
 
                 if (token != null)
                 {
                     currentLineTokens.Add(token);
 
                     if (oldToken.Equals("}")
-                        || oldToken.Equals("};"))
-                        reviewLine.IsContextEndLine = true;
+                    || oldToken.Equals("};"))
+                    reviewLine.IsContextEndLine = true;
                     if (isHidden)
                     {
                         reviewLine.IsHidden = true;
@@ -363,12 +363,12 @@ namespace ApiView
                     {
                         token.IsDocumentation = true;
                     }
-                }
-            }
+                    }
+                    }
 
             //Process last line
             if (currentLineTokens.Count > 0)
-            {                
+            {
                 reviewLine.Tokens = currentLineTokens;
                 var parent = previousLine;
                 while (parent != null && parent.Indent >= reviewLine.Indent)
@@ -382,8 +382,8 @@ namespace ApiView
                 {
                     parent.Children.Add(reviewLine);
                 }
-            }                        
-        }
+                }
+                }
 
         private static void GetNavigationMap(Dictionary<string, string> navigationItems, NavigationItem[] items)
         {
@@ -398,6 +398,6 @@ namespace ApiView
                 navigationItems.Add(key, item.Text);
                 GetNavigationMap(navigationItems, item.ChildItems);
             }
-        }
-    }
-}
+            }
+            }
+            }

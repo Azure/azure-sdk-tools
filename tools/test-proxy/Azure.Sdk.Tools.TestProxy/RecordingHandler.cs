@@ -97,9 +97,9 @@ namespace Azure.Sdk.Tools.TestProxy
             if (PlaybackSessions.Keys.Any())
             {
                 foreach(var value in PlaybackSessions.Values)
-                {
-                    results.Add(value.AuditLog);
-                }
+            {
+                results.Add(value.AuditLog);
+            }
             }
 
             if (RecordingSessions.Keys.Any())
@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     results.Add(value.AuditLog);
                 }
-            }
+                }
 
             if (InMemorySessions.Keys.Any())
             {
@@ -116,10 +116,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     results.Add(value.AuditLog);
                 }
-            }
+                }
 
             return results;
-        }
+                }
 
 
         public RecordingHandler(string targetDirectory, IAssetsStore store = null, StoreResolver storeResolver = null)
@@ -139,7 +139,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 Resolver = new StoreResolver();
             }
-        }
+            }
         #endregion
 
         #region recording functionality
@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     recordingSession.Session.Variables[kvp.Key] = kvp.Value;
                 }
-            }
+                }
 
             if (saveRecording)
             {
@@ -179,16 +179,16 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new in-memory session under id {sessionId}.");
                     }
-                }
+                    }
                 else
                 {
                     // Create directories above file if they don't already exist
                     WriteToDisk(recordingSession);
                 }
-            }
+                }
 
             DebugLogger.LogTrace($"RECORD STOP END {id}.");
-        }
+                }
 
         public void WriteToDisk(ModifiableRecordSession recordingSession)
         {
@@ -205,7 +205,7 @@ namespace Azure.Sdk.Tools.TestProxy
             recordingSession.Session.Serialize(writer);
             writer.Flush();
             stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
-        }
+            }
 
         /// <summary>
         /// Entrypoint handling an an optional parameter assets.json. If present, a restore option either MUST run or MAY run depending on if we're running in playback or adding new recordings.
@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 await this.Store.Restore(assetsJson);
             }
-        }
+            }
 
         public async Task StartRecordingAsync(string sessionId, HttpResponse outgoingResponse, string assetsJson = null)
         {
@@ -245,7 +245,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.LogTrace($"RECORD START END {id}.");
             outgoingResponse.Headers.Append("x-recording-id", id);
-        }
+            }
 
         public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
@@ -280,9 +280,9 @@ namespace Azure.Sdk.Tools.TestProxy
             if (incomingRequest.ContentLength == null)
             {
                 if(!incomingRequest.Headers["Transfer-Encoding"].ToString().Split(' ').Select(x => x.Trim()).Contains("chunked"))
-                {
-                    upstreamRequest.Content = null;
-                }
+            {
+                upstreamRequest.Content = null;
+            }
             }
 
             if (HandleRedirects)
@@ -311,9 +311,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 await session.Session.EntryLock.WaitAsync();
                 try
                 {
-                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Lock obtained. Adding entry {entry.RequestMethod} {entry.RequestUri} to session {recordingId}."));
-                    session.Session.Entries.Add(entry);
-                }
+                session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Lock obtained. Adding entry {entry.RequestMethod} {entry.RequestUri} to session {recordingId}."));
+                session.Session.Entries.Add(entry);
+            }
                 finally
                 {
                     session.Session.EntryLock.Release();
@@ -343,11 +343,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
 
                 if (entry.Response.Headers.ContainsKey("Content-Length")){
-                    outgoingResponse.ContentLength = bodyData.Length;
-                }
+                outgoingResponse.ContentLength = bodyData.Length;
+            }
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
-        }
+            }
 
         public static EntryRecordMode GetRecordMode(HttpRequest request)
         {
@@ -357,9 +357,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (values.Count != 1)
                 {
                     throw new HttpException(
-                        HttpStatusCode.BadRequest,
-                        $"'{SkipRecordingHeaderKey}' should contain a single value set to either '{SkipRecordingRequestBody}' or " +
-                        $"'{SkipRecordingRequestResponse}'");
+                HttpStatusCode.BadRequest,
+                $"'{SkipRecordingHeaderKey}' should contain a single value set to either '{SkipRecordingRequestBody}' or " +
+                $"'{SkipRecordingRequestResponse}'");
                 }
                 string skipMode = values.First();
                 if (skipMode.Equals(SkipRecordingRequestResponse, StringComparison.OrdinalIgnoreCase))
@@ -378,10 +378,10 @@ namespace Azure.Sdk.Tools.TestProxy
                         $"It should be either omitted from the request headers, or set to either '{SkipRecordingRequestBody}' " +
                         $"or '{SkipRecordingRequestResponse}'");
                 }
-            }
+                }
 
             return mode;
-        }
+                }
 
         public HttpRequestMessage CreateUpstreamRequest(HttpRequest incomingRequest, byte[] incomingBody)
         {
@@ -410,20 +410,20 @@ namespace Azure.Sdk.Tools.TestProxy
                     if (!upstreamRequest.Content.Headers.TryAddWithoutValidation(header.Key, values))
                     {
                         throw new HttpException(
-                            HttpStatusCode.BadRequest,
-                            $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
+                        HttpStatusCode.BadRequest,
+                        $"Encountered an unexpected exception while mapping a content header during upstreamRequest creation. Header: \"{header.Key}\". Value: \"{String.Join(",", values)}\""
                         );
                     }
-                }
+                    }
 
                 if (header.Key == "x-recording-upstream-host-header")
                 {
                     upstreamRequest.Headers.Host = header.Value;
                 }
-            }
+                }
 
             return upstreamRequest;
-        }
+                }
 
         #endregion
 
@@ -443,7 +443,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.BadRequest, $"There is no in-memory session with id {sessionId} available for playback retrieval.");
                 }
                 session.SourceRecordingId = sessionId;
-            }
+                }
             else
             {
                 await RestoreAssetsJson(assetsPath, true);
@@ -479,7 +479,7 @@ namespace Azure.Sdk.Tools.TestProxy
             await outgoingResponse.WriteAsync(json);
 
             DebugLogger.LogTrace($"PLAYBACK START END {id}.");
-        }
+            }
 
         public async Task StopPlayback(string recordingId, bool purgeMemoryStore = false)
         {
@@ -520,10 +520,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
 
                     GC.Collect();
-                }
+                    }
 
                 DebugLogger.LogTrace($"PLAYBACK STOP END {id}.");
-            }
+                    }
             finally
             {
                 session.Session.EntryLock.Release();
@@ -548,12 +548,12 @@ namespace Azure.Sdk.Tools.TestProxy
                 await session.Session.EntryLock.WaitAsync();
                 try
                 {
-                    if (!session.IsSanitized)
-                    {
-                        session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"In 'one-time' sanitization for {recordingId}. I am applying {sanitizers.Count} sanitizers."));
-                        await session.Session.Sanitize(sanitizers, false);
-                        session.IsSanitized = true;
-                    }
+                if (!session.IsSanitized)
+                {
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"In 'one-time' sanitization for {recordingId}. I am applying {sanitizers.Count} sanitizers."));
+                await session.Session.Sanitize(sanitizers, false);
+                session.IsSanitized = true;
+                }
                 }
                 finally
                 {
@@ -597,7 +597,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Beginning body write for {recordingId}."));
 
                     await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
-                }
+                    }
 
                 Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
@@ -616,7 +616,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Now popping entry {entry.RequestMethod} {match.RequestUri} from entries for {recordingId}."));
                     await session.Session.Remove(match, shouldLock: false);
                 }
-            }
+                }
             finally
             {
                 session.Session.EntryLock.Release();
@@ -660,22 +660,22 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 for(int i = 0; i < chunks.Length; i++)
                 {
-                    var chunk = chunks[i];
+                var chunk = chunks[i];
 
-                    await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
+                await outgoingResponse.Body.WriteAsync(chunk).ConfigureAwait(false);
 
-                    if (i != chunks.Length - 1)
-                    {
-                        await Task.Delay(sleepLength);
-                    }
+                if (i != chunks.Length - 1)
+                {
+                    await Task.Delay(sleepLength);
+                }
                 }
 
-            }
+                }
             else
             {
                 await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
             }
-        }
+            }
 
         public static async Task<(RecordEntry, byte[])> CreateEntryAsync(HttpRequest request)
         {
@@ -699,10 +699,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     entry.Request.Headers.Add(header.Key, header.Value.ToArray());
                 }
-            }
+                }
 
             return entry;
-        }
+                }
 
         #endregion
 
@@ -722,7 +722,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return path.Replace("\\", "/");
-        }
+            }
 
         public async Task Restore(string pathToAssetsJson)
         {
@@ -759,7 +759,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, $"The value of key \"HandleRedirects\" MUST be castable to a valid boolean value. Unparsable Value: \"{handleRedirectsString}\".");
                     }
-                }
+                    }
 
                 if (options.TryGetValue("ContextDirectory", out var sourceDirectoryObj))
                 {
@@ -773,7 +773,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value to the key \"ContextDirectory\" in the recording options dictionary.");
                     }
-                }
+                    }
 
                 if (options.TryGetValue("AssetsStore", out var assetsStoreObj))
                 {
@@ -787,19 +787,19 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value when providing the key \"AssetsStore\" in the recording options dictionary.");
                     }
-                }
+                    }
 
                 if (options.TryGetValue("Transport", out var transportConventions))
                 {
                     if (transportConventions != null)
                     {
                         try
-                        {
-                            string transportObject;
-                            if (transportConventions is JsonElement je)
-                            {
-                                transportObject = je.ToString();
-                            }
+                    {
+                        string transportObject;
+                    if (transportConventions is JsonElement je)
+                    {
+                        transportObject = je.ToString();
+                    }
                             else
                             {
                                 throw new Exception("'Transport' object was not a JsonElement");
@@ -827,13 +827,13 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, "Users must provide a valid value when providing the key \"Transport\" in the recording options dictionary.");
                     }
-                }
-            }
+                    }
+                    }
             else
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "When setting recording options, the request body is expected to be non-null and of type Dictionary<string, string>.");
             }
-        }
+            }
 
         public X509Certificate2 GetValidationCert(TransportCustomizations settings)
         {
@@ -860,12 +860,12 @@ namespace Azure.Sdk.Tools.TestProxy
                 foreach (var certPair in customizations.Certificates)
                 {
                     try
-                    {
+                {
 
-                        var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
-                        cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
-                        clientHandler.ClientCertificates.Add(cert);
-                    }
+                var cert = X509Certificate2.CreateFromPem(certPair.PemValue, certPair.PemKey);
+                cert = new X509Certificate2(cert.Export(X509ContentType.Pfx));
+                clientHandler.ClientCertificates.Add(cert);
+                }
                     catch (Exception e)
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, $"Unable to instantiate a new X509 certificate from the provided value and key. Failure Message: \"{e.Message}\".");
@@ -887,12 +887,12 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 clientHandler.ServerCertificateCustomValidationCallback = (HttpRequestMessage httpRequestMessage, X509Certificate2 cert, X509Chain x509Chain, SslPolicyErrors sslPolicyErrors) =>
                 {
-                    if (!string.IsNullOrWhiteSpace(customizations.TSLValidationCertHost) && httpRequestMessage.RequestUri.Host != customizations.TSLValidationCertHost)
+                if (!string.IsNullOrWhiteSpace(customizations.TSLValidationCertHost) && httpRequestMessage.RequestUri.Host != customizations.TSLValidationCertHost)
+                {
+                    if (sslPolicyErrors == SslPolicyErrors.None)
                     {
-                        if (sslPolicyErrors == SslPolicyErrors.None)
-                        {
-                            return true;
-                        }
+                        return true;
+                    }
 
                         return false;
                     }
@@ -900,23 +900,23 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         bool isChainValid = certificateChain.Build(cert);
                         if (!isChainValid)
-{
-    return false;
-}
+                        {
+                            return false;
+                        }
                         var isCertSignedByTheTlsCert = certificateChain.ChainElements.Cast<X509ChainElement>()
                             .Any(x => x.Certificate.Thumbprint == ledgerCert.Thumbprint);
 
                         return isCertSignedByTheTlsCert;
-                    }
+                        }
                 };
-            }
+                        }
             else if (insecure)
             {
                 clientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
             }
 
             return clientHandler;
-        }
+            }
 
         public void SetTransportOptions(TransportCustomizations customizations, string sessionId)
         {
@@ -930,9 +930,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (RecordingSessions.TryGetValue(sessionId, out var recordingSession))
                 {
                     recordingSession.Client = new HttpClient(customizedClientHandler)
-                    {
-                        Timeout = timeoutSpan
-                    };
+                {
+                    Timeout = timeoutSpan
+                }
                 }
 
                 if (customizations.PlaybackResponseTime > 0)
@@ -945,8 +945,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, $"Unable to set a transport customization on a recording session that is not active. Id: \"{sessionId}\"");
                     }
-                }
-            }
+                    }
+                    }
             else
             {
                 // after #3488 we will swap to a single client instead of both of these
@@ -987,7 +987,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     Directory.CreateDirectory(targetDirectory);
                 }
                 ContextDirectory = targetDirectory;
-            }
+                }
             catch (Exception ex)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"Unable set proxy context to target directory \"{targetDirectory}\". Unhandled exception was: \"{ex.Message}\".");
@@ -1015,7 +1015,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
-        }
+            }
 
         public async Task<string> UnregisterSanitizer(string sanitizerId, string recordingId = null)
         {
@@ -1029,7 +1029,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return await SanitizerRegistry.Unregister(sanitizerId);
-        }
+            }
 
 
         public async Task<List<string>> RegisterSanitizers(List<RecordedTestSanitizer> sanitizers, string recordingId = null)
@@ -1043,11 +1043,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 await session.Session.EntryLock.WaitAsync();
                 try
                 {
-                    foreach (var sanitizer in sanitizers)
-                    {
-                        session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
-                        registrations.Add(await SanitizerRegistry.Register(session, sanitizer, shouldLock: false));
-                    }
+                foreach (var sanitizer in sanitizers)
+                {
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
+                registrations.Add(await SanitizerRegistry.Register(session, sanitizer, shouldLock: false));
+                }
                 }
                 finally
                 {
@@ -1062,7 +1062,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         registrations.Add(await SanitizerRegistry.Register(sanitizer, shouldLock: false));
                     }
-                }
+                    }
                 finally
                 {
                     SanitizerRegistry.SessionSanitizerLock.Release();
@@ -1083,7 +1083,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return await SanitizerRegistry.Register(sanitizer);
-        }
+            }
 
         public void AddTransformToRecording(string recordingId, ResponseTransform transform)
         {
@@ -1093,7 +1093,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             session.AdditionalTransforms.Add(transform);
-        }
+            }
 
 
         public void SetMatcherForRecording(string recordingId, RecordMatcher matcher)
@@ -1104,7 +1104,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             session.CustomMatcher = matcher;
-        }
+            }
 
         public async Task SetDefaultExtensions(string recordingId = null)
         {
@@ -1122,7 +1122,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     inMemSession.ResetExtensions(SanitizerRegistry);
                 }
-            }
+                }
             else
             {
                 var countPlayback = PlaybackSessions.Count;
@@ -1139,10 +1139,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     if (countPlayback > 0)
                     {
                         sb.Append("Active Playback Sessions: [");
-                        lock (PlaybackSessions)
-                        {
-                            sb.Append(string.Join(", ", PlaybackSessions.Keys.ToArray()));
-                        }
+                    lock (PlaybackSessions)
+                    {
+                    sb.Append(string.Join(", ", PlaybackSessions.Keys.ToArray()));
+                    }
                         sb.Append("]. ");
                     }
 
@@ -1151,8 +1151,8 @@ namespace Azure.Sdk.Tools.TestProxy
                         sb.Append("Active InMem Sessions: [");
                         lock (InMemorySessions)
                         {
-                            sb.Append(string.Join(", ", InMemorySessions.Keys.ToArray()));
-                        }
+                        sb.Append(string.Join(", ", InMemorySessions.Keys.ToArray()));
+                    }
                         sb.Append("]. ");
                     }
 
@@ -1161,13 +1161,13 @@ namespace Azure.Sdk.Tools.TestProxy
                         sb.Append($"{countRecording} Active Recording Sessions: [");
                         lock (RecordingSessions)
                         {
-                            sb.Append(string.Join(", ", RecordingSessions.Keys.ToArray()));
-                        }
+                        sb.Append(string.Join(", ", RecordingSessions.Keys.ToArray()));
+                    }
                         sb.Append("]. ");
                     }
 
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
-                }
+                    }
 
                 await SanitizerRegistry.ResetSessionSanitizers();
 
@@ -1211,11 +1211,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 var contextDirectory = await Store.GetPath(assetsPath);
 
                 if (Path.IsPathFullyQualified(file)) {
-                    throw new HttpException(
-                        HttpStatusCode.BadRequest,
-                        $"The path provided in the recording file value {file} is fully qualified. This is not allowed when an assets.json is provided."
-                    );
-                }
+                throw new HttpException(
+                HttpStatusCode.BadRequest,
+                $"The path provided in the recording file value {file} is fully qualified. This is not allowed when an assets.json is provided."
+                );
+            }
                 path = Path.Join(contextDirectory, file);
             }
             // otherwise, it's a basic restore like we're used to
@@ -1225,10 +1225,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     path = Path.Join(ContextDirectory, file);
                 }
-            }
+                }
 
             return (path + (!path.EndsWith(".json") ? ".json" : String.Empty));
-        }
+                }
 
         public static string GetHeader(HttpRequest request, string name, bool allowNulls = false)
         {
@@ -1239,10 +1239,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     return null;
                 }
                 throw new HttpException(HttpStatusCode.BadRequest, $"Expected header {name} is not populated in request.");
-            }
+                }
 
             return value;
-        }
+                }
 
         public static Uri GetRequestUri(HttpRequest request)
         {

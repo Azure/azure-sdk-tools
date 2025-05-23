@@ -28,8 +28,8 @@ namespace Stress.Watcher
             }
             labels = labels.TrimEnd(',', ' ');
             return $"{Metadata.Name} Status: { CStatus.Experiment.phase }, Labels: {{ {labels} }}, Spec: {{ {Spec.Selector} }}";
-        }
-    }
+            }
+            }
 
     public class ChaosResourceSpec
     {
@@ -67,9 +67,9 @@ namespace Stress.Watcher
                 }
             }
             if (isInvalidSpec)
-{
-    return null;
-}
+            {
+                return null;
+            }
 
             string testInstance = null;
             foreach (PropertyInfo property in this.GetType().GetProperties()) {
@@ -80,11 +80,11 @@ namespace Stress.Watcher
                     ChaosResourceSpec chaosSpec = (ChaosResourceSpec)property.GetValue(this, null);
                     string ti = chaosSpec?.GetTestInstance();
                     testInstance = (ti == null) ? testInstance : ti;
-                }
+            }
             }
             return testInstance;
-        }
-    }
+            }
+            }
 
     public class ChaosSelector
     {

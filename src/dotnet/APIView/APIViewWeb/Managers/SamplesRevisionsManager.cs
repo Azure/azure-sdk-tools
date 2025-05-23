@@ -69,22 +69,22 @@ namespace APIViewWeb.Managers
                 return samplesRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
             }
             return default(SamplesRevisionModel);
-        }
+            }
 
         public async Task<string> GetSamplesRevisionContentAsync(string fileId)
         {
             var file = await _sampleFilesRepository.GetUsageSampleAsync(fileId);
 
             if (file == null)
-{
-    return null;
-}
+            {
+                return null;
+            }
 
             var reader = new StreamReader(file);
             var htmlString = reader.ReadToEnd();
 
             return htmlString;
-        }
+            }
 
         public async Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, string sample, string revisionTitle, string FileName = null)
         {
@@ -133,7 +133,7 @@ namespace APIViewWeb.Managers
                 await _sampleFilesRepository.UploadUsageSampleAsync(samplesRevision.OriginalFileId, originalStream);
                 await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(samplesRevision);
             }
-        }
+            }
 
         public async Task UpdateSamplesRevisionTitle(string reviewId, string sampleId, string newTitle)
         {
@@ -157,9 +157,9 @@ namespace APIViewWeb.Managers
                 {
                     await _commentsManager.SoftDeleteCommentAsync(user, comment);
                 }
-            }
+                }
             await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(samplesRevision);
-        }
+                }
 
         private async Task AssertUsageSampleOwnerAsync(ClaimsPrincipal user, SamplesRevisionModel samplesRevision)
         {
@@ -168,6 +168,6 @@ namespace APIViewWeb.Managers
             {
                 throw new AuthorizationFailedException();
             }
-        }
-    }
-}
+            }
+            }
+            }

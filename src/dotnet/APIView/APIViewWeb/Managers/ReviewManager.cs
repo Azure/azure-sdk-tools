@@ -140,7 +140,7 @@ namespace APIViewWeb.Managers
 
             var review = await _reviewsRepository.GetReviewAsync(id);
             return review;
-        }
+            }
 
         /// <summary>
         ///  GEt Reviews using List of ReviewIds
@@ -155,7 +155,7 @@ namespace APIViewWeb.Managers
                 return new List<ReviewListItemModel>();
             }
             return await _reviewsRepository.GetReviewsAsync(reviewIds, isClosed);
-        }
+            }
 
         /// <summary>
         /// Get Legacy Reviews from old database
@@ -173,7 +173,7 @@ namespace APIViewWeb.Managers
 
             var review = await _reviewsRepository.GetLegacyReviewAsync(id);
             return review;
-        }
+            }
 
         /// <summary>
         /// Get Review if it exist otherwise create it
@@ -192,15 +192,15 @@ namespace APIViewWeb.Managers
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
-                {
-                    codeFile = await _codeFileManager.CreateCodeFileAsync(
-                        originalName: file?.FileName, fileStream: openReadStream, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
-                }
+            {
+                codeFile = await _codeFileManager.CreateCodeFileAsync(
+                originalName: file?.FileName, fileStream: openReadStream, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
+            }
             }
             else if (!string.IsNullOrEmpty(filePath))
             {
                 codeFile = await _codeFileManager.CreateCodeFileAsync(
-                    originalName: filePath, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
+                originalName: filePath, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
             }
 
             if (codeFile != null)
@@ -210,9 +210,9 @@ namespace APIViewWeb.Managers
                 {
                     review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
                 }
-            }
+                }
             return review;
-        }
+                }
 
 
         /// <summary>
@@ -273,7 +273,7 @@ namespace APIViewWeb.Managers
                 await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, revision);
             }
             await _commentManager.SoftDeleteCommentsAsync(user, review.Id);
-        }
+            }
 
         /// <summary>
         /// Toggle Review Open/Closed state
@@ -325,7 +325,7 @@ namespace APIViewWeb.Managers
                 return;
             }
             await ToggleReviewApproval(user, review, notes);
-        }
+            }
 
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
@@ -388,9 +388,9 @@ namespace APIViewWeb.Managers
                 comment.CommentText = commentText.ToString();
 
                 await _commentsRepository.UpsertCommentAsync(comment);
-            }
+                }
             return result.Violations.Count;
-        }
+                }
 
         /// <summary>
         /// Logic to update Reviews in a blackground task
@@ -415,13 +415,13 @@ namespace APIViewWeb.Managers
                 if (updateDisabledLanguages.Contains(language))
                 {
                     _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for language " + language);
-                    continue;
+                continue;
                 }
                 var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
                 if (languageService == null)
-{
-    continue;
-}
+                {
+                    continue;
+                }
 
                 // If review is updated using devops pipeline then batch process update review requests
                 if (languageService.IsReviewGenByPipeline)
@@ -432,8 +432,8 @@ namespace APIViewWeb.Managers
                     if (!verifyUpgradabilityOnly)
                     {
                         await UpdateReviewsUsingPipeline(language, languageService, backgroundBatchProcessCount);
-                    }                    
-                }
+                    }
+                    }
                 else
                 {
                     var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
@@ -451,12 +451,12 @@ namespace APIViewWeb.Managers
                                 LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)?.CanUpdate(revision.Files.First().VersionString) == true)
                             {
                                 var requestTelemetry = new RequestTelemetry { Name = $"Updating {review.Language} Review with id: {review.Id}"  };
-                                var operation = _telemetryClient.StartOperation(requestTelemetry);
-                                try
-                                {
-                                    await Task.Delay(100);
-                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
-                                }
+                        var operation = _telemetryClient.StartOperation(requestTelemetry);
+                        try
+                        {
+                        await Task.Delay(100);
+                        await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
+                    }
                                 catch (Exception e)
                                 {
                                     _telemetryClient.TrackException(e);
@@ -505,11 +505,11 @@ namespace APIViewWeb.Managers
                     foreach (var file in revision.Files)
                     {
                         //Don't include current revision if file is not required to be updated.
-                        // E.g. json token file is uploaded for a language, specific revision was already upgraded.
-                        if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
-                        {
-                            continue;
-                        }
+                // E.g. json token file is uploaded for a language, specific revision was already upgraded.
+                if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                {
+                    continue;
+                }
 
                         _telemetryClient.TrackTrace($"Updating review: {review.Id}, revision: {revision.Id}");
                         paramList.Add(new APIRevisionGenerationPipelineParamModel()
@@ -532,13 +532,13 @@ namespace APIViewWeb.Managers
                     await Task.Delay(600000);
                     paramList.Clear();
                 }
-            }
+                }
 
             if (paramList.Count > 0)
             {
                 _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
                 await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
             }
-        }
-    }
-}
+            }
+            }
+            }

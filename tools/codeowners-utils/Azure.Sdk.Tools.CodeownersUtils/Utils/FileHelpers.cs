@@ -17,22 +17,22 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         public static string GetFileOrUrlContents(string fileOrUrl)
         {
             if (fileOrUrl.StartsWith("https")
-{
-    )
+            {
+                )
                 return GetUrlContents(fileOrUrl);
-}
+            }
 
             string fullPath = Path.GetFullPath(fileOrUrl);
             if (File.Exists(fullPath)
-{
-    )
+            {
+                )
                 return File.ReadAllText(fullPath);
-}
+            }
 
             throw new ArgumentException(
                 "The path provided is neither local path nor https link. " +
                 $"Please check your path: '{fileOrUrl}' resolved to '{fullPath}'.");
-        }
+            }
 
         /// <summary>
         /// Load a file from the repository into an List&lt;string&gt;. 
@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
             }
 
             return codeownersFileAsList;
-        }
+            }
 
         private static string GetUrlContents(string url)
         {
@@ -66,18 +66,18 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                 HttpResponseMessage response = null;
                 try
                 {
-                    response = client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        // This writeline is probably unnecessary but good to have if there are previous attempts that failed
-                        Console.WriteLine($"GetUrlContents for {url} attempt number {attempts} succeeded.");
-                        return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                    }
+                response = client.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    // This writeline is probably unnecessary but good to have if there are previous attempts that failed
+                Console.WriteLine($"GetUrlContents for {url} attempt number {attempts} succeeded.");
+                return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                }
                     else
                     {
                         Console.WriteLine($"GetUrlContents attempt number {attempts}. Non-{HttpStatusCode.OK} status code trying to fetch {url}. Status Code = {response.StatusCode}");
                     }
-                }
+                    }
                 catch (HttpRequestException httpReqEx)
                 {
                     // HttpRequestException means the request failed due to an underlying issue such as network connectivity,
@@ -96,9 +96,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                     System.Threading.Thread.Sleep(delayTimeInMs);
                 }
                 attempts++;
-            }
+                }
             // This will only get hit if the final retry is non-OK status code
             throw new FileLoadException($"Unable to fetch {url} after {attempts} attempts. See above for status codes for each attempt.");
-        }
-    }
-}
+                }
+                }
+                }

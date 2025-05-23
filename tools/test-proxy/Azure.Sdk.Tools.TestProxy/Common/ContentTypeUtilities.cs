@@ -27,30 +27,30 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             boundary = null;
 
             if (!headers.TryGetValue("Content-Type", out var values)
-{
-    )
+            {
+                )
                 return false;
-}
+            }
 
             var ct = values[0];
             if (!ct.StartsWith("multipart/mixed", StringComparison.OrdinalIgnoreCase)
-{
-    )
+            {
+                )
                 return false;
-}
+            }
 
             const string key = "boundary=";
             var idx = ct.IndexOf(key, StringComparison.OrdinalIgnoreCase);
             if (idx == -1)
-{
-    return false;
-}
+            {
+                return false;
+            }
 
             boundary = ct[(idx + key.Length)..]   // everything after “boundary=”
                          .Trim()                  // strip spaces
                          .Trim('"');              // strip optional quotes
             return boundary.Length > 0;
-        }
+            }
 
         public static bool IsTextContentType(IDictionary<string, string[]> headers, out Encoding encoding)
         {
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return true;
             }
             return false;
-        }
+            }
 
         public static bool TryGetContentType(IDictionary<string, StringValues> requestHeaders, out string contentType)
         {
@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             return false;
-        }
+            }
 
         public static bool TryGetTextEncoding(string contentType, out Encoding encoding)
         {
@@ -120,19 +120,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if (charset.StartsWith(utf8Charset.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
                     encoding = Encoding.UTF8;
-                    return true;
+                return true;
                 }
-            }
+                }
 
             if (
-                    (
-                        contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
-                        contentType.EndsWith(jsonSuffix, StringComparison.OrdinalIgnoreCase) ||
-                        contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
-                        contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
-                        contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
-                        contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase)
-                    ) && !ContentTypeUtilities.IsManifestContentType(contentType)
+                (
+                contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
+                contentType.EndsWith(jsonSuffix, StringComparison.OrdinalIgnoreCase) ||
+                contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
+                contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
+                contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
+                contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase)
+                ) && !ContentTypeUtilities.IsManifestContentType(contentType)
                 )
             {
                 encoding = Encoding.UTF8;

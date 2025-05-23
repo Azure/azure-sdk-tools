@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             ProcessCore(message).GetAwaiter().GetResult();
-        }
+            }
 
         public override async ValueTask ProcessAsync(HttpMessage message)
         {
@@ -64,15 +64,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             await ProcessCore(message);
-        }
+            }
 
         private async Task ProcessCore(HttpMessage message)
         {
             if (!(message.Request is MockRequest request)
-{
-    )
+            {
+                )
                 throw new InvalidOperationException("the request is not compatible with the transport");
-}
+            }
 
             lock (_syncObj)
             {
@@ -94,7 +94,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 message.Response.ContentStream = new AsyncValidatingStream(!ExpectSyncPipeline.Value, message.Response.ContentStream);
             }
-        }
+            }
 
         public MockRequest SingleRequest
         {

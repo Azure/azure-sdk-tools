@@ -38,29 +38,29 @@ namespace Azure.SDK.ChangelogGen.Report
                 if (group.Notes.Sum(s => s.Note.Length) > 0 || !ignoreEmptyGroup)
                 {
                     sb.AppendLine(group.ToString());
-                    sb.AppendLine();
+                sb.AppendLine();
                 }
-            }
+                }
             return sb.ToString().Trim('\r', '\n');
-        }
+                }
 
         public void MergeTo(Release to, MergeMode mode)
         {
             switch (mode)
             {
                 case MergeMode.Line:
-                    this.MergeByLine(to);
-                    break;
+                this.MergeByLine(to);
+                break;
                 case MergeMode.Group:
-                    this.MergeByGrup(to);
-                    break;
+                this.MergeByGrup(to);
+                break;
                 case MergeMode.OverWrite:
-                    this.MergeByOverwrite(to);
-                    break;
+                this.MergeByOverwrite(to);
+                break;
                 default:
-                    throw new InvalidOperationException("Unknown merge mode " + mode);
+                throw new InvalidOperationException("Unknown merge mode " + mode);
             }
-        }
+            }
 
         private void MergeByOverwrite(Release to)
         {
@@ -74,12 +74,12 @@ namespace Azure.SDK.ChangelogGen.Report
             {
                 var found = to.Groups.FirstOrDefault(g => g.Name == fromGroup.Name);
                 if (found != null)
-{
-    to.Groups.Remove(found);
-}
-            }
+                {
+                    to.Groups.Remove(found);
+                }
+                }
             to.Groups.AddRange(this.Groups);
-        }
+                }
 
         private void MergeByLine(Release to)
         {
@@ -106,10 +106,10 @@ namespace Azure.SDK.ChangelogGen.Report
                         {
                             Logger.Verbose($"Release Note: {fromGroup.Name} -> {fromItem} ignored in merge");
                         }
-                    }
-                }
-            }
-        }
+                        }
+                        }
+                        }
+                        }
 
         public static string ToChangeLog(List<Release> releases)
         {
@@ -120,9 +120,9 @@ namespace Azure.SDK.ChangelogGen.Report
         public static List<Release> FromChangelog(string changelog)
         {
             if (changelog == null)
-{
-    throw new ArgumentNullException(nameof(changelog));
-}
+            {
+                throw new ArgumentNullException(nameof(changelog));
+            }
 
             List<Release> releases = new List<Release>();
             var lines = changelog.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
@@ -133,15 +133,15 @@ namespace Azure.SDK.ChangelogGen.Report
                 i++;
 
             if (i >= lines.Length)
-{
-    return releases;
-}
+            {
+                return releases;
+            }
 
             if (!TryParseReleaseTitle(lines[i], out Release? firstRelease)
-{
-    )
+            {
+                )
                 throw new InvalidOperationException("Can't find first release info in changelog: " + lines[i]);
-}
+            }
             Release curRelease = firstRelease!;
 
             ReleaseNoteGroup curGroup = new ReleaseNoteGroup("");
@@ -150,7 +150,7 @@ namespace Azure.SDK.ChangelogGen.Report
                 if (ReleaseNoteGroup.TryParseGroupTitle(lines[i], out ReleaseNoteGroup? newGroup))
                 {
                     curRelease.Groups.Add(curGroup);
-                    curGroup = newGroup!;
+                curGroup = newGroup!;
                 }
                 else if (Release.TryParseReleaseTitle(lines[i], out Release? newRelease))
                 {
@@ -164,11 +164,11 @@ namespace Azure.SDK.ChangelogGen.Report
                     ReleaseNote item = new ReleaseNote(lines[i]);
                     curGroup.Notes.Add(item);
                 }
-            }
+                }
             curRelease.Groups.Add(curGroup);
             releases.Add(curRelease);
             return releases;
-        }
+                }
 
         public static bool TryParseReleaseTitle(string line, out Release? release)
         {
@@ -186,7 +186,7 @@ namespace Azure.SDK.ChangelogGen.Report
                 release = new Release(m.Groups["version"].Value, m.Groups["release"].Value);
                 return true;
             }
-        }
+            }
 
         public static Release ParseReleaseTitle(string line)
         {
@@ -199,6 +199,6 @@ namespace Azure.SDK.ChangelogGen.Report
                 throw new InvalidOperationException(
                     $"Unexpected release version/date format. Expected: 'version (xxxx-xx-xx or Unreleased)' Actual: '${line}'");
             }
-        }
-    }
-}
+            }
+            }
+            }

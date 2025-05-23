@@ -162,7 +162,7 @@ namespace APIView.DIff
                 return false;
             }
             return ((DiffHunk)obj) == this;
-        }
+            }
 
         public bool Equals(DiffHunk other)
         {
@@ -177,12 +177,12 @@ namespace APIView.DIff
         public override string ToString()
         {
             if (IsEmpty)
-{
-    return "[Hunk: Empty]";
-}
+            {
+                return "[Hunk: Empty]";
+            }
             return string.Format("[Hunk: InsertStart={0}, RemoveStart={1}, Removed={2}, Inserted={3}]", InsertStart, RemoveStart, Removed, Inserted);
-        }
-    }
+            }
+            }
 
     public sealed class Diff
     {
@@ -225,8 +225,8 @@ namespace APIView.DIff
                 if (lineA < baseData.Length && !baseData.Modified[lineA] && lineB < changedData.Length && !changedData.Modified[lineB])
                 {
                     // equal lines
-                    lineA++;
-                    lineB++;
+                lineA++;
+                lineB++;
 
                 }
                 else
@@ -249,11 +249,11 @@ namespace APIView.DIff
                         yield return new DiffHunk(startA, startB, lineA - startA, lineB - startB);
                     }
                     // if
-                }
+                    }
                 // if
-            }
+                    }
             // while
-        }
+                    }
 
         /// <summary>
         /// This is the algorithm to find the Shortest Middle Snake (SMS).
@@ -300,23 +300,23 @@ namespace APIView.DIff
                 {
                     // Debug.Write(0, "SMS", "extend forward path " + k.ToString());
 
-                    // find the only or better starting point
-                    int x, y;
-                    if (k == downK - D)
-                    {
-                        x = downVector[downOffset + k + 1];
-                        // down
-                    }
+                // find the only or better starting point
+                int x, y;
+                if (k == downK - D)
+                {
+                    x = downVector[downOffset + k + 1];
+                // down
+                }
                     else
                     {
                         x = downVector[downOffset + k - 1] + 1;
                         // a step to the right
                         if (k < downK + D && downVector[downOffset + k + 1] >= x)
-{
-    x = downVector[downOffset + k + 1];
-}
+                        {
+                            x = downVector[downOffset + k + 1];
+                        }
                         // down
-                    }
+                        }
                     y = x - k;
 
                     // find the end of the furthest reaching forward D-path in diagonal k.
@@ -333,13 +333,13 @@ namespace APIView.DIff
                         if (upVector[upOffset + k] <= downVector[downOffset + k])
                         {
                             ret.x = downVector[downOffset + k];
-                            ret.y = downVector[downOffset + k] - k;
-                            return (ret);
+                        ret.y = downVector[downOffset + k] - k;
+                        return (ret);
                         }
                         // if
-                    }
+                        }
                     // if
-                }
+                        }
                 // for k
                 // Extend the reverse path.
                 for (int k = upK - D; k <= upK + D; k += 2)
@@ -351,18 +351,18 @@ namespace APIView.DIff
                     if (k == upK + D)
                     {
                         x = upVector[upOffset + k - 1];
-                        // up
+                    // up
                     }
                     else
                     {
                         x = upVector[upOffset + k + 1] - 1;
                         // left
                         if (k > upK - D && upVector[upOffset + k - 1] < x)
-{
-    x = upVector[upOffset + k - 1];
-}
+                        {
+                            x = upVector[upOffset + k - 1];
+                        }
                         // up
-                    }
+                        }
                     // if
                     y = x - k;
 
@@ -380,18 +380,18 @@ namespace APIView.DIff
                         if (upVector[upOffset + k] <= downVector[downOffset + k])
                         {
                             ret.x = downVector[downOffset + k];
-                            ret.y = downVector[downOffset + k] - k;
-                            return (ret);
+                        ret.y = downVector[downOffset + k] - k;
+                        return (ret);
                         }
                         // if
-                    }
+                        }
                     // if
-                }
+                        }
                 // for k
-            }
+                        }
             // for D
             throw new ApplicationException("the algorithm should never come here.");
-        }
+                        }
         // SMS
 
         /// <summary>
@@ -428,14 +428,14 @@ namespace APIView.DIff
             {
                 // mark as inserted lines.
                 while (lowerB < upperB)
-                    dataB.Modified[lowerB++] = true;
+                dataB.Modified[lowerB++] = true;
 
             }
             else if (lowerB == upperB)
             {
                 // mark as deleted lines.
                 while (lowerA < upperA)
-                    dataA.Modified[lowerA++] = true;
+                dataA.Modified[lowerA++] = true;
 
             }
             else
@@ -449,9 +449,9 @@ namespace APIView.DIff
                 LCS(dataA, smsrd.x, upperA, dataB, smsrd.y, upperB, downVector, upVector);
                 // 2002.09.20: no need for 2 points
             }
-        }
+            }
         // LCS()
-    }
+            }
 
     /// <summary>Data on one input file being compared.
     /// </summary>

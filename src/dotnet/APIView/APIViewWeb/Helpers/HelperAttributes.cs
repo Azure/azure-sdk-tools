@@ -13,9 +13,9 @@ namespace APIViewWeb.Helpers
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
             if (value == null)
-{
-    return new ValidationResult("UploadModel must have a value");
-}
+            {
+                return new ValidationResult("UploadModel must have a value");
+            }
 
             UploadModel model = value as UploadModel;
             
@@ -27,18 +27,18 @@ namespace APIViewWeb.Helpers
                 var errorMessage = $"File is invalid for the language selected. Select a file with extension {string.Join(", ", languageService.Extensions)} for language {model.Language}";
 
                 if (model.Language == "Swift" && !fileName.EndsWith(".json")
-{
-    )
-                    return new ValidationResult(errorMessage);
-}
+                {
+                    )
+                return new ValidationResult(errorMessage);
+                }
 
                 if (model.Language != "Swift" && !languageService.IsSupportedFile(fileName)
-{
-    )
+                {
+                    )
                     return new ValidationResult(errorMessage);
-}
-            }
+                }
+                }
             return ValidationResult.Success;
-        }
-    }
-}
+                }
+                }
+                }

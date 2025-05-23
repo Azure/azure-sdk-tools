@@ -62,7 +62,7 @@ namespace IssueLabeler.Shared
                     Console.WriteLine($"Make sure the Azurite storage emulator running and try again.");
                     return false;
                 }
-            }
+                }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception: {ex.Message}\n\n");
@@ -99,30 +99,30 @@ namespace IssueLabeler.Shared
                 if (issueFromMessage.success)
                 {
                     var isMissingAreaLabel = await IsMissingAreaLabel(issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num);
-                    //if (isMissingAreaLabel)
-                    //{
-                    //    GetPredictionTest(issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num);
-                    //}
-                    // Delete the message
-                    if (shouldDelete && !isMissingAreaLabel)
-{
-    await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
-}
+                //if (isMissingAreaLabel)
+                //{
+                //    GetPredictionTest(issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num);
+                //}
+                // Delete the message
+                if (shouldDelete && !isMissingAreaLabel)
+                {
+                    await _queueClient.DeleteMessageAsync(message.MessageId, message.PopReceipt);
+                }
                 }
                 else
                 {
                     // Update the message contents - was missing repo info
                     if (shouldUpdate)
-{
-    await _queueClient.UpdateMessageAsync(message.MessageId,
-                                message.PopReceipt,
-                                "Updated contents",
-                                TimeSpan.FromSeconds(60.0)  // Make it invisible for another 60 seconds
-                            );
-}
-                }
-            }
-        }
+                    {
+                        await _queueClient.UpdateMessageAsync(message.MessageId,
+                        message.PopReceipt,
+                        "Updated contents",
+                        TimeSpan.FromSeconds(60.0)  // Make it invisible for another 60 seconds
+                        );
+                    }
+                    }
+                    }
+                    }
 
         private async Task<bool> IsMissingAreaLabel(string owner, string repo, int number)
         {
@@ -156,28 +156,28 @@ namespace IssueLabeler.Shared
                 {
                     var issueFromMessage = GetIssueFromMessage(message.MessageText);
 
-                    // Process (i.e. print) the messages in less than 5 minutes
-                    _logger.LogInformation($"processing message message: '{message.MessageText}'");
+                // Process (i.e. print) the messages in less than 5 minutes
+                _logger.LogInformation($"processing message message: '{message.MessageText}'");
 
-                    if (issueFromMessage.success)
-                    {
-                        var isMissingAreaLabel = await IsMissingAreaLabel(owner, repo, issueFromMessage.num);
-                        if (isMissingAreaLabel &&
-                            owner.Equals(issueFromMessage.owner, StringComparison.OrdinalIgnoreCase) &&
-                            repo.Equals(issueFromMessage.repo, StringComparison.OrdinalIgnoreCase))
-                        {
-                            // TODO test this
-                            // what if same issue has multiple messages... I dont want to comment plenty of times
-                            if (!issuesPending.Contains((issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num)))
-                            {
-                                issuesPending.Add((issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num));
-                            }
-                        }
-                    }
+                if (issueFromMessage.success)
+                {
+                    var isMissingAreaLabel = await IsMissingAreaLabel(owner, repo, issueFromMessage.num);
+                if (isMissingAreaLabel &&
+                    owner.Equals(issueFromMessage.owner, StringComparison.OrdinalIgnoreCase) &&
+                    repo.Equals(issueFromMessage.repo, StringComparison.OrdinalIgnoreCase))
+                {
+                    // TODO test this
+                // what if same issue has multiple messages... I dont want to comment plenty of times
+                if (!issuesPending.Contains((issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num)))
+                {
+                    issuesPending.Add((issueFromMessage.owner, issueFromMessage.repo, issueFromMessage.num));
                 }
-            }
+                }
+                }
+                }
+                }
             return issuesPending;
-        }
+                }
 
         private QueueClient GetQueueClient(string queueName = null)
         {
@@ -189,7 +189,7 @@ namespace IssueLabeler.Shared
             var builder = new UriBuilder(_queueAccountUri);
             builder.Path = queueName;
             return new QueueClient(builder.Uri, new DefaultAzureCredential());
-        }
+            }
 
         public async Task CleanupQueue()
         {
@@ -207,12 +207,12 @@ namespace IssueLabeler.Shared
                 if (int.TryParse(number, out int num))
                 {
                     var repo = matches[0].Groups["repo"].Value;
-                    var owner = matches[0].Groups["owner"].Value;
-                    return (owner, repo, num, true);
+                var owner = matches[0].Groups["owner"].Value;
+                return (owner, repo, num, true);
                 }
-            }
+                }
             return (default, default, default, false);
-        }
+                }
 
         public Task InsertMessageTask(string msg)
         {

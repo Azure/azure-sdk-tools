@@ -73,9 +73,9 @@ namespace APIViewWeb.MiddleWare
                 if (!String.IsNullOrEmpty(sanitizedBody))
                 {
                     requestInfo.Add("Request Body", sanitizedBody);
-                    requestTelemetry.Properties.Add("Request Body", sanitizedBody);
+                requestTelemetry.Properties.Add("Request Body", sanitizedBody);
                 }
-            }
+                }
 
 
             var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -114,9 +114,9 @@ namespace APIViewWeb.MiddleWare
         private string MaskSensitiveData(string body)
         {
             if (string.IsNullOrWhiteSpace(body)
-{
-    ) return body;
-}
+            {
+                ) return body;
+            }
 
             try
             {
@@ -141,10 +141,10 @@ namespace APIViewWeb.MiddleWare
                     {
                         sanitizedData[property.Name] = property.Value.GetRawText();
                     }
-                }
+                    }
 
                 return JsonSerializer.Serialize(sanitizedData);
-            }
+                    }
             catch
             {
                 return String.Empty;

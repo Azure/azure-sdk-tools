@@ -69,17 +69,17 @@ namespace APIViewWeb
                 process.OutputDataReceived += (sender, args) =>
                 {
                     if (args.Data != null)
-{
-    output.AppendLine(args.Data);
-}
+                    {
+                        output.AppendLine(args.Data);
+                    }
                 };
 
                 process.ErrorDataReceived += (sender, args) =>
                 {
                     if (args.Data != null)
-{
-    error.AppendLine(args.Data);
-}
+                    {
+                        error.AppendLine(args.Data);
+                    }
                 };
                 process.Start();
                 process.BeginOutputReadLine();
@@ -89,15 +89,15 @@ namespace APIViewWeb
                 if (process.ExitCode != 0)
                 {
                     processErrors = "Processor failed: " + Environment.NewLine +
-                        "stdout: " + Environment.NewLine +
-                        output + Environment.NewLine +
-                        "stderr: " + Environment.NewLine +
-                        error + Environment.NewLine;
+                    "stdout: " + Environment.NewLine +
+                    output + Environment.NewLine +
+                    "stderr: " + Environment.NewLine +
+                    error + Environment.NewLine;
                     throw new InvalidOperationException(processErrors);
                 }
-            }
+                }
             return processErrors;
-        }
+                }
 
         public async Task<CodeFile> RunParserProcess(string originalName, string tempDirectory, string jsonPath, string arguments)
         {
@@ -110,19 +110,19 @@ namespace APIViewWeb
                 if (File.Exists(jsonPath))
                 {
                     using (var codeFileStream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read, FileShare.None))
-                    {
-                        CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream);
-                        codeFile.VersionString = VersionString;
-                        codeFile.Language = Name;
-                        return codeFile;
-                    }
+                {
+                    CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream);
+                    codeFile.VersionString = VersionString;
+                    codeFile.Language = Name;
+                    return codeFile;
+                }
                 }
                 else
                 {
                     _telemetryClient.TrackTrace($"Processor failed to generate json file {jsonPath} with error {processErrors}");
                     throw new InvalidOperationException($"Processor failed to generate json file {jsonPath}");
                 }
-            }
+                }
             finally
             {
                 await Task.Delay(1000);

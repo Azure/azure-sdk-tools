@@ -197,9 +197,9 @@ namespace APIViewWeb
                             namespaceLeafMap[nameSpace] = new List<CppAstNode>();
                         }
                         namespaceLeafMap[nameSpace].Add(leafNamespaceNode);
-                    }
-                }
-            }
+                        }
+                        }
+                        }
 
             foreach (var nameSpace in namespaceLeafMap.Keys)
             {
@@ -208,10 +208,10 @@ namespace APIViewWeb
                 if ((!foundFilterNamespace || nameSpace.StartsWith(packageNamespace)) && !nameSpace.EndsWith(DetailsNamespacePostfix))
                 {
                     ProcessNamespaceNode(nameSpace);
-                    builder.NewLine();
-                    builder.NewLine();
+                builder.NewLine();
+                builder.NewLine();
                 }
-            }
+                }
 
             void ProcessNamespaceNode(string nameSpace)
             {
@@ -242,18 +242,18 @@ namespace APIViewWeb
                         foreach (var member in leafNamespaceNode.inner)
                         {
                             // Name space has mix of details namespace and classes
-                            // API View should skip those sub details namespaces also
-                            if (member.kind == NamespaceDeclKind)
-{
-    continue;
-}
+                    // API View should skip those sub details namespaces also
+                    if (member.kind == NamespaceDeclKind)
+                    {
+                        continue;
+                    }
 
                             builder.IncrementIndent();
                             ProcessNode(member, currentNamespaceMembers, nameSpace);
                             builder.DecrementIndent();
-                        }
                     }
-                }
+                    }
+                    }
 
                 currentNamespace.ChildItems = currentNamespaceMembers.ToArray();
                 navigation.Add(currentNamespace);
@@ -261,7 +261,7 @@ namespace APIViewWeb
                 for (int i = 0; i < namespaceTokens.Length; i++)
                     builder.Punctuation("}");
                 builder.NewLine();
-            }
+                    }
 
             NavigationItem BuildDeclaration(string name, string kind, string parentId = "")
             {
@@ -312,16 +312,16 @@ namespace APIViewWeb
                         if (parameterNode.kind == ParmVarDeclKind)
                         {
                             bldr.Append(":");
-                            bldr.Append(parameterNode.type.Replace(" ", "_"));
+                    bldr.Append(parameterNode.type.Replace(" ", "_"));
                         }
-                    }
-                }
+                        }
+                        }
 
                 bldr.Append("::");
                 var type = string.IsNullOrEmpty(methodNode.type) ? "void" : methodNode.type;
                 bldr.Append(type.Replace(" ", "_"));
                 return bldr.ToString();
-            }
+                        }
 
             NavigationItem ProcessClassNode(CppAstNode node, string parentName, List<CppAstNode> templateParams = null)
             {
@@ -341,9 +341,9 @@ namespace APIViewWeb
                             nodeName += ", ";
                         }
                         nodeName += paramNode.name;
-                    }
+                        }
                     nodeName += ">";
-                }
+                        }
                 if (!string.IsNullOrEmpty(nodeName))
                 {
                     navigationItem = BuildDeclaration(nodeName, node.tagUsed, parentName);
@@ -361,8 +361,8 @@ namespace APIViewWeb
                         if (first)
                         {
                             builder.Punctuation(":");
-                            builder.Space();
-                            first = false;
+                    builder.Space();
+                    first = false;
                         }
                         else
                         {
@@ -375,9 +375,9 @@ namespace APIViewWeb
                         {
                             BuildType(builder, parent.name, types);
                         }
-                    }
+                        }
                     builder.Space();
-                }
+                        }
 
                 builder.NewLine();
                 builder.WriteIndent();
@@ -396,9 +396,9 @@ namespace APIViewWeb
                     foreach (var childNode in node.inner)
                     {
                         if (childNode.kind == CxxRecordDeclKind && childNode.name == node.name)
-{
-    continue;
-}
+                        {
+                            continue;
+                        }
 
                         // add public or protected access specifier
                         if (childNode.kind == AccessSpecDeclKind)
@@ -416,7 +416,7 @@ namespace APIViewWeb
                             builder.Punctuation(":");
                             builder.IncrementIndent();
                             builder.NewLine();
-                        }
+                            }
                         else if (!isPrivateMember && !parentTypes.Contains(childNode.kind))
                         {
                             if (string.IsNullOrEmpty(currentAccessModifier) && !hasFoundDefaultAccessMembers)
@@ -424,9 +424,9 @@ namespace APIViewWeb
                                 hasFoundDefaultAccessMembers = true;
                             }
                             ProcessNode(childNode, memberNavigations, id);
-                        }
-                    }
-                }
+                            }
+                            }
+                            }
 
                 builder.DecrementIndent();
                 builder.DecrementIndent();
@@ -452,10 +452,10 @@ namespace APIViewWeb
                     {
                         diagnostic.Add(new CodeDiagnostic("", navigationItem.NavigationId, NonAccessModifierMemberError, ""));
                     }
-                }
+                    }
 
                 return navigationItem;
-            }
+                    }
 
             NavigationItem ProcessEnumNode(CppAstNode node)
             {
@@ -475,21 +475,21 @@ namespace APIViewWeb
                         if (parameterNode.kind == EnumConstantDeclKind)
                         {
                             builder.WriteIndent();
-                            BuildMemberDeclaration("", parameterNode.name);
-                            if (parameterNode.inner?.FirstOrDefault(n => n.kind == "ConstantExpr") is CppAstNode
-                                exprNode)
-                            {
-                                builder.Space();
-                                builder.Punctuation("=");
-                                builder.Space();
-                                BuildExpression(builder, exprNode);
-                            }
+                    BuildMemberDeclaration("", parameterNode.name);
+                    if (parameterNode.inner?.FirstOrDefault(n => n.kind == "ConstantExpr") is CppAstNode
+                        exprNode)
+                    {
+                        builder.Space();
+                    builder.Punctuation("=");
+                    builder.Space();
+                    BuildExpression(builder, exprNode);
+                    }
 
                             builder.Punctuation(",");
                             builder.NewLine();
-                        }
                     }
-                }
+                    }
+                    }
 
                 builder.DecrementIndent();
                 builder.WriteIndent();
@@ -497,7 +497,7 @@ namespace APIViewWeb
                 builder.NewLine();
                 builder.NewLine();
                 return navigationItem;
-            }
+                    }
 
             void ProcessFunctionDeclNode(CppAstNode node, string parentName)
             {
@@ -564,10 +564,10 @@ namespace APIViewWeb
                                 builder.Space();
                                 builder.Text(parameterNode.name);
                             }
-                        }
-                    }
+                            }
+                            }
                     builder.DecrementIndent();
-                }
+                            }
 
                 builder.Punctuation(")");
                 //Add any postfix keywords if signature has any.
@@ -577,9 +577,9 @@ namespace APIViewWeb
                     foreach (var key in node.keywords.Split())
                     {
                         builder.Space();
-                        builder.Keyword(key);
+                    builder.Keyword(key);
                     }
-                }
+                    }
 
                 // If method is tagged as pure, delete, or default then it should be marked as "=<0|default|delete>"
                 if (node.ispure == true)
@@ -606,7 +606,7 @@ namespace APIViewWeb
 
                 builder.Punctuation(";");
                 builder.NewLine();
-            }
+                }
 
             NavigationItem ProcessTemplateClassDeclNode(CppAstNode node, string parentName)
             {
@@ -624,12 +624,12 @@ namespace APIViewWeb
                         if (!first)
                         {
                             builder.Punctuation(",");
-                            builder.Space();
+                    builder.Space();
                         }
 
                         templateParams.Add(childnode);
                         BuildType(builder, childnode.name, types);
-                    }
+                        }
                     builder.Punctuation(">");
                     builder.NewLine();
                     builder.WriteIndent();
@@ -637,9 +637,9 @@ namespace APIViewWeb
                     {
                         returnValue = ProcessClassNode(childnode, parentName, templateParams);
                     }
-                }
+                    }
                 return returnValue;
-            }
+                    }
 
             NavigationItem ProcessTemplateClassSpecializationDeclNode(CppAstNode node, string parentName)
             {
@@ -661,9 +661,9 @@ namespace APIViewWeb
                     {
                         returnValue = ProcessClassNode(childnode, parentName, templateParams);
                     }
-                }
+                    }
                 return returnValue;
-            }
+                    }
 
 
             void ProcessTemplateFuncDeclNode(CppAstNode node, string parentName)
@@ -680,10 +680,10 @@ namespace APIViewWeb
                         if (!first)
                         {
                             builder.Punctuation(",");
-                            builder.Space();
+                    builder.Space();
                         }
                         BuildType(builder, childnode.name, types);
-                    }
+                        }
                     builder.Punctuation(">");
 
                     builder.Space();
@@ -692,8 +692,8 @@ namespace APIViewWeb
                     {
                         ProcessFunctionDeclNode(methodNode, parentName);
                     }
-                }
-            }
+                    }
+                    }
 
             void ProcessTypeAlias(CppAstNode node)
             {
@@ -733,7 +733,7 @@ namespace APIViewWeb
                 builder.Space();
                 BuildMemberDeclaration(parentName, node.name);
                 if (node.inner?.FirstOrDefault() is CppAstNode
-                                exprNode)
+                    exprNode)
                 {
                     builder.Space();
                     builder.Punctuation("=");
@@ -742,7 +742,7 @@ namespace APIViewWeb
                 }
                 builder.Punctuation(";");
                 builder.NewLine();
-            }
+                }
 
             void ProcessNode(CppAstNode node, List<NavigationItem> navigationItems, string parentName)
             {
@@ -751,11 +751,11 @@ namespace APIViewWeb
                 switch (node.kind)
                 {
                     case CxxRecordDeclKind:
-                        {
-                            currentNavItem = ProcessClassNode(node, parentName);
-                            builder.NewLine();
-                            break;
-                        }
+                {
+                    currentNavItem = ProcessClassNode(node, parentName);
+                    builder.NewLine();
+                    break;
+                }
 
                     case CxxConstructorDeclKind:
                     case CxxDestructorDeclKind:
@@ -810,7 +810,7 @@ namespace APIViewWeb
                 {
                     navigationItems.Add(currentNavItem);
                 }
-            }
+                }
 
             void BuildType(CodeFileTokensBuilder builder, string type, HashSet<string> types)
             {
@@ -830,7 +830,7 @@ namespace APIViewWeb
                         if (types.Contains(typePart) || namespaceLeafMap.ContainsKey(typeNamespace))
                         {
                             typeValue = typePart.Substring(typePart.LastIndexOf("::") + 2);
-                            navigateToId = typePart;
+                        navigateToId = typePart;
                         }
                         builder.Append(new CodeFileToken()
                         {
@@ -843,9 +843,9 @@ namespace APIViewWeb
                     {
                         builder.Text(typePart);
                     }
-                }
-            }
-        }
+                    }
+                    }
+                    }
 
         private static void BuildExpression(CodeFileTokensBuilder builder, CppAstNode exprNode)
         {
@@ -853,10 +853,10 @@ namespace APIViewWeb
             {
                 case "CStyleCastExpr":
                 case "ConstantExpr":
-                    foreach (var node in exprNode.inner)
-                    {
-                        BuildExpression(builder, node);
-                    }
+                foreach (var node in exprNode.inner)
+                {
+                    BuildExpression(builder, node);
+                }
                     break;
                 case "ParenExpr":
                     builder.Punctuation("(");
@@ -875,8 +875,8 @@ namespace APIViewWeb
                 default:
                     builder.Text(exprNode + " " + exprNode.value);
                     break;
-            }
-        }
+                    }
+                    }
 
         private class CppAstNode
         {
@@ -980,7 +980,7 @@ namespace APIViewWeb
                      ((node.kind == CxxConstructorDeclKind) ||
                      (lastNode.kind == ClassTemplateSpecializationDeclKind))
                     );
-            }
+                }
 
             public void ParseToAstTree(ZipArchiveEntry zipEntry, CppAstNode astRoot)
             {
@@ -1007,32 +1007,32 @@ namespace APIViewWeb
                         if (patternStack.Peek().Length == prefix.Length)
                         {
                             patternStack.Pop();
-                            astnodeStack.Pop();
+                    astnodeStack.Pop();
                         }
                         else if (patternStack.Peek().Length > prefix.Length)
                         {
                             while (patternStack.Count > 0 && patternStack.Peek().Length >= prefix.Length)
                             {
                                 patternStack.Pop();
-                                astnodeStack.Pop();
+                            astnodeStack.Pop();
                             }
-                        }
-                    }
+                            }
+                            }
                     if (ShouldProcessLine(line, node, astnodeStack.Peek()))
                     {
                         ParseLine(line, ref node);
 
                         var parentNode = astnodeStack.Count > 0 ? astnodeStack.Pop() : astRoot;
                         if (parentNode.inner == null)
-{
-    parentNode.inner = new List<CppAstNode>();
-}
+                        {
+                            parentNode.inner = new List<CppAstNode>();
+                        }
 
                         parentNode.inner.Add(node);
                         patternStack.Push(prefix);
                         astnodeStack.Push(parentNode);
                         astnodeStack.Push(node);
-                    }
+                        }
                     else if (!_skipOnlyCurrentNodeKinds.Contains(node.kind))
                     {
                         //skip anychild nodes of excluded node
@@ -1040,19 +1040,19 @@ namespace APIViewWeb
                         while (line != null)
                         {
                             var newLinePrefix = line.Substring(0, line.IndexOf(ParseNodeKind(line)));
-                            //Should not skip new line if it is at parent level or sibling
-                            if (newLinePrefix.Length <= prefix.Length)
-{
-    break;
-}
+                        //Should not skip new line if it is at parent level or sibling
+                        if (newLinePrefix.Length <= prefix.Length)
+                        {
+                            break;
+                        }
                             line = reader.ReadLine();
                         }
                         continue;
-                    }
+                        }
 
                     line = reader.ReadLine();
-                }
-            }
+                        }
+                        }
 
             private static void ParseLine(string line, ref CppAstNode node)
             {
@@ -1068,71 +1068,71 @@ namespace APIViewWeb
                     case NamespaceDeclKind:
                     case FunctionTemplateDeclKind:
                     case TemplateTypeParmDeclKind:
-                        node.name = tokens.LastOrDefault();
-                        break;
+                    node.name = tokens.LastOrDefault();
+                    break;
 
                     case VarDeclKind:
                     case ParmVarDeclKind:
-                        ParseFieldDecl(line, ref node, ref _varOrParamParser);
-                        break;
+                    ParseFieldDecl(line, ref node, ref _varOrParamParser);
+                    break;
 
                     case TypeAliasDeclKind:
-                        ParseFieldDecl(line, ref node, ref _typeAliasParser);
-                        break;
+                    ParseFieldDecl(line, ref node, ref _typeAliasParser);
+                    break;
 
                     case CxxMethodDeclKind:
                     case CxxConstructorDeclKind:
                     case CxxDestructorDeclKind:
                     case FunctionDeclKind:
-                        ParseMethodDecl(line, ref node, ref _methodOrParamParser);
-                        break;
+                    ParseMethodDecl(line, ref node, ref _methodOrParamParser);
+                    break;
 
                     case CxxRecordDeclKind:
-                        ParseClassDecl(line, ref node);
-                        break;
+                    ParseClassDecl(line, ref node);
+                    break;
 
                     case ClassTemplateSpecializationDeclKind:
-                        ParseClassTemplateSpecializationDecl(line, ref node);
-                        break;
+                    ParseClassTemplateSpecializationDecl(line, ref node);
+                    break;
                     case TemplateArgumentKind:
-                        ParseTemplateArgument(line, ref node);
-                        break;
+                    ParseTemplateArgument(line, ref node);
+                    break;
                     case ClassTemplateDeclKind:
-                        ParseClassTemplateDecl(line, ref node);
-                        break;
+                    ParseClassTemplateDecl(line, ref node);
+                    break;
 
                     case FieldDeclKind:
-                        ParseFieldDecl(line, ref node, ref _fieldDefParser);
-                        break;
+                    ParseFieldDecl(line, ref node, ref _fieldDefParser);
+                    break;
 
                     case StringLiteralKind:
                     case IntegerLiteralKind:
-                        ParseLiteralDecl(line, ref node);
-                        break;
+                    ParseLiteralDecl(line, ref node);
+                    break;
 
                     case AccessSpecDeclKind:
-                        ParseAccessType(line, ref node);
-                        break;
+                    ParseAccessType(line, ref node);
+                    break;
 
                     case EnumDeclKind:
-                        ParseEnumDecl(line, ref node);
-                        break;
+                    ParseEnumDecl(line, ref node);
+                    break;
 
                     case EnumConstantDeclKind:
-                        ParseEnumConstDecl(line, ref node);
-                        break;
+                    ParseEnumConstDecl(line, ref node);
+                    break;
 
                     case AccessModifierPublic:
                     case AccessModifierProtected:
                     case AccessModifierPrivate:
-                        //Inheritence declaration has inheritance access level as token kinds
-                        ParseInheritanceDecl(line, node);
-                        break;
+                    //Inheritence declaration has inheritance access level as token kinds
+                    ParseInheritanceDecl(line, node);
+                    break;
 
                     default:
-                        node.name = "Not implemented";
-                        node.type = "";
-                        break;
+                    node.name = "Not implemented";
+                    node.type = "";
+                    break;
                 }
             }
 
@@ -1144,7 +1144,7 @@ namespace APIViewWeb
                     node.name = match.Groups[1].Value;
                     node.type = match.Groups[2].Value.Trim();
                 }
-            }
+                }
 
             private static void ParseMethodDecl(string line, ref CppAstNode node, ref Regex regexPattern)
             {
@@ -1162,8 +1162,8 @@ namespace APIViewWeb
                     node.ispure = qualifiers.Any(q => q == "pure");
                     node.isdefault = qualifiers.Any(q => q == "default");
                     node.isdelete = qualifiers.Any(q => q == "delete");
-                }
-            }
+                    }
+                    }
 
             private static void ParseClassDecl(string line, ref CppAstNode node)
             {
@@ -1173,7 +1173,7 @@ namespace APIViewWeb
                     node.tagUsed = match.Groups[1].Value;
                     node.name = match.Groups[2].Value;
                 }
-            }
+                }
 
             private static void ParseClassTemplateDecl(string line, ref CppAstNode node)
             {
@@ -1182,7 +1182,7 @@ namespace APIViewWeb
                 {
                     node.name = match.Groups[1].Value;
                 }
-            }
+                }
 
             private static void ParseClassTemplateSpecializationDecl(string line, ref CppAstNode node)
             {
@@ -1192,7 +1192,7 @@ namespace APIViewWeb
                     node.name = match.Groups[2].Value;
                 }
 
-            }
+                }
             private static void ParseTemplateArgument(string line, ref CppAstNode node)
             {
                 var match = _templateArgumentParser.Match(line);
@@ -1202,7 +1202,7 @@ namespace APIViewWeb
                     node.type = match.Groups[2].Value;
                 }
 
-            }
+                }
 
             private static void ParseInheritanceDecl(string line, CppAstNode node)
             {
@@ -1212,7 +1212,7 @@ namespace APIViewWeb
                     node.access = match.Groups[1].Value;
                     node.name = match.Groups[2].Value;
                 }
-            }
+                }
 
             private static void ParseAccessType(string line, ref CppAstNode node)
             {
@@ -1221,7 +1221,7 @@ namespace APIViewWeb
                 {
                     node.access = match.Value;
                 }
-            }
+                }
 
             private static void ParseLiteralDecl(string line, ref CppAstNode node)
             {
@@ -1236,7 +1236,7 @@ namespace APIViewWeb
                 {
                     node.value = match.Groups[1].Value;
                 }
-            }
+                }
 
             private static void ParseEnumDecl(string line, ref CppAstNode node)
             {
@@ -1246,7 +1246,7 @@ namespace APIViewWeb
                     node.tagUsed = match.Groups[1].Value;
                     node.name = match.Groups[2].Value;
                 }
-            }
+                }
 
             private static void ParseEnumConstDecl(string line, ref CppAstNode node)
             {
@@ -1255,7 +1255,7 @@ namespace APIViewWeb
                 {
                     node.name = match.Groups[1].Value;
                 }
-            }
-        }
-    }
-}
+                }
+                }
+                }
+                }

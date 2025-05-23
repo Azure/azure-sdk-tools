@@ -33,14 +33,14 @@ namespace IssueLabeler.Shared.Models
         public IModelHolder CreateModelHolder(string owner, string repo)
         {
             if (!IsConfigured(repo)
-{
-    )
+            {
+                )
                 return null;
-}
+            }
             return _models.TryGetValue((owner, repo), out IModelHolder modelHolder) ?
                 modelHolder :
                _models.GetOrAdd((owner, repo), InitFor(repo));
-        }
+            }
 
         private bool IsConfigured(string repo)
         {
@@ -52,22 +52,22 @@ namespace IssueLabeler.Shared.Models
                 if (!string.IsNullOrEmpty(_configuration[configSection]))
                 {
                     configSection = $"PrModel:{repo}:PathPrefix";
-                    if (!string.IsNullOrEmpty(_configuration[configSection]))
-                    {
-                        // has both pr and issue config - allowed
-                        configSection = $"PrModel:{repo}:BlobName";
-                        return !string.IsNullOrEmpty(_configuration[configSection]);
-                    }
+                if (!string.IsNullOrEmpty(_configuration[configSection]))
+                {
+                    // has both pr and issue config - allowed
+                configSection = $"PrModel:{repo}:BlobName";
+                return !string.IsNullOrEmpty(_configuration[configSection]);
+                }
                     else
                     {
                         // has issue config only - allowed
                         configSection = $"PrModel:{repo}:BlobName";
                         return string.IsNullOrEmpty(_configuration[configSection]);
                     }
-                }
-            }
+                    }
+                    }
             return false;
-        }
+                    }
 
         private IModelHolder InitFor(string repo)
         {
@@ -77,7 +77,7 @@ namespace IssueLabeler.Shared.Models
                 _backgroundTaskQueue.QueueBackgroundWorkItem((ct) => mh.LoadEnginesAsync());
             }
             return mh;
-        }
+            }
 
         public IPredictor GetPredictor(string owner, string repo)
         {
@@ -91,6 +91,6 @@ namespace IssueLabeler.Shared.Models
                 throw new InvalidOperationException("Issue engine must be loaded.");
             }
             return new Predictor(_logger, modelHolder);
-        }
-    }
-}
+            }
+            }
+            }

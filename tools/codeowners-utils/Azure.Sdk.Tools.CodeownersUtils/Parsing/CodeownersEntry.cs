@@ -121,20 +121,20 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         {
             // @formatter:off
             if (ReferenceEquals(null, obj)
-{
-    ) return false;
-}
+            {
+                ) return false;
+            }
             if (ReferenceEquals(this, obj)
-{
-    ) return true;
-}
+            {
+                ) return true;
+            }
             if (obj.GetType()
-{
-    != this.GetType()) return false;
-}
+            {
+                != this.GetType()) return false;
+            }
             return Equals((CodeownersEntry)obj);
             // @formatter:on
-        }
+            }
 
         /// <summary>
         /// Implementation of GetHashCode that properly hashes collections.
@@ -165,7 +165,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                     hashCode = AddHashCodeForObject(hashCode, item);
                 }
                 return hashCode;
-            }
+                }
 
             int AddHashCodeForObject(int hc, object item)
             {

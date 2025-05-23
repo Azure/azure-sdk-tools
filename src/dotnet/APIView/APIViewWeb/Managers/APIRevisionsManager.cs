@@ -95,12 +95,12 @@ namespace APIViewWeb.Managers
             var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
 
             if (apiRevisionType != APIRevisionType.All)
-{
-    apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
-}
+            {
+                apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
+            }
 
             if (!string.IsNullOrEmpty(packageVersion))
-            {                
+            {
                 // Check for exact same package version
                 // If exact version is not found in revision then search for same major and minor version and return the latest.
                 var exactMatchRevisions = apiRevisions.Where(r => packageVersion.Equals(r.Files[0].PackageVersion));
@@ -118,9 +118,9 @@ namespace APIViewWeb.Managers
                     return majorMinorMatchRevisions.OrderByDescending(r => r.CreatedOn);
                 }                
                 return majorMinorMatchRevisions;
-            }
+                }
             return apiRevisions;
-        }
+                }
 
         /// <summary>
         /// Retrieve the latest APRevison for a particular Review.
@@ -135,7 +135,7 @@ namespace APIViewWeb.Managers
         public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId = null, IEnumerable<APIRevisionListItemModel> apiRevisions = null, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
             if (reviewId == null && apiRevisions == null)
-            { 
+            {
                 throw new ArgumentException("Either reviewId or apiRevisions must be supplied");
             }
 
@@ -149,7 +149,7 @@ namespace APIViewWeb.Managers
                 apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
             }
             return apiRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
-        }
+            }
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb.
@@ -165,7 +165,7 @@ namespace APIViewWeb.Managers
             }
             var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
             return await UpgradeAPIRevisionIfRequired(revisionModel);
-        }
+            }
 
         public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId)
         {
@@ -205,42 +205,42 @@ namespace APIViewWeb.Managers
             };
 
             if (!String.IsNullOrEmpty(reviewId)
-{
-    )
+            {
+                )
                 apiRevision.ReviewId = reviewId;
-}
+            }
 
             if (!String.IsNullOrEmpty(packageName)
-{
-    )
+            {
+                )
                 apiRevision.PackageName = packageName;
-}
+            }
 
             if (!String.IsNullOrEmpty(language)
-{
-    )
+            {
+                )
                 apiRevision.Language = language;
-}
+            }
 
             if (!String.IsNullOrEmpty(language)
-{
-    )
+            {
+                )
                 apiRevision.Language = language;
-}
+            }
 
             if (!String.IsNullOrEmpty(label)
-{
-    )
+            {
+                )
                 apiRevision.Label = label;
-}
+            }
 
             if (prNumber != null)
-{
-    apiRevision.PullRequestNo = prNumber;
-}
+            {
+                apiRevision.PullRequestNo = prNumber;
+            }
 
             return apiRevision;
-        }
+            }
 
         /// <summary>
         /// Add new Approval or ApprovalReverted action to the ChangeHistory of a Revision
@@ -295,7 +295,7 @@ namespace APIViewWeb.Managers
             
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
             return (updateReview, apiRevision);
-        }
+            }
 
 
         /// <summary>
@@ -315,18 +315,18 @@ namespace APIViewWeb.Managers
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
-                {
-                    apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
-                        name: file.FileName, label: label, fileStream: openReadStream, language: language);
-                }
+            {
+                apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                name: file.FileName, label: label, fileStream: openReadStream, language: language);
+            }
             }
             else if (!string.IsNullOrEmpty(filePath))
             {
                 apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
-                           name: filePath, label: label, fileStream: null, language: language);
+                name: filePath, label: label, fileStream: null, language: language);
             }
             return apiRevision;
-        }
+            }
 
         /// <summary>
         /// Add API Revision to Review
@@ -377,31 +377,31 @@ namespace APIViewWeb.Managers
                 if (rev.Id != apiRevision.Id)
                 {
                     var lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
-                    var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
-                    var RevisionBHtmlLines = RevisionBCodeFile.RenderReadOnly(false);
-                    var RevisionBTextLines = RevisionBCodeFile.RenderText(false);
+                var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
+                var RevisionBHtmlLines = RevisionBCodeFile.RenderReadOnly(false);
+                var RevisionBTextLines = RevisionBCodeFile.RenderText(false);
 
 
-                    // Compute diff before: apiRevision -> after: existing APIRevision
-                    var diffLines = InlineDiff.Compute(before: RevisionATextLines, after: RevisionBTextLines, beforeResults: RevisionAHtmlLines, afterResults: RevisionBHtmlLines);
+                // Compute diff before: apiRevision -> after: existing APIRevision
+                var diffLines = InlineDiff.Compute(before: RevisionATextLines, after: RevisionBTextLines, beforeResults: RevisionAHtmlLines, afterResults: RevisionBHtmlLines);
 
-                    Parallel.ForEach(diffLines, diffLine =>
-                    {
-                        if (diffLine.Kind == DiffLineKind.Unchanged && diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null)
-                        {
-                            var RevisionARootNode = RevisionACodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
-                            var RevisionBRootNode = RevisionBCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
+                Parallel.ForEach(diffLines, diffLine =>
+                {
+                if (diffLine.Kind == DiffLineKind.Unchanged && diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null)
+                {
+                    var RevisionARootNode = RevisionACodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
+                var RevisionBRootNode = RevisionBCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
 
-                            if (RevisionARootNode != null && RevisionBRootNode != null)
-                            {
-                                var diffSectionRoot = ComputeSectionDiff(before: RevisionARootNode, after: RevisionBRootNode, beforeFile: RevisionACodeFile, afterFile: RevisionBCodeFile);
-                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot)
-{
-    )
-                                    lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
-}
-                            }
-                        }
+                if (RevisionARootNode != null && RevisionBRootNode != null)
+                {
+                    var diffSectionRoot = ComputeSectionDiff(before: RevisionARootNode, after: RevisionBRootNode, beforeFile: RevisionACodeFile, afterFile: RevisionBCodeFile);
+                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot)
+                {
+                    )
+                lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+                }
+                }
+                }
                     });
 
                     if (apiRevision.HeadingsOfSectionsWithDiff.ContainsKey(rev.Id))
@@ -427,13 +427,13 @@ namespace APIViewWeb.Managers
                             if (RevisionARootNode != null && RevisionBRootNode != null)
                             {
                                 var diffSectionRoot = ComputeSectionDiff(before: RevisionBRootNode, after: RevisionARootNode, beforeFile: RevisionBCodeFile, afterFile: RevisionACodeFile);
-                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot)
-{
-    )
-                                    lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
-}
+                            if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot)
+                            {
+                                )
+                            lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                             }
-                        }
+                            }
+                            }
                     });
 
                     if (rev.HeadingsOfSectionsWithDiff.ContainsKey(apiRevision.Id))
@@ -445,10 +445,10 @@ namespace APIViewWeb.Managers
                         rev.HeadingsOfSectionsWithDiff.Add(apiRevision.Id, lineNumbersForHeadingOfSectionWithDiff);
                     }
                     await _apiRevisionsRepository.UpsertAPIRevisionAsync(rev);
-                }
+                    }
                 
-            }
-        }
+                    }
+                    }
 
         /// <summary>
         /// Computed the diff for hidden (collapsible) API sections
@@ -480,7 +480,7 @@ namespace APIViewWeb.Managers
                     diffResult[0]!.Line.NodeRef.IsLeaf && diffResult[1]!.Line.NodeRef.IsLeaf) // Detached Leaf Parents which are Eventually Discarded
                 {
                     var inlineDiffLine = new InlineDiffLine<CodeLine>(diffResult[1].Line, diffResult[0].Line, DiffLineKind.Unchanged);
-                    diffResult = new InlineDiffLine<CodeLine>[] { inlineDiffLine };
+                diffResult = new InlineDiffLine<CodeLine>[] { inlineDiffLine };
                 }
 
                 foreach (var diff in diffResult)
@@ -490,19 +490,19 @@ namespace APIViewWeb.Managers
                     switch (diff.Kind)
                     {
                         case DiffLineKind.Removed:
-                            queue.Enqueue((diff.Line.NodeRef, null, addedChild));
-                            break;
-                        case DiffLineKind.Added:
-                            queue.Enqueue((null, diff.Line.NodeRef, addedChild));
-                            break;
-                        case DiffLineKind.Unchanged:
-                            queue.Enqueue((diff.OtherLine.NodeRef, diff.Line.NodeRef, addedChild));
-                            break;
+                    queue.Enqueue((diff.Line.NodeRef, null, addedChild));
+                    break;
+                    case DiffLineKind.Added:
+                    queue.Enqueue((null, diff.Line.NodeRef, addedChild));
+                    break;
+                    case DiffLineKind.Unchanged:
+                    queue.Enqueue((diff.OtherLine.NodeRef, diff.Line.NodeRef, addedChild));
+                    break;
                     }
-                }
-            }
+                    }
+                    }
             return resultRoot;
-        }
+                    }
 
         /// <summary>
         /// Add APIRevision
@@ -567,10 +567,10 @@ namespace APIViewWeb.Managers
                 {
                     _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision));
                 }
-            }
+                }
             return apiRevision;
             //await GenerateAIReview(review, revision);
-        }
+                }
 
         /// <summary>
         /// Run Pipeline to generate API Revision
@@ -622,14 +622,14 @@ namespace APIViewWeb.Managers
             if (apiRevision.IsDeleted)
             {
                 var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
-                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.UnDeleted, user: user.GetGitHubLogin(), notes: "");
+                changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.UnDeleted, user: user.GetGitHubLogin(), notes: "");
 
                 apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
                 apiRevision.IsDeleted = changeUpdate.ChangeStatus;
 
                 await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             }
-        }
+            }
 
         /// <summary>
         /// Delete APIRevisions
@@ -656,14 +656,14 @@ namespace APIViewWeb.Managers
             if (!apiRevision.IsDeleted)
             {
                 var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
-                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
+                changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
 
                 apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
                 apiRevision.IsDeleted = changeUpdate.ChangeStatus;
 
                 await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             }
-        }
+            }
 
         /// <summary>
         /// 
@@ -698,10 +698,10 @@ namespace APIViewWeb.Managers
                 var reviewDetails = reviewFilePath.Split("/");
 
                 if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json")
-{
-    )
-                    continue;
-}
+                {
+                    )
+                continue;
+                }
 
                 var reviewId = reviewDetails[1];
                 var apiRevisionId = reviewDetails[2];
@@ -716,23 +716,23 @@ namespace APIViewWeb.Managers
                     if (apiRevision != null)
                     {
                         await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, apiRevision.Files.Single().FileId, codeFile);
-                        var file = apiRevision.Files.FirstOrDefault();
-                        file.VersionString = codeFile.VersionString;
-                        file.PackageName = codeFile.PackageName;
-                        file.PackageVersion = codeFile.PackageVersion;
-                        file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
-                        await _reviewsRepository.UpsertReviewAsync(review);
-                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+                    var file = apiRevision.Files.FirstOrDefault();
+                    file.VersionString = codeFile.VersionString;
+                    file.PackageName = codeFile.PackageName;
+                    file.PackageVersion = codeFile.PackageVersion;
+                    file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
+                    await _reviewsRepository.UpsertReviewAsync(review);
+                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
-                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
-                        {
-                            // Trigger diff calculation using updated code file from sandboxing pipeline
-                            await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);
-                        }
+                    if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                    {
+                        // Trigger diff calculation using updated code file from sandboxing pipeline
+                    await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);
                     }
-                }
-            }
-        }
+                    }
+                    }
+                    }
+                    }
 
         /// <summary>
         /// Check if APIRevision is the Same
@@ -783,12 +783,12 @@ namespace APIViewWeb.Managers
                         }
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
                         _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
-                    }
+                        }
                     else
                     {
                         _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} can be upgraded using new parser version.");
                     }
-                }
+                    }
                 catch (Exception ex)
                 {
                     if (!verifyUpgradabilityOnly)
@@ -822,9 +822,9 @@ namespace APIViewWeb.Managers
                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
-                    await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
-                    await Task.Delay(500);
-                }
+                await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
+                await Task.Delay(500);
+            }
                 catch (Exception e)
                 {
                     _telemetryClient.TrackException(e);
@@ -870,7 +870,7 @@ namespace APIViewWeb.Managers
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
-        }
+            }
 
         /// <summary>
         /// Assign reviewers to a review
@@ -887,16 +887,16 @@ namespace APIViewWeb.Managers
                 if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
                 {
                     var reviewAssignment = new ReviewAssignmentModel()
-                    {
-                        AssingedTo = reviewer,
-                        AssignedBy = User.GetGitHubLogin(),
-                        AssingedOn = DateTime.Now,
-                    };
+                {
+                    AssingedTo = reviewer,
+                AssignedBy = User.GetGitHubLogin(),
+                AssingedOn = DateTime.Now,
+                }
                     apiRevision.AssignedReviewers.Add(reviewAssignment);
                 }
-            }
+                }
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
-        }
+                }
 
         public async Task<APIRevisionListItemModel> UpdateAPIRevisionReviewersAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
         {
@@ -906,21 +906,21 @@ namespace APIViewWeb.Managers
                 if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
                 {
                     var reviewAssignment = new ReviewAssignmentModel()
-                    {
-                        AssingedTo = reviewer,
-                        AssignedBy = User.GetGitHubLogin(),
-                        AssingedOn = DateTime.Now,
-                    };
+                {
+                    AssingedTo = reviewer,
+                AssignedBy = User.GetGitHubLogin(),
+                AssingedOn = DateTime.Now,
+                }
                     apiRevision.AssignedReviewers.Add(reviewAssignment);
                 }
-            }
+                }
             foreach (var assignment in apiRevision.AssignedReviewers.FindAll(x => !reviewers.Contains(x.AssingedTo)))
             {
                 apiRevision.AssignedReviewers.Remove(assignment);
             }
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
-        }
+            }
 
         /// <summary>
         /// Get Reviews that have been assigned for review to a user
@@ -938,9 +938,9 @@ namespace APIViewWeb.Managers
             // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
             // without any API changes.
             if (revision.IsReleased)
-{
-    return revision;
-}
+            {
+                return revision;
+            }
 
             if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
             {
@@ -955,7 +955,7 @@ namespace APIViewWeb.Managers
             }
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
             return revision;
-        }
+            }
 
         /// <summary>
         /// Get ReviewIds of Language corresponding Review linked by CrossLanguagePackageId
@@ -964,7 +964,7 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId) {
             return await _apiRevisionsRepository.GetReviewIdsOfLanguageCorrespondingReviewAsync(crossLanguagePackageId);
-        }
+            }
 
         /// <summary>
         /// Generate the Revision on a DevOps Pipeline
@@ -1014,20 +1014,20 @@ namespace APIViewWeb.Managers
                 if (node.IsLeaf)
                 {
                     result.htmlLines = codeFile.GetDetachedLeafSectionLines(node);
-                    result.textLines = codeFile.GetDetachedLeafSectionLines(node, renderType: RenderType.Text, skipDiff: true);
+                result.textLines = codeFile.GetDetachedLeafSectionLines(node, renderType: RenderType.Text, skipDiff: true);
 
-                    if (result.htmlLines.Count() > 0)
-                    {
-                        curr.WasDetachedLeafParent = true;
-                    }
+                if (result.htmlLines.Count() > 0)
+                {
+                    curr.WasDetachedLeafParent = true;
+                }
                 }
                 else
                 {
                     result.htmlLines = result.textLines = node.Children.Select(x => new CodeLine(x.Data, nodeRef: x)).ToArray();
                 }
-            }
+                }
             return result;
-        }
+                }
         private async Task<APIRevisionListItemModel> UpgradeAPIRevisionIfRequired(APIRevisionListItemModel revisionModel)
         {
             if (revisionModel == null)
@@ -1051,18 +1051,18 @@ namespace APIViewWeb.Managers
                 var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
                 if (codeFile != null && codeFile.ReviewLines.Count == 0)
                 {
-                    codeFile.ConvertToTreeTokenModel();                    
-                    if (codeFile.ReviewLines.Count > 0)
-                    {
-                        await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
-                        codeFileDetails.VersionString = languageService.VersionString;
-                        codeFileDetails.ParserStyle = ParserStyle.Tree;
-                        codeFileDetails.IsConvertedTokenModel = true;
-                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
-                    }                    
+                    codeFile.ConvertToTreeTokenModel();
+                if (codeFile.ReviewLines.Count > 0)
+                {
+                    await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
+                codeFileDetails.VersionString = languageService.VersionString;
+                codeFileDetails.ParserStyle = ParserStyle.Tree;
+                codeFileDetails.IsConvertedTokenModel = true;
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
                 }
-            }
+                }
+                }
             return revisionModel;
-        }
-    }
-}
+                }
+                }
+                }

@@ -74,9 +74,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (!typespecHelper.IsRepoPathForPublicSpecRepo(repoRootPath))
                 {
                     response.Details.AddRange([
-                        $"Current repo root path '{repoRootPath}' is not a GitHub clone of 'Azure/azure-rest-api-specs' repo. SDK can be generated only if your TypeSpec changes are in public Azure/azure-rest-api-specs repo. ",
-                        "Create a pull request in public repo Azure/azure-rest-api-specs for your TypeSpec changes to get your TypeSpec ready."
-                        ]);
+                    $"Current repo root path '{repoRootPath}' is not a GitHub clone of 'Azure/azure-rest-api-specs' repo. SDK can be generated only if your TypeSpec changes are in public Azure/azure-rest-api-specs repo. ",
+                    "Create a pull request in public repo Azure/azure-rest-api-specs for your TypeSpec changes to get your TypeSpec ready."
+                    ]);
                     return response;
                 }
 
@@ -101,13 +101,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     response.Details.Add($"Pull request is not found in {REPO_OWNER}/{PUBLIC_SPECS_REPO} for your TypeSpec changes.");
                     if (pullrequestNumber == 0)
-{
-    response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
-}
+                    {
+                        response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
+                    }
                     else
                         response.Details.Add($"Pull request {pullrequestNumber} is not valid. Please provide a valid pull requet number to check the status.");
                     return response;
-                }
+                    }
 
                 // Pull request is not targetted to main branch
                 if (pullRequest.Base?.Ref?.Equals(DEFAULT_BRANCH) == false)
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.Details.Add($"Pull request {pullRequest.Number} has {approvalLabel} or it is in merged status. Your API spec changes are ready to generate SDK. Please make sure you have a release plan created for the pull request.");
                 response.Status = "Success";
                 return response;
-            }
+                }
             catch (Exception ex)
             {
                 response.Status = "Failed";
@@ -249,7 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Details.Add($"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}");
                 }
                 return output.Format(response);
-            }
+                }
             catch (Exception ex)
             {
                 var errorResponse = new GenericResponse();
@@ -290,7 +290,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var data = await devopsService.GetSDKPullRequestFromPipelineRun(buildId, language, workItemId);
                 return data;
-            }
+                }
             catch (Exception ex)
             {
                 SetFailure();
@@ -315,7 +315,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 command.AddCommand(subCommand);
             }
             return command;
-        }
+            }
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
@@ -324,30 +324,30 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case checkApiReadinessCommandName:
-                    var isSpecReady = await CheckApiReadyForSDKGeneration(commandParser.GetValueForOption(typeSpecProjectPathOpt), commandParser.GetValueForOption(pullRequestNumberOpt));
-                    output.Output($"Is API spec ready for SDK generation: {isSpecReady}");
-                    return;
+                var isSpecReady = await CheckApiReadyForSDKGeneration(commandParser.GetValueForOption(typeSpecProjectPathOpt), commandParser.GetValueForOption(pullRequestNumberOpt));
+                output.Output($"Is API spec ready for SDK generation: {isSpecReady}");
+                return;
                 case generateSdkCommandName:
-                    var sdkGenerationResponse = await GenerateSDK(commandParser.GetValueForOption(typeSpecProjectPathOpt),
-                        commandParser.GetValueForOption(apiVersionOpt),
-                        commandParser.GetValueForOption(sdkReleaseTypeOpt),
-                        commandParser.GetValueForOption(languageOpt),
-                        commandParser.GetValueForOption(pullRequestNumberOpt),
-                        commandParser.GetValueForOption(workItemIdOpt));
-                    output.Output($"SDK generation response: {sdkGenerationResponse}");
-                    return;
+                var sdkGenerationResponse = await GenerateSDK(commandParser.GetValueForOption(typeSpecProjectPathOpt),
+                commandParser.GetValueForOption(apiVersionOpt),
+                commandParser.GetValueForOption(sdkReleaseTypeOpt),
+                commandParser.GetValueForOption(languageOpt),
+                commandParser.GetValueForOption(pullRequestNumberOpt),
+                commandParser.GetValueForOption(workItemIdOpt));
+                output.Output($"SDK generation response: {sdkGenerationResponse}");
+                return;
                 case getPipelineStatusCommandName:
-                    var pipelineRunStatus = await GetPipelineRunStatus(commandParser.GetValueForOption(pipelineRunIdOpt));
-                    output.Output($"SDK generation pipeline run status: {pipelineRunStatus}");
-                    return;
+                var pipelineRunStatus = await GetPipelineRunStatus(commandParser.GetValueForOption(pipelineRunIdOpt));
+                output.Output($"SDK generation pipeline run status: {pipelineRunStatus}");
+                return;
                 case getSdkPullRequestCommandName:
-                    var sdkPullRequestDetails = await GetSDKPullRequestDetails(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(pipelineRunIdOpt), commandParser.GetValueForOption(workItemIdOpt));
-                    output.Output($"SDK pull request details: {sdkPullRequestDetails}");
-                    return;
+                var sdkPullRequestDetails = await GetSDKPullRequestDetails(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(pipelineRunIdOpt), commandParser.GetValueForOption(workItemIdOpt));
+                output.Output($"SDK pull request details: {sdkPullRequestDetails}");
+                return;
                 default:
-                    SetFailure();
-                    output.OutputError($"Unknown command: '{command}'");
-                    return;
+                SetFailure();
+                output.OutputError($"Unknown command: '{command}'");
+                return;
             }
         }
     }

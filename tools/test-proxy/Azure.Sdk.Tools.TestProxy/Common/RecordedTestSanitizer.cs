@@ -58,15 +58,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     headers[header] = s_sanitizeValueArray;
                 }
-            }
-        }
+                }
+                }
 
         public virtual string SanitizeTextBody(string contentType, string body)
         {
             if (JsonPathSanitizers.Count == 0)
-{
-    return body;
-}
+            {
+                return body;
+            }
             try
             {
                 JToken jsonO;
@@ -87,9 +87,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     {
                         token.Replace(JToken.FromObject(SanitizeValue));
                     }
-                }
+                    }
                 return JsonConvert.SerializeObject(jsonO, SerializerSettings);
-            }
+                    }
             catch
             {
                 return body;
@@ -168,21 +168,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         if (h.Key == "Content-Length")
                         {
                             var parsed = int.TryParse(h.Value[0], out var contentLength);
-                            if (parsed && contentLength != newBody.Length)
-                            {
-                                newValue = new StringValues(newBody.Length.ToString());
-                            }
+                        if (parsed && contentLength != newBody.Length)
+                        {
+                            newValue = new StringValues(newBody.Length.ToString());
+                        }
                         }
                         var headerLine = $"{h.Key}: {newValue}\r\n";
                         outStream.Write(Encoding.ASCII.GetBytes(headerLine));
-                    }
+                        }
                     // 3) blank line between headers and body
                     outStream.Write(MultipartUtilities.CrLf);
                     // 4) output the revised body (or nothing if there is nothing in the body)
                     outStream.Write(newBody);
                     outStream.Write(MultipartUtilities.CrLf);
-                }
-            }
+                        }
+                        }
             catch (IOException ex)
             {
                 var byteContent = Convert.ToBase64String(fixedRaw);
@@ -221,8 +221,8 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 }
 
                 UpdateSanitizedContentLength(message);
-            }
-        }
+                }
+                }
 
         public virtual void Sanitize(RecordEntry entry)
         {
@@ -240,8 +240,8 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 {
                     SanitizeBody(entry.Response);
                 }
-            }
-        }
+                }
+                }
 
         public virtual void Sanitize(RecordSession session)
         {
@@ -254,7 +254,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             {
                 session.Variables[variable.Key] = SanitizeVariable(variable.Key, variable.Value);
             }
-        }
+            }
 
         /// <summary>
         /// Optionally update the Content-Length header if we've sanitized it
@@ -272,6 +272,6 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             {
                 headers["Content-Length"] = new string[] { sanitizedLength.ToString(CultureInfo.InvariantCulture) };
             }
-        }
-    }
-}
+            }
+            }
+            }

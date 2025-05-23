@@ -51,8 +51,8 @@ namespace RandomNamespace
                 throw new ArgumentException(nameof(b));
             }
             int a = 2 + b;
-        }
-    }
+            }
+            }
 }";
             const string fixedCode = @"
 using System;
@@ -153,8 +153,8 @@ namespace RandomNamespace
                 throw new ArgumentException(nameof(b));
             }
             int a = 2 + b;
-        }
-    }
+            }
+            }
 }";
             const string fixedCode = @"
 using System;

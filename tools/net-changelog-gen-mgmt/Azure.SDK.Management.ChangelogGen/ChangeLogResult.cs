@@ -29,27 +29,27 @@ namespace Azure.SDK.ChangelogGen
                 }
                 report.Groups.Add(breakingGroup);
                 Logger.Error("Breaking change detected which is not expected\n" + breakingGroup.ToString());
-            }
+                }
 
             ReleaseNoteGroup featureAddedGroup = new ReleaseNoteGroup("Features Added");
             if (SpecVersionChange != null)
-{
-    featureAddedGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
-}
+            {
+                featureAddedGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
+            }
             if (featureAddedGroup.Notes.Count > 0)
-{
-    report.Groups.Add(featureAddedGroup);
-}
+            {
+                report.Groups.Add(featureAddedGroup);
+            }
 
             ReleaseNoteGroup othersGroup = new ReleaseNoteGroup("Other Changes");
             if (AzureCoreVersionChange != null)
-{
-    othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
-}
+            {
+                othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
+            }
             if (AzureResourceManagerVersionChange != null)
-{
-    othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
-}
+            {
+                othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
+            }
 
             var nonbreaking = ApiChange?.GetNonBreakingChanges().Where(b => filter.Count == 0 || filter.Contains(b.ChangeCatogory)).ToList();
             if (nonbreaking != null && nonbreaking.Count > 0)

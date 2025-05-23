@@ -46,7 +46,7 @@ namespace APIViewWeb.Models
             }
 
             return _rendered;
-        }
+            }
 
         public CodeLine[] RenderReadOnly(bool showDocumentation)
         {
@@ -63,7 +63,7 @@ namespace APIViewWeb.Models
             }
 
             return _renderedReadOnly;
-        }
+            }
 
         internal CodeLine[] RenderText(bool showDocumentation, bool skipDiff = false)
         {
@@ -80,7 +80,7 @@ namespace APIViewWeb.Models
             }
 
             return _renderedText;
-        }
+            }
         /// <summary>
         /// Get CodeLines from Section in RenderResult corresponding to the passed SectionId
         /// Add classes for managing hierachy of CodeLines
@@ -101,24 +101,24 @@ namespace APIViewWeb.Models
 
                 using (IEnumerator<TreeNode<CodeLine>> enumerator = section.GetEnumerator())
                 {
-                    enumerator.MoveNext();
-                    while (enumerator.MoveNext())
-                    {
-                        var node = enumerator.Current;
-                        var lineClass = new List<string>();
-                        var indent = node.Level;
+                enumerator.MoveNext();
+                while (enumerator.MoveNext())
+                {
+                    var node = enumerator.Current;
+                var lineClass = new List<string>();
+                var indent = node.Level;
 
-                        // Add classes for managing tree hierachy
-                        if (node.Children.Count > 0)
-                            lineClass.Add($"lvl_{node.Level}_parent_{node.PositionAmongSiblings}");
+                // Add classes for managing tree hierachy
+                if (node.Children.Count > 0)
+                lineClass.Add($"lvl_{node.Level}_parent_{node.PositionAmongSiblings}");
 
-                        if (!node.IsRoot)
-                            lineClass.Add($"lvl_{node.Level}_child_{node.PositionAmongSiblings}");
+                if (!node.IsRoot)
+                lineClass.Add($"lvl_{node.Level}_child_{node.PositionAmongSiblings}");
 
-                        if (node.Level > 1)
-{
-    lineClass.Add("d-none");
-}
+                if (node.Level > 1)
+                {
+                    lineClass.Add("d-none");
+                }
 
                         var lineClasses = String.Join(' ', lineClass);
 
@@ -132,33 +132,33 @@ namespace APIViewWeb.Models
                             if (renderedLeafSection.Length > 0)
                             {
                                 var placeHolderLineNumber = node.Data.LineNumber;
-                                int index = 0;
-                                foreach (var codeLine in renderedLeafSection)
-                                {
-                                    index++;
-                                    lineClasses = Regex.Replace(lineClasses, @"_child_[0-9]+", $"_child_{index}");
-                                    if (!String.IsNullOrWhiteSpace(codeLine.LineClass))
-                                    {
-                                        lineClasses = codeLine.LineClass.Trim() + $" {lineClasses}";
-                                    }
+                            int index = 0;
+                            foreach (var codeLine in renderedLeafSection)
+                            {
+                                index++;
+                            lineClasses = Regex.Replace(lineClasses, @"_child_[0-9]+", $"_child_{index}");
+                            if (!String.IsNullOrWhiteSpace(codeLine.LineClass))
+                            {
+                                lineClasses = codeLine.LineClass.Trim() + $" {lineClasses}";
+                            }
                                     result.Add(new CodeLine(codeLine, lineClass: lineClasses, lineNumber: placeHolderLineNumber, indent: indent));
                                     placeHolderLineNumber++;
-                                }
+                            }
                             }
                             else
                             {
                                 result.Add(new CodeLine(node.Data, lineClass: lineClasses, indent: indent));
                             }
-                        }
+                            }
                         else
                         {
                             result.Add(new CodeLine(node.Data, lineClass: lineClasses, indent: indent));
                         }
-                    }
-                }
-            }
+                        }
+                        }
+                        }
             return result.ToArray();
-        }
+                        }
 
         /// <summary>
         /// Compute diff CodeLines from rootNode of InlineDiffLine
@@ -181,8 +181,8 @@ namespace APIViewWeb.Models
                     if (node.WasDetachedLeafParent)
                     {
                         detachedLeafParent = node;
-                        detachedLeafParentLineNo = detachedLeafParent.Data.Line.LineNumber;
-                        continue;
+                    detachedLeafParentLineNo = detachedLeafParent.Data.Line.LineNumber;
+                    continue;
                     }
 
                     if (!node.IsLeaf)
@@ -202,9 +202,9 @@ namespace APIViewWeb.Models
                         lineClass.Add($"lvl_{level}_child_{node.PositionAmongSiblings}");
 
                     if (level > 1)
-{
-    lineClass.Add("d-none");
-}
+                    {
+                        lineClass.Add("d-none");
+                    }
 
                     var lineClasses = String.Join(' ', lineClass);
 
@@ -226,10 +226,10 @@ namespace APIViewWeb.Models
                         diffLine = new InlineDiffLine<CodeLine>(codeLine, node.Data.Kind, childNodeHasDiff);
                         diffLines.Add(diffLine);
                     }
-                }
-            }
+                    }
+                    }
             return diffLines.ToArray();
-        }
+                    }
 
         /// <summary>
         /// Determine if any descendant of the node is a diff change.
@@ -244,19 +244,19 @@ namespace APIViewWeb.Models
                 {
                     var node = enumerator.Current;
                     if (node.WasDetachedLeafParent)
-{
-    continue;
-}
+                    {
+                        continue;
+                    }
 
                     if (node.Data.Kind == DiffLineKind.Added || node.Data.Kind == DiffLineKind.Removed)
                     {
                         childNodeHasDiff = true;
                         break;
                     }
-                }
-            }
+                    }
+                    }
             return childNodeHasDiff;
-        }
+                    }
 
         /// <summary>
         /// Get Section root of appriopriate RenderType from Section in RenderResult corresponding to the passed SectionId an
@@ -270,7 +270,7 @@ namespace APIViewWeb.Models
                 return renderResult.Sections[sectionId];
             }
             return null;
-        }
+            }
 
 
         /// <summary>
@@ -299,9 +299,9 @@ namespace APIViewWeb.Models
                     renderedLeafSection = CodeFileHtmlRenderer.ReadOnly.Render(leafSection);
                 }
 
-            }
+                }
             return renderedLeafSection;
-        }
+                }
 
         /// <summary>
         /// Getermine the appriopriate RenderResult to pull from based on passed RenderType
@@ -313,32 +313,32 @@ namespace APIViewWeb.Models
             switch (renderType)
             {
                 case RenderType.Text:
-                    if (RenderResultText.Equals(default(RenderResult)
-{
-    ))
-                        _ = RenderText(showDocumentation, skipDiff);
-}
+                if (RenderResultText.Equals(default(RenderResult)
+                {
+                    ))
+                _ = RenderText(showDocumentation, skipDiff);
+                }
                     renderResult = RenderResultText;
                     break;
                 case RenderType.ReadOnly:
                     if (RenderResultReadOnly.Equals(default(RenderResult)
-{
-    ))
+                    {
+                        ))
                         _ = RenderReadOnly(showDocumentation);
-}
+                    }
                     renderResult = RenderResultReadOnly;
                     break;
                 default:
                     if (RenderResult.Equals(default(RenderResult)
-{
-    ))
+                    {
+                        ))
                         _ = Render(showDocumentation);
-}
+                    }
                     renderResult = RenderResult;
                     break;
-            }
+                    }
 
             return renderResult;
-        }
-    }
-}
+                    }
+                    }
+                    }

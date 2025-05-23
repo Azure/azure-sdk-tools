@@ -46,7 +46,7 @@ namespace APIViewWeb.Controllers
             {
                 _allowedListBotAccounts.UnionWith(botAllowedList.Split(","));
             }
-        }
+            }
 
         [HttpGet]
         public async Task<ActionResult> DetectApiChanges(
@@ -161,7 +161,7 @@ namespace APIViewWeb.Controllers
                     await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
                     pullRequests = (await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
                 }
-            }
+                }
             catch (OverflowException exception)
             {
                 _telemetryClient.TrackException(exception);
@@ -198,7 +198,7 @@ namespace APIViewWeb.Controllers
             {
                 await CreateUpdateRevisionWithBaseline(pullRequestModel, codeFile, baselineCodeFile, memoryStream, baseLineStream, review, baselineFileName);
             }
-        }
+            }
 
         private static bool revisionAlreadyExistsForPR(PullRequestModel prModel, bool baseline)
         {
@@ -207,7 +207,7 @@ namespace APIViewWeb.Controllers
                 return !string.IsNullOrEmpty(prModel.BaselineAPIRevisionId);
             }
             return !string.IsNullOrEmpty(prModel.APIRevisionId);
-        }
+            }
 
         private async Task<bool> prHasAPIChanges(IEnumerable<APIRevisionListItemModel> apiRevisions, CodeFile codeFile)
         {
@@ -221,12 +221,12 @@ namespace APIViewWeb.Controllers
                     if (await _apiRevisionsManager.AreAPIRevisionsTheSame(autoAPIRevision, renderedCodeFile))
                     {
                         // no change in api surface level from existing revision
-                        return false;
+                return false;
                     }
-                }
-            }
+                    }
+                    }
             return true;
-        }
+                    }
 
         private async Task CreateUpdateRevisionWithoutBaseline(PullRequestModel prModel, CodeFile codeFile, MemoryStream memoryStream, ReviewListItemModel review, string originalFileName)
         {
@@ -235,22 +235,22 @@ namespace APIViewWeb.Controllers
             if (revisionAlreadyExistsForPR(prModel, false))
             {
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName)
-{
-    )
-                    return;
-}
-            }
+                {
+                    )
+                return;
+                }
+                }
 
             //Create new API revision if PR has API changes            
             if ( await prHasAPIChanges(apiRevisions, codeFile))
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
-                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
+                userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
 
                 prModel.APIRevisionId = newAPIRevision.Id;
             }
-        }
+            }
         private async Task CreateUpdateRevisionWithBaseline(PullRequestModel prModel,
             CodeFile codeFile,
             CodeFile baselineCodeFile,
@@ -266,27 +266,27 @@ namespace APIViewWeb.Controllers
             if (revisionAlreadyExistsForPR(prModel, true))
             {
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, baselineMemoryStream, baselineCodeFile, originalFileName)
-{
-    )
-                    createNewBaselineRevision = false;
-}
-            }
+                {
+                    )
+                createNewBaselineRevision = false;
+                }
+                }
             if (revisionAlreadyExistsForPR(prModel, false))
             {
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName)
-{
-    )
-                    createNewModifiedRevision = false;
-}
-            }
+                {
+                    )
+                createNewModifiedRevision = false;
+                }
+                }
 
             // Create baseline revision
             if (createNewBaselineRevision)
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
-                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
-                    originalName: originalFileName);
+                userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
+                originalName: originalFileName);
                 prModel.BaselineAPIRevisionId = newAPIRevision.Id;
             }
 
@@ -294,9 +294,9 @@ namespace APIViewWeb.Controllers
             if (createNewModifiedRevision)
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
-                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
-                    originalName: originalFileName);
+                userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
+                originalName: originalFileName);
                 prModel.APIRevisionId = newAPIRevision.Id;
             }
 
@@ -312,7 +312,7 @@ namespace APIViewWeb.Controllers
                     await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, modifiedRevision, baseline);
                 }
             });
-        }
+                }
 
         /// <summary>
         /// Check to see if there is an existing APIRevision for the same PR. If yes, update the codeFile for the existing APIRevision
@@ -330,14 +330,14 @@ namespace APIViewWeb.Controllers
             {
                 //Update the code file if revision already exists
                 var codeModel = await _codeFileManager.CreateReviewCodeFileModel(
-                       apiRevisionId: revisionId, memoryStream: memoryStream, codeFile: codeFile);
+                apiRevisionId: revisionId, memoryStream: memoryStream, codeFile: codeFile);
                 codeModel.FileName = originalFileName;
                 apiRevision.Files[0] = codeModel;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
                 return true;
             }
             return false;
-        }
+            }
 
         private bool ValidateInputParams()
         { 
@@ -347,22 +347,22 @@ namespace APIViewWeb.Controllers
                 if (queryParam.Key == "filePath")
                 {
                     if (!VALID_EXTENSIONS.Any(e => value.EndsWith(e)
-{
-    ))
-                        return false;
-}
-                }
+                    {
+                        ))
+                return false;
+                    }
+                    }
 
                 if (queryParam.Key == "repoName")
                 {
                     if (!value.Contains("/")
-{
-    )
-                        return false;
-}
-                }
-            }
+                    {
+                        )
+                    return false;
+                    }
+                    }
+                    }
             return true;
-        }
-    }
-}
+                    }
+                    }
+                    }

@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 _recordingHandler.Transforms.Add(t);
             }
-        }
+            }
 
         [HttpPost]
         public async Task RemoveSanitizers()
@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     removedSanitizers.Add(sanitizerId);
                 }
-            }
+                }
 
             var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
 
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy
             Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
-        }
+                }
 
         [HttpGet]
         public async Task GetSanitizers()
@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.TestProxy
             Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
-        }
+            }
 
         [HttpPost]
         public async Task AddSanitizer()
@@ -151,7 +151,7 @@ namespace Azure.Sdk.Tools.TestProxy
             Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
-        }
+            }
 
         [HttpPost]
         public async Task AddSanitizers()
@@ -183,7 +183,7 @@ namespace Azure.Sdk.Tools.TestProxy
             Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
-        }
+            }
 
 
         [HttpPost]
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 _recordingHandler.Matcher = m;
             }
-        }
+            }
 
         [HttpPost]
         public async Task SetRecordingOptions()
@@ -261,17 +261,17 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         case JsonValueKind.Null:
                         case JsonValueKind.String:
-                            argumentValue = jsonElement.GetString();
-                            break;
+                        argumentValue = jsonElement.GetString();
+                        break;
                         case JsonValueKind.True:
                         case JsonValueKind.False:
-                            argumentValue = jsonElement.GetBoolean();
-                            break;
+                        argumentValue = jsonElement.GetBoolean();
+                        break;
                         case JsonValueKind.Object:
-                            try
-                            {
-                                argumentValue = Activator.CreateInstance(param.ParameterType, new List<object> { jsonElement }.ToArray());
-                            }
+                        try
+                        {
+                        argumentValue = Activator.CreateInstance(param.ParameterType, new List<object> { jsonElement }.ToArray());
+                    }
                             catch (Exception e)
                             {
                                 if (e.InnerException is HttpException)
@@ -279,14 +279,14 @@ namespace Azure.Sdk.Tools.TestProxy
                                     throw e.InnerException;
                                 }
                                 else
-{
-    throw;
-}
-                            }
+                                {
+                                    throw;
+                                }
+                                }
                             break;
                         default:
                             throw new HttpException(HttpStatusCode.BadRequest, $"{jsonElement.ValueKind} parameters are not supported");
-                    }
+                                }
 
                     if(argumentValue == null || (argumentValue is string stringResult && string.IsNullOrEmpty(stringResult)))
                     {
@@ -294,10 +294,10 @@ namespace Azure.Sdk.Tools.TestProxy
                         {
                             throw new HttpException(HttpStatusCode.BadRequest, $"Parameter \"{param.Name}\" was passed with no value. Please check the request body and try again.");
                         }
-                    }
+                        }
                         
                     arg_list.Add((object)argumentValue);
-                }
+                        }
                 else
                 {
                     if (param.IsOptional)
@@ -308,8 +308,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key \"{param.Name}\" was not found in the request body.");
                     }
-                }
-            }
+                    }
+                    }
 
             try
             {
@@ -322,10 +322,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw e.InnerException;
                 }
                 else
-{
-    throw;
-}
-            }
-        }
-    }
-}
+                {
+                    throw;
+                }
+                }
+                }
+                }
+                }

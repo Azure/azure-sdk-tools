@@ -105,9 +105,9 @@ namespace Azure.SDK.ChangelogGen
             string changelogContent = File.ReadAllText(ChangeLogMdFile);
             this.ReleasesInChangelog = Release.FromChangelog(changelogContent);
             if (this.ReleasesInChangelog.Count == 0)
-{
-    throw new InvalidDataException("No release found in changelog.md. At least one Release (Unreleased) expected");
-}
+            {
+                throw new InvalidDataException("No release found in changelog.md. At least one Release (Unreleased) expected");
+            }
             if (this.ReleasesInChangelog[0].ReleaseDate != "Unreleased")
             {
                 if (this.ReleasesInChangelog[0].Version != this.ReleaseVersion)
@@ -118,7 +118,7 @@ namespace Azure.SDK.ChangelogGen
                 {
                     Logger.Warning($"Last release version in changelog.md is the same as given one. Generated changelog will be merged to it: {this.ReleaseVersion}");
                 }
-            }
+                }
 
             if (string.IsNullOrEmpty(BaselineVersion))
             {
@@ -127,17 +127,17 @@ namespace Azure.SDK.ChangelogGen
                 if (lastRelease != null)
                 {
                     BaselineVersion = lastRelease.Version;
-                    BaselineVersionReleaseDate = lastRelease.ReleaseDate;
+                BaselineVersionReleaseDate = lastRelease.ReleaseDate;
                 }
                 else
                 {
                     Logger.Warning($"No baseline found and exit without doing anything which means current release is the first {(IsPreview ? "" : "stable")} release whose changelog is expected to be drafted manually.");
                     return false;
                 }
-            }
+                }
             BaselineGithubTag = $"{PackageName}_{BaselineVersion}";
             return true;
-        }
+                }
 
         private string GetGithubKey(string fullPath)
         {
@@ -163,9 +163,8 @@ namespace Azure.SDK.ChangelogGen
                 {
                     repoFolder = Path.GetDirectoryName(repoFolder);
                 }
-            }
+                }
             return repoFolder;
-        }
-    }
-}
-
+                }
+                }
+                }

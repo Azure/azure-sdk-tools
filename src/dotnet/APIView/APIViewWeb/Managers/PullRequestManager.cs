@@ -57,7 +57,7 @@ namespace APIViewWeb.Managers
             }
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
-        }
+            }
         public async Task UpsertPullRequestAsync(PullRequestModel pullRequestModel)
         {
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
@@ -81,14 +81,14 @@ namespace APIViewWeb.Managers
                 var pullRequest = await _githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
                 pullRequestModel = new PullRequestModel()
                 {
-                    RepoName = repoName,
-                    PullRequestNumber = prNumber,
-                    FilePath = originalFile,
-                    CreatedBy = pullRequest.User.Login,
-                    PackageName = packageName,
-                    Language = language,
-                    Assignee = pullRequest.Assignee?.Login
-                };
+                RepoName = repoName,
+                PullRequestNumber = prNumber,
+                FilePath = originalFile,
+                CreatedBy = pullRequest.User.Login,
+                PackageName = packageName,
+                Language = language,
+                Assignee = pullRequest.Assignee?.Login
+            }
             }
             return pullRequestModel;
         }
@@ -103,12 +103,12 @@ namespace APIViewWeb.Managers
                 foreach (var prModel in pullRequests)
                 {
                     try
+                {
+                    if (prModel.APIRevisionId != null && await IsPullRequestEligibleForCleanup(prModel))
                     {
-                        if (prModel.APIRevisionId != null && await IsPullRequestEligibleForCleanup(prModel))
-                        {
-                            _telemetryClient.TrackEvent($"Closing revision {prModel.ReviewId}/{prModel.APIRevisionId} created for pull request {prModel.PullRequestNumber}");
-                            await ClosePullRequestAPIRevision(prModel);
-                        }
+                        _telemetryClient.TrackEvent($"Closing revision {prModel.ReviewId}/{prModel.APIRevisionId} created for pull request {prModel.PullRequestNumber}");
+                    await ClosePullRequestAPIRevision(prModel);
+                    }
                         // Wait 10 seconds before processing next record.
                         await Task.Delay(10000);
                     }
@@ -181,7 +181,7 @@ namespace APIViewWeb.Managers
                 if (codeFile != null)
                 {
                     await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
-                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent);
+                    baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent);
                 }
                 else
                 {
@@ -202,7 +202,7 @@ namespace APIViewWeb.Managers
                     await UpsertPullRequestAsync(pullRequestModel);
                     pullRequests = (await GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
                 }
-            }
+                }
             finally
             {
                 memoryStream.Dispose();
@@ -216,9 +216,9 @@ namespace APIViewWeb.Managers
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
         {
             if (!_isGitClientAvailable)
-{
-    return false;
-}
+            {
+                return false;
+            }
 
             var repoInfo = prModel.RepoName.Split("/");
             var issue = await _githubClient.Issue.Get(repoInfo[0], repoInfo[1], prModel.PullRequestNumber);
@@ -228,7 +228,7 @@ namespace APIViewWeb.Managers
                 return issue.ClosedAt?.AddDays(_pullRequestCleanupDays) < DateTimeOffset.Now;
             }
             return false;
-        }
+            }
 
         private async Task ClosePullRequestAPIRevision(PullRequestModel pullRequestModel)
         {
@@ -239,11 +239,11 @@ namespace APIViewWeb.Managers
                 {
                     await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(userName: "azure-sdk", apiRevision: apiRevision, notes: "Deleted by PullRequest CleanUp Automation");
                 }
-            }
+                }
 
             pullRequestModel.IsOpen = false;
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
-        }
+                }
 
         private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
             PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent)
@@ -262,14 +262,14 @@ namespace APIViewWeb.Managers
             if (baselineCodeFile == null)
             {
                 await CreateUpdateRevisionWithoutBaseline(prModel: pullRequestModel, codeFile: codeFile, memoryStream: memoryStream, review: review,
-                    originalFileName: originalFileName, responseContent: responseContent);
+                originalFileName: originalFileName, responseContent: responseContent);
             }
             else
             {
                 await CreateUpdateRevisionWithBaseline(prModel: pullRequestModel, codeFile: codeFile, baselineCodeFile: baselineCodeFile, memoryStream: memoryStream,
                     baselineMemoryStream: baseLineStream, review: review, originalFileName: baselineFileName, responseContent: responseContent);
             }
-        }
+            }
 
         private async Task CreateUpdateRevisionWithoutBaseline(PullRequestModel prModel, CodeFile codeFile, MemoryStream memoryStream,
             ReviewListItemModel review, string originalFileName, CreateAPIRevisionAPIResponse responseContent)
@@ -279,26 +279,26 @@ namespace APIViewWeb.Managers
             if (revisionAlreadyExistsForPR(prModel, false))
             {
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: memoryStream, codeFile: codeFile,
-                    originalFileName: originalFileName, responseContent: responseContent)) 
+                    originalFileName: originalFileName, responseContent: responseContent))
                 {
                     responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision: '{prModel.APIRevisionId}'");
-                    return;
-                }   
-            }
+                return;
+                }
+                }
 
             //Create new API revision if PR has API changes            
             if (await prHasAPIChanges(apiRevisions, codeFile))
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
-                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
+                userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
 
                 responseContent.ActionsTaken.Add("Pull Request has changes in the API surface when compared to the last updated existing APIRevision.");
                 responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
 
                 prModel.APIRevisionId = newAPIRevision.Id;
             } 
-        }
+            }
 
         private static bool revisionAlreadyExistsForPR(PullRequestModel prModel, bool baseline)
         {
@@ -307,7 +307,7 @@ namespace APIViewWeb.Managers
                 return !string.IsNullOrEmpty(prModel.BaselineAPIRevisionId);
             }
             return !string.IsNullOrEmpty(prModel.APIRevisionId);
-        }
+            }
 
         private async Task<bool> prHasAPIChanges(IEnumerable<APIRevisionListItemModel> apiRevisions, CodeFile codeFile)
         {
@@ -321,12 +321,12 @@ namespace APIViewWeb.Managers
                     if (await _apiRevisionsManager.AreAPIRevisionsTheSame(autoAPIRevision, renderedCodeFile))
                     {
                         // no change in api surface level from existing revision
-                        return false;
+                return false;
                     }
-                }
-            }
+                    }
+                    }
             return true;
-        }
+                    }
 
         /// <summary>
         /// Check to see if there is an existing APIRevision for the same PR. If yes, update the codeFile for the existing APIRevision
@@ -346,14 +346,14 @@ namespace APIViewWeb.Managers
             {
                 //Update the code file if revision already exists
                 var codeModel = await _codeFileManager.CreateReviewCodeFileModel(
-                       apiRevisionId: revisionId, memoryStream: memoryStream, codeFile: codeFile);
+                apiRevisionId: revisionId, memoryStream: memoryStream, codeFile: codeFile);
                 codeModel.FileName = originalFileName;
                 apiRevision.Files[0] = codeModel;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
                 return true;
             }
             return false;
-        }
+            }
 
         private async Task CreateUpdateRevisionWithBaseline(PullRequestModel prModel, CodeFile codeFile, CodeFile baselineCodeFile,
             MemoryStream memoryStream, MemoryStream baselineMemoryStream, ReviewListItemModel review, string originalFileName, CreateAPIRevisionAPIResponse responseContent)
@@ -368,26 +368,26 @@ namespace APIViewWeb.Managers
                     codeFile: baselineCodeFile, originalFileName: originalFileName, responseContent: responseContent))
                 {
                     responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing BaseLine APIRevision: '{prModel.BaselineAPIRevisionId}'");
-                    createNewBaselineRevision = false;
-                }   
-            }
+                createNewBaselineRevision = false;
+                }
+                }
             if (revisionAlreadyExistsForPR(prModel, false))
             {
                 if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: memoryStream, codeFile: codeFile,
                     originalFileName: originalFileName, responseContent: responseContent))
                 {
                     responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision: '{prModel.APIRevisionId}'");
-                    createNewModifiedRevision = false;
+                createNewModifiedRevision = false;
                 }
-            }
+                }
 
             // Create baseline revision
             if (createNewBaselineRevision)
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
-                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
-                    originalName: originalFileName);
+                userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
+                originalName: originalFileName);
                 prModel.BaselineAPIRevisionId = newAPIRevision.Id;
                 responseContent.ActionsTaken.Add($"Created new Baseline APIRevisions with Id '{newAPIRevision.Id}'.");
             }
@@ -396,9 +396,9 @@ namespace APIViewWeb.Managers
             if (createNewModifiedRevision)
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
-                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
-                    originalName: originalFileName);
+                userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
+                originalName: originalFileName);
                 prModel.APIRevisionId = newAPIRevision.Id;
                 responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
             }
@@ -415,6 +415,6 @@ namespace APIViewWeb.Managers
                     await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, modifiedRevision, baseline);
                 }
             });
-        }
-    }
-}
+                }
+                }
+                }

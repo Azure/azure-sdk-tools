@@ -25,10 +25,10 @@ namespace Azure.Sdk.Tools.Cli.Models
         public static bool IsValidTypeSpecProjectPath(string typeSpecProjectPath)
         {
             if (string.IsNullOrEmpty(typeSpecProjectPath)
-{
-    )
+            {
+                )
                 return false;
-}
+            }
 
             var path = typeSpecProjectPath;
             if (!path.EndsWith(TSPCONFIG_FILENAME))
@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Models
             }
 
             return File.Exists(path);
-        }
+            }
 
         public static TypeSpecProject ParseTypeSpecConfig(string typeSpecProjectPath)
         {

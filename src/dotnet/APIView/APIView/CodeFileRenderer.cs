@@ -62,61 +62,61 @@ namespace ApiView
                 switch (token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
-                        break;
+                    CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
+                    break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
-                        StartDocumentationRange(stringBuilder);
-                        isDocumentationRange = true;
-                        break;
+                    StartDocumentationRange(stringBuilder);
+                    isDocumentationRange = true;
+                    break;
 
                     case CodeFileTokenKind.DocumentRangeEnd:
-                        CloseDocumentationRange(stringBuilder);
-                        isDocumentationRange = false;
-                        break;
+                    CloseDocumentationRange(stringBuilder);
+                    isDocumentationRange = false;
+                    break;
 
                     case CodeFileTokenKind.HiddenApiRangeStart:
-                        isHiddenApiToken = true;
-                        break;
+                    isHiddenApiToken = true;
+                    break;
 
                     case CodeFileTokenKind.HiddenApiRangeEnd:
-                        isHiddenApiToken = false;
-                        break;
+                    isHiddenApiToken = false;
+                    break;
 
                     case CodeFileTokenKind.DeprecatedRangeStart:
-                        isDeprecatedToken = true;
-                        break;
+                    isDeprecatedToken = true;
+                    break;
 
                     case CodeFileTokenKind.DeprecatedRangeEnd:
-                        isDeprecatedToken = false;
-                        break;
+                    isDeprecatedToken = false;
+                    break;
 
                     case CodeFileTokenKind.SkipDiffRangeStart:
-                        isSkipDiffRange = true;
-                        break;
+                    isSkipDiffRange = true;
+                    break;
 
                     case CodeFileTokenKind.SkipDiffRangeEnd:
-                        isSkipDiffRange = false;
-                        break;
+                    isSkipDiffRange = false;
+                    break;
 
                     case CodeFileTokenKind.FoldableSectionHeading:
-                        nodesInProcess.Push(SectionType.Heading);
-                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
-                        currentCrossLangId = (token.CrossLanguageDefinitionId != null) ? token.CrossLanguageDefinitionId : currentCrossLangId;
-                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                        break;
+                    nodesInProcess.Push(SectionType.Heading);
+                    currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                    currentCrossLangId = (token.CrossLanguageDefinitionId != null) ? token.CrossLanguageDefinitionId : currentCrossLangId;
+                    RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                    break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
-                        nodesInProcess.Push(SectionType.Content);
-                        break;
+                    nodesInProcess.Push(SectionType.Content);
+                    break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
-                        section = (section.IsRoot) ? section : section.Parent;
+                    section = (section.IsRoot) ? section : section.Parent;
+                    nodesInProcess.Pop();
+                    if (nodesInProcess.Peek().Equals(SectionType.Heading))
+                    {
                         nodesInProcess.Pop();
-                        if (nodesInProcess.Peek().Equals(SectionType.Heading))
-                        {
-                            nodesInProcess.Pop();
-                        }
+                    }
                         if (nodesInProcess.Count == 0 && section != null)
                         {
                             sections.Add(sections.Count, section);
@@ -227,7 +227,7 @@ namespace ApiView
             {
                 stringBuilder.Append(token.Value);
             }
-        }
+            }
 
         // Below two methods are HTML renderer specific and implemented in htmlrender class
         // These methods should not render anything for text renderer so keeping it empty
@@ -252,18 +252,18 @@ namespace ApiView
                     if (section == null)
                     {
                         section = new TreeNode<CodeLine>(codeLine);
-                        list.Add(codeLine);
+                list.Add(codeLine);
                     }
                     else
                     {
                         section = section.AddChild(codeLine);
                     }
-                }
+                    }
                 else
                 {
                     section.AddChild(codeLine);
                 }
-            }
+                }
             else
             {
                 if (section != null)
@@ -272,11 +272,11 @@ namespace ApiView
                     section = null;
                 }
                 list.Add(codeLine);
-            }
+                }
             currentId = null;
             stringBuilder.Clear();
-        }
-    }
+                }
+                }
 
  
 

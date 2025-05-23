@@ -80,7 +80,7 @@ namespace IssueLabelerService
             }
 
             return results;
-        }
+            }
 
         public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, BinaryData structure = null)
         {
@@ -143,13 +143,13 @@ namespace IssueLabelerService
                 if (score >= scoreThreshold)
                 {
                     document.Score = score;
-                    filteredDocuments.Add(document);
+                filteredDocuments.Add(document);
                 }
-            }
+                }
 
             _logger.LogInformation($"Found {filteredDocuments.Count} documents with score >= {scoreThreshold}");
             return filteredDocuments;
-        }
+                }
 
         public async Task<List<Issue>> SearchIssuesAsync(
             string indexName,
@@ -175,13 +175,13 @@ namespace IssueLabelerService
                 if (score >= scoreThreshold)
                 {
                     issue.Score = score;
-                    filteredIssues.Add(issue);
+                filteredIssues.Add(issue);
                 }
-            }
+                }
 
             _logger.LogInformation($"Found {filteredIssues.Count} issues with score >= {scoreThreshold}");
             return filteredIssues;
-        }
+                }
 
         public double GetHighestScore(IEnumerable<Issue> issues, IEnumerable<Document> docs, string repositoryName, int issueNumber)
         {
@@ -198,7 +198,7 @@ namespace IssueLabelerService
                 {
                     highestScore = doc.Score.Value;
                 }
-            }
+                }
 
             // Check scores in issues
             foreach (var issue in issues)
@@ -211,10 +211,10 @@ namespace IssueLabelerService
                 {
                     highestScore = issue.Score.Value;
                 }
-            }
+                }
 
             return highestScore;
-        }
+                }
 
         public string LabelsFilter(Dictionary<string, string> labels)
         {
@@ -226,8 +226,8 @@ namespace IssueLabelerService
             }
 
             return null;
-        }
-    }
+            }
+            }
 
     public class Issue
     {

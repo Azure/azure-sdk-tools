@@ -49,7 +49,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 releaseDate = firstMatch.Groups["date"].Value;
                 return firstMatch.Groups["ver"].Value;
             }
-        }
+            }
 
         public static bool IsPreviewRelease(string version)
         {
@@ -79,7 +79,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 throw new InvalidOperationException("Can't find branch with FriendlyName " + (branchFriendlyName ?? "CurrentBranch"));
             }
             return b;
-        }
+            }
 
         public static Tree GetTreeByTag(this Repository repo, string tagFriendlyName)
         {
@@ -100,15 +100,15 @@ namespace Azure.SDK.ChangelogGen.Utilities
             string[] segs = fileKey.Split('\\', '/');
 
             if (segs.Length == 0)
-{
-    throw new ArgumentNullException(nameof(fileKey));
-}
+            {
+                throw new ArgumentNullException(nameof(fileKey));
+            }
 
             Tree cur = tree;
             for (int i = 0; i < segs.Length - 1; i++)
             {
                 TreeEntry? curSeg = cur.FirstOrDefault(c => c.Name.ToLower() == segs[i].ToLower()) ??
-                    throw new InvalidOperationException($"Can't find file '{fileKey}' in Git at '{segs[i]}'. Git tree id = '{tree.Id}'");
+                throw new InvalidOperationException($"Can't find file '{fileKey}' in Git at '{segs[i]}'. Git tree id = '{tree.Id}'");
                 Debug.Assert(curSeg.Target.GetType() == typeof(Tree));
                 cur = (Tree)curSeg.Target;
             }
@@ -116,7 +116,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 throw new InvalidOperationException($"Cannot find file '{fileKey}' in Git at '{segs[^1]}'. Git tree id = '{tree.Id}'");
 
             return te.GetFileContent();
-        }
+            }
         #endregion
 
         #region api
@@ -143,21 +143,21 @@ namespace Azure.SDK.ChangelogGen.Utilities
         public static MethodInfo[] GetMethods(this Type type, BindingFlags flags, bool includePropertyMethod)
         {
             if (includePropertyMethod)
-{
-    return type.GetMethods(flags);
-}
+            {
+                return type.GetMethods(flags);
+            }
             else
-{
-    return type.GetMethods(flags).Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_")).ToArray();
-}
-        }
+            {
+                return type.GetMethods(flags).Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_")).ToArray();
+            }
+            }
 
         public static string ToFriendlyString(this PropertyInfo pi)
         {
             if (pi == null)
-{
-    throw new ArgumentNullException(nameof(pi));
-}
+            {
+                throw new ArgumentNullException(nameof(pi));
+            }
 
             var indexParameters = pi.GetIndexParameters();
             if (indexParameters.Length > 0)
@@ -168,14 +168,14 @@ namespace Azure.SDK.ChangelogGen.Utilities
             {
                 return $"{pi.PropertyType.ToFriendlyString()} {pi.Name}";
             }
-        }
+            }
 
         public static string ToFriendlyString(this MethodInfo mi)
         {
             if (mi == null)
-{
-    throw new ArgumentNullException(nameof(mi));
-}
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
 
             var genericArguments = mi.GetGenericArguments();
             var genericPart = genericArguments.Length == 0 ? "" : $"<{string.Join(", ", genericArguments.Select(g => g.Name))}>";
@@ -184,37 +184,37 @@ namespace Azure.SDK.ChangelogGen.Utilities
 
             string paramString = string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}{(p.HasDefaultValue && p.DefaultValue != null ? $" = {p.DefaultValue}" : "")}"));
             return $"{returnType.ToFriendlyString()} {mi.Name}{genericPart}({paramString})";
-        }
+            }
 
         public static string ToFriendlyString(this Type type, bool fullName = false)
         {
             if (type == null)
-{
-    throw new ArgumentNullException(nameof(type));
-}
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
 
             var gtp = type.GetGenericArguments();
             var genericPart = gtp.Length == 0 ? "" : $"<{string.Join(", ", gtp.Select(t => t.ToFriendlyString(fullName)))}>";
             string name = (fullName && type.FullName != null) ? type.FullName : type.Name;
             int index = name.IndexOf('`');
             if (index >= 0)
-{
-    name = name[..index];
-}
+            {
+                name = name[..index];
+            }
             return $"{name}{genericPart}";
-        }
+            }
 
         public static string ToFriendlyString(this ConstructorInfo ci)
         {
             if (ci == null)
-{
-    throw new ArgumentNullException(nameof(ci));
-}
+            {
+                throw new ArgumentNullException(nameof(ci));
+            }
 
             var paramList = ci.GetParameters();
 
             return $"{ci.Name}({string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}"))})";
-        }
+            }
 
         public static string GetKey(this Type type)
         {
@@ -245,9 +245,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
             {
                 FencedCodeBlock? fcb = b as FencedCodeBlock;
                 if (fcb == null)
-{
-    return false;
-}
+                {
+                    return false;
+                }
                 return (fcb.Info == "yaml" && string.IsNullOrEmpty(fcb.Arguments));
             }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList();
 
@@ -257,7 +257,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 .WithNamingConvention(HyphenatedNamingConvention.Instance)
                 .Build();
             return deserializer.Deserialize<Dictionary<string, object>>(allYaml);
-        }
+                }
         #endregion
-    }
-}
+                }
+                }

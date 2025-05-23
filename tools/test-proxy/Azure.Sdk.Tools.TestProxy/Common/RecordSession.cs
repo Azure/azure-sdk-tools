@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             jsonWriter.WriteEndObject();
 
             jsonWriter.WriteEndObject();
-        }
+            }
 
         public static RecordSession Deserialize(JsonElement element)
         {
@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     session.Entries.Add(RecordEntry.Deserialize(item));
                 }
-            }
+                }
 
             if (element.TryGetProperty(nameof(Variables), out property))
             {
@@ -65,22 +65,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     session.Variables[item.Name] = item.Value.GetString();
                 }
-            }
+                }
 
             if (element.TryGetProperty(nameof(Names), out property))
             {
                 foreach (JsonProperty item in property.EnumerateObject())
                 {
                     var queue = new Queue<string>();
-                    foreach (JsonElement subItem in item.Value.EnumerateArray())
-                    {
-                        queue.Enqueue(subItem.GetString());
-                    }
+                foreach (JsonElement subItem in item.Value.EnumerateArray())
+                {
+                    queue.Enqueue(subItem.GetString());
+                }
                     session.Names[item.Name] = queue;
                 }
-            }
+                }
             return session;
-        }
+                }
 
         public async Task Record(RecordEntry entry, bool shouldLock = true)
         {
@@ -99,8 +99,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     EntryLock.Release();
                 }
-            }
-        }
+                }
+                }
 
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
         {
@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     LogSanitizerModification(sanitizer.SanitizerId, reqEntryPreSanitize, requestEntry);
                 }
-            }
+                }
 
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
             RecordEntry.NormalizeJsonBody(requestEntry.Request);
@@ -131,7 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             return entry;
-        }
+            }
 
         public async Task Remove(RecordEntry entry, bool shouldLock = true)
         {
@@ -150,8 +150,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     EntryLock.Release();
                 }
-            }
-        }
+                }
+                }
 
         public async Task Sanitize(RecordedTestSanitizer sanitizer, bool shouldLock = true)
         {
@@ -188,17 +188,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
 
                         }
-                    }
-                }
-            }
+                        }
+                        }
+                        }
             finally
             {
                 if (shouldLock)
                 {
                     EntryLock.Release();
                 }
-            }
-        }
+                }
+                }
 
         public async Task Sanitize(IEnumerable<RecordedTestSanitizer> sanitizers, bool shouldLock = true)
         {
@@ -235,18 +235,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             {
                                 LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                             }
-                        }
-                    }
-                }
-            }
+                            }
+                            }
+                            }
+                            }
             finally
             {
                 if (shouldLock)
                 {
                     EntryLock.Release();
                 }
-            }
-        }
+                }
+                }
 
         /// <summary>
         /// Logs the modifications made by a sanitizer to a record entry.
@@ -289,7 +289,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Body is modified{before}{bodyTextPre}{after}{bodyTextPost}");
                 }
-            }
+                }
             if (isRequestBodyModified)
             {
                 LogBodyModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
@@ -313,7 +313,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             DebugLogger.LogDebug(logMessage.ToString());
-        }
+            }
 
         /// <summary>
         /// Generates a log prefix string that provides information about the sanitizer.
@@ -334,17 +334,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private bool AreHeadersModified(SortedDictionary<string, string[]> dict1, SortedDictionary<string, string[]> dict2)
         {
             if (dict1 == null || dict2 == null)
-{
-    return !(dict1 == dict2);
-}
+            {
+                return !(dict1 == dict2);
+            }
 
             if (dict1.Count != dict2.Count)
-{
-    return true;
-}
+            {
+                return true;
+            }
 
             return !dict1.All(kvp => dict2.TryGetValue(kvp.Key, out var value) && kvp.Value.SequenceEqual(value));
-        }
+            }
 
         /// <summary>
         /// Checks if the body content has been modified.
@@ -355,17 +355,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private bool IsBodyModified(byte[] array1, byte[] array2)
         {
             if (array1 == null && array2 == null)
-{
-    return false;
-}
+            {
+                return false;
+            }
 
             if (array1 == null || array2 == null)
-{
-    return true;
-}
+            {
+                return true;
+            }
 
             return !array1.SequenceEqual(array2);
-        }
+            }
 
         /// <summary>
         /// Converts the headers dictionary to a string representation.

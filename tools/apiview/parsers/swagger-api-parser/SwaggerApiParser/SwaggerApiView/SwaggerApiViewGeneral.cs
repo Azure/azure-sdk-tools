@@ -46,16 +46,16 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.Add(TokenSerializer.FoldableContentEnd());
 
             if (!String.IsNullOrEmpty(host)
-{
-    )
+            {
+                )
                 ret.AddRange(TokenSerializer.KeyValueTokens("host", host, true, context.IteratorPath.CurrentNextPath("host")));
-}
+            }
 
             if (!String.IsNullOrEmpty(basePath)
-{
-    )
+            {
+                )
                 ret.AddRange(TokenSerializer.KeyValueTokens("basePath", basePath, true, context.IteratorPath.CurrentNextPath("basePath")));
-}
+            }
 
             if (schemes != null && schemes.Count > 0)
             {
@@ -84,12 +84,12 @@ namespace SwaggerApiParser.SwaggerApiView
                 foreach (var kv in securityDefinitions)
                 {
                     ret.Add(new CodeFileToken(kv.Key, CodeFileTokenKind.FoldableSectionHeading));
-                    ret.Add(TokenSerializer.Colon());
-                    ret.Add(TokenSerializer.NewLine());
-                    ret.AddRange(TokenSerializer.TokenSerializeAsJson(kv.Value, true));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(TokenSerializer.NewLine());
+                ret.AddRange(TokenSerializer.TokenSerializeAsJson(kv.Value, true));
                 }
                 ret.Add(TokenSerializer.FoldableContentEnd());
-            }
+                }
 
             if (security != null && security.Count > 0)
             {
@@ -100,10 +100,10 @@ namespace SwaggerApiParser.SwaggerApiView
                     {
                         securityStr += kv.Key + ": [" + string.Join(", ", kv.Value) + "]";
                     }
-                }
+                    }
 
                 ret.AddRange(TokenSerializer.KeyValueTokens("security", securityStr, true, context.IteratorPath.CurrentNextPath("secuirty")));
-            }
+                    }
 
             if (tags != null && tags.Count > 0)
             {
@@ -117,9 +117,9 @@ namespace SwaggerApiParser.SwaggerApiView
                     {
                         ret.AddRange(tag.TokenSerialize(context));
                     }
-                }
+                    }
                 ret.Add(TokenSerializer.FoldableContentEnd());
-            }
+                    }
 
             if (externalDocs != null)
             {
@@ -134,7 +134,7 @@ namespace SwaggerApiParser.SwaggerApiView
             Utils.SerializePatternedObjects(patternedObjects, ret);
 
             return ret.ToArray();
-        }
+            }
 
         public NavigationItem BuildNavigationItem(IteratorPath iteratorPath = null)
         {

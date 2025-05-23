@@ -60,7 +60,7 @@ namespace AzureSDKDevToolsMCP.Tools
                     logger.LogInformation("Running npx tsv to run the validation");
                     ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
                     logger.LogInformation("Completed running TypeSpec validation");
-                }
+                    }
                 catch (Exception ex)
                 {
                     validationResults.Add($"Error: {ex.Message}");
@@ -92,7 +92,7 @@ namespace AzureSDKDevToolsMCP.Tools
             {
                 _ = RunProcess("npm", "ci", repoRoot);
             }
-        }
+            }
 
         private static string ValidateTypeSpec(string typeSpecProjectRootPath, string specRepoRootPath, IList<string> validationResults)
         {
@@ -108,7 +108,7 @@ namespace AzureSDKDevToolsMCP.Tools
                 validationResults.Add(output);
             }
             return "TypeSpec validation completed successfully";
-        }
+            }
 
 
         private static string GetGitRepoRootPath(string typeSpecProjectRootPath)
@@ -119,7 +119,7 @@ namespace AzureSDKDevToolsMCP.Tools
                 currentDirectory = currentDirectory.Parent;
             }
             return currentDirectory?.Parent?.FullName ?? string.Empty;
-        }
+            }
 
         private static string RunProcess(string command, string args, string workingDirectory)
         {
@@ -141,17 +141,17 @@ namespace AzureSDKDevToolsMCP.Tools
                 process.OutputDataReceived += (sender, args) =>
                 {
                     if (args.Data != null)
-{
-    output.AppendLine(args.Data);
-}
+                    {
+                        output.AppendLine(args.Data);
+                    }
                 };
 
                 process.ErrorDataReceived += (sender, args) =>
                 {
                     if (args.Data != null)
-{
-    output.AppendLine(args.Data);
-}
+                    {
+                        output.AppendLine(args.Data);
+                    }
                 };
                 process.Start();
                 process.BeginOutputReadLine();
@@ -161,9 +161,9 @@ namespace AzureSDKDevToolsMCP.Tools
                 {
                     output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
                 }
-            }
+                }
             return output.ToString();
-        }
+                }
 
         public override Command GetCommand()
         {
@@ -181,15 +181,15 @@ namespace AzureSDKDevToolsMCP.Tools
             switch (command)
             {
                 case typespecValidationCommandName:
-                    var repoRootPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
-                    var validationResults = RunTypeSpecValidation(repoRootPath);
-                    logger.LogInformation($"Validation results: [{validationResults}]");
-                    return 0;
+                var repoRootPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
+                var validationResults = RunTypeSpecValidation(repoRootPath);
+                logger.LogInformation($"Validation results: [{validationResults}]");
+                return 0;
 
                 default:
-                    logger.LogError($"Unknown command: {command}");
-                    return 1;
+                logger.LogError($"Unknown command: {command}");
+                return 1;
             }
-        }
-    }
-}
+            }
+            }
+            }

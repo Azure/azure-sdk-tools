@@ -65,7 +65,7 @@ namespace IssueLabelerService
                         _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
                         return EmptyResult;
                     }
-                }
+                    }
                 catch (Exception ex)
                 {
                     _logger.LogError($"Error labeling issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
@@ -116,24 +116,24 @@ namespace IssueLabelerService
         public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)
         {
             if (string.IsNullOrEmpty(template)
-{
-    )
+            {
+                )
                 return string.Empty;
-}
+            }
 
             string result = template;
 
             foreach (var replacement in replacements)
             {
                 if(!result.Contains($"{{{replacement.Key}}}"))
-                {
-                    logger.LogWarning($"Replacement value for {replacement.Key} does not exist in {template}.");
-                }
+            {
+                logger.LogWarning($"Replacement value for {replacement.Key} does not exist in {template}.");
+            }
                 result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
             }
 
             // Replace escaped newlines with actual newlines
             return result.Replace("\\n", "\n");
-        }
-    }
-}
+            }
+            }
+            }

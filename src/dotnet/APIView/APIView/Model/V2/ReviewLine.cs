@@ -119,7 +119,8 @@ namespace APIView.Model.V2
                     else 
                     {
                         var lastTuple = stringList[stringList.Count - 1];
-                        stringList[stringList.Count - 1] = (lastTuple.lineText + text, lastTuple.lineId);
+                        var currLineId = string.IsNullOrEmpty(lineId) ? lastTuple.lineId : lineId;
+                        stringList[stringList.Count - 1] = (lastTuple.lineText + text, currLineId);
                     }
                     break;
                 default:

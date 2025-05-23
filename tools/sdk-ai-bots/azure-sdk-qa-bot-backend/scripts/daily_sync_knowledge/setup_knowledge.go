@@ -17,23 +17,38 @@ import (
 
 // Defines the structure for source directories
 type Source struct {
-	path   string
-	folder string
-	name   string
+	path              string
+	folder            string
+	name              string
+	fileNameLowerCase bool
 }
 
 func main() {
 	// Process both repositories
 	sources := []Source{
 		{
-			path:   "docs/typespec/website/src/content/docs/docs",
-			folder: "typespec_docs",
-			name:   "TypeSpec",
+			path:              "docs/typespec/website/src/content/docs/docs",
+			folder:            "typespec_docs",
+			name:              "TypeSpec",
+			fileNameLowerCase: true,
 		},
 		{
-			path:   "docs/typespec-azure/website/src/content/docs/docs",
-			folder: "typespec_azure_docs",
-			name:   "TypeSpec Azure",
+			path:              "docs/typespec-azure/website/src/content/docs/docs",
+			folder:            "typespec_azure_docs",
+			name:              "TypeSpec Azure",
+			fileNameLowerCase: true,
+		},
+		{
+			path:   "docs/azure-rest-api-specs.wiki",
+			folder: "azure_rest_api_specs_wiki",
+		},
+		{
+			path:   "docs/azure-sdk-for-python.wiki",
+			folder: "azure_sdk_for_python_wiki",
+		},
+		{
+			path:   "docs/azure-sdk-for-python/doc",
+			folder: "azure_sdk_for_python_docs",
 		},
 	}
 
@@ -103,7 +118,10 @@ func main() {
 			if info.IsDir() {
 				return nil
 			}
-			fileName := strings.ToLower(strings.ReplaceAll(info.Name(), " ", "-"))
+			fileName := info.Name()
+			if source.fileNameLowerCase {
+				fileName = strings.ToLower(strings.ReplaceAll(info.Name(), " ", "-"))
+			}
 			blobPath := filepath.Join(source.folder, fileName)
 			currentFiles = append(currentFiles, blobPath)
 			// read the content of the target file

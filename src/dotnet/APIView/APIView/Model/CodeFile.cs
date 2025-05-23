@@ -64,11 +64,10 @@ namespace ApiView
         {
             var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
 
-            if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language)
-{
-    )
+            if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
+            {
                 hasSections = true;
-}
+            }
 
             // Splitting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time
@@ -202,9 +201,9 @@ namespace ApiView
             {
                 //Don't include documentation in converted code file due to incorrect documentation formatting used in previous model.
                 if (isDocumentation && oldToken.Kind != CodeFileTokenKind.DocumentRangeEnd)
-{
-    continue;
-}
+                {
+                    continue;
+                }
                 ReviewToken token = null;
                 switch(oldToken.Kind)
                 {
@@ -228,9 +227,9 @@ namespace ApiView
                         token = ReviewToken.CreateKeywordToken(oldToken.Value, false);
                         var keywordValue = oldToken.Value.ToLower();
                         if (keywordValue == "class" || keywordValue == "enum" || keywordValue == "struct" || keywordValue == "interface" || keywordValue == "type" || keywordValue == "namespace")
-{
-    className = keywordValue;
-}
+                {
+                    className = keywordValue;
+                }
                         break;
                     case CodeFileTokenKind.Comment:
                         token = ReviewToken.CreateCommentToken(oldToken.Value, false); 
@@ -244,9 +243,9 @@ namespace ApiView
                     case CodeFileTokenKind.TypeName:
                         token = ReviewToken.CreateTypeNameToken(oldToken.Value, false);
                         if (currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value.ToLower() == className))
-{
-    token.RenderClasses.Add(className);
-}
+                {
+                    token.RenderClasses.Add(className);
+                }
                         className = "";
                         break;
                     case CodeFileTokenKind.MemberName:
@@ -323,11 +322,10 @@ namespace ApiView
                         currentLineTokens = new List<ReviewToken>();
                         break;
                     case CodeFileTokenKind.LineIdMarker:
-                        if (string.IsNullOrEmpty(reviewLine.LineId)
-{
-    )
-                            reviewLine.LineId = oldToken.Value;
-}
+                        if (string.IsNullOrEmpty(reviewLine.LineId))
+                {
+                    reviewLine.LineId = oldToken.Value;
+                }
                         break;
                     default:
                         Console.WriteLine($"Unsupported token kind to convert to new model, Kind: {oldToken.Kind}, value: {oldToken.Value}, Line Id: {oldToken.DefinitionId}"); 
@@ -339,34 +337,32 @@ namespace ApiView
                     currentLineTokens.Add(token);
 
                     if (oldToken.Equals("}")
-{
-    || oldToken.Equals("};
-}"))
+                        || oldToken.Equals("};"))
                         reviewLine.IsContextEndLine = true;
                     if (isHidden)
-{
-    reviewLine.IsHidden = true;
-}
+                    {
+                        reviewLine.IsHidden = true;
+                    }
                     if (oldToken.DefinitionId != null)
-{
-    reviewLine.LineId = oldToken.DefinitionId;
-}
+                    {
+                        reviewLine.LineId = oldToken.DefinitionId;
+                    }
                     if (oldToken.CrossLanguageDefinitionId != null)
-{
-    reviewLine.CrossLanguageId = oldToken.CrossLanguageDefinitionId;
-}
+                    {
+                        reviewLine.CrossLanguageId = oldToken.CrossLanguageDefinitionId;
+                    }
                     if (isDeprecated)
-{
-    token.IsDeprecated = true;
-}
+                    {
+                        token.IsDeprecated = true;
+                    }
                     if (skipDiff)
-{
-    token.SkipDiff = true;
-}
+                    {
+                        token.SkipDiff = true;
+                    }
                     if (isDocumentation)
-{
-    token.IsDocumentation = true;
-}
+                    {
+                        token.IsDocumentation = true;
+                    }
                 }
             }
 
@@ -379,22 +375,22 @@ namespace ApiView
                     parent = parent.parentLine;
 
                 if (parent == null)
-{
-    this.ReviewLines.Add(reviewLine);
-}
+                {
+                    this.ReviewLines.Add(reviewLine);
+                }
                 else
-{
-    parent.Children.Add(reviewLine);
-}
+                {
+                    parent.Children.Add(reviewLine);
+                }
             }                        
         }
 
         private static void GetNavigationMap(Dictionary<string, string> navigationItems, NavigationItem[] items)
         {
             if (items == null)
-{
-    return;
-}
+            {
+                return;
+            }
 
             foreach (var item in items)
             {

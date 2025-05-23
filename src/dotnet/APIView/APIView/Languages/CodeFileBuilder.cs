@@ -316,9 +316,9 @@ namespace ApiView
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
             {
                 if (member.Kind == SymbolKind.NamedType || member.IsImplicitlyDeclared || !IsAccessible(member))
-{
-    continue;
-}
+                {
+                    continue;
+                }
                 if (member is IMethodSymbol method)
                 {
                     if (method.MethodKind == MethodKind.PropertyGet ||
@@ -397,9 +397,9 @@ namespace ApiView
             foreach (var typeInterface in namedType.Interfaces)
             {
                 if (!IsAccessible(typeInterface))
-{
-    continue;
-}
+                {
+                    continue;
+                }
 
                 if (!first)
                 {

@@ -157,11 +157,10 @@ namespace APIView.DIff
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DiffHunk)
-{
-    )
+            if (!(obj is DiffHunk))
+            {
                 return false;
-}
+            }
             return ((DiffHunk)obj) == this;
         }
 

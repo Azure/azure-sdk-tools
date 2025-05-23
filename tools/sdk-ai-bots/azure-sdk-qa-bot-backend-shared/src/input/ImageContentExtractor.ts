@@ -65,7 +65,7 @@ export class ImageContentExtractor {
     const operationLocation = readResponse.operationLocation;
 
     if (!operationLocation) {
-      logger.warn('Failed to get Operation-Location for OCR', this.logMeta);
+      logger.warn('Failed to get Operation-Location for OCR', { meta: this.logMeta });
       return { text: '', error: new Error('Failed to get Operation-Location for OCR') };
     }
     const operationId = operationLocation.split('/').slice(-1)[0];
@@ -76,7 +76,7 @@ export class ImageContentExtractor {
       try {
         result = await this.client.getReadResult(operationId);
       } catch (error) {
-        logger.warn(`Failed to get read OCR result`, error, this.logMeta);
+        logger.warn(`Failed to get read OCR result`, error, { meta: this.logMeta });
       }
       if (result && result.status !== 'notStarted' && result.status !== 'running') break;
       await new Promise((resolve) => setTimeout(resolve, this.pollResultInterval));

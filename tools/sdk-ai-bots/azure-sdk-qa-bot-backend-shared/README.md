@@ -25,7 +25,7 @@ interface PreprocessRequestBody {
 }
 ```
 
-## headers
+### headers
 
 ```ts
 interface Headers {

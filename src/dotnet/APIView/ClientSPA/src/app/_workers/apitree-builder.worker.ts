@@ -16,7 +16,6 @@ let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
 let visibleNodes: Set<string> = new Set<string>();
-let addPostDiffContext: boolean = false;
 let isNavigationTreeCreated: boolean = false;
 
 addEventListener('message', ({ data }) => {
@@ -69,7 +68,6 @@ addEventListener('message', ({ data }) => {
     diffBuffer = [];
     apiTreeBuilderData = null;
     visibleNodes = new Set<string>();
-    addPostDiffContext = false;
     isNavigationTreeCreated = false;
   }
   else {
@@ -149,7 +147,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         if (buildNode) {
           codePanelRowData.push(codeLine);
           visibleNodes.add(nodeIdHashed);
-          addPostDiffContext = true;
         }
       }
     });

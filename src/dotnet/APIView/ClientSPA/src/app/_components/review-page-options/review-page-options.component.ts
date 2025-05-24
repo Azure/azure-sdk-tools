@@ -135,7 +135,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setMarkedAsViewSwitch();
       this.setPageOptionValues();
     }
-    
+
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.setMarkedAsViewSwitch();
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);

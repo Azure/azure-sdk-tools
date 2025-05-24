@@ -626,8 +626,15 @@ namespace APIViewWeb.Helpers
             {
                 foreach (var username in approverConfig.Split(","))
                 {
-                    var userProfile = userProfileCache.GetUserProfileAsync(username).Result;
-                    if (!userProfile.Preferences.ApprovedLanguages.Any() || userProfile.Preferences.ApprovedLanguages.Contains(review.Language))
+                    try
+                    {
+                        var userProfile = userProfileCache.GetUserProfileAsync(username, createIfNotExist: false).Result;
+                        if (!userProfile.Preferences.ApprovedLanguages.Any() || userProfile.Preferences.ApprovedLanguages.Contains(review.Language))
+                        {
+                            preferredApprovers.Add(username);
+                        }
+                    }
+                    catch 
                     {
                         preferredApprovers.Add(username);
                     }

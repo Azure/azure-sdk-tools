@@ -1769,7 +1769,19 @@ class CheckDocstringParameters(BaseChecker):
             docstring = docstring.split(":")
         except AttributeError:
             return
-
+        no_return = False
+        if hasattr(node, "returns") and node.returns is not None:
+            try:
+                inferred = next(node.returns.infer())
+                if (
+                    getattr(inferred, "name", None) == "NoReturn"
+                    or getattr(inferred, "attrname", None) == "NoReturn"
+                ):
+                    no_return = True
+            except Exception:
+                pass
+        if no_return:
+            return 
         has_return, has_rtype = False, False
         for line in docstring:
             if line.startswith("return"):

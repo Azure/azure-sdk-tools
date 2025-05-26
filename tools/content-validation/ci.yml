@@ -35,4 +35,5 @@ steps:
     displayName: Build all projects and libraries
     inputs:
       command: 'build'
-      projects: 'tools/content-validation.sln'
+      projects: 'tools/content-validation/content-validation.sln'
+      workingDirectory: 'tools/content-validation'

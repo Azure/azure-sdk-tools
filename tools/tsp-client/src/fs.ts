@@ -3,6 +3,7 @@ import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { TspLocation } from "./typespec.js";
+import { EMITTER_PREFIXES } from "./utils.js";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -59,8 +60,7 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
   if (!obj || !obj.dependencies) {
     throw new Error("Invalid emitter-package.json");
   }
-  const languages: string[] = ["@azure-tools/typespec-", "@typespec/http-", "@typespec/openapi3", "@azure-typespec/"];
-  for (const lang of languages) {
+  for (const lang of EMITTER_PREFIXES) {
     const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
     if (emitter) {
       Logger.info(`Found emitter package ${emitter}@${obj.dependencies[emitter]}`);

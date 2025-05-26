@@ -7,23 +7,32 @@ trigger:
       - hotfix/*
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: ubuntu-latest
 
 steps:
   - task: UseDotNet@2
+    displayName: 'Install .NET Core SDK'
     inputs:
       packageType: 'sdk'
-      version: '8.x'
+      version: '8.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet 
 
-  - task: NuGetToolInstaller@1
-
-  - task: NuGetCommand@2
+  - task: DotNetCoreCLI@2
+    displayName: New Manifest for tool
     inputs:
-      restoreSolution: 'content-validation/*.sln'
+      command: custom
+      custom: 'new '
+      arguments: tool-manifest
 
-  - task: VSBuild@1
+  - task: DotNetCoreCLI@2
+    displayName: Install Playwright CLI
     inputs:
-      solution: 'content-validation/*.sln'
-      msbuildArgs: '/p:Configuration=Release'
-      platform: 'Any CPU'
-      configuration: 'Release'
+      command: custom
+      custom: 'tool '
+      arguments: install Microsoft.Playwright.CLI
+  
+  - task: DotNetCoreCLI@2
+    displayName: Build all projects and libraries
+    inputs:
+      command: 'build'
+      projects: 'content-validation.sln'

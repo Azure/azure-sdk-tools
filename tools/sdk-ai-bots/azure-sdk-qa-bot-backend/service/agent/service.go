@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
 )
@@ -67,16 +68,14 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(message.Content)})
 		}
 	}
-	userMessage := req.Message.Content
-	// lower case
-	userMessage = strings.ToLower(userMessage)
-	// replace keyword
-	for k, v := range model.KeywordReplaceMap {
-		userMessage = strings.ReplaceAll(userMessage, fmt.Sprintf(" %s ", k), fmt.Sprintf(" %s ", v))
-	}
 
-	// The user asks a question
-	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content)})
+	userMessage := preprocess.NewPreprocessService().PreprocessInput(req.Message.Content)
+	if userMessage == "" {
+		log.Println("User message is empty after preprocessing, skipping completion.")
+		return result, nil
+	}
+	log.Println("Preprocessed user message:", userMessage)
+	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(userMessage)})
 
 	intentStart := time.Now()
 	intentResult, err := s.RecongnizeIntension(messages)
@@ -96,12 +95,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 	}
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-
-	// Filter empty messages
-	if userMessage == "" {
-		return result, nil
-	}
-	log.Println("msg:", userMessage)
 
 	searchStart := time.Now()
 	searchClient := search.NewSearchClient()

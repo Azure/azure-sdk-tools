@@ -19,11 +19,11 @@ steps:
 
   - task: NuGetCommand@2
     inputs:
-      restoreSolution: '**/*.sln'
+      restoreSolution: 'content-validation/*.sln'
 
   - task: VSBuild@1
     inputs:
-      solution: '**/*.sln'
+      solution: 'content-validation/*.sln'
       msbuildArgs: '/p:Configuration=Release'
       platform: 'Any CPU'
       configuration: 'Release'

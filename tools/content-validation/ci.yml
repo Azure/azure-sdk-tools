@@ -9,6 +9,9 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  DisableComponentDetection: true
+
 steps:
   - task: UseDotNet@2
     displayName: 'Install .NET Core SDK'

@@ -89,7 +89,7 @@ public class UnnecessarySymbolsValidation : IValidation
                 var matchCollections = Regex.Matches(line, includePattern);
                 foreach (Match match in matchCollections)
                 {
-                    string unnecessarySymbol = $"\"{match.Value}\""; ;
+                    string unnecessarySymbol = $"\"{match.Value}\""; 
                     valueSet.Add(unnecessarySymbol);
                     errorList.Add($"Unnecessary symbol: {unnecessarySymbol} in code: `{line}`");
                 }

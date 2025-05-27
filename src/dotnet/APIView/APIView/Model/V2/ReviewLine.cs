@@ -100,7 +100,7 @@ namespace APIView.Model.V2
             }
             foreach (var child in Children)
             {
-                child.AppendApiTextToBuilder(builder, indent + 1, skipDocs, lineIndentSpaces);
+                child.AppendApiTextToBuilder(builder, indent + 1, skipDocs, lineIndentSpaces, filter);
             }
         }
 

@@ -337,6 +337,10 @@ namespace APIViewWeb.Helpers
             if (rowData.Type == CodePanelRowDatatype.CodeLine)
             {
                 rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
+                if (!codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Any() && String.IsNullOrEmpty(rowData.NodeId))
+                {
+                    rowData.NodeId = "FIRST_ROW";
+                }
                 codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
                 if (rowData.DiffKind == DiffKind.Added || rowData.DiffKind == DiffKind.Removed)
                 {

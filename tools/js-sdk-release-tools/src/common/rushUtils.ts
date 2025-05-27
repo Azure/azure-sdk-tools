@@ -110,6 +110,9 @@ export async function buildPackage(
     await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
+    // update snippets
+    logger.info(`Start to update snippets dev-tool run update-snippets.`);
+    await updateSnippets(packageDirectory);
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');
@@ -148,6 +151,20 @@ export async function formatSdk(packageDirectory: string) {
         logger.warn(`Failed to format code due to: ${(error as Error)?.stack ?? error}`);
     }
 
+}
+
+async function updateSnippets(packageDirectory: string) {
+    logger.info(`Start to update snippets in '${packageDirectory}'.`);
+    const cwd = packageDirectory;
+    const options = { ...runCommandOptions, cwd };
+
+    try {
+        const updateCommand = 'run update-snippets';
+        await runCommand('npm', ['exec', '--', 'dev-tool', updateCommand], options, true, 300, true);
+        logger.info(`Snippets updated successfully.`);
+    } catch (error) {
+        logger.warn(`Failed to update snippets due to: ${(error as Error)?.stack ?? error}`);
+    }
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

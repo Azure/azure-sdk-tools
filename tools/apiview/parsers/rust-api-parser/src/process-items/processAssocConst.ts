@@ -3,6 +3,7 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isAssocConstItem } from "./utils/typeGuards";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes an associated constant item and returns ReviewLine objects.
@@ -12,7 +13,7 @@ import { isAssocConstItem } from "./utils/typeGuards";
  */
 export function processAssocConst(item: Item): ReviewLine[] | null {
   if (!isAssocConstItem(item)) return null;
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item): [];
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
@@ -30,9 +31,8 @@ export function processAssocConst(item: Item): ReviewLine[] | null {
   // Add name
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "unknown",
+    Value: item.name || "unknown_assoc_const",
     HasSuffixSpace: false,
-    RenderClasses: ["interface"],
   });
 
   // Add colon
@@ -62,5 +62,6 @@ export function processAssocConst(item: Item): ReviewLine[] | null {
   });
 
   reviewLines.push(reviewLine);
+  lineIdMap.set(item.id.toString(), `const_${item.name}`);
   return reviewLines;
 }

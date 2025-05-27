@@ -1,7 +1,7 @@
 parameters:
   Repos: []
   DirectoryToSync: eng/common
-  FilePattern: ''
+  FilePatterns: []
   CommitMessage: commit-message-not-set
   UpstreamBranchName: branch-name-not-set
   BaseBranchName: $(DefaultBranch)
@@ -153,10 +153,18 @@ steps:
         Set-PsDebug -Trace 1
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         New-Item -ItemType Directory -Force -ErrorAction Ignore -Path $repoPath
-        Remove-Item -v -r -ErrorAction Ignore "$repoPath${{ parameters.FilePattern }}"
-        Copy-Item -v -r `
-          "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }}" `
-          $repoPath
+
+        $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
+        if (!$filePatterns) { $filePatterns = @("*")}
+
+        foreach ($filePattern in $filePatterns) {
+          Write-Host "Copying files with pattern: $filePattern"
+
+          Remove-Item -v -r -ErrorAction Ignore "${repoPath}/${filePattern}"
+          Copy-Item -v -r `
+            "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}/${filePattern}" `
+            $repoPath
+        }
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, mapLanguageAliases, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -94,9 +94,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   selectedApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
-    { label: 'Full Diff', value: FULL_DIFF_STYLE },
-    { label: 'Only Trees', value: TREE_DIFF_STYLE },
-    { label: 'Only Nodes', value: NODE_DIFF_STYLE }
+    { label: 'Changed types only', value: TREE_DIFF_STYLE },
+    { label: 'Full diff', value: FULL_DIFF_STYLE }
   ];
   selectedDiffStyle : string = this.diffStyleOptions[0];
 
@@ -355,7 +354,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       icon.classList.add('bi-clipboard');
     }, 1500);
 
-    this.copyReviewTextEmitter.emit(true);
+    this.copyReviewTextEmitter.emit(this.isDiffView);
   }
 
   clearReviewSearch() {

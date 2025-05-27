@@ -1,5 +1,14 @@
 # Release History
 
+## 0.5.6 (2025-04-23)
+- Documentation updates and fixing checkers
+
+## 0.5.5 (2025-04-22)
+
+- Bug fix for `do-not-log-raised-errors` checker
+- `do-not-log-exceptions` renamed to `do-not-log-exceptions-if-not-debug`
+- `do-not-use-logging-exception` checker added
+
 ## 0.5.4 (2025-04-16)
 - Bug fix for `do-not-import-asyncio` checker
 

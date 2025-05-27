@@ -4,7 +4,7 @@ import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, convertRowOfTokensToString, DIFF_ADDED, DIFF_REMOVED, isDiffRow } from 'src/app/_helpers/common-helpers';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
@@ -681,11 +681,25 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
-  copyReviewTextToClipBoard() {
+  copyReviewTextToClipBoard(isDiffView: boolean) {
     const reviewText : string [] = [];
     this.codePanelRowData.forEach((row) => {
       if (row.rowOfTokens && row.rowOfTokens.length > 0) {
         let codeLineText = convertRowOfTokensToString(row.rowOfTokens);
+        if (isDiffView) {
+          switch (row.diffKind) {
+            case DIFF_ADDED:
+              codeLineText = `+ ${codeLineText}`;
+              break; 
+            case DIFF_REMOVED:
+              codeLineText = `- ${codeLineText}`;
+              break;
+            default :
+              codeLineText = `  ${codeLineText}`;
+              break;
+          }
+        }
+
         if (row.indent && row.indent > 0) {
           codeLineText = '\t'.repeat(row.indent - 1) + codeLineText;
         }

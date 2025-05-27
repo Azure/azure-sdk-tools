@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
@@ -57,53 +58,9 @@ namespace APIViewWeb
             {
                 await stream.CopyToAsync(file);
             }
-            try
-            {
-                var pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
-                var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
-                RunProcess(tempDirectory, pythonVenvPath, arguments);
-                _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
-                using (var codeFileStream = File.OpenRead(jsonFilePath))
-                {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
-                    codeFile.VersionString = VersionString;
-                    codeFile.Language = Name;
-                    return codeFile;
-                }
-            }
-            catch(Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-                throw;
-            }
-            finally
-            {
-                Directory.Delete(tempDirectory, true);
-            }
-        }
-
-        private void RunProcess(string workingDirectory, string processName, string args)
-        {
-            var processStartInfo = new ProcessStartInfo(processName, args)
-            {
-                WorkingDirectory = workingDirectory,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            };
-            using (var process = Process.Start(processStartInfo))
-            {
-                process.WaitForExit(3 * 60 * 1000);
-                _telemetryClient.TrackEvent("Completed parsing python wheel. Exit code: " + process.ExitCode);
-                if (process.ExitCode != 0)
-                {
-                    throw new InvalidOperationException(
-                        "Processor failed: " + Environment.NewLine +
-                        "stdout: " + Environment.NewLine +
-                        process.StandardOutput.ReadToEnd() + Environment.NewLine +
-                        "stderr: " + Environment.NewLine +
-                        process.StandardError.ReadToEnd() + Environment.NewLine);
-                }
-            }
+            var pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
+            var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
+            return await RunParserProcess(originalName, pythonVenvPath, jsonFilePath, arguments);
         }
     }
 }

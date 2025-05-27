@@ -62,3 +62,22 @@ export function isDiffRow(row: CodePanelRowData) {
 export function convertRowOfTokensToString(rowOfTokens: StructuredToken[]): string {
   return rowOfTokens.map(token => token.value).join('');
 }
+
+export function getSupportedLanguages(): any {
+  return [
+    { label: "C", data: "C" },
+    { label: "C#", data: "C#" },
+    { label: "C++", data: "C++" },
+    { label: "Go", data: "Go" },
+    { label: "Java", data: "Java" },
+    { label: "JavaScript", data: "JavaScript" },
+    { label: "Json", data: "Json" },
+    { label: "Kotlin", data: "Kotlin" },
+    { label: "Python", data: "Python" },
+    { label: "Rust", data: "Rust" },
+    { label: "Swagger", data: "Swagger" },
+    { label: "Swift", data: "Swift" },
+    { label: "TypeSpec", data: "TypeSpec" },
+    { label: "Xml", data: "Xml" }
+  ];
+}

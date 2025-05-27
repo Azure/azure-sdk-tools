@@ -9,12 +9,12 @@ namespace APIViewWeb.Pages.Assemblies
     public class DeleteModel : PageModel
     {
         private readonly IReviewManager _manager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
 
-        public DeleteModel(IReviewManager manager, UserPreferenceCache preferenceCache)
+        public DeleteModel(IReviewManager manager, UserProfileCache userProfileCache)
         {
             _manager = manager;
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
         }
 
         public string AssemblyName { get; set; }

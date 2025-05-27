@@ -46,10 +46,10 @@ parameters:
 - name: DailyBranchRepos
   type: object
   default:
-    - Azure/azure-docs-sdk-dotnet
-    - Azure/azure-docs-sdk-java
     - MicrosoftDocs/azure-docs-sdk-node
     - MicrosoftDocs/azure-docs-sdk-python
+    - MicrosoftDocs/azure-docs-sdk-java
+    - MicrosoftDocs/azure-docs-sdk-net
 
 - name: RestAPISpecsDocsRepos
   type: object

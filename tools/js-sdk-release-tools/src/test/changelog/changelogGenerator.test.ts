@@ -5,22 +5,71 @@ import { SDKType } from "../../common/types.js";
 import { describe } from "node:test";
 import { tryReadNpmPackageChangelog } from "../../common/utils.js";
 import { removeSync, outputFileSync } from "fs-extra";
+import { getFirstReleaseContent } from "../../common/changelog/modifyChangelogFileAndBumpVersion.js";
+
+describe("Change log for first release package", () => {
+    test("ModularClient -> firstGA", async () => {
+        const root = path.join(__dirname, "testCases/modular-first-release/");
+        const content = getFirstReleaseContent(root, true);
+        expect(content).toBe(
+            "This is the first stable version with the package of @azure/arm-test",
+        );
+    });
+
+    test("ModularClient -> firstBeta", async () => {
+        const root = path.join(__dirname, "testCases/modular-first-release/");
+        const content = getFirstReleaseContent(root, false);
+        expect(content).toBe("Initial release of the @azure/arm-test package");
+    });
+
+    test("HLC -> firstGA", async () => {
+        const root = path.join(__dirname, "testCases/hlc-first-release/");
+        const content = getFirstReleaseContent(root, true);
+        expect(content).toBe(
+            "The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).",
+        );
+    });
+
+    test("HLC -> firstBeta", async () => {
+        const root = path.join(__dirname, "testCases/hlc-first-release/");
+        const content = getFirstReleaseContent(root, false);
+        expect(content).toBe(
+            "The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).",
+        );
+    });
+
+    test("RLC -> firstGA", async () => {
+        const root = path.join(__dirname, "testCases/rlc-first-release/");
+        const content = getFirstReleaseContent(root, true);
+        expect(content).toBe(
+            "This is the first stable version with the package of @azure-rest/test",
+        );
+    });
+
+    test("RLC -> firstBeta", async () => {
+        const root = path.join(__dirname, "testCases/rlc-first-release/");
+        const content = getFirstReleaseContent(root, false);
+        expect(content).toBe(
+            "Initial release of the @azure-rest/test package",
+        );
+    });
+});
 
 describe("Breaking change detection", () => {
     test("HLC -> Modular: Rename", async () => {
         const oldViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.1.old.hlc.api.md"
+            "testCases/operationGroups.1.old.hlc.api.md",
         );
         const newViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.1.new.modular.api.md"
+            "testCases/operationGroups.1.new.modular.api.md",
         );
         const changelog = await extractExportAndGenerateChangelog(
             oldViewPath,
             newViewPath,
             SDKType.HighLevelClient,
-            SDKType.ModularClient
+            SDKType.ModularClient,
         );
 
         expect(changelog.addedOperationGroup.length).toBe(0);
@@ -30,27 +79,27 @@ describe("Breaking change detection", () => {
         expect(changelog.removedOperation.length).toBe(1);
 
         expect(changelog.addedOperation[0].line).toBe(
-            "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
+            "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW",
         );
         expect(changelog.removedOperation[0].line).toBe(
-            "Removed operation DataProductsCatalogs.listByResourceGroup"
+            "Removed operation DataProductsCatalogs.listByResourceGroup",
         );
     });
 
     test("HLC -> HLC: Change Op", async () => {
         const oldViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.2.old.hlc.api.md"
+            "testCases/operationGroups.2.old.hlc.api.md",
         );
         const newViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.2.new.hlc.api.md"
+            "testCases/operationGroups.2.new.hlc.api.md",
         );
         const changelog = await extractExportAndGenerateChangelog(
             oldViewPath,
             newViewPath,
             SDKType.HighLevelClient,
-            SDKType.HighLevelClient
+            SDKType.HighLevelClient,
         );
 
         expect(changelog.addedOperationGroup.length).toBe(0);
@@ -60,27 +109,27 @@ describe("Breaking change detection", () => {
         expect(changelog.removedOperation.length).toBe(1);
 
         expect(changelog.addedOperation[0].line).toBe(
-            "Added operation DataProductsCatalogs.get_NEW"
+            "Added operation DataProductsCatalogs.get_NEW",
         );
         expect(changelog.removedOperation[0].line).toBe(
-            "Removed operation DataProductsCatalogs.get"
+            "Removed operation DataProductsCatalogs.get",
         );
     });
 
     test("Modular -> Modular: Change Op", async () => {
         const oldViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.3.old.modular.api.md"
+            "testCases/operationGroups.3.old.modular.api.md",
         );
         const newViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.3.new.modular.api.md"
+            "testCases/operationGroups.3.new.modular.api.md",
         );
         const changelog = await extractExportAndGenerateChangelog(
             oldViewPath,
             newViewPath,
             SDKType.ModularClient,
-            SDKType.ModularClient
+            SDKType.ModularClient,
         );
 
         expect(changelog.addedOperationGroup.length).toBe(0);
@@ -90,27 +139,27 @@ describe("Breaking change detection", () => {
         expect(changelog.removedOperation.length).toBe(1);
 
         expect(changelog.addedOperation[0].line).toBe(
-            "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
+            "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW",
         );
         expect(changelog.removedOperation[0].line).toBe(
-            "Removed operation DataProductsCatalogsOperations.listByResourceGroup"
+            "Removed operation DataProductsCatalogsOperations.listByResourceGroup",
         );
     });
 
     test("HLC -> HLC: Operation Group Add/Remove/ChangeSig", async () => {
         const oldViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.4.old.hlc.api.md"
+            "testCases/operationGroups.4.old.hlc.api.md",
         );
         const newViewPath = path.join(
             __dirname,
-            "testCases/operationGroups.4.new.hlc.api.md"
+            "testCases/operationGroups.4.new.hlc.api.md",
         );
         const changelog = await extractExportAndGenerateChangelog(
             oldViewPath,
             newViewPath,
             SDKType.HighLevelClient,
-            SDKType.HighLevelClient
+            SDKType.HighLevelClient,
         );
 
         expect(changelog.addedOperationGroup.length).toBe(1);
@@ -122,28 +171,34 @@ describe("Breaking change detection", () => {
         expect(changelog.operationSignatureChange.length).toBe(1);
 
         expect(changelog.addedOperationGroup[0].line).toBe(
-            "Added operation group DataProductsCatalogs_add"
+            "Added operation group DataProductsCatalogs_add",
         );
         expect(changelog.removedOperationGroup[0].line).toBe(
-            "Removed operation group DataProductsCatalogs_remove"
+            "Removed operation group DataProductsCatalogs_remove",
         );
         expect(changelog.operationSignatureChange[0].line).toBe(
-            "Operation DataProductsCatalogs_sig_change.get has a new signature"
+            "Operation DataProductsCatalogs_sig_change.get has a new signature",
         );
     });
 
     test("Patch RLC -> RLC's basic breaking changes", async () => {
         const root = path.join(
             __dirname,
-            "../../../packages/typescript-codegen-breaking-change-detector/misc/test-cases/patch-detection/"
+            "../../../packages/typescript-codegen-breaking-change-detector/misc/test-cases/patch-detection/",
         );
-        const oldViewPath = path.join(__dirname, `testCases/patch.1.old.rlc.api.md`);
-        const newViewPath = path.join(__dirname, `testCases/patch.1.new.rlc.api.md`);
+        const oldViewPath = path.join(
+            __dirname,
+            `testCases/patch.1.old.rlc.api.md`,
+        );
+        const newViewPath = path.join(
+            __dirname,
+            `testCases/patch.1.new.rlc.api.md`,
+        );
         const changelog = await extractExportAndGenerateChangelog(
             oldViewPath,
             newViewPath,
             SDKType.RestLevelClient,
-            SDKType.RestLevelClient
+            SDKType.RestLevelClient,
         );
         console.log("changelog --");
         expect(changelog.displayChangeLog()).toBe(
@@ -168,25 +223,27 @@ describe("Breaking change detection", () => {
   - Function funcParameterType has a new signature
   - Removed function overload "export function isUnexpected(response: C | D): response is A;"
   - Removed Type Alias typesRemove
-  - Type alias "typesChange" has been changed`
+  - Type alias "typesChange" has been changed`,
         );
     });
 });
 
 describe("Changelog reading", () => {
-        test("Read changelog that doesn't exist", () => {
-            const content = tryReadNpmPackageChangelog('./do/not/exist/CHANGELOG.md');
-            expect(content).toBe("");
-        });
-    
-        test("Read changelog that exists", () => {
-            const changelogPath = path.join('CHANGELOG.md')
-            try {
-                outputFileSync(changelogPath, 'aaa', 'utf-8');
-                const content = tryReadNpmPackageChangelog(changelogPath);
-                expect(content).toBe("aaa");
-            } finally {
-                removeSync(changelogPath);
-            }
-        })
+    test("Read changelog that doesn't exist", () => {
+        const content = tryReadNpmPackageChangelog(
+            "./do/not/exist/CHANGELOG.md",
+        );
+        expect(content).toBe("");
+    });
+
+    test("Read changelog that exists", () => {
+        const changelogPath = path.join("CHANGELOG.md");
+        try {
+            outputFileSync(changelogPath, "aaa", "utf-8");
+            const content = tryReadNpmPackageChangelog(changelogPath);
+            expect(content).toBe("aaa");
+        } finally {
+            removeSync(changelogPath);
+        }
+    });
 });

@@ -12,7 +12,7 @@
   {
     "id": "golang_implementation.html#golang-network-azure-core-policies",
     "category": "Using azcore.Pipeline",
-    "text": "YOU SHOULD use the policy implementations in Azure Core whenever possible. Do not try to \"write your own\" policy unless it is doing something unique to your service. If you need another option to an existing policy, engage with the [Architecture Board] to add the option.\n\nTODO\n\nTODO\n\nTODO\n\nTODO\n\nTODO\n\nTODO"
+    "text": "YOU SHOULD use the policy implementations in Azure Core whenever possible. Do not try to \"write your own\" policy unless it is doing something unique to your service. If you need another option to an existing policy, engage with the [Architecture Board] to add the option."
   },
   {
     "id": "golang_implementation.html#golang-enum-type",
@@ -32,7 +32,7 @@
   {
     "id": "golang_implementation.html#golang-enum-type-values",
     "category": "Constants as Enumerations",
-    "text": "DO define a function named <EnumTypeName>Values() that returns a slice containing all possible values for the enumeration.\n\n```go\n// WidgetColor specifies a Widget's color from the list of possible values.\ntype WidgetColor string\n\nconst (\n\tWidgetColorBlue  WidgetColor = \"blue\"\n\tWidgetColorGreen WidgetColor = \"green\"\n\tWidgetColorRed   WidgetColor = \"red\"\n)\n\n// PossibleWidgetColorValues returns a slice of possible values for WidgetColor.\nfunc PossibleWidgetColorValues() []WidgetColor {\n\t// ...\n}\n\n\n```\n\nTODO"
+    "text": "DO define a function named <EnumTypeName>Values() that returns a slice containing all possible values for the enumeration.\n\n```go\n// WidgetColor specifies a Widget's color from the list of possible values.\ntype WidgetColor string\n\nconst (\n\tWidgetColorBlue  WidgetColor = \"blue\"\n\tWidgetColorGreen WidgetColor = \"green\"\n\tWidgetColorRed   WidgetColor = \"red\"\n)\n\n// PossibleWidgetColorValues returns a slice of possible values for WidgetColor.\nfunc PossibleWidgetColorValues() []WidgetColor {\n\t// ...\n}\n\n\n```"
   },
   {
     "id": "golang_implementation.html#golang-config-global",
@@ -122,6 +122,6 @@
   {
     "id": "golang_implementation.html#golang-tracing-propagate",
     "category": "Distributed Tracing",
-    "text": "DO propagate tracing context on each outgoing service request through the appropriate headers to support a tracing service like Azure Monitor (https://azure.microsoft.com/services/monitor/) or ZipKin (https://zipkin.io/)   This is generally done with the HTTP pipeline.\n\nTODO\n\nTODO"
+    "text": "DO propagate tracing context on each outgoing service request through the appropriate headers to support a tracing service like Azure Monitor (https://azure.microsoft.com/services/monitor/) or ZipKin (https://zipkin.io/)   This is generally done with the HTTP pipeline."
   }
 ]

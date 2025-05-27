@@ -11,7 +11,7 @@ $javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | Con
 Describe ".NET Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $NET_REPO = "Azure/azure-sdk-for-net"
-        $NET_REPO_REF = "adaf77d86185ab38e86e20647f9327bf78e8a6c2"
+        $NET_REPO_REF = "5594fe195625e2816ed54d556d8948a8f60d862c"
 
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo $NET_REPO -Reference $NET_REPO_REF

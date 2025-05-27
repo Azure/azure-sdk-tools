@@ -7,6 +7,7 @@ import { isStructItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { getAPIJson } from "../main";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -19,10 +20,11 @@ export function processStruct(item: Item): ReviewLine[] {
   const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `struct_${item.name}`);
   // Process derives and impls
   let implResult: ImplProcessResult;
   if (item.inner.struct.impls) {
-    implResult = processImpl({ ...item, inner: { struct: item.inner.struct } });
+    implResult = processImpl(item);
   }
 
   const structLine: ReviewLine = {
@@ -33,7 +35,6 @@ export function processStruct(item: Item): ReviewLine[] {
 
   if (implResult.deriveTokens.length > 0) {
     const deriveTokensLine: ReviewLine = {
-      LineId: item.id.toString() + "_derive",
       Tokens: implResult.deriveTokens,
       RelatedToLine: item.id.toString(),
     };
@@ -47,10 +48,11 @@ export function processStruct(item: Item): ReviewLine[] {
 
   structLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
-    RenderClasses: ["struct"],
+    Value: item.name || "unknown_struct",
+    RenderClasses: ["class"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
+    HasSuffixSpace: false,
   });
 
   const genericsTokens = processGenerics(item.inner.struct.generics);
@@ -74,6 +76,7 @@ export function processStruct(item: Item): ReviewLine[] {
       Kind: TokenKind.Punctuation,
       Value: "{",
       HasSuffixSpace: false,
+      HasPrefixSpace: true,
     });
     item.inner.struct.kind.plain.fields.forEach((fieldId: number) => {
       const fieldItem = apiJson.index[fieldId];

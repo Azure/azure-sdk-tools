@@ -6,7 +6,7 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = "Usage Samples";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
     TempData["UserPreference"] = userPreference;
 }
 
@@ -15,7 +15,7 @@
     var leftOffCanvasClass = " show-left-offcanvas";
     var mainContainerLeftClass = " move-main-content-container-left";
     var mainContainerRightClass = " move-main-content-container-right";
-    if (userPreference.HideSamplesPageOptions.HasValue && userPreference.HideSamplesPageOptions == true)
+    if (userPreference.HideSamplesPageOptions)
     {
         rightOffCanvasClass = String.Empty;
         mainContainerRightClass = String.Empty;

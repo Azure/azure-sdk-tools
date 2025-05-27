@@ -1,7 +1,7 @@
 import { Type } from "../../../rustdoc-types/output/rustdoc-types";
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
-import { reexportLines } from "../processUse";
-import { externalReexports } from "./externalReexports";
+import { registerExternalItemReference } from "./externalReexports";
+import { replaceSuperPrefix } from "./pathUtils";
 import { processFunctionPointer } from "./processFunctionPointer";
 import { processGenericArgs } from "./processGenerics";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
@@ -17,18 +17,13 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
     // Create the base token for the type name
     const baseToken: ReviewToken = {
       Kind: TokenKind.TypeName,
-      Value: type.resolved_path.name || "unnamed",
+      Value: replaceSuperPrefix(type.resolved_path.name) || "unnamed_resolved_path",
       HasSuffixSpace: false,
       NavigateToId: type.resolved_path.id.toString(),
     };
 
-    // If the reexportLines.external.items does not already contain the line, add it
-    if (
-      !reexportLines.external.items.some((line) => line.LineId === type.resolved_path.id.toString())
-    ) {
-      const lines = externalReexports(type.resolved_path.id);
-      reexportLines.external.items.push(...lines.items);
-    }
+    // Add references if it's an external type
+    registerExternalItemReference(type.resolved_path.id);
     // If there are no generic arguments, just return the base token
     if (!type.resolved_path.args) {
       return [baseToken];
@@ -107,7 +102,8 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       ...type.impl_trait.flatMap((b, i) => {
         if ("trait_bound" in b) {
           return [
-            { Kind: TokenKind.TypeName, Value: b.trait_bound.trait.name },
+            { Kind: TokenKind.TypeName, Value: b.trait_bound.trait.name, HasSuffixSpace: false },
+            ...processGenericArgs(b.trait_bound.trait.args),
             i < type.impl_trait.length - 1
               ? { Kind: TokenKind.Punctuation, Value: "+", HasSuffixSpace: false }
               : { Kind: TokenKind.Text, Value: "", HasSuffixSpace: false },

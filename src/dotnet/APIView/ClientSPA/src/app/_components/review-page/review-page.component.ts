@@ -511,7 +511,7 @@ export class ReviewPageComponent implements OnInit {
   }
 
   handleCopyReviewTextEmitter(event: boolean) {
-    this.codePanelComponent.copyReviewTextToClipBoard();
+    this.codePanelComponent.copyReviewTextToClipBoard(event);
   }
   
   handleCodeLineSearchTextEmitter(searchText: string) {

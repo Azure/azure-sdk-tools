@@ -1,7 +1,19 @@
-from src import ApiViewReview
-from flask import Flask, request, jsonify
+from src._apiview_reviewer import ApiViewReview
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+import os
+import json
+import logging
 
-app = Flask(__name__)
+app = FastAPI()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("app.log"), logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
 
 supported_languages = [
     "android",
@@ -16,12 +28,50 @@ supported_languages = [
     "typescript",
 ]
 
+_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 
-@app.route("/<language>", methods=["POST"])
-def api_reviewer(language: str):
+
+@app.post("/{language}")
+async def api_reviewer(language: str, request: Request):
+    logger.info(f"Received request for language: {language}")
+
     if language not in supported_languages:
-        return jsonify({"error": "Unsupported language"}), 400
-    data = request.get_json()
-    content = data["content"]
-    result = ApiViewReview(language=language, model="o3-mini").get_response(content)
-    return jsonify(result.model_dump_json())
+        logger.warning(f"Unsupported language: {language}")
+        raise HTTPException(status_code=400, detail="Unsupported language")
+
+    try:
+        data = await request.json()
+
+        target_apiview = data.get("target", None)
+        target_id = data.get("target_id", None)
+        base_apiview = data.get("base", None)
+        outline = data.get("outline", None)
+
+        if not target_apiview:
+            logger.warning("No API content provided in the request")
+            raise HTTPException(status_code=400, detail="No API content provided")
+
+        logger.info(f"Processing {language} API review")
+
+        reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview, outline=outline)
+        result = reviewer.run()
+        reviewer.close()
+
+        # Check if "error.log" file exists and is not empty
+        if os.path.exists(error_log_file) and os.path.getsize(error_log_file) > 0:
+            with open(error_log_file, "r") as f:
+                error_message = f.read()
+                logger.error(f"Error log contents:\n{error_message}")
+
+        logger.info("API review completed successfully")
+
+        # TODO: Add logic to post comments to the target_id, if provided
+
+        return JSONResponse(content=json.loads(result.model_dump_json()))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")

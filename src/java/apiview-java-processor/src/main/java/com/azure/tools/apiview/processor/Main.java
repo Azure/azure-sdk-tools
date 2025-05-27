@@ -10,16 +10,25 @@ import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.*;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidationMessage;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class Main {
@@ -32,6 +41,7 @@ public class Main {
             System.exit(-1);
         }
 
+        long startMillis = System.currentTimeMillis();
         final String jarFiles = args[0];
         final String[] jarFilesArray = jarFiles.split(",");
 
@@ -41,6 +51,7 @@ public class Main {
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
         Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+        System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
     }
 
     /**
@@ -87,7 +98,13 @@ public class Main {
                 System.out.println("  Validating the generated JSON file against the schema...");
                 try {
                     JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
-                    JsonSchema schema = factory.getSchema(new URL(Constants.APIVIEW_JSON_SCHEMA).toURI());
+                    // Load the schema from the classpath resource
+                    URL resource = Main.class.getResource(Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    if (resource == null) {
+                        throw new IllegalStateException("Resource not found: " + Constants.APIVIEW_JSON_SCHEMA_RESOURCE);
+                    }
+                    URI localResourceUri = resource.toURI();
+                    JsonSchema schema = factory.getSchema(localResourceUri);
 
                     JsonNode jsonNode = new ObjectMapper().readTree(files[0]);
                     schema.initializeValidators();
@@ -98,9 +115,7 @@ public class Main {
                         System.out.println("    Validation failed. Errors:");
                         validationMessages.forEach(msg -> System.out.println("      " + msg.getMessage()));
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (URISyntaxException e) {
+                } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
             }

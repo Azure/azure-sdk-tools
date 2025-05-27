@@ -1,10 +1,13 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Id, Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
+import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
-import { isModuleItem } from "./utils/typeGuards";
-import { getAPIJson } from "../main";
+import { isModuleItem, isUseItem } from "./utils/typeGuards";
+import { getAPIJson, processedItems } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
+import { processUse } from "./processUse";
+import { AnnotatedReviewLines } from "./utils/models";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -19,142 +22,154 @@ export function processModule(
 ): ReviewLine[] {
   if (!isModuleItem(item)) return [];
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
+  const apiJson = getAPIJson();
+  const isRootModule = item.id === apiJson.root;
 
+  lineIdMap.set(item.id.toString(), item.name || "unknown_mod");
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
     Tokens: [],
     Children: [],
   };
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "pub mod",
-  });
   let fullName = "";
-  // parent module
-  if (parentModule) {
-    fullName += parentModule.prefix + "::";
+
+  if (!isRootModule) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "pub mod",
+    });
+    // parent module
+    if (parentModule) {
+      fullName += parentModule.prefix + "::";
+      reviewLine.Tokens.push({
+        Kind: TokenKind.TypeName,
+        Value: parentModule.prefix,
+        RenderClasses: ["namespace"],
+        NavigateToId: parentModule.id.toString(),
+        HasSuffixSpace: false,
+      });
+      reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: `::`,
+        HasSuffixSpace: false,
+      });
+    }
+    fullName += item.name;
+    lineIdMap.set(item.id.toString(), fullName);
+    // current module
     reviewLine.Tokens.push({
       Kind: TokenKind.TypeName,
-      Value: parentModule.prefix,
+      Value: item.name || "unknown_mod",
       RenderClasses: ["namespace"],
-      NavigateToId: parentModule.id.toString(),
-      HasSuffixSpace: false,
+      NavigateToId: item.id.toString(),
+      NavigationDisplayName: fullName,
     });
+
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
-      Value: `::`,
+      Value: "{",
       HasSuffixSpace: false,
     });
   }
 
-  fullName += item.name;
-  // current module
-  reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
-    Value: item.name || "null",
-    RenderClasses: ["namespace"],
-    NavigateToId: item.id.toString(),
-    NavigationDisplayName: fullName,
-  });
+  const allChildIds = item.inner.module.items;
+  const regularChildIds = [];
+  const useChildIds = [];
 
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: "{",
-    HasSuffixSpace: false,
-  });
+  const annotatedReviewLines: AnnotatedReviewLines = { siblingModule: {}, children: {} };
+  const passThroughParentInfo = isRootModule
+    ? parentModule
+    : {
+        id: item.id,
+        prefix: fullName,
+      };
+  for (const childId of allChildIds) {
+    if (isModuleItem(apiJson.index[childId])) {
+      // 1. Process child modules first so that any references in the parent modules can be shown as links than the fully dereferenced version
+      annotatedReviewLines.siblingModule[childId] = processModule(
+        apiJson.index[childId],
+        passThroughParentInfo,
+      );
+      processedItems.add(childId);
+    } else if (!isUseItem(apiJson.index[childId])) {
+      // 2. Non-use children should be processed before the use items and after the child modules
+      regularChildIds.push(childId);
+    } else if (isUseItem(apiJson.index[childId])) {
+      // 3. handle use items; with globs, non-globs, modules, items, etc; either as references or add as children to this module
+      useChildIds.push(childId);
+    }
+  }
 
-  if (item.inner && "module" in item.inner && item.inner.module.items) {
-    const result = processModuleChildren(item, reviewLine, parentModule);
-    reviewLines.push(...result);
-  } else {
-    // Empty module case
-    reviewLine.Tokens.push({
-      Kind: TokenKind.Punctuation,
-      Value: "}",
-    });
-    reviewLines.push(reviewLine);
+  if (regularChildIds.length > 0) {
+    for (const childId of regularChildIds) {
+      if (childId in apiJson.index) {
+        annotatedReviewLines.children[childId] = processItem(apiJson.index[childId]) || [];
+        processedItems.add(childId);
+      }
+    }
+  }
+
+  // Process the use items
+  if (useChildIds.length > 0) {
+    for (const childId of useChildIds) {
+      const useResult = processUse(apiJson.index[childId], passThroughParentInfo);
+      processedItems.add(childId);
+      for (const key in useResult.siblingModule) {
+        annotatedReviewLines.siblingModule[key] = useResult.siblingModule[key];
+      }
+      for (const key in useResult.children) {
+        annotatedReviewLines.children[key] = useResult.children[key];
+      }
+    }
+  }
+
+  // Take the keys from the children object, sort using getSortedChildren
+  // and then push to reviewLine.Children in that order
+  if (Object.keys(annotatedReviewLines.children).length > 0) {
+    const sortedChildIds = getSortedChildIds(
+      Object.keys(annotatedReviewLines.children).map((key) => parseInt(key)),
+    );
+    for (const childId of sortedChildIds.nonModule) {
+      if (annotatedReviewLines.children[childId]) {
+        if (!isRootModule) {
+          // If it is not rootModule, add items as children to the reviewLine
+          reviewLine.Children.push(...annotatedReviewLines.children[childId]);
+        } else {
+          // If it is rootModule, add items to the top-level
+          reviewLines.push(...annotatedReviewLines.children[childId]);
+        }
+      }
+    }
+  }
+
+  if (!isRootModule) {
+    if (reviewLine.Children.length > 0) {
+      // Add the closing brace for the module
+      reviewLines.push(reviewLine);
+      reviewLines.push({
+        Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+        IsContextEndLine: true,
+        RelatedToLine: reviewLine.LineId,
+      });
+    } else {
+      // Empty module case (no direct items or relevant re-exports)
+      reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: "}",
+      });
+      reviewLines.push(reviewLine);
+    }
+  }
+
+  // there will be sibling modules from the re-exported Use modules
+  // add them to the allChildIds.module, sort them again
+  const sortedSiblingModuleIds = getSortedChildIds(
+    Object.keys(annotatedReviewLines.siblingModule).map((key) => parseInt(key)),
+  );
+  for (const childId of sortedSiblingModuleIds.module) {
+    reviewLines.push(...annotatedReviewLines.siblingModule[childId]);
   }
 
   return reviewLines;
-}
-
-/**
- * Processes the children of a module item.
- *
- * @param {Item} item - The module item whose children are to be processed.
- * @param {ReviewLine} moduleReviewLine - The ReviewLine for the module declaration.
- * @param {Object} parentModule - Optional parent module information.
- * @returns {ReviewLine[]} Array of ReviewLine objects for the module and its children.
- */
-function processModuleChildren(
-  item: Item,
-  moduleReviewLine: ReviewLine,
-  parentModule?: { prefix: string; id: number },
-): ReviewLine[] {
-  const apiJson = getAPIJson();
-  const resultLines: ReviewLine[] = [];
-  let nonModuleChildrenExist = false;
-
-  if (!isModuleItem(item)) {
-    return [];
-  }
-  const sortedChildIds = getSortedChildIds(item.inner.module.items);
-
-  // Process non-module children in the sorted order
-  for (let i = 0; i < sortedChildIds.nonModule.length; i++) {
-    const childId = sortedChildIds.nonModule[i];
-    const childItem = apiJson.index[childId];
-    if (!isModuleItem(childItem)) {
-      const childReviewLines = processItem(childItem);
-      if (childReviewLines) {
-        if (!moduleReviewLine.Children) {
-          moduleReviewLine.Children = [];
-        }
-        moduleReviewLine.Children.push(...childReviewLines.filter((item) => item != null));
-      }
-      nonModuleChildrenExist = true;
-    }
-  }
-
-  // Add the current module's review line after processing non-module children
-  resultLines.push(moduleReviewLine);
-  if (!nonModuleChildrenExist) {
-    moduleReviewLine.Tokens.push({
-      Kind: TokenKind.Punctuation,
-      Value: "}",
-    });
-  } else {
-    resultLines.push({
-      RelatedToLine: item.id.toString(),
-      Tokens: [
-        {
-          Kind: TokenKind.Punctuation,
-          Value: "}",
-        },
-      ],
-    });
-  }
-
-  // Then process module children
-  for (let i = 0; i < sortedChildIds.module.length; i++) {
-    const moduleChildId = sortedChildIds.module[i];
-    const moduleChild = apiJson.index[moduleChildId];
-    const childItem = apiJson.index[moduleChild.id];
-    const modulePrefix = parentModule
-      ? parentModule.prefix
-        ? `${parentModule.prefix}::${item.name}`
-        : item.name
-      : item.name;
-    const siblingModuleLines = processModule(childItem, {
-      id: item.id,
-      prefix: modulePrefix,
-    });
-    if (siblingModuleLines) {
-      resultLines.push(...siblingModuleLines);
-    }
-  }
-
-  return resultLines;
 }

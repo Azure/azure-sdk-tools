@@ -545,14 +545,9 @@ class ApiViewReview:
             # Canary: minimal search query
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             try:
-                # Use a trivial query that should always succeed (empty or 'canary')
-                _ = self.search.search_all(query="canary")
-            except Exception as search_exc:
-                return f"Azure Search authentication failed: {type(search_exc).__name__}: {search_exc}"
-
-            try:
-                # Try CosmosDB context build with empty results (should fail fast if not permitted)
-                _ = self.search.build_context([])
+                # Use a real search result, even if empty
+                canary_results = self.search.search_all(query="canary")
+                _ = self.search.build_context(canary_results)
             except Exception as cosmos_exc:
                 return f"CosmosDB authentication failed: {type(cosmos_exc).__name__}: {cosmos_exc}"
         except Exception as e:

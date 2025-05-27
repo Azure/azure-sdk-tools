@@ -31,3 +31,4 @@ Azure/autorest.swift
 Azure/autorest.cpp
 Azure/perks
 Azure/azure-rest-api-specs
+Azure/typespec-rust

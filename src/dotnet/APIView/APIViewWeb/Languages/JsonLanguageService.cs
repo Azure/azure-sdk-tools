@@ -12,18 +12,20 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Json";
         public override string[] Extensions { get; } = { ".json" };
+        public override string VersionString { get; } = "1.0";
+        public override bool UsesTreeStyleParser { get; } = false;
 
         public override bool CanUpdate(string versionString) => false;
 
         public override bool IsSupportedFile(string name)
         {
             // Skip JS uploads
-            return base.IsSupportedFile(name) && !name.EndsWith(".api.json", StringComparison.OrdinalIgnoreCase);
+            return base.IsSupportedFile(name) && !name.EndsWith(".api.json", StringComparison.OrdinalIgnoreCase) && !name.EndsWith(".rust.json", StringComparison.OrdinalIgnoreCase);
         }
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            return await CodeFile.DeserializeAsync(stream, true);
+            return await CodeFile.DeserializeAsync(stream);
         }
     }
 }

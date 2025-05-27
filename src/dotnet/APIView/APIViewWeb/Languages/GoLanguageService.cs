@@ -7,6 +7,8 @@ using System.IO.Compression;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
+using Microsoft.ApplicationInsights;
+using System.Text;
 
 namespace APIViewWeb
 {
@@ -15,7 +17,11 @@ namespace APIViewWeb
         public override string Name { get; } = "Go";
         public override string [] Extensions { get; } = { ".gosource" };
         public override string ProcessName { get; } = "apiviewgo";
-        public override string VersionString { get; } = "2";
+        public override string VersionString { get; } = "0.1";
+
+        public GoLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        {
+        }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
@@ -38,40 +44,8 @@ namespace APIViewWeb
             archive.ExtractToDirectory(tempDirectory);
             var packageRootDirectory = originalFilePath.Replace(Extensions[0], "");
 
-            try
-            {
-                var arguments = GetProcessorArguments(packageRootDirectory, tempDirectory, tempDirectory);
-                var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
-                processStartInfo.WorkingDirectory = tempDirectory;
-                processStartInfo.RedirectStandardError = true;
-                processStartInfo.RedirectStandardOutput = true;
-
-                using (var process = Process.Start(processStartInfo))
-                {
-                    process.WaitForExit();
-                    if (process.ExitCode != 0)
-                    {
-                        throw new InvalidOperationException(
-                            "Processor failed: " + Environment.NewLine +
-                            "stdout: " + Environment.NewLine +
-                            process.StandardOutput.ReadToEnd() + Environment.NewLine +
-                            "stderr: " + Environment.NewLine +
-                            process.StandardError.ReadToEnd() + Environment.NewLine);
-                    }
-                }
-
-                using (var codeFileStream = File.OpenRead(jsonFilePath))
-                {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
-                    codeFile.VersionString = VersionString;
-                    codeFile.Language = Name;
-                    return codeFile;
-                }
-            }
-            finally
-            {
-                Directory.Delete(tempDirectory, true);
-            }
+            var arguments = GetProcessorArguments(packageRootDirectory, tempDirectory, tempDirectory);
+            return await RunParserProcess(packageRootDirectory, tempDirectory, jsonFilePath, arguments);
         }
     }
 }

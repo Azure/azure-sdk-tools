@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -36,7 +36,6 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 {
                     headers.Remove(headerKey);
                 }
-
             }
         }
     }

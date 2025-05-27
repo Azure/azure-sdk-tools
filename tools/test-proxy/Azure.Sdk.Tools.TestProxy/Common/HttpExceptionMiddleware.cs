@@ -44,19 +44,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.StatusCode = statusCode;
                 response.ContentType = "application/json;";
 
-                var encodedException = Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message));
-
                 if (e is TestRecordingMismatchException)
                 {
-                    response.Headers.Add("x-request-mismatch", "true");
-                    response.Headers.Add("x-request-mismatch-error", encodedException);
+                    response.Headers.Append("x-request-mismatch", "true");
+
+                    // grab the exception up till Remaining Entries: which can potentially push the header size past the default limit of ~8k
+                    var onlyMisMatchMessage = e.Message.Split("Remaining Entries:")[0];
+                    response.Headers.Append("x-request-mismatch-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(onlyMisMatchMessage)));
                 }
                 else
                 {
-                    response.Headers.Add("x-request-known-exception", "true");
-                    response.Headers.Add("x-request-known-exception-error", encodedException);
+                    response.Headers.Append("x-request-known-exception", "true");
+                    response.Headers.Append("x-request-known-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
                 }
-                
+
                 var bodyObj = new
                 {
                     Message = e.Message,
@@ -77,8 +78,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 response.StatusCode = unexpectedStatusCode;
                 response.ContentType = "application/json";
 
-                response.Headers.Add("x-request-exception", "true");
-                response.Headers.Add("x-request-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
+                response.Headers.Append("x-request-exception", "true");
+                response.Headers.Append("x-request-exception-error", Convert.ToBase64String(Encoding.UTF8.GetBytes(e.Message)));
 
                 DebugLogger.LogError(unexpectedStatusCode, e);
 

@@ -72,7 +72,8 @@ namespace APIViewWeb
         public override string Name { get; } = "C";
 
         public override string [] Extensions { get; } = { ".zip" };
-
+        public override string VersionString => CurrentVersion;
+        public override bool UsesTreeStyleParser { get; } = false;
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)

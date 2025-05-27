@@ -26,7 +26,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             { Language.JS, new JavaScript() },
             { Language.Net, new Net() },
             { Language.Python, new Python() },
-            { Language.Cpp, new Cpp() }
+            { Language.Cpp, new Cpp() },
+            { Language.Rust, new Rust() }
         };
 
         public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
@@ -59,7 +60,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option('l', "language", Required = true)]
             public Language Language { get; set; }
 
-            [Option("language-version", Required = true, HelpText = ".NET: 6|7, Java: 8|17, JS: 16|18, Python: 3.10|3.11, Cpp: N/A")]
+            [Option("language-version", Required = true, HelpText = ".NET: 6|7, Java: 8|17, JS: 16|18, Python: 3.10|3.11, Cpp: N/A, Rust: N/A")]
             public string LanguageVersion { get; set; }
 
             [Option("no-async")]
@@ -144,7 +145,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 // Cpp is sync-only
                 options.NoAsync = true;
             }
-
+            else if (options.Language == Language.Rust)
+            {
+                // Rust is sync-only
+                options.NoAsync = true;
+            }
             var serviceInfo = DeserializeYaml<ServiceInfo>(options.TestsFile);
 
             var selectedPackageVersions = serviceInfo.PackageVersions.Where(d =>

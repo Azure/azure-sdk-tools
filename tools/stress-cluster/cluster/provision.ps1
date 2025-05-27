@@ -1,3 +1,5 @@
+#!/bin/env pwsh
+
 [CmdletBinding(DefaultParameterSetName = 'Default', SupportsShouldProcess = $true)]
 param (
     [string]$Environment = 'dev',
@@ -5,17 +7,6 @@ param (
     [switch]$Development = $false,
     # If provisioning an existing cluster and updating nodes, it must be done exclusively
     [switch]$UpdateNodes = $false,
-
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $TenantId,
-
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $ProvisionerApplicationId,
-
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [string] $ProvisionerApplicationSecret,
 
     [ValidateScript({
         if (!(Test-Path $_)) {
@@ -32,7 +23,7 @@ param (
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" PSModule-Helpers.ps1)
-Install-ModuleIfNotInstalled -WhatIf:$false "powershell-yaml" "0.4.1" | Import-Module
+Install-ModuleIfNotInstalled -Confirm -WhatIf:$false "powershell-yaml" "0.4.7" | Import-Module
 
 $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
@@ -167,7 +158,7 @@ function DeployHelmResources()
         }
         RunOrExitOnFailure helm repo add --force-update $chartRepoName file://$absAddonsPath
     } else {
-        RunOrExitOnFailure helm repo add --force-update $chartRepoName https://stresstestcharts.blob.core.windows.net/helm/
+        RunOrExitOnFailure helm repo add --force-update $chartRepoName https://azuresdkartifacts.z5.web.core.windows.net/stress/
     }
     RunOrExitOnFailure helm repo add chaos-mesh https://charts.chaos-mesh.org
     RunOrExitOnFailure helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure
@@ -193,17 +184,17 @@ function RegisterAKSFeatures([string]$group, [string]$cluster) {
     }
     RunOrExitOnFailure az extension add --name aks-preview
     RunOrExitOnFailure az extension update --name aks-preview
-    RunOrExitOnFailure az feature register --namespace Microsoft.ContainerService --name EnableImageCleanerPreview
+    RunOrExitOnFailure az feature register --subscription $params.subscriptionId --namespace Microsoft.ContainerService --name EnableImageCleanerPreview
     $i = 0
     do {
         sleep $i
-        $feature = RunOrExitOnFailure az feature show --namespace Microsoft.ContainerService --name EnableImageCleanerPreview -o json
+        $feature = RunOrExitOnFailure az feature show --subscription $params.subscriptionId --namespace Microsoft.ContainerService --name EnableImageCleanerPreview -o json
         $feature = $feature | ConvertFrom-Json
         Write-Host "Waiting for 'EnableImageCleanerPreview' feature to register. This may take several minutes."
         $i = 30
     } while ($feature.properties.state -eq "Registering")
-    RunOrExitOnFailure az provider register --namespace Microsoft.ContainerService
-    RunOrExitOnFailure az aks update -g $group -n $cluster --enable-image-cleaner --image-cleaner-interval-hours 24
+    RunOrExitOnFailure az provider register --subscription $params.subscriptionId --namespace Microsoft.ContainerService
+    RunOrExitOnFailure az aks update --subscription $params.subscriptionId -g $group -n $cluster --enable-image-cleaner --image-cleaner-interval-hours 24
 }
 
 function LoadEnvParams()
@@ -231,22 +222,19 @@ function main()
         helm -h > $null
     }
 
-    if ($Environment -NotIn "prod", "pg" -and !$LocalAddonsPath) {
+    if ($Environment -NotIn "prod", "pg", "storage" -and !$LocalAddonsPath) {
         throw "When using a custom environment you must set -LocalAddonsPath to provide the stress-infrastructure release with environment values"
-    }
-
-    if ($PSCmdlet.ParameterSetName -eq 'Provisioner') {
-        az login `
-            --service-principal `
-            --username $ProvisionerApplicationId `
-            --password $ProvisionerApplicationSecret`
-            --tenant $TenantId
-        if ($LASTEXITCODE) { exit $LASTEXITCODE }
     }
 
     if (!$Development) {
         $params = LoadEnvParams
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
+
+        az account set -s $params.subscriptionId
+        if ($LASTEXITCODE) {
+            exit $LASTEXITCODE
+        }
+
         DeployClusterResources $params
         RegisterAKSFeatures $STRESS_CLUSTER_RESOURCE_GROUP $params.clusterName
     }

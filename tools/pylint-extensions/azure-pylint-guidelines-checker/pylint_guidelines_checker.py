@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4760
+Pylint custom checkers for SDK guidelines: C4717 - C4767
 """
 
 import logging
@@ -161,79 +161,93 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
             " https://azure.github.io/azure-sdk/python_design.html#service-operations",
             "unapproved-client-method-name-prefix",
             "All clients should use the preferred verbs for method names.",
-        )
-    }
-    options = (
-        (
-            "ignore-unapproved-client-method-name-prefix",
-            {
-                "default": False,
-                "type": "yn",
-                "metavar": "<y_or_n>",
-                "help": "Allow clients to not use preferred method name prefixes",
-            },
         ),
-    )
+    }
 
-    ignore_clients = [
+    ignore_clients = [  
         "PipelineClient",
         "AsyncPipelineClient",
         "ARMPipelineClient",
         "AsyncARMPipelineClient",
     ]
 
+    approved_prefixes = [
+        "get",
+        "list",
+        "create",
+        "upsert",
+        "set",
+        "update",
+        "replace",
+        "append",
+        "add",
+        "delete",
+        "remove",
+        "begin",
+        "upload",
+        "download", # standard verbs
+        "close",    # very common verb
+        "cancel",
+        "clear",
+        "subscribe",
+        "send",
+        "query",    # common verbs
+        "analyze",
+        "train",
+        "detect",   # future proofing
+        "from",     # special case
+    ]
+
+    ignored_decorators = [
+        "property",
+    ]
+
     def __init__(self, linter=None):
         super(ClientHasApprovedMethodNamePrefix, self).__init__(linter)
+        self.process_class = None
+        self.namespace = None
+    
+    def _check_decorators(self, node):
+        if not node.decorators:
+            return False
+        for decorator in node.decorators.nodes:
+            if isinstance(decorator, astroid.nodes.Name) and decorator.name in self.ignored_decorators:
+                return True
+        return False
+
+    def visit_module(self, node):
+        self.namespace = node.name
 
     def visit_classdef(self, node):
-        """Visits every class in file and checks if it is a client. If it is a client, checks
-        that approved method name prefixes are present.
+        if all((
+            node.name.endswith("Client"),
+            node.name not in self.ignore_clients,
+            not node.name.startswith("_"),
+            not '._' in self.namespace,
+        )):
+            self.process_class = node
 
-        :param node: class node
-        :type node: ast.ClassDef
-        :return: None
-        """
-        try:
-            if node.name.endswith("Client") and node.name not in self.ignore_clients:
-                client_methods = [
-                    child for child in node.get_children() if child.is_function
-                ]
-
-                approved_prefixes = [
-                    "get",
-                    "list",
-                    "create",
-                    "upsert",
-                    "set",
-                    "update",
-                    "replace",
-                    "append",
-                    "add",
-                    "delete",
-                    "remove",
-                    "begin",
-                ]
-                for idx, method in enumerate(client_methods):
-                    if (
-                        method.name.startswith("__")
-                        or "_exists" in method.name
-                        or method.name.startswith("_")
-                        or method.name.startswith("from")
-                    ):
-                        continue
-                    prefix = method.name.split("_")[0]
-                    if prefix.lower() not in approved_prefixes:
-                        self.add_message(
-                            msgid="unapproved-client-method-name-prefix",
-                            node=client_methods[idx],
-                            confidence=None,
-                        )
-        except AttributeError:
-            logger.debug(
-                "Pylint custom checker failed to check if client has approved method name prefix."
+    def visit_functiondef(self, node):
+        if any((
+            self.process_class is None, # not in a client class
+            node.name.startswith("_"), # private method
+            node.name.endswith("_exists"), # special case
+            self._check_decorators(node), # property
+            node.parent != self.process_class, # nested method
+        )):
+            return
+        
+        # check for approved prefix
+        parts = node.name.split("_")
+        if parts[0].lower() not in self.approved_prefixes:
+            self.add_message(
+                msgid="unapproved-client-method-name-prefix",
+                node=node,
+                confidence=None,
             )
-            pass
 
+    def leave_classdef(self, node):
+        self.process_class = None
 
 class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
     name = "client-method-multiple-parameters"
@@ -1741,7 +1755,8 @@ class CheckDocstringParameters(BaseChecker):
         """Checks if function returns anything.
         If return found, checks that the docstring contains a return doc and rtype.
 
-        :param node: ast.FunctionDef
+        :param node: function node
+        :type node: ast.FunctionDef
         :return: None
         """
 
@@ -1832,25 +1847,25 @@ class CheckForPolicyUse(BaseChecker):
     name = "check-for-policies"
     priority = -1
     msgs = {
-        "C4739": (
+        "C4769": (
             "You should include a UserAgentPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-user-agent-policy",
             "You should include a UserAgentPolicy in the HTTP Pipeline.",
         ),
-        "C4740": (
+        "C4770": (
             "You should include a LoggingPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-logging-policy",
             "You should include a LoggingPolicy in the HTTP Pipeline.",
         ),
-        "C4741": (
+        "C4771": (
             "You should include a RetryPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-retry-policy",
             "You should include a RetryPolicy in the HTTP Pipeline.",
         ),
-        "C4742": (
+        "C4772": (
             "You should include a DistributedTracingPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-distributed-tracing-policy",
@@ -2376,19 +2391,19 @@ class NonCoreNetworkImport(BaseChecker):
             "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
-    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio", "httpx"]
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
             return
         for import_, _ in node.names:
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from a blocked package."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
             return
         self._check_import(node.modname, node)
 
@@ -2614,7 +2629,7 @@ class DeleteOperationReturnStatement(BaseChecker):
         try:
             if node.returns.as_string() == "None":
                 # If there are residual comment typehints or no return value,
-                # we dont want to throw an error
+                # we don't want to throw an error
                 return
             if node.name.startswith("delete") and node.parent.name.endswith("Client"):
                 if node.returns.as_string() != "None":
@@ -2708,6 +2723,132 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
+class DoNotLogErrorsEndUpRaising(BaseChecker):
+
+    """Rule to check that errors that get raised aren't logged"""
+
+    name = "do-not-log-raised-errors"
+    priority = -1
+    msgs = {"C4762": (
+            "Do not log an exception that you re-raise 'as-is'",
+            "do-not-log-raised-errors",
+            "Do not log an exception that you re-raise 'as-is'",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that raised errors aren't logged in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged if exception is raised.
+        """
+        try:
+            # Return a list of exception blocks
+            except_block = node.handlers
+            # Iterate through each exception block
+            for nod in except_block:
+                # Get the nodes in each block (e.g. nodes Expr and Raise)
+                exception_block_body = nod.body
+                exception_name = nod.name.name
+                self.check_for_raise(exception_block_body, exception_name)
+        except:
+            pass
+
+    def check_for_raise(self, node, exception_name):
+        """ Helper function - checks for instance of 'Raise' node
+            Also checks 'If' and nested 'If' branches
+        """
+        for i in node:
+            if isinstance(i, astroid.Raise):
+                # If it is a bare raise, or explicitly raising the same exception as-is
+                # TODO: raise X from exception
+                if (isinstance(i.exc, astroid.Name) and i.exc.name == exception_name) or not i.exc:  #or (isinstance(i.cause, astroid.Name) and i.cause.name == exception_name):
+                    # Check if the exception is being logged
+                    self.check_for_logging(node, exception_name)
+            # Check for any nested 'If' branches
+            if isinstance(i, astroid.If):
+                self.check_for_raise(i.body, exception_name)
+
+                # Check any 'elif' or 'else' branches
+                self.check_for_raise(i.orelse, exception_name)
+
+
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - Called from 'check_for_raise' function
+            Checks if the same exception that's being raised is also being logged
+        """
+
+        try:
+            # Find all function calls in the code
+            for j in node:
+                if isinstance(j, astroid.Expr) and isinstance(j.value.func, astroid.Attribute):
+                    # check that the attribute is a logging level
+                    if j.value.func.attrname in ["debug", "info", "warning", "error", "exception", "critical"]:
+                    
+                        # Check all arguments to the logger
+                        # The exception could be logged in various ways:
+                        # 1. logger.debug(exception)
+                        # 2. logger.debug(f"something {exception}")
+                        # 3. logger.debug("Failed: %r", exception)
+
+                        # if we have exception.__name__ or str(exception) lets not raise an error
+                        for log_arg in j.value.args:
+                            # Check for calls like str(exception) or exception.__name__
+                            if isinstance(log_arg, astroid.Call) and isinstance(log_arg.func, astroid.Name) and log_arg.func.name == "str":
+                                for arg in log_arg.args:
+                                    if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                        # This is str(exception), which is fine
+                                        return
+                            
+                            # Check for attribute access like exception.__name__
+                            if isinstance(log_arg, astroid.Attribute) and isinstance(log_arg.expr, astroid.Name):
+                                if log_arg.expr.name == exception_name and log_arg.attrname == "__name__":
+                                    # This is exception.__name__, which is fine
+                                    return
+                        
+                        # Check for f-strings that might contain the exception
+                        for log_arg in j.value.args:
+                            if isinstance(log_arg, astroid.Name) and log_arg.name == exception_name:
+                                self.add_message(
+                                    msgid="do-not-log-raised-errors",
+                                    node=j, 
+                                    confidence=None,
+                                )
+                                return
+                            if isinstance(log_arg, astroid.Call):
+                                for arg in log_arg.args:
+                                    if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                        self.add_message(
+                                            msgid="do-not-log-raised-errors",
+                                            node=j,
+                                            confidence=None,
+                                        )
+                                        return
+                            if isinstance(log_arg, astroid.JoinedStr):
+                                for value in log_arg.values:
+                                    if isinstance(value, astroid.FormattedValue):
+                                        try:
+                                            if isinstance(value.value, astroid.Name) and value.value.name == exception_name:
+                                                self.add_message(
+                                                    msgid="do-not-log-raised-errors",
+                                                    node=j,
+                                                    confidence=None,
+                                                )
+                                                return
+                                        except AttributeError:
+                                            pass
+                        
+                        # Check for string formatting with exception as argument
+                        if len(j.value.args) > 1:
+                            for idx in range(1, len(j.value.args)):
+                                if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == exception_name:
+                                    self.add_message(
+                                        msgid="do-not-log-raised-errors",
+                                        node=j,
+                                        confidence=None,
+                                    )
+                                    return
+        except:
+            pass
+
 
 class NoImportTypingFromTypeCheck(BaseChecker):
 
@@ -2717,9 +2858,9 @@ class NoImportTypingFromTypeCheck(BaseChecker):
     priority = -1
     msgs = {
         "C4760": (
-            "Do not import from typing inside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
             "no-typing-import-in-type-check",
-            "Do not import from typing inside of TYPE_CHECKING. You can import from typing outside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
         ),
     }
 
@@ -2750,6 +2891,393 @@ class NoImportTypingFromTypeCheck(BaseChecker):
         except:
             pass
 
+
+class DoNotUseLegacyTyping(BaseChecker):
+
+    """ Rule to check that we aren't using legacy typing using comments. """
+
+    name = "do-not-use-legacy-typing"
+    priority = -1
+    msgs = {
+        "C4761": (
+            "Do not use legacy typing using comments.",
+            "do-not-use-legacy-typing",
+            "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
+        ),
+    }
+
+    def visit_functiondef(self, node):
+        """Check that we aren't using legacy typing."""
+        try:
+            if node.type_comment_args or node.type_comment_returns:
+                self.add_message(
+                    msgid=f"do-not-use-legacy-typing",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
+
+
+class DoNotImportAsyncio(BaseChecker):
+
+    """Rule to check that libraries do not import the asyncio package directly."""
+
+    name = "do-not-import-asyncio"
+    priority = -1
+    msgs = {
+        "C4763": (
+            "If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead of importing asyncio. For other imports of asyncio, ignore this warning.",
+            "do-not-import-asyncio",
+            "If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead of importing asyncio. For other imports of asyncio, ignore this warning.",
+        ),
+    }
+
+    IGNORE_PACKAGES = ['azure.core', 'corehttp', 'azure.mgmt.core']
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from asyncio directly."""
+        try:
+            if node.modname == "asyncio" and not any(node.root().name.startswith(pkg) for pkg in self.IGNORE_PACKAGES):
+                self.add_message(
+                    msgid=f"do-not-import-asyncio",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
+
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        try:
+            for name, _ in node.names:
+                if name == "asyncio" and not any(node.root().name.startswith(pkg) for pkg in self.IGNORE_PACKAGES):
+                    self.add_message(
+                        msgid=f"do-not-import-asyncio",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            pass
+
+
+class InvalidUseOfOverload(BaseChecker):
+    
+    """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+    name = "invalid-use-of-overload"
+    priority = -1
+    msgs = {
+        "C4765": (
+            "Do not mix async and synchronous overloads",
+            "invalid-use-of-overload",
+            "Functions and their overloads must be either all async or all synchronous.",
+        ),
+    }
+
+    def visit_classdef(self, node):
+        """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+        try:
+            # Obtain a list of all functions and function names
+            functions = []
+            node.body
+            for item in node.body:
+                if hasattr(item, 'name'):
+                    functions.append(item)
+
+            # Dictionary of lists of all functions by name
+            overloadedfunctions = {}
+            for item in functions:
+                if item.name in overloadedfunctions:
+                    overloadedfunctions[item.name].append(item)
+                else:
+                    overloadedfunctions[item.name] = [item]
+
+
+            # Loop through the overloaded functions and check they are the same type
+            for funct in overloadedfunctions.values():
+                if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
+                    function_is_async = None
+
+                    for item in funct:
+                        if function_is_async is None:
+                            function_is_async = self.is_function_async(item)
+
+                        else:
+                            if function_is_async != self.is_function_async(item):
+                                self.add_message(
+                                    msgid=f"invalid-use-of-overload",
+                                    node=item,
+                                    confidence=None,
+                                )
+        except:
+            pass
+
+
+    def is_function_async(self, node):
+        try:
+            str(node.__class__).index("Async")
+            return True
+        except:
+            return False
+
+
+class DoNotLogExceptions(BaseChecker):
+
+    """Rule to check that exceptions aren't logged"""
+
+    name = "do-not-log-exceptions-if-not-debug"
+    priority = -1
+    msgs = {"C4766": (
+            "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information. See Details:"
+            " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
+            "do-not-log-exceptions-if-not-debug",
+            "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that exceptions aren't logged in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged.
+        """
+        try:
+            # Return a list of exception blocks
+            except_block = node.handlers
+            # Iterate through each exception block
+            for nod in except_block:
+                # Get exception blocks with an exception name
+                if nod.name is not None:
+                    exception_name = nod.name.name
+                    self.check_for_logging(nod.body, exception_name)
+        except:
+            pass
+
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - checks nodes to see if logging has occurred at all
+            levels.
+        """
+        try:
+            levels_matches = ["warning", "error", "info"]
+            for j in node:
+                if isinstance(j, astroid.Expr):
+                    expression = j.as_string().lower()
+                    
+                    # if this is a logging expression
+                    if j.value.func.attrname in levels_matches:
+                        # in the logging function call check if in exc_info we are only enabled for debug log
+                        if "isenabledfor(logging.debug)" in expression:
+                            pass
+                        else:
+                            # Check for variables after strings
+                            end_finder = expression.rfind("'")
+                            delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
+                            if end_finder != -1:
+                                expression_a = expression[end_finder + 1:]
+                                # If there are variables after a string
+                                if len(expression_a) > 1:
+                                    expression = expression_a
+                            for delimiter in delimiters:
+                                expression = " ".join(expression.split(delimiter))
+                            expression1 = expression.split()
+                            # Check for presence of exception name
+                            for i in range(len(expression1)):
+                                if exception_name == expression1[i]:
+                                    if i+1 < len(expression1):
+                                        # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
+                                        #  error
+                                        if ".__name__" not in expression1[i+1]:
+                                            self.add_message(
+                                                msgid=f"do-not-log-exceptions-if-not-debug",
+                                                node=j,
+                                                confidence=None,
+                                            )
+                                    else:
+                                        self.add_message(
+                                            msgid=f"do-not-log-exceptions-if-not-debug",
+                                            node=j,
+                                            confidence=None,
+                                        )
+                if isinstance(j, astroid.If):
+                    self.check_for_logging(j.body, exception_name)
+                    # Check any 'elif' or 'else' branches
+                    self.check_for_logging(j.orelse, exception_name)
+        except:
+            pass
+
+
+class DoNotHardcodeConnectionVerify(BaseChecker):
+
+    """Rule to check that developers do not hardcode a boolean to connection_verify."""
+
+    name = "do-not-hardcode-connection-verify"
+    priority = -1
+    msgs = {
+        "C4767": (
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to set it.",
+            "do-not-hardcode-connection-verify",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to set it",
+        ),
+    }
+
+    def visit_call(self, node):
+        """Visit function calls to ensure it isn't used as a keyword parameter"""
+        try:
+            if len(node.keywords) > 0:
+                for keyword in node.keywords:
+                    if keyword.arg == "connection_verify":
+                        if type(keyword.value.value) == bool:
+                            self.add_message(
+                                msgid=f"do-not-hardcode-connection-verify",
+                                node=keyword,
+                                confidence=None,
+                            )
+        except:
+            pass
+
+    def visit_assign(self, node):
+        """Visiting variable Assignments"""
+        try: # self.connection_verify = True
+            if node.targets[0].attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            try: # connection_verify = True
+                if node.targets[0].name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass # typically lists
+
+    def visit_annassign(self, node):
+        """Visiting variable annotated assignments"""
+        try: # self.connection_verify: bool = True
+            if node.target.attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:  # Picks up connection_verify: bool = True
+            try:
+                if node.target.name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass
+
+
+class DoNotDedentDocstring(BaseChecker):
+
+    """Rule to check that developers do not hardcode `dedent` in their docstring. Sphinx will handle this automatically."""
+
+    name = "do-not-hardcode-dedent"
+    priority = -1
+    msgs = {
+        "C4768": (
+            "Do not hardcode dedent value in docstring. Leave the dedent entry in your docstring empty, do not assign a numerical value to it.",
+            "do-not-hardcode-dedent",
+            "Do not hardcode dedent value in docstring. It's up to sphinx to handle this automatically",
+        ),
+    }
+
+    def __init__(self, linter=None):
+        super(DoNotDedentDocstring, self).__init__(linter)
+
+    def check_for_dedent(self, node):
+        """Parse the docstring for a dedent.
+        If found, checks that the dedent does not have a value set.
+
+        :param node: ast.ClassDef or ast.FunctionDef
+        :return: None
+        """
+
+        try:
+            # not every class/method will have a docstring so don't crash here, just return
+            # don't fail if there is no dedent in the docstring, be lenient
+            if (
+                node.doc_node.value.find(":dedent") != -1
+            ):
+                dedent_value = node.doc_node.value.split(":dedent:")[1].split("\n")[0].strip()
+                try:
+                    int(dedent_value)
+                    self.add_message(
+                        "do-not-hardcode-dedent",
+                        node=node,
+                        confidence=None,
+                    )
+                except:
+                    pass  
+        except Exception:
+            return
+
+    def visit_classdef(self, node):
+        """Visits every class docstring.
+
+        :param node: ast.ClassDef
+        :return: None
+        """
+        try:
+            for func in node.body:
+                if isinstance(func, astroid.FunctionDef) and func.name == "__init__":
+                    self.check_for_dedent(node)
+        except Exception:
+            logger.debug("Pylint custom checker failed to check docstrings.")
+            pass
+
+    def visit_functiondef(self, node):
+        """Visits every method docstring.
+
+        :param node: ast.FunctionDef
+        :return: None
+        """
+        try:
+            if node.name == "__init__":
+                return
+            self.check_for_dedent(node)
+        except Exception:
+            logger.debug("Pylint custom checker failed to check docstrings.")
+            pass
+
+    # this line makes it work for async functions
+    visit_asyncfunctiondef = visit_functiondef
+
+class DoNotUseLoggingException(BaseChecker):
+    """Rule to check that exceptions aren't logged using exception method"""
+
+    name = "do-not-use-logging-exception"
+    priority = -1
+    msgs = {
+        "C4769": (
+            "Do not use Exception level logging. This can cause sensitive information to get leaked.",
+            "do-not-use-logging-exception",
+            "Do not use Exception level logging. This can cause sensitive information to get leaked.",
+        ),
+    }
+
+    def visit_call(self, node):
+        """Check that we aren't using logging.exception or logger.exception."""
+        try:
+            if node.func.attrname == "exception":
+                self.add_message(
+                    msgid="do-not-use-logging-exception",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2780,16 +3308,24 @@ def register(linter):
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
+    linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(DoNotUseLegacyTyping(linter))
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+    linter.register_checker(InvalidUseOfOverload(linter))
+    linter.register_checker(DoNotLogExceptions(linter))
+    linter.register_checker(DoNotHardcodeConnectionVerify(linter))
+    linter.register_checker(DoNotDedentDocstring(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
     # Rules are disabled until false positive rate improved
-    # linter.register_checker(CheckForPolicyUse(linter))
-    # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
+    #linter.register_checker(CheckForPolicyUse(linter))
+    linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
 
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
+    linter.register_checker(DoNotUseLoggingException(linter))

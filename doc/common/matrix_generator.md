@@ -92,7 +92,7 @@ jobs:
       JobTemplatePath: /eng/common-tests/matrix-generator/samples/matrix-job-sample.yml
       AdditionalParameters: []
       CloudConfig:
-        SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
+        ServiceConnection: azure-sdk-tests-public
         Location: eastus2
         Cloud: Public
       MatrixFilters: []

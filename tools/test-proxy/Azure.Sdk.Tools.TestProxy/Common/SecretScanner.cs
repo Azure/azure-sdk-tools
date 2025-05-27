@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Console;
-using Microsoft.Build.Tasks;
 using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -29,37 +29,44 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             var detectedSecrets = new ConcurrentBag<Tuple<string, Detection>>();
             var total = relativePaths.Count();
             var seen = 0;
-            Console.WriteLine(string.Empty);
 
-            var options = new ParallelOptions
+            if (relativePaths.Count() > 0)
             {
-                MaxDegreeOfParallelism = Environment.ProcessorCount
-            };
+                Console.WriteLine(string.Empty);
 
-            Parallel.ForEach(relativePaths, options, (filePath) =>
-            {
-                var path = Path.Combine(assetRepoRoot, filePath);
-
-                if (File.Exists(path))
+                var options = new ParallelOptions
                 {
-                    var content = File.ReadAllText(path);
-                    var fileDetections = DetectSecrets(content);
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                };
 
-                    if (fileDetections != null && fileDetections.Count > 0)
-                    {
-                        foreach (Detection detection in fileDetections)
+                Parallel.ForEach(relativePaths, options, (filePath) =>
+                {
+                    if (!filePath.StartsWith("D")) {
+                        var isolatedPath = filePath.Trim().TrimStart('?', 'M').Trim();
+                        var path = Path.Combine(assetRepoRoot, isolatedPath);
+
+                        if (File.Exists(path))
                         {
-                            detectedSecrets.Add(Tuple.Create(filePath, detection));
+                            var content = File.ReadAllText(path);
+                            var fileDetections = DetectSecrets(content);
+
+                            if (fileDetections != null && fileDetections.Count > 0)
+                            {
+                                foreach (Detection detection in fileDetections)
+                                {
+                                    detectedSecrets.Add(Tuple.Create(filePath, detection));
+                                }
+                            }
+
+                            Interlocked.Increment(ref seen);
+
+                            Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
                         }
                     }
+                });
 
-                    Interlocked.Increment(ref seen);
-
-                    Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
-                }
-            });
-
-            Console.WriteLine(string.Empty);
+                Console.WriteLine(string.Empty);
+            }
 
             return detectedSecrets.ToList();
         }

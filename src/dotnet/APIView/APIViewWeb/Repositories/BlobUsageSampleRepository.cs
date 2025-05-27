@@ -1,23 +1,25 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.Extensions.Logging;
+using Azure;
 using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.Configuration;
 using System.Text;
-using System;
+using Azure.Storage.Blobs.Models;
 
 namespace APIViewWeb.Repositories
 {
     public class BlobUsageSampleRepository : IBlobUsageSampleRepository
     {
-        private BlobContainerClient _container;
+        private readonly BlobServiceClient _serviceClient;
+        private readonly ILogger<BlobUsageSampleRepository> _logger;
 
-        public BlobUsageSampleRepository(IConfiguration configuration)
+        public BlobUsageSampleRepository(BlobServiceClient blobServiceClient, ILogger<BlobUsageSampleRepository> logger)
         {
-            var connectionString = configuration["Blob:ConnectionString"];
-            _container = new BlobContainerClient(connectionString, "usagesamples"); 
+            _serviceClient = blobServiceClient;
+            _logger = logger;
         }
 
         public async Task<Stream> GetUsageSampleAsync(string sampleFileId)
@@ -27,33 +29,50 @@ namespace APIViewWeb.Repositories
                 var info = await GetBlobClient(sampleFileId).DownloadAsync();
                 return info.Value.Content;
             }
-            catch (Exception e)
+            catch (RequestFailedException e)
             {
-                // Error handling- Allows tidy pages to be displayed for a blob not existing
-                if(e.Message.StartsWith("The specified container does not exist."))
+                _logger.LogError(e, "Error retrieving usage sample with ID {SampleFileId}", sampleFileId);
+                if (e.ErrorCode == BlobErrorCode.ContainerNotFound.ToString())
                 {
                     return new MemoryStream(Encoding.UTF8.GetBytes("Bad Blob"));
                 }
                 else
                 {
-                    return null;
+                    throw;
                 }
             }
         }
 
         public async Task UploadUsageSampleAsync(string sampleFileId, Stream stream)
         {
-            await GetBlobClient(sampleFileId).UploadAsync(stream, overwrite:true);
+            try
+            {
+                await GetBlobClient(sampleFileId).UploadAsync(stream, overwrite: true);
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error uploading usage sample with ID {SampleFileId}", sampleFileId);
+                throw;
+            }
         }
 
-        public async Task DeleteUsageSampleAsync (string sampleFileId)
+        public async Task DeleteUsageSampleAsync(string sampleFileId)
         {
-            await GetBlobClient(sampleFileId).DeleteAsync();
+            try
+            {
+                await GetBlobClient(sampleFileId).DeleteAsync();
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error deleting usage sample with ID {SampleFileId}", sampleFileId);
+                throw;
+            }
         }
 
         private BlobClient GetBlobClient(string sampleFileId)
         {
-            return _container.GetBlobClient(sampleFileId);
+            var container = _serviceClient.GetBlobContainerClient("usagesamples");
+            return container.GetBlobClient(sampleFileId);
         }
     }
 }

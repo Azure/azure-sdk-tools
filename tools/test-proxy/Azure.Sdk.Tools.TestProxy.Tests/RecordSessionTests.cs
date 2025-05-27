@@ -163,7 +163,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingId = ctx.Response.Headers["x-recording-id"].ToString();
             var session = handler.RecordingSessions[recordingId];
             session.Session.Entries.Add(testEntry);
-            handler.StopRecording(recordingId);
+            await handler.StopRecording(recordingId);
+
+            // ensure that we audited properly
+            var auditSession = handler.AuditSessions[recordingId];
+            var auditItems = TestHelpers.ExhaustQueue<AuditLogItem>(auditSession);
+
+            Assert.Equal(2, auditItems.Count);
 
             // now load it, did we avoid mangling it?
             var sessionFromDisk = TestHelpers.LoadRecordSession(Path.Combine(testFolder, testName));
@@ -413,7 +419,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "Body differences:" + Environment.NewLine +
                 "Request and record bodies do not match at index 40:" + Environment.NewLine +
                 "     request: \"e and long.\"" + Environment.NewLine +
-                "     record:  \"e and long but it also doesn't\"" + Environment.NewLine,
+                "     record:  \"e and long but it also doesn't\"" + Environment.NewLine +
+                "Remaining Entries:" + Environment.NewLine +
+                "0: http://remote-host" + Environment.NewLine,
                 exception.Message);
         }
 
@@ -629,14 +637,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void RecordingSessionSanitizeSanitizesVariables()
+        public async Task RecordingSessionSanitizeSanitizesVariables()
         {
             var sanitizer = new TestSanitizer();
             var session = new RecordSession();
             session.Variables["A"] = "secret";
             session.Variables["B"] = "Totally not a secret";
 
-            session.Sanitize(sanitizer);
+            await session.Sanitize(sanitizer);
 
             Assert.Equal("SANITIZED", session.Variables["A"]);
             Assert.Equal("Totally not a SANITIZED", session.Variables["B"]);

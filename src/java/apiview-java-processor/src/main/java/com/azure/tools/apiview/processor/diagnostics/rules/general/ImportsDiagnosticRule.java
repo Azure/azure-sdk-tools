@@ -27,17 +27,14 @@ public class ImportsDiagnosticRule implements DiagnosticRule {
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         // we need to map the issue to the class id, because import text isn't printed in the APIView output
-        getClassName(cu).map(listing.getKnownTypes()::get).ifPresent(typeId -> {
-            ASTUtils.getImports(cu).forEach(importStr -> {
+        getClassName(cu).map(listing.getKnownTypes()::get).ifPresent(typeId -> ASTUtils.getImports(cu)
+            .forEach(importStr -> {
                 for (String illegalPackage : illegalPackages) {
                     if (importStr.contains(illegalPackage)) {
-                        listing.addDiagnostic(new Diagnostic(
-                            WARNING,
-                            typeId,
+                        listing.addDiagnostic(new Diagnostic(WARNING, typeId,
                             "Do not add dependencies to classes in the '" + illegalPackage + "' package."));
                     }
                 }
-            });
-        });
+            }));
     }
 }

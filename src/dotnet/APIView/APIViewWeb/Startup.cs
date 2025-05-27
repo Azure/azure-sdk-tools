@@ -34,6 +34,10 @@ using Microsoft.OpenApi.Models;
 using System.IO;
 using Microsoft.Azure.Cosmos;
 using APIViewWeb.Managers.Interfaces;
+using Azure.Identity;
+using APIViewWeb.Helpers;
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -101,7 +105,6 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
-            services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
@@ -112,8 +115,7 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
-            services.AddSingleton<IAICommentsManager, AICommentsManager>();
-            services.AddSingleton<UserPreferenceCache>();
+            services.AddSingleton<UserProfileCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -121,6 +123,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, JavaLanguageService>();
             services.AddSingleton<LanguageService, PythonLanguageService>();
             services.AddSingleton<LanguageService, JavaScriptLanguageService>();
+            services.AddSingleton<LanguageService, RustLanguageService>();
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
@@ -222,8 +225,18 @@ namespace APIViewWeb
             }
 
             services.AddAuthorization();
+            services.AddCors(options => {
+                options.AddPolicy("AllowCredentials", builder =>
+                {
+                    string [] origins = (Environment.IsDevelopment()) ? URlHelpers.GetAllowedStagingOrigins() : URlHelpers.GetAllowedProdOrigins();
+                    builder.WithOrigins(origins)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+                        .SetPreflightMaxAge(TimeSpan.FromHours(20));
+                });
+            });
             services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
-
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
@@ -232,15 +245,18 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoAPIRevisionModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
-            services.AddSingleton<CosmosClient>(x =>
+            services.AddSingleton(x =>
             {
-                return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
+                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
+            });
+            services.AddSingleton(x =>
+            {
+                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), new DefaultAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
-            services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
@@ -316,11 +332,12 @@ namespace APIViewWeb
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseCors("AllowCredentials");
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI();
 

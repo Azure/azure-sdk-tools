@@ -6,12 +6,9 @@ import {
   Namespace,
   NoTarget,
   Program,
-  ProjectionApplication,
-  projectProgram,
   resolvePath,
   Service,
 } from "@typespec/compiler";
-import { buildVersionProjections, getVersion } from "@typespec/versioning";
 import path from "path";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
@@ -20,7 +17,6 @@ export interface ResolvedApiViewEmitterOptions {
   emitterOutputDir: string;
   outputFile?: string;
   service?: string;
-  version?: string;
   includeGlobalNamespace: boolean;
 }
 
@@ -37,7 +33,6 @@ export function resolveOptions(context: EmitContext<ApiViewEmitterOptions>): Res
     emitterOutputDir: context.emitterOutputDir,
     outputFile: resolvedOptions["output-file"],
     service: resolvedOptions["service"],
-    version: resolvedOptions["version"],
     includeGlobalNamespace: resolvedOptions["include-global-namespace"] ?? false,
   };
 }
@@ -48,67 +43,12 @@ function resolveNamespaceString(namespace: Namespace): string | undefined {
   return value === "" ? undefined : value;
 }
 
-// TODO: Up-level this logic?
-function resolveAllowedVersions(program: Program, service: Service): string[] {  
-  const allowed: string[] = [];
-  const serviceVersion = service.version;
-  const versions = getVersion(program, service.type)?.getVersions();
-  if (serviceVersion !== undefined && versions !== undefined) {
-    throw new Error("Cannot have serviceVersion with multi-API.");
-  }
-  if (serviceVersion !== undefined) {
-    allowed.push(serviceVersion);
-  } else if (versions !== undefined) {
-    for (const item of versions) {
-      allowed.push(item.name);
-    }
-  } else {
-    throw new Error("Unable to resolve allowed versions.");
-  }
-  return allowed;
-}
-
-function resolveVersionValue(program: Program, namespace: Namespace, version: string): string {
-  try {
-    const versions = getVersion(program, namespace)!.getVersions();
-    return versions.filter((item) => item.name === version).map((item) => item.value)[0];
-  } catch {
-    return version;
-  }
-}
-
-function resolveProgramForVersion(program: Program, namespace: Namespace, versionKey?: string): Program {
-  if (!versionKey) {
-    return program;
-  }
-  const version = resolveVersionValue(program, namespace, versionKey);
-  const projections = buildVersionProjections(program, namespace).filter((item) => item.version === version);
-  if (projections.length === 0) {
-    // non-multi-version scenario. Return original program.
-    return program;
-  } else {
-    // alias could result in an api version appearing twice, so always take the first
-    const projection = projections[0];
-    projection.projections.push({
-      projectionName: "atVersion",
-      arguments: [version],
-    });
-    const commonProjections: ProjectionApplication[] = [
-      {
-        projectionName: "target",
-        arguments: ["json"],
-      },
-    ];
-    return projectProgram(program, [...commonProjections, ...projection.projections]);
-  }
-}
-
 /**
  * Ensures that single-value options are not used in multi-service specs unless the
  * `--service` option is specified. Single-service specs need not pass this option.
  */
 function validateMultiServiceOptions(program: Program, services: Service[], options: ResolvedApiViewEmitterOptions) {
-  for (const [name, val] of [["output-file", options.outputFile], ["version", options.version]]) {
+  for (const [name, val] of [["output-file", options.outputFile]]) {
     if (val && !options.service && services.length > 1) {
       reportDiagnostic(program, {
         code: "invalid-option",
@@ -161,28 +101,11 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     services = applyServiceFilter(program, services, options);
 
     for (const service of services) {
-      const versionString = options.version ?? service.version;
       const namespaceString = resolveNamespaceString(service.type) ?? "Unknown"
       const serviceTitle = service.title ? service.title : namespaceString;
-      const allowedVersions = resolveAllowedVersions(program, service);
-      if (versionString) {
-        if (allowedVersions.filter((version) => version === versionString).length === 0) {
-          reportDiagnostic(program, {
-            code: "version-not-found",
-            target: NoTarget,
-            format: {
-              version: versionString,
-              serviceTitle: serviceTitle,
-              allowed: allowedVersions.join(" | "),
-            }, 
-          })
-          return;
-        }  
-      }      
-      const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
       
-      const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
-      apiview.emit(resolvedProgram);
+      const apiview = new ApiView(serviceTitle, namespaceString, options.includeGlobalNamespace);
+      apiview.compile(program);
       apiview.resolveMissingTypeReferences();
 
       if (!program.compilerOptions.noEmit && !program.hasError()) {
@@ -192,7 +115,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         const outputPath = resolvePath(outputFolder, outputFile);
         await emitFile(program, {
           path: outputPath,
-          content: JSON.stringify(apiview.asApiViewDocument()) + "\n"
+          content: JSON.stringify(apiview.asCodeFile()) + "\n"
         });  
       }    
     }

@@ -1,19 +1,19 @@
-import {NPMViewResult, StringMap, tr} from "@ts-common/azure-js-dev-tools";
-import {logger} from "./logger";
-const semverInc = require('semver/functions/inc')
+import {logger} from "./logger.js";
+import {inc as semverInc} from "semver";
+import { ApiVersionType } from "../common/types.js"
 
-export function getVersion(npmViewResult: NPMViewResult,tag: string) {
-    const distTags: StringMap<string> | undefined = npmViewResult['dist-tags'];
+export function getVersion(npmViewResult: Record<string, any> | undefined, tag: string) {
+    const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
     return distTags && distTags[tag];
 }
 
-export function getversionDate(npmViewResult: NPMViewResult, version : string){
-    const time: StringMap<string> | undefined = npmViewResult['time'];
+export function getversionDate(npmViewResult: Record<string, any>, version : string){
+    const time: Record<string, any> | undefined = npmViewResult['time'];
     return time && time[version];
 }
 
-export function getLatestStableVersion(npmViewResult: NPMViewResult) {
-    const distTags: StringMap<string> | undefined = npmViewResult['dist-tags'];
+export function getLatestStableVersion(npmViewResult: Record<string, any> | undefined) {
+    const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
     const stableVersion = distTags && distTags['latest'];
     return stableVersion;
 }
@@ -59,7 +59,7 @@ export function bumpPreviewVersion(version: string, usedVersions: string[] | und
 
 export function getNewVersion(stableVersion: string | undefined, usedVersions: string[] | undefined, hasBreakingChange, isStableRelease: boolean): string {
     if (!stableVersion) {
-        logger.logError(`Invalid stableVersion ${stableVersion}`);
+        logger.error(`Invalid stableVersion '${stableVersion}'.`);
         process.exit(1);
     }
     if (isStableRelease) {
@@ -79,4 +79,13 @@ export function getNewVersion(stableVersion: string | undefined, usedVersions: s
             }
         }
     }
+}
+
+export async function isStableSDKReleaseType(apiVersionType: string, options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
+    let isStableRelease = apiVersionType != ApiVersionType.Preview;
+    if(options.apiVersion && options.sdkReleaseType ) {
+        logger.info(`Detected appVersion is ${options.apiVersion}, sdkReleaseType is ${options.sdkReleaseType}`);
+        isStableRelease = options.sdkReleaseType == 'stable'
+    }
+    return isStableRelease;
 }

@@ -149,7 +149,16 @@ namespace APIView.TreeToken
 
         [JsonIgnore]
         public List<APITreeNode> ChildrenObj { get; set; } = new List<APITreeNode>();
-         
+
+        [JsonIgnore]
+        public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
+
+        [JsonIgnore]
+        public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
+
+        [JsonIgnore]
+        public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
+
         public override int GetHashCode()
         {
             int hash = 17;

@@ -10,7 +10,9 @@ using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,6 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
+        private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
@@ -47,7 +50,8 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
-            TelemetryClient telemetryClient)
+            TelemetryClient telemetryClient,
+            IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -60,17 +64,23 @@ namespace APIViewWeb.Managers
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
+            var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
+            if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
+            {
+                _upgradeDisabledLangs.UnionWith(backgroundTaskDisabledLangs.Split(','));
+            }
         }
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query.
         /// </summary>
-        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="user"></param>
+        /// <param name="pageParams"></param> Contains pagination info
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams)
+        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams)
         {
-             return await _apiRevisionsRepository.GetAPIRevisionsAsync(pageParams, filterAndSortParams);
+            return await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
         }
 
         /// <summary>
@@ -151,12 +161,14 @@ namespace APIViewWeb.Managers
             {
                 throw new UnauthorizedAccessException();
             }
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            return await UpgradeAPIRevisionIfRequired(revisionModel);
         }
 
         public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId)
         {
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            return await UpgradeAPIRevisionIfRequired(revisionModel);
         }
 
         /// <summary>
@@ -221,7 +233,7 @@ namespace APIViewWeb.Managers
         /// <param name="notes"></param>
         /// <param name="approver"></param>
         /// <returns>true if review approval needs to be updated otherwise false</returns>
-        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
+        public async Task<(bool updateReview, APIRevisionListItemModel apiRevision)> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
         {
             if (apiRevisionId == null && apiRevision == null)
             {
@@ -263,7 +275,38 @@ namespace APIViewWeb.Managers
             }
             
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
-            return updateReview;
+            return (updateReview, apiRevision);
+        }
+
+
+        /// <summary>
+        /// Create APIRevision from File or FilePAth
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="review"></param>
+        /// <param name="file"></param>
+        /// <param name="filePath"></param>
+        /// <param name="language"></param>
+        /// <param name="label"></param>
+        /// <returns></returns>
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label)
+        {
+            APIRevisionListItemModel apiRevision = null;
+
+            if (file != null)
+            {
+                using (var openReadStream = file.OpenReadStream())
+                {
+                    apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                        name: file.FileName, label: label, fileStream: openReadStream, language: language);
+                }
+            }
+            else if (!string.IsNullOrEmpty(filePath))
+            {
+                apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                           name: filePath, label: label, fileStream: null, language: language);
+            }
+            return apiRevision;
         }
 
         /// <summary>
@@ -540,6 +583,30 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Restore APIRevisions
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        public async Task RestoreAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string apiRevisionId)
+        {
+            var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+            ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
+            if (apiRevision.IsDeleted)
+            {
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
+                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.UnDeleted, user: user.GetGitHubLogin(), notes: "");
+
+                apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+                apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            }
+        }
+
+        /// <summary>
         /// Delete APIRevisions
         /// </summary>
         /// <param name="user"></param>
@@ -610,10 +677,11 @@ namespace APIViewWeb.Managers
 
                 var reviewId = reviewDetails[1];
                 var apiRevisionId = reviewDetails[2];
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+
                 var codeFile = await CodeFile.DeserializeAsync(entry.Open());
 
                 // Update code file with one downloaded from pipeline
-                var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 if (review != null)
                 {
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
@@ -623,7 +691,10 @@ namespace APIViewWeb.Managers
                         var file = apiRevision.Files.FirstOrDefault();
                         file.VersionString = codeFile.VersionString;
                         file.PackageName = codeFile.PackageName;
+                        file.PackageVersion = codeFile.PackageVersion;
+                        file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
                         await _reviewsRepository.UpsertReviewAsync(review);
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
                         if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
                         {
@@ -640,12 +711,18 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="renderedCodeFile"></param>
+        /// <param name="considerPackageVersion"></param>
         /// <returns></returns>
-        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile)
+        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false)
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            return _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            var result = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            if (considerPackageVersion)
+            {
+                return result && lastRevisionFile.CodeFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
+            }
+            return result;
         }
 
         /// <summary>
@@ -653,8 +730,9 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="languageService"></param>
+        /// <param name="verifyUpgradabilityOnly"> </param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService)
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, bool verifyUpgradabilityOnly)
         {
             foreach (var file in revision.Files)
             {
@@ -666,20 +744,35 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
-                    // file.Name property has been repurposed to store package name and version string
-                    // This is causing issue when updating review using latest parser since it expects Name field as file name
-                    // We have added a new property FileName which is only set for new reviews
-                    // All older reviews needs to be handled by checking review name field
-                    var fileName = file.FileName ?? file.Name;
-                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false);
-                    await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
-                    // update only version string
-                    file.VersionString = codeFile.VersionString;
-                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                    if (string.IsNullOrEmpty(file.FileName))
+                    {
+                        _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
+                        continue;
+                    }
+                    var codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false);
+                    if (!verifyUpgradabilityOnly)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
+                        // update only version string
+                        file.VersionString = codeFile.VersionString;
+                        if (codeFile.ReviewLines.Count > 0)
+                        {
+                            file.ParserStyle = ParserStyle.Tree;
+                        }
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                        _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
+                    }
+                    else
+                    {
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} can be upgraded using new parser version.");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _telemetryClient.TrackTrace("Failed to update revision " + revision.Id);
+                    if (!verifyUpgradabilityOnly)
+                        _telemetryClient.TrackTrace($"Failed to update {revision.Language} revision with id {revision.Id}");
+                    else
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {file.PackageName} cannot be upgraded using new parser version.");
                     _telemetryClient.TrackException(ex);
                 }
             }
@@ -781,6 +874,30 @@ namespace APIViewWeb.Managers
                 }
             }
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+        }
+
+        public async Task<APIRevisionListItemModel> UpdateAPIRevisionReviewersAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
+        {
+            APIRevisionListItemModel apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            foreach (var reviewer in reviewers)
+            {
+                if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
+                {
+                    var reviewAssignment = new ReviewAssignmentModel()
+                    {
+                        AssingedTo = reviewer,
+                        AssignedBy = User.GetGitHubLogin(),
+                        AssingedOn = DateTime.Now,
+                    };
+                    apiRevision.AssignedReviewers.Add(reviewAssignment);
+                }
+            }
+            foreach (var assignment in apiRevision.AssignedReviewers.FindAll(x => !reviewers.Contains(x.AssingedTo)))
+            {
+                apiRevision.AssignedReviewers.Remove(assignment);
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            return apiRevision;
         }
 
         /// <summary>
@@ -886,6 +1003,42 @@ namespace APIViewWeb.Managers
                 }
             }
             return result;
+        }
+        private async Task<APIRevisionListItemModel> UpgradeAPIRevisionIfRequired(APIRevisionListItemModel revisionModel)
+        {
+            if (revisionModel == null)
+            {
+                return revisionModel;
+            }
+            var codeFileDetails = revisionModel.Files[0];
+            if (_upgradeDisabledLangs.Contains(codeFileDetails.Language))
+            {
+                return revisionModel;
+            }
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
+            if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
+            {
+                await UpdateAPIRevisionAsync(revisionModel, languageService, false);
+                revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+            }
+            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString) &&  codeFileDetails.ParserStyle == ParserStyle.Flat)
+            {
+                // Convert to tree model only if current token file is in flat token model
+                var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
+                if (codeFile != null && codeFile.ReviewLines.Count == 0)
+                {
+                    codeFile.ConvertToTreeTokenModel();                    
+                    if (codeFile.ReviewLines.Count > 0)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
+                        codeFileDetails.VersionString = languageService.VersionString;
+                        codeFileDetails.ParserStyle = ParserStyle.Tree;
+                        codeFileDetails.IsConvertedTokenModel = true;
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
+                    }                    
+                }
+            }
+            return revisionModel;
         }
     }
 }

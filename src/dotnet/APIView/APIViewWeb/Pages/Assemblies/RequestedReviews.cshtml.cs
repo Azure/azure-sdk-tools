@@ -13,28 +13,27 @@ namespace APIViewWeb.Pages.Assemblies
 {
     public class RequestedReviews: PageModel
     {
-        private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
 
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ApprovedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
 
-        public RequestedReviews(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionsManager, UserPreferenceCache cache)
+        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, UserProfileCache userProfileCache)
         {
-            _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
-            _preferenceCache = cache;
+            _userProfileCache = userProfileCache;
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(User.GetGitHubLogin());
+            var userId = User.GetGitHubLogin();
+            APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
 
             List<APIRevisionListItemModel> activeAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
-            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.Select(x => x.AssingedOn)))
+            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.First(x => x.AssingedTo.Equals(userId)).AssingedOn))
             {
                 if (!apiRevison.IsApproved)
                 {

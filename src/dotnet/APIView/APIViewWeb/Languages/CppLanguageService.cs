@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -114,7 +113,11 @@ namespace APIViewWeb
 
         public override string Name { get; } = "C++";
 
+        public override string VersionString => CurrentVersion;
+
         public override string [] Extensions { get; } = { ".cppast" };
+
+        public override bool UsesTreeStyleParser { get; } = false;
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 

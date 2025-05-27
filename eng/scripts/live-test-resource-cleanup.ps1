@@ -16,8 +16,7 @@ param (
   [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
   [string] $ProvisionerApplicationId,
 
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidateNotNullOrEmpty()]
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $false)]
   [string] $ProvisionerApplicationSecret,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
@@ -56,11 +55,15 @@ param (
   [Parameter()]
   [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist.txt",
 
+  [string] $GroupFilter = '*',
+
   [Parameter()]
   [switch] $Force,
 
   [Parameter(ParameterSetName = 'Interactive')]
   [switch] $Login,
+
+  [switch] $UseExistingAzContext,
 
   [Parameter(ValueFromRemainingArguments = $true)]
   $IgnoreUnusedArguments
@@ -112,13 +115,12 @@ function Log($Message) {
   Write-Host $Message
 }
 
-function IsValidAlias
+function IsValidAlias([string]$Alias)
 {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string]$Alias
-  )
-
+  if (!$Alias) { 
+    return $false 
+  }
+  
   if ($OwnerAliasCache.ContainsKey($Alias)) {
     return $OwnerAliasCache[$Alias]
   }
@@ -231,7 +233,7 @@ function HasValidOwnerTag([object]$ResourceGroup) {
 function HasValidAliasInName([object]$ResourceGroup) {
     # check compliance (formatting first, then validate alias) and skip if compliant
     if ($ResourceGroup.ResourceGroupName `
-      -match '^(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_].*)?$' `
+      -match '^(SSS3PT_)?(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_].*)?$' `
       -and (IsValidAlias -Alias $matches['alias']))
     {
       Write-Host " Found resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches['alias'])'"
@@ -342,6 +344,23 @@ function DeleteArmDeployments([object]$ResourceGroup) {
   $null = $toDelete | Remove-AzResourceGroupDeployment
 }
 
+function DeleteSubscriptionDeployments() {
+  $subDeployments = @(Get-AzSubscriptionDeployment)
+  if (!$subDeployments) {
+    return
+  }
+  Write-Host "Removing $($subDeployments.Count) subscription scoped deployments async"
+  $subDeployments | Remove-AzSubscriptionDeployment -AsJob | Out-Null
+  for ($i = 0; $i -lt 20; $i++) {
+      $notStarted = Get-Job | Where-Object { $_.State -eq 'NotStarted' }
+      if (!$notStarted) {
+          break
+      }
+      Write-Host "Waiting for async jobs to start..."
+      Start-Sleep 5
+  }
+}
+
 function DeleteOrUpdateResourceGroups() {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param()
@@ -351,7 +370,11 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  [Array]$allGroups = Retry { Get-AzResourceGroup }
+  [Array]$allGroups = Retry { Get-AzResourceGroup } | Where-Object { $_.ResourceGroupName -like $GroupFilter }
+  if (!$allGroups) {
+      Write-Warning "No resource groups found"
+      return
+  }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()
@@ -398,47 +421,63 @@ function DeleteOrUpdateResourceGroups() {
     }
   }
 
-  DeleteAndPurgeGroups $toDelete
+  $hasError = DeleteAndPurgeGroups $toDelete
 
   foreach ($rg in $toClean) {
-    DeleteArmDeployments $rg
+    try {
+      DeleteArmDeployments $rg
+    } catch {
+      Write-Warning "Error deleting deployments for group '$($rg.ResourceGroupName)'"
+      Write-Warning $_
+    }
+  }
+
+  if ($hasError) {
+    throw "Encountered errors removing some resource groups"
   }
 }
 
 function DeleteAndPurgeGroups([array]$toDelete) {
+  $hasError = $false
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
 
   if ($toDelete) {
     Write-Host "Total Resource Groups To Delete: $($toDelete.Count)"
   }
-  foreach ($rg in $toDelete)
-  {
-    $deleteAfter = GetTag $rg "DeleteAfter"
-    if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
-      # Add purgeable resources that will be deleted with the resource group to the collection.
-      $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
+  foreach ($rg in $toDelete) {
+    try {
+      $deleteAfter = GetTag $rg "DeleteAfter"
+      if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
+        # Add purgeable resources that will be deleted with the resource group to the collection.
+        $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
 
-      if ($purgeableResourcesFromRG) {
-        $purgeableResources += $purgeableResourcesFromRG
-        Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
-      }
+        if ($purgeableResourcesFromRG) {
+          $purgeableResources += $purgeableResourcesFromRG
+          Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+        }
 
-      Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
-      Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
+        Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
+        Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
 
-      # For storage tests specifically, if they are aborted then blobs with immutability policies
-      # can be left around which prevent deletion.
-      if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
-        & $PSScriptRoot/Remove-WormStorageAccounts.ps1 -GroupPrefix $rg.ResourceGroupName
-      } else {
+        # For storage tests specifically, if they are aborted then blobs with immutability policies
+        # can be left around which prevent deletion.
+        if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
+          SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
+          Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+        }
+
         Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
       }
+    } catch {
+      Write-Warning "Failure deleting/purging group $($rg.ResourceGroupName):"
+      Write-Warning $_
+      $hasError = $true
     }
   }
 
   if (!$purgeableResources.Count) {
-    return
+    return $hasError
   }
   if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
     # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
@@ -449,10 +488,14 @@ function DeleteAndPurgeGroups([array]$toDelete) {
       $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
     }
   }
+
+  return $hasError
 }
 
 function Login() {
-  if ($PSCmdlet.ParameterSetName -eq "Provisioner") {
+  if ($UseExistingAzContext -and (Get-AzContext)) {
+    Write-Verbose "Using existing account"
+  } elseif ($PSCmdlet.ParameterSetName -eq "Provisioner" -and $ProvisionerApplicationSecret) {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)
@@ -488,8 +531,11 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
   Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
 }
 
-DeleteOrUpdateResourceGroups
-
-if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-  Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+try {
+  DeleteOrUpdateResourceGroups
+  DeleteSubscriptionDeployments
+} finally {
+  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+    Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+  }
 }

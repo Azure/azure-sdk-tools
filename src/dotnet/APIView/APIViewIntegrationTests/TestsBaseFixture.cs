@@ -20,6 +20,8 @@ using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.ApplicationInsights;
+using Azure.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewIntegrationTests
 {
@@ -62,6 +64,7 @@ namespace APIViewIntegrationTests
             services.AddSingleton<LanguageService, JavaLanguageService>();
             services.AddSingleton<LanguageService, PythonLanguageService>();
             services.AddSingleton<LanguageService, JavaScriptLanguageService>();
+            services.AddSingleton<LanguageService, RustLanguageService>();
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
@@ -74,7 +77,7 @@ namespace APIViewIntegrationTests
             PackageNameManager = serviceProvider.GetService<PackageNameManager>();
             User = TestUser.GetTestuser();
 
-            _cosmosClient = new CosmosClient(_config["Cosmos:ConnectionString"]);
+            _cosmosClient = new CosmosClient(_config["CosmosEndpoint"], new DefaultAzureCredential());
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(_config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIRevisions", "/ReviewId").Wait();
@@ -86,13 +89,14 @@ namespace APIViewIntegrationTests
             CommentRepository = new CosmosCommentsRepository(_config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(_config, _cosmosClient);
 
-            _blobCodeFileContainerClient = new BlobContainerClient(_config["Blob:ConnectionString"], "codefiles");
-            _blobOriginalContainerClient = new BlobContainerClient(_config["Blob:ConnectionString"], "originals");
+            var blobServiceClient = new BlobServiceClient(new Uri(_config["StorageAccountUrl"]), new DefaultAzureCredential());
+            _blobCodeFileContainerClient = blobServiceClient.GetBlobContainerClient("codefiles");
+            _blobOriginalContainerClient = blobServiceClient.GetBlobContainerClient("originals");
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
-            BlobCodeFileRepository = new BlobCodeFileRepository(_config, memoryCache);
-            var blobOriginalsRepository = new BlobOriginalsRepository(_config);
+            BlobCodeFileRepository = new BlobCodeFileRepository(blobServiceClient, memoryCache, Mock.Of<ILogger<BlobCodeFileRepository>>());
+            var blobOriginalsRepository = new BlobOriginalsRepository(blobServiceClient, Mock.Of<ILogger<BlobOriginalsRepository>>());
 
             var authorizationServiceMoq = new Mock<IAuthorizationService>();
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
@@ -117,22 +121,21 @@ namespace APIViewIntegrationTests
                  notificationManager: notificationManager, options: options.Object);
 
             CodeFileManager = new CodeFileManager(
-            languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
-            originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+                languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
+                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
 
             APIRevisionManager = new APIRevisionsManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object);
-
+                telemetryClient: telemetryClient.Object, configuration: _config);
 
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
                 commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object);
+                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager);
 
             TestDataPath = _config["TestPkgPath"];
         }

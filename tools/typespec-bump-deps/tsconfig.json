@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "composite": false,
+    "alwaysStrict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": false,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "strict": true,
+    "declaration": true,
+    "stripInternal": true,
+    "noEmitHelpers": false,
+    "target": "es2019",
+    "types": ["node"],
+    "lib": ["es2019"],
+    "experimentalDecorators": true,
+    "newLine": "LF",
+    "outDir": "dist",
+    "incremental": false
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

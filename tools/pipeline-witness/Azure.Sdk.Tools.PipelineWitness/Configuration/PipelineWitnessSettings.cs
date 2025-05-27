@@ -5,11 +5,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
     public class PipelineWitnessSettings
     {
         /// <summary>
-        /// Gets or sets the uri of the key vault to use
-        /// </summary>
-        public string KeyVaultUri { get; set; }
-
-        /// <summary>
         /// Gets or sets uri of the cosmos account to use
         /// </summary>
         public string CosmosAccountUri { get; set; }
@@ -28,6 +23,26 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the name of the build complete queue
         /// </summary>
         public string BuildCompleteQueueName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of concurrent build complete queue workers to register
+        /// </summary>
+        public int BuildCompleteWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the name of the GitHub actions queue
+        /// </summary>
+        public string GitHubActionRunsQueueName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the GitHub action queue workers to register
+        /// </summary>
+        public int GitHubActionRunsWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets secret used to verify GitHub webhook payloads
+        /// </summary>
+        public string GitHubWebhookSecret { get; set; }
 
         /// <summary>
         /// Gets or sets the amount of time a message should be invisible in the queue while being processed
@@ -60,14 +75,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public string Account { get; set; }
 
         /// <summary>
-        /// Gets or sets the amount of time between iterations of the build definition upload loop
+        /// Gets or sets the loops settins for the Build Definitions worker
         /// </summary>
-        public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
+        public PeriodicProcessSettings BuildDefinitionWorker { get; set; }
 
         /// <summary>
-        /// Gets or sets the number of concurrent build complete queue workers to register
+        /// Gets or sets the loops settins for the Missing Azure Pipline Runs worker
         /// </summary>
-        public int BuildCompleteWorkerCount { get; set; } = 1;
+        public PeriodicProcessSettings MissingPipelineRunsWorker { get; set; }
+
+        /// <summary>
+        /// Gets or sets the loops settins for the Missing GitHub Actions worker
+        /// </summary>
+        public PeriodicProcessSettings MissingGitHubActionsWorker { get; set; }
 
         /// <summary>
         /// Gets or sets the artifact name used by the pipeline owners extraction build
@@ -93,5 +113,25 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the container to use for async locks
         /// </summary>
         public string CosmosAsyncLockContainer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of monitored GitHub repositories (Overrides GitHubRepositoriesSource)
+        /// </summary>
+        public string[] GitHubRepositories { get; set; }
+
+        /// <summary>
+        /// Gets or sets the url for a list of monitored GitHub repositories
+        /// </summary>
+        public string GitHubRepositoriesSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Client Id to use for GitHub API requests.
+        /// </summary>
+        public string GitHubAppClientId { get; set; }
+
+        /// <summary>
+        /// Gets or sets private key to use when generating GitHub App access tokens.
+        /// </summary>
+        public string GitHubAppPrivateKey { get; set; }
     }
 }

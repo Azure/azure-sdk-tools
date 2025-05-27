@@ -1,9 +1,9 @@
-import { ApiVersionType } from "../../common/types"
-import { IApiVersionTypeExtractor } from "../../common/interfaces";
-import { getClassicClientParametersPath, getTsSourceFile } from "../../common/utils";
+import { ApiVersionType } from "../../common/types.js"
+import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
+import { getClassicClientParametersPath, getTsSourceFile } from "../../common/utils.js";
 
 // TODO: add unit test
-export const getApiVersionType: IApiVersionTypeExtractor = (packageRoot: string): ApiVersionType => {
+export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: string): Promise<ApiVersionType> => {
     const paraPath = getClassicClientParametersPath(packageRoot);
     const source = getTsSourceFile(paraPath);
     const variableDeclarations = source?.getVariableDeclarations();

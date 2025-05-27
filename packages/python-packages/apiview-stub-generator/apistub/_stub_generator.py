@@ -5,27 +5,29 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import glob
+import importlib.metadata
 import sys
 import os
 import argparse
+from pkginfo import get_metadata
 
-import io
 import importlib
 import logging
 import shutil
-import ast
-import textwrap
 import tempfile
 from subprocess import check_call
 import zipfile
+import tarfile
 
-
-from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
 
+from apistub._generated.treestyle.parser.models import ApiView
+from apistub._generated.treestyle.parser._model_base import (
+    SdkJSONEncoder as APIViewEncoder,
+)
+
 INIT_PY_FILE = "__init__.py"
-TOP_LEVEL_WHEEL_FILE = "top_level.txt"
+INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
 
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -33,28 +35,37 @@ logging.getLogger().setLevel(logging.ERROR)
 class StubGenerator:
     def __init__(self, **kwargs):
         from .nodes import PylintParser
+
         self._kwargs = kwargs
         if not kwargs:
             parser = argparse.ArgumentParser(
                 description="Parses a Python package and generates a JSON token file for consumption by the APIView tool."
             )
             parser.add_argument(
-                "--pkg-path", required=True, help=("Path to the package source root, WHL or ZIP file."),
+                "--pkg-path",
+                required=True,
+                help=("Path to the package source root, WHL, ZIP, or TAR file."),
             )
             parser.add_argument(
-                "--temp-path", 
-                help=("Extract the package to the specified temporary path. Defaults to a random temp dir."),
+                "--temp-path",
+                help=(
+                    "Extract the package to the specified temporary path. Defaults to a random temp dir."
+                ),
                 default=tempfile.gettempdir(),
             )
             parser.add_argument(
                 "--out-path",
                 default=os.getcwd(),
-                help=("Path at which to write the generated JSON file. Defaults to CWD."),
+                help=(
+                    "Path at which to write the generated JSON file. Defaults to CWD."
+                ),
             )
             parser.add_argument(
                 "--mapping-path",
                 default=None,
-                help=("Path to an 'apiview_mapping_python.json' file that supplies cross-language definition IDs.")
+                help=(
+                    "Path to an 'apiview-properties.json' file that supplies cross-language definition IDs."
+                ),
             )
             parser.add_argument(
                 "--verbose",
@@ -68,13 +79,15 @@ class StubGenerator:
             )
             parser.add_argument(
                 "--source-url",
-                help=("URL to the pull request URL that contains the source used to generate this APIView.")
+                help=(
+                    "URL to the pull request URL that contains the source used to generate this APIView."
+                ),
             )
             parser.add_argument(
                 "--skip-pylint",
                 help=("Skips running pylint on the package to obtain diagnostics."),
                 default=False,
-                action="store_true"
+                action="store_true",
             )
             self._args = parser.parse_args()
 
@@ -94,17 +107,20 @@ class StubGenerator:
             logging.error("Temp path [{0}] is invalid".format(temp_path))
             exit(1)
 
+        if os.path.isdir(pkg_path):
+            pkg_path = os.path.abspath(pkg_path)
         self.pkg_path = pkg_path
         self.temp_path = temp_path
         self.out_path = out_path
         self.source_url = source_url
         self.mapping_path = mapping_path
-        self.filter_namespace = filter_namespace or ''
+        self.filter_namespace = filter_namespace or ""
+        self.namespace = ""
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
         # Extract package to temp directory if it is wheel or sdist
-        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
+        if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
             self.wheel_path = self._extract_wheel()
         else:
             self.wheel_path = None
@@ -121,33 +137,83 @@ class StubGenerator:
                 value = None
         return value
 
-    def generate_tokens(self):
-        # Extract package to temp directory if it is wheel or sdist
-        if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
-            pkg_root_path = self.wheel_path
-            pkg_name, version = self._parse_pkg_name()
-            namespace = self.get_module_root_name(pkg_root_path)
-        else:
-            # package root is passed as arg to parse
+    def install_extra_dependencies(self):
+        for extra in self.extras_require:
+            if ":" in extra:
+                logging.info(f"Skipping conditional extra dependency: {extra}")
+                continue
+            logging.info(f"Installing extra dependency: {extra}")
+            try:
+                check_call(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pip",
+                        "install",
+                        f"{self.pkg_path}[{extra}]",
+                        "-q",
+                    ]
+                )
+            except:
+                # If we can't install the extra dependency, skip and continue
+                logging.info(f"Failed to install extra dependency: {extra}")
+                pass
+
+    def _get_pkg_metadata(self):
+        # pkginfo does not get package metadata in 3.10 when running against package root path
+        if not self.wheel_path:
             pkg_root_path = self.pkg_path
-            pkg_name, version, namespace = parse_setup_py(pkg_root_path)
+            pkg_name = os.path.split(self.pkg_path)[-1]
+            version = importlib.metadata.version(pkg_name)
+            dist = importlib.metadata.distribution(pkg_name)
+            self.extras_require = dist.metadata.get_all('Provides-Extra') or []
+            return pkg_root_path, pkg_name, version
+        pkg_root_path = self.wheel_path
+        metadata = get_metadata(self.pkg_path)
+        pkg_name = metadata.name
+        version = metadata.version
+        self.extras_require = metadata.provides_extras
+        return pkg_root_path, pkg_name, version
 
-        logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
-
+    def generate_tokens(self):
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
-        self._install_package(pkg_name)
-        
+        self._install_package()
+        pkg_root_path, pkg_name, version = self._get_pkg_metadata()
+        logging.info(
+            "package name: {0}, version:{1}".format(
+                pkg_name, version
+            )
+        )
         if self.filter_namespace:
-            logging.info("Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace))
-            namespace = self.filter_namespace
+            logging.info(
+                "Namespace filter is passed. Filtering modules within namespace :{}".format(
+                    self.filter_namespace
+                )
+            )
+            self.namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
+        try:
+            apiview = self._generate_tokens(
+                pkg_root_path, pkg_name, version, source_url=self.source_url
+            )
+        except ImportError as import_exc:
+            logging.info(f"{import_exc}\nInstalling extra dependencies.")
+            self.install_extra_dependencies()
+            # Retry generating tokens
+            apiview = self._generate_tokens(
+                pkg_root_path, pkg_name, version, source_url=self.source_url
+            )
+
         if apiview.diagnostics:
-            logging.info("*************** Completed parsing package with errors ***************")
+            logging.info(
+                "*************** Completed parsing package with errors ***************"
+            )
         else:
-            logging.info("*************** Completed parsing package and generating tokens ***************")
+            logging.info(
+                "*************** Completed parsing package and generating tokens ***************"
+            )
         return apiview
 
     def serialize(self, apiview, encoder=APIViewEncoder):
@@ -155,7 +221,6 @@ class StubGenerator:
         logging.debug("Serializing tokens into json")
         json_apiview = encoder().encode(apiview)
         return json_apiview
-
 
     def _find_modules(self, pkg_root_path):
         """Find modules within the package to import and parse
@@ -167,15 +232,22 @@ class StubGenerator:
         for root, subdirs, files in os.walk(pkg_root_path):
             # Ignore any modules with name starts with "_"
             # For e.g. _generated, _shared etc
-            dirs_to_skip = [x for x in subdirs if x.startswith("_") or x.startswith(".")]
+            # Ignore build, which is created when installing a package from source.
+            # Ignore tests, which may have an __init__.py but is not part of the package.
+            dirs_to_skip = [x for x in subdirs if x.startswith(("_", ".", "test", "build"))]
             for d in dirs_to_skip:
+                logging.debug("Dirs to skip: {}".format(dirs_to_skip))
                 subdirs.remove(d)
-
-            # Add current path as module name if _init.py is present
             if INIT_PY_FILE in files:
                 module_name = os.path.relpath(root, pkg_root_path).replace(
                     os.path.sep, "."
                 )
+                # If namespace has not been set yet, try to find the first __init__.py that's not purely for extension.
+                if not self.namespace:
+                    self._set_root_namespace(
+                        os.path.join(root, INIT_PY_FILE), module_name
+                    )
+
                 modules.append(module_name)
                 # Add any public py file names as modules
                 sub_modules = [
@@ -188,10 +260,28 @@ class StubGenerator:
         logging.debug("Modules in package: {}".format(modules))
         return sorted(modules)
 
+    def _set_root_namespace(self, init_file_path, module_name):
+        with open(init_file_path, "r") as f:
+            in_docstring = False
+            content = []
+            for line in f:
+                stripped_line = line.strip()
+                # If in multi-line docstring, skip following lines until end of docstring.
+                # If single-line docstring, skip the docstring line.
+                if stripped_line.startswith(('"""', "'''")) and not stripped_line.endswith(('"""', "'''")):
+                    in_docstring = not in_docstring
+                # If comment, skip line. Otherwise, add to content.
+                if not in_docstring and not stripped_line.startswith("#"):
+                    content.append(line)
+            if len(content) > 1 or (
+                len(content) == 1 and not INIT_EXTENSION_SUBSTRING in content[0]
+            ):
+                self.namespace = module_name
 
-    def _generate_tokens(self, pkg_root_path, package_name, namespace, package_version, *, source_url):
-        """This method returns a dictionary of namespace and all public classes in each namespace
-        """
+    def _generate_tokens(
+        self, pkg_root_path, package_name, package_version, *, source_url
+    ):
+        """This method returns a dictionary of namespace and all public classes in each namespace"""
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
         from apistub.nodes._module_node import ModuleNode
@@ -199,32 +289,35 @@ class StubGenerator:
 
         self.module_dict = {}
         mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
-        apiview = ApiView(
-            pkg_name=package_name,
-            namespace=namespace,
-            metadata_map=mapping,
-            source_url=source_url,
-            pkg_version=package_version
-        )
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
+        apiview = ApiView(
+            pkg_name=package_name,
+            metadata_map=mapping,
+            namespace=self.namespace,
+            source_url=source_url,
+            pkg_version=package_version,
+        )
+        apiview.generate_tokens()
+
         # load all modules and parse them recursively
         for m in modules:
-            if not m.startswith(namespace):
-                logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
+            if not m.startswith(self.namespace):
+                logging.debug(
+                    "Skipping module {0}. Module should start with {1}".format(
+                        m, self.namespace
+                    )
+                )
                 continue
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
+            self.module_dict[m] = ModuleNode(
+                m, module_obj, self.namespace, apiview=apiview
+            )
 
-        # Create navigation info to navigate within APIreview tool
-        navigation = Navigation(package_name, None)
-        navigation.tags = NavigationTag(Kind.type_package)
-        apiview.add_navigation(navigation)
-
-        # Generate any global diagnostics
+        ## Generate any global diagnostics
         global_errors = PylintParser.get_items("GLOBAL")
         for g in global_errors or []:
             g.generate_tokens(apiview, "GLOBAL")
@@ -235,16 +328,11 @@ class StubGenerator:
             self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
-            self.module_dict[m].generate_tokens(apiview)
-            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-            module_nav = self.module_dict[m].get_navigation()
-            if module_nav:
-                navigation.add_child(module_nav)
+            self.module_dict[m].generate_tokens(apiview.review_lines)
         return apiview
 
     def _extract_wheel(self):
-        """Extract the wheel into out dir and return root path to azure root directory in package
-        """
+        """Extract the wheel into out dir and return root path to azure root directory in package"""
         file_name, _ = os.path.splitext(os.path.basename(self.pkg_path))
         temp_pkg_dir = os.path.join(self.temp_path, file_name)
         if os.path.exists(temp_pkg_dir):
@@ -257,83 +345,27 @@ class StubGenerator:
         logging.debug(
             "Extracting {0} to directory {1}".format(self.pkg_path, temp_pkg_dir)
         )
-        zip_file = zipfile.ZipFile(self.pkg_path)
-        zip_file.extractall(temp_pkg_dir)
+        if self.pkg_path.endswith(".tar.gz"):
+            with tarfile.open(self.pkg_path) as tar_ref:
+                tar_ref.extractall(temp_pkg_dir)
+                self._remove_extra_internal_folder(temp_pkg_dir)
+        else:
+            with zipfile.ZipFile(self.pkg_path) as zip_ref:
+                zip_ref.extractall(temp_pkg_dir)
         logging.debug("Extracted package files into temp path")
+
         return temp_pkg_dir
 
+    def _remove_extra_internal_folder(self, temp_pkg_dir):
+        contents = os.listdir(temp_pkg_dir)
+        if len(contents) == 1 and os.path.isdir(
+            os.path.join(temp_pkg_dir, contents[0])
+        ):
+            internal_folder = os.path.join(temp_pkg_dir, contents[0])
+            for item in os.listdir(internal_folder):
+                shutil.move(os.path.join(internal_folder, item), temp_pkg_dir)
+            os.rmdir(internal_folder)
 
-    def get_module_root_name(self, wheel_extract_path):
-        # APiStubgen finds namespace from setup.py when running against code repo
-        # But we don't have setup.py to parse when wheel is uploaded into APIView tool
-        # Parse top_level.txt file in dist-info to find root module name
-        files = glob.glob(os.path.join(wheel_extract_path, "*", TOP_LEVEL_WHEEL_FILE))
-        if not files:
-            logging.warning("File {0} is not found in {1} to identify root module name. All modules in package will be parsed".format(TOP_LEVEL_WHEEL_FILE, wheel_extract_path))
-            return ""
-        with io.open(files[0], "r") as top_lvl_file:
-            root_module_name = top_lvl_file.readline().strip()
-            logging.info("Root module found in {0}: '{1}'".format(TOP_LEVEL_WHEEL_FILE, root_module_name))
-            return root_module_name
-
-
-    def _parse_pkg_name(self):
-        file_name = os.path.basename(self.pkg_path)
-        whl_name, extension = os.path.splitext(file_name)
-        if extension[1:] not in ["whl", "zip"]:
-            raise ValueError(
-                "Invalid type of package. API view parser expects wheel or sdist package"
-            )
-
-        filename_parts = whl_name.split("-")
-        pkg_name = filename_parts[0].replace("_", "-")
-        version = filename_parts[1]
-        return pkg_name, version
-
-    def _install_package(self, pkg_name):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
-        check_call(commands, timeout = 60)
-
-
-def parse_setup_py(setup_path):
-    """Parses setup.py and finds package name and version"""
-    setup_filename = os.path.join(setup_path, "setup.py")
-    mock_setup = textwrap.dedent(
-        """\
-    def setup(*args, **kwargs):
-        __setup_calls__.append((args, kwargs))
-    """
-    )
-    parsed_mock_setup = ast.parse(mock_setup, filename=setup_filename)
-    with io.open(setup_filename, "r", encoding="utf-8-sig") as setup_file:
-        parsed = ast.parse(setup_file.read())
-        for index, node in enumerate(parsed.body[:]):
-            if (
-                not isinstance(node, ast.Expr)
-                or not isinstance(node.value, ast.Call)
-                or not hasattr(node.value.func, "id")
-                or node.value.func.id != "setup"
-            ):
-                continue
-            parsed.body[index:index] = parsed_mock_setup.body
-            break
-
-    fixed = ast.fix_missing_locations(parsed)
-    codeobj = compile(fixed, setup_filename, "exec")
-    local_vars = {}
-    global_vars = {"__setup_calls__": []}
-    current_dir = os.getcwd()
-    working_dir = os.path.dirname(setup_filename)
-    os.chdir(working_dir)
-    exec(codeobj, global_vars, local_vars)
-    os.chdir(current_dir)
-    _, kwargs = global_vars["__setup_calls__"][0]
-    package_name = kwargs["name"]
-    name_space = package_name.replace('-', '.')
-    if "packages" in kwargs.keys():
-        packages = kwargs["packages"]
-        if packages:
-            name_space = packages[0]
-            logging.info("Namespaces found for package {0}: {1}".format(package_name, packages))
-
-    return package_name, kwargs["version"], name_space
+    def _install_package(self):
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
+        check_call(commands, timeout=120)

@@ -22,8 +22,4 @@ public interface Analyser {
      *      ignored as necessary.
      */
     void analyse(List<Path> allFiles);
-
-    default void analyse(Path file) {
-        analyse(Collections.singletonList(file));
-    }
 }

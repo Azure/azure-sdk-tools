@@ -20,7 +20,7 @@ namespace PipelineGenerator
 
         public IEnumerable<SdkComponent> Scan(DirectoryInfo path, string searchPattern)
         {
-            string variantPattern = searchPattern.Replace(".yml", "\\.(?<variant>([a-z]+))\\.yml");
+            string variantPattern = searchPattern.Replace(".yml", "\\.(?<variant>(\\w+))\\.yml");
             Regex variantExtractionExpression = new Regex($"^{variantPattern}$");
             Logger.LogDebug($"Scanning directory '{path.FullName}' for components with search pattern '{searchPattern}' variant pattern '{variantPattern}'");
 

@@ -1,0 +1,30 @@
+Package parsed using Swift APIView (version 0.3.0)
+
+
+package OperatorTestFile.swifttxt {
+    prefix operator +++
+
+    infix operator +-: AdditionPrecedence
+
+    precedencegroup CongruentPrecedence {
+        lowerThan: MultiplicationPrecedence
+        higherThan: AdditionPrecedence
+        associativity: left
+    }
+
+    public struct Vector2D {
+        public var x = 0.0, y = 0.0
+    }
+
+    public extension Vector2D {
+        static func +(left: Vector2D, right: Vector2D) -> Vector2D
+        static prefix func -(vector: Vector2D) -> Vector2D
+        static func +=(left: inout Vector2D, right: Vector2D)
+        static prefix func +++(vector: inout Vector2D) -> Vector2D
+        static func +-(left: Vector2D, right: Vector2D) -> Vector2D
+    }
+
+    extension Vector2D: Equatable {
+        public static func ==(left: Vector2D, right: Vector2D) -> Bool
+    }
+}

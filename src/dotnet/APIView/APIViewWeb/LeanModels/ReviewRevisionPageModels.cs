@@ -1,6 +1,7 @@
 using System.Collections.Generic;
-using ApiView;
+using System.Text.Json.Serialization;
 using APIView;
+using APIView.TreeToken;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.LeanModels
@@ -10,8 +11,16 @@ namespace APIViewWeb.LeanModels
         ProceedWithPageLoad = 0,
         TryGetlegacyReview,
         ErrorDueToInvalidAPIRevisonProceedWithPageLoad,
-        ErrorDueToInvalidAPIRevisonRedirectToIndexPage
+        ErrorDueToInvalidAPIRevisonRedirectToIndexPage,
+        RedirectToSPAUI
+    }
 
+    public enum CodePanelRowDatatype
+    {
+        CodeLine,
+        Documentation,
+        Diagnostics,
+        CommentThread
     }
 
     public class ReviewContentModel
@@ -43,5 +52,22 @@ namespace APIViewWeb.LeanModels
         public UserPreferenceModel UserPreference { get; set; }
         public bool? ShowDocumentation { get; set; }
         public bool? ShowDiffOnly { get; set; }
+    }
+
+    public class NavigationTreeNodeData
+    {
+        public string Kind { get; set; }
+        public string Icon { get; set; }
+        public string NodeIdHashed { get; set; }
+    }
+
+    public class NavigationTreeNode
+    {
+        public string Label { get; set; }
+        public NavigationTreeNodeData Data { get; set; }
+        public bool Expanded { get; set; }
+        [JsonIgnore]
+        public List<NavigationTreeNode> ChildrenObj { get; set; } = new List<NavigationTreeNode>();
+        public List<NavigationTreeNode> Children => ChildrenObj.Count > 0 ? ChildrenObj : null;
     }
 }

@@ -1,0 +1,29 @@
+<app-nav-bar></app-nav-bar>
+<div #mainContainer class="container-fluid main-container">
+    <app-review-info 
+        [review]="review"
+        [apiRevisions]="apiRevisions"
+        [samplesRevisions]="samplesRevisions"
+        [activeApiRevisionId]="activeApiRevisionId"
+        [activeSamplesRevisionId]="activeSamplesRevisionId"
+        [diffApiRevisionId]="diffApiRevisionId"
+        [userProfile]="userProfile"
+        [showPageoptionsButton]="showPageoptionsButton"
+        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
+    <div class="mt-2" style="display: flex;">
+        <div>
+            <p-menu [model]="sideMenu" class="side-menu">
+                <ng-template pTemplate="item" let-item>
+                    <a pRipple class="flex align-items-center p-menuitem-link" pTooltip="{{item.tooltip}}" tooltipPosition="right">
+                        <span [class]="item.icon"></span>
+                        <p-badge *ngIf="item.badge" class="ml-auto" [value]="item.badge" severity="danger" />
+                    </a>
+                </ng-template>
+            </p-menu>
+        </div>
+        <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
+            <ng-content></ng-content>
+        </div>
+    </div>
+</div>
+<app-footer></app-footer>

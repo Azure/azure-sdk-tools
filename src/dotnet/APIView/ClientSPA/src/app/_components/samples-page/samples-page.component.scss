@@ -1,0 +1,80 @@
+:host ::ng-deep {
+    .samples-panel{
+        height: calc(100vh - 130px);
+
+        pre {
+            background-color: var(--editor-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+
+            code {
+                padding-left : 0px;
+                padding-right: 0px;
+                background-color: var(--editor-bg-color);
+
+                .line-actions {
+                    text-align: right;
+                    white-space: nowrap;
+                    cursor: pointer;
+                    display: inline-block;
+                    width: 20px;
+                    position: sticky;
+                    left: 0;
+                    background-color: inherit;
+                    color: var(--base-text-color);
+
+                    .toggle-user-comments-btn {
+                        color: transparent;
+                        &.hide {
+                            visibility: invisible;
+                        }
+                
+                        &.show, &.temp-show {
+                            color: inherit;
+                        }
+                    }
+                }
+            }
+        }
+
+        blockquote {
+            padding: 10px 20px;
+            margin: 0 0 20px;
+            border-left: 5px solid var(--border-color);
+            background-color: var(base-bg-color);
+            font-style: italic;
+            color: var(--base-text-color);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+          
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+    }
+
+    .CodeMirror-wrap pre {
+        border: none !important;
+    }
+
+    .p-splitter-panel-nested {
+        display: block;
+        min-width: 0;
+    }
+
+    .edit-samples-sidebar {
+        width: 50dvw;
+    }
+
+    .samples-editor-panel {
+        height: calc(100vh - 300px);
+        border-radius: 6px;
+        overflow: hidden;
+        border: solid 1px var(--border-color);
+    }
+}

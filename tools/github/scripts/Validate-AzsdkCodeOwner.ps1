@@ -14,13 +14,7 @@ $hasPermissions = $false
 # Verify that the user exists and has the correct public
 # organization memberships.
 $orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
-$orgs = $orgResponse | ConvertFrom-Json
-
-if ($orgs -ne $null) {
-    $orgs = $orgs | select -Expand login
-} else {
-    $orgs = @()
-}
+$orgs = $orgResponse | ConvertFrom-Json | Select-Object -Expand login -ErrorAction Ignore
 
 # Validate that the user has the required public organization memberships.
 $requiredOrgs = [System.Collections.Generic.HashSet[String]]::new([StringComparer]::InvariantCultureIgnoreCase)
@@ -28,7 +22,7 @@ $requiredOrgs.Add("Microsoft") | Out-Null
 $requiredOrgs.Add("Azure") | Out-Null
 
 # Capture non-required organizations for verbose output.
-$otherOrgs = $orgs | where { -not $requiredOrgs.Contains($_) }
+$otherOrgs = $orgs | Where-Object { -not $requiredOrgs.Contains($_) }
 
 Write-Host ""
 Write-Host "Required Orginizations:" -ForegroundColor DarkGray
@@ -71,8 +65,14 @@ if ($permission -eq "admin" -or $permission -eq "write") {
     Write-Host "`t$([char]0x2713) $($permission) " -ForegroundColor Green
     $hasPermissions = $true
 } else {
-    Write-Host "`tx $($permission)" -ForegroundColor Red
+    Write-Host "`tx write" -ForegroundColor Red
 }
+
+# Write the other permissions for the user, if
+# verbose output is enabled.
+Write-Verbose ""
+Write-Verbose "Other Permissions:"
+Write-Verbose "`t$($permission) (not required)"
 
 # Validate the user and write the results.
 $isValid = ($hasOrgs -and $hasPermissions)
@@ -91,7 +91,7 @@ Write-Host ""
 Write-Host ""
 
 # If verbose output is requested, write the raw API responses.
-Write-Verbose "Orginizations API Response:"
+Write-Verbose "Organizations API Response:"
 Write-Verbose "`t$orgResponse"
 
 Write-Verbose ""

@@ -12,7 +12,8 @@ from collections.abc import Sequence
 import datetime
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar
+from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar, Protocol
+from typing_extensions import runtime_checkable
 
 from ._mixin import MixinWithOverloads
 
@@ -325,3 +326,7 @@ class GenericStack(Generic[T]):
 AliasUnion = NewType('AliasUnion', Union[str, int, bool])
 
 AliasNewType = NewType('AliasNewType', Dict[str, str])
+
+@runtime_checkable
+class SomeProtocolDecorator(Protocol):
+    pass

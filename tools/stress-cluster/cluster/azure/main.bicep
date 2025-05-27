@@ -8,6 +8,9 @@ param clusterLocation string = 'westus3'
 param monitoringLocation string = 'centralus'
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
+param defaultAgentPoolSku string = 'Standard_D8ads_v6'
+param systemAgentPoolSku string = 'Standard_D4ads_v6'
+param skipAcrRoleAssignment bool = false
 param maintenanceWindowDay string = 'Monday'
 param tags object
 // AKS does not allow agentPool updates via existing managed cluster resources
@@ -81,6 +84,8 @@ module cluster 'cluster/cluster.bicep' = {
         clusterName: clusterName
         defaultAgentPoolMinNodes: defaultAgentPoolMinNodes
         defaultAgentPoolMaxNodes: defaultAgentPoolMaxNodes
+        defaultAgentPoolSku: defaultAgentPoolSku 
+        systemAgentPoolSku: systemAgentPoolSku 
         maintenanceWindowDay: maintenanceWindowDay 
         tags: tags
         groupSuffix: groupSuffix
@@ -94,18 +99,29 @@ module containerRegistry 'cluster/acr.bicep' = {
     params: {
         registryName: '${replace(clusterName, '-', '')}${resourceSuffix}'
         location: clusterLocation
-        objectIds: concat(accessGroups, array(cluster.outputs.kubeletIdentityObjectId))
+        objectIds: accessGroups
+        kubeletIdentityObjectId: cluster.outputs.kubeletIdentityObjectId
+        // Cluster may be in a tenant that does not include the corp access groups
+        skipAcrRoleAssignment: skipAcrRoleAssignment
     }
 }
+
+var storageName = 'stressdebug${resourceSuffix}'
 
 module storage 'cluster/storage.bicep' = {
   name: 'storage'
   scope: group
   params: {
-    storageName: 'stressdebug${resourceSuffix}'
+    storageName: storageName
     fileShareName: 'stressfiles${resourceSuffix}'
     location: clusterLocation
   }
+}
+
+// Get storage account reference for key lookup (avoid key as secret output from storage module)
+resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' existing = {
+  name: storageName
+  scope: group
 }
 
 var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
@@ -120,9 +136,9 @@ var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STR
 // See https://docs.microsoft.com/azure/aks/azure-files-volume#create-a-kubernetes-secret
 // See https://docs.microsoft.com/azure/aks/azure-files-csi
 var debugStorageKeySecretName = 'debugStorageKey-${resourceSuffix}'
-var debugStorageKeySecretValue = storage.outputs.key
 var debugStorageAccountSecretName = 'debugStorageAccount-${resourceSuffix}'
 var debugStorageAccountSecretValue = storage.outputs.name
+var debugStorageKeySecretValue = '${storageAccount.listKeys().keys[0].value}'
 
 module keyvault 'cluster/keyvault.bicep' = {
     name: 'keyvault'

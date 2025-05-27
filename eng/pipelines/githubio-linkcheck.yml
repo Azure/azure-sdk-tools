@@ -11,10 +11,32 @@ variables:
 jobs:
 - job: CheckLinks
   displayName: Check and Cache Links
-  timeoutInMinutes: 360
+  timeoutInMinutes: 720
   steps:
+  - pwsh: |
+      $reposToClone = @(
+        "azure-rest-api-specs",
+        "azure-sdk",
+        "azure-sdk-for-android",
+        "azure-sdk-for-c",
+        "azure-sdk-for-cpp",
+        "azure-sdk-for-go",
+        "azure-sdk-for-ios",
+        "azure-sdk-for-java",
+        "azure-sdk-for-js",
+        "azure-sdk-for-net",
+        "azure-sdk-for-python",
+        "azure-sdk-for-rust"
+      )
+      foreach ($repo in $reposToClone) {
+        git clone https://github.com/Azure/${repo}.git --depth 1 --single-branch --branch main
+      }
+
+    workingDirectory: $(Pipeline.Workspace)
+    displayName: 'Clone repos to optimize github link checking'
+
   - task: PowerShell@2
-    displayName: 'azure-sdk link check'
+    displayName: 'azure-sdk link check' 
     condition: succeededOrFailed()
     inputs:
       pwsh: true
@@ -25,6 +47,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -localGithubClonedRoot "$(Pipeline.Workspace)"
         -requestTimeoutSec 60 # For the nightly link checks increase timeout to handle some of the links that are redirects and can take longer
 
   - task: PowerShell@2

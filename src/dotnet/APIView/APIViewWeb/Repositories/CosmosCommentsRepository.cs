@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Repositories;
@@ -19,9 +20,15 @@ namespace APIViewWeb
             _commentsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "Comments");
         }
 
-        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
         {
-            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = false");
+            StringBuilder query = new StringBuilder($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = {isDeleted.ToString().ToLower()}");
+
+            if (commentType != null) 
+            {
+                query.Append($" AND c.CommentType = '{commentType.ToString()}'");
+            }
+            return await GetCommentsFromQueryAsync(query.ToString());
         }
 
         public async Task UpsertCommentAsync(CommentItemModel commentModel)

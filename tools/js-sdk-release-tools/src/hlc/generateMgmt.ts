@@ -1,19 +1,22 @@
-import {logger} from "../utils/logger";
+import {logger} from "../utils/logger.js";
 import {execSync} from "child_process";
 
 import fs from "fs";
 import * as path from "path";
-import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git";
-import {generateChangelogAndBumpVersion} from "./utils/automaticGenerateChangeLogAndBumpVersion";
-import {Changelog} from "../changelog/changelogGenerator";
-import {changeRushJson} from "../utils/changeRushJson";
-import {modifyOrGenerateCiYml} from "../utils/changeCiYaml";
-import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample";
-import {changeReadmeMd} from "./utils/changeReadmeMd";
-import {RunningEnvironment} from "../utils/runningEnvironment";
-import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
-import {getReleaseTool} from "./utils/getReleaseTool";
-import { addApiViewInfo } from "../utils/addApiViewInfo";
+import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git.js";
+import {generateChangelogAndBumpVersion} from "../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
+import {Changelog} from "../changelog/changelogGenerator.js";
+import {changeRushJson} from "../utils/changeRushJson.js";
+import {modifyOrGenerateCiYml} from "../utils/changeCiYaml.js";
+import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample.js";
+import {changeReadmeMd} from "./utils/changeReadmeMd.js";
+import {RunningEnvironment} from "../utils/runningEnvironment.js";
+import {getOutputPackageInfo} from "../utils/getOutputPackageInfo.js";
+import {getReleaseTool} from "./utils/getReleaseTool.js";
+import { addApiViewInfo } from "../utils/addApiViewInfo.js";
+import { defaultChildProcessTimeout } from '../common/utils.js'
+import { migratePackage } from "../common/migration.js";
+import { isRushRepo } from "../common/rushUtils.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -28,13 +31,21 @@ export async function generateMgmt(options: {
     downloadUrlPrefix?: string;
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
-    logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+    logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
     if (!options.skipGeneration) {
+        if(options.apiVersion && options.apiVersion !== '') {
+            // for high level client, we will build a tag for the package
+            logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+            options.tag = `package-${options.apiVersion}`;
+        }
+
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
-        if (options.tag) {
+        if (options.tag && options.tag !== '') {
             cmd += ` --tag=${options.tag}`;
         }
 
@@ -46,14 +57,12 @@ export async function generateMgmt(options: {
             cmd += ` ${options.additionalArgs}`;
         }
 
-        logger.logGreen('Executing command:');
-        logger.logGreen('------------------------------------------------------------');
-        logger.logGreen(cmd);
-        logger.logGreen('------------------------------------------------------------');
+        logger.info(`Start to execute command '${cmd}'`);
         try {
-            execSync(cmd, {stdio: 'inherit'});
+            
+            execSync(cmd, {stdio: 'inherit', timeout: defaultChildProcessTimeout});
         } catch (e: any) {
-            throw new Error(`An error occurred while generating codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         }
     }
 
@@ -63,13 +72,14 @@ export async function generateMgmt(options: {
         let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, undefined);
 
         try {
-            logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
+            logger.info(`Start to install dependencies for ${changedPackageDirectory}.`);
             const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
             const packageName = packageJson.name;
 
             if (!options.skipGeneration) {
-                changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
-
+                if (isRushRepo(options.sdkRepo)) {
+                    changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
+                }
                 // change configuration to skip build test, sample
                 changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Hlc);
 
@@ -104,18 +114,35 @@ export async function generateMgmt(options: {
                     outputPackageInfo.path.push(file);
                 }
             }
-
-            logger.logGreen(`rush update`);
-            execSync('rush update', {stdio: 'inherit'});
-            logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
-            execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
-            logger.logGreen('Generating Changelog and Bumping Version...');
             let changelog: Changelog | undefined;
-            if (!options.skipGeneration) {
-                changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+            if (isRushRepo(options.sdkRepo)) {
+                logger.info(`Start to run command: 'rush update'.`);
+                execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+    
+                await migratePackage(options.sdkRepo,packagePath);
+    
+                logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+                logger.info('Start to generate changelog and bump version...');
+                if (!options.skipGeneration) {
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
+                }
+                logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
+                execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            } else {
+                logger.info(`Start to run command: 'pnpm update'.`);
+                execSync('pnpm install', {stdio: 'inherit'});
+                                
+                logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+                logger.info('Start to generate changelog and bump version...');
+                if (!options.skipGeneration) {
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
+                }
+                logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
+                execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
             }
-            logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
-            execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
             }
@@ -155,8 +182,8 @@ export async function generateMgmt(options: {
                 }
             }
         } catch (e: any) {
-            logger.logError('Error:');
-            logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Failed to build for readme file '${options.readmeMd}'.\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
             if (outputPackageInfo) {
                 outputPackageInfo.result = 'failed';
             }
@@ -169,7 +196,5 @@ export async function generateMgmt(options: {
             }
         }
     }
-
-    logger.log(`>>>>>>>>>>>>>>>>>>> End: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
-    logger.log();
+    logger.info(`Generate SDK from '${options.readmeMd}' successfully.`);
 }

@@ -1,0 +1,149 @@
+:host ::ng-deep {
+    font-family: var(--font-family);
+    
+    .comment-thread-container {
+        width: min(100%, 1000px);
+    }
+
+    .comment-thread-navigation {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        transform: translate(0, -50%);
+    }
+
+    .user-avartar {
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+    }
+
+    .p-timeline-event-opposite {
+        display: none;
+    }
+
+    .p-timeline-event-separator {
+        margin-left: 3%;
+    }
+
+    .p-timeline-event-content {
+        flex: 1 1 auto;
+    }
+
+    .p-timeline .p-timeline-event-connector {
+        background-color: var(--border-color) !important;
+    }
+
+    .p-timeline.p-timeline-vertical .p-timeline-event-connector {
+        width: 2px;
+    }
+    
+    .p-panel {
+        border: none;
+        background-color: unset;
+
+        p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    }
+
+    .p-panel .p-panel-header {
+        border: none;
+        padding: 0px;
+        background: inherit;
+        color: inherit;
+    }
+
+    .p-panel .p-panel-content {
+        padding: 0px;
+        border: none;
+        background: inherit;
+        color: inherit;
+    }
+
+    .p-panel.p-panel-toggleable .p-panel-header {
+        padding: 0px;
+    }
+
+    .p-panel .p-panel-footer {
+        padding: 0.5rem 0 0.5rem 0;
+        border: none;
+        background: inherit;
+        color: inherit;
+    }
+
+    .emoji-active {
+        color: orange;
+    }
+
+    .comment-action-btn {
+        border-color: var(--border-color) !important;
+    }
+
+    .editor-action-btn {
+        border-color: var(--border-color) !important;
+    }
+
+    .resolution-info {
+        margin-bottom: 1px;
+    }
+
+    .resolved-toggler {
+        color: var(--primary-color);
+        font-weight: bolder;
+        cursor: pointer;
+    }
+
+    .rendered-comment-content {
+        overflow-wrap: anywhere;
+        white-space: normal;
+        pre {
+            max-width: 100%;
+            white-space: pre-wrap;
+            background-color: var(--editor-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+
+            code {
+                background-color: var(--editor-bg-color);
+
+                .line-actions {
+                    text-align: right;
+                    white-space: nowrap;
+                    display: inline-block;
+                    cursor: pointer;
+                    width: 20px;
+                    padding-inline-end: 15px;
+                    position: sticky;
+                    left: 0;
+                    background-color: inherit;
+                    color: var(--base-text-color);
+
+                    .toggle-user-comments-btn  {
+                        color: transparent;
+                    }
+                }
+            }
+        }
+        blockquote {
+            padding: 10px 20px;
+            margin: 0 0 20px;
+            border-left: 5px solid var(--border-color);
+            background-color: var(base-bg-color);
+            font-style: italic;
+            color: var(--base-text-color);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+          
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+    }
+}

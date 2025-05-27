@@ -6,7 +6,7 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = "Revisions";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
     TempData["UserPreference"] = userPreference;
 }
 <div class="container-fluid mx-0 px-0 sub-header-content">
@@ -24,7 +24,7 @@
     var leftOffCanvasClass = " show-left-offcanvas";
     var mainContainerLeftClass = " move-main-content-container-left";
     var mainContainerRightClass = " move-main-content-container-right";
-    if (userPreference.HideRevisionsPageOptions.HasValue && userPreference.HideRevisionsPageOptions == true)
+    if (userPreference.HideRevisionsPageOptions)
     {
         rightOffCanvasClass = String.Empty;
         mainContainerRightClass = String.Empty;

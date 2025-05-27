@@ -29,12 +29,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void Reset()
+        public async Task Reset()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            _recordingHandler.SetDefaultExtensions(recordingId);
+            await _recordingHandler.SetDefaultExtensions(recordingId);
         }
 
         [HttpGet]
@@ -64,45 +64,41 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async Task RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
+        public async Task RemoveSanitizers()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+
+            // Originally, this list was parsed using [FromBody], which was implicitly case insensitive. Need to maintain for compat.
+            var sanitizerList = await HttpRequestInteractions.GetBody<RemoveSanitizerList>(Request, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             var removedSanitizers = new List<string>();
-            var exceptionsList = new List<string>();
 
-            if (sanitizerList.Sanitizers.Count == 0)
+            // - body may be empty
+            // - body may actually pass an empty list. handle both.
+            if ((sanitizerList?.Sanitizers ?? new List<string>()).Count == 0)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "At least one sanitizerId for removal must be provided.");
             }
 
             foreach(var sanitizerId in sanitizerList.Sanitizers) {
-                try
+                var removedId = await _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                if (!string.IsNullOrWhiteSpace(removedId))
                 {
-                    var removedId = _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
                     removedSanitizers.Add(sanitizerId);
                 }
-                catch (HttpException ex) {
-                    exceptionsList.Add(ex.Message);
-                }
             }
 
-            if (exceptionsList.Count > 0)
-            {
-                var varExceptionMessage = $"Unable to remove {exceptionsList.Count} sanitizer{(exceptionsList.Count > 1 ? 's' : string.Empty)}. Detailed list follows: \n"
-                    + string.Join("\n", exceptionsList);
-                throw new HttpException(HttpStatusCode.BadRequest, varExceptionMessage);
-            }
-            else
-            {
-                var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
+            var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
 
-                Response.ContentType = "application/json";
-                Response.ContentLength = json.Length;
+            Response.ContentType = "application/json";
+            Response.ContentLength = json.Length;
 
-                await Response.WriteAsync(json);
-            }
+            await Response.WriteAsync(json);
         }
 
         [HttpGet]
@@ -116,11 +112,11 @@ namespace Azure.Sdk.Tools.TestProxy
             if (!string.IsNullOrEmpty(recordingId))
             {
                 var session = _recordingHandler.GetActiveSession(recordingId);
-                sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers(session);
+                sanitizers = await _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers(session);
             }
             else
             {
-                sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers();
+                sanitizers = await _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers();
             }
 
             var json = JsonSerializer.Serialize(new { Sanitizers = sanitizers });
@@ -143,11 +139,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                registeredSanitizerId = _recordingHandler.RegisterSanitizer(s, recordingId);
+                registeredSanitizerId = await _recordingHandler.RegisterSanitizer(s, recordingId);
             }
             else
             {
-                registeredSanitizerId = _recordingHandler.RegisterSanitizer(s);
+                registeredSanitizerId = await _recordingHandler.RegisterSanitizer(s);
             }
 
             var json = JsonSerializer.Serialize(new { Sanitizer = registeredSanitizerId });
@@ -171,26 +167,15 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, "When bulk adding sanitizers, ensure there is at least one sanitizer added in each batch. Received 0 work items.");
             }
 
-            var registeredSanitizers = new List<string>();
+            // we need check if a recording id is present BEFORE the loop, as we want to encapsulate the entire
+            // sanitizer add operation in a single lock, rather than gathering and releasing a sanitizer lock
+            // for the session/recording on _each_ sanitizer addition.
 
-            // register them all
-            foreach(var sanitizer in workload)
-            {
-                if (recordingId != null)
-                {
-                    var registeredId = _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
-                    registeredSanitizers.Add(registeredId);
-                }
-                else
-                {
-                    var registeredId = _recordingHandler.RegisterSanitizer(sanitizer);
-                    registeredSanitizers.Add(registeredId);
-                }
-            }
+            var registeredSanitizers = await _recordingHandler.RegisterSanitizers(workload, recordingId);
 
             if (recordingId != null)
             {
-                Response.Headers.Add("x-recording-id", recordingId);
+                Response.Headers.Append("x-recording-id", recordingId);
             }
 
             var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });
@@ -221,10 +206,10 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        [AllowEmptyBody]
-        public void SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
+        public async Task SetRecordingOptions()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var options = await HttpRequestInteractions.GetBody<Dictionary<string, object>>(Request);
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 

@@ -1,17 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -62,26 +58,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return value;
         }
 
-        public async static Task<T> GetBody<T>(HttpRequest req)
+        public async static Task<T> GetBody<T>(HttpRequest req, JsonSerializerOptions serializerOptions = null)
         {
+            string bodyContent = string.Empty;
+
             if (req.ContentLength > 0)
             {
+                var options = serializerOptions ?? new JsonSerializerOptions();
                 try
                 {
                     using (var jsonDocument = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true }))
                     {
-                        return JsonSerializer.Deserialize<T>(jsonDocument.RootElement.GetRawText(), new JsonSerializerOptions() { });
-                    }
+                        bodyContent = jsonDocument.RootElement.GetRawText();
 
+                        return JsonSerializer.Deserialize<T>(bodyContent, options);
+                    }
                 }
                 catch (Exception e)
                 {
-                    req.Body.Position = 0;
-                    using (StreamReader readstream = new StreamReader(req.Body, Encoding.UTF8))
-                    {
-                        string bodyContent = readstream.ReadToEnd();
-                        throw new HttpException(HttpStatusCode.BadRequest, $"The body of this request is invalid JSON. Content: {bodyContent}. Exception detail: {e.Message}");
-                    }
+                    throw new HttpException(HttpStatusCode.BadRequest, $"The body of this request is invalid JSON. Content: {bodyContent}. Exception detail: {e.Message}");
                 }
             }
 

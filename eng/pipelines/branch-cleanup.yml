@@ -15,6 +15,7 @@ parameters:
     - Azure/azure-sdk-for-js
     - Azure/azure-sdk-for-net
     - Azure/azure-sdk-for-python
+    - Azure/azure-sdk-for-rust
 
 - name: ForkAutomationBranches
   type: object
@@ -45,10 +46,15 @@ parameters:
 - name: DailyBranchRepos
   type: object
   default:
-    - Azure/azure-docs-sdk-dotnet
-    - Azure/azure-docs-sdk-java
     - MicrosoftDocs/azure-docs-sdk-node
     - MicrosoftDocs/azure-docs-sdk-python
+    - MicrosoftDocs/azure-docs-sdk-java
+    - MicrosoftDocs/azure-docs-sdk-net
+
+- name: RestAPISpecsDocsRepos
+  type: object
+  default:
+    - MicrosoftDocs/AzureRestPreview
 
 jobs:
   - job:
@@ -56,6 +62,7 @@ jobs:
     pool:
       name: azsdk-pool-mms-ubuntu-2204-general
       vmImage: ubuntu-22.04
+    timeoutInMinutes: 120
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml
@@ -124,7 +131,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -140,7 +147,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs-pr"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -157,5 +164,21 @@ jobs:
               -RepoId "${{ repo }}"
               -BranchRegex "^daily"
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
+
+      - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} azure-rest-api-specs docs branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -BranchRegex "^(result_)?([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-14))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

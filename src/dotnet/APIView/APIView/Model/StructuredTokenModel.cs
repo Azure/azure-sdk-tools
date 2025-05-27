@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Text.Json.Serialization;
+using System.Text.Json;
+using System;
+using APIView.Model.V2;
 
 namespace APIView.TreeToken
 {
@@ -35,6 +38,15 @@ namespace APIView.TreeToken
         ParameterSeparator = 4
     }
 
+    public enum DiffKind
+    {
+        NoneDiff = 0,
+        Unchanged = 1, // Unchanged means the top level node is the same, the children could still contain diffs.
+        Added = 2,
+        Removed = 3
+    }
+
+
     /// <summary>
     /// Represents an APIView token its properties and tags for APIView parsers.
     /// </summary>
@@ -49,6 +61,10 @@ namespace APIView.TreeToken
         /// Property key to indicate id to be navigated to when a token is clicked.
         /// </summary>
         public static string NAVIGATE_TO_ID = "NavigateToId";
+        /// <summary>
+        /// Property key to indicate that a token should be ignored for computing diff
+        /// </summary>
+        public static string SKIPP_DIFF = "SkippDiff";
         /// <summary>
         /// Property value that marks a token as documentation
         /// </summary>
@@ -193,6 +209,71 @@ namespace APIView.TreeToken
             Value = value;
             Kind = StructuredTokenKind.Content;
         }
+        public StructuredToken(StructuredToken token)
+        {
+            Value = token.Value;
+            Id = token.Id;
+            Kind = token.Kind;
+            foreach (var property in token.PropertiesObj)
+            {
+                PropertiesObj.Add(property.Key, property.Value);
+            }
+            foreach (var renderClass in token.RenderClassesObj)
+            {
+                RenderClassesObj.Add(renderClass);
+            }
+        }
+
+        public StructuredToken(ReviewToken token)
+        {
+            Value = token.Value;
+            RenderClassesObj = new HashSet<string>(token.RenderClasses);
+
+            if (token.IsDeprecated == true)
+            {
+                TagsObj.Add("Deprecated");
+            }
+
+            if (!string.IsNullOrEmpty(token.NavigateToId))
+            {
+                PropertiesObj.Add("NavigateToId", token.NavigateToId);
+            }
+
+            if (token.IsDocumentation == true)
+            {
+                TagsObj.Add(StructuredToken.DOCUMENTATION);
+            }
+            string className = StructuredToken.TEXT;
+            switch (token.Kind)
+            {
+                case TokenKind.Text:
+                    className = StructuredToken.TEXT;
+                    break;
+                case TokenKind.Punctuation:
+                    className = StructuredToken.PUNCTUATION;
+                    break;
+                case TokenKind.Keyword:
+                    className = StructuredToken.KEYWORD;
+                    break;
+                case TokenKind.TypeName:
+                    className = StructuredToken.TYPE_NAME;
+                    break;
+                case TokenKind.MemberName:
+                    className = StructuredToken.MEMBER_NAME;
+                    break;
+                case TokenKind.Comment:
+                    className = StructuredToken.COMMENT;
+                    break;
+                case TokenKind.StringLiteral:
+                    className = StructuredToken.STRING_LITERAL;
+                    break;
+                case TokenKind.Literal:
+                    className = StructuredToken.LITERAL;
+                    break;
+            }
+            RenderClassesObj.Add(className);
+        }
+
 
         public static StructuredToken CreateLineBreakToken()
         {

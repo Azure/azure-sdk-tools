@@ -8,9 +8,12 @@ parameters:
 - name: DirectoryToSync
   type: string
   default: not-specified
+- name: FilePatterns
+  type: object
+  default: []
 - name: BaseBranchName
   type: string
-  default: $(Build.SourceBranch)
+  default: $(DefaultBranch)
 - name: Repos
   type: object
   default: []
@@ -35,8 +38,16 @@ stages:
             - pwsh: |
                 Set-PsDebug -Trace 1
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
-                $patchfiles = git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}"
-                if ($patchfiles -and ($LASTEXITCODE -eq 0)) {
+                $patchFiles = @()
+
+                $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
+                if (!$filePatterns) { $filePatterns = @("*")}
+
+                foreach ($filePattern in $filePatterns) {
+                  Write-Host "Creating patch files for pattern: $filePattern"
+                  $patchFiles += git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}/$filePattern"
+                }
+                if ($patchFiles -and ($LASTEXITCODE -eq 0)) {
                   echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
                   echo "Setting PatchFilesLocation"
                 }
@@ -57,6 +68,7 @@ stages:
               parameters:
                 CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
+                FilePatterns: ${{ parameters.FilePatterns }}
                 UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                 BaseBranchName: $(system.pullRequest.targetBranch)
                 SkipCheckingForChanges: true
@@ -189,15 +201,11 @@ stages:
             vmImage: ubuntu-22.04
 
           steps:
-            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-              parameters:
-                Paths:
-                  - ${{ parameters.DirectoryToSync }}
-
             - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
+                FilePatterns: ${{ parameters.FilePatterns }}
                 UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}"
                 BaseBranchName: ${{ parameters.BaseBranchName }}
                 Repos: ${{ parameters.Repos }}

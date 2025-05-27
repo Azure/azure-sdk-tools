@@ -4,103 +4,151 @@ import {
     InterfaceDeclaration,
     TypeAliasDeclaration
 } from "parse-ts-to-ast";
-import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
-import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
-import { TSExportedMetaData } from "./extractMetaData";
-import { SDKType } from "../common/types";
-import { logger } from "../utils/logger";
+import {
+    AssignDirection,
+    AstContext,
+    DiffLocation,
+    DiffPair,
+    DiffReasons,
+    InlineDeclarationNameSetMessage,
+    RuleMessage,
+    RuleMessageKind,
+    detectBreakingChangesBetweenPackages,
+    patchRoutes,
+    patchTypeAlias,
+    patchFunction,
+} from "typescript-codegen-breaking-change-detector";
+
+import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration.js";
+import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration.js";
+import { join } from "path";
+import { SDKType } from "../common/types.js";
+import { logger } from "../utils/logger.js";
+import { TSExportedMetaData } from "./extractMetaData.js";
+import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor.js";
+import { Node, SyntaxKind } from "ts-morph";
+
+export interface ChangelogItem {
+    line: string;
+    oldName?: string;
+    newName?: string;
+    toDelete?: boolean;
+}
 
 export class Changelog {
+    // TODO: refactor: use unified changelog item,
+    //       avoid updating the following for adding a new change type
+    //       -   'hasBreakingChange'
+    //       -   'hasFeature'
+    //       -   'getBreakingChangeItems'
+    //       -   'getBreakingChangeItems
+    //       -   'displayChangeLog'
+
     // features
-    public addedOperationGroup: string[] = [];
-    public addedOperation: string[] = [];
-    public addedInterface: string[] = [];
-    public addedClass: string[] = [];
-    public addedTypeAlias: string[] = [];
-    public interfaceAddOptionalParam: string[] = [];
-    public interfaceParamTypeExtended: string[] = [];
-    public typeAliasAddInherit: string[] = [];
-    public typeAliasAddParam: string[] = [];
-    public addedEnum: string[] = [];
-    public addedEnumValue: string[] = [];
-    public addedFunction: string[] = [];
+    public addedOperationGroup: ChangelogItem[] = [];
+    public addedOperation: ChangelogItem[] = [];
+    public addedInterface: ChangelogItem[] = [];
+    public addedClass: ChangelogItem[] = [];
+    public addedTypeAlias: ChangelogItem[] = [];
+    public interfaceAddOptionalParam: ChangelogItem[] = [];
+    public interfaceParamTypeExtended: ChangelogItem[] = [];
+    public typeAliasAddInherit: ChangelogItem[] = [];
+    public typeAliasAddParam: ChangelogItem[] = [];
+    public addedEnum: ChangelogItem[] = [];
+    public addedEnumValue: ChangelogItem[] = [];
+    public addedFunction: ChangelogItem[] = [];
+    public addedFunctionOverload: ChangelogItem[] = [];
+
     // breaking changes
-    public removedOperationGroup: string[] = [];
-    public removedOperation: string[] = [];
-    public operationSignatureChange: string[] = [];
-    public deletedClass: string[] = [];
-    public classSignatureChange: string[] = [];
-    public interfaceParamDelete: string[] = [];
-    public interfaceParamAddRequired: string[] = [];
-    public interfaceParamTypeChanged: string[] = [];
-    public interfaceParamChangeRequired: string[] = [];
-    public classParamDelete: string[] = [];
-    public classParamChangeRequired: string[] = [];
-    public typeAliasDeleteInherit: string[] = [];
-    public typeAliasParamDelete: string[] = [];
-    public typeAliasAddRequiredParam: string[] = [];
-    public typeAliasParamChangeRequired: string[] = [];
-    public removedEnum: string[] = [];
-    public removedEnumValue: string[] = [];
-    public removedFunction: string[] = [];
+    public removedOperationGroup: ChangelogItem[] = [];
+    public removedOperation: ChangelogItem[] = [];
+    public operationSignatureChange: ChangelogItem[] = [];
+    public deletedClass: ChangelogItem[] = [];
+    public classSignatureChange: ChangelogItem[] = [];
+    public interfaceParamDelete: ChangelogItem[] = [];
+    public interfaceParamAddRequired: ChangelogItem[] = [];
+    public interfaceParamTypeChanged: ChangelogItem[] = [];
+    public interfaceParamChangeRequired: ChangelogItem[] = [];
+    public classParamDelete: ChangelogItem[] = [];
+    public classParamChangeRequired: ChangelogItem[] = [];
+    public typeAliasDeleteInherit: ChangelogItem[] = [];
+    public typeAliasParamDelete: ChangelogItem[] = [];
+    public typeAliasAddRequiredParam: ChangelogItem[] = [];
+    public typeAliasParamChangeRequired: ChangelogItem[] = [];
+    public typeAliasOtherChanged: ChangelogItem[] = [];
+    public removedEnum: ChangelogItem[] = [];
+    public removedEnumValue: ChangelogItem[] = [];
+    public removedFunction: ChangelogItem[] = [];
+    public removedFunctionOverload: ChangelogItem[] = [];
+    public changedFunction: ChangelogItem[] = [];
+    public removedTypeAlias: ChangelogItem[] = [];
 
     public get hasBreakingChange() {
-        return this.removedOperationGroup.length > 0 ||
-            this.removedOperation.length > 0 ||
-            this.operationSignatureChange.length > 0 ||
-            this.deletedClass.length > 0 ||
-            this.classSignatureChange.length > 0 ||
-            this.interfaceParamDelete.length > 0 ||
-            this.interfaceParamAddRequired.length > 0 ||
-            this.interfaceParamChangeRequired.length > 0 ||
-            this.interfaceParamTypeChanged.length > 0 ||
-            this.classParamDelete.length > 0 ||
-            this.classParamChangeRequired.length > 0 ||
-            this.typeAliasDeleteInherit.length > 0 ||
-            this.typeAliasParamDelete.length > 0 ||
-            this.typeAliasAddRequiredParam.length > 0 ||
-            this.typeAliasParamChangeRequired.length > 0 ||
-            this.removedEnum.length > 0 ||
-            this.removedEnumValue.length > 0;
-            this.removedFunction.length > 0;
+        return this.removedOperationGroup.filter(i => !i.toDelete).length > 0 ||
+            this.removedOperation.filter(i => !i.toDelete).length > 0 ||
+            this.operationSignatureChange.filter(i => !i.toDelete).length > 0 ||
+            this.deletedClass.filter(i => !i.toDelete).length > 0 ||
+            this.classSignatureChange.filter(i => !i.toDelete).length > 0 ||
+            this.interfaceParamDelete.filter(i => !i.toDelete).length > 0 ||
+            this.interfaceParamAddRequired.filter(i => !i.toDelete).length > 0 ||
+            this.interfaceParamChangeRequired.filter(i => !i.toDelete).length > 0 ||
+            this.interfaceParamTypeChanged.filter(i => !i.toDelete).length > 0 ||
+            this.classParamDelete.filter(i => !i.toDelete).length > 0 ||
+            this.classParamChangeRequired.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasDeleteInherit.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasParamDelete.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasAddRequiredParam.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasParamChangeRequired.filter(i => !i.toDelete).length > 0 ||
+            this.removedEnum.filter(i => !i.toDelete).length > 0 ||
+            this.removedEnumValue.filter(i => !i.toDelete).length > 0 ||
+            this.removedFunction.filter(i => !i.toDelete).length > 0 ||
+            this.changedFunction.filter(i => !i.toDelete).length > 0 ||
+            this.removedFunctionOverload.filter(i => !i.toDelete).length > 0 ||
+            this.removedTypeAlias.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasOtherChanged.filter(i => !i.toDelete).length > 0;
     }
 
     public get hasFeature() {
-        return this.addedOperationGroup.length > 0 ||
-            this.addedOperation.length > 0 ||
-            this.addedInterface.length > 0 ||
-            this.addedClass.length > 0 ||
-            this.addedTypeAlias.length > 0 ||
-            this.interfaceAddOptionalParam.length > 0 ||
-            this.interfaceParamTypeExtended.length > 0 ||
-            this.typeAliasAddInherit.length > 0 ||
-            this.typeAliasAddParam.length > 0 ||
-            this.addedEnum.length > 0 ||
-            this.addedEnumValue.length > 0;
-        this.addedFunction.length > 0;
+        return this.addedOperationGroup.filter(i => !i.toDelete).length > 0 ||
+            this.addedOperation.filter(i => !i.toDelete).length > 0 ||
+            this.addedInterface.filter(i => !i.toDelete).length > 0 ||
+            this.addedClass.filter(i => !i.toDelete).length > 0 ||
+            this.addedTypeAlias.filter(i => !i.toDelete).length > 0 ||
+            this.interfaceAddOptionalParam.filter(i => !i.toDelete).length > 0 ||
+            this.interfaceParamTypeExtended.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasAddInherit.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasAddParam.filter(i => !i.toDelete).length > 0 ||
+            this.addedEnum.filter(i => !i.toDelete).length > 0 ||
+            this.addedEnumValue.filter(i => !i.toDelete).length > 0 ||
+            this.addedFunction.filter(i => !i.toDelete).length > 0 ||
+            this.addedFunctionOverload.filter(i => !i.toDelete).length > 0;
     }
 
     public getBreakingChangeItems(): string[] {
         let items: string[] = [];
         if (this.hasBreakingChange) {
-            this.removedOperationGroup
-                .concat(this.removedOperation)
-                .concat(this.operationSignatureChange)
-                .concat(this.deletedClass)
-                .concat(this.classSignatureChange)
-                .concat(this.interfaceParamDelete)
-                .concat(this.interfaceParamAddRequired)
-                .concat(this.interfaceParamChangeRequired)
-                .concat(this.interfaceParamTypeChanged)
-                .concat(this.classParamDelete)
-                .concat(this.classParamChangeRequired)
-                .concat(this.typeAliasDeleteInherit)
-                .concat(this.typeAliasParamDelete)
-                .concat(this.typeAliasAddRequiredParam)
-                .concat(this.typeAliasParamChangeRequired)
-                .concat(this.removedEnum)
-                .concat(this.removedEnumValue)
-                .concat(this.removedFunction)
+            this.removedOperationGroup.filter(i => !i.toDelete).map(i => i.line)
+                .concat(this.removedOperation.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.operationSignatureChange.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.deletedClass.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.classSignatureChange.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamDelete.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamAddRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamChangeRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamTypeChanged.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.classParamDelete.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.classParamChangeRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasDeleteInherit.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasParamDelete.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasAddRequiredParam.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasParamChangeRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedEnum.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedEnumValue.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.changedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedFunctionOverload.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedTypeAlias.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasOtherChanged.filter(i => !i.toDelete).map(i => i.line))
                 .forEach(e => {
                     items.push(e);
                 });
@@ -108,23 +156,25 @@ export class Changelog {
         return items;
     }
 
+
     public displayChangeLog(): string {
         const display: string[] = [];
         if (this.hasFeature) {
             display.push('### Features Added');
             display.push('');
-            this.addedOperationGroup
-                .concat(this.addedOperation)
-                .concat(this.addedInterface)
-                .concat(this.addedClass)
-                .concat(this.addedTypeAlias)
-                .concat(this.interfaceAddOptionalParam)
-                .concat(this.interfaceParamTypeExtended)
-                .concat(this.typeAliasAddInherit)
-                .concat(this.typeAliasAddParam)
-                .concat(this.addedEnum)
-                .concat(this.addedEnumValue)
-                .concat(this.addedFunction)
+            this.addedOperationGroup.filter(i => !i.toDelete).map(i => i.line)
+                .concat(this.addedOperation.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedInterface.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedClass.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedTypeAlias.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceAddOptionalParam.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamTypeExtended.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasAddInherit.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasAddParam.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedEnum.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedEnumValue.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedFunctionOverload.filter(i => !i.toDelete).map(i => i.line))
                 .forEach(e => {
                     display.push('  - ' + e);
                 });
@@ -134,30 +184,75 @@ export class Changelog {
             if (this.hasFeature) display.push('');
             display.push('### Breaking Changes');
             display.push('');
-            this.removedOperationGroup
-                .concat(this.removedOperation)
-                .concat(this.operationSignatureChange)
-                .concat(this.deletedClass)
-                .concat(this.classSignatureChange)
-                .concat(this.interfaceParamDelete)
-                .concat(this.interfaceParamAddRequired)
-                .concat(this.interfaceParamChangeRequired)
-                .concat(this.interfaceParamTypeChanged)
-                .concat(this.classParamDelete)
-                .concat(this.classParamChangeRequired)
-                .concat(this.typeAliasDeleteInherit)
-                .concat(this.typeAliasParamDelete)
-                .concat(this.typeAliasAddRequiredParam)
-                .concat(this.typeAliasParamChangeRequired)
-                .concat(this.removedEnum)
-                .concat(this.removedEnumValue)
-                .concat(this.removedFunction)
+            this.removedOperationGroup.filter(i => !i.toDelete).map(i => i.line)
+                .concat(this.removedOperation.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.operationSignatureChange.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.deletedClass.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.classSignatureChange.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamDelete.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamAddRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamChangeRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.interfaceParamTypeChanged.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.classParamDelete.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.classParamChangeRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasDeleteInherit.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasParamDelete.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasAddRequiredParam.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasParamChangeRequired.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedEnum.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedEnumValue.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.changedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedFunctionOverload.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedTypeAlias.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasOtherChanged.filter(i => !i.toDelete).map(i => i.line))
                 .forEach(e => {
                     display.push('  - ' + e);
                 });
         }
 
         return display.join('\n');
+    }
+
+    // TODO: add modular
+    public async postProcess(baselinePackageRoot: string, currentPackageRoot: string, sdkType: SDKType): Promise<void> {
+        if (sdkType !== SDKType.RestLevelClient) {
+            logger.warn(`No need to post process changelog for ${sdkType}.`)
+            return;
+        }
+        try {
+            const tempFolder = join('~/.tmp-breaking-change-detect');
+            const messageMap = await detectBreakingChangesBetweenPackages(baselinePackageRoot, currentPackageRoot, tempFolder, false);
+            switch (sdkType) {
+                case SDKType.RestLevelClient:
+                    await this.postProcessForRestLevelClient(messageMap);
+                    break;
+            }
+        } catch (err) {
+            throw new Error(`Failed to apply special breaking change rules to ${sdkType}`);
+        }
+    }
+
+    private processInlineMessage(messages: InlineDeclarationNameSetMessage[]) {
+        logger.info('Before post process rename messages in changelog')
+        logger.info(this.displayChangeLog());
+        
+        if (messages.length !== 1) {
+            throw new Error(`Multiple inline messages are unsupported`)
+        }
+        const postProcesser = new RestLevelClientChangelogPostProcessor(this, messages[0]);
+        postProcesser.run();
+
+        logger.info('After post process rename messages in changelog')
+        logger.info(this.displayChangeLog());
+    }
+
+    private async postProcessForRestLevelClient(messageMap: Map<string, RuleMessage[] | undefined>) {
+        // RLC only has 1 api view
+        const key = Array.from(messageMap.keys())[0]
+        const messages = messageMap.get(key)!
+        const inlineMessages = messages.filter(m => m.kind === RuleMessageKind.InlineDeclarationNameSetMessage).map(m => m as InlineDeclarationNameSetMessage)
+        this.processInlineMessage(inlineMessages)
     }
 }
 
@@ -174,13 +269,13 @@ function getRenamedOperationGroupFromToMap(from: TSExportedMetaData): { [id: str
 
 const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
-): string[] => {
+): ChangelogItem[] => {
     const newToOldMap = getRenamedOperationGroupFromToMap(metaDataNew);
-    const addOperationGroup: string[] = [];
+    const addOperationGroup: ChangelogItem[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
         const oldName = oldSdkType === newSdkType ? operationGroup : newToOldMap[operationGroup];
         if (!metaDataOld.operationInterface[oldName]) {
-            addOperationGroup.push('Added operation group ' + operationGroup);
+            addOperationGroup.push({ line: 'Added operation group ' + operationGroup, newName: operationGroup });
         }
     });
     return addOperationGroup;
@@ -194,9 +289,9 @@ function getAllMethodNameInInterface(interface_: InterfaceDeclaration): Array<st
 
 const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
-): string[] => {
+): ChangelogItem[] => {
     const newToOldMap = getRenamedOperationGroupFromToMap(metaDataNew);
-    const addOperation: string[] = [];
+    const addOperation: ChangelogItem[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOldMap[newOperationGroup];
         if(!metaDataOld.operationInterface[oldOperationGroup]) {
@@ -206,44 +301,44 @@ const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpo
         const oldInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
         newInterfaceMethodNames
             .filter(newOpName => !oldInterfaceMethodNames.includes(newOpName))
-            .forEach(newOpName => { addOperation.push('Added operation ' + newOperationGroup + '.' + newOpName); });
+            .forEach(newOpName => { addOperation.push({ line: 'Added operation ' + newOperationGroup + '.' + newOpName, newName: newOperationGroup }); });
         return;
     });
     return addOperation;
 };
 
-const findAddedInterface = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addInterface: string[] = [];
+const findAddedInterface = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addInterface: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (!metaDataOld.modelInterface[model]) {
-            addInterface.push('Added Interface ' + model);
+            addInterface.push({ line: 'Added Interface ' + model, newName: model });
         }
     });
     return addInterface;
 };
 
-const findAddedClass = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addClass: string[] = [];
+const findAddedClass = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addClass: ChangelogItem[] = [];
     Object.keys(metaDataNew.classes).forEach(model => {
         if (!metaDataOld.classes[model]) {
-            addClass.push('Added Class ' + model);
+            addClass.push({ line: 'Added Class ' + model, newName: model });
         }
     });
     return addClass;
 };
 
-const findAddedTypeAlias = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addModel: string[] = [];
+const findAddedTypeAlias = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addModel: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (!metaDataOld.typeAlias[typeAlias]) {
-            addModel.push('Added Type Alias ' + typeAlias);
+            addModel.push({ line: 'Added Type Alias ' + typeAlias, newName: typeAlias });
         }
     });
     return addModel;
 };
 
-const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceAddedParam: string[] = [];
+const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceAddedParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -258,7 +353,7 @@ const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataN
                         }
                     });
                     if (!find) {
-                        interfaceAddedParam.push('Interface ' + model + ' has a new optional parameter ' + pNew.name);
+                        interfaceAddedParam.push({ line: 'Interface ' + model + ' has a new optional parameter ' + pNew.name });
                     }
                 }
             });
@@ -267,8 +362,8 @@ const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataN
     return interfaceAddedParam;
 };
 
-const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceParamTypeExtended: string[] = [];
+const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceParamTypeExtended: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -289,7 +384,7 @@ const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDat
                                         }
                                     }
                                     if (allFind) {
-                                        interfaceParamTypeExtended.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                        interfaceParamTypeExtended.push({ line: `Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`, newName: pNew.type, oldName: pOld.type });
                                     }
                                 }
                             }
@@ -303,8 +398,8 @@ const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDat
     return interfaceParamTypeExtended;
 };
 
-const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasAddInherit: string[] = [];
+const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasAddInherit: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -314,18 +409,20 @@ const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: T
                     typeAliasFromNew.type.inherits.forEach(inherit => {
                         if (typeof inherit === 'string') {
                             if (typeAliasFromOld.type instanceof IntersectionDeclaration) {
+                                // strange behavior, 'ClustersUpdateMediaTypesParam_CCC' is in intersection type, but it's in 'inherits'
+                                // export type ClustersUpdateParameters = ClustersUpdateMediaTypesParam_CCC & ClustersUpdateBodyParam & RequestParameters;
                                 if (typeAliasFromOld.type.inherits) {
                                     if (!typeAliasFromOld.type.inherits.includes(inherit)) {
-                                        typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                        typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, newName: inherit });
                                     }
                                 } else {
-                                    typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                    typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, newName: inherit });
                                 }
                             } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
-                                typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, newName: inherit });
                             } else if (typeof typeAliasFromOld.type === 'string') {
                                 if (typeAliasFromOld.type !== inherit) {
-                                    typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                    typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, newName: inherit });
                                 }
                             }
                         }
@@ -337,8 +434,8 @@ const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: T
     return typeAliasAddInherit;
 };
 
-const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasAddParam: string[] = [];
+const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasAddParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -359,10 +456,10 @@ const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSE
                                         });
                                     });
                                     if (!find) {
-                                        typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                        typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                     }
                                 } else {
-                                    typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                    typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                 }
                             } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
                                 let find = false;
@@ -372,10 +469,10 @@ const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSE
                                     }
                                 });
                                 if (!find) {
-                                    typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                    typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                 }
                             } else if (typeof typeAliasFromOld.type === 'string') {
-                                typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                             }
                         });
                     });
@@ -394,10 +491,10 @@ const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSE
                                     });
                                 });
                                 if (!find) {
-                                    typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                    typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                 }
                             } else {
-                                typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                             }
                         } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
                             let find = false;
@@ -407,10 +504,10 @@ const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSE
                                 }
                             });
                             if (!find) {
-                                typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                             }
                         } else if (typeof typeAliasFromOld.type === 'string') {
-                            typeAliasAddParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                            typeAliasAddParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                         }
                     });
                 }
@@ -420,25 +517,25 @@ const findTypeAliasAddParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSE
     return typeAliasAddParam;
 };
 
-const findAddedEnum = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addedEnum: string[] = [];
+const findAddedEnum = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addedEnum: ChangelogItem[] = [];
     Object.keys(metaDataNew.enums).forEach(e => {
         if (!metaDataOld.enums[e]) {
-            addedEnum.push('Added Enum ' + e);
+            addedEnum.push({ line: 'Added Enum ' + e, newName: e });
         }
     });
     return addedEnum;
 };
 
-const findAddedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addedEnumValue: string[] = [];
+const findAddedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addedEnumValue: ChangelogItem[] = [];
     Object.keys(metaDataNew.enums).forEach(e => {
         if (metaDataOld.enums[e]) {
             const enumOld = metaDataOld.enums[e] as EnumDeclaration;
             const enumNew = metaDataNew.enums[e] as EnumDeclaration;
             enumNew.members.forEach(v => {
                 if (!enumOld.members.includes(v)) {
-                    addedEnumValue.push('Enum ' + e + ' has a new value ' + v);
+                    addedEnumValue.push({ line: 'Enum ' + e + ' has a new value ' + v, newName: e });
                 }
             });
         }
@@ -446,11 +543,11 @@ const findAddedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpo
     return addedEnumValue;
 };
 
-const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addedFunction: string[] = [];
+const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addedFunction: ChangelogItem[] = [];
     Object.keys(metaDataNew.functions).forEach(e => {
         if (!metaDataOld.functions[e]) {
-            addedFunction.push(`Added function ${e}`);
+            addedFunction.push({ line: `Added function ${e}`, newName: e });
         }
     });
     return addedFunction;
@@ -459,13 +556,13 @@ const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpor
 
 const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
-): string[] => {
+): ChangelogItem[] => {
     const oldToNew = getRenamedOperationGroupFromToMap(metaDataOld);
-    const removedOperationGroup: string[] = [];
+    const removedOperationGroup: ChangelogItem[] = [];
     Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
         const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
         if (!metaDataNew.operationInterface[newOperationGroup]) {
-            removedOperationGroup.push('Removed operation group ' + oldOperationGroup);
+            removedOperationGroup.push({ line: 'Removed operation group ' + oldOperationGroup, oldName: oldOperationGroup });
         }
     });
     return removedOperationGroup;
@@ -473,9 +570,9 @@ const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew:
 
 const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
-): string[] => {
+): ChangelogItem[] => {
     const oldToNew = getRenamedOperationGroupFromToMap(metaDataOld);
-    const removedOperation: string[] = [];
+    const removedOperation: ChangelogItem[] = [];
 
     Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
         const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
@@ -486,16 +583,17 @@ const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
         const oldInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
         oldInterfaceMethodNames
             .filter(oldOpName => !newInterfaceMethodNames.includes(oldOpName))
-            .forEach(oldOpName => { removedOperation.push('Removed operation ' + oldOperationGroup + '.' + oldOpName); });
+            .forEach(oldOpName => { removedOperation.push({ line: 'Removed operation ' + oldOperationGroup + '.' + oldOpName, oldName: oldOpName }); });
         return true;
     });
     return removedOperation;
 };
 
+// TODO: fix no check for return type
 const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
-    oldSdkType: SDKType, newSdkType: SDKType): string[] => {
+    oldSdkType: SDKType, newSdkType: SDKType): ChangelogItem[] => {
     const newToOld = getRenamedOperationGroupFromToMap(metaDataNew);
-    const operationSignatureChange: string[] = [];
+    const operationSignatureChange: ChangelogItem[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOld[newOperationGroup];
         if (!metaDataOld.operationInterface[oldOperationGroup]) {
@@ -508,7 +606,7 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
             const newOpNames = operationGroupFromNew.methods.map(m => m.name);
             const newOpNameSet = new Set<string>(newOpNames);
             const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
-            logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
+            logger.warn(`'${unchangeOperationNames}' operation names aren't changed, but signature may change, please check manually.`);
             return;
         }
         
@@ -519,7 +617,7 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
             const newOpNames = operationGroupFromNew.properties.map(m => m.name);
             const newOpNameSet = new Set<string>(newOpNames);
             const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
-            logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
+            logger.warn(`'${unchangeOperationNames}' operation names aren't changed, but signature may change, please check manually.`);
             return;
         }
 
@@ -533,13 +631,13 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
                         const parametersOld = mOld.parameters;
                         const parametersNew = mNew.parameters;
                         if (parametersNew.length !== parametersOld.length) {
-                            operationSignatureChange.push('Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature');
+                            operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature' });
                         } else {
                             for (let index = 0; index < parametersNew.length; index++) {
                                 const pOld = parametersOld[index];
                                 const pNew = parametersNew[index];
                                 if (pOld.type !== pNew.type || pOld.isOptional !== pNew.isOptional) {
-                                    operationSignatureChange.push('Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature');
+                                    operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature', newName: pNew.type });
                                     return;
                                 }
                             }
@@ -553,18 +651,18 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
     return operationSignatureChange;
 };
 
-const findDeletedClass = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const deletedClass: string[] = [];
+const findDeletedClass = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const deletedClass: ChangelogItem[] = [];
     Object.keys(metaDataOld.classes).forEach(model => {
         if (!metaDataNew.classes[model]) {
-            deletedClass.push('Deleted Class ' + model);
+            deletedClass.push({ line: 'Deleted Class ' + model, oldName: model });
         }
     });
     return deletedClass;
 };
 
-const findClassSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classSignatureChange: string[] = [];
+const findClassSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const classSignatureChange: ChangelogItem[] = [];
     Object.keys(metaDataNew.classes).forEach(model => {
         if (metaDataOld.classes[model]) {
             const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
@@ -573,19 +671,23 @@ const findClassSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: 
             const constructorNew = modelFromNew.ctor;
             if (constructorOld === undefined && constructorNew === undefined) return;
             if (constructorOld === undefined || constructorNew === undefined) {
-                classSignatureChange.push('Class ' + model + ' has a new signature');
+                classSignatureChange.push({ line: 'Class ' + model + ' has a new signature' });
                 return;
             }
             const parametersOld = constructorOld.parameters;
             const parametersNew = constructorNew.parameters;
             if (parametersNew.length !== parametersOld.length) {
-                classSignatureChange.push('Class ' + model + ' has a new signature');
+                classSignatureChange.push({ line: 'Class ' + model + ' has a new signature' });
             } else {
                 for (let index = 0; index < parametersNew.length; index++) {
                     const pOld = parametersOld[index];
                     const pNew = parametersNew[index];
-                    if (pOld.type !== pNew.type || pOld.isOptional !== pNew.isOptional) {
-                        classSignatureChange.push('Class ' + model + ' has a new signature');
+                    if (pOld.isOptional !== pNew.isOptional) {
+                        classSignatureChange.push({ line: 'Class ' + model + ' has a new signature' });
+                        return;
+                    }
+                    if (pOld.type !== pNew.type) {
+                        classSignatureChange.push({ line: 'Class ' + model + ' has a new signature', oldName: pOld.type, newName: pNew.type });
                         return;
                     }
                 }
@@ -595,8 +697,8 @@ const findClassSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: 
     return classSignatureChange;
 };
 
-const findInterfaceParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceDeleteParam: string[] = [];
+const findInterfaceParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceDeleteParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -623,7 +725,7 @@ const findInterfaceParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: 
                     });
                 }
                 if (!find) {
-                    interfaceDeleteParam.push('Interface ' + model + ' no longer has parameter ' + pOld.name);
+                    interfaceDeleteParam.push({ line: 'Interface ' + model + ' no longer has parameter ' + pOld.name, oldName: pOld.name});
                 }
             });
         }
@@ -631,8 +733,8 @@ const findInterfaceParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: 
     return interfaceDeleteParam;
 };
 
-const findInterfaceParamAddRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceAddedParam: string[] = [];
+const findInterfaceParamAddRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceAddedParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -647,7 +749,7 @@ const findInterfaceParamAddRequired = (metaDataOld: TSExportedMetaData, metaData
                         }
                     });
                     if (!find) {
-                        interfaceAddedParam.push('Interface ' + model + ' has a new required parameter ' + pNew.name);
+                        interfaceAddedParam.push({ line: 'Interface ' + model + ' has a new required parameter ' + pNew.name, newName: '?????' });
                     }
                 }
             });
@@ -656,8 +758,8 @@ const findInterfaceParamAddRequired = (metaDataOld: TSExportedMetaData, metaData
     return interfaceAddedParam;
 };
 
-const findInterfaceParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceParamChangeRequired: string[] = [];
+const findInterfaceParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceParamChangeRequired: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -667,7 +769,7 @@ const findInterfaceParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
                     modelFromOld.properties.forEach(pOld => {
                         if (pNew.name === pOld.name) {
                             if (pOld.isOptional) {
-                                interfaceParamChangeRequired.push('Parameter ' + pNew.name + ' of interface ' + model + ' is now required');
+                                interfaceParamChangeRequired.push({ line: 'Parameter ' + pNew.name + ' of interface ' + model + ' is now required' });
                             }
                             return;
                         }
@@ -679,8 +781,8 @@ const findInterfaceParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
     return interfaceParamChangeRequired;
 };
 
-const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceParamTypeChanged: string[] = [];
+const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceParamTypeChanged: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -695,13 +797,13 @@ const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaData
                                 if (!!newTypes && !!oldTypes) {
                                     for (const t of oldTypes) {
                                         if (!newTypes.includes(t)) {
-                                            interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                            interfaceParamTypeChanged.push({ line: `Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`, oldName: pOld.type, newName: pNew.type });
                                             break;
                                         }
                                     }
                                 }
                             } else {
-                                interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                interfaceParamTypeChanged.push({ line: `Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`, oldName: pOld.type, newName: pNew.type });
                             }
                         }
                         return;
@@ -713,8 +815,8 @@ const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaData
     return interfaceParamTypeChanged;
 };
 
-const findClassParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classDeleteParam: string[] = [];
+const findClassParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const classDeleteParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.classes).forEach(model => {
         if (metaDataOld.classes[model]) {
             const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
@@ -728,7 +830,7 @@ const findClassParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
                     }
                 });
                 if (!find) {
-                    classDeleteParam.push('Class ' + model + ' no longer has parameter ' + pOld.name);
+                    classDeleteParam.push({ line: 'Class ' + model + ' no longer has parameter ' + pOld.name });
                 }
             });
         }
@@ -736,8 +838,8 @@ const findClassParamDelete = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return classDeleteParam;
 };
 
-const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const classParamChangeRequired: string[] = [];
+const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const classParamChangeRequired: ChangelogItem[] = [];
     Object.keys(metaDataNew.classes).forEach(model => {
         if (metaDataOld.classes[model]) {
             const modelFromOld = metaDataOld.classes[model] as ClassDeclaration;
@@ -747,7 +849,7 @@ const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataN
                     modelFromOld.properties.forEach(pOld => {
                         if (pNew.name === pOld.name) {
                             if (pOld.isOptional) {
-                                classParamChangeRequired.push('Parameter ' + pNew.name + ' of class ' + model + ' is now required');
+                                classParamChangeRequired.push({ line: 'Parameter ' + pNew.name + ' of class ' + model + ' is now required' });
                             }
                             return;
                         }
@@ -759,8 +861,8 @@ const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataN
     return classParamChangeRequired;
 };
 
-const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasDeleteInherit: string[] = [];
+const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasDeleteInherit: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -772,16 +874,16 @@ const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew
                             if (typeAliasFromNew.type instanceof IntersectionDeclaration) {
                                 if (typeAliasFromNew.type.inherits) {
                                     if (!typeAliasFromNew.type.inherits.includes(inherit)) {
-                                        typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                        typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, oldName: inherit });
                                     }
                                 } else {
-                                    typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                    typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, oldName: inherit });
                                 }
                             } else if (typeAliasFromNew.type instanceof TypeLiteralDeclaration) {
-                                typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, oldName: inherit });
                             } else if (typeof typeAliasFromNew.type === 'string') {
                                 if (typeAliasFromNew.type !== inherit) {
-                                    typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                    typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, oldName: inherit });
                                 }
                             }
                         }
@@ -793,8 +895,8 @@ const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew
     return typeAliasDeleteInherit;
 };
 
-const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasDeleteParam: string[] = [];
+const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasDeleteParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -826,10 +928,10 @@ const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: 
                                         })
                                     }
                                     if (!find) {
-                                        typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name);
+                                        typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name });
                                     }
                                 } else {
-                                    typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name);
+                                    typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name });
                                 }
                             } else if (typeAliasFromNew.type instanceof TypeLiteralDeclaration) {
                                 let find = false;
@@ -839,10 +941,10 @@ const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: 
                                     }
                                 });
                                 if (!find) {
-                                    typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name);
+                                    typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name });
                                 }
                             } else if (typeof typeAliasFromNew.type === 'string') {
-                                typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name);
+                                typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' no longer has parameter ' + pOld.name });
                             }
                         });
                     });
@@ -860,10 +962,10 @@ const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: 
                                     });
                                 });
                                 if (!find) {
-                                    typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name);
+                                    typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name });
                                 }
                             } else {
-                                typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name);
+                                typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name });
                             }
                         } else if (typeAliasFromNew.type instanceof TypeLiteralDeclaration) {
                             let find = false;
@@ -873,10 +975,10 @@ const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: 
                                 }
                             });
                             if (!find) {
-                                typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name);
+                                typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name });
                             }
                         } else if (typeof typeAliasFromNew.type === 'string') {
-                            typeAliasDeleteParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name);
+                            typeAliasDeleteParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pOld.name });
                         }
                     });
                 }
@@ -886,8 +988,8 @@ const findTypeAliasDeleteParam = (metaDataOld: TSExportedMetaData, metaDataNew: 
     return typeAliasDeleteParam;
 };
 
-const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasAddRequiredParam: string[] = [];
+const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasAddRequiredParam: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -908,10 +1010,10 @@ const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaData
                                         });
                                     });
                                     if (!find) {
-                                        typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                        typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                     }
                                 } else {
-                                    typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                    typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                 }
                             } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
                                 let find = false;
@@ -921,10 +1023,10 @@ const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaData
                                     }
                                 });
                                 if (!find) {
-                                    typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                    typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                 }
                             } else if (typeof typeAliasFromOld.type === 'string') {
-                                typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                             }
                         });
                     });
@@ -943,10 +1045,10 @@ const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaData
                                     });
                                 });
                                 if (!find) {
-                                    typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                    typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                                 }
                             } else {
-                                typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                             }
                         } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
                             let find = false;
@@ -956,10 +1058,10 @@ const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaData
                                 }
                             });
                             if (!find) {
-                                typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                                typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                             }
                         } else if (typeof typeAliasFromOld.type === 'string') {
-                            typeAliasAddRequiredParam.push('Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name);
+                            typeAliasAddRequiredParam.push({ line: 'Type Alias ' + typeAlias + ' has a new parameter ' + pNew.name });
                         }
                     });
                 }
@@ -969,8 +1071,8 @@ const findTypeAliasAddRequiredParam = (metaDataOld: TSExportedMetaData, metaData
     return typeAliasAddRequiredParam;
 };
 
-const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasParamChangeRequired: string[] = [];
+const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasParamChangeRequired: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -985,7 +1087,7 @@ const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
                                     typeAliasFromOld.type.typeLiteralDeclarations.forEach(typeLiteralDeclarationOld => {
                                         typeLiteralDeclarationOld.properties.forEach(pOld => {
                                             if (pNew.name === pOld.name && pOld.isOptional) {
-                                                typeAliasParamChangeRequired.push('Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required');
+                                                typeAliasParamChangeRequired.push({ line: 'Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required' });
                                             }
                                         });
                                     });
@@ -993,7 +1095,7 @@ const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
                             } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
                                 typeAliasFromOld.type.properties.forEach(pOld => {
                                     if (pNew.name === pOld.name && pOld.isOptional) {
-                                        typeAliasParamChangeRequired.push('Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required');
+                                        typeAliasParamChangeRequired.push({ line: 'Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required' });
                                     }
                                 });
                             }
@@ -1007,7 +1109,7 @@ const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
                                 typeAliasFromOld.type.typeLiteralDeclarations.forEach(typeLiteralDeclarationOld => {
                                     typeLiteralDeclarationOld.properties.forEach(pOld => {
                                         if (pNew.name === pOld.name && pOld.isOptional) {
-                                            typeAliasParamChangeRequired.push('Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required');
+                                            typeAliasParamChangeRequired.push({ line: 'Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required' });
                                         }
                                     });
                                 });
@@ -1015,7 +1117,7 @@ const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
                         } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
                             typeAliasFromOld.type.properties.forEach(pOld => {
                                 if (pNew.name === pOld.name && pOld.isOptional) {
-                                    typeAliasParamChangeRequired.push('Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required');
+                                    typeAliasParamChangeRequired.push({ line: 'Parameter ' + pNew.name + ' of Type Alias ' + typeAlias + ' is now required' });
                                 }
                             });
                         }
@@ -1027,25 +1129,25 @@ const findTypeAliasParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
     return typeAliasParamChangeRequired;
 };
 
-const findRemovedEnum = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const removedEnum: string[] = [];
+const findRemovedEnum = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const removedEnum: ChangelogItem[] = [];
     Object.keys(metaDataOld.enums).forEach(e => {
         if (!metaDataNew.enums[e]) {
-            removedEnum.push('Removed Enum ' + e);
+            removedEnum.push({ line: 'Removed Enum ' + e });
         }
     });
     return removedEnum;
 };
 
-const findRemovedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const removedEnumValue: string[] = [];
+const findRemovedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const removedEnumValue: ChangelogItem[] = [];
     Object.keys(metaDataNew.enums).forEach(e => {
         if (metaDataOld.enums[e]) {
             const enumOld = metaDataOld.enums[e] as EnumDeclaration;
             const enumNew = metaDataNew.enums[e] as EnumDeclaration;
             enumOld.members.forEach(v => {
                 if (!enumNew.members.includes(v)) {
-                    removedEnumValue.push('Enum ' + e + ' no longer has value ' + v);
+                    removedEnumValue.push({ line: 'Enum ' + e + ' no longer has value ' + v });
                 }
             });
         }
@@ -1053,11 +1155,11 @@ const findRemovedEnumValue = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return removedEnumValue;
 };
 
-const findRemovedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const removedFunction: string[] = [];
+const findRemovedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const removedFunction: ChangelogItem[] = [];
     Object.keys(metaDataOld.functions).forEach(e => {
         if (!metaDataNew.functions[e]) {
-            removedFunction.push('Removed function ' + e);
+            removedFunction.push({ line: 'Removed function ' + e, oldName: e});
         }
     });
     return removedFunction;
@@ -1066,7 +1168,7 @@ const findRemovedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExp
 
 export const changelogGenerator = (
     metaDataOld: TSExportedMetaData, metadataNew: TSExportedMetaData,
-    oldSdkType: SDKType, newSdkType: SDKType): Changelog => {
+    oldSdkType: SDKType, newSdkType: SDKType, astContext: AstContext): Changelog => {
     if (!oldSdkType || !newSdkType) {
         throw new Error(`SDK type is not valid. Old SDK type: ${oldSdkType}, New SDK type: ${newSdkType}`);
     }
@@ -1106,5 +1208,203 @@ export const changelogGenerator = (
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
     changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
+
+    // patch RLC
+    if (newSdkType === SDKType.RestLevelClient && oldSdkType === SDKType.RestLevelClient) {
+        const routesDiffPairs = patchRoutes(astContext);
+        handleRoutesDiffPairs(routesDiffPairs, changLog);    
+
+        const functionNames = new Set([...Object.keys(metaDataOld.functions), ...Object.keys(metadataNew.functions)]);
+        const functionDiffPairs = [...functionNames].reduce((pairs, functionName) => {
+            pairs.push(...patchFunction(functionName, astContext));
+            return pairs;
+        }, new Array<DiffPair>());
+        handleFunctionDiffPairs(functionDiffPairs, changLog);
+
+        const typeAliasNames = new Set([...Object.keys(metaDataOld.typeAlias), ...Object.keys(metadataNew.typeAlias)]);
+        const typeAliasPairs = [...typeAliasNames].reduce((pairs, typeAliasName) => {
+            pairs.push(...patchTypeAlias(typeAliasName, astContext, AssignDirection.CurrentToBaseline));
+            return pairs;
+        }, new Array<DiffPair>());
+        handleAddedRemovedTypeAliasDiffPairs(typeAliasPairs, changLog);
+        
+        // NOTE: handle type alias's type change case in simple way for now, and exclude intersection type, since already handled
+        // TODO: handle type alias's type change case in a general way
+        const typeAliasPairsReverse = [...typeAliasNames].reduce((pairs, typeAliasName) => {
+            pairs.push(...patchTypeAlias(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
+            return pairs;
+        }, new Array<DiffPair>());
+        
+        // NOTE: ignore generic type aliases, since isTypeAssignableTo() doesn't work for generic type,
+        //       and operation detection can detect it as expected
+        const ignoreGenericTypeAlias = (pairs: DiffPair[]) => pairs.filter(p => {
+            const node = p.source?.node ?? p.target?.node;
+            if (!node) throw new Error('Empty node for both source and target');
+            return node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getTypeParameters().length === 0;
+        });
+
+        handleChangedTypeAliasDiffPairs(
+            ignoreGenericTypeAlias(typeAliasPairs), 
+            ignoreGenericTypeAlias(typeAliasPairsReverse), 
+            changLog);
+    }
+
     return changLog;
 };
+
+function handleFunctionDiffPairs(pairs: DiffPair[], changelog: Changelog) {
+    pairs.forEach(p => {
+        // signature overload is added or removed
+        if (p.location === DiffLocation.Signature_Overload && p.reasons === DiffReasons.Added) {
+            changelog.addedFunctionOverload.push({
+                line: `Added function overload "${p.source!.node.getText()}"`,
+                newName: p.source!.node.getText()
+            })
+            return;
+        }
+        if (p.location === DiffLocation.Signature_Overload && p.reasons === DiffReasons.Removed) {
+            changelog.removedFunctionOverload.push({
+                line: `Removed function overload "${p.target!.node.getText()}"`,
+                oldName: p.target!.node.getText()
+            })
+            return;
+        }
+        // signature is added or removed
+        if (p.location === DiffLocation.Signature &&
+            (p.reasons === DiffReasons.Added || p.reasons === DiffReasons.Removed)) {
+            // already handled in changelog generator, ignore
+            return;
+        }
+        // signature is changed
+        if (p.location === DiffLocation.Signature_ReturnType && p.reasons === DiffReasons.TypeChanged) {
+            const functionName = p.source!.node.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName();
+            const newReturnType = p.source!.node.asKindOrThrow(SyntaxKind.FunctionDeclaration).getReturnTypeNodeOrThrow().getText();
+            changelog.changedFunction.push({
+                line: `Function ${functionName} has a new signature`,
+                newName: newReturnType
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Signature_ParameterList && p.reasons === DiffReasons.CountChanged) {
+            const functionName = p.source!.node.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName();
+            changelog.changedFunction.push({
+                line: `Function ${functionName} has a new signature`
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Parameter && p.reasons === DiffReasons.TypeChanged) {
+            const newParameterType = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getTypeNode()?.getText();
+            const functionName = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getParent().asKindOrThrow(SyntaxKind.FunctionDeclaration).getName();
+            changelog.changedFunction.push({
+                line: `Function ${functionName} has a new signature`,
+                newName: newParameterType
+            });
+            return;
+        }
+        // unsupported
+        throw new Error(`Unsupported diff pair: ${p.location} - ${p.reasons}`);
+    });
+}
+
+function handleChangedTypeAliasDiffPairs(typeAliasPairs: DiffPair[], typeAliasPairsReverse: DiffPair[], changelog: Changelog) {
+    function getName(p: DiffPair) {
+        return p.source!.node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getName();
+    }
+
+    const changedTypeAlias = typeAliasPairs
+            .filter(p => p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.TypeChanged)
+            .reduce((set, p) => {
+                set.add(getName(p));
+                return set;
+            }, new Set<string>());
+        const changedTypeAliasReverse = typeAliasPairsReverse
+            .filter(p => p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.TypeChanged)
+            .reduce((set, p) => {
+                set.add(getName(p));
+                return set;
+            }, new Set<string>());
+        const changedTypeAliasIntersection = [...changedTypeAlias].filter(x => changedTypeAliasReverse.has(x));
+        changedTypeAliasIntersection.forEach(t => {
+            changelog.typeAliasOtherChanged.push({line: `Type alias "${t}" has been changed`});
+        });
+}
+
+function handleAddedRemovedTypeAliasDiffPairs(pairs: DiffPair[], changelog: Changelog) {
+    pairs.forEach(p => {
+        if (p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.Removed) {
+            const name = p.target!.node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getName();
+            changelog.removedTypeAlias.push({ line: 'Removed Type Alias ' + name, oldName: name });
+            return;
+        }
+    });
+}
+
+function handleRoutesDiffPairs(routeDiffPairs: DiffPair[], changelog: Changelog) {
+    function getOperationPath(node: Node) {
+        if (node.isKind(SyntaxKind.FunctionDeclaration)) return node.getParameterOrThrow('path').getTypeNodeOrThrow().getText(); 
+        if (node.isKind(SyntaxKind.CallSignature)) return node.getParameterOrThrow('path').getTypeNodeOrThrow().getText();
+        if (node.isKind(SyntaxKind.Parameter)) {
+            if (node.getName() === 'path') return node.getTypeNodeOrThrow().getText();
+            for (const p of node.getNextSiblings()) {
+                if (p.isKind(SyntaxKind.Parameter) && p.getName() === 'path') return p.getTypeNodeOrThrow().getText();
+            }
+            for (const p of node.getPreviousSiblings()) {
+                if (p.isKind(SyntaxKind.Parameter) && p.getName() === 'path') return p.getTypeNodeOrThrow().getText();
+            }
+        }
+        throw new Error(`Operation path not found for ${node.getText()}`);
+    }
+
+    routeDiffPairs.forEach(p => {
+        // Routes is added or removed 
+        if (p.location === DiffLocation.Interface && p.reasons === DiffReasons.Removed) {
+            changelog.addedOperationGroup.push({ line: 'Added operation group Routes', newName: 'Routes' });
+            return;
+        }
+        if (p.location === DiffLocation.Interface && p.reasons === DiffReasons.Added) {
+            changelog.removedOperationGroup.push({ line: 'Removed operation group Routes', oldName: 'Routes' });
+            return;
+        }
+        // operation is added or removed
+        if (p.location === DiffLocation.Signature && p.reasons === DiffReasons.Added) {
+            changelog.addedOperation.push({
+                line: 'Added operation in Routes for path: ' + getOperationPath(p.source!.node),
+                newName: p.source!.name
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Signature && p.reasons === DiffReasons.Removed) {
+            changelog.removedOperation.push({
+                line: 'Removed operation Routes for path: ' + getOperationPath(p.target!.node),
+                oldName: p.target!.name
+            });
+            return;
+        }
+        // signature is changed
+        if (p.location === DiffLocation.Signature_ReturnType && p.reasons === DiffReasons.TypeChanged) {
+            const newReturnType = p.source!.node.asKind(SyntaxKind.CallSignature)?.getReturnTypeNodeOrThrow().getText();
+            changelog.operationSignatureChange.push({
+                line: 'Operation in "Routes" has a new signature for path: ' + getOperationPath(p.source!.node),
+                newName: newReturnType
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Signature_ParameterList && p.reasons === DiffReasons.CountChanged) {
+            const path = getOperationPath(p.source!.node);
+            changelog.operationSignatureChange.push({
+                line: 'Operation in "Routes" has a new signature for path: ' + path
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Parameter && p.reasons === DiffReasons.TypeChanged) {
+            const newParameterType = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getTypeNodeOrThrow().getText();
+            changelog.operationSignatureChange.push({
+                line: 'Operation in "Routes" has a new signature for path: ' + getOperationPath(p.source!.node),
+                newName: newParameterType
+            });
+            return;
+        }
+        // unsupported
+        throw new Error(`Unsupported diff pair: ${p.location} - ${p.reasons}`);
+    });
+}

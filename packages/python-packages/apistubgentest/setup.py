@@ -63,5 +63,12 @@ setup(
     ],
     zip_safe=False,
     packages=find_packages(),
+    extras_require={
+        ":python_version<'3.7'": ["qsharp<0.16.0"],
+        "testing": [
+            "httpx>=0.15.4,<1.0",
+            "pandas>1.0.0,<3.0",
+        ]
+    },
     python_requires=">=3.8"
 )

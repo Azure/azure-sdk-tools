@@ -55,6 +55,11 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 getDefaultValue: () => false);
             universalOption.AddAlias("-u");
 
+            var autoShutdownOption = new Option<int>(
+                name: "--auto-shutdown-in-seconds",
+                description: "Integer argument; When provided, the proxy will auto-shutdown after not being contacted over any HTTP route for this number of seconds.",
+                getDefaultValue: () => -1);
+
             var breakGlassOption = new Option<bool>(
                 name: "--break-glass",
                 description: "Flag; Ignore secret push protection results when pushing.",
@@ -88,10 +93,11 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             startCommand.AddOption(insecureOption);
             startCommand.AddOption(dumpOption);
             startCommand.AddOption(universalOption);
+            startCommand.AddOption(autoShutdownOption);
             startCommand.AddArgument(collectedArgs);
 
             startCommand.SetHandler(async (startOpts) => await callback(startOpts),
-                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, collectedArgs)
+                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, autoShutdownOption, collectedArgs)
             );
             root.Add(startCommand);
 

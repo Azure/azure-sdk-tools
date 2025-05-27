@@ -48,8 +48,7 @@
 
 ### AI label service
 
-This is a REST API that evaluates the content of an issue and attempts to predict a set of labels that should be applied to it.  If a prediction is made with a reasonable level of confidence, the service will return exactly one service label and one category label.  If confidence thresholds were not met for both label types, no labels are returned. The AI label service can only a response with labels for [officially supported repositories]
-(<https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-labels/repositories.txt>). For libraries that are not supported it an empty response will be returned.
+This is a REST API that evaluates the content of an issue and attempts to predict a set of labels and provide a relevant answer. If predictions are made with a high degree of confidence, the service will return one service label, one category label and a solution comment. In this case an `issue-addressed` is added to the issue to close it. If a prediction is made with a reasonable level of confidence, the service will return one service label, one category label, and a suggestion comment.  If confidence thresholds were not met, labels nor a comment are provided. The AI label service can only respond with labels for [officially supported repositories]
 
 #### Example payload
 
@@ -66,14 +65,42 @@ This is a REST API that evaluates the content of an issue and attempts to predic
 
 #### Example responses
 
-_**Predictions made**_
+_**Only labels predicted**_
 
 ```json
 {
-  "labels": [
+  "labels" : [
     "Storage",
     "Client"
-  ]
+  ],  
+  "answer" : null,
+  "answerType" : null
+}
+```
+
+_**Suggestion is provided**_
+
+```json
+{
+  "labels" : [
+    "Storage",
+    "Client"
+  ],  
+  "answer" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I have some suggestions that you can try out...",  
+  "answerType" : "suggestion"  
+}
+```
+
+_**Solution is provided**_
+
+```json
+{
+  "labels" : [
+    "Storage",
+    "Client"
+  ],  
+  "answer" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I found a solution for your issue...",  
+  "answerType" : "solution"  
 }
 ```
 
@@ -81,7 +108,9 @@ _**No predictions**_
 
 ```json
 {
-  "labels": []
+  "labels": [],  
+  "answer" : null,  
+  "answerType" : null  
 }
 ```
 
@@ -118,8 +147,9 @@ IF labels were predicted:
             - Create the following comment, mentioning all AzureSdkOwners from the set
                  "@{person1} @{person2}...${personX}"
 
-        - Create the following comment
-             "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
+        IF only labels were predicted
+          - Create the following comment
+              "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
 
     # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the service label OR no
     # CODEOWNERS entries for the service label with AzureSdkOwners OR there is a CODEOWNERS entry with
@@ -132,6 +162,12 @@ IF labels were predicted:
 
     IF "needs-team-triage" is not being added to the issue
          - Add "needs-team-attention" label to the issue
+
+    IF answer type is suggestion
+         - Comment with suggestion
+    ELSE IF answer type is solution
+         - Comment with solution
+         - Add "issue-addressed" label to issue
 
 ELSE
     - Add "needs-triage" label to the issue
@@ -426,12 +462,13 @@ OR
 - Determine if this is a community contribution:
 
     ```text
-    IF the user is NOT a member of the Azure Org
-      IF the user does not have Admin or Write Collaborator permission
-        - Add "customer-reported" label
-        - Add "Community Contribution" label
-        - Create the following comment
-          - "Thank you for your contribution @{issueAuthor}! We will review the pull request and get back to you soon."
+    If the user is NOT a known bot
+      IF the user is NOT a member of the Azure Org
+        IF the user does not have Admin or Write Collaborator permission
+          - Add "customer-reported" label
+          - Add "Community Contribution" label
+          - Create the following comment
+            - "Thank you for your contribution @{issueAuthor}! We will review the pull request and get back to you soon."
     ```
 
 ## Reset pull request activity
@@ -629,6 +666,7 @@ OR
 - Issue is open
 - Issue was opened > 2 years ago
 - Issue was last updated more than 30 days ago
+- Issue does NOT have the auto-close-exempt label
 
 ### Actions
 

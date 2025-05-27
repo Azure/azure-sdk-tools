@@ -1,46 +1,14 @@
 param location string
 param logsStorageAccountName string
+param devOpsEventHubNamespaceName string
+param gitHubEventHubNamespaceName string
 param kustoClusterName string
 param kustoDatabaseName string
 param webAppName string
+param subnetId string
 param appIdentityPrincipalId string
-
-var tables = [
-  {
-    name: 'Build'
-    container: 'builds'
-  }
-  {
-    name: 'BuildDefinition'
-    container: 'builddefinitions'
-  }
-  {
-    name: 'BuildFailure'
-    container: 'buildfailures'
-  }
-  {
-    name: 'BuildLogLine'
-    container: 'buildloglines'
-  }
-  {
-    name: 'BuildTimelineRecord'
-    container: 'buildtimelinerecords'
-  }
-  {
-    name: 'PipelineOwner'
-    container: 'pipelineowners'
-  }
-  {
-    name: 'TestRun'
-    container: 'testruns'
-  }
-  {
-    name: 'TestRunResult'
-    container: 'testrunresults'
-  }
-]
-
-var kustoScript = loadTextContent('../artifacts/merged.kql')
+param useVnet bool
+param forceUpdateTag string = utcNow()
 
 // Storage Account for output blobs
 resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
@@ -54,14 +22,15 @@ resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     defaultToOAuthAuthentication: false
     allowCrossTenantReplication: true
     minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: true
-    allowSharedKeyAccess: true
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: []
-      ipRules: []
-      defaultAction: 'Allow'
-    }
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
+    networkAcls: useVnet
+      ? {
+        bypass: 'AzureServices'
+        virtualNetworkRules: [{ id: subnetId }]
+        defaultAction: 'Deny'
+      }
+      : null
     supportsHttpsTrafficOnly: true
     encryption: {
       services: {
@@ -104,19 +73,6 @@ resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = [for table in tables: {
-  parent: logsStorageAccount::blobServices
-  name: table.container
-  properties: {
-    immutableStorageWithVersioning: {
-      enabled: false
-    }
-    defaultEncryptionScope: '$account-encryption-key'
-    denyEncryptionScopeOverride: false
-    publicAccess: 'None'
-  }
-}]
-
 // Event Grid
 resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
   name: logsStorageAccountName
@@ -125,11 +81,14 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
     source: logsStorageAccount.id
     topicType: 'microsoft.storage.storageaccounts'
   }
+  identity: {
+    type: 'SystemAssigned'
+  }
 }
 
 // Event Hub
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: logsStorageAccountName
+resource devOpsEventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
+  name: devOpsEventHubNamespaceName
   location: location
   sku: {
     name: 'Standard'
@@ -139,7 +98,27 @@ resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = 
   properties: {
     minimumTlsVersion: '1.0'
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
+    disableLocalAuth: true
+    zoneRedundant: false
+    isAutoInflateEnabled: false
+    maximumThroughputUnits: 0
+    kafkaEnabled: true
+  }
+}
+
+// Event Hub
+resource gitHubEventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
+  name: gitHubEventHubNamespaceName
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Standard'
+    capacity: 1
+  }
+  properties: {
+    minimumTlsVersion: '1.0'
+    publicNetworkAccess: 'Enabled'
+    disableLocalAuth: true
     zoneRedundant: false
     isAutoInflateEnabled: false
     maximumThroughputUnits: 0
@@ -158,6 +137,9 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
   }
   identity: {
     type: 'SystemAssigned'
+  }
+  tags: {
+    'NRMS.KustoPlatform.Classification.1P': 'Corp'
   }
   properties: {
     trustedExternalTenants: []
@@ -180,12 +162,22 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
     enableAutoStop: false
     publicIPType: 'IPv4'
   }
+
   resource database 'Databases' = {
     name: kustoDatabaseName
     location: location
     kind: 'ReadWrite'
     properties: {
       hotCachePeriod: 'P31D'
+    }
+  }
+
+  resource managedEndpoint 'managedPrivateEndpoints' = if(useVnet) {
+    name: logsStorageAccountName
+    properties: {
+      groupId: 'blob'
+      privateLinkResourceId: logsStorageAccount.id
+      requestMessage: ''
     }
   }
 }
@@ -195,64 +187,10 @@ resource kustoScriptInvocation 'Microsoft.Kusto/clusters/databases/scripts@2022-
   name: 'intitializeDatabase'
   parent: kustoCluster::database
   properties: {
-      scriptContent: kustoScript
-      forceUpdateTag: uniqueString(kustoScript)
+      scriptContent: loadTextContent('../artifacts/merged.kql')
+      forceUpdateTag: forceUpdateTag
   }
 }
-
-resource eventHubs 'Microsoft.EventHub/namespaces/eventhubs@2022-01-01-preview' = [for (table, i) in tables: {
-  parent: eventHubNamespace
-  name: table.container
-  properties: {
-    messageRetentionInDays: 7
-    partitionCount: 8
-    status: 'Active'
-  }
-}]
-
-resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2022-06-15' = [for (table, i) in tables: {
-  parent: eventGridTopic
-  name: table.container
-  properties: {
-    destination: {
-      properties: {
-        resourceId: eventHubs[i].id
-      }
-      endpointType: 'EventHub'
-    }
-    filter: {
-      subjectBeginsWith: '/blobServices/default/containers/${table.container}'
-      includedEventTypes: [
-        'Microsoft.Storage.BlobCreated'
-      ]
-    }
-    eventDeliverySchema: 'EventGridSchema'
-    retryPolicy: {
-      maxDeliveryAttempts: 30
-      eventTimeToLiveInMinutes: 1440
-    }
-  }
-}]
-
-resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnections@2022-02-01' = [for (table, i) in tables: {
-  parent: kustoCluster::database
-  name: '${kustoDatabaseName}-${table.container}'
-  location: location
-  kind: 'EventGrid'
-  properties: {
-    ignoreFirstRecord: false
-    storageAccountResourceId: logsStorageAccount.id
-    eventHubResourceId: eventHubs[i].id
-    consumerGroup: '$Default'
-    tableName: table.name
-    mappingRuleName: '${table.name}_mapping'
-    dataFormat: 'JSON'
-    blobStorageEventType: 'Microsoft.Storage.BlobCreated'
-    databaseRouting: 'Single'
-    managedIdentityResourceId: kustoCluster.id
-  }
-  dependsOn: [ kustoScriptInvocation ]
-}]
 
 // Assign roles to the Kusto cluster and App Service
 resource blobContributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
@@ -287,16 +225,138 @@ resource eventHubsDataReceiverRoleDefinition 'Microsoft.Authorization/roleDefini
   scope: subscription()
   // This is the Event Hubs Data Receiver role
   // Allows receive access to Azure Event Hubs resources.
-  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#analytics
+  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/analytics#azure-event-hubs-data-receiver
   name: 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
 }
 
-resource kustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
-  name: guid(eventHubsDataReceiverRoleDefinition.id, kustoClusterName, eventHubNamespace.id)
-  scope: eventHubNamespace
+resource eventHubsDataSenderRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Event Hubs Data Sender role
+  // Allows send access to Azure Event Hubs resources..
+  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/analytics#azure-event-hubs-data-sender
+  name: '2b629674-e913-4c01-ae53-ef4638d8f975'
+}
+
+resource devOpsKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataReceiverRoleDefinition.id, kustoClusterName, devOpsEventHubNamespace.id)
+  scope: devOpsEventHubNamespace
   properties:{
     principalId: kustoCluster.identity.principalId
     roleDefinitionId: eventHubsDataReceiverRoleDefinition.id
     description: 'Blob Contributor for Kusto ingestion'
+  }
+}
+
+resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataReceiverRoleDefinition.id, kustoClusterName, gitHubEventHubNamespace.id)
+  scope: gitHubEventHubNamespace
+  properties:{
+    principalId: kustoCluster.identity.principalId
+    roleDefinitionId: eventHubsDataReceiverRoleDefinition.id
+    description: 'Blob Contributor for Kusto ingestion'
+  }
+}
+
+resource devOpsEventGridEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataSenderRoleDefinition.id, logsStorageAccountName, devOpsEventHubNamespace.id)
+  scope: devOpsEventHubNamespace
+  properties:{
+    principalId: eventGridTopic.identity.principalId
+    roleDefinitionId: eventHubsDataSenderRoleDefinition.id
+    description: 'Event Hubs Data Sender'
+  }
+}
+
+resource gitHubEventGridEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataSenderRoleDefinition.id, logsStorageAccountName, gitHubEventHubNamespace.id)
+  scope: gitHubEventHubNamespace
+  properties:{
+    principalId: eventGridTopic.identity.principalId
+    roleDefinitionId: eventHubsDataSenderRoleDefinition.id
+    description: 'Event Hubs Data Sender'
+  }
+}
+
+// Data Explorer needs to a per-table cursor when importing data. Because the read cursor for Event Hubs is the
+// consumer group and the basic tier for event hubs is limited to 1 consumer group per event hub and 10 event hubs per
+// namespace, we need an event hub per table, so we split our tables across two namespaces.
+// https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-quotas
+module devOpsTables 'tableResources.bicep' = {
+  name: '${deployment().name}-devOpsTables'
+  scope: resourceGroup()
+  dependsOn:[ kustoScriptInvocation, devOpsEventGridEventHubsAssignment ]
+  params: {
+    location: location
+    logsStorageAccountName: logsStorageAccountName
+    eventHubNamespaceName: devOpsEventHubNamespace.name
+    eventGridTopicName: eventGridTopic.name
+    kustoClusterName: kustoCluster.name
+    kustoDatabaseName: kustoCluster::database.name
+    tables: [
+      {
+        name: 'Build'
+        container: 'builds'
+      }
+      {
+        name: 'BuildDefinition'
+        container: 'builddefinitions'
+      }
+      {
+        name: 'BuildFailure'
+        container: 'buildfailures'
+      }
+      {
+        name: 'BuildLogLine'
+        container: 'buildloglines'
+      }
+      {
+        name: 'BuildTimelineRecord'
+        container: 'buildtimelinerecords'
+      }
+      {
+        name: 'PipelineOwner'
+        container: 'pipelineowners'
+      }
+      {
+        name: 'TestRun'
+        container: 'testruns'
+      }
+      {
+        name: 'TestRunResult'
+        container: 'testrunresults'
+      }
+    ]
+  }
+}
+
+module gitHubTables 'tableResources.bicep' = {
+  name: '${deployment().name}-gitHubTables'
+  scope: resourceGroup()
+  dependsOn:[ kustoScriptInvocation, gitHubEventGridEventHubsAssignment ]
+  params: {
+    location: location
+    logsStorageAccountName: logsStorageAccountName
+    eventHubNamespaceName: gitHubEventHubNamespace.name
+    eventGridTopicName: eventGridTopic.name
+    kustoClusterName: kustoCluster.name
+    kustoDatabaseName: kustoCluster::database.name
+    tables: [
+      {
+        name: 'GitHubActionsRun'
+        container: 'githubactionsruns'
+      }
+      {
+        name: 'GitHubActionsJob'
+        container: 'githubactionsjobs'
+      }
+      {
+        name: 'GitHubActionsStep'
+        container: 'githubactionssteps'
+      }
+      {
+        name: 'GitHubActionsLogLine'
+        container: 'githubactionslogs'
+      }
+    ]
   }
 }

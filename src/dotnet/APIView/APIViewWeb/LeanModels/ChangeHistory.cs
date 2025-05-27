@@ -4,6 +4,7 @@ using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.LeanModels
 {
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum AICommentChangeAction
     {
@@ -12,6 +13,7 @@ namespace APIViewWeb.LeanModels
         Modified
     }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ReviewChangeAction
     {
@@ -24,6 +26,7 @@ namespace APIViewWeb.LeanModels
         UnDeleted
     }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum APIRevisionChangeAction
     {
@@ -34,6 +37,7 @@ namespace APIViewWeb.LeanModels
         UnDeleted
     }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum CommentChangeAction
     {
@@ -46,7 +50,7 @@ namespace APIViewWeb.LeanModels
     }
 
     public abstract class ChangeHistoryModel
-    {   
+    {
         public string ChangedBy { get; set; }
         public DateTime? ChangedOn { get; set; }
         public string Notes { get; set; }

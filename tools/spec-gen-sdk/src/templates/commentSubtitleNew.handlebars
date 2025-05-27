@@ -1,0 +1,14 @@
+{{#if showLiteInstallInstruction}}
+  <ul>
+    {{#each handledPackages}}
+    <li>Installation instruction for service <b>{{name}}</b> [<a href="{{generationPullRequestDiffUrl}}" target="_blank">Preview Changes</a>]<br/>
+    <i><pre>{{renderMessagesUnifiedPipeline liteInstallationInstruction}}</pre></i></li>
+    {{/each}}
+  </ul>
+{{/if}}
+{{#if hasBreakingChange}}
+<BR><BR>
+```diff<BR>
+- Breaking Change Detected<BR>
+```<BR><BR>
+{{/if}}

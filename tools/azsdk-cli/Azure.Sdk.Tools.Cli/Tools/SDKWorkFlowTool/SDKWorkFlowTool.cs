@@ -53,6 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> pipelineRunIdOpt = new(["--pipeline-run"], "SDK generation pipeline run id") { IsRequired = true };
         private readonly Option<string> urlOpt = new(["--url"], "Pull request url") { IsRequired = true };
         private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
+        private readonly Option<int> workItemOptionalIdOpt = new(["--workitem-id"], "Release plan work item id") { IsRequired = false };
 
 
         // disabling analyzer warning for MCP001 because the called function is in an entire try/catch block.
@@ -406,7 +407,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 new Command(generateSdkCommandName, "Generate SDK for a TypeSpec project") { typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt },
                 new Command(getPipelineStatusCommandName, "Get SDK generation pipeline run status") { pipelineRunIdOpt },
                 new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt },
-                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemIdOpt, releasePlanIdOpt }
+                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt }
             };
 
             foreach (var subCommand in subCommands)
@@ -445,7 +446,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     output.Output($"SDK pull request details: {sdkPullRequestDetails}");
                     return;
                 case linkSdkPrCommandName:
-                    var linkStatus = await LinkSdkPullRequestToReleasePlan(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(urlOpt), workItemId: commandParser.GetValueForOption(workItemIdOpt), releasePlanId: commandParser.GetValueForOption(releasePlanIdOpt));
+                    var linkStatus = await LinkSdkPullRequestToReleasePlan(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(urlOpt), workItemId: commandParser.GetValueForOption(workItemOptionalIdOpt), releasePlanId: commandParser.GetValueForOption(releasePlanIdOpt));
                     output.Output($"Link status: {linkStatus}");
                     return;
                 default:

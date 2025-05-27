@@ -510,9 +510,12 @@ class ApiViewReview:
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()
+            initial_comment_count = len(self.results.comments)
             self._deduplicate_comments()
+            merged_comment_count = len(self.results.comments)
             deduplicate_end_time = time()
             print(f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds.")
+            print(f"  Initial comments: {initial_comment_count}, Merged comments: {merged_comment_count}")
 
             # Track time for _filter_comments
             filter_start_time = time()

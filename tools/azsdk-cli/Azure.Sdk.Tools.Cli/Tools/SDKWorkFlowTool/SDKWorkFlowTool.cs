@@ -52,19 +52,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> workItemIdOpt = new(["--workitem-id"], "SDK release plan work item id") { IsRequired = true };
         private readonly Option<int> pipelineRunIdOpt = new(["--pipeline-run"], "SDK generation pipeline run id") { IsRequired = true };
         private readonly Option<string> urlOpt = new(["--url"], "Pull request url") { IsRequired = true };
+        private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
 
 
         // disabling analyzer warning for MCP001 because the called function is in an entire try/catch block.
-        #pragma warning disable MCP001
+#pragma warning disable MCP001
         [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
-        public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
-        #pragma warning restore MCP001
+        public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber = 0)
+#pragma warning restore MCP001
         {
-            var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);
+            var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullRequestNumber);
             return output.Format(response);
         }
 
-        private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullrequestNumber)
+        private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullRequestNumber)
         {
             var response = new GenericResponse()
             {
@@ -73,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                if (string.IsNullOrEmpty(typeSpecProjectRoot) && pullrequestNumber == 0)
+                if (string.IsNullOrEmpty(typeSpecProjectRoot) && pullRequestNumber == 0)
                 {
                     response.Details.Add("Invalid value for both TypeSpec project root and pull request number. Provide atleast the TypeSpec project root path for modified project or provide a pull request number.");
                     return response;
@@ -108,15 +109,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Get pull request details
-                Octokit.PullRequest? pullRequest = pullrequestNumber != 0 ? await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber) :
+                Octokit.PullRequest? pullRequest = pullRequestNumber != 0 ? await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber) :
                     await githubService.GetPullRequestForBranchAsync(REPO_OWNER, PUBLIC_SPECS_REPO, branchName);
                 if (pullRequest == null)
                 {
                     response.Details.Add($"Pull request is not found in {REPO_OWNER}/{PUBLIC_SPECS_REPO} for your TypeSpec changes.");
-                    if (pullrequestNumber == 0)
+                    if (pullRequestNumber == 0)
                         response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
                     else
-                        response.Details.Add($"Pull request {pullrequestNumber} is not valid. Please provide a valid pull requet number to check the status.");
+                        response.Details.Add($"Pull request {pullRequestNumber} is not valid. Please provide a valid pull requet number to check the status.");
                     return response;
                 }
 
@@ -165,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
 
         [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
-        public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullrequestNumber, int workItemId)
+        public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber, int workItemId)
         {
             try
             {
@@ -201,7 +202,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Verify if spec is read to generate SDK
-                var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullrequestNumber);
+                var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullRequestNumber);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);
@@ -209,10 +210,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Get Pull request details and check if pr is merged or not. if merged then run the pipeline against the target branch or against pr merge ref
-                var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber);
+                var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber);
                 if (pullRequest == null)
                 {
-                    response.Details.Add($"Failed to get pull request details for {pullrequestNumber} in {REPO_OWNER}/{PUBLIC_SPECS_REPO}");
+                    response.Details.Add($"Failed to get pull request details for {pullRequestNumber} in {REPO_OWNER}/{PUBLIC_SPECS_REPO}");
                     response.Status = "Failed";
                 }
 
@@ -223,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 string typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
-                string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
+                string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
                 var pipelineRun = await devopsService.RunSDKGenerationPipeline(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId);
                 response = new GenericResponse()
                 {
@@ -405,7 +406,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 new Command(generateSdkCommandName, "Generate SDK for a TypeSpec project") { typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt },
                 new Command(getPipelineStatusCommandName, "Get SDK generation pipeline run status") { pipelineRunIdOpt },
                 new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt },
-                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemIdOpt}
+                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemIdOpt, releasePlanIdOpt }
             };
 
             foreach (var subCommand in subCommands)
@@ -444,7 +445,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     output.Output($"SDK pull request details: {sdkPullRequestDetails}");
                     return;
                 case linkSdkPrCommandName:
-                    var linkStatus = await LinkSdkPullRequestToReleasePlan(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(urlOpt), workItemId: commandParser.GetValueForOption(workItemIdOpt));
+                    var linkStatus = await LinkSdkPullRequestToReleasePlan(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(urlOpt), workItemId: commandParser.GetValueForOption(workItemIdOpt), releasePlanId: commandParser.GetValueForOption(releasePlanIdOpt));
                     output.Output($"Link status: {linkStatus}");
                     return;
                 default:

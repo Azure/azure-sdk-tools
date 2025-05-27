@@ -495,6 +495,13 @@ class ApiViewReview:
             print(f"Generating {self._get_language_pretty_name()} review...")
             overall_start_time = time()
 
+            # Canary check: try authenticating against Search and CosmosDB before LLM calls
+            canary_error = self._canary_check_search_and_cosmos()
+            if canary_error:
+                print(f"{self.RED_TEXT}ERROR: {canary_error}{self.RESET_COLOR}")
+                logger.error(f"Aborting review due to canary check failure: {canary_error}")
+                raise RuntimeError(f"Aborting review: {canary_error}")
+
             # Track time for _generate_comments
             generate_start_time = time()
             self._generate_comments()
@@ -528,6 +535,29 @@ class ApiViewReview:
         finally:
             # Don't close the executor here as it might be needed for future operations
             pass
+
+    def _canary_check_search_and_cosmos(self) -> str | None:
+        """
+        Attempts a minimal search and CosmosDB access to verify authentication before LLM calls.
+        Returns an error string if authentication fails, otherwise None.
+        """
+        try:
+            # Canary: minimal search query
+            self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+            try:
+                # Use a trivial query that should always succeed (empty or 'canary')
+                _ = self.search.search_all(query="canary")
+            except Exception as search_exc:
+                return f"Azure Search authentication failed: {type(search_exc).__name__}: {search_exc}"
+
+            try:
+                # Try CosmosDB context build with empty results (should fail fast if not permitted)
+                _ = self.search.build_context([])
+            except Exception as cosmos_exc:
+                return f"CosmosDB authentication failed: {type(cosmos_exc).__name__}: {cosmos_exc}"
+        except Exception as e:
+            return f"Unexpected canary check error: {type(e).__name__}: {e}"
+        return None
 
     def _get_language_pretty_name(self) -> str:
         """

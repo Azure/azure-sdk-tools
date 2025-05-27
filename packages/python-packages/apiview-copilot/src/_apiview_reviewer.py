@@ -4,10 +4,8 @@ import json
 import logging
 import os
 import prompty
-import pathlib
 import prompty.azure_beta
 import signal
-import sys
 import threading
 from time import time
 from typing import Optional, List
@@ -548,21 +546,17 @@ class ApiViewReview:
         return language_pretty_names.get(self.language, self.language.capitalize())
 
     def _retrieve_context(self, query: str) -> List[object] | None:
+        """
+        Given a code query, searches the unified index for relevant guidelines,
+        memories and examples.
+        """
         try:
-            """
-            Given a code query, searches the unified index for relevant guidelines,
-            memories and examples.
-            """
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-
-            # search the examples index directly with the code snippet
             results = self.search.search_all(query=query)
             context = self.search.build_context(results)
             return context
         except Exception as e:
-            # Log search errors
-            logger.error(f"Error retrieving context: {str(e)}")
-            # Return empty context as fallback
+            logger.error(f"Error retrieving context: {type(e).__name__}: {e}", exc_info=True)
             return None
 
     def _load_generic_metadata(self):

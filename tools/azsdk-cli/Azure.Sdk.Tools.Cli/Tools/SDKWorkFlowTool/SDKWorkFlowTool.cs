@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     if (pullRequestNumber == 0)
                         response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
                     else
-                        response.Details.Add($"Pull request {pullRequestNumber} is not valid. Please provide a valid pull requet number to check the status.");
+                        response.Details.Add($"Pull request {pullRequestNumber} is not valid. Please provide a valid pull request number to check the status.");
                     return response;
                 }
 

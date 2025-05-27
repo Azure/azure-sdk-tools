@@ -67,6 +67,10 @@ class ApiViewContextMode:
 DEFAULT_CONTEXT_MODE = ApiViewContextMode.RAG
 
 
+def in_ci():
+    return os.getenv("TF_BUILD", False)
+
+
 # create enum for the ReviewMode
 class ApiViewReviewMode:
     FULL = "full"
@@ -465,7 +469,12 @@ class ApiViewReview:
         """
 
         def execute_prompt() -> str:
-            return prompty.execute(prompt_path, inputs=inputs)
+            if in_ci():
+                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
+            else:
+                configuration = {}
+
+            return prompty.execute(prompt_path, inputs=inputs, configuration=configuration)
 
         def on_retry(exception, attempt, max_attempts):
             logger.warning(

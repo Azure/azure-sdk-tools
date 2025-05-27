@@ -4,10 +4,8 @@ import json
 import logging
 import os
 import prompty
-import pathlib
 import prompty.azure_beta
 import signal
-import sys
 import threading
 from time import time
 from typing import Optional, List
@@ -497,6 +495,13 @@ class ApiViewReview:
             print(f"Generating {self._get_language_pretty_name()} review...")
             overall_start_time = time()
 
+            # Canary check: try authenticating against Search and CosmosDB before LLM calls
+            canary_error = self._canary_check_search_and_cosmos()
+            if canary_error:
+                print(f"{self.RED_TEXT}ERROR: {canary_error}{self.RESET_COLOR}")
+                logger.error(f"Aborting review due to canary check failure: {canary_error}")
+                raise RuntimeError(f"Aborting review: {canary_error}")
+
             # Track time for _generate_comments
             generate_start_time = time()
             self._generate_comments()
@@ -505,9 +510,12 @@ class ApiViewReview:
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()
+            initial_comment_count = len(self.results.comments)
             self._deduplicate_comments()
+            merged_comment_count = len(self.results.comments)
             deduplicate_end_time = time()
             print(f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds.")
+            print(f"  Initial comments: {initial_comment_count}, Merged comments: {merged_comment_count}")
 
             # Track time for _filter_comments
             filter_start_time = time()
@@ -531,6 +539,24 @@ class ApiViewReview:
             # Don't close the executor here as it might be needed for future operations
             pass
 
+    def _canary_check_search_and_cosmos(self) -> str | None:
+        """
+        Attempts a minimal search and CosmosDB access to verify authentication before LLM calls.
+        Returns an error string if authentication fails, otherwise None.
+        """
+        try:
+            # Canary: minimal search query
+            self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+            try:
+                # Use a real search result, even if empty
+                canary_results = self.search.search_all(query="canary")
+                _ = self.search.build_context(canary_results)
+            except Exception as cosmos_exc:
+                return f"CosmosDB authentication failed: {type(cosmos_exc).__name__}: {cosmos_exc}"
+        except Exception as e:
+            return f"Unexpected canary check error: {type(e).__name__}: {e}"
+        return None
+
     def _get_language_pretty_name(self) -> str:
         """
         Returns a pretty name for the language.
@@ -548,21 +574,17 @@ class ApiViewReview:
         return language_pretty_names.get(self.language, self.language.capitalize())
 
     def _retrieve_context(self, query: str) -> List[object] | None:
+        """
+        Given a code query, searches the unified index for relevant guidelines,
+        memories and examples.
+        """
         try:
-            """
-            Given a code query, searches the unified index for relevant guidelines,
-            memories and examples.
-            """
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-
-            # search the examples index directly with the code snippet
             results = self.search.search_all(query=query)
             context = self.search.build_context(results)
             return context
         except Exception as e:
-            # Log search errors
-            logger.error(f"Error retrieving context: {str(e)}")
-            # Return empty context as fallback
+            logger.error(f"Error retrieving context: {type(e).__name__}: {e}", exc_info=True)
             return None
 
     def _load_generic_metadata(self):

@@ -284,7 +284,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 if (!IsValidLanguage(language))
                 {
-                    return $"Unsupported language to get pull request details. Supported languages: {SUPPORTED_LANGUAGES}";
+                    return $"Unsupported language to get pull request details. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";
                 }
 
                 StringBuilder sb = new ();
@@ -380,7 +380,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 
                 // Add PR to release plan
-                var releasePlan = workItemId == 0? await devopsService.GetReleasePlan(releasePlanId) : await devopsService.GetReleasePlanForWorkItem(workItemId);
+                var releasePlan = workItemId == 0 ? await devopsService.GetReleasePlan(releasePlanId) : await devopsService.GetReleasePlanForWorkItem(workItemId);
                 if (releasePlan == null || releasePlan.WorkItemId == 0)
                 {
                     return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";

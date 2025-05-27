@@ -357,7 +357,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 // Add work item as child of release plan work item
-                if (string.IsNullOrEmpty(sdkGenerationPipelineUrl))
+                if (!string.IsNullOrEmpty(sdkGenerationPipelineUrl))
                 {
                     jsonLinkDocument.Add(
                         new JsonPatchOperation
@@ -533,7 +533,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
         {
-            Regex regex = new Regex("https:\\/\\/github.com\\/[A|a]zure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
+            Regex regex = new Regex("https:\\/\\/github.com\\/[Aa]zure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
             var match = regex.Match(sdkGenerationSummary);
             return match.Success ? match.Value : string.Empty;
         }

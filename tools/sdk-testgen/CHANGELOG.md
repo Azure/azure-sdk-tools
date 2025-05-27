@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Thu, 14 May 2024 08:36:29 GMT and should not be manually modified.
+This log was last generated on Thu, 27 May 2025 08:20:31 GMT and should not be manually modified.
+
+## 2.6.3
+Thu, 27 May 2025 08:20:31 GMT
+
+### Patches
+
+- Export types for downstream.
 
 ## 2.6.2
 Thu, 14 May 2024 08:36:29 GMT

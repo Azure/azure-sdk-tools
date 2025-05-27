@@ -350,7 +350,7 @@ namespace APIViewWeb.Managers
             var payload = new Dictionary<string, object>
             {
                 { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
-                { "outline", String.Join("\\n", activeApiOutline.Select(item => item.lineText)) },
+                { "outline", activeApiOutline }
             };
 
             if (!String.IsNullOrEmpty(diffApiRevisionId))

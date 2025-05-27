@@ -1,11 +1,13 @@
 from src._apiview_reviewer import ApiViewReview
+from src.mcp import mcp_app
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 import os
 import json
 import logging
 
-app = FastAPI()
+
+app = FastAPI("APIView Copilot")
 
 # Configure logging
 logging.basicConfig(
@@ -75,3 +77,6 @@ async def api_reviewer(language: str, request: Request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+app.mount("/mcp", mcp_app)

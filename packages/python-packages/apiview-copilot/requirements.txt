@@ -5,6 +5,7 @@ azure-search-documents==11.5.2
 black==25.1.0
 fastapi==0.111.0
 knack==0.12.0
+mcp==1.9.1
 openai==1.67.0
 prompty[azure]==0.1.49
 python-dotenv==1.0.1

@@ -96,7 +96,6 @@ def get_dependencies(package_specifier: str) -> List[str]:
     except Exception as f:
         error_encountered = True
         output = ""
-    print("Getting pkg dependencies:", output)
 
     if output:
         json_output = json.loads(output)

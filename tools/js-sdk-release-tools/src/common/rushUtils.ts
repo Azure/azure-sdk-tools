@@ -153,7 +153,7 @@ export async function formatSdk(packageDirectory: string) {
 
 }
 
-async function updateSnippets(packageDirectory: string) {
+export async function updateSnippets(packageDirectory: string) {
     logger.info(`Start to update snippets in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };

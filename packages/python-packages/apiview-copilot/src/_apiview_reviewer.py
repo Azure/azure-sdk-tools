@@ -111,7 +111,7 @@ class ApiViewReview:
         self.summary = None
         self.outline = outline
         comments_json = json.loads(comments) if comments else None
-        self.comments = [ExistingComment(**data) for data in comments_json] if comments_json else []
+        self.existing_comments = [ExistingComment(**data) for data in comments_json] if comments_json else []
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):
@@ -455,6 +455,44 @@ class ApiViewReview:
         print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
         self.results.comments = [Comment(**comment) for comment in keep_comments]
 
+    def _filter_preexisting_comments(self):
+        """
+        Check if there are any preexisting comments on the same line as new proposed comments. If so,
+        resolve them with the LLM to either discard or update the proposed comment.
+        """
+        comments_to_remove = []
+        for idx, comment in enumerate(self.results.comments):
+            existing_comments = [e for e in self.existing_comments if e.line_no == comment.line_no]
+            if not existing_comments:
+                continue
+            # Prepare the inputs for the prompt
+            inputs = {
+                "comment": comment.model_dump(),
+                "existing": [e.model_dump() for e in existing_comments],
+                "language": self._get_language_pretty_name(),
+            }
+            prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
+            print(f"Filtering preexisting comments for line {comment.line_no}...")
+            try:
+                response = self._run_prompt(prompt_path, inputs)
+                response_json = json.loads(response)
+                if response_json.get("status") == "KEEP":
+                    comment.comment = response_json.get("comment")
+                elif response_json.get("status") == "DISCARD":
+                    # mark this comment for removal
+                    comments_to_remove.append(idx)
+            except Exception as e:
+                logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
+                # If there's an error, we can choose to keep the comment as is or discard it
+                # Here we choose to keep it, but log the error
+                logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
+        # remove comments that were marked for removal
+        if not comments_to_remove:
+            return
+        self.results.comments = [
+            comment for idx, comment in enumerate(self.results.comments) if idx not in comments_to_remove
+        ]
+
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
         Run a prompt with retry logic.
@@ -534,6 +572,12 @@ class ApiViewReview:
             self._filter_comments()
             filter_end_time = time()
             print(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
+
+            # Track time for _filter_preexisting_comments
+            preexisting_start_time = time()
+            self._filter_preexisting_comments()
+            preexisting_end_time = time()
+            print(f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds.")
 
             # Add the summary to the results
             if self.summary:

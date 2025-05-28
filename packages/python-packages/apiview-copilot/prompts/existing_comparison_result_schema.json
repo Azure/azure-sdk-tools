@@ -13,7 +13,7 @@
         },
         "status": {
           "type": "string",
-          "description": "status of the comment, can be 'KEEP' or 'REMOVE'"
+          "description": "status of the comment, can be 'KEEP' or 'DISCARD'"
         },
         "status_reason": {
           "type": "string",

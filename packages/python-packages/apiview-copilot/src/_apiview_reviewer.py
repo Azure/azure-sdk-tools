@@ -110,8 +110,7 @@ class ApiViewReview:
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
         self.outline = outline
-        comments_json = json.loads(comments) if comments else None
-        self.existing_comments = [ExistingComment(**data) for data in comments_json] if comments_json else []
+        self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):
@@ -460,6 +459,7 @@ class ApiViewReview:
         Check if there are any preexisting comments on the same line as new proposed comments. If so,
         resolve them with the LLM to either discard or update the proposed comment.
         """
+        print(f"Filtering preexisting comments...")
         comments_to_remove = []
         for idx, comment in enumerate(self.results.comments):
             existing_comments = [e for e in self.existing_comments if e.line_no == comment.line_no]
@@ -472,7 +472,6 @@ class ApiViewReview:
                 "language": self._get_language_pretty_name(),
             }
             prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
-            print(f"Filtering preexisting comments for line {comment.line_no}...")
             try:
                 response = self._run_prompt(prompt_path, inputs)
                 response_json = json.loads(response)
@@ -489,9 +488,14 @@ class ApiViewReview:
         # remove comments that were marked for removal
         if not comments_to_remove:
             return
+        initial_comment_count = len(self.results.comments)
         self.results.comments = [
             comment for idx, comment in enumerate(self.results.comments) if idx not in comments_to_remove
         ]
+        final_comment_count = len(self.results.comments)
+        print(
+            f"Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
+        )
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
@@ -573,15 +577,16 @@ class ApiViewReview:
             filter_end_time = time()
             print(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
 
+            # Add the summary to the results
+            if self.summary:
+                self.results.comments.append(self.summary)
+
             # Track time for _filter_preexisting_comments
             preexisting_start_time = time()
             self._filter_preexisting_comments()
             preexisting_end_time = time()
             print(f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds.")
 
-            # Add the summary to the results
-            if self.summary:
-                self.results.comments.append(self.summary)
             results = self.results.sorted()
 
             overall_end_time = time()

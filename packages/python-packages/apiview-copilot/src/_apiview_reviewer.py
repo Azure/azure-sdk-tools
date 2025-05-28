@@ -421,8 +421,6 @@ class ApiViewReview:
         filter_prompt_file = "comment_filter.prompty"
         filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
 
-        print(f"Filtering comments...")
-
         # Submit each comment to the executor for parallel processing
         futures = {}
         for idx, comment in enumerate(self.results.comments):
@@ -436,9 +434,10 @@ class ApiViewReview:
                 },
             )
 
-        # Collect results as they complete
+        # Collect results as they complete, with % complete logging
         keep_comments = []
         discard_comments = []
+        total = len(futures)
         for idx, future in futures.items():
             try:
                 response = future.result()
@@ -449,6 +448,10 @@ class ApiViewReview:
                     discard_comments.append(response_json)
             except Exception as e:
                 logger.error(f"Error filtering comment at index {idx}: {str(e)}")
+            # Log % complete
+            percent = int(((idx + 1) / total) * 100) if total else 100
+            print(f"Filtering comments... {percent}% complete", end="\r", flush=True)
+        print()  # Ensure the progress bar is visible before the summary
 
         # Update the results with the filtered comments
         print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
@@ -459,32 +462,43 @@ class ApiViewReview:
         Check if there are any preexisting comments on the same line as new proposed comments. If so,
         resolve them with the LLM to either discard or update the proposed comment.
         """
-        print(f"Filtering preexisting comments...")
         comments_to_remove = []
+        # Prepare tasks for comments that have preexisting comments
+        tasks = []
+        indices = []
         for idx, comment in enumerate(self.results.comments):
             existing_comments = [e for e in self.existing_comments if e.line_no == comment.line_no]
             if not existing_comments:
                 continue
-            # Prepare the inputs for the prompt
             inputs = {
                 "comment": comment.model_dump(),
                 "existing": [e.model_dump() for e in existing_comments],
                 "language": self._get_language_pretty_name(),
             }
             prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
+            tasks.append((idx, comment, prompt_path, inputs))
+            indices.append(idx)
+
+        total = len(tasks)
+        futures = {}
+        for i, (idx, comment, prompt_path, inputs) in enumerate(tasks):
+            futures[idx] = self.executor.submit(self._run_prompt, prompt_path, inputs)
+
+        for i, (idx, comment, prompt_path, inputs) in enumerate(tasks):
             try:
-                response = self._run_prompt(prompt_path, inputs)
+                response = futures[idx].result()
                 response_json = json.loads(response)
                 if response_json.get("status") == "KEEP":
                     comment.comment = response_json.get("comment")
                 elif response_json.get("status") == "DISCARD":
-                    # mark this comment for removal
                     comments_to_remove.append(idx)
             except Exception as e:
                 logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
-                # If there's an error, we can choose to keep the comment as is or discard it
-                # Here we choose to keep it, but log the error
                 logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
+            percent = int(((i + 1) / total) * 100) if total else 100
+            print(f"Filtering preexisting comments... {percent}% complete", end="\r", flush=True)
+        print()  # Ensure the progress bar is visible before the summary
+
         # remove comments that were marked for removal
         if not comments_to_remove:
             return

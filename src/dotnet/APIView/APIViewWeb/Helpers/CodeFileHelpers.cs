@@ -97,7 +97,8 @@ namespace APIViewWeb.Helpers
                     if (crossLanguageProcessingData.Content.ContainsKey(line.CrossLanguageId.ToLower()))
                     {
                         crossLanguageProcessingData.Content[line.CrossLanguageId.ToLower()].Add(new CodePanelRowData() {
-                            Type = CodePanelRowDatatype.Separator
+                            Type = CodePanelRowDatatype.Separator,
+                            Indent = indent,
                         });
                     }
                     else

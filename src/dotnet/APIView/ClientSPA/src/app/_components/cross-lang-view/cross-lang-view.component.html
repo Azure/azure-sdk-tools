@@ -30,9 +30,14 @@
           <div *ngFor="let item of getCodeLines(key)" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
           [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
             <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine">
-            <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
-                <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)">{{token.value}}</span>
-            </div>
+              <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+                  <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)">{{token.value}}</span>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="item.type === CodePanelRowDatatype.Separator">
+              <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+                  <span ><i class="bi bi-three-dots"></i></span>
+              </div>
             </ng-container>
           </div>
           <span class="lang-link mb-2 ms-3 py-1 px-2 border rounded small"><a [href]="getCodeLineUrl(key)" target="_blank"><i class="bi bi-box-arrow-up-right"></i>{{ getCodeLineUrlText(key)}} </a></span>

@@ -8,7 +8,8 @@ export enum CodePanelRowDatatype {
   Documentation = "documentation",
   Diagnostics = "diagnostics",
   CommentThread = "commentThread",
-  CrossLanguage = "crossLanguage"
+  CrossLanguage = "crossLanguage",
+  Separator = "separator"
 }
 
 export class CodePanelRowData {

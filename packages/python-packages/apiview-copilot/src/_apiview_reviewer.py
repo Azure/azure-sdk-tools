@@ -470,7 +470,7 @@ class ApiViewReview:
 
         def execute_prompt() -> str:
             if in_ci():
-                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
+                configuration = {"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
             else:
                 configuration = {}
 

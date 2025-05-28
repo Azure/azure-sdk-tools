@@ -47,7 +47,6 @@ def local_review(
     language: str,
     target: str,
     base: str = None,
-    # mode argument removed
     outline: str = None,
     existing_comments: str = None,
 ):

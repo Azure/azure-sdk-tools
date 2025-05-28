@@ -94,7 +94,7 @@ class ApiViewReview:
         *,
         language: str,
         outline: Optional[str] = None,
-        comments: Optional[str] = None,
+        comments: Optional[list] = None,
         mode: str = DEFAULT_CONTEXT_MODE,
     ):
         self.target = self._unescape(target)

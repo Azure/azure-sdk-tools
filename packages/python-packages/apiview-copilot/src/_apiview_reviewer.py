@@ -12,7 +12,7 @@ from typing import Optional, List
 import yaml
 
 from ._diff import create_diff_with_line_numbers
-from ._models import ReviewResult, Comment
+from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
@@ -94,6 +94,7 @@ class ApiViewReview:
         *,
         language: str,
         outline: Optional[str] = None,
+        comments: Optional[str] = None,
         mode: str = DEFAULT_CONTEXT_MODE,
     ):
         self.target = self._unescape(target)
@@ -109,6 +110,8 @@ class ApiViewReview:
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
         self.outline = outline
+        comments_json = json.loads(comments) if comments else None
+        self.comments = [ExistingComment(**data) for data in comments_json] if comments_json else []
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):
@@ -416,7 +419,7 @@ class ApiViewReview:
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
-        filter_prompt_file = "final_comment_filter.prompty"
+        filter_prompt_file = "comment_filter.prompty"
         filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
 
         print(f"Filtering comments...")

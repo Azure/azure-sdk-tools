@@ -41,6 +41,7 @@ async def api_reviewer(language: str, request: Request):
         target_id = data.get("target_id", None)
         base_apiview = data.get("base", None)
         outline = data.get("outline", None)
+        comments = data.get("comments", None)
 
         if not target_apiview:
             logger.warning("No API content provided in the request")
@@ -48,7 +49,9 @@ async def api_reviewer(language: str, request: Request):
 
         logger.info(f"Processing {language} API review")
 
-        reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview, outline=outline)
+        reviewer = ApiViewReview(
+            language=language, target=target_apiview, base=base_apiview, outline=outline, comments=comments
+        )
         result = reviewer.run()
         reviewer.close()
 

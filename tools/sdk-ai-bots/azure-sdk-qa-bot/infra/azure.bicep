@@ -1,32 +1,37 @@
+// Computer Vision
+@secure()
+param azureComputerVisionApiKey string
+@secure()
+param azureComputerVisionEndpoint string
+
+// RAG
+@secure()
+param ragApiKey string
+@secure()
+param ragEndpoint string
+@secure()
+param ragTanentId string
+
+// Channels
+@secure()
+param channelIdForPython string
+@secure()
+param ragTanentIdForPython string
+
+// Resources
 @maxLength(20)
 @minLength(4)
 @description('Used to generate names for all resources in this file')
 param resourceBaseName string
-
-@secure()
-param azureComputerVisionApiKey string
-
-@secure()
-param azureComputerVisionEndpoint string
-
-@secure()
-param azureOpenAIKey string
-
-@secure()
-param azureOpenAIEndpoint string
-
-@secure()
-param azureOpenAIDeploymentName string
-
-param webAppSKU string
-
-@maxLength(42)
-param botDisplayName string
-
 param serverfarmsName string = resourceBaseName
 param webAppName string = resourceBaseName
 param identityName string = resourceBaseName
 param location string = resourceGroup().location
+param webAppSKU string
+
+// Bot
+@maxLength(42)
+param botDisplayName string
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
@@ -58,6 +63,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
       alwaysOn: true
       linuxFxVersion: 'NODE|20-lts'
       appSettings: [
+        // Web app
         {
           name: 'WEBSITE_RUN_FROM_PACKAGE'
           value: '1' // Run Azure App Service from a package file
@@ -66,6 +72,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'RUNNING_ON_AZURE'
           value: '1'
         }
+        // Bot
         {
           name: 'BOT_ID'
           value: identity.properties.clientId
@@ -74,22 +81,33 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'BOT_TENANT_ID'
           value: identity.properties.tenantId
         }
-        { 
-          name: 'BOT_TYPE' 
+        {
+          name: 'BOT_TYPE'
           value: 'UserAssignedMsi'
         }
+        // RAG
         {
-          name: 'AZURE_OPENAI_API_KEY'
-          value: azureOpenAIKey
+          name: 'RAG_API_KEY'
+          value: ragApiKey
         }
         {
-          name: 'AZURE_OPENAI_ENDPOINT'
-          value: azureOpenAIEndpoint
+          name: 'RAG_ENDPOINT'
+          value: ragEndpoint
         }
         {
-          name: 'AZURE_OPENAI_DEPLOYMENT_NAME'
-          value: azureOpenAIDeploymentName
+          name: 'RAG_TANENT_ID'
+          value: ragTanentId
         }
+        // Channels
+        {
+          name: 'CHANNEL_ID_FOR_PYTHON'
+          value: channelIdForPython
+        }
+        {
+          name: 'RAG_TANENT_ID_FOR_PYTHON'
+          value: ragTanentIdForPython
+        }
+        // Computer Vision
         {
           name: 'AZURE_COMPUTER_VISION_ENDPOINT'
           value: azureComputerVisionEndpoint

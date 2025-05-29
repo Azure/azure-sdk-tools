@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Octokit } from '@octokit/rest';
 import { GithubClient } from '../src/input/GithubClient.js';
-import { request } from 'http';
 
 // Mock the Octokit client
 vi.mock('@octokit/rest', () => {

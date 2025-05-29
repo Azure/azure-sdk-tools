@@ -4,9 +4,9 @@ import { URLNotSupportedError } from '../error/inputErrors.js';
 
 export class LinkContentExtractor {
   private readonly githubClient = new GithubClient();
-  private logMeta?: object;
+  private logMeta: object;
 
-  constructor(logMeta?: object) {
+  constructor(logMeta: object = {}) {
     this.logMeta = logMeta;
     this.githubClient = new GithubClient(undefined, logMeta);
   }

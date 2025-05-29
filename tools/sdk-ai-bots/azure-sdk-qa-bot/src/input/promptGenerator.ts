@@ -2,9 +2,9 @@ import { logger } from '../logging/logger.js';
 import { RemoteContent } from './RemoteContent.js';
 
 export class PromptGenerator {
-  private logMeta?: object;
+  private logMeta: object;
 
-  constructor(logMeta?: object) {
+  constructor(logMeta: object = {}) {
     this.logMeta = logMeta;
   }
 

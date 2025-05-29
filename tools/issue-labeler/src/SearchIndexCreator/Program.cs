@@ -67,14 +67,21 @@ namespace SearchIndexCreator
         {
             // 1. Retrieve all issues from a repository
             var searchContentRetrieval = new SearchContentRetrieval(config, config["GithubKey"]);
-
             var searchContents = await searchContentRetrieval.RetrieveSearchContent("Azure", config["repo"]);
-
             Console.WriteLine($"Retrieved {searchContents.Count} search contents from the repository.");
+            
             // 2. Upload the search contents to Azure Blob Storage
             await searchContentRetrieval.UploadSearchContent(searchContents);
             Console.WriteLine("Search contents uploaded to Azure Blob Storage.");
-            
+
+            //3. Create an Azure Search Index
+            var index = new ContentIndex(config);
+            var defaultCredential = new DefaultAzureCredential();
+            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+
+            await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
         }
 
         // Retrieve issues from GitHub, upload to Azure Blob Storage, and create an Azure Search Index

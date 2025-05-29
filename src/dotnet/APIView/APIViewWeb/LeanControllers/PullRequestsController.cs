@@ -3,7 +3,6 @@ using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static MongoDB.Libmongocrypt.CryptContext;
 
 namespace APIViewWeb.LeanControllers
 {

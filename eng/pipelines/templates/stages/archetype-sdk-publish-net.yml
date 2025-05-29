@@ -160,7 +160,7 @@ stages:
             targetPath: $(Artifacts)
 
       - ${{ if eq(parameters.ShouldPublishSymbols, 'true') }}:
-        - template: ../steps/publish-symbols.yml
+        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
           parameters:
             BuildToolsRepositoryPath: $(BuildToolPath)
             PackagesPath: $(Artifacts)

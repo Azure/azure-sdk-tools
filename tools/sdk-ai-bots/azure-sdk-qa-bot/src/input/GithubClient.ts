@@ -31,9 +31,9 @@ export class GithubClient {
   private readonly authToken?: string;
   private readonly perPage = 100;
   private readonly octokit: Octokit;
-  private logMeta?: object;
+  private logMeta: object;
 
-  constructor(authToken?: string, logMeta?: object) {
+  constructor(authToken?: string, logMeta: object = {}) {
     this.logMeta = logMeta;
     this.authToken = authToken;
     this.octokit = new Octokit({ auth: this.authToken });

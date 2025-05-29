@@ -6,10 +6,11 @@ import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js'
 import { ImageTextExtractor } from '../input/ImageContentExtractor.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import { LinkContentExtractor } from '../input/LinkContentExtractor.js';
-import config from '../config.js';
+import config from '../config/config.js';
 import { PromptGenerator } from '../input/promptGenerator.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
+import { getRagTanent } from '../config/utils.js';
 
 export interface FakeModelOptions {
   rag: RAGOptions;
@@ -17,11 +18,6 @@ export interface FakeModelOptions {
 
 export class FakeModel implements PromptCompletionModel {
   private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
-  private readonly options: FakeModelOptions;
-
-  constructor(options: FakeModelOptions) {
-    this.options = options;
-  }
 
   public async completePrompt(
     context: TurnContext,
@@ -31,15 +27,20 @@ export class FakeModel implements PromptCompletionModel {
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
     const meta = getTurnContextLogMeta(context);
+    const channelId = context.activity.conversation.id.split(';')[0];
+    logger.info(`Processing request for channel: ${channelId}`, meta);
+    const ragTanentId = getRagTanent(channelId);
+    const ragOptions: RAGOptions = {
+      endpoint: config.ragEndpoint,
+      apiKey: config.ragApiKey,
+      tenantId: ragTanentId,
+    };
     const thinkingHandler = new ThinkingHandler(context);
     await thinkingHandler.start(context);
 
     const prompt = await this.generatePrompt(context, meta);
-    if (config.debug) {
-      await context.sendActivity(`[DEBUG] Prompt: ${prompt}`);
-    }
     logger.info('prompt to RAG:' + prompt, meta);
-    let ragReply = await getRAGReply(prompt, this.options.rag, meta);
+    let ragReply = await getRAGReply(prompt, ragOptions, meta);
     if (!ragReply) {
       ragReply = { answer: 'AI Service is not available', has_result: false, references: [] };
     }

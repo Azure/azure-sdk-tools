@@ -1,7 +1,7 @@
 import { TeamsAdapter } from '@microsoft/teams-ai';
 
 // This bot's main dialog.
-import config from './config.js';
+import config from './config/config.js';
 import { LogMiddleware } from './middleware/LogMiddleware.js';
 import { logger } from './logging/logger.js';
 import { getTurnContextLogMeta } from './logging/utils.js';

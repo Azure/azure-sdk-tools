@@ -6,23 +6,25 @@ import {
 } from '@azure/cognitiveservices-computervision/esm/models/index.js';
 import axios, { AxiosResponse } from 'axios';
 import { RemoteContent } from './RemoteContent.js';
-import { ManagedIdentityCredential } from '@azure/identity';
+import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity';
 import { logger } from '../logging/logger.js';
+import config from '../config/config.js';
 
 export class ImageTextExtractor {
   private readonly pollResultInterval = 500;
   private readonly botFrameworkScope = 'https://api.botframework.com/.default';
 
   // env
-  private readonly azureComputerVisionEndpoint = process.env['AZURE_COMPUTER_VISION_ENDPOINT'];
-  private readonly azureComputerVisionApiKey = process.env['AZURE_COMPUTER_VISION_API_KEY'];
-  private readonly botId = process.env['BOT_ID'];
+  private readonly azureComputerVisionEndpoint = config.azureComputerVisionEndpoint;
+  private readonly azureComputerVisionApiKey = config.azureComputerVisionApiKey;
+  private readonly botId = config.MicrosoftAppId;
 
-  private readonly credentials = new ManagedIdentityCredential(this.botId);
+  private readonly credentials =
+    process.env.IS_LOCAL === 'true' ? new DefaultAzureCredential() : new ManagedIdentityCredential(this.botId);
   private readonly client: ComputerVisionClient;
-  private logMeta?: object;
+  private logMeta: object;
 
-  constructor(logMeta?: object) {
+  constructor(logMeta: object = {}) {
     this.logMeta = logMeta;
     const creds = new ApiKeyCredentials({
       inHeader: {

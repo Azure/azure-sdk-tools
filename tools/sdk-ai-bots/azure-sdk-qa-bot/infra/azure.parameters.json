@@ -11,14 +11,20 @@
     "azureComputerVisionApiKey": {
       "value": "${{SECRET_AZURE_COMPUTER_VISION_API_KEY}}"
     },
-    "azureOpenAIKey": {
-      "value": "${{SECRET_AZURE_OPENAI_API_KEY}}"
+    "ragApiKey": {
+      "value": "${{SECRET_RAG_API_KEY}}"
     },
-    "azureOpenAIEndpoint": {
-      "value": "${{AZURE_OPENAI_ENDPOINT}}"
+    "ragEndpoint": {
+      "value": "${{RAG_ENDPOINT}}"
     },
-    "azureOpenAIDeploymentName": {
-      "value": "${{AZURE_OPENAI_DEPLOYMENT_NAME}}"
+    "ragTanentId": {
+      "value": "${{RAG_TANENT_ID}}"
+    },
+    "channelIdForPython": {
+      "value": "${{CHANNEL_ID_FOR_PYTHON}}"
+    },
+    "ragTanentIdForPython": {
+      "value": "${{RAG_TANENT_ID_FOR_PYTHON}}"
     },
     "webAppSKU": {
       "value": "B3"

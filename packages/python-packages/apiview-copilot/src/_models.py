@@ -1,8 +1,19 @@
 from enum import Enum
 from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Optional, Dict, Set, Union
+from typing import List, Optional, Dict, Set
 
 from ._sectioned_document import Section
+
+
+class ExistingComment(BaseModel):
+    """
+    Represents an existing comment in the APIView.
+    This is used to prevent copilot from generating the same comment again.
+    """
+
+    line_no: int = Field(description="Line number of the existing comment.")
+    author: str = Field(description="The author of the existing comment.")
+    comment: str = Field(description="The contents of the existing comment.")
 
 
 class Comment(BaseModel):
@@ -35,16 +46,27 @@ class Guideline(BaseModel):
     id: str = Field(description="Unique identifier for the guideline.")
     title: str = Field(description="Short descriptive title of the guideline.")
     content: str = Field(description="Full text of the guideline.")
-    lang: Optional[str] = Field(
+
+    # Classification fields
+    language: Optional[str] = Field(
         None,
         description="If this guideline is specific to a language (e.g., 'python'). If omitted, the guideline is language-agnostic.",
     )
-
-    # reverse links
-    related_guidelines: Optional[List[str]] = Field(
-        description="List of guideline IDs that are related to this guideline."
+    tags: Optional[List[str]] = Field(
+        None,
+        description="List of tags that classify the guideline.",
     )
-    related_examples: Optional[List[str]] = Field(description="List of example IDs that are related to this guideline.")
+
+    # Relationship fields
+    related_guidelines: List[str] = Field(
+        default_factory=list, description="List of guideline IDs that are related to this guideline."
+    )
+    related_examples: List[str] = Field(
+        default_factory=list, description="List of example IDs that are related to this guideline."
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="List of memory IDs that are related to this guideline."
+    )
 
 
 class ExampleType(str, Enum):
@@ -58,13 +80,11 @@ class Example(BaseModel):
     """
 
     id: str = Field(description="Unique identifier for the example.")
-    guideline_ids: List[str] = Field(description="List of guideline IDs to which this example applies.")
-    content: str = Field(description="Code snippet demonstrating the example.")
-    explanation: str = Field(description="Explanation of why this is good/bad.")
-    example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
+    title: str = Field(description="Short descriptive title of the example.")
+    content: str = Field(description="Code snippet containing the example.")
 
     # Classification fields
-    lang: Optional[str] = Field(None, description="If this example is specific to a language (e.g., 'python').")
+    language: Optional[str] = Field(None, description="If this example is specific to a language (e.g., 'python').")
     service: Optional[str] = Field(
         None,
         description="If this example is specific to a service (e.g., 'azure-functions').",
@@ -72,6 +92,63 @@ class Example(BaseModel):
     is_exception: bool = Field(
         False,
         description="Indicates if this example provides an exception to the guidelines rather than an amplification.",
+    )
+    tags: Optional[List[str]] = Field(
+        None,
+        description="List of tags that classify the guideline.",
+    )
+    example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
+
+    # Relationship fields
+    guideline_ids: List[str] = Field(
+        default_factory=list, description="List of guideline IDs to which this example applies."
+    )
+    memory_ids: List[str] = Field(default_factory=list, description="List of memory IDs to which this example applies.")
+    related_guidelines: List[str] = Field(
+        default_factory=list, description="List of guideline IDs that are related to this example."
+    )
+    related_examples: List[str] = Field(
+        default_factory=list, description="List of example IDs that are related to this example."
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="List of memory IDs that are related to this example."
+    )
+
+
+class Memory(BaseModel):
+    """
+    Represents a memory object in CosmosDB.
+    """
+
+    id: str = Field(description="Unique identifier for the memory.")
+    title: str = Field(description="Short descriptive title of the memory.")
+    content: str = Field(description="Content of the memory.")
+
+    # Classification fields
+    language: Optional[str] = Field(None, description="If this memory is specific to a language (e.g., 'python').")
+    service: Optional[str] = Field(
+        None,
+        description="If this memory is specific to a service (e.g., 'azure-functions').",
+    )
+    is_exception: bool = Field(
+        False,
+        description="Indicates if this memory provides an exception to the guidelines rather than an amplification.",
+    )
+    source: str = Field(description="The source of the memory, such as 'manual' or 'teams_conversation'.")
+    tags: Optional[List[str]] = Field(
+        None,
+        description="List of tags that classify the memory.",
+    )
+
+    # Relationship fields
+    related_guidelines: List[str] = Field(
+        default_factory=list, description="List of guideline IDs that are related to this memory."
+    )
+    related_examples: List[str] = Field(
+        default_factory=list, description="List of example IDs that are related to this memory."
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="List of memory IDs that are related to this memory."
     )
 
 

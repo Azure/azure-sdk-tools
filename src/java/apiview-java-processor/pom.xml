@@ -20,20 +20,20 @@
     <dependency>
       <groupId>com.azure</groupId>
       <artifactId>azure-json</artifactId>
-      <version>1.1.0</version>
+      <version>1.5.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.github.javaparser</groupId>
       <artifactId>javaparser-core</artifactId>
-      <version>3.25.10</version>
+      <version>3.26.4</version>
     </dependency>
 
     <!-- JSON schema validation -->
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.5.2</version>
+      <version>1.5.6</version>
       <exclusions>
           <exclusion>
               <groupId>com.fasterxml.jackson.dataformat</groupId>

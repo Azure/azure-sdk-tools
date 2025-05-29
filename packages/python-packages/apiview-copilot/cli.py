@@ -7,14 +7,12 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import (
-    DEFAULT_USE_RAG,
-)
+from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from typing import Optional, List
+from typing import Optional
 
 helps[
     "review"
@@ -49,7 +47,8 @@ def local_review(
     language: str,
     target: str,
     base: str = None,
-    use_rag: bool = DEFAULT_USE_RAG,
+    outline: str = None,
+    existing_comments: str = None,
 ):
     """
     Generates a review using the locally installed code.
@@ -76,7 +75,24 @@ def local_review(
     else:
         base_apiview = None
 
-    reviewer = ApiViewReview(target=target_apiview, base=base_apiview, language=language, use_rag=use_rag)
+    outline_text = None
+    if outline:
+        with open(outline, "r", encoding="utf-8") as f:
+            outline_text = f.read()
+
+    comments_obj = None
+    if existing_comments:
+        with open(existing_comments, "r", encoding="utf-8") as f:
+            comments_obj = json.load(f)
+
+    reviewer = ApiViewReview(
+        target=target_apiview,
+        base=base_apiview,
+        language=language,
+        mode=DEFAULT_CONTEXT_MODE,
+        outline=outline_text,
+        comments=comments_obj,
+    )
     review = reviewer.run()
     reviewer.close()
     output_path = os.path.join("scratch", "output", language)
@@ -192,20 +208,44 @@ def deploy_flask_app(
     deploy_app_to_azure(app_name, resource_group, subscription_id)
 
 
-def generate_review_from_app(language: str, target: str, base: Optional[str] = None):
+def generate_review_from_app(
+    language: str,
+    target: str,
+    base: Optional[str] = None,
+    outline: Optional[str] = None,
+    existing_comments: Optional[str] = None,
+):
     """Generates a review using the deployed Flask app."""
     from scripts.remote_review import generate_remote_review
 
     # Read the file content
     with open(target, "r", encoding="utf-8") as f:
-        target = f.read()
+        target_content = f.read()
     if base:
         with open(base, "r", encoding="utf-8") as f:
-            base = f.read()
+            base_content = f.read()
     else:
-        base = None
+        base_content = None
 
-    response = asyncio.run(generate_remote_review(target=target, base=base, language=language))
+    outline_text = None
+    if outline:
+        with open(outline, "r", encoding="utf-8") as f:
+            outline_text = f.read()
+
+    comments_obj = None
+    if existing_comments:
+        with open(existing_comments, "r", encoding="utf-8") as f:
+            comments_obj = json.load(f)
+
+    response = asyncio.run(
+        generate_remote_review(
+            target=target_content,
+            base=base_content,
+            language=language,
+            outline=outline_text,
+            existing_comments=comments_obj,
+        )
+    )
 
     # response is already a dict, no need to parse it
     if isinstance(response, dict):
@@ -215,29 +255,10 @@ def generate_review_from_app(language: str, target: str, base: Optional[str] = N
         print(response)
 
 
-def search_examples(path: str, language: str):
-    """Search the examples-index for a query."""
-    from scripts.search_examples import search_examples
-
-    results = search_examples(path, language)
-    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
-
-
-def search_guidelines(language: str, text: Optional[str] = None, path: Optional[str] = None):
-    """Search the guidelines-index for a query."""
-    from scripts.search_guidelines import search_guidelines
-
-    if (path and text) or (not path and not text):
-        raise ValueError("Provide one of `--path` or `--text`.")
-    results = search_guidelines(path or text, language)
-    print(json.dumps(results, indent=2, cls=CustomJSONEncoder))
-
-
 def search_knowledge_base(
     language: str,
     text: Optional[str] = None,
     path: Optional[str] = None,
-    index: List[str] = ["examples", "guidelines"],
     markdown: bool = False,
 ):
     """
@@ -252,11 +273,8 @@ def search_knowledge_base(
     if path:
         with open(path, "r") as f:
             query = f.read()
-    if "examples" in index:
-        examples = search.search_examples(query=query)
-    if "guidelines" in index:
-        guidelines = search.search_guidelines(query=query)
-    context = search.build_context(guidelines, examples)
+    results = search.search_all(query=query)
+    context = search.build_context(results)
     if markdown:
         md = context.to_markdown()
         print(md)
@@ -289,8 +307,6 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
-            g.command("examples", "search_examples")
-            g.command("guidelines", "search_guidelines")
             g.command("kb", "search_knowledge_base")
         return OrderedDict(self.command_table)
 
@@ -303,13 +319,10 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
+
+        mode_choices = [v for k, v in vars(ApiViewContextMode).items() if isinstance(v, str) and not k.startswith("_")]
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
-            ac.argument(
-                "use_rag",
-                action="store_true",
-                help="Use RAG pattern to generate the review.",
-            )
             ac.argument(
                 "target",
                 type=str,
@@ -321,6 +334,20 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file to compare against. If omitted, copilot will review the entire target APIView.",
                 options_list=("--base", "-b"),
+            )
+            ac.argument(
+                "outline",
+                type=str,
+                help="Path to a plain text file containing the outline text.",
+                options_list=["--outline"],
+                default=None,
+            )
+            ac.argument(
+                "existing_comments",
+                type=str,
+                help="Path to a JSON file containing existing comments.",
+                options_list=["--existing-comments"],
+                default=None,
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

@@ -3,24 +3,17 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 {
-
+    #if DEBUG
     [McpServerToolType, Description("Echoes the message back to the client.")]
-    public class HelloWorldTool : MCPTool
+    public class HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputService output) : MCPTool
     {
-        private readonly ILogger<HelloWorldTool> _logger;
-
-
-        public HelloWorldTool(ILogger<HelloWorldTool> logger)
-        {
-            _logger = logger;
-        }
-
         private Argument<string> _inputArg = new Argument<string>(
             name: "input",
             description: "The text to echo back"
@@ -29,37 +22,74 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             Arity = ArgumentArity.ExactlyOne
         };
 
+        private readonly Option<bool> failOpt = new(["--fail"], () => false, "Force failure");
+
         public override Command GetCommand()
         {
-            Command command = new Command("hello-world");
+            Command command = new("hello-world");
             command.AddArgument(_inputArg);
-
-            command.SetHandler(async ctx =>
-            {
-                ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
-            });
-
+            command.AddOption(failOpt);
+            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
 
-        #pragma warning disable CS1998
-        public override async Task<int>HandleCommand(InvocationContext ctx, CancellationToken ct)
-        #pragma warning restore CS1998
+        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             string input = ctx.ParseResult.GetValueForArgument(_inputArg);
-
-            var result = new CommandResponse()
-            {
-                Status = 0,
-                Result = Echo(input)
-            };
-
-            _logger.LogInformation("Result {result}", result);
-
-            return 0;
+            var fail = ctx.ParseResult.GetValueForOption(failOpt);
+            var result = fail ? EchoFail(input) : EchoSuccess(input);
+            ctx.ExitCode = ExitCode;
+            output.Output(result);
+            await Task.CompletedTask;
         }
 
-        [McpServerTool(Name="hello-world"), Description("Echoes the message back to the client.")]
-        public static string Echo(string message) => $"RESPONDING TO {message}";
+        [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
+        public DefaultCommandResponse EchoFail(string message)
+        {
+            try
+            {
+
+                logger.LogError("Echoing message: {message}", message);
+                SetFailure(1);
+
+                return new()
+                {
+                    ResponseError = $"RESPONDING TO '{message}' with FAIL: {ExitCode}",
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while echoing message: {message}", message);
+                return new()
+                {
+                    ResponseError = $"Error occurred while processing '{message}': {ex.Message}"
+                };
+            }
+        }
+
+
+        [McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
+        public DefaultCommandResponse EchoSuccess(string message)
+        {
+            try
+            {
+                logger.LogInformation("Echoing message: {message}", message);
+
+                return new()
+                {
+                    Message = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}",
+                    Duration = 1
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while echoing message: {message}", message);
+                return new()
+                {
+                    ResponseError = $"Error occurred while processing '{message}': {ex.Message}"
+                };
+            }
+        }
     }
+    #endif
 }

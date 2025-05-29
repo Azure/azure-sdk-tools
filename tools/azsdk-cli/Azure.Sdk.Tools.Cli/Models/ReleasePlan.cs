@@ -21,7 +21,11 @@ namespace Azure.Sdk.Tools.Cli.Models
         public bool IsDataPlane { get; set; } = false;
         public string SpecAPIVersion { get; set; } = string.Empty;
         public string SpecType {  get; set; } = string.Empty;
-        public List<SDKGenerationInfo> SDKGenerationInfos { get; set; } = [];
+        public string ReleasePlanLink { get; set; } = string.Empty;
+        public bool IsTestReleasePlan { get; set; } = false;
+        public int ReleasePlanId { get; set; }
+        public string SDKReleaseType { get; set; } = string.Empty;
+        public List<SDKInfo> SDKInfo { get; set; } = [];
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
@@ -69,8 +73,26 @@ namespace Azure.Sdk.Tools.Cli.Models
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.APISpecversion",
                     Value = SpecAPIVersion
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.SDKtypetobereleased",
+                    Value = SDKReleaseType
                 }
             };
+
+            // Add release plan test tag if this is a test release plan
+            if (IsTestReleasePlan)
+            {
+                var tag = new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Tags",
+                    Value = "Release Planner App Test"
+                };
+                jsonDocument.Add(tag);
+            }
             return jsonDocument;
         }
 
@@ -80,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         }
     }
 
-    public class SDKGenerationInfo
+    public class SDKInfo
     {
         public string Language { get; set; } = string.Empty;
         public string GenerationPipelineUrl { get; set; } = string.Empty;

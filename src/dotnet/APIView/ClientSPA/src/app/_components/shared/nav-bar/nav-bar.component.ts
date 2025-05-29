@@ -11,7 +11,6 @@ import { environment } from 'src/environments/environment';
 })
 export class NavBarComponent implements OnInit {
   userProfile : UserProfile | undefined;
-  profilePageWebAppUrl : string | undefined
   logoutPageWebAppUrl : string  = this.configService.webAppUrl + "Account/Logout"
   assetsPath : string = environment.assetsPath;
 
@@ -20,7 +19,7 @@ export class NavBarComponent implements OnInit {
   ngOnInit(): void {
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
-        this.profilePageWebAppUrl = this.configService.webAppUrl + "Assemblies/profile/" + userProfile.userName;
+        this.userProfile = userProfile;
       });
   }
 }

@@ -83,12 +83,14 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IDevOpsService
     {
-        public Task<ReleasePlan> GetReleasePlan(int workItemId);
+        public Task<ReleasePlan> GetReleasePlan(int releasePlanId);
+        public Task<ReleasePlan> GetReleasePlanForWorkItem(int workItemId);
         public Task<ReleasePlan> GetReleasePlan(string pullRequestUrl);
         public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
         public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
         public Task<Build> GetPipelineRun(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRun(int buildId, string language, int workItemId);
+        public Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
     }
 
     public class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -99,17 +101,28 @@ namespace Azure.Sdk.Tools.Cli.Services
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
 
-        public async Task<ReleasePlan> GetReleasePlan(int workItemId)
+        public async Task<ReleasePlan> GetReleasePlanForWorkItem(int workItemId)
         {
             _logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await _connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
             if (workItem?.Id == null)
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
-            _logger.LogInformation($"Release plan work item: [{JsonSerializer.Serialize(workItem)}]");
             var releasePlan = MapWorkItemToReleasePlan(workItem);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
             return releasePlan;
+        }
+
+        public async Task<ReleasePlan> GetReleasePlan(int releasePlanId)
+        {
+            // First find the API spec work item
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var releasePlanWorkItems = await FetchWorkItems(query);
+            if (releasePlanWorkItems.Count == 0)
+            {
+                throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
+            }
+            return MapWorkItemToReleasePlan(releasePlanWorkItems[0]);
         }
 
         private static ReleasePlan MapWorkItemToReleasePlan(WorkItem workItem)
@@ -124,17 +137,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ProductTreeId = workItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKReleaseMonth = workItem.Fields.TryGetValue("Custom.SDKReleaseMonth", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsManagementPlane = workItem.Fields.TryGetValue("Custom.MgmtScope", out value) ? value?.ToString() == "Yes" : false,
-                IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false
+                IsDataPlane = workItem.Fields.TryGetValue("Custom.DataScope", out value) ? value?.ToString() == "Yes" : false,
+                ReleasePlanLink = workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                ReleasePlanId = workItem.Fields.TryGetValue("Custom.ReleasePlanID", out value) ? int.Parse(value?.ToString() ?? "0") : 0,
+                SDKReleaseType = workItem.Fields.TryGetValue("Custom.SDKtypetobereleased", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
             // Get sdk generation status if it was already run for current release plan
             var sdkGenPipelineFields = workItem.Fields.Keys.Where(k => k.StartsWith("Custom.SDKGenerationPipelineFor"));
-            var sdkGenerationInfoList = releasePlan.SDKGenerationInfos;
+            var sdkGenerationInfoList = releasePlan.SDKInfo;
             if (sdkGenPipelineFields.Any())
             {
                 foreach (var fieldName in sdkGenPipelineFields)
                 {
-                    var sdkGenPipelineInfo = new SDKGenerationInfo()
+                    var sdkGenPipelineInfo = new SDKInfo()
                     {
                         GenerationPipelineUrl = workItem.Fields[fieldName]?.ToString() ?? string.Empty,
                         Language = MapLanguageIdToName(fieldName.Replace("Custom.SDKGenerationPipelineFor", ""))
@@ -152,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     var language = MapLanguageIdToName(fieldName.Replace("Custom.SDKPullRequestFor", ""));
                     if (!sdkGenerationInfoList.Any(s => s.Language.Equals(language)))
                         sdkGenerationInfoList.Add(
-                            new SDKGenerationInfo()
+                            new SDKInfo()
                             {
                                 Language = language
                             }
@@ -305,42 +321,53 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private static string MapLanguageToId(string language)
         {
-            return language switch
+            var lang = language.ToLower();
+            return lang switch
             {
-                ".NET" => "Dotnet",
+                ".net" => "Dotnet",
+                "csharp" => "Dotnet",
+                "js" => "JavaScript",
+                "python" => "Python",
+                "java" => "Java",
+                "go" => "Go",
                 _ => language
             };
         }
 
         private static string MapLanguageIdToName(string language)
         {
-            return language switch
+            var lang = language.ToLower();
+            return lang switch
             {
-                "Dotnet" => ".NET",
+                "dotnet" => ".NET",
                 _ => language
             };
         }
 
-        private async Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
+        public async Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
         {
             // Adds SDK generation and pull request link in release plan work item.
             try
             {
-                if (string.IsNullOrEmpty(language) || workItemId == 0 || string.IsNullOrEmpty(sdkGenerationPipelineUrl))
+                if (string.IsNullOrEmpty(language) || workItemId == 0 || (string.IsNullOrEmpty(sdkGenerationPipelineUrl) && string.IsNullOrEmpty(sdkPullRequestUrl)))
                 {
-                    _logger.LogError("Language, work item ID and SDK generation pipeline URL are required to add SDK generation info to work item.");
+                    _logger.LogError("Please provide the language, work item ID, and either the SDK generation pipeline URL or the SDK pull request URL to add SDK info to a work item.");
                     return false;
                 }
+
+                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 // Add work item as child of release plan work item
-                var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+                if (!string.IsNullOrEmpty(sdkGenerationPipelineUrl))
                 {
-                     new JsonPatchOperation
-                     {
-                          Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                          Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
-                          Value = sdkGenerationPipelineUrl
-                     }
-                };
+                    jsonLinkDocument.Add(
+                        new JsonPatchOperation
+                        {
+                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                            Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
+                            Value = sdkGenerationPipelineUrl
+                        });
+                }
+                
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
                     jsonLinkDocument.Add(
@@ -476,13 +503,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (contentStream != null)
                 {
                     var content = new StreamReader(contentStream);
-                    var pullrequestUrl = ParseSDKPullRequestUrl(content.ReadToEnd());
+                    var pullRequestUrl = ParseSDKPullRequestUrl(content.ReadToEnd());
                     if (workItemId != 0)
                     {
                         _logger.LogInformation("Adding SDK pull request to release plan");
-                        await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullrequestUrl);
+                        await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl);
                     }
-                    return pullrequestUrl;
+                    return pullRequestUrl;
                 }
             }
 
@@ -504,9 +531,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             return $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
         }
 
-        private static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
+        public static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
         {
-            Regex regex = new Regex("https:\\/\\/github.com\\/Azure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
+            Regex regex = new Regex("https:\\/\\/github.com\\/[Aa]zure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
             var match = regex.Match(sdkGenerationSummary);
             return match.Success ? match.Value : string.Empty;
         }

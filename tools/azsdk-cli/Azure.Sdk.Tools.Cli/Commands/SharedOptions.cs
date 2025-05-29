@@ -8,11 +8,40 @@ namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
-        public static Option<string> ToolOption = new Option<string>("--tools")
+        public static Option<string> ToolOption = new("--tools")
         {
             Description = "If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.",
             IsRequired = false,
         };
+
+        public static Option<string> Format = new(["--output", "-o"], () => "plain")
+        {
+            Description = "The format of the output. Supported formats are: plain, json",
+            IsRequired = false,
+        };
+
+        public static Option<bool> Debug = new(["--debug"], () => false)
+        {
+            Description = "Enable debug logging",
+            IsRequired = false,
+        };
+
+        public static (string, bool) GetGlobalOptionValues(string[] args)
+        {
+            var root = new RootCommand
+            {
+                TreatUnmatchedTokensAsErrors = false
+            };
+            root.AddGlobalOption(Format);
+            root.AddGlobalOption(Debug);
+
+            var parser = new Parser(root);
+            var result = parser.Parse(args);
+
+            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
+            var debug = result.GetValueForOption(Debug);
+            return (raw, debug);
+        }
 
         public static string[] GetToolsFromArgs(string[] args)
         {
@@ -26,15 +55,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var result = parser.Parse(args);
 
             var raw = result.GetValueForOption(ToolOption);
-            if (string.IsNullOrWhiteSpace(raw))
+            if (string.IsNullOrWhiteSpace(raw)) {
                 return new string[] { };
+            }
 
             return raw
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => s.ToLowerInvariant())
                 .ToArray();
         }
-
 
         public static List<Type> GetFilteredToolTypes(string[] args)
         {

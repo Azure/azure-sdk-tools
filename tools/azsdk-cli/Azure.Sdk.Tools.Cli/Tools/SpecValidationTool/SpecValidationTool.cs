@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.CommandLine;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
@@ -15,10 +17,13 @@ namespace AzureSDKDevToolsMCP.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper _helper, ILogger<SpecValidationTools> logger)
+    public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger) : MCPTool
     {
-        private readonly ITypeSpecHelper _typeSpecHelper = _helper;
-        private readonly ILogger<SpecValidationTools> _logger = logger;
+        // Commands
+        private const string typespecValidationCommandName = "validate-typespec";
+
+        // Options
+        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
 
         /// <summary>
         /// Validates the TypeSpec API specification.
@@ -27,33 +32,53 @@ namespace AzureSDKDevToolsMCP.Tools
         [McpServerTool, Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
         public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
-            _logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
-            var validationResults = new List<string>();
-            if (!_typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
-            {
-                validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
-                return validationResults;
-            }
-
             try
             {
-                var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
-                _logger.LogInformation($"Repo root path: {specRepoRootPath}");
-                // Run npm ci
-                _logger.LogInformation("Running npm ci");                
-                RunNpmCi(specRepoRootPath);
-                _logger.LogInformation("Completed runnign npm ci");
+                logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
+                var validationResults = new List<string>();
+                if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
+                {
+                    validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
+                    return validationResults;
+                }
 
-                //Run TypeSpec validation
-                _logger.LogInformation("Running npx tsv to run the validation");
-                ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                _logger.LogInformation("Completed running TypeSpec validation");
+                try
+                {
+                    var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
+                    logger.LogInformation($"Repo root path: {specRepoRootPath}");
+
+                    // Run npm ci only if "node_modules/.bin/tsv" is not present to improve validation performance
+                    if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
+                    {
+                        // Run npm ci
+                        logger.LogInformation("Running npm ci");
+                        RunNpmCi(specRepoRootPath);
+                        logger.LogInformation("Completed running npm ci");
+                    }
+
+                    //Run TypeSpec validation
+                    logger.LogInformation("Running npx tsv to run the validation");
+                    ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
+                    logger.LogInformation("Completed running TypeSpec validation");
+                }
+                catch (Exception ex)
+                {
+                    validationResults.Add($"Error: {ex.Message}");
+                }
+                return validationResults;
             }
             catch (Exception ex)
             {
-                validationResults.Add($"Error: {ex.Message}");
+                logger.LogError($"Unhandled exception: {ex}");
+                SetFailure();
+                return new List<string> { $"Unhandled exception: {ex.Message}" };
             }
-            return validationResults;
+        }
+
+        private bool IsTypeSpecValidationExecutablePresent(string repoRoot)
+        {
+            var tsvExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "tsv.cmd" : "tsv";
+            return File.Exists(Path.Combine(repoRoot, "node_modules", ".bin", tsvExecutable));
         }
 
         public static void RunNpmCi(string repoRoot)
@@ -73,7 +98,7 @@ namespace AzureSDKDevToolsMCP.Tools
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
-            {                
+            {
                 var output = RunProcess("cmd.exe", $"/C npx tsv {typeSpecProjectRootPath}", specRepoRootPath);
                 validationResults.Add(output);
             }
@@ -84,7 +109,7 @@ namespace AzureSDKDevToolsMCP.Tools
             }
             return "TypeSpec validation completed successfully";
         }
-       
+
 
         private static string GetGitRepoRootPath(string typeSpecProjectRootPath)
         {
@@ -109,20 +134,58 @@ namespace AzureSDKDevToolsMCP.Tools
                 CreateNoWindow = true,
                 WorkingDirectory = workingDirectory
             };
-            using var process = Process.Start(processInfo) ?? throw new Exception($"Failed to start the process: {args}");
-            StringBuilder output = new ();
-            while (!process.HasExited)
+            var output = new StringBuilder();
+            using (var process = new Process())
             {
-                Thread.Sleep(2000);
-                process.Refresh();
-                output.Append(process.StandardOutput.ReadToEnd());                
-            }
-            output.Append(process.StandardOutput.ReadToEnd());
-            if (process.ExitCode != 0)
-            {
-                output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
+                process.StartInfo = processInfo;
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit(100000);
+                if (process.ExitCode != 0)
+                {
+                    output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
+                }
             }
             return output.ToString();
+        }
+
+        public override Command GetCommand()
+        {
+            Command command = new Command(typespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+            command.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            return command;
+        }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public override async Task<int> HandleCommand(System.CommandLine.Invocation.InvocationContext ctx, CancellationToken ct)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            var command = ctx.ParseResult.CommandResult.Command.Name;
+
+            switch (command)
+            {
+                case typespecValidationCommandName:
+                    var repoRootPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
+                    var validationResults = RunTypeSpecValidation(repoRootPath);
+                    logger.LogInformation($"Validation results: [{validationResults}]");
+                    return 0;
+
+                default:
+                    logger.LogError($"Unknown command: {command}");
+                    return 1;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 import { formatSuppressionLine } from '../src/utils/reportFormat';
+import { describe, it, expect } from 'vitest';
 
 // To invoke these tests, run `npm run test-reportFormat` from the "private/openapi-sdk-automation" directory.
 describe('formatSuppressionLine', () => {

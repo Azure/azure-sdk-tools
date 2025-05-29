@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\github-event-processor\Azure.Sdk.Tools.GitHubEventProcessor\Azure.Sdk.Tools.GitHubEventProcessor.csproj" />
     <ProjectReference Include="..\IssueLabelerService\IssueLabelerService.csproj" />
+    <ProjectReference Include="..\IssueLabeler.Shared\IssueLabeler.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

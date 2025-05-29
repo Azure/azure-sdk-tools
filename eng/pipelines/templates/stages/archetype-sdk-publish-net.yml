@@ -88,8 +88,10 @@ stages:
       runOnce:
         deploy:
           steps:
-            - checkout: azure-sdk-build-tools
-              path: $(BuildToolPath)
+            # todo, remove this in favor of a published build tools blob that we will download as an artifact from the previous job
+            - powershell: |
+                git clone -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" --depth 1 https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-build-tools $(BuildToolPath)
+              displayName: "Clone build tools"
 
             - ${{ if eq(parameters.ShouldSign, 'true') }}:
               - task: 1ES.DownloadPipelineArtifact@1
@@ -144,10 +146,8 @@ stages:
         image: ${{ parameters.SigningPool.image }}
       os: ${{ parameters.SigningPool.os }}
     steps:
-
-      - powershell: |
-          git clone -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" --depth 1 https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-build-tools $(BuildToolPath)
-        displayName: "Clone build tools"
+      - checkout: azure-sdk-build-tools
+        path: $(BuildToolPath)
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages

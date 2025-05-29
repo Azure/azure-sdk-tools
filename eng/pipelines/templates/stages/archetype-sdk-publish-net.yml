@@ -24,7 +24,7 @@ stages:
   variables:
     Artifacts: $(System.DefaultWorkingDirectory)/_artifacts/packages
     Binaries: $(System.DefaultWorkingDirectory)/_artifacts/binaries
-    BuildToolPath: $(System.DefaultWorkingDirectory)/_azure-sdk-build-tools
+    BuildToolPath: $(Pipeline.Workspace)/_azure-sdk-build-tools
     BuildToolScripts: $(BuildToolPath)/scripts
     BuildToolTools: $(BuildToolPath)/tools
     ReleaseRepo: azure/azure-sdk-tools
@@ -47,7 +47,7 @@ stages:
           artifactName: packages-signed
     steps:
       - checkout: azure-sdk-build-tools
-        path: $(BuildToolPath)
+        path: _azure-sdk-build-tools
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages

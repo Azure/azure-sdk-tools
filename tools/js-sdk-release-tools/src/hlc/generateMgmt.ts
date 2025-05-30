@@ -121,8 +121,8 @@ export async function generateMgmt(options: {
     
                 await migratePackage(options.sdkRepo,packagePath);
     
-                logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-                execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+                logger.info(`Start to run command: 'rush build -t ${packageName} --verbose', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
@@ -133,14 +133,14 @@ export async function generateMgmt(options: {
                 logger.info(`Start to run command: 'pnpm update'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
                                 
-                logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-                execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+                logger.info(`Start to run command: 'pnpm build --filter ${packageName} --verbose', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`pnpm build --filter ${packageName} --verbose`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
                 }
-                logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
-                execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
+                logger.info(`Start to run command: 'pnpm pack --verbose' under ${packagePath}.`);
+                execSync(`pnpm pack --verbose`, {stdio: 'inherit', cwd: packagePath});
             }
             
             if (!options.skipGeneration) {

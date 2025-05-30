@@ -100,7 +100,7 @@ export async function buildPackage(
         logger.info(`Pnpm install successfully.`);
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
+        await runCommand('pnpm', ['build', '--filter', name, '--verbose'], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);

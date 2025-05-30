@@ -30,9 +30,12 @@ public class LogAnalysisResponse : Response
 public class LogError
 {
     [JsonPropertyName("file")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string File { get; set; } = string.Empty;
     [JsonPropertyName("line")]
-    public int Line { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Line { get; set; }
     [JsonPropertyName("message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Message { get; set; } = string.Empty;
 }

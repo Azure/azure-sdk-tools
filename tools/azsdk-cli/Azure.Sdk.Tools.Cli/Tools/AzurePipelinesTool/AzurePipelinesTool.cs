@@ -255,6 +255,12 @@ public class AzurePipelinesTool(
             }
 
             var (result, _usage) = await azureAgentService.QueryFiles(logs, session, "Why did this pipeline fail?", ct);
+
+            foreach (var log in logs)
+            {
+                File.Delete(log);
+            }
+
             if (usage != null)
             {
                 usage += _usage;

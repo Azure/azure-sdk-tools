@@ -97,7 +97,7 @@ Provide suggested next steps. Respond only in valid JSON with a single object in
 
         do
         {
-            Thread.Sleep(TimeSpan.FromMilliseconds(500));
+            await Task.Delay(500, ct);
             run = await client.Runs.GetRunAsync(thread.Id, run.Id, cancellationToken: ct);
         }
         while (run.Status == RunStatus.Queued || run.Status == RunStatus.InProgress);

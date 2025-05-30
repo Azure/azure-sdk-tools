@@ -147,7 +147,7 @@ stages:
       os: ${{ parameters.SigningPool.os }}
     steps:
       - checkout: azure-sdk-build-tools
-        path: $(BuildToolPath)
+        path: _azure-sdk-build-tools
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages

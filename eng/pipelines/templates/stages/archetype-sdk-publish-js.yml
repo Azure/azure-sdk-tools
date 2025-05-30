@@ -11,7 +11,7 @@ parameters:
 - name: Registry
   type: string
   default: 'https://registry.npmjs.org/'
-- name: Tag:
+- name: Tag
   type: string
   default: 'latest'
 - name: PackageJsonPath

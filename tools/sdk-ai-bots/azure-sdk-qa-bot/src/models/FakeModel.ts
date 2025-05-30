@@ -11,6 +11,7 @@ import { PromptGenerator } from '../input/promptGenerator.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { getRagTanent } from '../config/utils.js';
+import { ConversationHandler, ConversationMessage } from '../input/ConversationHandler.js';
 
 export interface FakeModelOptions {
   rag: RAGOptions;
@@ -18,6 +19,11 @@ export interface FakeModelOptions {
 
 export class FakeModel implements PromptCompletionModel {
   private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
+  private readonly converationHandler = new ConversationHandler();
+
+  constructor() {
+    this.converationHandler.initialize();
+  }
 
   public async completePrompt(
     context: TurnContext,
@@ -38,7 +44,11 @@ export class FakeModel implements PromptCompletionModel {
     const thinkingHandler = new ThinkingHandler(context);
     await thinkingHandler.start(context);
 
-    const prompt = await this.generatePrompt(context, meta);
+    const previousConversation = await this.getConversation(context, meta);
+    const currentPrompt = await this.generatePromptFromTurnContext(context, meta);
+
+    const previousQAs = previousConversation.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const prompt = previousQAs.map((qa) => qa.text).join('\n\n') + `\n\n# Current Question:\n${currentPrompt}`;
     logger.info('prompt to RAG:' + prompt, meta);
     let ragReply = await getRAGReply(prompt, ragOptions, meta);
     if (!ragReply) {
@@ -49,7 +59,37 @@ export class FakeModel implements PromptCompletionModel {
     await this.replyToUser(context, ragReply);
 
     await thinkingHandler.stop();
+
+    await this.saveCurrentQA(context, currentPrompt, ragReply, meta);
+
     return { status: 'success' };
+  }
+  private generateCurrentQA(prompt: string, answer: RAGReply, timestamp: Date) {
+    const refences = answer.references
+      .map((ref) => {
+        return `
+### reference
+${ref.title}
+### link
+${ref.link}
+### content
+${ref.content}
+### source
+${ref.source}`;
+      })
+      .join('\n');
+
+    return `
+# Previous Conversation on ${timestamp}:
+## Question
+${prompt}
+## Answer
+${answer.answer}
+## References
+${refences}
+## Has Result from RAG?
+${answer.has_result ? 'Yes' : 'No'}
+`;
   }
 
   private async replyToUser(context: TurnContext, ragReply: RAGReply) {
@@ -59,7 +99,7 @@ export class FakeModel implements PromptCompletionModel {
     await context.sendActivities([MessageFactory.text(ragReply.answer), replyCard]);
   }
 
-  private async generatePrompt(context: TurnContext, meta: object): Promise<string> {
+  private async generatePromptFromTurnContext(context: TurnContext, meta: object): Promise<string> {
     logger.info('Received activity:', JSON.stringify(context.activity), meta);
     const linkContentExtractor = new LinkContentExtractor(meta);
     const imageContentExtractor = new ImageTextExtractor(meta);
@@ -79,9 +119,34 @@ export class FakeModel implements PromptCompletionModel {
     const extractLinkContentsPromise = linkContentExtractor.extract(inlineLinkUrls);
 
     const [imageContents, linkContents] = await Promise.all([extractImageContentsPromise, extractLinkContentsPromise]);
-
     const userName = context.activity.from.name;
     const prompt = promptGenerator.generate(userName, removedMentionText, imageContents, linkContents);
     return prompt;
+  }
+
+  private async getConversation(context: TurnContext, meta: object) {
+    try {
+      const conversation = await this.converationHandler.getConversationMessages(context.activity.conversation.id);
+      return conversation;
+    } catch (error) {
+      logger.error('Failed to retrieve conversation messages', error, meta);
+      return [];
+    }
+  }
+
+  private async saveCurrentQA(context: TurnContext, currentQuestion: string, currentAnswer: RAGReply, meta: object) {
+    const now = new Date();
+    const qa = this.generateCurrentQA(currentQuestion, currentAnswer, now);
+    const currentMessage: ConversationMessage = {
+      conversationId: context.activity.conversation.id,
+      activityId: context.activity.id,
+      text: qa,
+      timestamp: now,
+    };
+    try {
+      await this.converationHandler.saveMessage(currentMessage);
+    } catch (error) {
+      logger.error('Failed to save current prompt', error, meta);
+    }
   }
 }

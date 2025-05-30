@@ -1,8 +1,14 @@
-// Computer Vision
+// Azure Computer Vision
 @secure()
 param azureComputerVisionApiKey string
 @secure()
 param azureComputerVisionEndpoint string
+
+// Azure Table
+@secure()
+param azureStorageUrl string
+@secure()
+param azureTableNameForConversation string
 
 // RAG
 @secure()
@@ -107,7 +113,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'RAG_TANENT_ID_FOR_PYTHON'
           value: ragTanentIdForPython
         }
-        // Computer Vision
+        // Azure Computer Vision
         {
           name: 'AZURE_COMPUTER_VISION_ENDPOINT'
           value: azureComputerVisionEndpoint
@@ -115,6 +121,15 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'AZURE_COMPUTER_VISION_API_KEY'
           value: azureComputerVisionApiKey
+        }
+        // Azure Table
+        {
+          name: 'AZURE_STORAGE_URL'
+          value: azureStorageUrl
+        }
+        {
+          name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
+          value: azureTableNameForConversation
         }
       ]
       ftpsState: 'FtpsOnly'

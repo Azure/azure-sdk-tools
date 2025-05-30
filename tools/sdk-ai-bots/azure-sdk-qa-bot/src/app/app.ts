@@ -8,7 +8,7 @@ import { FakeModel } from '../models/FakeModel.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackReaction, RAGOptions, sendFeedback } from '../backend/rag.js';
-import config, { channelToRagTanent } from '../config/config.js';
+import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
 
 // Create AI components

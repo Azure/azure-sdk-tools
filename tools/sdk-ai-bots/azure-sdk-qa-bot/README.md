@@ -48,6 +48,9 @@ The following files can be customized and demonstrate an example implementation 
 | File                            | Contents                                          |
 | ------------------------------- | ------------------------------------------------- |
 | `src/index.ts`                  | Sets up the bot app server.                       |
+| `src/input/ConversationHandler.ts` | Handles conversation message storage in Cosmos DB. |
+
+For details about setting up and using Cosmos DB storage for conversation history, see the [Cosmos DB Storage documentation](./docs/cosmos-db-storage.md).
 | `src/adapter.ts`                | Sets up the bot adapter.                          |
 | `src/config.ts`                 | Defines the environment variables.                |
 | `src/prompts/chat/skprompt.txt` | Defines the prompt.                               |

@@ -13,7 +13,7 @@ steps:
       displayName: 'Decompress ${{ target.rid }}'
       inputs:
         targetType: filePath
-        filePath: '$(Build.SourcesDirectory)/eng/pipelines/templates/scripts/prepare-artifact-for-signing.ps1'
+        filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/pipelines/templates/scripts/prepare-artifact-for-signing.ps1'
         arguments: '-Rid "${{ target.rid }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -AssemblyName "${{ target.assembly }}"'
         pwsh: true
         workingDirectory: ${{ parameters.BinariesPath }}
@@ -32,7 +32,7 @@ steps:
       displayName: 'Repackage signed ${{ target.rid }}'
       inputs:
         targetType: filePath
-        filePath: '$(Build.SourcesDirectory)/eng/pipelines/templates/scripts/assemble-signed-artifact.ps1'
+        filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/assemble-signed-artifact.ps1'
         arguments: '-Rid "${{ target.rid }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -SignedFileDirectory "$(SigningArtifactDir)" -AssemblyName "${{ target.assembly }}"'
         pwsh: true
         workingDirectory: ${{ parameters.BinariesPath }}

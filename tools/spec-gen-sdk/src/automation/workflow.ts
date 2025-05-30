@@ -214,6 +214,7 @@ const workflowGenerateSdk = async (context: WorkflowContext) => {
   if (fs.existsSync(suppressionFile)) {
     filterSuppressionFileMap.set(context.specConfigPath, suppressionFile);
   }
+  // if not suppression file added 
 
   const { status, generateOutput } = await workflowCallGenerateScript(
     context,

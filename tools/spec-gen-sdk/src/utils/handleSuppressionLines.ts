@@ -8,7 +8,7 @@ export type SDKSuppressionContentList = Map<string, {content: SdkSuppressionsYml
  * get special suppression by sdkName and packageName info and
  * diff breaking changes info to display in pull request comment
  * @param suppressionContentList
- * @param name
+ * @param name package name
  * @param breakingChangeItems
  * @param context
  * @returns suppressionLines

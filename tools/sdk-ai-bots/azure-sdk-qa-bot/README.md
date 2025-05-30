@@ -11,6 +11,8 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 ## TODO
 
 - [] Split envs for computer vision
+- [] Add test for conversation context
+- [] Add bicep for grant managed identity in storage 
 
 ## Get started with the template
 

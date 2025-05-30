@@ -21,65 +21,57 @@ namespace IssueLabelerService
         }
         public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels)
         {
-            // Configuration for Azure services
             var modelName = _config.AnswerModelName;
-            var issueIndexName = _config.IssueIndexName;
-            var documentIndexName = _config.DocumentIndexName;
-
-            // Issue specific configurations
-            var issueSemanticName = _config.IssueSemanticName;
-            string issueFieldName = _config.IssueIndexFieldName;
-
-            // Document specific configurations
-            var documentSemanticName = _config.DocumentSemanticName;
-            string documentFieldName = _config.DocumentIndexFieldName;
-
-            // Query + Filtering configurations
+            var indexName = _config.IndexName;
+            var semanticName = _config.SemanticName;
+            var fieldName = _config.IssueIndexFieldName;
             string query = $"{issue.Title} {issue.Body}";
             int top = int.Parse(_config.SourceCount);
             double scoreThreshold = double.Parse(_config.ScoreThreshold);
             double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
-            var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold, labels);
-            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold, labels);
- 
-            if (docs.Count == 0 && issues.Count == 0)
+            _logger.LogInformation($"Searching content index '{indexName}' with query: {query}");
+            var searchContentResults = await _ragService.IssueTriageContentIndexAsync(
+                indexName,
+                semanticName,
+                fieldName,
+                query,
+                top,
+                scoreThreshold,
+                labels
+            );
+            if (searchContentResults.Count == 0)
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}. Documents: {docs.Count}, Issues: {issues.Count}.");
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
             }
+            _logger.LogInformation($"Found {searchContentResults.Count} relevant issues for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
 
-            double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
-            bool solution = highestScore >= solutionThreshold;
 
+            var printableContent = string.Join("\n\n", searchContentResults.Select(searchContent =>
+                $"Title: {searchContent.Title}\nDescription: {searchContent.chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
+
+            double highestScore = _ragService.GetHighestScoreForContent(searchContentResults, issue.RepositoryName, issue.IssueNumber);
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            // Format issues 
-            var printableIssues = string.Join("\n\n", issues.Select(issue =>
-                $"Title: {issue.Title}\nDescription: {issue.chunk}\nURL: {issue.Url}\nScore: {issue.Score}"));
+            string AnswerType = highestScore >= solutionThreshold ? "solution" : "suggestions";
+            _logger.LogInformation($"Solution status for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}: {AnswerType}");
 
-            // Format documents 
-            var printableDocs = string.Join("\n\n", docs.Select(doc =>
-                $"Content: {doc.chunk}\nURL: {doc.Url}\nScore: {doc.Score}"));
+            string instructions, userPrompt;
+            instructions = _config.Instructions;
 
-            var replacementsUserPrompt = new Dictionary<string, string>
+            var replacements = new Dictionary<string, string>
             {
                 { "Title", issue.Title },
                 { "Description", issue.Body },
-                { "PrintableDocs", printableDocs },
-                { "PrintableIssues", printableIssues }
+                { "AnswerType", AnswerType },
+                { "PrintableContent", printableContent }
             };
 
-            string instructions, userPrompt;
-            if (solution)
-            {
-                instructions = _config.SolutionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionUserPrompt, replacementsUserPrompt, _logger);
-            }
-            else
-            {
-                instructions = _config.SuggestionInstructions;
-                userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.SuggestionUserPrompt, replacementsUserPrompt, _logger);
-            }
+            userPrompt = AzureSdkIssueLabelerService.FormatTemplate(
+                _config.Prompt,
+                replacements,
+                _logger
+            );
 
             var response = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName);
 
@@ -90,7 +82,7 @@ namespace IssueLabelerService
                 { "RepositoryName", issue.RepositoryName }
             };
 
-            if (solution)
+            if (AnswerType == "solution")
             {
                 intro = AzureSdkIssueLabelerService.FormatTemplate(_config.SolutionResponseIntroduction, replacementsIntro, _logger);
                 outro = _config.SolutionResponseConclusion;
@@ -110,9 +102,10 @@ namespace IssueLabelerService
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formatted_response}");
 
-            return new AnswerOutput {
-                Answer =  formatted_response, 
-                AnswerType = solution ? "solution" : "suggestion" 
+            return new AnswerOutput
+            {
+                Answer = formatted_response,
+                AnswerType = AnswerType
             };
         }
     }

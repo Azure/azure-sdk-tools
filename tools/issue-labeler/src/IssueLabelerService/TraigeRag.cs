@@ -7,7 +7,6 @@ using Azure.Search.Documents.Models;
 using OpenAI.Chat;
 using System.Text.Json;
 using Azure.Search.Documents.Indexes;
-using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
@@ -29,6 +28,48 @@ namespace IssueLabelerService
             s_searchIndexClient = searchIndexClient;
         }
 
+
+        public async Task<List<Content>> IssueTriageContentIndexAsync(
+            string indexName,
+            string semanticConfigName,
+            string field,
+            string query,
+            int count,
+            double scoreThreshold,
+            Dictionary<string, string> labels = null)
+        {
+            var searchResults = await AzureSearchQueryAsync<Content>(
+                indexName,
+                semanticConfigName,
+                field,
+                query,
+                count
+            );
+
+            List<Content> filteredIssues = new List<Content>();
+            foreach (var (issue, score) in searchResults)
+            {
+                if (score >= scoreThreshold)
+                {
+                    issue.Score = score;
+                    filteredIssues.Add(issue);
+                }
+            }
+            return filteredIssues;
+        }
+
+        public double GetHighestScoreForContent(IEnumerable<Content> issues, string repositoryName, int issueNumber)
+        {
+          foreach (var issue in issues)
+            {
+                if (issue.Score == null)
+                {
+                    throw new Exception($"An issue in the search results for {repositoryName} using the Open AI Labeler for issue #{issueNumber} has a null score.");
+                }
+            }
+            return issues.Max(issue => issue.Score ?? double.MinValue);  
+        }
+        
         public async Task<List<(T, double)>> AzureSearchQueryAsync<T>(
             string indexName,
             string semanticConfigName,
@@ -117,117 +158,8 @@ namespace IssueLabelerService
 
             return answers.Content[0].Text;
         }
-
-        public async Task<List<Document>> SearchDocumentsAsync(
-            string indexName,
-            string semanticConfigName,
-            string field,
-            string query,
-            int count,
-            double scoreThreshold,
-            Dictionary<string, string> labels = null)
-        {
-            string filter = LabelsFilter(labels);
-            var searchResults = await AzureSearchQueryAsync<Document>(
-                indexName,
-                semanticConfigName,
-                field,
-                query,
-                count);
-
-            List<Document> filteredDocuments = new List<Document>();
-            foreach (var (document, score) in searchResults)
-            {
-                if (score >= scoreThreshold)
-                {
-                    document.Score = score;
-                    filteredDocuments.Add(document);
-                }
-            }
-
-            _logger.LogInformation($"Found {filteredDocuments.Count} documents with score >= {scoreThreshold}");
-            return filteredDocuments;
-        }
-
-        public async Task<List<Issue>> SearchIssuesAsync(
-            string indexName,
-            string semanticConfigName,
-            string field,
-            string query,
-            int count,
-            double scoreThreshold,
-            Dictionary<string, string> labels = null)
-        {
-            string filter = LabelsFilter(labels);
-            var searchResults = await AzureSearchQueryAsync<Issue>(
-                indexName,
-                semanticConfigName,
-                field,
-                query,
-                count,
-                filter);
-
-            List<Issue> filteredIssues = new List<Issue>();
-            foreach (var (issue, score) in searchResults)
-            {
-                if (score >= scoreThreshold)
-                {
-                    issue.Score = score;
-                    filteredIssues.Add(issue);
-                }
-            }
-
-            _logger.LogInformation($"Found {filteredIssues.Count} issues with score >= {scoreThreshold}");
-            return filteredIssues;
-        }
-
-        public double GetHighestScore(IEnumerable<Issue> issues, IEnumerable<Document> docs, string repositoryName, int issueNumber)
-        {
-            double highestScore = double.MinValue;
-
-            // Check scores in docs
-            foreach (var doc in docs)
-            {
-                if (doc.Score == null)
-                {
-                    throw new Exception($"A document in the search results for {repositoryName} using the Open AI Labeler for issue #{issueNumber} has a null score.");
-                }
-                if (doc.Score > highestScore)
-                {
-                    highestScore = doc.Score.Value;
-                }
-            }
-
-            // Check scores in issues
-            foreach (var issue in issues)
-            {
-                if (issue.Score == null)
-                {
-                    throw new Exception($"An issue in the search results for {repositoryName} using the Open AI Labeler for issue #{issueNumber} has a null score.");
-                }
-                if (issue.Score > highestScore)
-                {
-                    highestScore = issue.Score.Value;
-                }
-            }
-
-            return highestScore;
-        }
-
-        public string LabelsFilter(Dictionary<string, string> labels)
-        {
-            if (labels?.Take(2).Count() == 2)
-            {
-                // Dynamically construct the filter string
-                var filters = labels.Select(label => $"{label.Key} eq '{label.Value}'");
-                return string.Join(" and ", filters);
-            }
-
-            return null;
-        }
     }
-
-    public class Issue
+    public class Content
     {
         public string Id { get; set; }
         public string Title { get; set; }
@@ -236,22 +168,8 @@ namespace IssueLabelerService
         public string Category { get; set; }
         public string Author { get; set; }
         public string Repository { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
         public string Url { get; set; }
-        public double? Score { get; set; }
-
-        public override string ToString()
-        {
-            return JsonSerializer.Serialize(this);
-        }
-    }
-
-    public class Document
-    {
-        public string chunk { get; set; }
-        public string Url { get; set; }
-        public string Service { get; set; }
-        public string Category { get; set; }
         public double? Score { get; set; }
 
         public override string ToString()

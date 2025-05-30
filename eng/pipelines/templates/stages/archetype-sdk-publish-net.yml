@@ -111,7 +111,7 @@ stages:
                 inputs:
                   targetType: filePath
                   # todo how different is this from the one in eng/common/scripts? Let's see if we can make this work with this original
-                  # for now
+                  # for now, but we need to come back around and fix this.
                   filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
                   arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
                 env:
@@ -149,6 +149,8 @@ stages:
       - checkout: azure-sdk-build-tools
         path: _azure-sdk-build-tools
 
+      - checkout: self
+
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages
         inputs:
@@ -184,6 +186,7 @@ stages:
           displayName: 'Post to github release'
           inputs:
             targetType: filePath
+            # todo, move this local script from the build tools repo as well
             filePath: '$(BuildToolScripts)/post-files-to-git-release.ps1'
             arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
             pwsh: true

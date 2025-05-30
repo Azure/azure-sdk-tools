@@ -13,7 +13,7 @@ steps:
       displayName: 'Decompress ${{ target.rid }}'
       inputs:
         targetType: filePath
-        filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/pipelines/templates/scripts/prepare-artifact-for-signing.ps1'
+        filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/prepare-artifact-for-signing.ps1'
         arguments: '-Rid "${{ target.rid }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -AssemblyName "${{ target.assembly }}"'
         pwsh: true
         workingDirectory: ${{ parameters.BinariesPath }}

@@ -7,6 +7,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Helpers
 {
@@ -67,24 +68,22 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        public static string ResolveReviewUrl(PullRequestModel pullRequest, string hostName, IEnumerable<LanguageService> languageServices)
+        public static string ResolveReviewUrl(string reviewId, string apiRevisionId, string language, IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
-            var legacyurl = $"https://{hostName}/Assemblies/Review/{pullRequest.ReviewId}";
-            var url = $"https://spa.{hostName}/review/{pullRequest.ReviewId}?activeApiRevisionId={pullRequest.APIRevisionId}";
-            if (!String.IsNullOrEmpty(pullRequest.APIRevisionId))
-            {
-                legacyurl += $"?revisionId={pullRequest.APIRevisionId}";
-            }
+            var host = configuration["APIVIew-Host-Url"];
+            var spaHost = configuration["APIVIew-SPA-Host-Url"];
+            var reviewSpaUrlTemplate = $"{spaHost}/review/{reviewId}?activeApiRevisionId={apiRevisionId}";
+            var reviewUrlTemplate = $"{host}/Assemblies/Review/{reviewId}?revisionId={apiRevisionId}";
 
-            var language = LanguageServiceHelpers.MapLanguageAlias(pullRequest.Language);
+            language = LanguageServiceHelpers.MapLanguageAlias(language);
             var languageService = LanguageServiceHelpers.GetLanguageService(language: language, languageServices: languageServices);
             if (languageService.UsesTreeStyleParser) // Languages using treestyle parser are also using the spa UI
             {
-                return url;
+                return reviewSpaUrlTemplate;
             }
             else
             {
-                return legacyurl;
+                return reviewUrlTemplate;
             }
         }
     }

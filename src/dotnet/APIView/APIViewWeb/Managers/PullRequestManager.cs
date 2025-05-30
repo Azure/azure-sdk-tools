@@ -165,7 +165,7 @@ namespace APIViewWeb.Managers
             {
                 // PR commit is already processed. No need to reprocess it again.
                 responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed.");
-                return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName, languageServices: _languageServices) : "";
+                return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices) : "";
             }
 
             pullRequestModel.Commits.Add(commitSha);
@@ -211,7 +211,7 @@ namespace APIViewWeb.Managers
             }
 
             // Return review URL created for current package if exists
-            return string.IsNullOrEmpty(pullRequestModel.APIRevisionId) ? "" : ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName, languageServices: _languageServices);
+            return string.IsNullOrEmpty(pullRequestModel.APIRevisionId) ? "" : ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices);
         }
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)

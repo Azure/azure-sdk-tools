@@ -43,7 +43,7 @@ namespace IssueLabelerService
             // If no results are found, throw an exception
             if (searchContentResults.Count == 0)
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
+                throw new InvalidDataException($"Not enough relevant sources found for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}.");
             }
             _logger.LogInformation($"Found {searchContentResults.Count} issues with score >= {scoreThreshold}");
 

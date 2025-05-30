@@ -43,8 +43,7 @@ namespace SearchIndexCreator
                         break;
                     case "4":
                         await ProcessLabels(config);
-                        break;
-                    
+                        break;  
                     default:
                         Console.WriteLine("Invalid option selected.");
                         break;

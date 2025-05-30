@@ -20,16 +20,17 @@ namespace IssueLabelerService
             _logger = logger;
         }
         public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels)
-        {
+        {        
             var modelName = _config.AnswerModelName;
             var indexName = _config.IndexName;
             var semanticName = _config.SemanticName;
             var fieldName = _config.IssueIndexFieldName;
-            string query = $"{issue.Title} {issue.Body}";
-            int top = int.Parse(_config.SourceCount);
-            double scoreThreshold = double.Parse(_config.ScoreThreshold);
-            double solutionThreshold = double.Parse(_config.SolutionThreshold);
+            var top = int.Parse(_config.SourceCount);
+            var scoreThreshold = double.Parse(_config.ScoreThreshold);
+            var solutionThreshold = double.Parse(_config.SolutionThreshold);
 
+            var query = $"{issue.Title} {issue.Body}";
+            
             _logger.LogInformation($"Searching content index '{indexName}' with query: {query}");
             var searchContentResults = await _ragService.IssueTriageContentIndexAsync(
                 indexName,
@@ -54,10 +55,8 @@ namespace IssueLabelerService
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
             string AnswerType = highestScore >= solutionThreshold ? "solution" : "suggestions";
-            _logger.LogInformation($"Solution status for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}: {AnswerType}");
 
-            string instructions, userPrompt;
-            instructions = _config.Instructions;
+            _logger.LogInformation($"Solution status for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}: {AnswerType}");
 
             var replacements = new Dictionary<string, string>
             {
@@ -67,7 +66,9 @@ namespace IssueLabelerService
                 { "PrintableContent", printableContent }
             };
 
-            userPrompt = AzureSdkIssueLabelerService.FormatTemplate(
+            string instructions = _config.Instructions;
+
+            string userPrompt = AzureSdkIssueLabelerService.FormatTemplate(
                 _config.Prompt,
                 replacements,
                 _logger

@@ -22,6 +22,10 @@ namespace IssueLabelerService
         private static SearchIndexClient s_searchIndexClient;
         private ILogger<TriageRag> _logger;
 
+        private const int MinSubqueries = 3;
+        private const int MaxSubqueries = 7;
+        private const int CharsPerSubquery = 30;
+
         public TriageRag(ILogger<TriageRag> logger, AzureOpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
             s_openAiClient = openAiClient;
@@ -224,6 +228,42 @@ namespace IssueLabelerService
             }
 
             return null;
+        }
+
+        public async Task<List<string>> GenerateSubqueriesAsync(string subqueriesPromptTemplate, string query, string modelName)
+        {
+            var subqueryCount = Math.Clamp(query.Length / CharsPerSubquery, MinSubqueries, MaxSubqueries).ToString();
+
+            var replacementSubqueriesPrompt = new Dictionary<string, string>
+            {
+                { "subqueryCount", subqueryCount },
+                { "query", query }
+            };
+            var subqueriesPrompt = AzureSdkIssueLabelerService.FormatTemplate(subqueriesPromptTemplate, replacementSubqueriesPrompt, _logger);
+
+        
+            _logger.LogInformation($"Starting subquery generation for query: {query}");
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                _logger.LogWarning("Query is empty or null. Returning an empty list of subqueries.");
+                return new List<string>();
+            }
+            
+            _logger.LogInformation($"Instructions for subquery generation: {subqueriesPrompt}");
+
+            string response = await SendMessageQnaAsync(subqueriesPrompt, query, modelName);
+
+            var subqueries = response
+                .Split('\n')
+                .Select(line => line?.Trim())
+                .Where(line => !string.IsNullOrEmpty(line) && line.Length >= 2 && char.IsDigit(line[0]))
+                .Select(line => line.Substring(2).TrimEnd())
+                .ToList();
+
+            _logger.LogInformation($"Generated {subqueries.Count} subqueries: {string.Join(", ", subqueries)}");
+
+            return subqueries;
         }
     }
 

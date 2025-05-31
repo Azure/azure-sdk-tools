@@ -22,63 +22,52 @@ namespace IssueLabelerService
 
         public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
-            // Configuration for Azure services
             var modelName = _config.LabelModelName;
-            var issueIndexName = _config.IssueIndexName;
-            var documentIndexName = _config.DocumentIndexName;
-
-            // Issue specific configurations
-            var issueSemanticName = _config.IssueSemanticName;
-            string issueFieldName = _config.IssueIndexFieldName;
-
-            // Document specific configurations
-            var documentSemanticName = _config.DocumentSemanticName;
-            string documentFieldName = _config.DocumentIndexFieldName;
-
-            // Query + Filtering configurations
+            var indexName = _config.IndexName;
+            var semanticName = _config.SemanticName;
             string query = $"{issue.Title} {issue.Body}";
             int top = int.Parse(_config.SourceCount);
             double scoreThreshold = double.Parse(_config.ScoreThreshold);
+            var fieldName = _config.IssueIndexFieldName;
+            double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
-            // Search for issues and documents
-            var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold);
-            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold);
-
-            // Filtered out all sources for either one then not enough information to answer the issue. 
-            if (docs.Count == 0 || issues.Count == 0)
+            _logger.LogInformation($"Searching content index '{indexName}' with query: {query}");
+            var searchContentResults = await _ragService.IssueTriageContentIndexAsync(
+                indexName,
+                semanticName,
+                fieldName,
+                query,
+                top,
+                scoreThreshold
+            );
+            // If no results are found, throw an exception
+            if (searchContentResults.Count == 0)
             {
                 throw new InvalidDataException($"Not enough relevant sources found for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}.");
             }
+            _logger.LogInformation($"Found {searchContentResults.Count} issues with score >= {scoreThreshold}");
 
-            double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
 
-            _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
-            // Format issues 
-            var printableIssues = string.Join("\n\n", issues.Select(issue =>
-                $"Title: {issue.Title}\nDescription: {issue.chunk}\nService: {issue.Service}\nScore: {issue.Score}"));
-
-            // Format documents 
-            var printableDocs = string.Join("\n\n", docs.Select(doc =>
-                $"Content: {doc.chunk}\nService: {doc.Service}\nScore: {doc.Score}"));
-
-            // Get labels for this repository
+            //RAG service
             var labels = await GetLabelsAsync(issue.RepositoryName);
             var categoryLabels = GetCategoryLabelsForPrompt(labels, issue.RepositoryName);
 
-            // Will replace variables inside of the user prompt configuration.
+            var printableContent = string.Join("\n\n", searchContentResults.Select(searchContent =>
+                $"Title: {searchContent.Title}\nDescription: {searchContent.chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
+
+            double highestScore = _ragService.GetHighestScoreForContent(searchContentResults, issue.RepositoryName, issue.IssueNumber);
+            _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
+
+            string instructions = _config.LabelInstructions;
             var replacements = new Dictionary<string, string>
             {
                 { "Title", issue.Title },
                 { "Description", issue.Body },
-                { "PrintableDocs", printableDocs },
-                { "PrintableIssues", printableIssues },
-                { "PrintableLabels", categoryLabels }
+                { "PrintableLabels", categoryLabels },
+                { "PrintableContent", printableContent }
             };
-
-            string instructions = _config.LabelInstructions;
-            string userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelUserPrompt, replacements, _logger);
-
+            string userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelPrompt, replacements, _logger);
             var structure = BuildSearchStructure();
 
             var result = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName, structure);

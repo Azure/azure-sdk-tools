@@ -72,7 +72,7 @@ namespace APIView.Model.V2
             Tokens.Add(token);
         }
 
-        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4, TokensFilter filter = TokensFilter.All)
+        public void AppendApiTextToBuilder<T>(T builder, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4, TokensFilter filter = TokensFilter.All) where T : class
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
             {
@@ -84,30 +84,47 @@ namespace APIView.Model.V2
             {
                 if (filter != TokensFilter.Outline)
                 {
-                    sb.Append(Environment.NewLine);
+                    AppendToBuilder(builder, Environment.NewLine);
                 }
                 return;
             }
+            //Add spaces for indentation
+            string indentSpaces = new string(' ', indent * lineIndentSpaces);
             var lineString = ToString(filter);
+
             if (!(filter == TokensFilter.Outline && String.IsNullOrWhiteSpace(lineString)))
             {
-                //Add spaces for indentation
-                for (int i = 0; i < indent; i++)
-                {
-                    for (int j = 0; j < lineIndentSpaces; j++)
-                    {
-                        sb.Append(" ");
-                    }
-                }
-
-                //Process all tokens
-                sb.Append(lineString);
-                sb.Append(Environment.NewLine);
+                AppendToBuilder(builder, indentSpaces);
+                AppendToBuilder(builder, lineString, LineId);
+                AppendToBuilder(builder, Environment.NewLine);
             }
-
             foreach (var child in Children)
             {
-                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs, lineIndentSpaces, filter);
+                child.AppendApiTextToBuilder(builder, indent + 1, skipDocs, lineIndentSpaces, filter);
+            }
+        }
+
+        private void AppendToBuilder<T>(T builder, string text, string lineId = null)
+        {
+            switch (builder)
+            {
+                case StringBuilder stringBuilder:
+                    stringBuilder.Append(text);
+                    break;
+                case List<(string lineText, string lineId)> stringList:
+                    if (stringList.Count == 0 || text.Equals(Environment.NewLine))
+                    {
+                        stringList.Add((text, lineId));
+                    }
+                    else 
+                    {
+                        var lastTuple = stringList[stringList.Count - 1];
+                        var currLineId = string.IsNullOrEmpty(lineId) ? lastTuple.lineId : lineId;
+                        stringList[stringList.Count - 1] = (lastTuple.lineText + text, currLineId);
+                    }
+                    break;
+                default:
+                    throw new ArgumentException("Unsupported type for builder. Expected StringBuilder or List<string>.");
             }
         }
 

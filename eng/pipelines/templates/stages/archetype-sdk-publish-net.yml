@@ -70,6 +70,25 @@ stages:
             BuildToolsPath: $(BuildToolPath)
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
 
+      # These tasks were originally located just before publishing in the Publish_Package deployment job,
+      # but we moved them here because they utilize a local script, and that's not allowed in the Publish_Package job.
+      # Functionally this is identical ordering to what was in Publish_Package originally, just across
+      # two different jobs instead of within one.
+      - ${{ if eq(parameters.ShouldTag, 'true') }}:
+        - task: PowerShell@2
+          displayName: 'Verify Package Tags and Create Git Releases'
+          inputs:
+            targetType: filePath
+            filePath: 'eng/common/scripts/create-tags-and-git-release.ps1'
+            arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
+          env:
+            GH_TOKEN: $(azuresdk-github-pat)
+        # sets output variable $(release) for use in the job after next
+        - pwsh: |
+            Write-Host "##vso[task.setvariable variable=releaseVar;isOutput=true]$(release)"
+          displayName: 'Set Release Variable'
+          name: SetRelease
+
   - deployment: Publish_Package
     dependsOn: SignPackage
     environment: net-release
@@ -88,11 +107,6 @@ stages:
       runOnce:
         deploy:
           steps:
-            # todo, remove this in favor of a published build tools blob that we will download as an artifact from the previous job
-            - powershell: |
-                git clone -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" --depth 1 https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-build-tools $(BuildToolPath)
-              displayName: "Clone build tools"
-
             - ${{ if eq(parameters.ShouldSign, 'true') }}:
               - task: 1ES.DownloadPipelineArtifact@1
                 displayName: Download Signed Packages
@@ -103,23 +117,6 @@ stages:
                   ${{ else }}:
                     artifactName: packages
                     targetPath: $(Artifacts)
-
-            - ${{ if eq(parameters.ShouldTag, 'true') }}:
-              # sets output variable $(release)
-              - task: PowerShell@2
-                displayName: 'Verify Package Tags and Create Git Releases'
-                inputs:
-                  targetType: filePath
-                  # todo how different is this from the one in eng/common/scripts? Let's see if we can make this work with this original
-                  # for now, but we need to come back around and fix this.
-                  filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
-                  arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
-                env:
-                  GH_TOKEN: $(azuresdk-github-pat)
-              - pwsh: |
-                  Write-Host "##vso[task.setvariable variable=releaseVar;isOutput=true]$(release)"
-                displayName: 'Set Release Variable'
-                name: SetRelease
 
             - ${{ if eq(parameters.ShouldPublish, 'true') }}:
               - task: 1ES.PublishNuget@1
@@ -133,11 +130,13 @@ stages:
                   nuGetFeedType: internal
 
   - job: PostPackagePublish
-    dependsOn: Publish_Package
+    dependsOn:
+     - Publish_Package
+     - SignPackage
     displayName: Post Package Publish
     variables:
       - name: release
-        value: $[ dependencies.Publish_Package.outputs['Publish_Package.SetRelease.releaseVar'] ]
+        value: $[ dependencies.SignPackage.outputs['SignPackage.SetRelease.releaseVar'] ]
     pool:
       name: ${{ parameters.SigningPool.name }}
       ${{ if eq(parameters.OSName, 'macOS') }}:

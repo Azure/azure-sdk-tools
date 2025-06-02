@@ -82,7 +82,7 @@ stages:
           displayName: 'Verify Package Tags and Create Git Releases'
           inputs:
             targetType: filePath
-            filePath: '$(Buiild.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/create-tags-and-git-release.ps1'
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/create-tags-and-git-release.ps1'
             arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
           env:
             GH_TOKEN: $(azuresdk-github-pat)

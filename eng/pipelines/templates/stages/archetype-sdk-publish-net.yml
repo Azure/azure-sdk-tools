@@ -46,8 +46,7 @@ stages:
           targetPath: $(Artifacts)
           artifactName: packages-signed
     steps:
-      - checkout: azure-sdk-build-tools
-        path: _azure-sdk-build-tools
+      - checkout: self
 
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages

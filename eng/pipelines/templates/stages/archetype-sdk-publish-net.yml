@@ -46,6 +46,10 @@ stages:
           targetPath: $(Artifacts)
           artifactName: packages-signed
     steps:
+      # need to checkout the build tools repo to get the signing helper proj
+      - checkout: azure-sdk-build-tools
+        path: _azure-sdk-build-tools
+
       - checkout: self
 
       - task: DownloadPipelineArtifact@2
@@ -78,7 +82,7 @@ stages:
           displayName: 'Verify Package Tags and Create Git Releases'
           inputs:
             targetType: filePath
-            filePath: 'eng/common/scripts/create-tags-and-git-release.ps1'
+            filePath: '$(Pipeline.Workspace)/azure-sdk-tools/eng/common/scripts/create-tags-and-git-release.ps1'
             arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
           env:
             GH_TOKEN: $(azuresdk-github-pat)

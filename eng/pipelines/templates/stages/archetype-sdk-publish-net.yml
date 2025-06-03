@@ -80,8 +80,8 @@ stages:
       - ${{ if eq(parameters.ShouldTag, 'true') }}:
         - task: PowerShell@2
           displayName: 'Verify Package Tags and Create Git Releases'
-          workingDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/'
           inputs:
+            workingDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/'
             targetType: filePath
             filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/create-tags-and-git-release.ps1'
             arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'

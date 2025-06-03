@@ -19,4 +19,4 @@ jobs:
           Write-Host $t
 
           $t2 = Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1' -AsSecureString
-          Write-Host (ConvertFrom-SecureSTring -AsPlainText $t2)
+          Write-Host (ConvertFrom-SecureSTring -AsPlainText $t2.Token)

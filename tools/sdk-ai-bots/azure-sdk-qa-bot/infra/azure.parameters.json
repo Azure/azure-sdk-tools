@@ -11,6 +11,12 @@
     "azureComputerVisionApiKey": {
       "value": "${{SECRET_AZURE_COMPUTER_VISION_API_KEY}}"
     },
+    "azureStorageUrl": {
+      "value": "${{AZURE_STORAGE_URL}}"
+    },
+    "azureTableNameForConversation": {
+      "value": "${{AZURE_TABLE_NAME_FOR_CONVERSATION}}"
+    },
     "ragApiKey": {
       "value": "${{SECRET_RAG_API_KEY}}"
     },

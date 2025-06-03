@@ -11,6 +11,8 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 ## TODO
 
 - [] Split envs for computer vision
+- [] Add test for conversation context
+- [] Add bicep for grant managed identity in storage 
 
 ## Get started with the template
 
@@ -48,6 +50,9 @@ The following files can be customized and demonstrate an example implementation 
 | File                            | Contents                                          |
 | ------------------------------- | ------------------------------------------------- |
 | `src/index.ts`                  | Sets up the bot app server.                       |
+| `src/input/ConversationHandler.ts` | Handles conversation message storage in Cosmos DB. |
+
+For details about setting up and using Cosmos DB storage for conversation history, see the [Cosmos DB Storage documentation](./docs/cosmos-db-storage.md).
 | `src/adapter.ts`                | Sets up the bot adapter.                          |
 | `src/config.ts`                 | Defines the environment variables.                |
 | `src/prompts/chat/skprompt.txt` | Defines the prompt.                               |

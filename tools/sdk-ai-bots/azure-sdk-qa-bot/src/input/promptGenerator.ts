@@ -10,14 +10,14 @@ export class PromptGenerator {
 
   generate(user: string, textInput?: string, imageContents?: RemoteContent[], linkContents?: RemoteContent[]) {
     const imagesPrompt = imageContents
-      ? `## Additional information from images\n\n${imageContents.map(createSection)}\n\n`
+      ? `### Additional information from images\n\n${imageContents.map(createSection)}\n\n`
       : ``;
     const linksPrompt = linkContents
-      ? `## Additional information from links\n\n${linkContents.map(createSection)}\n\n`
+      ? `### Additional information from links\n\n${linkContents.map(createSection)}\n\n`
       : ``;
 
     return `
-# Question from user ${user}
+## Question from user ${user}
 
 ${textInput}
 
@@ -31,7 +31,7 @@ ${linksPrompt}
       if (content.error) {
         logger.warn(`Skip remote content due to error: ${content.error}`, this.logMeta);
       }
-      return `### Content from ${content.id}: ${content.url}\n\n${content.text}\n\n`;
+      return `#### Content from ${content.id}: ${content.url}\n\n${content.text}\n\n`;
     }
   }
 }

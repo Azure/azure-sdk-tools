@@ -10,6 +10,9 @@ const config = {
   // Computer Vision
   azureComputerVisionEndpoint: process.env.AZURE_COMPUTER_VISION_ENDPOINT,
   azureComputerVisionApiKey: process.env.AZURE_COMPUTER_VISION_API_KEY,
+  // Azure Table Storage
+  azureStorageUrl: process.env.AZURE_STORAGE_URL,
+  azureTableNameForConversation: process.env.AZURE_TABLE_NAME_FOR_CONVERSATION,
 };
 
 export const channelToRagTanent = {

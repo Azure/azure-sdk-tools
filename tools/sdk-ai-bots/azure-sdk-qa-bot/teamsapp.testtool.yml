@@ -34,4 +34,7 @@ deploy:
         RAG_TANENT_ID_FOR_PYTHON: ${{RAG_TANENT_ID_FOR_PYTHON}}
         # Test in local
         IS_LOCAL: true
+        # Azure Table
+        AZURE_STORAGE_URL: ${{AZURE_STORAGE_URL}}
+        AZURE_TABLE_NAME: ${{AZURE_TABLE_NAME}}
 

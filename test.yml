@@ -18,7 +18,5 @@ jobs:
           $t = Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1'
           Write-Host $t
 
-          $t2 = Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1' -AsSecureString:$false
-          Write-Host $t2
-          
-          
+          $t2 = Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1' -AsSecureString
+          Write-Host (ConvertFrom-SecureSTring -AsPlainText $t2)

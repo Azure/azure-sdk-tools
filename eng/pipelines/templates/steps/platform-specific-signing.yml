@@ -1,6 +1,5 @@
 parameters:
   BinariesPath: ''
-  BuildScriptsPath: ''
   ExeMatrix: []
 
 steps:

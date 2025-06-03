@@ -67,6 +67,7 @@ stages:
               path: $(Binaries)
 
       - ${{ if eq(parameters.ShouldSign, 'true') }}:
+        # we still need azure-sdk-build-tools present to get the signing helper and partition-by-strongname.ps1
         - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
           parameters:
             PackagesPath: $(Artifacts)
@@ -148,6 +149,7 @@ stages:
         image: ${{ parameters.SigningPool.image }}
       os: ${{ parameters.SigningPool.os }}
     steps:
+      # publish-symbols uses a local script in the build tools repo, so we need to checkout that repo
       - checkout: azure-sdk-build-tools
         path: _azure-sdk-build-tools
 
@@ -189,7 +191,7 @@ stages:
           inputs:
             targetType: filePath
             # todo, move this local script from the build tools repo as well
-            filePath: '$(BuildToolScripts)/post-files-to-git-release.ps1'
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-git-release.ps1'
             arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
             pwsh: true
           env:

@@ -139,7 +139,7 @@ stages:
     displayName: Post Package Publish
     variables:
       - name: release
-        value: $[ dependencies.SignPackage.outputs['SignPackage.SetRelease.releaseVar'] ]
+        value: $[ dependencies.SignPackage.outputs['SetRelease.releaseVar'] ]
     pool:
       name: ${{ parameters.SigningPool.name }}
       ${{ if eq(parameters.OSName, 'macOS') }}:

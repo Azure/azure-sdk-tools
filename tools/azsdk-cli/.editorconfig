@@ -1,0 +1,2 @@
+# disallow single if statements with no curly braces
+dotnet_diagnostic.SA1503.severity = error

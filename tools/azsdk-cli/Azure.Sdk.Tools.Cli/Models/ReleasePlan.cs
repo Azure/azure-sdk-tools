@@ -26,6 +26,8 @@ namespace Azure.Sdk.Tools.Cli.Models
         public int ReleasePlanId { get; set; }
         public string SDKReleaseType { get; set; } = string.Empty;
         public List<SDKInfo> SDKInfo { get; set; } = [];
+        public string ReleasePlanSubmittedByEmail { get; set; } = string.Empty;
+        public bool IsCreatedByAgent { get; set; }
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
@@ -92,6 +94,30 @@ namespace Azure.Sdk.Tools.Cli.Models
                     Value = "Release Planner App Test"
                 };
                 jsonDocument.Add(tag);
+            }
+
+            // Add flag in release plan to indicate that it's used by Copilot agent
+            if (IsCreatedByAgent)
+            {
+                var createdUsingAgent = new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.CreatedUsing",
+                    Value = "Copilot"
+                };
+                jsonDocument.Add(createdUsingAgent);
+            }
+
+            // Add release plan submitted by email field
+            if (!string.IsNullOrEmpty(ReleasePlanSubmittedByEmail))
+            {
+                var submittedByEmail = new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.ReleasePlanSubmittedby",
+                    Value = ReleasePlanSubmittedByEmail
+                };
+                jsonDocument.Add(submittedByEmail);
             }
             return jsonDocument;
         }

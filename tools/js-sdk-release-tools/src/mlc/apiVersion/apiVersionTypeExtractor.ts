@@ -22,7 +22,11 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     const parametersPath = join(packageRoot, "src/rest/parameters.ts");
     if (await exists(parametersPath)) {
         const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
-        if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
+        if (typeFromOperations !== ApiVersionType.None) {
+            return typeFromOperations;
+        } else {
+            return ApiVersionType.Stable; // If no version found in operations, default to stable
+        }
     }
 
     logger.info('No operation found, fallback to get api version type from latest version in NPM');

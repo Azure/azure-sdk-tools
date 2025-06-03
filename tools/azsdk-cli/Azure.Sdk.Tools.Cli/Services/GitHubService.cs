@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private GitHubClient gitHubClient;
         private ILogger<GitHubService> logger;
 
-        private static string CreatedByCopilotLabel = "Created by copilot";
+        private const string CreatedByCopilotLabel = "Created by copilot";
 
         public GitHubService(ILogger<GitHubService> _logger)
         {
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             // Create the pull request
-
+            PullRequest? createdPullRequest = null;
             try
             {
                 responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
@@ -152,20 +152,28 @@ namespace Azure.Sdk.Tools.Cli.Services
                     Body = body
                 };
 
-                var createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
+                createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
                 if (createdPullRequest == null)
                 {
                     responseList.Add($"Failed to create pull request for changes in {headBranch}.");
                     return responseList;
                 }
                 responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
+            }
+            catch (Exception ex)
+            {
+                responseList.Add($"Failed to create pull request. Error: {ex.Message}");
+                return responseList;
+            }
 
+            try
+            {
                 // Add label
                 await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [CreatedByCopilotLabel]);
             }
             catch (Exception ex)
             {
-                responseList.Add($"Pull request creation failed. Error: {ex.Message}");
+                responseList.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
             }
             return responseList;
         }

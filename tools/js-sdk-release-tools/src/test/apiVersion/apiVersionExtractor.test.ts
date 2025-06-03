@@ -77,7 +77,7 @@ describe('Rest client file fallbacks', () => {
     });    
     describe('RLC', () => {
         test('src/xxxContext.ts exists', async () => {
-           const root = join(__dirname, 'testCases/rlc-context/');
+            const root = join(__dirname, 'testCases/rlc-context/');
             const version = await getApiVersionTypeInRLC(root);
             expect(version).toBe(ApiVersionType.Preview);
         });

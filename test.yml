@@ -15,5 +15,5 @@ jobs:
         azurePowerShellVersion: 'LatestVersion'
         ScriptType: 'InlineScript'
         Inline: |
-          $token = (Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1').Token
-          Write-Host "Token obtained."
+          Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1'
+          

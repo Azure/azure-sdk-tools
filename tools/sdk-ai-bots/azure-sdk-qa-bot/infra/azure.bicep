@@ -1,9 +1,3 @@
-// Azure Computer Vision
-@secure()
-param azureComputerVisionApiKey string
-@secure()
-param azureComputerVisionEndpoint string
-
 // Azure Table
 @secure()
 param azureStorageUrl string
@@ -21,6 +15,7 @@ param ragTanentId string
 // Channels
 @secure()
 param channelIdForPython string
+param channelIdForPythonDevInternal string
 @secure()
 param ragTanentIdForPython string
 
@@ -39,9 +34,34 @@ param webAppSKU string
 @maxLength(42)
 param botDisplayName string
 
+// Azure Computer Vision
+var cognitiveServiceAccountName = '${resourceBaseName}-cv'
+
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
   name: identityName
+}
+
+resource cognitiveServiceAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+  name: cognitiveServiceAccountName
+  location: 'eastus'
+  sku: {
+    name: 'S1'
+  }
+  kind: 'ComputerVision'
+  identity: {
+    type: 'None'
+  }
+  properties: {
+    customSubDomainName: cognitiveServiceAccountName
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+    allowProjectManagement: false
+    publicNetworkAccess: 'Enabled'
+  }
 }
 
 // Compute resources for your Web App
@@ -110,17 +130,21 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           value: channelIdForPython
         }
         {
+          name: 'CHANNEL_ID_FOR_PYTHON_DEV_INTERNAL'
+          value: channelIdForPythonDevInternal
+        }
+        {
           name: 'RAG_TANENT_ID_FOR_PYTHON'
           value: ragTanentIdForPython
         }
         // Azure Computer Vision
         {
           name: 'AZURE_COMPUTER_VISION_ENDPOINT'
-          value: azureComputerVisionEndpoint
+          value: cognitiveServiceAccount.properties.endpoint
         }
         {
           name: 'AZURE_COMPUTER_VISION_API_KEY'
-          value: azureComputerVisionApiKey
+          value: cognitiveServiceAccount.listKeys().key1
         }
         // Azure Table
         {

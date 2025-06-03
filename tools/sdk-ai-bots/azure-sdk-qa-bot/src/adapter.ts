@@ -14,7 +14,8 @@ const onTurnErrorHandler = async (context, error) => {
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
-  logger.error(`\n [onTurnError] unhandled error: ${error}`, getTurnContextLogMeta(context));
+  const stack = 'stack' in error ? (error.stack as string).replace(/\n/g, ' ') : '';
+  logger.error(`\n [onTurnError] unhandled error: ${error}, call stack: ${stack}`, getTurnContextLogMeta(context));
 
   // Only send error message for user messages, not for other message types so the bot doesn't spam a channel or chat.
   if (context.activity.type === 'message') {

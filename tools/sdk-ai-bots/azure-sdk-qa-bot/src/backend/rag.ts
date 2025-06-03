@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { logger } from '../logging/logger.js';
-import { channelToRagTanent, ragApiPaths } from '../config/config.js';
+import { ragApiPaths } from '../config/config.js';
 
 export interface RAGOptions {
   endpoint: string;

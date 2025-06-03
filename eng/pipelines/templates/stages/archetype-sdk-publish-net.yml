@@ -86,6 +86,7 @@ stages:
             arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
           env:
             GH_TOKEN: $(azuresdk-github-pat)
+          workingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
         # sets output variable $(release) for use in the job after next
         - pwsh: |
             Write-Host "##vso[task.setvariable variable=releaseVar;isOutput=true]$(release)"

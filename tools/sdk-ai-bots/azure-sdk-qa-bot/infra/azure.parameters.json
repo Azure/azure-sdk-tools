@@ -5,12 +5,6 @@
     "resourceBaseName": {
       "value": "bot${{RESOURCE_SUFFIX}}"
     },
-    "azureComputerVisionEndpoint": {
-      "value": "${{AZURE_COMPUTER_VISION_ENDPOINT}}"
-    },
-    "azureComputerVisionApiKey": {
-      "value": "${{SECRET_AZURE_COMPUTER_VISION_API_KEY}}"
-    },
     "azureStorageUrl": {
       "value": "${{AZURE_STORAGE_URL}}"
     },
@@ -28,6 +22,9 @@
     },
     "channelIdForPython": {
       "value": "${{CHANNEL_ID_FOR_PYTHON}}"
+    },
+    "channelIdForPythonDevInternal": {
+      "value": "${{CHANNEL_ID_FOR_PYTHON_DEV_INTERNAL}}"
     },
     "ragTanentIdForPython": {
       "value": "${{RAG_TANENT_ID_FOR_PYTHON}}"

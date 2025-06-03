@@ -142,9 +142,8 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
   context.stagedArtifactsFolder = stagedArtifactsFolder;
-  const destination = path.join(stagedArtifactsFolder, pkg.name);
-  if (!existsSync(destination)) {
-    fs.mkdirSync(destination, { recursive: true });
+  if (!existsSync(stagedArtifactsFolder)) {
+    fs.mkdirSync(stagedArtifactsFolder, { recursive: true });
   }
 
   // if no artifact generated or language is Go, skip
@@ -152,6 +151,10 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     return; 
   }
 
+  const destination = path.join(stagedArtifactsFolder, pkg.name);
+  if (!existsSync(destination)) {
+    fs.mkdirSync(destination, { recursive: true });
+  }
   context.sdkArtifactFolder = destination;
   for (const artifactPath of pkg.artifactPaths) {
     const fileName = path.basename(artifactPath);

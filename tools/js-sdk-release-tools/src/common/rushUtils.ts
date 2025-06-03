@@ -12,6 +12,7 @@ import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
 import { migratePackage } from './migration.js';
 import { existsSync } from 'fs';
+import { formatSdk, updateSnippets } from './devToolUtils.js';
 
 interface ProjectItem {
     packageName: string;
@@ -135,35 +136,6 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
-    }
-}
-
-export async function formatSdk(packageDirectory: string) {
-    logger.info(`Start to format code in '${packageDirectory}'.`);
-    const cwd = packageDirectory;
-    const options = { ...runCommandOptions, cwd };
-    const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
-
-    try {
-        await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
-        logger.info(`format sdk successfully.`);
-    } catch (error) {
-        logger.warn(`Failed to format code due to: ${(error as Error)?.stack ?? error}`);
-    }
-
-}
-
-export async function updateSnippets(packageDirectory: string) {
-    logger.info(`Start to update snippets in '${packageDirectory}'.`);
-    const cwd = packageDirectory;
-    const options = { ...runCommandOptions, cwd };
-
-    try {
-        const updateCommand = 'run update-snippets';
-        await runCommand('npm', ['exec', '--', 'dev-tool', updateCommand], options, true, 300, true);
-        logger.info(`Snippets updated successfully.`);
-    } catch (error) {
-        logger.warn(`Failed to update snippets due to: ${(error as Error)?.stack ?? error}`);
     }
 }
 

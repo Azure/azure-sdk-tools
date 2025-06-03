@@ -16,7 +16,8 @@ import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
 import { migratePackage } from "../common/migration.js";
-import { isRushRepo, updateSnippets } from "../common/rushUtils.js";
+import { isRushRepo } from "../common/rushUtils.js";
+import { updateSnippets } from "../common/devToolUtils.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,

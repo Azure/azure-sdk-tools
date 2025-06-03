@@ -27,6 +27,9 @@ extends:
     ToolDirectory: tools/test-proxy
     ReleaseBinaries: true
     StandaloneExeMatrix:
+    - rid: osx-arm64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
     - rid: osx-x64
       framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
@@ -34,6 +37,9 @@ extends:
       framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-x64
+      framework: net8.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: linux-arm64
       framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     TestPreSteps:

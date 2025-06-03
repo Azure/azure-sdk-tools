@@ -20,7 +20,7 @@ parameters:
 
 stages:
 - stage: Release
-  dependsOn: ${{ parameters.DependsOn }}
+  dependsOn: ${{ parameters.dependsOn }}
   variables:
     Artifacts: $(System.DefaultWorkingDirectory)/_artifacts/packages
     Binaries: $(System.DefaultWorkingDirectory)/_artifacts/binaries
@@ -34,7 +34,7 @@ stages:
     displayName: Sign Package
     pool:
       name: ${{ parameters.SigningPool.name }}
-      ${{ if eq(parameters.OSName, 'macOS') }}:
+      ${{ if eq(parameters.SigningPool.os, 'macOS') }}:
         vmImage: ${{ parameters.SigningPool.image }}
       ${{ else }}:
         image: ${{ parameters.SigningPool.image }}

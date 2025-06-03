@@ -23,7 +23,7 @@ For linux signing:
 
 
 .PARAMETER Rid
-The targeted dotnet framework. Example values: osx-x64, winx64, linux-arm64
+The targeted dotnet framework. Example values: osx-x64, win-x64, linux-arm64
 
 .PARAMETER BinariesDirectory
 The folder containing the downloaded file contents of "binaries" artifact.

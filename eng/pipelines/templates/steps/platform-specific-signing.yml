@@ -2,7 +2,6 @@ parameters:
   BinariesPath: ''
   BuildScriptsPath: ''
   ExeMatrix: []
-  Use1ESTemplate: false
 
 steps:
 

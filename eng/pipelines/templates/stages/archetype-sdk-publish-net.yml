@@ -73,21 +73,20 @@ stages:
             BuildToolsPath: $(BuildToolPath)
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
 
-      # These tasks were originally located just before publishing in the Publish_Package deployment job,
-      # but we moved them here because they utilize a local script, and that's not allowed in the Publish_Package job.
-      # Functionally this is identical ordering to what was in Publish_Package originally, just across
-      # two different jobs instead of within one.
       - ${{ if eq(parameters.ShouldTag, 'true') }}:
+        # sets output variable $(release)
         - task: PowerShell@2
           displayName: 'Verify Package Tags and Create Git Releases'
           inputs:
-            pwsh: true
             targetType: filePath
-            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/create-tags-and-git-release.ps1'
+            # This script is different from the azure-sdk-tools repo in that it A) doesn't need the eng/common $Language variable set
+            # AND it sets an output variable for all the release names that were created. The output variable should be added to the eng/common
+            # version and a basic override of $Language should be supported before we can remove this build-tools repo script.
+            filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
             arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
           env:
             GH_TOKEN: $(azuresdk-github-pat)
-        # sets output variable $(release) for use in the job after next
+
         - pwsh: |
             Write-Host "##vso[task.setvariable variable=releaseVar;isOutput=true]$(release)"
           displayName: 'Set Release Variable'

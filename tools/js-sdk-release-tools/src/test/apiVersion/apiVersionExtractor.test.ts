@@ -55,6 +55,24 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionType(root);
             expect(version).toBe(ApiVersionType.Preview);
         });
+        test("Model only spec", async () => {
+            vi.mock('../../common/npmUtils', async () => {
+                let count = 0;
+                return {
+                    tryGetNpmView: async () => {
+                        count++;
+                        if (count === 1) return { 'dist-tags': { latest: "1.0.0-beta.1" }}
+                        return { 'dist-tags': { latest: "1.0.0" }}
+                    },
+                }
+            });
+            const root = join(__dirname, 'testCases/rlc-model-only/');
+            const version1 = await getApiVersionType(root);
+            expect(version1).toBe(ApiVersionType.Preview);
+            const version2 = await getApiVersionType(root);
+            expect(version2).toBe(ApiVersionType.Stable);
+            vi.restoreAllMocks();
+        });
     });
     describe('RLC', () => {
         test('src/xxxContext.ts exists', async () => {

@@ -1,0 +1,19 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: Test
+    steps:
+    - task: AzurePowershell@5
+      displayName: 'Testing'
+      inputs:
+        pwsh: true
+        azureSubscription: 'Azure SDK Symbols Publishing'
+        azurePowerShellVersion: 'LatestVersion'
+        ScriptType: 'InlineScript'
+        Inline: |
+          $token = (Get-AzAccessToken -ResourceUrl 'api://30471ccf-0966-45b9-a979-065dbedb24c1').Token
+          Write-Host "Token obtained."

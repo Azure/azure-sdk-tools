@@ -23,6 +23,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         private GitHubClient gitHubClient;
         private ILogger<GitHubService> logger;
 
+        private const string CreatedByCopilotLabel = "Created by copilot";
+
         public GitHubService(ILogger<GitHubService> _logger)
         {
             logger = _logger;
@@ -140,28 +142,40 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return responseList;
             }
 
-
             // Create the pull request
-            responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
-            var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
-            {
-                Body = body
-            };
-
+            PullRequest? createdPullRequest = null;
             try
             {
-                var createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
+                responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
+                var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
+                {
+                    Body = body
+                };
+
+                createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
                 if (createdPullRequest == null)
+                {
                     responseList.Add($"Failed to create pull request for changes in {headBranch}.");
-                else
-                    responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
-                return responseList;
+                    return responseList;
+                }
+                responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
             }
             catch (Exception ex)
             {
                 responseList.Add($"Failed to create pull request. Error: {ex.Message}");
                 return responseList;
             }
+
+            try
+            {
+                // Add label
+                await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [CreatedByCopilotLabel]);
+            }
+            catch (Exception ex)
+            {
+                responseList.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
+            }
+            return responseList;
         }
 
         public async Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber)

@@ -16,6 +16,7 @@ const (
 	Source_AzureRestAPISpec      Source = "azure_rest_api_specs_wiki"
 	Source_AzureSDKForPython     Source = "azure_sdk_for_python_docs"
 	Source_AzureSDKForPythonWiki Source = "azure_sdk_for_python_wiki"
+	Source_TypeSpecQA            Source = "static_typespec_qa"
 )
 
 type Role string

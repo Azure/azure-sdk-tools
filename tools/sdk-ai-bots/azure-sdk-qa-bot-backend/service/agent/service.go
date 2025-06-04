@@ -89,6 +89,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			} else {
 				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecAzure, model.Source_AzureRestAPISpec}
 			}
+			req.Sources = append(req.Sources, model.Source_TypeSpecQA)
 		}
 		if len(intentResult.Question) > 0 {
 			userMessage = intentResult.Question

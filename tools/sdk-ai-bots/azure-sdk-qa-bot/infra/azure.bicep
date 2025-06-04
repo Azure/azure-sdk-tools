@@ -15,6 +15,7 @@ param ragTanentId string
 // Channels
 @secure()
 param channelIdForPython string
+@secure()
 param channelIdForPythonDevInternal string
 @secure()
 param ragTanentIdForPython string
@@ -24,18 +25,18 @@ param ragTanentIdForPython string
 @minLength(4)
 @description('Used to generate names for all resources in this file')
 param resourceBaseName string
+
 param serverfarmsName string = resourceBaseName
 param webAppName string = resourceBaseName
 param identityName string = resourceBaseName
+param logAnalyticsName string = resourceBaseName
+param cognitiveServiceAccountName string = resourceBaseName
 param location string = resourceGroup().location
 param webAppSKU string
 
 // Bot
 @maxLength(42)
 param botDisplayName string
-
-// Azure Computer Vision
-var cognitiveServiceAccountName = '${resourceBaseName}-cv'
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
@@ -173,7 +174,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
 
 // Create Log Analytics Workspace
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: '${resourceBaseName}-law'
+  name: logAnalyticsName
   location: location
   properties: {
     retentionInDays: 30

@@ -10,11 +10,23 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 
 ## TODO
 
+### Infra
+
 - [] Split envs for computer vision
+- [] Add bicep for grant managed identity in storage
+- [] Add `Storage Account Contributor` and `Storage Table Data Contributor` in IAM
+
+### Test
+
 - [] Add test for conversation context
-- [] Add bicep for grant managed identity in storage 
+
+---
+
+> Below are the auto generated readme
+> [TODO]: update the below content 
 
 ## Get started with the template
+
 
 > **Prerequisites**
 >

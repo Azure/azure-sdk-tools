@@ -1,11 +1,15 @@
-from src._apiview_reviewer import ApiViewReview
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from src._apiview_reviewer import ApiViewReview
 import json
 import logging
 import os
+from fastapi import FastAPI
+from src.agent._api import router as agent_router
 
 app = FastAPI()
+app.include_router(agent_router)
+
 logger = logging.getLogger("uvicorn")  # Use Uvicorn's logger
 
 supported_languages = [

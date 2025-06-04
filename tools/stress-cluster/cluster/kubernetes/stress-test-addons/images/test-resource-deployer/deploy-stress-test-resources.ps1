@@ -32,7 +32,7 @@ if (!$identity) {
 }
 
 # Capture output so we don't print environment variable secrets
-$env = & /common/TestResources/New-TestResources.ps1 `
+$env = & /eng/common/TestResources/New-TestResources.ps1 `
     -BaseName $env:BASE_NAME `
     -ResourceGroupName $env:RESOURCE_GROUP_NAME `
     -SubscriptionId $env:AZURE_SUBSCRIPTION_ID `
@@ -44,7 +44,7 @@ $env = & /common/TestResources/New-TestResources.ps1 `
     -TestApplicationOid $identity.PrincipalId `
     -Location 'westus3' `
     -DeleteAfterHours 168 `
-    -ServiceDirectory '/azure/' `
+    -TestResourcesDirectory 'azure' `
     -SuppressVsoCommands:$true `
     -CI `
     -Force

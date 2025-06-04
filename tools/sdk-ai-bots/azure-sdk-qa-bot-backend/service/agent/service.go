@@ -142,6 +142,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		mergedChunks = append(mergedChunks, model.Index{
 			Title:     result.Title,
 			ContextID: result.ContextID,
+			Header1:   result.Header1,
 		})
 	}
 	var wg sync.WaitGroup

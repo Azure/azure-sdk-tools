@@ -107,8 +107,32 @@ func (s *SearchClient) GetCompleteContext(chunk model.Index) ([]model.Index, err
 	return resp.Value, nil
 }
 
+func (s *SearchClient) GetHeader1CompleteContext(chunk model.Index) ([]model.Index, error) {
+	// Escape single quotes by replacing them with double single quotes (OData filter syntax)
+	escapedHeader1 := strings.ReplaceAll(chunk.Header1, "'", "''")
+
+	req := &model.QueryIndexRequest{
+		Count:   false,
+		OrderBy: "ordinal_position",
+		Select:  "chunk_id, chunk, title, header_1, header_2, header_3, ordinal_position, context_id",
+		Filter:  fmt.Sprintf("title eq '%s' and context_id eq '%s' and header_1 eq '%s'", chunk.Title, chunk.ContextID, escapedHeader1),
+	}
+	resp, err := s.QueryIndex(context.Background(), req)
+	if err != nil {
+		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+	}
+	return resp.Value, nil
+}
+
 func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
-	chunks, err := s.GetCompleteContext(chunk)
+	var chunks []model.Index
+	var err error
+	switch chunk.ContextID {
+	case string(model.Source_TypeSpecQA):
+		chunks, err = s.GetHeader1CompleteContext(chunk)
+	default:
+		chunks, err = s.GetCompleteContext(chunk)
+	}
 	if err != nil {
 		return chunk
 	}

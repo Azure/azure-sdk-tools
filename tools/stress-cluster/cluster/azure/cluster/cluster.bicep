@@ -15,11 +15,11 @@ param updateNodes bool = false
 // monitoring parameters
 param workspaceId string
 
-var kubernetesVersion = '1.29.8'
+var kubernetesVersion = '1.32.4'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {
-  name: 'systemal'
+  name: 'systemap'
   count: 1
   minCount: 1
   maxCount: 4
@@ -27,6 +27,7 @@ var systemAgentPool = {
   vmSize: systemAgentPoolSku
   type: 'VirtualMachineScaleSets'
   osType: 'Linux'
+  osSKU: 'AzureLinux'
   enableAutoScaling: true
   enableEncryptionAtHost: true
   nodeLabels: {
@@ -35,7 +36,7 @@ var systemAgentPool = {
 }
 
 var defaultAgentPool = {
-  name: 'defaultal'
+  name: 'defaultap'
   count: defaultAgentPoolMinNodes
   minCount: defaultAgentPoolMinNodes
   maxCount: defaultAgentPoolMaxNodes
@@ -43,6 +44,7 @@ var defaultAgentPool = {
   vmSize: defaultAgentPoolSku
   type: 'VirtualMachineScaleSets'
   osType: 'Linux'
+  osSKU: 'AzureLinux'
   osDiskType: 'Ephemeral'
   enableAutoScaling: true
   enableEncryptionAtHost: true
@@ -128,7 +130,7 @@ resource existingCluster 'Microsoft.ContainerService/managedClusters@2024-10-01'
 // See https://github.com/Azure/bicep/issues/1410
 var cluster = updateNodes ? existingCluster : newCluster
 
-resource pools 'Microsoft.ContainerService/managedClusters/agentPools@2022-09-02-preview' = [for pool in agentPools: if (updateNodes) {
+resource pools 'Microsoft.ContainerService/managedClusters/agentPools@2025-03-01' = [for pool in agentPools: if (updateNodes) {
   parent: existingCluster
   name: pool.name
   properties: {

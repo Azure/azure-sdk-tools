@@ -170,7 +170,11 @@ export class APIRevisionsService {
     });
   }
 
-  generateAIReview(reviewId: string, activeApiRevisionId: string, diffApiRevisionId: string | undefined = undefined): Observable<number> {
+  generateAIReview(
+    reviewId: string, 
+    activeApiRevisionId: string, 
+    diffApiRevisionId: string | undefined = undefined
+  ): Observable<number> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });

@@ -29,4 +29,14 @@ namespace APIViewWeb.Models
         [JsonPropertyName("comments")]
         public List<AIReviewComment> Comments { get; set; }
     }
+
+    public class CommentModelForCopilot
+    {
+        [JsonPropertyName("line_no")]
+        public int LineNumber { get; set; }
+        [JsonPropertyName("author")]
+        public string Author { get; set; }
+        [JsonPropertyName("comment")]
+        public string CommentText { get; set; }
+    }
 }

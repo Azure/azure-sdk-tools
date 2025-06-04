@@ -26,6 +26,7 @@ extends:
   parameters:
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
     ReleaseBinaries: true
+    Use1ESOfficial: true
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
     StandaloneExeMatrix:
     - rid: osx-x64

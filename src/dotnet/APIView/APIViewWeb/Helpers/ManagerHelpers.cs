@@ -5,10 +5,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
-using System.Collections.Generic;
-using APIViewWeb.Managers;
-using Microsoft.ApplicationInsights;
 using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Helpers
 {
@@ -69,14 +68,23 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        public static string ResolveReviewUrl(PullRequestModel pullRequest, string hostName)
+        public static string ResolveReviewUrl(string reviewId, string apiRevisionId, string language, IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
-            var url = $"https://{hostName}/Assemblies/Review/{pullRequest.ReviewId}";
-            if (!String.IsNullOrEmpty(pullRequest.APIRevisionId))
+            var host = configuration["APIVIew-Host-Url"];
+            var spaHost = configuration["APIVIew-SPA-Host-Url"];
+            var reviewSpaUrlTemplate = $"{spaHost}/review/{reviewId}?activeApiRevisionId={apiRevisionId}";
+            var reviewUrlTemplate = $"{host}/Assemblies/Review/{reviewId}?revisionId={apiRevisionId}";
+
+            language = LanguageServiceHelpers.MapLanguageAlias(language);
+            var languageService = LanguageServiceHelpers.GetLanguageService(language: language, languageServices: languageServices);
+            if (languageService.UsesTreeStyleParser) // Languages using treestyle parser are also using the spa UI
             {
-                url += $"?revisionId={pullRequest.APIRevisionId}";
+                return reviewSpaUrlTemplate;
             }
-            return url;
+            else
+            {
+                return reviewUrlTemplate;
+            }
         }
     }
 }

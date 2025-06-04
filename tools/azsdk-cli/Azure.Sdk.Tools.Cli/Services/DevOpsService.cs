@@ -146,7 +146,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 SDKReleaseType = workItem.Fields.TryGetValue("Custom.SDKtypetobereleased", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsCreatedByAgent = workItem.Fields.TryGetValue("Custom.IsCreatedByAgent", out value) && "Copilot".Equals(value?.ToString()),
                 ReleasePlanSubmittedByEmail = workItem.Fields.TryGetValue("Custom.ReleasePlanSubmittedByEmail", out value) ? value?.ToString() ?? string.Empty : string.Empty,
-                //ActiveSpecPullRequest = workItem.Fields.TryGetValue("Custom.ActiveSpecPullRequest", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKLanguages = workItem.Fields.TryGetValue("Custom.SDKLanguages", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString())
             };
@@ -771,6 +770,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        /// <summary>
+        /// Link namespace approval issue to release plan work item.
+        /// </summary>
+        /// <param name="releasePlanWorkItemId"></param>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="Exception"></exception>
         public async Task<bool> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string url)
         {
             // Link namespace approval issue to release plan work item

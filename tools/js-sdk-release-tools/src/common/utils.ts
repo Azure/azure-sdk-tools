@@ -1,17 +1,16 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType } from './types.js';
+import { SDKType, RunMode } from './types.js';
 import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
-import { access } from 'node:fs/promises';
+import { access, readdir, rm } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
-
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -340,4 +339,33 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
 // Get the spec repo where the project is defined to set into tsp-location.yaml
 export function generateRepoDataInTspLocation(repoUrl: string) {
     return repoUrl.replace("https://github.com/", "")
+}
+
+export async function cleanUpPackageDirectory(
+    packageDirectory: string,
+    runMode?: string,
+): Promise<void> {
+    // Preserve test directory and assets.json file in SpecPullRequest mode
+    const shouldPreserveTestAndAssets = runMode === RunMode.SpecPullRequest;
+
+    if (shouldPreserveTestAndAssets) {
+        logger.info(
+            `Cleaning ${packageDirectory} directory, but preserving test directory and assets.json file`,
+        );
+    } else {
+        logger.info(`Completely cleaning ${packageDirectory} directory`);
+    }
+
+    // Get all subdirectories and files
+    const entries = await readdir(packageDirectory);
+    // Skip test directory and assets.json file in SpecPullRequest mode
+    const filteredEntries = shouldPreserveTestAndAssets
+        ? entries.filter((entry) => entry !== "test" && entry !== "assets.json")
+        : entries;
+
+    // Process each entry
+    for (const entry of filteredEntries) {
+        const entryPath = posix.join(packageDirectory, entry);
+        await rm(entryPath, { recursive: true, force: true });
+    }
 }

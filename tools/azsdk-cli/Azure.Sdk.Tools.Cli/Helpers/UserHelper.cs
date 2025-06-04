@@ -13,12 +13,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public class UserHelper: IUserHelper
     {
         private readonly string[]  scopes = new[] { "https://graph.microsoft.com/.default" };
-        private readonly DefaultAzureCredential credential = new DefaultAzureCredential();
 
         public async Task<string> GetUserEmail()
         {
-
-            var graphClient = new GraphServiceClient(credential, scopes);
+            var graphClient = new GraphServiceClient(new DefaultAzureCredential(), scopes);
             var user = await graphClient.Me.GetAsync();
             if (user == null)
             {

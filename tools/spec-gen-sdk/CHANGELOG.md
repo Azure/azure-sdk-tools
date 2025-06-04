@@ -1,5 +1,9 @@
 # Release
 
+## 2025-06-03 - 0.8.1
+
+- Created stagedArtifacts folder all the time if it's been set to the execution report
+
 ## 2025-05-22 - 0.8.0
 
 - Added a parameter to optionally skip SDK generation from OpenAPI specs

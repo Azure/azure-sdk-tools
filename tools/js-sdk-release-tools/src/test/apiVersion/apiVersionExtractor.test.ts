@@ -55,7 +55,26 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionType(root);
             expect(version).toBe(ApiVersionType.Preview);
         });
-    });
+        test("Model only spec", async () => {
+            const mockNpmUtils = await import("../../common/npmUtils.js");
+            let count = 0;
+            const spy = vi
+                .spyOn(mockNpmUtils, "tryGetNpmView")
+                .mockImplementation(async () => {
+                    count++;
+                    if (count === 1)
+                        return { "dist-tags": { latest: "1.0.0-beta.1" } };
+                    return { "dist-tags": { latest: "1.0.0" } };
+                });
+
+            const root = join(__dirname, "testCases/mlc-model-only/");
+            const version1 = await getApiVersionType(root);
+            expect(version1).toBe(ApiVersionType.Preview);
+            const version2 = await getApiVersionType(root);
+            expect(version2).toBe(ApiVersionType.Stable);
+            spy.mockRestore();
+        });
+    });    
     describe('RLC', () => {
         test('src/xxxContext.ts exists', async () => {
             const root = join(__dirname, 'testCases/rlc-context/');
@@ -83,22 +102,23 @@ describe('Rest client file fallbacks', () => {
             expect(version).toBe(ApiVersionType.Stable);
         });
         test("Model only spec", async () => {
-            vi.mock('../../common/npmUtils', async () => {
-                let count = 0;
-                return {
-                    tryGetNpmView: async () => {
-                        count++;
-                        if (count === 1) return { 'dist-tags': { latest: "1.0.0-beta.1" }}
-                        return { 'dist-tags': { latest: "1.0.0" }}
-                    },
-                }
-            });
-            const root = join(__dirname, 'testCases/rlc-model-only/');
+            const mockNpmUtils = await import("../../common/npmUtils.js");
+            let count = 0;
+            const spy = vi
+                .spyOn(mockNpmUtils, "tryGetNpmView")
+                .mockImplementation(async () => {
+                    count++;
+                    if (count === 1)
+                        return { "dist-tags": { latest: "1.0.0-beta.1" } };
+                    return { "dist-tags": { latest: "1.0.0" } };
+                });
+
+            const root = join(__dirname, "testCases/rlc-model-only/");
             const version1 = await getApiVersionTypeInRLC(root);
             expect(version1).toBe(ApiVersionType.Preview);
             const version2 = await getApiVersionTypeInRLC(root);
             expect(version2).toBe(ApiVersionType.Stable);
-            vi.restoreAllMocks();
+            spy.mockRestore();
         });
     });
 });

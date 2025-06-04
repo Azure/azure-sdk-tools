@@ -33,6 +33,14 @@ public class TokenUsageHelper
         {
             (inputPrice, outputPrice) = (0.165, 0.66);
         }
+        if (model == "gpt-4.1")
+        {
+            (inputPrice, outputPrice) = (2, 8);
+        }
+        else if (model == "gpt-4.1-mini")
+        {
+            (inputPrice, outputPrice) = (0.4, 1.60);
+        }
         else if (model == "o3-mini")
         {
             (inputPrice, outputPrice) = (1.21, 4.84);

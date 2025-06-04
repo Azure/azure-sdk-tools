@@ -8,10 +8,15 @@ parameters:
 - name: ArtifactName
   type: string
   default: ''
+- name: Registry
+  type: string
+  default: 'https://registry.npmjs.org/'
+- name: Tag
+  type: string
+  default: 'latest'
 - name: PackageJsonPath
   type: string
   default: ''
-
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -27,53 +32,8 @@ extends:
           dependsOn: ${{ parameters.BuildStageName }}
 
           jobs:
-            - deployment: Publish
-              environment: 'package-publish'
-              pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
-                os: linux
-
-              strategy:
-                runOnce:
-                  deploy:
-                    steps:
-                    - checkout: self
-
-                    - download: current
-                      artifact: ${{ parameters.ArtifactName }}
-                      timeoutInMinutes: 5
-
-                    - task: PowerShell@2
-                      inputs:
-                        filePath: '$(Build.SourcesDirectory)/eng/scripts/determine-js-release-tag.ps1'
-                        failOnStderr: true
-                        pwsh: true
-                        arguments: '-PackageJsonPath ${{ parameters.PackageJsonPath }}'
-
-                    - pwsh: |
-                        Write-Host "Will deploy with tag of $(Tag)"
-                        Get-ChildItem "$(Pipeline.Workspace)/${{ parameters.ArtifactName }}" -Recurse -Force `
-                          | Where-Object { $_.Name -like "*.tgz" } `
-                          | Copy-Item -Destination "$(Build.ArtifactStagingDirectory)"
-
-                        Get-ChildItem "$(Build.ArtifactStagingDirectory)" -Recurse -Force | % { Write-Host $_.FullName }
-                      displayName: Move artifact to $(Build.ArtifactStagingDirectory)
-
-                    - task: EsrpRelease@9
-                      inputs:
-                        displayName: 'Publish oav to ESRP'
-                        ConnectedServiceName: 'Azure SDK PME Managed Identity'
-                        ClientId: '5f81938c-2544-4f1f-9251-dd9de5b8a81b'
-                        DomainTenantId: '975f013f-7f24-47e8-a7d3-abc4752bf346'
-                        UseManagedIdentity: true
-                        KeyVaultName: 'kv-azuresdk-codesign'
-                        SignCertName: 'azure-sdk-esrp-release-certificate'
-                        Intent: 'PackageDistribution'
-                        ContentType: 'npm'
-                        FolderLocation: $(Build.ArtifactStagingDirectory)
-                        Owners: ${{ coalesce(variables['Build.RequestedForEmail'], 'azuresdk@microsoft.com') }}
-                        Approvers: 'azuresdk@microsoft.com'
-                        ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
-                        MainPublisher: 'ESRPRELPACMANTEST'
-                        productstate: $(Tag)
+            - template: /eng/common/pipelines/templates/jobs/npm-publish.yml
+              parameters:
+                ArtifactName: ${{ parameters.ArtifactName }}
+                Registry: ${{ parameters.Registry }}
+                Tag: ${{ parameters.Tag }}

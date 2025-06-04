@@ -31,6 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> pullRequestOpt = new(["--pull-request"], "Api spec pull request URL");
         private readonly Option<string> sdkReleaseTypeOpt = new(["--sdk-type"], "SDK release type: beta or preview");
         private readonly Option<bool> isTestReleasePlanOpt = new(["--test-release"], () => false, "Create release plan in test environment") { IsRequired = false};
+        private readonly Option<string> userEmailOpt = new(["--user-email"], "User email for release plan creation") { IsRequired = false };
 
 
         [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
@@ -57,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var subCommands = new[]
             {
                 new Command(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},
-                new Command(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt, sdkReleaseTypeOpt, isTestReleasePlanOpt }
+                new Command(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt, sdkReleaseTypeOpt, userEmailOpt, isTestReleasePlanOpt }
             };
 
             foreach (var subCommand in subCommands)
@@ -90,7 +91,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var specPullRequestUrl = commandParser.GetValueForOption(pullRequestOpt);
                     var sdkReleaseType = commandParser.GetValueForOption(sdkReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValueForOption(isTestReleasePlanOpt);
-                    var releasePlan = await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, isTestReleasePlan);
+                    var userEmail = commandParser.GetValueForOption(userEmailOpt);
+                    var releasePlan = await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
                     output.Output($"Release plan created: {releasePlan}");
                     return;
                 default:
@@ -122,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Create Release Plan work item.")]
-        public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, bool isTestReleasePlan = false)
+        public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
             {
@@ -164,6 +166,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     SpecPullRequests = [specPullRequestUrl],
                     IsTestReleasePlan = isTestReleasePlan,
                     SDKReleaseType = sdkReleaseType,
+                    IsCreatedByAgent = true,
+                    ReleasePlanSubmittedByEmail = userEmail
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItem(releasePlan);
                 if (workItem == null)

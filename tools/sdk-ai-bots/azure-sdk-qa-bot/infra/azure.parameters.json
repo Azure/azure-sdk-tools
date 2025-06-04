@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "resourceBaseName": {
-      "value": "bot${{RESOURCE_SUFFIX}}"
+      "value": "${{RESOURCE_SUFFIX}}"
     },
     "azureStorageUrl": {
       "value": "${{AZURE_STORAGE_URL}}"

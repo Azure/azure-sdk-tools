@@ -82,6 +82,9 @@ export enum DiffReasons {
 
   // new features
   Added = 1024,
+
+  // should not reach here
+  NotComparable = 2048,
 }
 
 export interface DiffPair {

@@ -207,14 +207,15 @@ export function getCallableEntityParametersFromSymbol(symbol: Symbol): Parameter
 // Note: return true when parameters list is the same in name and type 
 export function isSameConstructorLikeDeclaration<T extends CallSignatureDeclaration | ConstructorDeclaration>(
   left: T,
-  right: T
+  right: T,
+  compareParameterName = true
 ): boolean {
   if (left.getTypeParameters().length !== right.getTypeParameters().length) return false;
   if (left.getParameters().length !== right.getParameters().length) return false;
 
   const sameParameters = left.getParameters().filter((leftParameter, i) => {
     const rightParameter = right.getParameters()[i];
-    if (leftParameter.getName() !== rightParameter.getName()) return false;
+    if (compareParameterName && leftParameter.getName() !== rightParameter.getName()) return false;
 
     const leftParaType = leftParameter.getType();
     const rightParaType = rightParameter.getType();

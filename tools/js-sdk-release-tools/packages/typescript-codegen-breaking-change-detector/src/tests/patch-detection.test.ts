@@ -278,11 +278,7 @@ describe("patch current tool's breaking changes", async () => {
 
       const astContext = createTestAstContext(baselineApiView, currentApiView);
       const breakingPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
-      expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
-      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
-      expect(breakingPairs[0].target?.name).toBe('constructor(p1: string, p2: string) {}');
+      expect(breakingPairs.length).toBe(0);
     });
 
     test('change constructor\'s parameters list', async () => {

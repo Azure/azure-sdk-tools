@@ -36,6 +36,7 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   // return it, it will be used to compare later
   // Otherwise, it's a non-funtion/method/signature node, return its type node
   const getTypeNode = (node: Node): TypeNode => {
+    // Note: if the node is a constructor, the return type is the instance type
     if (Node.isReturnTyped(node)) return node.getReturnTypeNodeOrThrow();
     if (Node.isTyped(node)) return node.getTypeNodeOrThrow();
     throw new Error(`Unsupported ${node.getKindName()} node: "${node.getText()}"`);
@@ -79,9 +80,9 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
 
 const findMappingConstructorLikeDeclaration: FindMappingConstructorLikeDeclaration<ConstructorLikeDeclaration> = (
   target: ConstructorLikeDeclaration,
-  declarations: ConstructorLikeDeclaration[]
+  declarations: ConstructorLikeDeclaration[],
 ) => {
-  const declaration = declarations.find((s) => isSameConstructorLikeDeclaration(target, s));
+  const declaration = declarations.find((s) => isSameConstructorLikeDeclaration(target, s, false));
   if (!declaration) return undefined;
   const id = declaration.getText();
   return { id, declaration };
@@ -221,11 +222,20 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
 }
 
 function findReturnTypeBreakingChangesCore(source: Node, target: Node): DiffPair[] {
-  const reasons = findBreakingReasons(source, target);
-  if (reasons === DiffReasons.None) return [];
   const getName = (node: Node) => (Node.hasName(node) ? node.getName() : node.getText());
   const targetNameNode = target ? { name: getName(target), node: target } : undefined;
   const sourceNameNode = source ? { name: getName(source), node: source } : undefined;
+  
+  const isSourceConstructorDeclaration = Node.isConstructorDeclaration(source);
+  const isTargetConstructorDeclaration = Node.isConstructorDeclaration(target);
+  if (isSourceConstructorDeclaration !== isTargetConstructorDeclaration) {
+    const pair = createDiffPair(DiffLocation.Signature, DiffReasons.NotComparable, sourceNameNode, targetNameNode);
+    return [pair];
+  }
+  if (isSourceConstructorDeclaration) return [];
+
+  const reasons = findBreakingReasons(source, target);
+  if (reasons === DiffReasons.None) return [];
   const pair = createDiffPair(DiffLocation.Signature_ReturnType, reasons, sourceNameNode, targetNameNode);
   return [pair];
 }
@@ -326,6 +336,7 @@ export function findInterfaceBreakingChanges(
 
 // TODO: detect property and method
 export function findClassBreakingChanges(source: ClassDeclaration, target: ClassDeclaration) {
+  // TODO: constructor's parameter names are not breaking changes
   // find constructor breaking changes
   const constructorBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
     source.getConstructors(),

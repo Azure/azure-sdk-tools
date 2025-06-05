@@ -1,4 +1,4 @@
-// TODO: support class
+// TODO: add test for interfaces
 import {
   InterfaceDeclaration,
   Node,
@@ -80,7 +80,7 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
 
 const findMappingConstructorLikeDeclaration: FindMappingConstructorLikeDeclaration<ConstructorLikeDeclaration> = (
   target: ConstructorLikeDeclaration,
-  declarations: ConstructorLikeDeclaration[],
+  declarations: ConstructorLikeDeclaration[]
 ) => {
   const declaration = declarations.find((s) => isSameConstructorLikeDeclaration(target, s, false));
   if (!declaration) return undefined;
@@ -225,7 +225,7 @@ function findReturnTypeBreakingChangesCore(source: Node, target: Node): DiffPair
   const getName = (node: Node) => (Node.hasName(node) ? node.getName() : node.getText());
   const targetNameNode = target ? { name: getName(target), node: target } : undefined;
   const sourceNameNode = source ? { name: getName(source), node: source } : undefined;
-  
+
   const isSourceConstructorDeclaration = Node.isConstructorDeclaration(source);
   const isTargetConstructorDeclaration = Node.isConstructorDeclaration(target);
   if (isSourceConstructorDeclaration !== isTargetConstructorDeclaration) {
@@ -334,16 +334,20 @@ export function findInterfaceBreakingChanges(
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
 }
 
-// TODO: detect property and method
+// TODO: detect static properties and methods
 export function findClassBreakingChanges(source: ClassDeclaration, target: ClassDeclaration) {
-  // TODO: constructor's parameter names are not breaking changes
   // find constructor breaking changes
   const constructorBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
     source.getConstructors(),
     target.getConstructors(),
     findMappingConstructorLikeDeclaration
   );
-  return constructorBreakingChanges;
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
+
+  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+
+  return [...constructorBreakingChanges, ...propertyBreakingChanges];
 }
 
 function findRemovedFunctionOverloads(

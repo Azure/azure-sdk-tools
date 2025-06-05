@@ -193,7 +193,9 @@ export function getCallableEntityParameters(node: Node): ParameterDeclaration[] 
     case SyntaxKind.PropertySignature:
       return getCallableEntityReturnTypeNode(node)?.asKindOrThrow(SyntaxKind.FunctionType).getParameters() ?? [];
     case SyntaxKind.CallSignature:
-      return node.asKindOrThrow(SyntaxKind.CallSignature)?.getParameters();
+      return node.asKindOrThrow(SyntaxKind.CallSignature).getParameters();
+      case SyntaxKind.MethodDeclaration:
+        return node.asKindOrThrow(SyntaxKind.MethodDeclaration).getParameters();
     default:
       throw new Error(`Unsupported function kind: ${node.getKindName()}`);
   }

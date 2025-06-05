@@ -6,13 +6,12 @@ import { TSESTree } from '@typescript-eslint/utils';
 import type { VisitorKeys } from '@typescript-eslint/visitor-keys';
 import {
   EnumDeclaration,
-  FunctionDeclaration,
   InterfaceDeclaration,
-  ParameterDeclaration,
-  Signature,
   SourceFile,
   TypeAliasDeclaration,
   Node,
+  CallSignatureDeclaration,
+  ConstructorDeclaration,
 } from 'ts-morph';
 
 export interface ParseForESLintResult {
@@ -108,6 +107,7 @@ export enum DiffLocation {
   Property,
   TypeAlias,
   Interface,
+  Class,
 }
 
 export enum AssignDirection {
@@ -116,7 +116,9 @@ export enum AssignDirection {
   CurrentToBaseline, // e.g. output model
 }
 
-export type FindMappingCallSignature = (
-  target: Signature,
-  signatures: Signature[]
-) => { signature: Signature; id: string } | undefined;
+export type ConstructorLikeDeclaration = CallSignatureDeclaration | ConstructorDeclaration;
+
+export type FindMappingConstructorLikeDeclaration<T extends ConstructorLikeDeclaration> = (
+  target: T,
+  declarations: T[]
+) => { declaration: T; id: string } | undefined;

@@ -8,7 +8,7 @@ namespace IssueLabelerService
 {
     public class IndexContent : IssueTriageContent
     {
-        public string chunk { get; set; }
+        public string Chunk { get; set; }
         public double? Score { get; set; }
 
         public IndexContent(string id, string repository, string url, string documentType)

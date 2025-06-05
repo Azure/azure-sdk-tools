@@ -15,7 +15,13 @@ namespace SearchIndexCreator
         {
             _config = config;
         }
-
+        
+        /// <summary>
+        /// Sets up and runs the indexer.
+        /// </summary>
+        /// <param name="indexClient">The client to manage the Azure Search index.</param>
+        /// <param name="indexerClient">The client to manage the Azure Search indexer.</param>
+        /// <param name="openAIClient">The client to interact with Azure OpenAI.</param>
         public async Task SetupAndRunIndexer(SearchIndexClient indexClient, SearchIndexerClient indexerClient, AzureOpenAIClient openAIClient)
         {
             try
@@ -50,11 +56,15 @@ namespace SearchIndexCreator
                 throw;
             }
         }
-
+        
+        /// <summary>
+        /// Gets a sample search index with HNSW alorithm, built in vectorizer, semantic search turned on, compression set up, and all needed fields for issues.
+        /// </summary>
+        /// <returns>The sample search index.</returns>
         private SearchIndex GetSampleIndex()
         {
             var indexName = _config["IndexName"];
-            
+
             var index = new SearchIndex(indexName)
             {
                 SemanticSearch = CreateSemanticSearch(),
@@ -120,7 +130,7 @@ namespace SearchIndexCreator
                             TitleField = new SemanticField(fieldName: "Title"),
                             ContentFields =
                             {
-                                new SemanticField(fieldName: "chunk")
+                                new SemanticField(fieldName: "Chunk")
                             },
                             KeywordsFields =
                             {
@@ -141,7 +151,7 @@ namespace SearchIndexCreator
 
             return new List<SearchField>
             {
-                    new SearchableField("chunk_id")
+                    new SearchableField("ChunkId")
                     {
                         IsKey = true,
                         IsFilterable = false,
@@ -149,14 +159,14 @@ namespace SearchIndexCreator
                         IsFacetable = false,
                         AnalyzerName = LexicalAnalyzerName.Keyword
                     },
-                    new SearchableField("parent_id")
+                    new SearchableField("ParentId")
                     {
                         IsFilterable = true,
                         IsSortable = false,
                         IsFacetable = false
                     },
-                    new SearchableField("chunk"),
-                    new SearchField("text_vector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
+                    new SearchableField("Chunk"),
+                    new SearchField("TextVector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                     {
                         IsSearchable = true,
                         VectorSearchDimensions = modelDimensions,
@@ -197,7 +207,7 @@ namespace SearchIndexCreator
                         IsSortable = false,
                         IsFilterable = true
                     },
-                    new SearchField("metadata_storage_last_modified", SearchFieldDataType.DateTimeOffset)
+                    new SearchField("MetadataStorageLastModified", SearchFieldDataType.DateTimeOffset)
                     {
                         IsHidden = true,
                         IsSearchable = false
@@ -251,7 +261,7 @@ namespace SearchIndexCreator
                     },
                     new List<OutputFieldMappingEntry>
                     {
-                        new OutputFieldMappingEntry("embedding") { TargetName = "text_vector" }
+                        new OutputFieldMappingEntry("embedding") { TargetName = "TextVector" }
                     }
                 )
                 {
@@ -264,13 +274,13 @@ namespace SearchIndexCreator
             {
                 IndexProjection = new SearchIndexerIndexProjection(new[]
                 {
-                    new SearchIndexerIndexProjectionSelector(_config["IndexName"], parentKeyFieldName: "parent_id", sourceContext: "/document/pages/*", mappings: new[]
+                    new SearchIndexerIndexProjectionSelector(_config["IndexName"], parentKeyFieldName: "ParentId", sourceContext: "/document/pages/*", mappings: new[]
                     {
-                        new InputFieldMappingEntry("text_vector")
+                        new InputFieldMappingEntry("TextVector")
                         {
-                            Source = "/document/pages/*/text_vector"
+                            Source = "/document/pages/*/TextVector"
                         },
-                        new InputFieldMappingEntry("chunk")
+                        new InputFieldMappingEntry("Chunk")
                         {
                             Source = "/document/pages/*"
                         },
@@ -315,9 +325,9 @@ namespace SearchIndexCreator
                             Source = "/document/DocumentType"
                         },
                         // Metadata is needed for updating the document (or atleast last modified not sure of the rest)
-                        new InputFieldMappingEntry("metadata_storage_last_modified")
+                        new InputFieldMappingEntry("MetadataStorageLastModified")
                         {
-                            Source = "/document/metadata_storage_last_modified"
+                            Source = "/document/MetadataStorageLastModified"
                         }
                     })
                 })

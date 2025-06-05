@@ -31,7 +31,7 @@ namespace IssueLabelerService
             var searchContentResults = await GetSearchContentResults(issue, labels);
 
             var printableContent = string.Join("\n\n", searchContentResults.Select(searchContent =>
-                $"Title: {searchContent.Title}\nDescription: {searchContent.chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
+                $"Title: {searchContent.Title}\nDescription: {searchContent.Chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
 
             var highestScore = _ragService.GetHighestScoreForContent(searchContentResults, issue.RepositoryName, issue.IssueNumber);
             _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");

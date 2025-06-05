@@ -187,11 +187,12 @@ namespace SearchIndexCreator
 
             foreach (var issue in issues)
             {
-                var (service, category) = GetServiceAndCategoryLabels(issue.Labels);
+                // Find all pink and yellow labels
+                var (service, category, hasCustomerReported, hasIssueAddressed) = AnalyzeLabels(issue.Labels);
 
-                if (service is null || category is null)
+                if (service == null || category == null || !hasCustomerReported || !hasIssueAddressed)
                 {
-                    continue;
+                    continue; // Skip this issue if it doesn't meet all criteria
                 }
 
                 List<string> labels = new List<string>
@@ -255,22 +256,23 @@ namespace SearchIndexCreator
         private static bool IsCategoryLabel(Octokit.Label label) =>
             string.Equals(label.Color, "ffeb77", StringComparison.InvariantCultureIgnoreCase);
 
-        private (Octokit.Label service, Octokit.Label category) GetServiceAndCategoryLabels(IReadOnlyList<Octokit.Label> labels)
+        private (Octokit.Label service, Octokit.Label category, bool hasCustomerReported, bool hasIssueAddressed) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels)
         {
             Octokit.Label service = null, category = null;
+            bool hasCustomerReported = false, hasIssueAddressed = false;
 
             foreach (var label in labels)
             {
-                if (IsCategoryLabel(label))
-                {
+                if (IsServiceLabel(label))
                     service = label;
-                }
-                else if (IsServiceLabel(label))
-                {
+                else if (IsCategoryLabel(label))
                     category = label;
-                }
+                else if (label.Name.Equals("customer-reported", StringComparison.OrdinalIgnoreCase))
+                    hasCustomerReported = true;
+                else if (label.Name.Equals("issue-addressed", StringComparison.OrdinalIgnoreCase))
+                    hasIssueAddressed = true;
             }
-            return (service, category);
+            return (service, category, hasCustomerReported, hasIssueAddressed);
         }
 
         private async Task<List<IssueComment>> GetIssueCommentsAsync(string repoOwner, string repo, int issueNumber)
@@ -343,24 +345,6 @@ namespace SearchIndexCreator
             }
         }
 
-        private class TreeItem
-        {
-            public string Path { get; set; }
-            public string Mode { get; set; }
-            public string Type { get; set; }
-            public string Sha { get; set; }
-            public int Size { get; set; }
-            public string Url { get; set; }
-        }
-
-        private class GitTree
-        {
-            public string Sha { get; set; }
-            public string Url { get; set; }
-            public List<TreeItem> Tree { get; set; }
-            public bool Truncated { get; set; }
-        }
-
         private BlobServiceClient GetBlobServiceClient(string accountName)
         {
             BlobServiceClient client = new(
@@ -383,7 +367,7 @@ namespace SearchIndexCreator
                 };
 
                 await blobServiceClient.SetPropertiesAsync(properties.Value);
-                
+
                 Console.WriteLine("Enabled native blob soft delete on the storage account.");
             }
             else
@@ -391,5 +375,24 @@ namespace SearchIndexCreator
                 Console.WriteLine("Blob soft delete is already enabled on the storage account.");
             }
         }
+
+        private class TreeItem
+        {
+            public string Path { get; set; }
+            public string Mode { get; set; }
+            public string Type { get; set; }
+            public string Sha { get; set; }
+            public int Size { get; set; }
+            public string Url { get; set; }
+        }
+
+        private class GitTree
+        {
+            public string Sha { get; set; }
+            public string Url { get; set; }
+            public List<TreeItem> Tree { get; set; }
+            public bool Truncated { get; set; }
+        }
+
     }
 }

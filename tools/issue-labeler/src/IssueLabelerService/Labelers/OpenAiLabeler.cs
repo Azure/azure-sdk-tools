@@ -31,7 +31,7 @@ namespace IssueLabelerService
 
             var categoryLabels = GetCategoryLabelsForPrompt(labels, issue.RepositoryName);
             var printableContent = string.Join("\n\n", searchContentResults.Select(searchContent =>
-                $"Title: {searchContent.Title}\nDescription: {searchContent.chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
+                $"Title: {searchContent.Title}\nDescription: {searchContent.Chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
             var userPrompt = FormatUserPrompt(issue, categoryLabels, printableContent);
 
             var structure = BuildSearchStructure();

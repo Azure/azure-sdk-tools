@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return response;
                 }
 
-                // Pull request is not targetted to main branch
+                // Pull request is not targeted to main branch
                 if (pullRequest.Base?.Ref?.Equals(DEFAULT_BRANCH) == false)
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} merges changes to '{pullRequest.Base?.Ref}' branch. SDK can be generated only from a pull request with {DEFAULT_BRANCH} branch as target. Create a pull request for your changes with '{DEFAULT_BRANCH}' branch as target.");
@@ -222,6 +222,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (response.Status.Equals("Failed"))
                 {
                     return output.Format(response);
+                }
+
+                // Spec readiness passed. So mark the spec status as approved if release plan exists.
+                if (workItemId != 0)
+                {
+                    await devopsService.UpdateApiSpecStatus(workItemId, "Approved");
                 }
 
                 string typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);

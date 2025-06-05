@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
+using ModelContextProtocol.Protocol.Types;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -30,14 +31,71 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 
-            // walk the tools, register them as subcommands for the root command.
+            List<MCPTool> parentedTools = new();
+
             foreach (var t in toolTypes)
             {
                 var tool = (MCPTool)ActivatorUtilities.CreateInstance(serviceProvider, t);
-                rootCommand.AddCommand(tool.GetCommand());
+
+                // register any tools have no parents first to the root command
+                if (tool.CommandHierarchy.Length == 0)
+                {
+                    rootCommand.AddCommand(tool.GetCommand());
+                }
+                else
+                {
+                    parentedTools.Add(tool);
+                }
             }
 
+            PopulateParentedCommands(rootCommand, parentedTools);
+
             return rootCommand;
+        }
+
+        private static void PopulateParentedCommands(RootCommand rootCommand, List<MCPTool> parentedTools)
+        {
+            var parentMap = new Dictionary<string, Command>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (MCPTool tool in parentedTools)
+            {
+                var leaf = tool.GetCommand();
+                var hierarchy = tool.CommandHierarchy;
+                Command previousParent = rootCommand;
+
+                for (int i = 0; i < hierarchy.Length; i++)
+                {
+                    var segment = hierarchy[i];
+
+                    // populate the dictionary lookup for the command so we don't create it multiple times as we walk the hieararchy across multiple tools
+                    if (!parentMap.ContainsKey(segment.Verb))
+                    {
+                        parentMap[segment.Verb] = new Command(segment.Verb, segment.Description);
+                    }
+
+                    // now access the node from the dictionary that we're currently on. the previous step populated the parentMap with the Command representing this verb if it didn't already exist
+                    var currentNode = parentMap[segment.Verb];
+
+                    // if the previous parent doesn't already have this node, add it, gotta maintain that hierarchy!
+                    if (!previousParent.Children.Contains(currentNode))
+                    {
+                        previousParent.AddCommand(currentNode);
+                    }
+
+                    // if we are on the last segment of the hierarchy, add the leaf command to the current node
+                    if (i == hierarchy.Length - 1)
+                    {
+                        // if we're at the end of the hierarchy, add the leaf command
+                        currentNode.AddCommand(leaf);
+                    }
+                    else
+                    {
+
+                        // our previous parent is now the current node for the next iteration
+                        previousParent = currentNode;
+                    }
+                }
+            }
         }
     }
 }

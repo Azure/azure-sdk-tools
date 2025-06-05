@@ -23,6 +23,8 @@ namespace Azure.Sdk.Tools.Cli.Contract
             ExitCode = exitCode;
         }
 
+        public CommandVerbDescription[] CommandHierarchy { get; set; } = Array.Empty<CommandVerbDescription>();
+
         public abstract Command GetCommand();
 
         public abstract Task HandleCommand(InvocationContext ctx, CancellationToken ct);

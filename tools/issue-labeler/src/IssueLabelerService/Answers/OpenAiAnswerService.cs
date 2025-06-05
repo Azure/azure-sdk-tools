@@ -103,7 +103,9 @@ namespace IssueLabelerService
 
         private string FormatResponse(string answerType, IssuePayload issue, string response)
         {
-            string intro, outro;
+            string intro;
+            string outro;
+            
             var replacementsIntro = new Dictionary<string, string>
             {
                 { "IssueUserLogin", issue.IssueUserLogin },

@@ -68,6 +68,7 @@ namespace IssueLabelerService
             var properties = string.Join(", ", labelKeys.Select(key => $"\"{key}\": {{ \"type\": \"string\" }}"));
             var scores = string.Join(", ", labelKeys.Select(key => $"\"{key}ConfidenceScore\": {{ \"type\": \"string\" }}"));
             var required = string.Join(", ", labelKeys.Select(key => $"\"{key}\""));
+
             return BinaryData.FromString($$"""
             {
               "type": "object",
@@ -133,9 +134,9 @@ namespace IssueLabelerService
         {
             var indexName = _config.IndexName;
             var semanticName = _config.SemanticName;
-            string query = $"{issue.Title} {issue.Body}";
-            int top = int.Parse(_config.SourceCount);
-            double scoreThreshold = double.Parse(_config.ScoreThreshold);
+            var query = $"{issue.Title} {issue.Body}";
+            var top = int.Parse(_config.SourceCount);
+            var scoreThreshold = double.Parse(_config.ScoreThreshold);
             var fieldName = _config.IssueIndexFieldName;
 
             _logger.LogInformation($"Searching content index '{indexName}' with query: {query}");
@@ -177,13 +178,17 @@ namespace IssueLabelerService
         {
             foreach (var label in filteredOutput)
             {
+
                 try
                 {
+
                     var confidence = double.Parse(output[$"{label.Key}ConfidenceScore"]);
+
                     if (label.Value == "UNKNOWN")
                     {
                         throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
                     }
+                    
                     if (confidence < double.Parse(_config.ConfidenceThreshold))
                     {
                         throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");

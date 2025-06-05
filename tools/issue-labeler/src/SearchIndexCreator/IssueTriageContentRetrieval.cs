@@ -51,6 +51,7 @@ namespace SearchIndexCreator
             {
                 throw new ArgumentNullException(nameof(_accountName), "Storage account name cannot be null or empty.");
             }
+
             var blobServiceClient = GetBlobServiceClient(_accountName);
             await EnsureBlobSoftDeleteEnabled(blobServiceClient);
 
@@ -63,10 +64,12 @@ namespace SearchIndexCreator
                 try
                 {
                     var jsonContent = JsonConvert.SerializeObject(content);
+
                     var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
                     {
                         ContentType = "application/json"
                     };
+
                     using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(jsonContent)))
                     {
                         await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobUploadOptions
@@ -74,6 +77,7 @@ namespace SearchIndexCreator
                             HttpHeaders = blobHttpHeaders
                         });
                     }
+
                     Console.WriteLine($"Uploaded {content.Id} to {containerClient.Name} container.");
                 }
                 catch (Exception ex)
@@ -91,10 +95,13 @@ namespace SearchIndexCreator
                 Filter = IssueFilter.All,
                 Since = DateTimeOffset.Now.Subtract(TimeSpan.FromDays(days))
             };
+
             issueReq.Labels.Add("customer-reported");
+
             issueReq.Labels.Add("issue-addressed");
 
             var issues = await _client.Issue.GetAllForRepository(repoOwner, repoName, issueReq);
+
             var results = new List<IssuePayload>();
 
             foreach (var issue in issues)
@@ -113,8 +120,10 @@ namespace SearchIndexCreator
                     RepositoryName = repoName,
                     RepositoryOwnerName = repoOwner,
                 };
+
                 results.Add(payload);
             }
+
             return results;
         }
 
@@ -125,11 +134,13 @@ namespace SearchIndexCreator
             var documentPaths = new List<string>();
 
             await DirectoryTree(_token, documentPaths, repoOwner, _repo);
+
             foreach (var path in documentPaths)
             {
                 try
                 {
                     var fileContent = await _client.Repository.Content.GetAllContents(repoOwner, _repo, path);
+
                     if (!String.IsNullOrEmpty(fileContent[0].Content))
                     {
                         IssueTriageContent documentSearchContent = new IssueTriageContent(
@@ -156,6 +167,7 @@ namespace SearchIndexCreator
                     throw new Exception($"Error getting repository contents for path: {path}", ex);
                 }
             }
+
             return results;
         }
 
@@ -176,16 +188,20 @@ namespace SearchIndexCreator
             foreach (var issue in issues)
             {
                 var (service, category) = GetServiceAndCategoryLabels(issue.Labels);
+
                 if (service is null || category is null)
                 {
                     continue;
                 }
+
                 List<string> labels = new List<string>
                 {
                     service.Name,
                     category.Name
                 };
+
                 var codeowners = CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).AzureSdkOwners;
+
                 IssueTriageContent searchContent = new IssueTriageContent(
                     $"{repoOwner}/{_repo}/{issue.Number.ToString()}/Issue",
                     repoOwner + "/" + _repo,
@@ -201,11 +217,14 @@ namespace SearchIndexCreator
                     CreatedAt = issue.CreatedAt,
                     CodeOwner = 0
                 };
+
                 results.Add(searchContent);
 
                 var issue_comments = await GetIssueCommentsAsync(repoOwner, _repo, issue.Number);
+
                 foreach (var comment in issue_comments)
                 {
+
                     IssueTriageContent commentContent = new IssueTriageContent(
                         $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
                         repoOwner + "/" + _repo,
@@ -221,9 +240,12 @@ namespace SearchIndexCreator
                         CreatedAt = comment.CreatedAt,
                         CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
                     };
+
                     results.Add(commentContent);
+
                 }
             }
+
             return results;
         }
 
@@ -254,6 +276,7 @@ namespace SearchIndexCreator
         private async Task<List<IssueComment>> GetIssueCommentsAsync(string repoOwner, string repo, int issueNumber)
         {
             var issue_comments = await _client.Issue.Comment.GetAllForIssue(repoOwner, repo, issueNumber);
+
             return issue_comments
                 .Where(c =>
                     !c.User.Login.Equals("github-actions[bot]") && // Filter out bot comments
@@ -358,7 +381,9 @@ namespace SearchIndexCreator
                     Enabled = true,
                     Days = 7 // Set the desired retention period
                 };
+
                 await blobServiceClient.SetPropertiesAsync(properties.Value);
+                
                 Console.WriteLine("Enabled native blob soft delete on the storage account.");
             }
             else

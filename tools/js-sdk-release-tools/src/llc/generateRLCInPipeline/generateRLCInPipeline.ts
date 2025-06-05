@@ -21,7 +21,6 @@ import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoD
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
-import { migratePackage } from "../../common/migration.js";
 import { isRushRepo } from "../../common/rushUtils.js";
 
 export async function generateRLCInPipeline(options: {
@@ -246,9 +245,7 @@ export async function generateRLCInPipeline(options: {
         if (isRushRepo(options.sdkRepo)) {
             logger.info(`Start to update rush.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-    
-            await migratePackage(options.sdkRepo, packagePath);
-    
+        
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
             execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});

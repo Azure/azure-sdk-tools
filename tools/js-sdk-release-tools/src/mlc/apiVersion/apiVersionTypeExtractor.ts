@@ -1,5 +1,5 @@
 import { ApiVersionType } from "../../common/types.js";
-import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
+import { IApiVersionTypeExtractor, IModelOnlyChecker } from "../../common/interfaces.js";
 import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils.js";
 import { join } from "path";
 import { exists } from "fs-extra";
@@ -18,21 +18,36 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         if (typeFromClient !== ApiVersionType.None) return typeFromClient;
     }
 
+    const isModelOnlyPackage = await isModelOnly(packageRoot);
+    if (isModelOnlyPackage) {
+        logger.info('No operation found, fallback to get api version type from latest version in NPM');
+        const packageName = getNpmPackageName(packageRoot);
+        const npmViewResult = await tryGetNpmView(packageName);
+        const latestVersion = getVersion(npmViewResult, "latest");
+        const isBeta = isBetaVersion(latestVersion);
+        return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+    }
+    
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');
     const parametersPath = join(packageRoot, "src/rest/parameters.ts");
-    if (await exists(parametersPath)) {
-        const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
-        if (typeFromOperations !== ApiVersionType.None) {
-            return typeFromOperations;
-        } else {
-            return ApiVersionType.Stable; // If no version found in operations, default to stable
-        }
+    const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
+    if (typeFromOperations !== ApiVersionType.None) {
+        return typeFromOperations;
+    } else {
+        return ApiVersionType.Stable; // If no version found in operations, default to stable
     }
+};
 
-    logger.info('No operation found, fallback to get api version type from latest version in NPM');
-    const packageName = getNpmPackageName(packageRoot);
-    const npmViewResult = await tryGetNpmView(packageName);
-    const latestVersion = getVersion(npmViewResult, "latest");
-    const isBeta = isBetaVersion(latestVersion);
-    return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
+    // For MLC, simply check for parameters.ts - its absence indicates a model-only service
+    const parametersPath = join(packageRoot, "src/rest/parameters.ts");
+    const isParametersExists = await exists(parametersPath);
+    
+    if (!isParametersExists) {
+        logger.info(`No parameters.ts found in ${packageRoot}, this is a model-only service in MLC`);
+        return true;
+    }
+    
+    logger.info(`Found parameters.ts in ${packageRoot}, this is not a model-only service`);
+    return false;
 };

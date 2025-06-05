@@ -1,11 +1,19 @@
 import { ApiVersionType, SDKType } from "../../common/types.js";
 import { getSDKType } from "../../common/utils.js";
 import { logger } from "../../utils/logger.js";
+import { isModelOnly } from "../apiVersion/apiVersionTypeExtractor.js";
 
 import * as fs from "fs";
 import * as path from "path";
 
-export function updateUserAgent(packageFolderPath: string, packageVersion: string) {
+export async function updateUserAgent(packageFolderPath: string, packageVersion: string) {
+    // Skip updating user agent for model-only packages
+    const isModelOnlyPackage = await isModelOnly(packageFolderPath);
+    if (isModelOnlyPackage) {
+        logger.info(`Package in ${packageFolderPath} is a model-only package, skipping user agent update`);
+        return;
+    }
+
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const packageName = packageJsonData.name.replace("@azure/", "");
     const sdkType = getSDKType(packageFolderPath);

@@ -23,6 +23,7 @@ import { generateChangelogAndBumpVersion } from "../../common/changelog/automati
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { migratePackage } from "../../common/migration.js";
 import { isRushRepo } from "../../common/rushUtils.js";
+import { updateSnippets } from "../../common/devToolUtils.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -264,6 +265,9 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
             execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
         }
+
+        logger.info(`Start to update snippets.`);
+        await updateSnippets(packagePath);
         
         if (!options.skipGeneration) {
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);

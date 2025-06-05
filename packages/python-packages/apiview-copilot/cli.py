@@ -8,6 +8,7 @@ import pathlib
 
 from src._search_manager import SearchManager
 from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
+from src.agent import AgentReviewPlanner
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -40,6 +41,17 @@ helps[
 ] = """
     type: group
     short-summary: Commands for searching the knowledge base.
+"""
+
+helps[
+    "agent review"
+] = """
+    type: command
+    short-summary: Generates a review using the locally installed AgentReviewPlanner.
+    examples:
+      - name: Run a local agent review
+        text: >-
+          apiviewcopilot agent review --language python --target path/to/file.txt --base path/to/base.txt --outline path/to/outline.txt --comments path/to/comments.json
 """
 
 
@@ -282,6 +294,26 @@ def search_knowledge_base(
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
 
 
+def local_agent_review(
+    language: str,
+    target: str,
+    base: str = None,
+    outline: str = None,
+    existing_comments: str = None,
+):
+    """
+    Performs an API review using the local agent.
+    """
+    planner = AgentReviewPlanner(
+        target=target,
+        base=base,
+        language=language,
+        outline=outline,
+        comments=existing_comments,
+    )
+    return planner.run()
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -308,6 +340,8 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
+        with CommandGroup(self, "agent", "__main__#{}") as g:
+            g.command("review", "local_agent_review")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
@@ -346,7 +380,33 @@ class CliCommandsLoader(CLICommandsLoader):
                 "existing_comments",
                 type=str,
                 help="Path to a JSON file containing existing comments.",
-                options_list=["--existing-comments"],
+                default=None,
+            )
+        with ArgumentsContext(self, "agent review") as ac:
+            ac.argument("path", type=str, help="The path to the APIView file")
+            ac.argument(
+                "target",
+                type=str,
+                help="The path to the APIView file to review.",
+                options_list=("--target", "-t"),
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file to compare against. If omitted, copilot will review the entire target APIView.",
+                options_list=("--base", "-b"),
+            )
+            ac.argument(
+                "outline",
+                type=str,
+                help="Path to a plain text file containing the outline text.",
+                options_list=["--outline"],
+                default=None,
+            )
+            ac.argument(
+                "existing_comments",
+                type=str,
+                help="Path to a JSON file containing existing comments.",
                 default=None,
             )
         with ArgumentsContext(self, "eval create") as ac:

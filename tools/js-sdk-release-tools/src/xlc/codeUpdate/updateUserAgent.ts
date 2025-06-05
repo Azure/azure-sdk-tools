@@ -25,9 +25,9 @@ export async function updateUserAgent(packageFolderPath: string, packageVersion:
             break;
         case SDKType.ModularClient:
             // Check if it's a model-only package for MLC
-            const isMlcModelOnly = await isModelOnly(packageFolderPath);
-            if (isMlcModelOnly) {
-                logger.info(`Modular client package in ${packageFolderPath} is a model-only package, skipping user agent update`);
+            const isModelOnlyForModularClient = await isModelOnly(packageFolderPath);
+            if (isModelOnlyForModularClient) {
+                logger.info(`Modular client package in ${packageFolderPath} is a model-only package, skipping user agent update.`);
                 break;
             }
 

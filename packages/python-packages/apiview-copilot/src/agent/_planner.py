@@ -1,8 +1,9 @@
-from semantic_kernel import Kernel
+from ._kernel import create_kernel
 from typing import Optional
+from semantic_kernel.planners.function_calling_stepwise_planner import FunctionCallingPlanner
 
 
-class AgentReviewPlanner:
+class AgentReviewPlanner(FunctionCallingPlanner):
     def __init__(
         self,
         *,
@@ -12,7 +13,7 @@ class AgentReviewPlanner:
         comments: Optional[str] = None,
         outline: Optional[str] = None,
     ):
-        self.kernel = Kernel()  # Configure as needed
+        self.kernel = create_kernel()
         self.target = target
         self.base = base
         self.language = language
@@ -25,9 +26,11 @@ class AgentReviewPlanner:
         Return only strong, actionable feedback with supporting links.
         """
 
+    def create_plan(self, goal):
+        # Placeholder: In real usage, use SK's planner or prompt
+        return goal
+
     def run(self):
-        # Example: Use the kernel to process the review_data
-        # This is a placeholder; actual logic will depend on your SK setup
         context = {
             "target": self.target,
             "base": self.base,
@@ -35,7 +38,6 @@ class AgentReviewPlanner:
             "comments": self.comments,
             "outline": self.outline,
         }
-
         plan = self.create_plan(self.goal)
         result = self.kernel.run(plan, context)
         return result

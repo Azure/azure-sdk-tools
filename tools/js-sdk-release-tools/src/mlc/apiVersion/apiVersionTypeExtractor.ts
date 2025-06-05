@@ -35,7 +35,7 @@ export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promi
     const isParametersExists = await exists(parametersPath);
     
     if (!isParametersExists) {
-        logger.warn(`No parameters.ts found in ${packageRoot}, this is a model-only service in MLC`);
+        logger.warn(`No parameters.ts found in ${packageRoot}, this is a model-only service in Modular client`);
         return true;
     }
     

@@ -1,13 +1,10 @@
-import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils.js";
+import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath, getApiVersionTypeFromNpm } from "../../xlc/apiVersion/utils.js";
 
 import { ApiVersionType } from "../../common/types.js";
 import { IApiVersionTypeExtractor, IModelOnlyChecker } from "../../common/interfaces.js";
 import { join } from "path";
 import pkg from 'fs-extra';
 const { exists, readFile } = pkg;
-import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getNpmPackageName } from "../../common/utils.js";
-import { getVersion, isBetaVersion } from "../../utils/version.js";
 import { logger } from "../../utils/logger.js";
 import { parse } from "yaml"
 import { iterate, MarkDownEx, parseMarkdown } from "@azure-tools/openapi-tools-common";
@@ -59,12 +56,7 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
 
     const isModelOnlyPackage = await isModelOnly(packageRoot);
     if (isModelOnlyPackage) {
-        logger.info('No operation found, fallback to get api version type from latest version in NPM');
-        const packageName = getNpmPackageName(packageRoot);
-        const npmViewResult = await tryGetNpmView(packageName);
-        const latestVersion = getVersion(npmViewResult, "latest");
-        const isBeta = isBetaVersion(latestVersion);
-        return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+        return await getApiVersionTypeFromNpm(packageRoot);
     }
     
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');

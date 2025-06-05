@@ -7,13 +7,6 @@ import * as fs from "fs";
 import * as path from "path";
 
 export async function updateUserAgent(packageFolderPath: string, packageVersion: string) {
-    // Skip updating user agent for model-only packages
-    const isModelOnlyPackage = await isModelOnly(packageFolderPath);
-    if (isModelOnlyPackage) {
-        logger.info(`Package in ${packageFolderPath} is a model-only package, skipping user agent update`);
-        return;
-    }
-
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const packageName = packageJsonData.name.replace("@azure/", "");
     const sdkType = getSDKType(packageFolderPath);
@@ -31,6 +24,13 @@ export async function updateUserAgent(packageFolderPath: string, packageVersion:
             })
             break;
         case SDKType.ModularClient:
+            // Check if it's a model-only package for MLC
+            const isMlcModelOnly = await isModelOnly(packageFolderPath);
+            if (isMlcModelOnly) {
+                logger.info(`MLC package in ${packageFolderPath} is a model-only package, skipping user agent update`);
+                break;
+            }
+
             // Update version in src for Modular
             files = fs.readdirSync(path.join(packageFolderPath, 'src', "api"));
             files.forEach(file => {

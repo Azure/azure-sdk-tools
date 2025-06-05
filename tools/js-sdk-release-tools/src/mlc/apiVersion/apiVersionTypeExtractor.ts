@@ -1,12 +1,9 @@
 import { ApiVersionType } from "../../common/types.js";
 import { IApiVersionTypeExtractor, IModelOnlyChecker } from "../../common/interfaces.js";
-import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils.js";
+import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath, getApiVersionTypeFromNpm } from "../../xlc/apiVersion/utils.js";
 import { join } from "path";
 import { exists } from "fs-extra";
 import { logger } from "../../utils/logger.js";
-import { getNpmPackageName } from "../../common/utils.js";
-import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getVersion, isBetaVersion } from "../../utils/version.js";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
@@ -17,15 +14,9 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         const typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, pattern, tryFindRestClientPath);
         if (typeFromClient !== ApiVersionType.None) return typeFromClient;
     }
-
     const isModelOnlyPackage = await isModelOnly(packageRoot);
     if (isModelOnlyPackage) {
-        logger.info('No operation found, fallback to get api version type from latest version in NPM');
-        const packageName = getNpmPackageName(packageRoot);
-        const npmViewResult = await tryGetNpmView(packageName);
-        const latestVersion = getVersion(npmViewResult, "latest");
-        const isBeta = isBetaVersion(latestVersion);
-        return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+        return await getApiVersionTypeFromNpm(packageRoot);
     }
     
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');

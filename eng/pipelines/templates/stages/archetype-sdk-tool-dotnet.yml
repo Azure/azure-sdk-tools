@@ -40,7 +40,7 @@ parameters:
     default: true
   - name: Use1ESOfficial
     type: boolean
-    default: false
+    default: true
   - name: TestMatrix
     type: object
     default:

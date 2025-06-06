@@ -4,6 +4,8 @@ from azure.identity.aio import DefaultAzureCredential
 from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollingOptions
 from datetime import timedelta
 
+from .plugins import SearchPlugin
+
 load_dotenv(override=True)
 
 
@@ -23,7 +25,7 @@ async def get_main_agent():
             agent = AzureAIAgent(
                 client=client,
                 definition=agent_definition,
-                plugins=[],
+                plugins=[SearchPlugin()],
                 polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
             )
             yield agent

@@ -1,7 +1,6 @@
 import { RemoteContent } from './RemoteContent.js';
 import { GithubClient, PRDetails } from './GithubClient.js';
 import { URLNotSupportedError } from '../error/inputErrors.js';
-import { logger } from '../logging/logger.js';
 
 export class LinkContentExtractor {
   private readonly githubClient = new GithubClient();

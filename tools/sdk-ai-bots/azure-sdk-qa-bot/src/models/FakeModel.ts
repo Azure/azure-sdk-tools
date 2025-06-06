@@ -63,6 +63,7 @@ export class FakeModel implements PromptCompletionModel {
     return { status: 'success' };
   }
 
+  // TODO: remove duplicate external link or image contents
   private async generatePlainPromptIncludeConversationMessages(
     prompt: Prompt,
     conversationId: string,
@@ -89,6 +90,13 @@ export class FakeModel implements PromptCompletionModel {
     const removedMentionText = TurnContext.removeRecipientMention(context.activity);
     const text = context.activity.text;
     const inlineLinkUrls = text.match(this.urlRegex) || [];
+    const attachmentUrls = (context.activity.attachments || [])
+      .filter((attachment) => attachment.contentType === 'text/html' && attachment.content)
+      .map((attachment) => attachment.content.match(this.urlRegex) || []);
+    const uniqueLinksSet = new Set([...inlineLinkUrls, ...attachmentUrls.flat()]);
+    const uniqueLinks = Array.from(uniqueLinksSet);
+    logger.info(`Extracted links from activity`, { meta, uniqueLinks });
+
     const inlineImageUrls =
       context.activity.attachments
         ?.filter((attachment) => {
@@ -97,7 +105,7 @@ export class FakeModel implements PromptCompletionModel {
         .map((attachment) => attachment.contentUrl) ?? [];
     const rawPrompt: Prompt = {
       textWithoutMention: removedMentionText,
-      links: inlineLinkUrls,
+      links: uniqueLinks,
       images: inlineImageUrls,
       userName: context.activity.from.name,
       timestamp: context.activity.timestamp || new Date(),

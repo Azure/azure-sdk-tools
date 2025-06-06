@@ -1,0 +1,42 @@
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  DisableComponentDetection: true
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET Core SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '8.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet 
+
+  - task: DotNetCoreCLI@2
+    displayName: New Manifest for tool
+    inputs:
+      command: custom
+      custom: 'new '
+      arguments: tool-manifest
+
+  - task: DotNetCoreCLI@2
+    displayName: Install Playwright CLI
+    inputs:
+      command: custom
+      custom: 'tool '
+      arguments: install Microsoft.Playwright.CLI
+  
+  - task: DotNetCoreCLI@2
+    displayName: Build all projects and libraries
+    inputs:
+      command: 'build'
+      projects: 'tools/content-validation/content-validation.sln'
+      workingDirectory: 'tools/content-validation'

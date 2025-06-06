@@ -6,10 +6,10 @@ export class LogMiddleware implements Middleware {
   async onTurn(context: TurnContext, next: () => Promise<void>): Promise<void> {
     const { activity } = context;
     const meta = getTurnContextLogMeta(context);
-    logger.info('Incoming activity', meta);
+    logger.info('Incoming activity', { meta });
 
     await next();
 
-    logger.info('Turn processing completed', { convId: activity.conversation.id });
+    logger.info('Turn processing completed', { convId: activity.conversation.id, meta });
   }
 }

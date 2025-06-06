@@ -8,7 +8,7 @@ export interface RAGOptions {
   tenantId: string;
 }
 
-interface RAGReference {
+export interface RAGReference {
   title: string;
   source: string;
   link: string;
@@ -51,12 +51,12 @@ export async function getRAGReply(
       }
     );
     if (response.status !== 200) {
-      logger.warn(`Failed to fetch data from RAG backend. Status: ${response.status}`, meta);
+      logger.warn(`Failed to fetch data from RAG backend. Status: ${response.status}`, { meta });
     }
-    logger.info('Get response from RAG', response.data, meta);
+    logger.info('Get response from RAG', { responseBody: response.data, meta });
     return response.data;
   } catch (error) {
-    logger.warn('Failed to get reply from RAG:', error, meta);
+    logger.warn('Failed to get reply from RAG:', { error, meta });
     return undefined;
   }
 }
@@ -74,7 +74,7 @@ export async function sendFeedback(
 ) {
   logger.info(
     `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${options.tenantId}`,
-    meta
+    { meta }
   );
   try {
     const response = await axios.post(
@@ -99,7 +99,7 @@ export async function sendFeedback(
     }
     return response.data;
   } catch (error) {
-    logger.warn('Failed to send feedback:', error, meta);
+    logger.warn('Failed to send feedback:', { error, meta });
     return undefined;
   }
 }

@@ -33,7 +33,7 @@ export class LinkContentExtractor {
       let text = ``;
       for (const key in prDetails) {
         const detail = JSON.stringify(prDetails[key], null, 2);
-        text += `### ${key}\n\n${detail}\n\n`;
+        text += `### ${key}\n${detail}\n`;
       }
       contents.push({ text, url, id });
     }

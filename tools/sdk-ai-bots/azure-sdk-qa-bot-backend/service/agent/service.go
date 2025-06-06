@@ -69,14 +69,15 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 	}
 
-	userMessage := preprocess.NewPreprocessService().PreprocessInput(req.Message.Content)
-	if userMessage == "" {
+	preProcessedMessage := preprocess.NewPreprocessService().PreprocessInput(req.Message.Content)
+	if preProcessedMessage == "" {
 		log.Println("User message is empty after preprocessing, skipping completion.")
 		return result, nil
 	}
-	log.Println("Preprocessed user message:", userMessage)
-	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(userMessage)})
+	log.Println("Preprocessed user message:", preProcessedMessage)
+	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(preProcessedMessage)})
 
+	userMessage := req.Message.Content
 	intentStart := time.Now()
 	intentResult, err := s.RecongnizeIntension(messages)
 	if err != nil {
@@ -157,10 +158,8 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	wg.Wait()
 
 	chunks := make([]string, 0)
-	var chunkTitles []string
 	for _, result := range mergedChunks {
 		chunk := processDocument(result)
-		chunkTitles = append(chunkTitles, result.Title)
 		chunks = append(chunks, chunk)
 	}
 	for _, result := range normalResult {

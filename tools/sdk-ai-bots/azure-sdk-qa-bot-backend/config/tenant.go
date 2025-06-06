@@ -8,9 +8,10 @@ type TenantConfig struct {
 }
 
 var typespecSources = []model.Source{
-	model.Source_TypeSpec,
 	model.Source_TypeSpecAzure,
 	model.Source_AzureRestAPISpec,
+	model.Source_TypeSpec,
+	model.Source_TypeSpecQA,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
@@ -20,6 +21,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_AzureSDKQaBot: {
 		PromptTemplate: "default.md",
+		Sources:        typespecSources,
 	},
 }
 

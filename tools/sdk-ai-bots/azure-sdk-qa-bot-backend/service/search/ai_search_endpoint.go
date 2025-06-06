@@ -33,7 +33,7 @@ func (s *SearchClient) QueryIndex(ctx context.Context, req *model.QueryIndexRequ
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/indexes/%s/%s", s.BaseUrl, s.Index, "docs/search?api-version=2024-11-01-preview"), bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/indexes/%s/%s", s.BaseUrl, s.Index, "docs/search?api-version=2025-05-01-preview"), bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -68,8 +68,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		VectorQueries: []model.VectorQuery{
 			{
 				Text:   query,
-				K:      k,
-				Fields: "text_vector, title_vector",
+				Fields: "text_vector",
 				Kind:   "text",
 			},
 		},

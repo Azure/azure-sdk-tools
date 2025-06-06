@@ -1,20 +1,25 @@
+from dotenv import load_dotenv
+import os
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from .skills import ChunkingSkill
+
+from .plugins import ChunkingPlugin
+
+load_dotenv(override=True)
 
 
 def create_kernel() -> Kernel:
     """
     Creates and configures a Semantic Kernel instance with Azure OpenAI.
     """
-    kernel = Kernel()
-
-    # Configure the Azure OpenAI service
-    kernel.add_service(
-        AzureChatCompletion(api_base="https://your-openai-api-endpoint", deployment_name="your-deployment-name")
+    kernel = Kernel(
+        plugins={"ChunkingPlugin": ChunkingPlugin()},
+        services={
+            "AzureChatCompletion": AzureChatCompletion(
+                base_url=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                deployment_name="gpt-4.1",
+                api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            )
+        },
     )
-
-    # Register skills
-    kernel.add_skill("ChunkingSkill", ChunkingSkill())
-
     return kernel

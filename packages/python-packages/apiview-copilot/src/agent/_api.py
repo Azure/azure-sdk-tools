@@ -1,23 +1,19 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from src.agent._planner import AgentReviewPlanner
+from semantic_kernel.agents import ChatCompletionAgent
 
 router = APIRouter()
 
 
 @router.post("/agent/review")
 async def agent_review(request: Request):
-    data = await request.json()
+    from ._agent import get_review_agent
 
-    planner = AgentReviewPlanner(
-        target=data.get("target"),
-        base=data.get("base"),
-        language=data.get("language"),
-        comments=data.get("comments"),
-    )
+    data = await request.json()
+    agent = get_review_agent()
 
     try:
-        result = planner.run()
+        result = agent.run()
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=400)
 

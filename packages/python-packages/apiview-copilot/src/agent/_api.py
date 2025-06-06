@@ -7,10 +7,10 @@ router = APIRouter()
 
 @router.post("/agent/review")
 async def agent_review(request: Request):
-    from ._agent import get_review_agent
+    from ._agent import get_main_agent
 
     data = await request.json()
-    agent = get_review_agent()
+    agent = get_main_agent()
 
     try:
         result = agent.run()

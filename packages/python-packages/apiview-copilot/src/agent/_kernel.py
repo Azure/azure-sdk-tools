@@ -3,8 +3,6 @@ import os
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 
-from .plugins import ChunkingPlugin
-
 load_dotenv(override=True)
 
 
@@ -13,7 +11,7 @@ def create_kernel() -> Kernel:
     Creates and configures a Semantic Kernel instance with Azure OpenAI.
     """
     kernel = Kernel(
-        plugins={"ChunkingPlugin": ChunkingPlugin()},
+        plugins={},
         services={
             "AzureChatCompletion": AzureChatCompletion(
                 base_url=os.getenv("AZURE_OPENAI_ENDPOINT"),

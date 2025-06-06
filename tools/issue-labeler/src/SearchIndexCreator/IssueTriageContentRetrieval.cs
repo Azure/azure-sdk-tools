@@ -258,8 +258,10 @@ namespace SearchIndexCreator
 
         private (Octokit.Label service, Octokit.Label category, bool hasCustomerReported, bool hasIssueAddressed) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels)
         {
-            Octokit.Label service = null, category = null;
-            bool hasCustomerReported = false, hasIssueAddressed = false;
+            Octokit.Label service = null;
+            Octokit.Label category = null;
+            var hasCustomerReported = false;
+            var hasIssueAddressed = false;
 
             foreach (var label in labels)
             {

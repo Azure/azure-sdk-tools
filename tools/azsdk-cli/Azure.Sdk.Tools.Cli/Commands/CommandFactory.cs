@@ -1,6 +1,5 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
-using ModelContextProtocol.Protocol.Types;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {

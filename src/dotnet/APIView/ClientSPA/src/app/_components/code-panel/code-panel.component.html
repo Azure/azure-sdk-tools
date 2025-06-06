@@ -37,11 +37,13 @@
         [codePanelRowData]="item"
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [userProfile]="userProfile"
+        [preferredApprovers]="preferredApprovers"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
         (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
         (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
         (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+        (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
         (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
       </app-comment-thread>
     </ng-container>

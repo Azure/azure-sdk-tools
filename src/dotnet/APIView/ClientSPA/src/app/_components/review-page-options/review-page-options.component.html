@@ -284,16 +284,6 @@
         <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
         </div>
     </p-dialog>
-
-    <p-dialog header="Regenerate Copilot Comments" 
-        [modal]="true" [(visible)]="showRegenerateAICommentDialogModel"
-        [style]="{ width: '30dvw' }">
-        <p>Note that this will delete existing Copilot comments</p>
-        <div class="d-grid gap-2 mt-2">
-        <button class="btn btn-primary" type="button" (click)="generateAIReview(); showRegenerateAICommentDialogModel = false">Go ahead</button>
-        <button class="btn btn-link" type="button" (click)="showRegenerateAICommentDialogModel = false;">Cancel</button>
-        </div>
-    </p-dialog>
 </ng-container>
 <ng-template #loadingOrFailedTemplate>
     <div *ngIf="loadingStatus === 'loading'" class="spinner-border m-3" role="status">

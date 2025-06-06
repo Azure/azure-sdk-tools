@@ -89,6 +89,18 @@ export class CommentsService {
     });
   }
 
+  toggleCommentDownVote(reviewId: string, commentId: string) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    })
+
+    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/toggleCommentDownVote`, {}, { 
+      headers: headers,
+      observe: 'response',
+      withCredentials: true
+    });
+  }
+
   deleteComment(reviewId: string, commentId: string) {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

@@ -245,6 +245,20 @@ namespace APIViewWeb.Managers
             if (comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
             {
                 comment.Upvotes.Add(user.GetGitHubLogin());
+                comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin());
+            }
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+        }
+
+        public async Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment.Downvotes.RemoveAll(u => u == user.GetGitHubLogin()) == 0)
+            {
+                comment.Downvotes.Add(user.GetGitHubLogin());
+                comment.Upvotes.RemoveAll(u => u == user.GetGitHubLogin());
             }
 
             await _commentsRepository.UpsertCommentAsync(comment);

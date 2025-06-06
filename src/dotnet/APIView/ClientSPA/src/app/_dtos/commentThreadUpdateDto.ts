@@ -6,6 +6,7 @@ export enum CommentThreadUpdateAction {
     CommentResolved,
     CommentUnResolved,
     CommentUpVoteToggled,
+    CommentDownVoteToggled,
     CommentDeleted
 }
 

@@ -62,19 +62,6 @@ describe('ConversationHandler E2E', () => {
     expect(savedMessage.text).toBe('This is an end-to-end test message');
   }, 10000); // 10 seconds timeout
 
-  it('should retrieve the recently saved message', async () => {
-    if (!hasTableStorageConfig) {
-      return;
-    }
-
-    const message = await handler.getMessage(testConversationId, testActivityId);
-
-    expect(message).toBeDefined();
-    expect(message?.conversationId).toBe(testConversationId);
-    expect(message?.activityId).toBe(testActivityId);
-    expect(message?.text).toBe('This is an end-to-end test message');
-  }, 10000);
-
   it('should retrieve all messages in a conversation', async () => {
     if (!hasTableStorageConfig) {
       return;
@@ -104,17 +91,5 @@ describe('ConversationHandler E2E', () => {
 
     expect(foundFirstMessage).toBe(true);
     expect(foundSecondMessage).toBe(true);
-  }, 10000); // 10 seconds timeout
-
-  it('should return undefined for non-existent messages', async () => {
-    if (!hasTableStorageConfig) {
-      return;
-    }
-
-    // Attempt to retrieve a non-existent message
-    const nonExistentMessage = await handler.getMessage(testConversationId, 'non-existent-id');
-
-    // Verify the result is undefined
-    expect(nonExistentMessage).toBeUndefined();
   }, 10000); // 10 seconds timeout
 });

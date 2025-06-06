@@ -43,7 +43,7 @@ export class GithubClient {
     // 1. Parse owner, repo, pull_number from URL
     const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
     if (!match) {
-      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, this.logMeta);
+      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta: this.logMeta });
       return { comments: { review: [], issue: [] }, reviews: [], basic: { labels: [], title: '' }, diff: '' };
     }
 

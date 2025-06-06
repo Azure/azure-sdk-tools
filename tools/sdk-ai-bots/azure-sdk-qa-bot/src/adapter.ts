@@ -29,7 +29,8 @@ const onTurnErrorHandler = async (context, error) => {
 
     // Send a message to the user
     const errorMessage =
-      `The bot encountered an error or bug.` + (process.env.IS_LOCAL === 'true' ? `\nError: ${error}` : '');
+      `The bot encountered an error or bug.` +
+      (process.env.IS_LOCAL === 'true' ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
     await context.sendActivity(errorMessage);
   }
 };

@@ -2,8 +2,15 @@ import { TableClient, TableServiceClient, TableEntity, odata } from '@azure/data
 import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity';
 import { logger } from '../logging/logger.js';
 import config from '../config/config.js';
+import { RAGReply } from '../backend/rag.js';
 
-type MessageType = 'question' | 'answer';
+export interface Prompt {
+  textWithoutMention: string;
+  links?: string[];
+  images?: string[];
+  userName: string;
+  timestamp: Date;
+}
 
 /**
  * Interface representing a message in a conversation
@@ -22,7 +29,17 @@ export interface ConversationMessage {
   /**
    * Text content of the message
    */
-  text: string;
+  text?: string;
+
+  /**
+   * RAG reply
+   */
+  reply?: RAGReply;
+
+  /**
+   * Raw prompt information
+   */
+  prompt?: Prompt;
 
   /**
    * Timestamp when the message was created
@@ -48,6 +65,16 @@ export interface MessageEntity extends TableEntity {
    * Text content of the message
    */
   text: string;
+
+  /**
+   * JSON string of prompt
+   */
+  prompt?: string;
+
+  /**
+   * JSON string of RAG reply
+   */
+  reply?: string;
 
   /**
    * ISO timestamp string when the message was created
@@ -80,7 +107,7 @@ export class ConversationHandler {
     logger.info('ConversationHandler initialized', {
       url: this.tableStorageUrl,
       table: this.tableName,
-      ...this.logMeta,
+      meta: this.logMeta,
     });
   }
 
@@ -90,7 +117,7 @@ export class ConversationHandler {
   public async initialize(): Promise<void> {
     try {
       if (!this.tableStorageUrl) {
-        logger.warn('Azure Table Storage URL not configured. Message persistence is disabled.', this.logMeta);
+        logger.warn('Azure Table Storage URL not configured. Message persistence is disabled.', { meta: this.logMeta });
         return;
       }
 
@@ -108,18 +135,18 @@ export class ConversationHandler {
         // Create table client for this table
         this.tableClient = new TableClient(this.tableStorageUrl, this.tableName, credential);
 
-        logger.info('Azure Table Storage connection initialized successfully', this.logMeta);
+        logger.info('Azure Table Storage connection initialized successfully', { meta: this.logMeta });
       } catch (tableError: any) {
         // If the table already exists, we can ignore that specific error
         if (tableError.statusCode === 409 && tableError.errorCode === 'TableAlreadyExists') {
           this.tableClient = new TableClient(this.tableStorageUrl, this.tableName, credential);
-          logger.info('Connected to existing Azure Table Storage table', this.logMeta);
+          logger.info('Connected to existing Azure Table Storage table', { meta: this.logMeta });
         } else {
           throw tableError;
         }
       }
     } catch (error) {
-      logger.error('Failed to initialize Azure Table Storage connection', { error, ...this.logMeta });
+      logger.error('Failed to initialize Azure Table Storage connection', { error, meta: this.logMeta });
       throw error;
     }
   }
@@ -129,9 +156,10 @@ export class ConversationHandler {
    * @param message The message to save
    * @returns The saved message with any server-generated properties
    */
-  public async saveMessage(message: ConversationMessage): Promise<ConversationMessage> {
+  public async saveMessage(message: ConversationMessage): Promise<MessageEntity | undefined> {
     if (!this.tableClient) {
-      logger.warn('Table client not initialized. Call initialize() before saving messages.', this.logMeta);
+      logger.warn('Table client not initialized. Call initialize() before saving messages.', { meta: this.logMeta });
+      return;
     }
 
     try {
@@ -144,21 +172,19 @@ export class ConversationHandler {
       logger.info('Message saved to Azure Table Storage', {
         conversationId: message.conversationId,
         messageId: message.activityId,
-        ...this.logMeta,
+        meta: this.logMeta,
+        entity: JSON.stringify(entity),
       });
 
-      return {
-        ...message,
-        timestamp: new Date(entity.timestamp),
-      };
+      return entity;
     } catch (error) {
       logger.error('Failed to save message to Azure Table Storage', {
         error,
         conversationId: message.conversationId,
         messageId: message.activityId,
-        ...this.logMeta,
+        meta: this.logMeta,
       });
-      return message;
+      return;
     }
   }
 
@@ -169,7 +195,9 @@ export class ConversationHandler {
    */
   public async getConversationMessages(conversationId: string): Promise<ConversationMessage[]> {
     if (!this.tableClient) {
-      logger.warn('Table client not initialized. Call initialize() before retrieving messages.', this.logMeta);
+      logger.warn('Table client not initialized. Call initialize() before retrieving messages.', {
+        meta: this.logMeta,
+      });
       return [];
     }
 
@@ -188,56 +216,18 @@ export class ConversationHandler {
       }
 
       // Sort by timestamp
-      messages.sort((a, b) => {
+      const sortedMessages = messages.sort((a, b) => {
         return (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0);
       });
 
-      return messages;
+      return sortedMessages;
     } catch (error) {
       logger.error('Failed to retrieve conversation messages', {
         error,
         conversationId,
-        ...this.logMeta,
+        meta: this.logMeta,
       });
       return [];
-    }
-  }
-
-  /**
-   * Gets a specific message by its ID and conversation ID
-   * @param conversationId The ID of the conversation
-   * @param messageId The ID of the message
-   * @returns The message if found, otherwise undefined
-   */
-  public async getMessage(conversationId: string, messageId: string): Promise<ConversationMessage | undefined> {
-    if (!this.tableClient) {
-      logger.warn('Table client not initialized. Call initialize() before retrieving messages.', this.logMeta);
-      return undefined;
-    }
-
-    try {
-      // Try to retrieve the entity by partitionKey (conversationId) and rowKey (messageId)
-      try {
-        const entity = await this.tableClient.getEntity(conversationId, messageId);
-        const messageEntity = entity as unknown as MessageEntity;
-
-        // Convert the entity to a ConversationMessage
-        return this.entityToMessage(messageEntity);
-      } catch (err: any) {
-        // If entity not found, Azure SDK throws an error with statusCode 404
-        if (err.statusCode === 404) {
-          return undefined;
-        }
-        throw err; // Re-throw if it's a different error
-      }
-    } catch (error) {
-      logger.error('Failed to retrieve message', {
-        error,
-        conversationId,
-        messageId,
-        ...this.logMeta,
-      });
-      return undefined;
     }
   }
 
@@ -249,11 +239,21 @@ export class ConversationHandler {
   private messageToEntity(message: ConversationMessage): MessageEntity {
     const timestamp = message.timestamp || new Date();
 
+    // Serialize prompt, handling Date objects properly
+    const promptToStore = message.prompt
+      ? {
+          ...message.prompt,
+          timestamp: message.prompt.timestamp?.toISOString(),
+        }
+      : undefined;
+
     return {
       partitionKey: message.conversationId,
       rowKey: message.activityId,
-      text: message.text,
+      text: message.text || '',
       timestamp: timestamp.toISOString(),
+      prompt: promptToStore ? JSON.stringify(promptToStore) : undefined,
+      reply: message.reply ? JSON.stringify(message.reply) : undefined,
     };
   }
 
@@ -263,11 +263,35 @@ export class ConversationHandler {
    * @returns ConversationMessage domain object
    */
   private entityToMessage(entity: MessageEntity): ConversationMessage {
+    let prompt: Prompt | undefined;
+    let reply: RAGReply | undefined;
+
+    // Parse prompt and handle Date conversion
+    if (entity.prompt) {
+      const parsedPrompt = JSON.parse(entity.prompt);
+      if (parsedPrompt && Object.keys(parsedPrompt).length > 0) {
+        prompt = {
+          ...parsedPrompt,
+          timestamp: parsedPrompt.timestamp ? new Date(parsedPrompt.timestamp) : undefined,
+        } as Prompt;
+      }
+    }
+
+    // Parse reply
+    if (entity.reply) {
+      const parsedReply = JSON.parse(entity.reply);
+      if (parsedReply && Object.keys(parsedReply).length > 0) {
+        reply = parsedReply as RAGReply;
+      }
+    }
+
     return {
       conversationId: entity.partitionKey,
       activityId: entity.rowKey,
       text: entity.text,
       timestamp: new Date(entity.timestamp),
+      prompt: prompt,
+      reply: reply,
     };
   }
 }

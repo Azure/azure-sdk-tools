@@ -47,7 +47,7 @@
     "zone.js": "~0.14.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^17.3.10",
+    "@angular-devkit/build-angular": "^17.3.17",
     "@angular/cli": "~17.3.10",
     "@angular/compiler-cli": "^17.3.10",
     "@fortawesome/fontawesome-free": "^6.4.2",

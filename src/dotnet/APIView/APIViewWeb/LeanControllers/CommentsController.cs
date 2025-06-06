@@ -195,6 +195,20 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
+        /// Resolve comments in a comment thread
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <returns></returns>
+        [HttpPatch("{reviewId}/{commentId}/toggleCommentDownVote", Name = "ToggleCommentDownVote")]
+        public async Task<ActionResult> ToggleDownUpVoteAsync(string reviewId, string commentId)
+        {
+            await _commentsManager.ToggleDownvoteAsync(User, reviewId, commentId);
+            return Ok();
+        }
+
+
+        /// <summary>
         /// Soft Delete a Comment
         /// </summary>
         /// <param name="reviewId"></param>

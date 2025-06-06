@@ -23,6 +23,8 @@ namespace APIViewWeb.Managers
         public Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId);
         public Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId);
         public Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
+        public Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
+
         public HashSet<GithubUser> GetTaggableUsers();
     }
 }

@@ -366,12 +366,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   generateAIReview() {
-    if (this.generateAIReviewButtonText === 'Regenerate copilot review') {
-      this.showRegenerateAICommentDialogModel = true;
-      this.generateAIReviewButtonText = 'Generating review...';
-      return;
-    }
-
     this.aiReviewGenerationState = 'InProgress';
     this.generateAIReviewButtonText = 'Generating review...';
     const diffApiRevisionId = this.diffAPIRevision ? this.diffAPIRevision.id : undefined;

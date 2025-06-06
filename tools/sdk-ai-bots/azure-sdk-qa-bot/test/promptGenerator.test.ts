@@ -146,7 +146,6 @@ describe('PromptGenerator', () => {
     ];
 
     const fullPrompt = await promptGenerator.generatePlainFullPrompt(prompt, conversationMessages);
-    console.log('🚀 ~ it ~ fullPrompt:', fullPrompt);
 
     expect(fullPrompt)
       .toEqual(`# Question from user User on date: Wed Oct 01 2025 20:00:00 GMT+0800 (China Standard Time)

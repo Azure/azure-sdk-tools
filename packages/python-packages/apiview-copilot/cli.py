@@ -8,7 +8,7 @@ import pathlib
 
 from src._search_manager import SearchManager
 from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
-from src.agent import AgentReviewPlanner
+from src.agent import get_review_agent
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -47,7 +47,7 @@ helps[
     "agent review"
 ] = """
     type: command
-    short-summary: Generates a review using the locally installed AgentReviewPlanner.
+    short-summary: Generates a review using the locally installed AgentReviewer.
     examples:
       - name: Run a local agent review
         text: >-
@@ -304,14 +304,14 @@ def local_agent_review(
     """
     Performs an API review using the local agent.
     """
-    planner = AgentReviewPlanner(
-        target=target,
-        base=base,
-        language=language,
-        outline=outline,
-        comments=existing_comments,
-    )
-    return planner.run()
+
+    async def _run():
+        agent = await get_review_agent()
+        # ...rest of your async logic here...
+        return agent
+
+    result = asyncio.run(_run())
+    print(result)
 
 
 SUPPORTED_LANGUAGES = [

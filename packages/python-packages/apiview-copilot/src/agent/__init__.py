@@ -1,4 +1,4 @@
 from ._api import agent_review
-from ._planner import AgentReviewPlanner
+from ._agent import get_review_agent
 
-__all__ = ["agent_review", "AgentReviewPlanner"]
+__all__ = ["agent_review", "get_review_agent"]

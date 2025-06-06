@@ -39,11 +39,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             return rootCommand;
         }
 
-        private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPTool> parentedTools)
+        private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPTool> toolList)
         {
             var parentMap = new Dictionary<string, Command>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (MCPTool tool in parentedTools)
+            foreach (MCPTool tool in toolList)
             {
                 var leaf = tool.GetCommand();
                 var hierarchy = tool.CommandHierarchy;

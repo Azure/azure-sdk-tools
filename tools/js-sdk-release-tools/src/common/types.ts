@@ -62,6 +62,7 @@ export interface ModularClientPackageOptions {
     local: boolean;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    runMode: string | undefined;
 }
 
 export interface NpmPackageInfo {

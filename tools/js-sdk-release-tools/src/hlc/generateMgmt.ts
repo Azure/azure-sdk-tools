@@ -36,6 +36,7 @@ export async function generateMgmt(options: {
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
+    const changedPackagePaths:string[] = [];
     if (!options.skipGeneration) {
         if(options.apiVersion && options.apiVersion !== '') {
             // for high level client, we will build a tag for the package
@@ -126,6 +127,7 @@ export async function generateMgmt(options: {
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
+                    changedPackagePaths.push(changedPackageDirectory);
                 }
                 logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
                 execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
@@ -138,6 +140,7 @@ export async function generateMgmt(options: {
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
+                    changedPackagePaths.push(changedPackageDirectory);
                 }
                 logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
                 execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
@@ -197,4 +200,6 @@ export async function generateMgmt(options: {
         }
     }
     logger.info(`Generate SDK from '${options.readmeMd}' successfully.`);
+
+    return changedPackagePaths; 
 }

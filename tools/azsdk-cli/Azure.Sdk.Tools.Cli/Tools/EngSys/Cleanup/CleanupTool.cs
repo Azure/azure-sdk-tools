@@ -27,8 +27,6 @@ public class CleanupTool: MCPTool
         this.agentServiceFactory = agentServiceFactory;
         this.logger = logger;
 
-        // Set up the “path” where this command lives:
-        // e.g. if you want it under “eng cleanup”
         CommandHierarchy =
         [
             CommandVerbDescriptions.EngSys, CommandVerbDescriptions.Cleanup

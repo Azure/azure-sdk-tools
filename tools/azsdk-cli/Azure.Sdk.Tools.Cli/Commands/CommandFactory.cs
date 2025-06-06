@@ -31,29 +31,16 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 
-            List<MCPTool> parentedTools = new();
+            var toolInstances = toolTypes
+                .Select(t => (MCPTool)ActivatorUtilities.CreateInstance(serviceProvider, t))
+                .ToList();
 
-            foreach (var t in toolTypes)
-            {
-                var tool = (MCPTool)ActivatorUtilities.CreateInstance(serviceProvider, t);
-
-                // register any tools have no parents first to the root command
-                if (tool.CommandHierarchy.Length == 0)
-                {
-                    rootCommand.AddCommand(tool.GetCommand());
-                }
-                else
-                {
-                    parentedTools.Add(tool);
-                }
-            }
-
-            PopulateParentedCommands(rootCommand, parentedTools);
+            PopulateToolHierarchy(rootCommand, toolInstances);
 
             return rootCommand;
         }
 
-        private static void PopulateParentedCommands(RootCommand rootCommand, List<MCPTool> parentedTools)
+        private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPTool> parentedTools)
         {
             var parentMap = new Dictionary<string, Command>(StringComparer.OrdinalIgnoreCase);
 
@@ -62,6 +49,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 var leaf = tool.GetCommand();
                 var hierarchy = tool.CommandHierarchy;
                 Command previousParent = rootCommand;
+
+                if (hierarchy.Length == 0)
+                {
+                    // if there is no hierarchy, add the command directly to the root command
+                    rootCommand.AddCommand(leaf);
+                    continue;
+                }
 
                 for (int i = 0; i < hierarchy.Length; i++)
                 {

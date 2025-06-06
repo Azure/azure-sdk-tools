@@ -94,8 +94,10 @@ class SearchResult:
         self.answers = []
         for result in result_list:
             self.results.append(SearchItem(result))
-        for answer in search_results.get_answers():
-            self.answers.append(SearchAnswer(answer))
+        answers = search_results.get_answers()
+        if answers:
+            for answer in answers:
+                self.answers.append(SearchAnswer(answer))
 
     def __len__(self):
         return len(self.results)
@@ -338,15 +340,16 @@ class SearchManager:
             return []
         return general_guidelines + language_guidelines
 
-    def search_all(self, query: str, *, top: int = 20) -> SearchResult:
+    def _search(self, query: str, *, filter: str, top: int = 20) -> SearchResult:
         """
-        Searches the unified index for the given query and returns the results as a SearchResult object.
+        Internal method to perform a search on the Azure Search index.
+        This method is used by the public search methods to perform the actual search.
         """
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
         client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
         result = client.search(
             search_text=query,
-            filter=self.filter_expression,
+            filter=filter,
             semantic_configuration_name="semantic-search-config",
             semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,
@@ -356,6 +359,30 @@ class SearchManager:
             vector_queries=[VectorizableTextQuery(text=query, fields="text_vector")],
         )
         return SearchResult(result)
+
+    def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
+        filter = "kind eq 'guidelines'"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        return self._search(query, filter=filter, top=top)
+
+    def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
+        filter = "kind eq 'examples'"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        return self._search(query, filter=filter, top=top)
+
+    def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
+        filter = "kind eq 'memories'"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        return self._search(query, filter=filter, top=top)
+
+    def search_all(self, query: str, *, top: int = 20) -> SearchResult:
+        """
+        Searches the unified index for the given query and returns the results as a SearchResult object.
+        """
+        return self._search(query, filter=self.filter_expression, top=top)
 
     def guidelines_for_ids(self, ids: List[str]) -> List[object]:
         """

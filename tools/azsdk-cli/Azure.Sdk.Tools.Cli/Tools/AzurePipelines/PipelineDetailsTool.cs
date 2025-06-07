@@ -46,7 +46,7 @@ public class PipelineDetailsTool : MCPTool
 
     public override Command GetCommand()
     {
-        var pipelineRunCommand = new Command(CommandVerbDescriptions.GetPipeline.Verb, CommandVerbDescriptions.GetPipeline.Description) { buildIdOpt, projectOpt };
+        var pipelineRunCommand = new Command("pipeline", "Get details for a pipeline run") { buildIdOpt, projectOpt };
         pipelineRunCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         return pipelineRunCommand;

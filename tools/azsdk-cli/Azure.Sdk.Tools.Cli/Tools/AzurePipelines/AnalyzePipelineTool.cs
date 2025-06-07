@@ -60,7 +60,7 @@ public class AnalyzePipelinesTool : MCPTool
 
     public override Command GetCommand()
     {
-        var analyzePipelineCommand = new Command(CommandVerbDescriptions.AnalyzePipeline.Verb, CommandVerbDescriptions.AnalyzePipeline.Description) {
+        var analyzePipelineCommand = new Command("analyze", "Analyze a pipeline run") {
             buildIdOpt, projectOpt, logIdOpt, projectEndpointOpt, aiModelOpt
         };
         analyzePipelineCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });

@@ -51,7 +51,7 @@ function ErrorExit($exitCode) {
 
 # start a merge, but leave it open
 Write-Verbose "git merge $SourceBranch --no-ff --no-commit"
-git merge $SourceBranch --no-ff --no-commit | Tee-Object -Variable mergeOutput
+git merge -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" $SourceBranch --no-ff --no-commit | Tee-Object -Variable mergeOutput
 if ($LASTEXITCODE -and -not $mergeOutput.EndsWith('Automatic merge failed; fix conflicts and then commit the result.')) { ErrorExit $LASTEXITCODE }
 
 # update paths matching "theirs", except for "ours" and "merge", to the state in $SourceBranch

@@ -170,6 +170,28 @@ export class APIRevisionsService {
     });
   }
 
+  generateAIReview(
+    reviewId: string, 
+    activeApiRevisionId: string, 
+    diffApiRevisionId: string | undefined = undefined
+  ): Observable<number> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    let params = new HttpParams();
+    params = params.append('activeApiRevisionId', activeApiRevisionId);
+    if (diffApiRevisionId) {
+      params = params.append('diffApiRevisionId', diffApiRevisionId);
+    }
+
+    return this.http.post<number>(this.baseUrl + `/${reviewId}/generateReview`, {},
+    { 
+      headers: headers,
+      params: params,
+      withCredentials: true,
+    });
+  }
+
   private isIndexPage(currentRoute: ActivatedRoute): Observable<boolean> {
     return currentRoute.data.pipe(
       map(data => {

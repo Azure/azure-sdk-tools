@@ -6,11 +6,9 @@ using System.ComponentModel;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.OAuth;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 
@@ -20,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 public class PipelineDetailsTool : MCPTool
 {
     private BuildHttpClient buildClient;
-    private readonly Boolean initialized = false;
+    private readonly bool initialized = false;
 
     private IAzureService azureService;
     private IOutputService output;

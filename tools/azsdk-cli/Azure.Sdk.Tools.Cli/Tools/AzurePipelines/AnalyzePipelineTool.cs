@@ -26,7 +26,7 @@ public class AnalyzePipelinesTool : MCPTool
     private TestResultsHttpClient testClient;
     private IAzureAgentService azureAgentService;
     private TokenUsageHelper usage;
-    private readonly Boolean initialized = false;
+    private readonly bool initialized = false;
 
     private IAzureService azureService;
     private IAzureAgentServiceFactory azureAgentServiceFactory;

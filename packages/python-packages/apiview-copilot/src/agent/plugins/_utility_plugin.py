@@ -1,3 +1,4 @@
+import json
 import os
 import prompty
 import prompty.azure_beta
@@ -41,3 +42,34 @@ class UtilityPlugin:
         api_diff = create_diff_with_line_numbers(old=base, new=target)
         response = prompty.execute(prompt_path, inputs={"content": api_diff, "language": language}, configuration={})
         return response
+
+    @kernel_function(description="Load a JSON file from the specified path.")
+    async def load_json_file(self, file_path: str):
+        """
+        Load a JSON file from the specified path.
+        Args:
+            file_path (str): The path to the JSON file.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                json_content = json.load(file)
+                return json.dumps(json_content, indent=2)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error decoding JSON from file {file_path}: {e}")
+
+    @kernel_function(description="Load a text file from the specified path.")
+    async def load_text_file(self, file_path: str):
+        """
+        Load a text file from the specified path.
+        Args:
+            file_path (str): The path to the text file.
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                return file.read()
+        except Exception as e:
+            raise ValueError(f"Error reading text file {file_path}: {e}")

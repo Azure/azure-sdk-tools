@@ -1,3 +1,5 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+
 trigger:
   branches:
     include:
@@ -5,38 +7,41 @@ trigger:
       - feature/*
       - release/*
       - hotfix/*
+  paths:
+    include:
+      - tools/content-validation
 
-pool:
-  vmImage: ubuntu-latest
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/content-validation
 
-variables:
-  DisableComponentDetection: true
-
-steps:
-  - task: UseDotNet@2
-    displayName: 'Install .NET Core SDK'
-    inputs:
-      packageType: 'sdk'
-      version: '8.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet 
-
-  - task: DotNetCoreCLI@2
-    displayName: New Manifest for tool
-    inputs:
-      command: custom
-      custom: 'new '
-      arguments: tool-manifest
-
-  - task: DotNetCoreCLI@2
-    displayName: Install Playwright CLI
-    inputs:
-      command: custom
-      custom: 'tool '
-      arguments: install Microsoft.Playwright.CLI
-  
-  - task: DotNetCoreCLI@2
-    displayName: Build all projects and libraries
-    inputs:
-      command: 'build'
-      projects: 'tools/content-validation/content-validation.sln'
-      workingDirectory: 'tools/content-validation'
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/content-validation
+    TestDirectory: tools/content-validation/tests
+    ReleaseBinaries: true
+    TestPreSteps:
+      - task: DotNetCoreCLI@2
+        displayName: Install Playwright CLI
+        inputs:
+          command: custom
+          custom: 'tool'
+          arguments: install Microsoft.Playwright.CLI
+    StandaloneExeMatrix:
+      - rid: win-x64
+        framework: net8.0
+        assembly: content-validation
+      - rid: linux-x64
+        framework: net8.0
+        assembly: content-validation
+      - rid: osx-x64
+        framework: net8.0
+        assembly: content-validation

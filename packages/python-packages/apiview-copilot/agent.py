@@ -1,8 +1,12 @@
 from dotenv import load_dotenv
 import asyncio
 from src.agent._agent import get_main_agent
+import logging
 
 load_dotenv(override=True)
+
+# Enable INFO-level logging for kernel function invocation messages
+logging.getLogger("semantic_kernel.functions.kernel_function_log_messages").setLevel(logging.INFO)
 
 
 async def chat():

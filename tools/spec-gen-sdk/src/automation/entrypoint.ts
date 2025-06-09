@@ -23,7 +23,7 @@ import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdk
 import { extractPathFromSpecConfig } from '../utils/utils';
 import { toolError } from '../utils/messageUtils';
 
-interface SdkAutoOptions {
+export interface SdkAutoOptions {
   specRepo: RepoKey;
   sdkName: string;
   branchPrefix: string;

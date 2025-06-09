@@ -1,6 +1,6 @@
 import { default as ajvInit, ValidateFunction } from 'ajv';
 
-export const getTypeTransformer = <T>(schema: object, name: string) => {
+export function getTypeTransformer <T>(schema: object, name: string) {
   let validator: ValidateFunction | undefined;
   return (obj: unknown) => {
     addSchema();

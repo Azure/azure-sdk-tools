@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import asyncio
-from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin
+from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin, ApiReviewPlugin
 import logging
 
 load_dotenv(override=True)
@@ -8,7 +8,7 @@ load_dotenv(override=True)
 # Enable INFO-level logging for kernel function invocation messages
 logging.getLogger("semantic_kernel.functions.kernel_function_log_messages").setLevel(logging.INFO)
 
-_PLUGINS = {"SearchPlugin": SearchPlugin, "UtilityPlugin": UtilityPlugin}
+_PLUGINS = {"SearchPlugin": SearchPlugin, "UtilityPlugin": UtilityPlugin, "ApiReviewPlugin": ApiReviewPlugin}
 
 
 async def call_plugin_function(*, plugin_name: str, function_name: str, function_args: dict):

@@ -4,7 +4,7 @@ from azure.identity.aio import DefaultAzureCredential
 from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollingOptions
 from datetime import timedelta
 
-from .plugins import SearchPlugin, UtilityPlugin
+from .plugins import SearchPlugin, UtilityPlugin, ApiReviewPlugin
 
 load_dotenv(override=True)
 
@@ -35,7 +35,7 @@ error message to the user.
             agent = AzureAIAgent(
                 client=client,
                 definition=agent_definition,
-                plugins=[SearchPlugin(), UtilityPlugin()],
+                plugins=[SearchPlugin(), UtilityPlugin(), ApiReviewPlugin()],
                 polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
             )
             yield agent

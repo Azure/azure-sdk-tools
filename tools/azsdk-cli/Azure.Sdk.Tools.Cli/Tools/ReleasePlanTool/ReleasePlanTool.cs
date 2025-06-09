@@ -10,7 +10,6 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Primitives;
 using ModelContextProtocol.Server;
 using Octokit;
 
@@ -18,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper typeSpecHelper, ILogger<ReleasePlanTool> logger, IOutputService output, IUserHelper userHelper, IGitHubService githubService) : MCPTool
+    public partial class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper typeSpecHelper, ILogger<ReleasePlanTool> logger, IOutputService output, IUserHelper userHelper, IGitHubService githubService) : MCPTool
     {
         //Namespace approval repo details
         private const string namespaceApprovalRepoName = "azure-sdk";
@@ -46,6 +45,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly HashSet<string> supportedLanguages = [
             ".NET","Java","Python","JavaScript","Go"
         ];
+
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
+        private static partial Regex NameSpaceIssueUrlRegex();
 
 
         [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
@@ -215,9 +217,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Update the SDK Info in the release plan work item. This tool is called to update SDK language, package name, optional language exclusion note in the release plan work item." +
+        [McpServerTool, Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
             " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
-        public async Task<string> UpdateReleasePlanSDKInfo(int releasePlanWorkItemId, string sdkDetails, string languageExclusionNote = "")
+        public async Task<string> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
         {
             try
             {
@@ -244,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
                 }
 
-                var updated = await devOpsService.UpdateReleasePlanSDKDetails(releasePlanWorkItemId, SdkInfos, languageExclusionNote);
+                var updated = await devOpsService.UpdateReleasePlanSDKDetails(releasePlanWorkItemId, SdkInfos);
                 if (!updated)
                 {
                     SetFailure();
@@ -268,7 +270,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Link package namespace approval issue to release plan. This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
+        [McpServerTool, Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
         public async Task<string> LinkNameSpaceApprovalIssue(int releasePlanWorkItemId, string namespaceApprovalIssue)
         {
             try
@@ -277,8 +279,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     return "Release plan ID and namespace approval issue are required to verify namespace approval status";
                 }
-                var regex = new Regex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)");
-                var match = regex.Match(namespaceApprovalIssue);
+
+                // Get release plan and verify if it is a management plane release plan before linking namespace approval issue
+                var releasePlan = await devOpsService.GetReleasePlanForWorkItem(releasePlanWorkItemId);
+                if (releasePlan == null)
+                {
+                    return $"Release plan with ID {releasePlanWorkItemId} not found.";
+                }
+
+                if (!releasePlan.IsManagementPlane)
+                {
+                    return "Namespace approval is only required for management plane release plans. This release plan is not for management plane.";
+                }
+
+                var match = NameSpaceIssueUrlRegex().Match(namespaceApprovalIssue);
                 // Check if the namespace approval issue is a valid GitHub issue number
                 if (!match.Success)
                 {

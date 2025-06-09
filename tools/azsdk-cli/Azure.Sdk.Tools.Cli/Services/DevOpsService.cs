@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Build> GetPipelineRun(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRun(int buildId, string language, int workItemId);
         public Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
-        public Task<bool> UpdateReleasePlanSDKDetails(int workItemId, List<SDKInfo> sdkLanguages, string languageExclusionNote = "");
+        public Task<bool> UpdateReleasePlanSDKDetails(int workItemId, List<SDKInfo> sdkLanguages);
         public Task<bool> UpdateApiSpecStatus(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequest(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string url);
@@ -171,21 +171,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
             }
 
-            int releasePlanWorkItemId = workItem.Id ?? 0;
-            if (releasePlanWorkItemId != 0)
+            // Get details from API spec work item
+            try
             {
-                // Get details from API spec work item
-                try
-                {
-                    var apiSpecWorkItem = await GetApiSpecWorkItem(releasePlanWorkItemId);
-                    releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
-                    releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
-                    releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Failed to get API spec work item for release plan work item {releasePlanWorkItemId}. Error: {ex.Message}");
-                }
+                var apiSpecWorkItem = await GetApiSpecWorkItem(releasePlan.WorkItemId);
+                releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
+                releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
+                releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to get API spec work item for release plan work item {releasePlan.WorkItemId}. Error: {ex.Message}");
             }
 
             return releasePlan;
@@ -566,11 +562,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// </summary>
         /// <param name="workItemId"></param>
         /// <param name="sdkLanguages"></param>
-        /// <param name="languageExclusionNote"></param>
         /// <returns>bool</returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<bool> UpdateReleasePlanSDKDetails(int workItemId, List<SDKInfo> sdkLanguages, string languageExclusionNote = "")
+        public async Task<bool> UpdateReleasePlanSDKDetails(int workItemId, List<SDKInfo> sdkLanguages)
         {
             // Adds SDK languages in release plan work item.
             try
@@ -587,12 +582,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                     languageNames.UnionWith(releasePlan.SDKInfo.Select(s => s.Language));
                 }
 
-                // Make sure all languages are supported or exception note is provided
-                if (languageNames.Count < 5 && string.IsNullOrEmpty(languageExclusionNote))
-                {
-                    throw new ArgumentException("Please provide a language exclusion note if you are not releasing SDK for all languages.");
-                }
-
                 var languages = string.Join(",", languageNames);
                 _logger.LogInformation($"Selected languages to generate SDK: {languages}");
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
@@ -604,18 +593,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                         Value = languages
                     }
                 };
-
-                if (!string.IsNullOrEmpty(languageExclusionNote))
-                {
-                    jsonLinkDocument.Add(
-                        new JsonPatchOperation
-                        {
-                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = "/fields/Custom.LanguageExclusionNote",
-                            Value = languageExclusionNote
-                        }
-                    );
-                }
 
                 foreach(var sdk in sdkLanguages)
                 {

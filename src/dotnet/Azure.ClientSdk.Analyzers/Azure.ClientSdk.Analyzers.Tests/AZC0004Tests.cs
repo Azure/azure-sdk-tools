@@ -396,5 +396,43 @@ namespace RandomNamespace
             await Verifier.CreateAnalyzer(code)
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0004NotProducedForProperties()
+        {
+            const string code = @"
+using Azure.Core.Pipeline;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        private HttpPipeline _pipeline;
+
+        public virtual HttpPipeline Pipeline => _pipeline;
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForPropertiesWithAsyncSuffix()
+        {
+            const string code = @"
+using Azure.Core.Pipeline;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        private HttpPipeline _pipeline;
+
+        public virtual HttpPipeline PipelineAsync => _pipeline;
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
     }
 }

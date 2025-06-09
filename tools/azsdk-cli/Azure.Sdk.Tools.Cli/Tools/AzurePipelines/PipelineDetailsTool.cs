@@ -40,7 +40,7 @@ public class PipelineDetailsTool : MCPTool
 
         CommandHierarchy =
         [
-            CommandVerbDescriptions.AzurePipelines
+            CommandVerbDescriptions.AzurePipelines  // azsdk azp
         ];
     }
 

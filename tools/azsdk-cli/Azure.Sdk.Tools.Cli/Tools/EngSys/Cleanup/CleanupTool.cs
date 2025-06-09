@@ -29,7 +29,7 @@ public class CleanupTool: MCPTool
 
         CommandHierarchy =
         [
-            CommandVerbDescriptions.EngSys, CommandVerbDescriptions.Cleanup
+            CommandVerbDescriptions.EngSys, CommandVerbDescriptions.Cleanup  // azsdk eng cleanup
         ];
     }
 

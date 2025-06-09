@@ -93,7 +93,7 @@ stages:
             echo "Package ${{ package.name }} has unsupported type: ${{ package.type }}"
             exit 1
           displayName: 'Unsupported package type'
-          condition: always()
+          condition: not(canceled())
 
     - checkout: self
       path: s/autorest

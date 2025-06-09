@@ -201,4 +201,4 @@ stages:
         inputs:
           artifactName: processed-files
           targetPath: $(Artifacts)
-        condition: always()
+        condition: not(canceled())

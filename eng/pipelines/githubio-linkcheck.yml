@@ -37,7 +37,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'azure-sdk link check' 
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -52,7 +52,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'azure-sdk link check with caching'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -65,7 +65,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'java link check'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -78,7 +78,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'js link check'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -91,7 +91,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'net link check'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -104,7 +104,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'python link check'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -117,7 +117,7 @@ jobs:
 
   - task: PowerShell@2
     displayName: 'tools link check'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
@@ -131,12 +131,12 @@ jobs:
 
   - publish: $(cachefile)
     artifact: verify-links-cache.txt
-    condition: succeededOrFailed()
+    condition: not(canceled())
     displayName: Upload verified links
 
   - task: AzurePowerShell@5
     displayName: 'Upload cache file to blob container'
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       azureSubscription: 'Azure SDK Artifacts'
       ScriptType: 'InlineScript'

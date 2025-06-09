@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -60,10 +61,10 @@ func (s *SearchClient) QueryIndex(ctx context.Context, req *model.QueryIndexRequ
 }
 
 func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source) ([]model.Index, error) {
-	req := &model.QueryIndexRequest{
+	// Base request template
+	baseReq := model.QueryIndexRequest{
 		Search: query,
 		Count:  false,
-		Top:    k,
 		Select: "title, context_id, chunk, header_1, header_2, header_3, chunk_id, ordinal_position",
 		VectorQueries: []model.VectorQuery{
 			{
@@ -78,18 +79,49 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		Answers:               "extractive|count-3",
 		QueryLanguage:         "en-us",
 	}
-	if len(sources) > 0 {
-		filters := make([]string, 0)
-		for _, source := range sources {
-			filters = append(filters, fmt.Sprintf("context_id eq '%s'", source))
+
+	// If no sources specified, search all at once
+	if len(sources) == 0 {
+		baseReq.Top = k
+		resp, err := s.QueryIndex(context.Background(), &baseReq)
+		if err != nil {
+			return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
 		}
-		req.Filter = strings.Join(filters, " or ")
+		return resp.Value, nil
 	}
-	resp, err := s.QueryIndex(context.Background(), req)
-	if err != nil {
-		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+
+	// Search with priority based on source order
+	var allResults []model.Index
+	remainingK := k
+
+	// Search one source at a time in priority order
+	for _, source := range sources {
+		if remainingK <= 0 {
+			break
+		}
+
+		// Create a new request for this source
+		req := baseReq
+		req.Top = remainingK
+		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
+
+		resp, err := s.QueryIndex(context.Background(), &req)
+		if err != nil {
+			log.Printf("Warning: search error for source %s: %v", source, err)
+			continue
+		}
+
+		for _, doc := range resp.Value {
+			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
+				log.Printf("Skipping result with low score: %s/%s, score: %f", doc.ContextID, doc.Title, doc.RerankScore)
+				continue
+			}
+			allResults = append(allResults, doc)
+			remainingK--
+		}
 	}
-	return resp.Value, nil
+
+	return allResults, nil
 }
 
 func (s *SearchClient) GetCompleteContext(chunk model.Index) ([]model.Index, error) {

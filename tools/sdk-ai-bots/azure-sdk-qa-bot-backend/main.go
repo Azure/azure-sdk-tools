@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/handler"
@@ -28,7 +30,8 @@ func main() {
 	// init resources
 	config.InitSecrets()
 	config.InitOpenAIClient()
-	
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.Llongfile | log.Lmicroseconds | log.Ldate)
 	r := setupRouter()
 	r.Run(":8088")
 }

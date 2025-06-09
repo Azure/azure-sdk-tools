@@ -31,7 +31,7 @@ type PreprocessWarning struct {
 }
 
 type PreprocessResponse struct {
-	Text     string           `json:"text"`
+	Text     string              `json:"text"`
 	Warnings []PreprocessWarning `json:"warnings,omitempty"`
 }
 
@@ -42,6 +42,10 @@ func (s *PreprocessService) PreprocessInput(input string) string {
 	for k, v := range model.KeywordReplaceMap {
 		input = strings.ReplaceAll(input, fmt.Sprintf(" %s ", k), fmt.Sprintf(" %s ", v))
 	}
+	return input
+}
+
+func (s *PreprocessService) ExtractAdditionalInfo(input string) string {
 	// Extract image links from the input
 	imageLinks := extractImageLinks(input)
 

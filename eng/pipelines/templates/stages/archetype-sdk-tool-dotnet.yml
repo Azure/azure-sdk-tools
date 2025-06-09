@@ -90,7 +90,7 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   displayName: Publish to packages artifact
-                  condition: succeededOrFailed()
+                  condition: not(canceled())
                   artifactName: packages
                   targetPath: $(packagesToPublishDir)
 
@@ -180,7 +180,7 @@ extends:
                 - ${{ parameters.TestPostSteps }}
 
                 - task: PublishTestResults@2
-                  condition: succeededOrFailed()
+                  condition: not(canceled())
                   inputs:
                     testResultsFiles: '**/*.trx'
                     testRunTitle: $(System.JobDisplayName)

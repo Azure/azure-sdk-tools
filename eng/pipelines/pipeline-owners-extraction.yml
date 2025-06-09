@@ -56,5 +56,5 @@ stages:
       - publish: $(OutputPath)
         displayName: Publish pipelineOwners artifact
         artifact: pipelineOwners
-        condition: succeededOrFailed()
+        condition: not(canceled())
 

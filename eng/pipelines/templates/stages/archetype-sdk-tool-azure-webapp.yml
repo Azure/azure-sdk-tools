@@ -38,7 +38,7 @@ stages:
           - publish: $(Build.ArtifactStagingDirectory)
             displayName: Upload
             artifact: artifacts
-            condition: succeededOrFailed()
+            condition: not(canceled())
 
     - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
       - stage: Staging

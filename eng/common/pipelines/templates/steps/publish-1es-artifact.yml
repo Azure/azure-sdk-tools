@@ -22,11 +22,11 @@ steps:
         Write-Host "Setting artifact name to ${{ parameters.ArtifactName }}" 
         Write-Host "##vso[task.setvariable variable=PublishArtifactName;]${{ parameters.ArtifactName }}"
       }
-    condition: and(succeededOrFailed(), ${{ parameters.CustomCondition }})
+    condition: and(not(canceled()), ${{ parameters.CustomCondition }})
     displayName: Set Artifact Name 
 
   - task: 1ES.PublishPipelineArtifact@1
-    condition: and(succeededOrFailed(), ${{ parameters.CustomCondition }})
+    condition: and(not(canceled()), ${{ parameters.CustomCondition }})
     displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
     inputs:
       artifactName: '$(PublishArtifactName)'

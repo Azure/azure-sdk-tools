@@ -43,7 +43,7 @@ steps:
 
   - task: PublishTestResults@2
     displayName: Publish Test Results
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       testResultsFormat: NUnit
       testResultsFiles: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/testResults.xml
@@ -51,7 +51,7 @@ steps:
 
   - task: PublishCodeCoverageResults@2
     displayName: Publish Code Coverage to Azure DevOps
-    condition: succeededOrFailed()
+    condition: not(canceled())
     inputs:
       summaryFileLocation: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}/coverage.xml
       pathToSources: $(Build.SourcesDirectory)/${{ parameters.TargetDirectory }}

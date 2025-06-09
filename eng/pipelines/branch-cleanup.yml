@@ -76,7 +76,7 @@ jobs:
       - ${{ each repo in parameters.Repos }}:
         - task: PowerShell@2
           displayName: ${{ repo }} sync eng/common branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true
@@ -91,7 +91,7 @@ jobs:
 
         - task: PowerShell@2
           displayName: ${{ repo }} sync workflow branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true
@@ -107,7 +107,7 @@ jobs:
       - ${{ each repo in parameters.ForkAutomationBranches }}:
         - task: PowerShell@2
           displayName: ${{ repo }} automation branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true
@@ -122,7 +122,7 @@ jobs:
 
         - task: PowerShell@2
           displayName: ${{ repo }} swagger public SDK PR and branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true
@@ -138,7 +138,7 @@ jobs:
       - ${{ each repo in parameters.SDKPrivate }}:
         - task: PowerShell@2
           displayName: ${{ repo }} swagger private SDK PR and branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true
@@ -154,7 +154,7 @@ jobs:
       - ${{ each repo in parameters.DailyBranchRepos }}:
         - task: PowerShell@2
           displayName: ${{ repo }} daily docs branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true
@@ -170,7 +170,7 @@ jobs:
       - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
         - task: PowerShell@2
           displayName: ${{ repo }} azure-rest-api-specs docs branch clean-up
-          condition: succeededOrFailed()
+          condition: not(canceled())
           continueOnError: true
           inputs:
             pwsh: true

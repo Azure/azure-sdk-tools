@@ -5,7 +5,7 @@ steps:
       displayName: Bypass local DNS server to workaround issue resolving cognitiveservices names
       condition: |
         and(
-          succeededOrFailed(),
+          not(canceled()),
           or(contains(variables['OSVmImage'], 'ubuntu'),contains(variables['OSVmImage'], 'linux')),
           eq(variables['Container'], '')
         )

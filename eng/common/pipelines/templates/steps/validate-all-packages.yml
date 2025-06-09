@@ -30,6 +30,6 @@ steps:
       continueOnError: true
       condition: >-
         and(
-          succeededOrFailed(),
+          not(canceled()),
           not(endsWith(variables['Build.Repository.Name'], '-pr'))
         )

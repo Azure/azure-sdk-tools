@@ -52,7 +52,7 @@ extends:
               outputs:
                 - output: pipelineArtifact
                   displayName: Publish to packages artifact
-                  condition: succeededOrFailed()
+                  condition: not(canceled())
                   artifactName: packages
                   targetPath: ${{ parameters.ArtifactsPath }}
 

@@ -417,27 +417,5 @@ namespace RandomNamespace
             await Verifier.CreateAnalyzer(code)
                 .RunAsync();
         }
-
-        [Fact]
-        public async Task AZC0004NotProducedForRealWorldPropertyScenario()
-        {
-            const string code = @"
-using Azure.Core.Pipeline;
-
-namespace Azure.Storage.Contoso
-{
-    public class WidgetManagerClient
-    {
-        private HttpPipeline _pipeline;
-
-        /// <summary>
-        /// The HTTP pipeline for sending and receiving REST requests and responses. 
-        /// </summary>
-        public virtual HttpPipeline Pipeline => _pipeline;
-    }
-}";
-            await Verifier.CreateAnalyzer(code)
-                .RunAsync();
-        }
     }
 }

@@ -30,7 +30,5 @@ namespace {namespaceName}
 
             await Verifier.VerifyAnalyzerAsync(code);
         }
-
-
     }
 }

@@ -34,7 +34,7 @@ extends:
         inputs:
           command: custom
           custom: 'tool'
-          arguments: install Microsoft.Playwright.CLI
+          arguments: install --global Microsoft.Playwright.CLI
     StandaloneExeMatrix:
       - rid: win-x64
         framework: net8.0

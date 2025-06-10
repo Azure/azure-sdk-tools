@@ -7,14 +7,11 @@ namespace Microsoft.FxLister.Services;
 
 public class PackageAnalyzer
 {
-    private readonly ILogger _logger;
-    
     public PackageAnalyzer()
     {
-        _logger = NullLogger.Instance;
     }
     
-    public async Task<List<string>> DiscoverAzurePackagesAsync()
+    public async Task<List<string>> DiscoverAzurePackagesAsync(int batchSize = 20)
     {
         var azurePackages = new List<string>();
         
@@ -40,22 +37,21 @@ public class PackageAnalyzer
             // Search for Azure packages
             var searchFilter = new SearchFilter(includePrerelease: false)
             {
-                SupportedFrameworks = new[] { "net8.0", "netstandard2.0", "netstandard2.1" }
+                SupportedFrameworks = new[] { "netstandard2.0" }
             };
             
             int skip = 0;
-            int take = 20; // Limit to 20 packages for initial testing
+            int take = batchSize;
             bool hasMore = true;
-            int maxResults = 100; // Maximum total results
             
-            while (hasMore && azurePackages.Count < maxResults)
+            while (hasMore)
             {
                 var searchResults = await searchResource.SearchAsync(
                     "Azure",
                     searchFilter,
                     skip,
                     take,
-                    _logger,
+                    NullLogger.Instance,
                     CancellationToken.None);
                 
                 var packages = searchResults.ToList();
@@ -86,6 +82,6 @@ public class PackageAnalyzer
             throw new InvalidOperationException($"Failed to discover Azure packages: {ex.Message}", ex);
         }
         
-        return azurePackages.Distinct().OrderBy(p => p).ToList();
+        return azurePackages.Distinct().ToList();
     }
 }

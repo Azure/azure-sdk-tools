@@ -12,11 +12,8 @@ namespace Microsoft.FxLister.Services;
 
 public class RealTypeExtractor
 {
-    private readonly ILogger _logger;
-    
     public RealTypeExtractor()
     {
-        _logger = NullLogger.Instance;
     }
     
     public async Task<List<string>> ExtractTypesFromPackagesAsync(List<string> packageIds)
@@ -74,7 +71,7 @@ public class RealTypeExtractor
             var versions = await findPackageByIdResource.GetAllVersionsAsync(
                 packageId,
                 new SourceCacheContext(),
-                _logger,
+                NullLogger.Instance,
                 CancellationToken.None);
             
             var latestVersion = versions.Where(v => !v.IsPrerelease).OrderByDescending(v => v).FirstOrDefault();
@@ -90,7 +87,7 @@ public class RealTypeExtractor
                 latestVersion,
                 packageStream,
                 new SourceCacheContext(),
-                _logger,
+                NullLogger.Instance,
                 CancellationToken.None);
             
             if (!success)
@@ -128,8 +125,8 @@ public class RealTypeExtractor
         {
             var libItems = packageReader.GetLibItems();
             
-            // Try to find assemblies in order of preference
-            var targetFrameworks = new[] { "net8.0", "net6.0", "netstandard2.1", "netstandard2.0", "net462" };
+            // Try to find assemblies for netstandard2.0
+            var targetFrameworks = new[] { "netstandard2.0" };
             
             foreach (var tfm in targetFrameworks)
             {

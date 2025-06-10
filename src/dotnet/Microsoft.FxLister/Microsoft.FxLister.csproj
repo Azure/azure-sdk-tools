@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>fxlister</AssemblyName>
     <RootNamespace>Microsoft.FxLister</RootNamespace>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>

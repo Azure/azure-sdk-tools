@@ -46,7 +46,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();  @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
@@ -80,7 +81,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   overrideFatalDiagnosticsforApproval : boolean = false;
 
   canApproveReview: boolean | undefined = undefined;
-  reviewIsApproved: boolean | undefined = undefined;  reviewApprover: string = 'azure-sdk';
+  reviewIsApproved: boolean | undefined = undefined;
+  reviewApprover: string = 'azure-sdk';
   copyReviewTextButtonText : string = 'Copy review text';
 
   // Namespace review properties
@@ -151,7 +153,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
     if (changes['diffAPIRevision']) {
       this.setAPIRevisionApprovalStates();
-    }    if (changes['review'] && changes['review'].currentValue != undefined) {
+    }
+
+    if (changes['review'] && changes['review'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
       this.setNamespaceReviewStates();
@@ -322,13 +326,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec';
     this.isNamespaceReviewRequested = this.review?.isNamespaceReviewRequested || false;
 
-    console.log('setNamespaceReviewStates called:', {
-      language: this.review?.language,
-      canRequestNamespaceReview: this.canRequestNamespaceReview,
-      isNamespaceReviewRequested: this.isNamespaceReviewRequested,
-      reviewData: this.review
-    });
-
     if (this.isNamespaceReviewRequested) {
       this.namespaceReviewBtnClass = "btn btn-outline-secondary";
       this.namespaceReviewBtnLabel = "Namespace Review Requested";
@@ -430,10 +427,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     console.log('Namespace review button clicked, isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
     // Only allow if not already requested
     if (!this.isNamespaceReviewRequested) {
-      console.log('Emitting namespace approval event');
       this.namespaceApprovalEmitter.emit(true);
-    } else {
-      console.log('Namespace review already requested, ignoring click');
     }
   }
 

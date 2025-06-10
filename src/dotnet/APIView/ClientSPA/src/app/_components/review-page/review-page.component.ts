@@ -469,6 +469,7 @@ export class ReviewPageComponent implements OnInit {
       });
     }
   }
+
   handleReviewApprovalEmitter(value: boolean) {
     if (value) {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
@@ -477,12 +478,12 @@ export class ReviewPageComponent implements OnInit {
         }
       });
     }
-  }  handleNamespaceApprovalEmitter(value: boolean) {
+  }
+
+  handleNamespaceApprovalEmitter(value: boolean) {
     if (value) {
-      console.log('Requesting namespace review for review ID:', this.reviewId);
       this.reviewsService.requestNamespaceReview(this.reviewId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          console.log('Namespace review response:', review);
           this.review = review;
         },
         error: (error) => {

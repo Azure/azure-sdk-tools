@@ -10,19 +10,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
-{    public class RequestedReviews: PageModel
+{    
+    public class RequestedReviews: PageModel
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
-        public readonly UserProfileCache _userProfileCache;public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
+        public readonly UserProfileCache _userProfileCache;
+        public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ApprovedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
-        public IEnumerable<APIRevisionListItemModel> NamespaceApprovalRequestedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, UserProfileCache userProfileCache)
+        public IEnumerable<APIRevisionListItemModel> NamespaceApprovalRequestedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();        
+        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, UserProfileCache userProfileCache)
         {
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
             _userProfileCache = userProfileCache;
-        }        public async Task<IActionResult> OnGetAsync()
+        }        
+        public async Task<IActionResult> OnGetAsync()
         {
             var userId = User.GetGitHubLogin();
             APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
@@ -45,24 +49,24 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
 
-            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.First(x => x.AssingedTo.Equals(userId)).AssingedOn))
+            foreach (var apiRevision in APIRevisions.OrderByDescending(r => r.AssignedReviewers.First(x => x.AssingedTo.Equals(userId)).AssingedOn))
             {
-                if (!apiRevison.IsApproved)
+                if (!apiRevision.IsApproved)
                 {
-                    activeAPIRevs.Add(apiRevison);
+                    activeAPIRevs.Add(apiRevision);
                 }
 
-                if (apiRevison.IsApproved && apiRevison.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn >= DateTime.Now.AddDays(-7))
+                if (apiRevision.IsApproved && apiRevision.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn >= DateTime.Now.AddDays(-7))
                 {
-                    approvedAPIRevs.Add(apiRevison);
+                    approvedAPIRevs.Add(apiRevision);
                 }
 
                 // Check if the parent review has namespace approval requested using cached data
-                if (reviews.TryGetValue(apiRevison.ReviewId, out var parentReview) && 
+                if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview) && 
                     parentReview.IsNamespaceReviewRequested && 
                     !parentReview.IsNamespaceApproved)
                 {
-                    namespaceApprovalRequestedAPIRevs.Add(apiRevison);
+                    namespaceApprovalRequestedAPIRevs.Add(apiRevision);
                 }
             }
             

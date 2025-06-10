@@ -107,29 +107,7 @@ export class ReviewsService {
     {
       headers: headers,
       withCredentials: true,
-    });
-  }
-
-  toggleNamespaceApproval(reviewId: string, apiRevisionId: string) : Observable<Review> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}/toggleNamespaceApproval`, {},
-    {
-      headers: headers,
-      withCredentials: true,
-    });
-  }
-  approveNamespace(reviewId: string, notes: string = '') : Observable<Review> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/approveNamespace`, notes,
-    {
-      headers: headers,
-      withCredentials: true,
-    });
-  }
+    });  }
 
   requestNamespaceReview(reviewId: string, notes: string = '') : Observable<Review> {
     const headers = new HttpHeaders({

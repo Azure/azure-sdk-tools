@@ -11,43 +11,31 @@ namespace Azure.Sdk.Tools.Cli.Commands
     /// </summary>
     public static class SharedCommandGroups
     {
-        public static Option<string> CheckThisOption
+        public static readonly Option<string> CheckThisOption = new Option<string>(
+            aliases: new[] { "--meep", "-m" },
+            description: "This should be settable anywhere in the assigned command",
+            getDefaultValue: () => "oops"
+        )
         {
-            get => new Option<string>(
-                        aliases: new[] { "--meep", "-m" },
-                        description: "This should be settable anywhere in the assigned command",
-                        getDefaultValue: () => "oops"
-                   )
-            {
-                IsRequired = false
-            };
-        }
+            IsRequired = false
+        };
 
-        public static CommandGroup AzurePipelines
-        {
-            get => new CommandGroup(
-                       Verb: "azp",
-                       Description: "Azure Pipelines Tool",
-                       Options: new List<Option> { CheckThisOption }
-                   );
-        }
+        public static readonly CommandGroup AzurePipelines = new CommandGroup(
+            Verb: "azp",
+            Description: "Azure Pipelines Tool",
+            Options: new List<Option> { CheckThisOption }
+        );
 
-        public static CommandGroup EngSys
-        {
-            get => new CommandGroup(
-                       Verb: "eng",
-                       Description: "Internal azsdk engineering system commands",
-                       Options: new List<Option>()
-                   );
-        }
+        public static readonly CommandGroup EngSys = new CommandGroup(
+            Verb: "eng",
+            Description: "Internal azsdk engineering system commands",
+            Options: new List<Option>()
+        );
 
-        public static CommandGroup Cleanup
-        {
-            get => new CommandGroup(
-                       Verb: "cleanup",
-                       Description: "Cleanup commands",
-                       Options: new List<Option>()
-                   );
-        }
+        public static readonly CommandGroup Cleanup = new CommandGroup(
+            Verb: "cleanup",
+            Description: "Cleanup commands",
+            Options: new List<Option>()
+        );
     }
 }

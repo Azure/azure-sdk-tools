@@ -56,8 +56,6 @@ public class PipelineDetailsTool : MCPTool
     {
         Initialize();
 
-        var haha = ctx.ParseResult.GetValueForOption(SharedCommandGroups.CheckThisOption);
-
         var cmd = ctx.ParseResult.CommandResult.Command.Name;
         var buildId = ctx.ParseResult.GetValueForOption(buildIdOpt);
         var project = ctx.ParseResult.GetValueForOption(projectOpt);

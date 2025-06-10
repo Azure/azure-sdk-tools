@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Contract
             ExitCode = exitCode;
         }
 
-        public CommandVerbDescription[] CommandHierarchy { get; set; } = Array.Empty<CommandVerbDescription>();
+        public CommandGroup[] CommandHierarchy { get; set; } = Array.Empty<CommandGroup>();
 
         public abstract Command GetCommand();
 

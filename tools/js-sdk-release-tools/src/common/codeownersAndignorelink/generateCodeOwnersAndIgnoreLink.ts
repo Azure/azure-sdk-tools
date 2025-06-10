@@ -7,6 +7,7 @@ import { getNpmPackageName } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
 import { getGeneratedPackageDirectory } from "../../common/utils.js";
 import { posix } from "node:path";
+
 export async function generateCodeOwnersAndIgnoreLink(
     sdkType: SDKType,
     options: {
@@ -41,6 +42,7 @@ export async function generateCodeOwnersAndIgnoreLink(
         }
     }    
 }
+
 export async function generateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
 ) {
@@ -63,6 +65,7 @@ export async function generateCodeOwnersAndIgnoreLinkForPackage(
         );
     }
 }
+
 function updateCODEOWNERS(packagePath: string) {
     const jsSdkRepoPath = String(shell.pwd());
     const codeownersPath = path.join(jsSdkRepoPath, ".github", "CODEOWNERS");

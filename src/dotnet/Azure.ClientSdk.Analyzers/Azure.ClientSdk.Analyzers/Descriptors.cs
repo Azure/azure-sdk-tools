@@ -170,11 +170,11 @@ namespace Azure.ClientSdk.Analyzers
         public static readonly DiagnosticDescriptor AZC0034 = new DiagnosticDescriptor(
             nameof(AZC0034),
             "Avoid duplicate type names",
-            "Type name '{0}' conflicts with a common type name or should be used as a nested type. Consider renaming to avoid confusion.",
+            "Type name '{0}' conflicts with a common type name. Consider renaming to avoid confusion.",
             DiagnosticCategory.Naming,
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             true,
-            "Type names should not conflict with common .NET types or be reserved for specific nested type usage.");
+            "Type names should not conflict with common .NET types.");
         #endregion
 
         #region General

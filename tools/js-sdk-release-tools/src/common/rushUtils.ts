@@ -111,8 +111,6 @@ export async function buildPackage(
     await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
-    // update snippets
-    logger.info(`Start to update snippets.`);
     await updateSnippets(packageDirectory);
 
     // restore in temp folder

@@ -144,7 +144,6 @@ export async function generateMgmt(options: {
                 execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
             }
             
-            logger.info(`Start to update snippets.`);
             await updateSnippets(packagePath);
 
             if (!options.skipGeneration) {

@@ -31,7 +31,7 @@ public class IgnoreData
 
     static IgnoreData()
     {
-        string filePath = "../../../../ignore.json";
+        string filePath = "../../../ignore.json";
 
         if (!File.Exists(filePath))
         {

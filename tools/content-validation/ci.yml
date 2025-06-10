@@ -34,3 +34,15 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
+      - task: CopyFiles@2
+        displayName: Copy appsettings.json to output directory
+        inputs:
+          SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation/ContentValidation.Test
+          Contents: 'appsettings.json'
+          TargetFolder: $(Build.ArtifactStagingDirectory)/bin
+      - task: CopyFiles@2
+        displayName: Copy ignore.json to output directory
+        inputs:
+          SourceFolder: $(System.DefaultWorkingDirectory)
+          Contents: 'ignore.json'
+          TargetFolder: $(Build.ArtifactStagingDirectory)/bin

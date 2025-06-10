@@ -36,6 +36,6 @@ extends:
 
     - script: |
         cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
-        python -m pip install tox
+        python -m pip install tox==4.24.2
         tox -e pytest,stubgen
       displayName: Run APIView tests

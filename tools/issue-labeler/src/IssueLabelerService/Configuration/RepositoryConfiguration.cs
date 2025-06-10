@@ -18,12 +18,12 @@ namespace IssueLabelerService
         public string BlobContainerName => GetItem("BlobContainerName");
         public string CommonModelRepositoryName => GetItem("CommonModelRepositoryName");
         public string ConfidenceThreshold => GetItem("ConfidenceThreshold");
-        public string DocumentIndexName => GetItem("DocumentIndexName");
-        public string DocumentSemanticName => GetItem("DocumentSemanticName");
         public string EnableAnswers => GetItem("EnableAnswers");
         public string EnableLabels => GetItem("EnableLabels");
-        public string IssueIndexName => GetItem("IssueIndexName");
-        public string IssueSemanticName => GetItem("IssueSemanticName");
+        public string IndexName => GetItem("IndexName");
+        public string SemanticName => GetItem("SemanticName");
+        public string Instructions => GetItem("Instructions");
+        public string Prompt => GetItem("Prompt");
         public string LabelPredictor => GetItem("LabelPredictor");
         public string OpenAIEndpoint => GetItem("OpenAIEndpoint");
         public string RepoNames => GetItem("RepoNames");
@@ -55,7 +55,7 @@ namespace IssueLabelerService
         public string SuggestionInstructions => GetItem("SuggestionInstructions");
         public string SolutionUserPrompt => GetItem("SolutionUserPrompt");
         public string SuggestionUserPrompt => GetItem("SuggestionUserPrompt");
-        public string LabelUserPrompt => GetItem("LabelUserPrompt");
+        public string LabelPrompt => GetItem("LabelPrompt");
         public string LabelInstructions => GetItem("LabelInstructions");
         public string LabelNames => GetItem("LabelNames");
 

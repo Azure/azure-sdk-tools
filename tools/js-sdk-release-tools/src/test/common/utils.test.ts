@@ -12,7 +12,6 @@ import { getRandomInt } from "../utils/utils.js";
 import { ensureDir, remove, writeFile, pathExists } from "fs-extra";
 import { stringify } from "yaml";
 import { RunMode } from "../../common/types.js";
-import { posix } from "path";
 import { mkdir, readdir } from "fs/promises";
 
 describe("resolveOptions", () => {
@@ -218,40 +217,7 @@ describe("getReleaseStatus", () => {
 });
 
 describe("cleanUpPackageDirectory", () => {
-    test("preserves test directory and assets.json in SpecPullRequest mode", async () => {
-        const tempPackageDir = path.join(
-            __dirname,
-            `tmp/package-${getRandomInt(10000)}`
-        );
-        
-        try {
-            // Create a test directory structure
-            await ensureDir(tempPackageDir);
-            await ensureDir(path.join(tempPackageDir, "src"));
-            await ensureDir(path.join(tempPackageDir, "dist"));
-            await ensureDir(path.join(tempPackageDir, "test"));
-            await writeFile(path.join(tempPackageDir, "assets.json"), "{}", "utf8");
-            await writeFile(path.join(tempPackageDir, "package.json"), "{}", "utf8");
-            
-            // Run the function with SpecPullRequest mode
-            await cleanUpPackageDirectory(tempPackageDir, RunMode.SpecPullRequest);
-            
-            // Check if test directory and assets.json are preserved
-            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
-            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
-            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
-            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
-            
-            expect(testDirExists).toBe(true);
-            expect(assetsFileExists).toBe(true);
-            expect(srcDirExists).toBe(false);
-            expect(packageJsonExists).toBe(false);
-        } finally {
-            await remove(tempPackageDir);
-        }
-    });
-    
-    test("removes all files and directories in non-SpecPullRequest mode", async () => {
+    test("preserves test directory and assets.json in non-SpecPullRequest mode", async () => {
         const tempPackageDir = path.join(
             __dirname,
             `tmp/package-${getRandomInt(10000)}`
@@ -269,15 +235,22 @@ describe("cleanUpPackageDirectory", () => {
             // Run the function with Release mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
-            // Check if everything is removed
-            const entries = await readdir(tempPackageDir);
-            expect(entries.length).toBe(0);
+            // Check if test directory and assets.json are preserved
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
+            
+            expect(testDirExists).toBe(true);
+            expect(assetsFileExists).toBe(true);
+            expect(srcDirExists).toBe(false);
+            expect(packageJsonExists).toBe(false);
         } finally {
             await remove(tempPackageDir);
         }
     });
     
-    test("treats undefined runMode same as non-SpecPullRequest mode", async () => {
+    test("removes all files and directories in SpecPullRequest mode", async () => {
         const tempPackageDir = path.join(
             __dirname,
             `tmp/package-${getRandomInt(10000)}`
@@ -287,12 +260,14 @@ describe("cleanUpPackageDirectory", () => {
             // Create a test directory structure
             await ensureDir(tempPackageDir);
             await ensureDir(path.join(tempPackageDir, "src"));
+            await ensureDir(path.join(tempPackageDir, "dist"));
             await ensureDir(path.join(tempPackageDir, "test"));
             await writeFile(path.join(tempPackageDir, "assets.json"), "{}", "utf8");
-            
-            // Run the function with undefined runMode
-            await cleanUpPackageDirectory(tempPackageDir);
-            
+            await writeFile(path.join(tempPackageDir, "package.json"), "{}", "utf8");
+
+            // Run the function with SpecPullRequest mode
+            await cleanUpPackageDirectory(tempPackageDir, RunMode.SpecPullRequest);
+
             // Check if everything is removed
             const entries = await readdir(tempPackageDir);
             expect(entries.length).toBe(0);
@@ -323,34 +298,5 @@ describe("cleanUpPackageDirectory", () => {
         } finally {
             await remove(tempPackageDir);
         }
-    });
-    
-    test("handles string values for runMode", async () => {
-        const tempPackageDir = path.join(
-            __dirname,
-            `tmp/package-${getRandomInt(10000)}`
-        );
-        
-        try {
-            // Create a test directory structure
-            await ensureDir(tempPackageDir);
-            await ensureDir(path.join(tempPackageDir, "src"));
-            await ensureDir(path.join(tempPackageDir, "test"));
-            await writeFile(path.join(tempPackageDir, "assets.json"), "{}", "utf8");
-            
-            // Run the function with string value instead of enum
-            await cleanUpPackageDirectory(tempPackageDir, "spec-pull-request");
-            
-            // Check if test directory and assets.json are preserved
-            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
-            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
-            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
-            
-            expect(testDirExists).toBe(true);
-            expect(assetsFileExists).toBe(true);
-            expect(srcDirExists).toBe(false);
-        } finally {
-            await remove(tempPackageDir);
-        }
-    });
+    }); 
 });

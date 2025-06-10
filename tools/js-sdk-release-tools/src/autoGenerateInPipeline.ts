@@ -95,7 +95,7 @@ async function automationGenerateInPipeline(
                     versionPolicyName: 'management',
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
-                    runMode: runMode,
+                    runMode: runMode as RunMode,
                 };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];

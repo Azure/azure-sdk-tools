@@ -343,7 +343,7 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
 
 export async function cleanUpPackageDirectory(
     packageDirectory: string,
-    runMode?: string,
+    runMode: RunMode,
 ): Promise<void> {
     // Preserve test directory and assets.json file in SpecPullRequest mode
     const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest;

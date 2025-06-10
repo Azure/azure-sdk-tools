@@ -105,7 +105,16 @@ export async function compileTsp({
     additionalEmitterOptions.split(";").forEach((option) => {
       const [key, value] = option.split("=");
       if (key && value) {
-        emitterOverrideOptions[key] = value;
+        try {
+          const obj = JSON.parse(value);
+          if (typeof obj === "object" && obj !== null && !Array.isArray(obj)) {
+            emitterOverrideOptions[key] = obj;
+          } else {
+            emitterOverrideOptions[key] = value;
+          }
+        } catch {
+          emitterOverrideOptions[key] = value;
+        }
       }
     });
   }

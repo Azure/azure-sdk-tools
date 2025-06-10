@@ -41,7 +41,7 @@ def chat():
         }
         logging.info(f"Sending payload: {payload}")
         try:
-            resp = requests.post(API_ENDPOINT, json=payload, timeout=60)
+            resp = requests.post(API_ENDPOINT, json=payload, timeout=300)
             logging.info(f"POST {API_ENDPOINT} status={resp.status_code}")
             if resp.status_code == 200:
                 data = resp.json()

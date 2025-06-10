@@ -34,6 +34,8 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
+      - script: pwsh bin/Debug/net8.0/playwright.ps1 install
+        displayName: Install Playwright Browsers
       - task: CopyFiles@2
         displayName: Copy appsettings.json to output directory
         inputs:

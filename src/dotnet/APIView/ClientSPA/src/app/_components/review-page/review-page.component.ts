@@ -106,7 +106,7 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
-      
+
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
@@ -139,7 +139,7 @@ export class ReviewPageComponent implements OnInit {
         icon: 'bi bi-chat-left-dots',
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
-        command: () => { 
+        command: () => {
           if (this.getLoadingStatus() === 'completed') {
             this.conversationSidePanel = !this.conversationSidePanel;
           }
@@ -149,7 +149,7 @@ export class ReviewPageComponent implements OnInit {
         icon: 'bi bi-puzzle',
         tooltip: 'Samples',
         command: () => {
-          if (this.latestSampleRevision) {          
+          if (this.latestSampleRevision) {
             this.router.navigate(['/samples', this.reviewId],
             { queryParams: { activeSamplesRevisionId: this.latestSampleRevision?.id } });
           }
@@ -269,7 +269,7 @@ export class ReviewPageComponent implements OnInit {
       pageRevisions.push(this.diffApiRevisionId);
     }
 
-    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined,
       undefined, "createdOn", undefined, undefined, undefined, true, pageRevisions)
       .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
         next: (response: any) => {
@@ -450,7 +450,7 @@ export class ReviewPageComponent implements OnInit {
         this.activeAPIRevision = apiRevision;
         const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
         this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
-      } 
+      }
     });
   }
 
@@ -469,12 +469,24 @@ export class ReviewPageComponent implements OnInit {
       });
     }
   }
-
   handleReviewApprovalEmitter(value: boolean) {
     if (value) {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
+        }
+      });
+    }
+  }  handleNamespaceApprovalEmitter(value: boolean) {
+    if (value) {
+      console.log('Requesting namespace review for review ID:', this.reviewId);
+      this.reviewsService.requestNamespaceReview(this.reviewId!).pipe(take(1)).subscribe({
+        next: (review: Review) => {
+          console.log('Namespace review response:', review);
+          this.review = review;
+        },
+        error: (error) => {
+          console.error('Error requesting namespace review:', error);
         }
       });
     }
@@ -513,7 +525,7 @@ export class ReviewPageComponent implements OnInit {
   handleCopyReviewTextEmitter(event: boolean) {
     this.codePanelComponent.copyReviewTextToClipBoard(event);
   }
-  
+
   handleCodeLineSearchTextEmitter(searchText: string) {
     this.codeLineSearchText = searchText;
   }
@@ -566,7 +578,7 @@ export class ReviewPageComponent implements OnInit {
   }
 
   getLoadingStatus() : 'loading' | 'completed' | 'failed' {
-    if (this.codePanelComponent?.isLoading) 
+    if (this.codePanelComponent?.isLoading)
     {
       return 'loading';
     }
@@ -593,7 +605,7 @@ export class ReviewPageComponent implements OnInit {
     }
     return false;
   }
-  
+
   ngOnDestroy() {
     this.workerService.terminateWorker();
     this.destroy$.next();

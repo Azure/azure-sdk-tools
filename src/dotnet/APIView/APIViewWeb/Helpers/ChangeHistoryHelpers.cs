@@ -36,25 +36,41 @@ namespace APIViewWeb.Helpers
             if (actionInvalid)
             {
                 throw new ArgumentException($"Invalid arguments action : {action}");
-            }
-
-            var actionsAddedByUser = GetActionsAdded(changeHistory, actionAdded, user);
-            var actionsRevertedByUser = GetActionsReverted(changeHistory, actionReverted, user);
-
+            }            var actionsAddedByUser = GetActionsAdded(changeHistory, actionAdded, user);
+            
             T obj = (T)Activator.CreateInstance(typeof(T));
 
-            if (actionsAddedByUser.Count() > actionsRevertedByUser.Count())
+            // Check if this is a one-way action (no revert action)
+            if (actionReverted.Equals(default(E)))
             {
-                obj.GetType().GetProperty("ChangeAction").SetValue(obj, actionReverted);
+                // For one-way actions, always add the action
+                obj.GetType().GetProperty("ChangeAction").SetValue(obj, actionAdded);
             }
             else
             {
-                obj.GetType().GetProperty("ChangeAction").SetValue(obj, actionAdded);
+                // For binary actions, check if we should add or revert
+                var actionsRevertedByUser = GetActionsReverted(changeHistory, actionReverted, user);
+
+                if (actionsAddedByUser.Count() > actionsRevertedByUser.Count())
+                {
+                    obj.GetType().GetProperty("ChangeAction").SetValue(obj, actionReverted);
+                }
+                else
+                {
+                    obj.GetType().GetProperty("ChangeAction").SetValue(obj, actionAdded);
+                }
             }
+            
             obj.GetType().GetProperty("ChangedBy").SetValue(obj, user);
             obj.GetType().GetProperty("Notes").SetValue(obj, notes);
             obj.GetType().GetProperty("ChangedOn").SetValue(obj, DateTime.Now);
             changeHistory.Add(obj);
+
+            // For one-way actions, always return true
+            if (actionReverted.Equals(default(E)))
+            {
+                return (changeHistory, true);
+            }
 
             var actionsAdded = GetActionsAdded(changeHistory, actionAdded);
             var actionsReverted = GetActionsReverted(changeHistory, actionReverted);
@@ -81,16 +97,19 @@ namespace APIViewWeb.Helpers
             var resolvedAction = ResolveAction<E>(action);
             E actionAdded = resolvedAction.actionAdded;
             E actionReverted = resolvedAction.actionReverted;
-            bool actionInvalid = resolvedAction.actionInvalid;
-
-            if (actionInvalid)
+            bool actionInvalid = resolvedAction.actionInvalid;            if (actionInvalid)
             {
                 throw new ArgumentException($"Invalid arguments action : {action}");
+            }            // For one-way actions, check if the action has been added
+            if (actionReverted.Equals(default(E)))
+            {
+                var actionsAddedByUser = GetActionsAdded(changeHistory, actionAdded, user);
+                return actionsAddedByUser.Count() > 0;
             }
 
-            var actionsAddedByUser = GetActionsAdded(changeHistory, actionAdded, user);
+            var actionsAddedByUserFinal = GetActionsAdded(changeHistory, actionAdded, user);
             var actionsRevertedByUser = GetActionsReverted(changeHistory, actionReverted, user);
-            return (actionsAddedByUser.Count() > actionsRevertedByUser.Count()) ? true : false;
+            return (actionsAddedByUserFinal.Count() > actionsRevertedByUser.Count()) ? true : false;
         }
         /// <summary>
         /// From a list of changeHistory get the creator
@@ -146,10 +165,14 @@ namespace APIViewWeb.Helpers
                 var userProperty = c.GetType().GetProperty("ChangedBy").GetValue(c);
                 return changeAction.Equals(actionAdded) && userProperty.Equals(user);
             });
-        }
-
-        private static IEnumerable<T1> GetActionsReverted<T1, T2>(List<T1> changeHistory, T2 actionReverted, string user = null)
+        }        private static IEnumerable<T1> GetActionsReverted<T1, T2>(List<T1> changeHistory, T2 actionReverted, string user = null)
         {
+            // If actionReverted is null/default, return empty list (for one-way actions)
+            if (actionReverted.Equals(default(T2)))
+            {
+                return new List<T1>();
+            }
+            
             return changeHistory.Where(c =>
             {
                 var changeAction = c.GetType().GetProperty("ChangeAction").GetValue(c);
@@ -205,11 +228,25 @@ namespace APIViewWeb.Helpers
                     Enum.TryParse(typeof(E), "UnResolved", out object ur);
                     actionAdded = action;
                     actionReverted = (E)ur;
-                    break;
-                case "UnResolved":
+                    break;                case "UnResolved":
                     Enum.TryParse(typeof(E), "Resolved", out object r);
                     actionAdded = (E)r;
                     actionReverted = action;
+                    break;
+                case "NamespaceApproved":
+                    Enum.TryParse(typeof(E), "NamespaceApprovalReverted", out object nar);
+                    actionAdded = action;
+                    actionReverted = (E)nar;
+                    break;
+                case "NamespaceApprovalReverted":
+                    Enum.TryParse(typeof(E), "NamespaceApproved", out object na);
+                    actionAdded = (E)na;
+                    actionReverted = action;
+                    break;
+                case "NamespaceReviewRequested":
+                    // This is a one-way action, no revert
+                    actionAdded = action;
+                    actionReverted = default(E);
                     break;
                 default:
                     actionInvalid = true;

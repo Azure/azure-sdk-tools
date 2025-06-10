@@ -96,15 +96,16 @@ namespace APIViewWeb.LeanModels
         public string Id { get; set; } = IdHelper.GenerateId();
         public string PackageName { get; set; }
         public string Language { get; set; }
-    }
-
-    public class ReviewListItemModel : BaseListitemModel
+    }    public class ReviewListItemModel : BaseListitemModel
     {
         public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
         public List<ReviewChangeHistoryModel> ChangeHistory { get; set; } = new List<ReviewChangeHistoryModel>();
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
         public bool IsApproved { get; set; }
+        public bool IsNamespaceApproved { get; set; }
+        public HashSet<string> NamespaceApprovers { get; set; } = new HashSet<string>();
+        public bool IsNamespaceReviewRequested { get; set; }
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }

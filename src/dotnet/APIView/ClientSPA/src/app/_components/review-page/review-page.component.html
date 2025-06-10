@@ -28,7 +28,7 @@
                     [userProfile]="userProfile"
                     [loadFailed]="loadFailed"
                     [loadFailedMessage]="loadFailedMessage"
-                    [showLineNumbers]="showLineNumbers" 
+                    [showLineNumbers]="showLineNumbers"
                     [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                     [scrollToNodeId]="scrollToNodeId"
                     [codeLineSearchText]="codeLineSearchText"
@@ -66,10 +66,10 @@
                     (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
                     (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
                     (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
-                    (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"
-                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
+                    (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
-                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"></app-review-page-options>
+                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+                    (namespaceApprovalEmitter)="handleNamespaceApprovalEmitter($event)"></app-review-page-options>
             </div>
         </ng-template>
     </p-splitter>
@@ -87,7 +87,7 @@
             <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
         </div>
     </ng-template>
-    <app-conversations 
+    <app-conversations
         [apiRevisions]="apiRevisions"
         [comments]="comments"
         [review]="review"

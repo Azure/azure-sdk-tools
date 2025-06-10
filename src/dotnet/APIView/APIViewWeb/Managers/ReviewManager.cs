@@ -328,6 +328,111 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Add new NamespaceApproved or NamespaceApprovalReverted action to the ChangeHistory of a Review. Serves as namespace approval for TypeSpec
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="id"></param>
+        /// <param name="revisionId"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> ToggleNamespaceApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
+        {
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
+            var userId = user.GetGitHubLogin();
+            var updatedReview = await ToggleNamespaceApproval(user, review, notes);
+            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveNamespaceApprovalSelf", id, revisionId, review.IsNamespaceApproved);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveNamespaceApproval", id, revisionId, userId, review.IsNamespaceApproved);
+            return updatedReview;
+        }
+
+        /// <summary>
+        /// ApproveNamespaceAsync
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> ApproveNamespaceAsync(ClaimsPrincipal user, string reviewId, string notes = "")
+        {
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
+            if (review.IsNamespaceApproved)
+            {
+                return review;
+            }
+            return await ToggleNamespaceApproval(user, review, notes);
+        }
+
+        /// <summary>
+        /// Request namespace review for TypeSpec and mark related SDK language reviews as namespace approval requested
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "")
+        {
+            ReviewListItemModel typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
+            
+            // Only allow for TypeSpec reviews
+            if (typeSpecReview.Language != "TypeSpec")
+            {
+                throw new InvalidOperationException("Namespace review can only be requested for TypeSpec reviews");
+            }
+
+            var userId = user.GetGitHubLogin();
+            
+            // Mark the TypeSpec review as namespace review requested
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, notes);
+            typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
+            typeSpecReview.IsNamespaceReviewRequested = changeUpdate.ChangeStatus;
+            
+            await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+
+            // Find and mark related SDK language reviews
+            await MarkRelatedSDKReviewsForNamespaceReview(typeSpecReview.PackageName, userId, notes);
+
+            return typeSpecReview;
+        }
+
+        /// <summary>
+        /// Find related SDK language reviews and mark them as namespace approval requested
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="userId"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        private async Task MarkRelatedSDKReviewsForNamespaceReview(string packageName, string userId, string notes)
+        {
+            // SDK languages to look for
+            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+            
+            foreach (var language in sdkLanguages)
+            {
+                try
+                {
+                    // Find review with the same package name in each SDK language
+                    var relatedReview = await _reviewsRepository.GetReviewAsync(language, packageName, false);
+                    if (relatedReview != null && !relatedReview.IsDeleted)
+                    {
+                        // Mark as namespace review requested
+                        var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                            relatedReview.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, notes);
+                        relatedReview.ChangeHistory = changeUpdate.ChangeHistory;
+                        relatedReview.IsNamespaceReviewRequested = changeUpdate.ChangeStatus;
+                        
+                        await _reviewsRepository.UpsertReviewAsync(relatedReview);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Continue if we can't find a review for this language - it might not exist
+                    continue;
+                }
+            }
+        }
+
+        /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
         public async Task<int> GenerateAIReview(string reviewId, string revisionId)
@@ -479,7 +584,135 @@ namespace APIViewWeb.Managers
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsApproved = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
+            
+            // If this review was approved (first release), check if we should auto-approve namespace for related TypeSpec
+            if (changeUpdate.ChangeStatus && IsSDKLanguage(review.Language))
+            {
+                await CheckAndAutoApproveNamespaceForTypeSpec(review.PackageName, userId);
+            }
+            
             return review;
+        }
+
+        private async Task<ReviewListItemModel> ToggleNamespaceApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
+        {
+            await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
+            var userId = user.GetGitHubLogin();
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                review.ChangeHistory, ReviewChangeAction.NamespaceApproved, userId, notes);
+            review.ChangeHistory = changeUpdate.ChangeHistory;
+            review.IsNamespaceApproved = changeUpdate.ChangeStatus;
+            
+            if (changeUpdate.ChangeStatus)
+            {
+                review.NamespaceApprovers.Add(userId);
+            }
+            else
+            {
+                review.NamespaceApprovers.Remove(userId);
+            }
+            
+            await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
+        }
+
+        /// <summary>
+        /// Check if all related SDK reviews are approved and if so, automatically approve namespace for TypeSpec review
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        private async Task CheckAndAutoApproveNamespaceForTypeSpec(string packageName, string userId)
+        {
+            // Get the base package name (e.g., "contoso" from "contoso.widget")
+            var packageBaseName = packageName?.Split('.').FirstOrDefault()?.ToLower();
+            if (string.IsNullOrEmpty(packageBaseName))
+                return;
+
+            try
+            {
+                // Find the TypeSpec review for this package
+                var typeSpecReview = await _reviewsRepository.GetReviewAsync("TypeSpec", packageName, false);
+                if (typeSpecReview == null || typeSpecReview.IsDeleted || typeSpecReview.IsNamespaceApproved)
+                    return;
+
+                // Check if all related SDK reviews are approved
+                var allSDKReviewsApproved = await AreAllRelatedSDKReviewsApproved(packageBaseName);
+                
+                if (allSDKReviewsApproved)
+                {
+                    // Auto-approve namespace for the TypeSpec review
+                    var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                        typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceApproved, userId, "Auto-approved: All related SDK reviews are approved");
+                    typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
+                    typeSpecReview.IsNamespaceApproved = changeUpdate.ChangeStatus;
+                    
+                    if (changeUpdate.ChangeStatus)
+                    {
+                        typeSpecReview.NamespaceApprovers.Add(userId);
+                    }
+                    
+                    await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the original approval
+                // This is a nice-to-have feature, not critical
+                System.Diagnostics.Debug.WriteLine($"Error in auto-namespace approval: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check if all related SDK reviews for a package are approved
+        /// </summary>
+        /// <param name="packageBaseName">Base package name (e.g., "contoso" from "contoso.widget")</param>
+        /// <returns>True if all existing SDK reviews are approved</returns>
+        private async Task<bool> AreAllRelatedSDKReviewsApproved(string packageBaseName)
+        {
+            // The 5 supported SDK languages
+            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+            var foundReviews = new List<ReviewListItemModel>();
+
+            foreach (var language in sdkLanguages)
+            {
+                try
+                {
+                    // Get all reviews for this language
+                    var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
+                    
+                    // Find reviews that match the package base name
+                    var matchingReviews = reviews.Where(r => 
+                        !r.IsDeleted && 
+                        r.PackageName.ToLower().StartsWith(packageBaseName))
+                        .ToList();
+                    
+                    foundReviews.AddRange(matchingReviews);
+                }
+                catch (Exception)
+                {
+                    // Continue if we can't get reviews for this language
+                    continue;
+                }
+            }
+
+            // If no SDK reviews found, we can't auto-approve
+            if (!foundReviews.Any())
+                return false;
+
+            // Check if ALL found SDK reviews are approved
+            return foundReviews.All(review => review.IsApproved);
+        }
+
+        /// <summary>
+        /// Check if the language is one of the 5 supported SDK languages
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        private bool IsSDKLanguage(string language)
+        {
+            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+            return sdkLanguages.Contains(language);
         }
 
         /// <summary>
@@ -492,50 +725,86 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         private async Task UpdateReviewsUsingPipeline(string language, LanguageService languageService, int backgroundBatchProcessCount)
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
-            var paramList = new List<APIRevisionGenerationPipelineParamModel>();
-
-            foreach (var review in reviews)
+            try
             {
-                var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                foreach (var revision in revisions)
-                {
-                    foreach (var file in revision.Files)
-                    {
-                        //Don't include current revision if file is not required to be updated.
-                        // E.g. json token file is uploaded for a language, specific revision was already upgraded.
-                        if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
-                        {
-                            continue;
-                        }
+                _telemetryClient.TrackTrace($"Starting UpdateReviewsUsingPipeline for language: {language}");
 
-                        _telemetryClient.TrackTrace($"Updating review: {review.Id}, revision: {revision.Id}");
-                        paramList.Add(new APIRevisionGenerationPipelineParamModel()
+                // Get all non-closed reviews for the language
+                var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
+                
+                var eligibleReviews = new List<APIRevisionGenerationPipelineParamModel>();
+                
+                foreach (var review in reviews)
+                {
+                    try
+                    {
+                        var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+                        foreach (var revision in revisions)
                         {
-                            FileID = file.FileId,
-                            ReviewID = review.Id,
-                            RevisionID = revision.Id,
-                            FileName = Path.GetFileName(file.FileName)
-                        });
+                            // Check if the revision has original files and can be updated
+                            if (revision.Files.Any(f => f.HasOriginal) && 
+                                languageService.CanUpdate(revision.Files.First().VersionString))
+                            {
+                                // Add to the batch for pipeline processing
+                                eligibleReviews.Add(new APIRevisionGenerationPipelineParamModel
+                                {
+                                    ReviewID = review.Id,
+                                    RevisionID = revision.Id,
+                                    FileID = revision.Files.First().FileId,
+                                    FileName = revision.Files.First().FileName
+                                });
+
+                                // Break to avoid multiple revisions per review in the same batch
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _telemetryClient.TrackException(ex);
+                        _telemetryClient.TrackTrace($"Error processing review {review.Id} for pipeline update: {ex.Message}");
+                        // Continue with other reviews
                     }
                 }
 
-                // This should be changed to configurable batch count
-                if (paramList.Count >= backgroundBatchProcessCount)
+                if (eligibleReviews.Count > 0)
                 {
-                    _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
-                    await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
-                    // Delay of 10 minute before starting next batch
-                    // We should try to increase the number of revisions in the batch than number of runs.
-                    await Task.Delay(600000);
-                    paramList.Clear();
+                    // Batch the reviews to avoid pipeline run storm
+                    var batchSize = Math.Max(1, backgroundBatchProcessCount);
+                    var batches = eligibleReviews
+                        .Select((review, index) => new { review, index })
+                        .GroupBy(x => x.index / batchSize)
+                        .Select(g => g.Select(x => x.review).ToList())
+                        .ToList();
+
+                    _telemetryClient.TrackTrace($"Processing {eligibleReviews.Count} eligible reviews in {batches.Count} batches for language: {language}");
+
+                    foreach (var batch in batches)
+                    {
+                        try
+                        {
+                            // Use the same pipeline generation approach as API revisions
+                            await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(batch, language);
+                            _telemetryClient.TrackTrace($"Successfully queued pipeline batch with {batch.Count} reviews for language: {language}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _telemetryClient.TrackException(ex);
+                            _telemetryClient.TrackTrace($"Failed to queue pipeline batch for language {language}: {ex.Message}");
+                            // Continue with other batches
+                        }
+                    }
+                }
+                else
+                {
+                    _telemetryClient.TrackTrace($"No eligible reviews found for pipeline update for language: {language}");
                 }
             }
-
-            if (paramList.Count > 0)
+            catch (Exception ex)
             {
-                _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
-                await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
+                _telemetryClient.TrackException(ex);
+                _telemetryClient.TrackTrace($"Error in UpdateReviewsUsingPipeline for language {language}: {ex.Message}");
+                // Don't rethrow - this shouldn't break the background update process
             }
         }
     }

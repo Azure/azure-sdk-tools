@@ -35,7 +35,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() hasHiddenAPIs : boolean = false;
   @Input() hasHiddenAPIThatIsDiff : boolean = false;
   @Input() codeLineSearchInfo : CodeLineSearchInfo | undefined = undefined;
-  
+
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -46,19 +46,19 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();  @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>(); 
+  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
   private destroy$ = new Subject<void>();
-  
+
   webAppUrl : string = this.configService.webAppUrl
   assetsPath : string = environment.assetsPath;
-  
+
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
@@ -78,11 +78,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   showDisableCodeLinesLazyLoadingModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
-  
+
   canApproveReview: boolean | undefined = undefined;
-  reviewIsApproved: boolean | undefined = undefined;
-  reviewApprover: string = 'azure-sdk';
+  reviewIsApproved: boolean | undefined = undefined;  reviewApprover: string = 'azure-sdk';
   copyReviewTextButtonText : string = 'Copy review text';
+
+  // Namespace review properties
+  canRequestNamespaceReview: boolean = false;
+  isNamespaceReviewRequested: boolean = false;
+  namespaceReviewBtnClass: string = '';
+  namespaceReviewBtnLabel: string = '';
+  namespaceReviewMessage: string = '';
 
   codeLineSearchText: FormControl = new FormControl('');
 
@@ -108,9 +114,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   };
 
   constructor(
-    private configService: ConfigService, 
-    private route: ActivatedRoute, 
-    private router: Router, 
+    private configService: ConfigService,
+    private route: ActivatedRoute,
+    private router: Router,
     private apiRevisionsService: APIRevisionsService, private pullRequestService: PullRequestsService) { }
 
   ngOnInit() {
@@ -145,11 +151,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
     if (changes['diffAPIRevision']) {
       this.setAPIRevisionApprovalStates();
-    }
-
-    if (changes['review'] && changes['review'].currentValue != undefined) { 
+    }    if (changes['review'] && changes['review'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
+      this.setNamespaceReviewStates();
       this.updateDiffStyle();
     }
 
@@ -213,7 +218,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.disableCodeLinesLazyLoadingEmitter.emit(event.checked);
     }
   }
-  
+
 
   /**
   * Callback for markedAsViewSwitch Change
@@ -304,7 +309,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
     }
   }
-
   setReviewApprovalStatus() {
     this.canToggleApproveAPIRevision = (this.review && this.review!.packageName && !(mapLanguageAliases(["Swagger", "TypeSpec"]).includes(this.review?.language!))) ? true : false;
     this.reviewIsApproved = this.review && this.review?.isApproved ? true : false;
@@ -313,8 +317,31 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     }
   }
 
+  setNamespaceReviewStates() {
+    // Only show namespace review request for TypeSpec language
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec';
+    this.isNamespaceReviewRequested = this.review?.isNamespaceReviewRequested || false;
+
+    console.log('setNamespaceReviewStates called:', {
+      language: this.review?.language,
+      canRequestNamespaceReview: this.canRequestNamespaceReview,
+      isNamespaceReviewRequested: this.isNamespaceReviewRequested,
+      reviewData: this.review
+    });
+
+    if (this.isNamespaceReviewRequested) {
+      this.namespaceReviewBtnClass = "btn btn-outline-secondary";
+      this.namespaceReviewBtnLabel = "Namespace Review Requested";
+      this.namespaceReviewMessage = "";
+    } else {
+      this.namespaceReviewBtnClass = "btn btn-success";
+      this.namespaceReviewBtnLabel = "Request Namespace Review";
+      this.namespaceReviewMessage = "";
+    }
+  }
+
   setPullRequestsInfo() {
-    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') { 
+    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') {
       this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
           this.associatedPullRequests = response;
@@ -332,7 +359,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       });
     }
   }
-  
+
   setSubscribeSwitch() {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
   }
@@ -367,7 +394,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   /**
    * Use positive number to navigate to the next search result and negative number to navigate to the previous search result
-   * @param number 
+   * @param number
    */
   navigateSearch(number: 1 | -1) {
     if (number == 1) {
@@ -395,10 +422,19 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   handleReviewApprovalAction() {
     this.reviewApprovalEmitter.emit(true);
   }
-
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
     this.showAPIRevisionApprovalModal = false;
+  }
+  handleNamespaceReviewAction() {
+    console.log('Namespace review button clicked, isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
+    // Only allow if not already requested
+    if (!this.isNamespaceReviewRequested) {
+      console.log('Emitting namespace approval event');
+      this.namespaceApprovalEmitter.emit(true);
+    } else {
+      console.log('Namespace review already requested, ignoring click');
+    }
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

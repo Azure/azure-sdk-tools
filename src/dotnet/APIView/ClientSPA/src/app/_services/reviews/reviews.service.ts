@@ -35,20 +35,20 @@ export class ReviewsService {
     if (approval == "Approved" || approval == "Pending") {
       params = (approval == "Approved") ? params.append('isApproved', true) : params.append('isApproved', false);
     }
-      
+
     params = params.append('sortField', sortField);
     params = params.append('sortOrder', sortOrder);
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     })
-      
+
     return this.http.get<Review[]>(this.baseUrl,
-      { 
+      {
         headers: headers,
         params: params,
-        observe: 'response', 
-        withCredentials: true 
+        observe: 'response',
+        withCredentials: true
       } ).pipe(
           map((response : any) => {
             if (response.body) {
@@ -86,9 +86,9 @@ export class ReviewsService {
     })
 
     return this.http.post<Review>(this.baseUrl, formData,
-      { 
-        observe: 'response', 
-        withCredentials: true 
+      {
+        observe: 'response',
+        withCredentials: true
       }).pipe(
         map((response : any) => {
           if (response.body) {
@@ -104,7 +104,39 @@ export class ReviewsService {
       'Content-Type': 'application/json',
     });
     return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
-    { 
+    {
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+
+  toggleNamespaceApproval(reviewId: string, apiRevisionId: string) : Observable<Review> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}/toggleNamespaceApproval`, {},
+    {
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+  approveNamespace(reviewId: string, notes: string = '') : Observable<Review> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/approveNamespace`, notes,
+    {
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+
+  requestNamespaceReview(reviewId: string, notes: string = '') : Observable<Review> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/requestNamespaceReview`, notes,
+    {
       headers: headers,
       withCredentials: true,
     });
@@ -117,9 +149,9 @@ export class ReviewsService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-   
+
     return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/toggleSubscribe`, {},
-    { 
+    {
       headers: headers,
       params: params,
       withCredentials: true
@@ -134,8 +166,8 @@ export class ReviewsService {
     if (diffApiRevisionId) {
       params = params.append('diffApiRevisionId', diffApiRevisionId);
     }
-    return this.http.get(this.baseUrl + `/${reviewId}/content`, 
-    { 
+    return this.http.get(this.baseUrl + `/${reviewId}/content`,
+    {
       params: params, observe: 'response',
       responseType: 'arraybuffer', withCredentials: true });
   }}

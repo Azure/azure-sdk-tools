@@ -11,9 +11,7 @@ namespace APIViewWeb.LeanModels
         Created = 0,
         Deleted,
         Modified
-    }
-
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    }    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ReviewChangeAction
     {
@@ -22,6 +20,9 @@ namespace APIViewWeb.LeanModels
         ReOpened,
         Approved,
         ApprovalReverted,
+        NamespaceApproved,
+        NamespaceApprovalReverted,
+        NamespaceReviewRequested,
         Deleted,
         UnDeleted
     }

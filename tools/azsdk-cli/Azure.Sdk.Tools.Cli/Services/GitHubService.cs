@@ -16,12 +16,15 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
+        public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
     }
 
     public class GitHubService : IGitHubService
     {
         private GitHubClient gitHubClient;
         private ILogger<GitHubService> logger;
+
+        private const string CreatedByCopilotLabel = "Created by copilot";
 
         public GitHubService(ILogger<GitHubService> _logger)
         {
@@ -140,28 +143,40 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return responseList;
             }
 
-
             // Create the pull request
-            responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
-            var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
-            {
-                Body = body
-            };
-
+            PullRequest? createdPullRequest = null;
             try
             {
-                var createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
+                responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
+                var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
+                {
+                    Body = body
+                };
+
+                createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
                 if (createdPullRequest == null)
+                {
                     responseList.Add($"Failed to create pull request for changes in {headBranch}.");
-                else
-                    responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
-                return responseList;
+                    return responseList;
+                }
+                responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
             }
             catch (Exception ex)
             {
                 responseList.Add($"Failed to create pull request. Error: {ex.Message}");
                 return responseList;
             }
+
+            try
+            {
+                // Add label
+                await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [CreatedByCopilotLabel]);
+            }
+            catch (Exception ex)
+            {
+                responseList.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
+            }
+            return responseList;
         }
 
         public async Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber)
@@ -222,6 +237,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                 checkResults.Add($"Failed to get Github pull request checks, Error: {ex.Message}");
             }
             return checkResults;
+        }
+
+        /// <summary>
+        /// Gets the issue details for a given issue number in a specified repository.
+        /// </summary>
+        /// <param name="repoOwner"></param>
+        /// <param name="repoName"></param>
+        /// <param name="issueNumber"></param>
+        /// <returns></returns>
+        public async Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)
+        {
+            return await gitHubClient.Issue.Get(repoOwner, repoName, issueNumber);
         }
     }
 }

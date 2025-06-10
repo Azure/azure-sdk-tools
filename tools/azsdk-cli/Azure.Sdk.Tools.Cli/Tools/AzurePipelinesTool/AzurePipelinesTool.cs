@@ -39,7 +39,7 @@ public class AzurePipelinesTool(
     private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "Pipeline/Build ID") { IsRequired = true };
     private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log");
     private readonly Option<string> projectOpt = new(["--project", "-p"], "Pipeline project name");
-    private readonly Option<string> aiEndpointOpt = new(["--ai-endpoint"], "The endpoint for the Azure AI Agent service");
+    private readonly Option<string> projectEndpointOpt = new(["--ai-endpoint", "-e"], "The ai foundry project endpoint for the Azure AI Agent service");
     private readonly Option<string> aiModelOpt = new(["--ai-model"], "The model to use for the Azure AI Agent");
 
     public override Command GetCommand()
@@ -47,7 +47,7 @@ public class AzurePipelinesTool(
         Command command = new("azp", "Azure Pipelines Tool");
         var pipelineRunCommand = new Command(getPipelineRunCommandName, "Get details for a pipeline run") { buildIdOpt, projectOpt };
         var analyzePipelineCommand = new Command(analyzePipelineCommandName, "Analyze a pipeline run") {
-            buildIdOpt, projectOpt, logIdOpt, aiEndpointOpt, aiModelOpt
+            buildIdOpt, projectOpt, logIdOpt, projectEndpointOpt, aiModelOpt
         };
 
         // Do not add a handler for the 'azp' command, that way System.CommandLine can fall back to the
@@ -79,22 +79,22 @@ public class AzurePipelinesTool(
         else if (cmd == analyzePipelineCommandName)
         {
             var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
-            var aiEndpoint = ctx.ParseResult.GetValueForOption(aiEndpointOpt);
+            var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
             var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
 
             logger.LogInformation("Analyzing pipeline {buildId}...", buildId);
-            azureAgentService = azureAgentServiceFactory.Create(aiModel, aiEndpoint);
+            azureAgentService = azureAgentServiceFactory.Create(projectEndpoint, aiModel);
 
             if (logId != 0)
             {
-                var result = await AnalyzePipelineFailureLog(project, buildId, logId);
+                var result = await AnalyzePipelineFailureLog(project, buildId, [logId], ct);
                 ctx.ExitCode = ExitCode;
                 usage?.LogCost();
                 output.Output(result);
             }
             else
             {
-                var result = await AnalyzePipeline(project, buildId);
+                var result = await AnalyzePipeline(project, buildId, ct);
                 ctx.ExitCode = ExitCode;
                 usage?.LogCost();
                 output.Output(result);
@@ -142,12 +142,12 @@ public class AzurePipelinesTool(
     }
 
     [McpServerTool, Description("Gets failures from tasks (non-test failures) in a pipeline run")]
-    public async Task<List<TimelineRecord>?> GetPipelineTaskFailures(string project, int buildId)
+    public async Task<List<TimelineRecord>?> GetPipelineTaskFailures(string project, int buildId, CancellationToken ct = default)
     {
         try
         {
             logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
-            var timeline = await buildClient.GetBuildTimelineAsync(project, buildId);
+            var timeline = await buildClient.GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
             var failedNonTests = timeline.Records.Where(
                                     r => r.Result == TaskResult.Failed
                                     && r.RecordType == "Task"
@@ -169,17 +169,17 @@ public class AzurePipelinesTool(
         Include relevant data like test name and environment, error type, error messages, functions and error lines.
         Provide suggested next steps.
     ")]
-    public async Task<List<FailedTestRunResponse>> GetPipelineFailedTestResults(string project, int buildId)
+    public async Task<List<FailedTestRunResponse>> GetPipelineFailedTestResults(string project, int buildId, CancellationToken ct = default)
     {
         try
         {
             logger.LogDebug("Getting pipeline failed test results for {project} {buildId}", project, buildId);
             var results = new List<ShallowTestCaseResult>();
-            var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId);
+            var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId, cancellationToken: ct);
             results.AddRange(testRuns);
             while (testRuns.ContinuationToken != null)
             {
-                var nextResults = await testClient.GetTestResultsByPipelineAsync(project, buildId, continuationToken: testRuns.ContinuationToken);
+                var nextResults = await testClient.GetTestResultsByPipelineAsync(project, buildId, continuationToken: testRuns.ContinuationToken, cancellationToken: ct);
                 results.AddRange(nextResults);
                 testRuns.ContinuationToken = nextResults.ContinuationToken;
             }
@@ -198,7 +198,10 @@ public class AzurePipelinesTool(
             foreach (var runId in failedRuns)
             {
                 var testCases = await testClient.GetTestResultsAsync(
-                                project, runId, outcomes: [TestOutcome.Failed, TestOutcome.Aborted]);
+                                    project,
+                                    runId,
+                                    outcomes: [TestOutcome.Failed, TestOutcome.Aborted],
+                                    cancellationToken: ct);
 
                 foreach (var tc in testCases)
                 {
@@ -216,7 +219,7 @@ public class AzurePipelinesTool(
 
             return failedRunData;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.LogError("Failed to get pipeline failed test results {buildId}: {exception}", buildId, ex.Message);
             SetFailure();
@@ -230,25 +233,34 @@ public class AzurePipelinesTool(
         }
     }
 
-    [McpServerTool, Description("Analyze and diagnose the failed test results from a pipeline")]
-    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLog(string? project, int buildId, int logId)
+    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLog(string? project, int buildId, List<int> logIds, CancellationToken ct)
     {
         try
         {
             project ??= "public";
+            var session = $"{project}-{buildId}";
+            List<string> logs = [];
 
-            logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
+            foreach (var logId in logIds)
+            {
+                logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
 
-            var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId);
-            var logText = string.Join("\n", logContent);
-            var logBytes = System.Text.Encoding.UTF8.GetBytes(logText);
-            var session = $"{project}-{buildId}-{logId}";
-            var filename = $"{session}.txt";
+                var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId, cancellationToken: ct);
+                var logText = string.Join("\n", logContent);
+                var tempPath = Path.GetTempFileName() + ".txt";
+                logger.LogDebug("Writing log id {logId} to temporary file {tempPath}", logId, tempPath);
+                await File.WriteAllTextAsync(tempPath, logText, ct);
+                var filename = $"{session}-{logId}.txt";
+                logs.Add(tempPath);
+            }
 
-            logger.LogDebug("Analyzing pipeline failure log {filename} with AI agent", filename);
+            var (result, _usage) = await azureAgentService.QueryFiles(logs, session, "Why did this pipeline fail?", ct);
 
-            using var stream = new MemoryStream(logBytes);
-            var (result, _usage) = await azureAgentService.QueryFileAsync(stream, filename, session, "Why did this pipeline fail?");
+            foreach (var log in logs)
+            {
+                File.Delete(log);
+            }
+
             if (usage != null)
             {
                 usage += _usage;
@@ -284,17 +296,17 @@ public class AzurePipelinesTool(
         }
         catch (Exception ex)
         {
-            logger.LogError("Failed to analyze pipeline failure log {filename}: {exception}", logId, ex.Message);
+            logger.LogError("Failed to analyze pipeline {buildId}: {error}", buildId, ex.Message);
             SetFailure();
             return new LogAnalysisResponse()
             {
-                ResponseError = $"Failed to analyze pipeline failure log {logId}: {ex.Message}",
+                ResponseError = $"Failed to analyze pipeline {buildId}: {ex.Message}",
             };
         }
     }
 
     [McpServerTool, Description("Analyze azure pipeline for failures")]
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(string? project, int buildId)
+    public async Task<AnalyzePipelineResponse> AnalyzePipeline(string? project, int buildId, CancellationToken ct)
     {
         try
         {
@@ -308,15 +320,14 @@ public class AzurePipelinesTool(
 
             var taskAnalysis = new List<LogAnalysisResponse>();
 
-            foreach (var task in failedTasks ?? [])
-            {
-                if (task.Log == null)
-                {
-                    continue;
-                }
-                var analysis = await AnalyzePipelineFailureLog(project, buildId, task.Log.Id);
-                taskAnalysis.Add(analysis);
-            }
+            List<int> logIds = failedTasks?
+                .Where(t => t.Log != null)
+                .Select(t => t.Log.Id)
+                .Distinct()
+                .ToList() ?? [];
+
+            var analysis = await AnalyzePipelineFailureLog(project, buildId, logIds, ct);
+            taskAnalysis.Add(analysis);
 
             return new AnalyzePipelineResponse()
             {

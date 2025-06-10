@@ -1,19 +1,12 @@
 from src._apiview_reviewer import ApiViewReview
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-import os
 import json
 import logging
+import os
 
 app = FastAPI()
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("app.log"), logging.StreamHandler()],
-)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")  # Use Uvicorn's logger
 
 supported_languages = [
     "android",
@@ -35,6 +28,7 @@ error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 @app.post("/{language}")
 async def api_reviewer(language: str, request: Request):
     logger.info(f"Received request for language: {language}")
+    logging.getLogger("uvicorn.error").debug(f"Request body: {await request.body()}")
 
     if language not in supported_languages:
         logger.warning(f"Unsupported language: {language}")
@@ -47,6 +41,7 @@ async def api_reviewer(language: str, request: Request):
         target_id = data.get("target_id", None)
         base_apiview = data.get("base", None)
         outline = data.get("outline", None)
+        comments = data.get("comments", None)
 
         if not target_apiview:
             logger.warning("No API content provided in the request")
@@ -54,7 +49,9 @@ async def api_reviewer(language: str, request: Request):
 
         logger.info(f"Processing {language} API review")
 
-        reviewer = ApiViewReview(language=language, target=target_apiview, base=base_apiview, outline=outline)
+        reviewer = ApiViewReview(
+            language=language, target=target_apiview, base=base_apiview, outline=outline, comments=comments
+        )
         result = reviewer.run()
         reviewer.close()
 

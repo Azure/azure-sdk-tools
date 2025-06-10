@@ -29,6 +29,7 @@
                                     optionLabel="label"
                                     placeholder="Select languages you want to be able to approve."
                                     [showClear]="true"
+                                    (onClear)="onProfileChange($event)"
                                     [maxSelectedLabels]="12"
                                     selectedItemsLabel="{0} items selected"
                                     [style]="{'width':'100%'}">

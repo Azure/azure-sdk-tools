@@ -9,6 +9,7 @@ using ModelContextProtocol.Server;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
+using System.Text;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -26,11 +27,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly static string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
         private readonly static string DEFAULT_BRANCH = "main";
 
+        public readonly static HashSet<string> SUPPORTED_LANGUAGES = new()
+        {
+            "python",
+            ".net",
+            "javascript",
+            "java",
+            "go"
+        };
+
         // Commands
         private const string checkApiReadinessCommandName = "check-api-readiness";
         private const string generateSdkCommandName = "generate-sdk";
         private const string getPipelineStatusCommandName = "create-pr";
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
+        private const string linkSdkPrCommandName = "link-sdk-pr";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
@@ -40,18 +51,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> languageOpt = new(["--language"], "SDK language, Options[Python, .NET, JavaScript, Java, go]") { IsRequired = true };
         private readonly Option<int> workItemIdOpt = new(["--workitem-id"], "SDK release plan work item id") { IsRequired = true };
         private readonly Option<int> pipelineRunIdOpt = new(["--pipeline-run"], "SDK generation pipeline run id") { IsRequired = true };
+        private readonly Option<string> urlOpt = new(["--url"], "Pull request url") { IsRequired = true };
+        private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
+        private readonly Option<int> workItemOptionalIdOpt = new(["--workitem-id"], "Release plan work item id") { IsRequired = false };
+
 
         // disabling analyzer warning for MCP001 because the called function is in an entire try/catch block.
-        #pragma warning disable MCP001
+#pragma warning disable MCP001
         [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
-        public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullrequestNumber = 0)
-        #pragma warning restore MCP001
+        public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber = 0)
+#pragma warning restore MCP001
         {
-            var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullrequestNumber);
+            var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullRequestNumber);
             return output.Format(response);
         }
 
-        private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullrequestNumber)
+        private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullRequestNumber)
         {
             var response = new GenericResponse()
             {
@@ -60,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                if (string.IsNullOrEmpty(typeSpecProjectRoot) && pullrequestNumber == 0)
+                if (string.IsNullOrEmpty(typeSpecProjectRoot) && pullRequestNumber == 0)
                 {
                     response.Details.Add("Invalid value for both TypeSpec project root and pull request number. Provide atleast the TypeSpec project root path for modified project or provide a pull request number.");
                     return response;
@@ -95,19 +110,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Get pull request details
-                Octokit.PullRequest? pullRequest = pullrequestNumber != 0 ? await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber) :
+                Octokit.PullRequest? pullRequest = pullRequestNumber != 0 ? await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber) :
                     await githubService.GetPullRequestForBranchAsync(REPO_OWNER, PUBLIC_SPECS_REPO, branchName);
                 if (pullRequest == null)
                 {
                     response.Details.Add($"Pull request is not found in {REPO_OWNER}/{PUBLIC_SPECS_REPO} for your TypeSpec changes.");
-                    if (pullrequestNumber == 0)
+                    if (pullRequestNumber == 0)
                         response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
                     else
-                        response.Details.Add($"Pull request {pullrequestNumber} is not valid. Please provide a valid pull requet number to check the status.");
+                        response.Details.Add($"Pull request {pullRequestNumber} is not valid. Please provide a valid pull request number to check the status.");
                     return response;
                 }
 
-                // Pull request is not targetted to main branch
+                // Pull request is not targeted to main branch
                 if (pullRequest.Base?.Ref?.Equals(DEFAULT_BRANCH) == false)
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} merges changes to '{pullRequest.Base?.Ref}' branch. SDK can be generated only from a pull request with {DEFAULT_BRANCH} branch as target. Create a pull request for your changes with '{DEFAULT_BRANCH}' branch as target.");
@@ -152,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
 
         [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
-        public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullrequestNumber, int workItemId)
+        public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber, int workItemId)
         {
             try
             {
@@ -188,7 +203,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Verify if spec is read to generate SDK
-                var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullrequestNumber);
+                var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullRequestNumber);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);
@@ -196,10 +211,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Get Pull request details and check if pr is merged or not. if merged then run the pipeline against the target branch or against pr merge ref
-                var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullrequestNumber);
+                var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber);
                 if (pullRequest == null)
                 {
-                    response.Details.Add($"Failed to get pull request details for {pullrequestNumber} in {REPO_OWNER}/{PUBLIC_SPECS_REPO}");
+                    response.Details.Add($"Failed to get pull request details for {pullRequestNumber} in {REPO_OWNER}/{PUBLIC_SPECS_REPO}");
                     response.Status = "Failed";
                 }
 
@@ -209,8 +224,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return output.Format(response);
                 }
 
+                // Spec readiness passed. So mark the spec status as approved if release plan exists.
+                if (workItemId != 0)
+                {
+                    await devopsService.UpdateApiSpecStatus(workItemId, "Approved");
+                }
+
                 string typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
-                string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullrequestNumber}/merge";
+                string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
                 var pipelineRun = await devopsService.RunSDKGenerationPipeline(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId);
                 response = new GenericResponse()
                 {
@@ -264,12 +285,37 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <param name="workItemId">Work item ID for the release plan</param>
         /// <returns></returns>
-        [McpServerTool, Description("Get generated SDK pull request link from SDK generation pipeline run, Build ID of pipeline run is required to query pull request link.")]
-        public async Task<string> GetSDKPullRequestDetails(string language, int buildId, int workItemId)
+        [McpServerTool, Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
+        public async Task<string> GetSDKPullRequestDetails(string language, int workItemId, int buildId = 0)
         {
             try
             {
-                //Todo: If buildId is given as 0 then we should find all build triggered by current user and check for the latest build triggered for the language.
+                if (!IsValidLanguage(language))
+                {
+                    return $"Unsupported language to get pull request details. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";
+                }
+
+                StringBuilder sb = new ();
+
+                // Get SDK details from work item
+                if (buildId == 0)
+                {
+                    sb.AppendLine("Build Id is not available. Checking for SDK pull request details in release plan work item.");
+                    var releasePlan = await devopsService.GetReleasePlan(workItemId);
+                    var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
+                    if (sdkInfo != null && !string.IsNullOrEmpty(sdkInfo.SdkPullRequestUrl))
+                    {
+                        sb.AppendLine($"SDK pull request details for {language}: {sdkInfo.SdkPullRequestUrl}");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"No SDK pull request details found for {language} in release plan work item.");
+                    }
+
+                    return sb.ToString();
+                }
+
+                // Find SDK details from build pipeline run
                 var pipeline = await devopsService.GetPipelineRun(buildId);
                 if (pipeline == null)
                 {
@@ -296,6 +342,68 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        public static bool IsValidLanguage(string language)
+        {
+            return SUPPORTED_LANGUAGES.Contains(language.ToLower());
+        }
+
+        private static string GetRepoName(string language)
+        {
+            return language.ToLower() switch
+            {
+                ".net" => "azure-sdk-for-net",
+                "javascript" => "azure-sdk-for-js",
+                _ => $"azure-sdk-for-{language.ToLower()}"
+            };
+        }
+
+        [McpServerTool, Description("Link SDK pull request to release plan work item")]
+        public async Task<string> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0)
+        {
+            try
+            {
+                // work item Id or release plan Id is required to link SDK pull request to release plan
+                if (workItemId == 0 && releasePlanId == 0)
+                {
+                    return "Either work item ID or release plan ID is required to link SDK pull request to release plan.";
+                }
+
+                // Verify language and get repo name
+                if (!IsValidLanguage(language))
+                {
+                    return $"Unsupported language to link pull request. Supported languages: {SUPPORTED_LANGUAGES}";
+                }
+                // Verify SDK pull request URL
+                if (string.IsNullOrEmpty(pullRequestUrl))
+                {
+                    return "SDK pull request URL is required to link it to release plan.";
+                }
+
+                // Parse just the pull request link from input
+                var repoName = GetRepoName(language);
+                var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pullRequestUrl);
+                if (!parsedLink.Contains(repoName))
+                {
+                    return $"Invalid pull request link. Provide a pull request link in SDK repo {repoName}";
+                }
+                
+                // Add PR to release plan
+                var releasePlan = workItemId == 0 ? await devopsService.GetReleasePlan(releasePlanId) : await devopsService.GetReleasePlanForWorkItem(workItemId);
+                if (releasePlan == null || releasePlan.WorkItemId == 0)
+                {
+                    return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";
+                }
+
+                await devopsService.AddSdkInfoInReleasePlan(releasePlan.WorkItemId, language, "", parsedLink);
+                return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}";
+            }
+            catch(Exception ex)
+            {
+                SetFailure();
+                return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";
+            }
+        }
+
         public override Command GetCommand()
         {
             var command = new Command("spec-workflow");
@@ -304,7 +412,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 new Command(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK") { typeSpecProjectPathOpt, pullRequestNumberOpt },
                 new Command(generateSdkCommandName, "Generate SDK for a TypeSpec project") { typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt },
                 new Command(getPipelineStatusCommandName, "Get SDK generation pipeline run status") { pipelineRunIdOpt },
-                new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt }
+                new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt },
+                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt }
             };
 
             foreach (var subCommand in subCommands)
@@ -339,8 +448,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     output.Output($"SDK generation pipeline run status: {pipelineRunStatus}");
                     return;
                 case getSdkPullRequestCommandName:
-                    var sdkPullRequestDetails = await GetSDKPullRequestDetails(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(pipelineRunIdOpt), commandParser.GetValueForOption(workItemIdOpt));
+                    var sdkPullRequestDetails = await GetSDKPullRequestDetails(commandParser.GetValueForOption(languageOpt), workItemId: commandParser.GetValueForOption(workItemIdOpt), buildId: commandParser.GetValueForOption(pipelineRunIdOpt));
                     output.Output($"SDK pull request details: {sdkPullRequestDetails}");
+                    return;
+                case linkSdkPrCommandName:
+                    var linkStatus = await LinkSdkPullRequestToReleasePlan(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(urlOpt), workItemId: commandParser.GetValueForOption(workItemOptionalIdOpt), releasePlanId: commandParser.GetValueForOption(releasePlanIdOpt));
+                    output.Output($"Link status: {linkStatus}");
                     return;
                 default:
                     SetFailure();

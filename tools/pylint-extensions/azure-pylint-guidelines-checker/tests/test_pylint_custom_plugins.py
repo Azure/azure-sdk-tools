@@ -3078,6 +3078,11 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.visit_functiondef(node)
+    def test_docstring_noreturn(self, setup):
+        # Should not raise docstring-missing-return or docstring-missing-rtype for NoReturn
+        node = setup.body[13]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
 
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):

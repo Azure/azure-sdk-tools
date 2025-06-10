@@ -26,12 +26,15 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<UserProfileModel>> GetUserPreference([FromQuery]string userName = null)
         {
             userName = userName ?? User.GetGitHubLogin();
-            var userProfile = await _userProfileCache.GetUserProfileAsync(userName);
-            if (userProfile == default)
+            try 
+            {
+                var userProfile = await _userProfileCache.GetUserProfileAsync(userName, createIfNotExist: false);
+                return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
+            }
+            catch
             {
                 return new LeanJsonResult(null, StatusCodes.Status404NotFound);
             }
-            return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
         }
 
         [HttpPut("preference", Name = "UpdateUserPreference")]

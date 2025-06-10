@@ -6,6 +6,12 @@ import logging
 import os
 from fastapi import FastAPI
 from src.agent._api import router as agent_router
+from fastapi import APIRouter
+from pydantic import BaseModel
+from src.agent._agent import get_main_agent
+import asyncio
+from semantic_kernel.agents import AzureAIAgentThread
+import uuid
 
 app = FastAPI()
 app.include_router(agent_router)
@@ -27,6 +33,18 @@ supported_languages = [
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
+
+
+class AgentChatRequest(BaseModel):
+    user_input: str
+    thread_id: str = None
+    messages: list = None  # Optional: for multi-turn
+
+
+class AgentChatResponse(BaseModel):
+    response: str
+    thread_id: str
+    messages: list
 
 
 @app.post("/{language}")
@@ -76,3 +94,19 @@ async def api_reviewer(language: str, request: Request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/agent/chat", response_model=AgentChatResponse)
+async def agent_chat_thread_endpoint(request: AgentChatRequest):
+    # Load agent instructions from prompty file
+    prompty_path = os.path.join(os.path.dirname(__file__), "prompts", "main_agent.prompty")
+    with open(prompty_path, "r", encoding="utf-8") as f:
+        agent_instructions = f.read()
+    user_input = request.user_input
+    thread_id = request.thread_id or str(uuid.uuid4())
+    messages = request.messages or []
+    messages.append(user_input)
+    async with get_main_agent() as agent:
+        thread = AzureAIAgentThread(client=agent.client, id=thread_id)
+        response = await agent.get_response(messages=messages, thread=thread)
+    return AgentChatResponse(response=str(response), thread_id=thread_id, messages=messages)

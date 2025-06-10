@@ -44,10 +44,11 @@ public class PackageAnalyzer
             };
             
             int skip = 0;
-            int take = 100;
+            int take = 20; // Limit to 20 packages for initial testing
             bool hasMore = true;
+            int maxResults = 100; // Maximum total results
             
-            while (hasMore)
+            while (hasMore && azurePackages.Count < maxResults)
             {
                 var searchResults = await searchResource.SearchAsync(
                     "Azure",

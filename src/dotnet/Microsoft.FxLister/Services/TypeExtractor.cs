@@ -78,11 +78,18 @@ public class TypeExtractor
                         token: CancellationToken.None);
                     
                     if (downloadResult?.PackageStream == null)
+                    {
+                        Console.WriteLine($"  Failed to download package {packageId}");
                         continue;
+                    }
+                    
+                    Console.WriteLine($"  Successfully downloaded package {packageId}");
                     
                     // Extract types from the package
                     using var packageReader = new PackageArchiveReader(downloadResult.PackageStream);
                     var types = ExtractTypesFromPackage(packageReader);
+                    
+                    Console.WriteLine($"  Found {types.Count} types in {packageId}");
                     
                     foreach (var type in types)
                     {
@@ -121,6 +128,8 @@ public class TypeExtractor
         {
             // Get lib files that are .NET assemblies
             var libItems = packageReader.GetLibItems();
+            Console.WriteLine($"    Found {libItems.Count()} lib item groups");
+            
             var targetFramework = NuGetFramework.ParseFolder("net8.0") ?? 
                                 NuGetFramework.ParseFolder("netstandard2.1") ?? 
                                 NuGetFramework.ParseFolder("netstandard2.0");
@@ -130,10 +139,16 @@ public class TypeExtractor
                 .OrderByDescending(lib => lib.TargetFramework.Version)
                 .FirstOrDefault();
             
+            Console.WriteLine($"    Compatible lib items: {(compatibleLibItems != null ? "found" : "none")}");
+            
             if (compatibleLibItems != null)
             {
-                foreach (var file in compatibleLibItems.Items.Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+                var dlls = compatibleLibItems.Items.Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToList();
+                Console.WriteLine($"    Found {dlls.Count} DLL files");
+                
+                foreach (var file in dlls)
                 {
+                    Console.WriteLine($"    Processing DLL: {file}");
                     try
                     {
                         using var stream = packageReader.GetStream(file);
@@ -142,11 +157,12 @@ public class TypeExtractor
                         memoryStream.Position = 0;
                         
                         var assemblyTypes = ExtractTypesFromAssembly(memoryStream);
+                        Console.WriteLine($"      Found {assemblyTypes.Count} types in {file}");
                         types.AddRange(assemblyTypes);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Skip assemblies that can't be read
+                        Console.WriteLine($"      Failed to process {file}: {ex.Message}");
                     }
                 }
             }

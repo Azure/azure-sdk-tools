@@ -23,8 +23,9 @@ public static class TypesCommand
         {
             try
             {
+                // Use real implementations
                 var packageAnalyzer = new PackageAnalyzer();
-                var typeExtractor = new TypeExtractor();
+                var typeExtractor = new RealTypeExtractor();
                 
                 Console.WriteLine("Discovering Azure NuGet packages...");
                 var packages = await packageAnalyzer.DiscoverAzurePackagesAsync();

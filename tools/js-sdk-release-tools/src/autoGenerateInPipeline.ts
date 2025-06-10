@@ -59,6 +59,7 @@ async function automationGenerateInPipeline(
                 });
                 break;
             case SDKType.RestLevelClient:
+                // RLC + swagger is not supported.
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),

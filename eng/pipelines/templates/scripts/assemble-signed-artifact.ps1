@@ -84,6 +84,8 @@ try {
 
    if ($Rid.StartsWith("win")) {
       $unzippedArtifactName = (Split-Path $SignedFileDirectory -Leaf).ToString()
+
+      Write-Host "Unzipped artifact name: $unzippedArtifactName"
       $summaryDirectory = Join-Path -Path $BinariesDirectory -ChildPath (Join-Path -Path "CodeSignSummaries" -ChildPath $unzippedArtifactName)
       $destinationDirectory = Join-Path -Path $BinariesDirectory -ChildPath $unzippedArtifactName
 

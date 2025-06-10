@@ -34,14 +34,33 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
-      - script: pwsh $(Build.BinariesDirectory)/net8.0/playwright.ps1 install
-        displayName: Install Playwright Browsers
+      - task: DotNetCoreCLI@2
+        displayName: Install Playwright CLI
+        inputs:
+          command: custom
+          custom: 'tool '
+          arguments: install Microsoft.Playwright.CLI
+    
+      - task: DotNetCoreCLI@2
+        displayName: Build all projects and libraries
+        inputs:
+          command: 'build'
+          projects: 'content-validation.sln'
+
+      - task: DotNetCoreCLI@2
+        displayName: Run Playwright Install
+        inputs:
+          command: custom
+          custom: 'tool '
+          arguments: run playwright install
+
       - task: CopyFiles@2
         displayName: Copy appsettings.json to output directory
         inputs:
           SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation/ContentValidation.Test
           Contents: 'appsettings.json'
           TargetFolder: $(System.DefaultWorkingDirectory)/artifacts/bin
+
       - task: CopyFiles@2
         displayName: Copy ignore.json to output directory
         inputs:

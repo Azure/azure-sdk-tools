@@ -1,7 +1,7 @@
 parameters:
   - name: PackageSpecifiers
-    type: object
-    default: []
+    type: string
+    default: <package1>==1.0.0,<package2>==1.0.0
   - name: PythonVersionOverride
     type: string
     default: "3.9"

@@ -1,8 +1,19 @@
 from enum import Enum
 from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Optional, Dict, Set, Union
+from typing import List, Optional, Dict, Set
 
 from ._sectioned_document import Section
+
+
+class ExistingComment(BaseModel):
+    """
+    Represents an existing comment in the APIView.
+    This is used to prevent copilot from generating the same comment again.
+    """
+
+    line_no: int = Field(description="Line number of the existing comment.")
+    author: str = Field(description="The author of the existing comment.")
+    comment: str = Field(description="The contents of the existing comment.")
 
 
 class Comment(BaseModel):

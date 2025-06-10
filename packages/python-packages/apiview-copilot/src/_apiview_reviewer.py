@@ -12,7 +12,7 @@ from typing import Optional, List
 import yaml
 
 from ._diff import create_diff_with_line_numbers
-from ._models import ReviewResult, Comment
+from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
@@ -94,6 +94,7 @@ class ApiViewReview:
         *,
         language: str,
         outline: Optional[str] = None,
+        comments: Optional[list] = None,
         mode: str = DEFAULT_CONTEXT_MODE,
     ):
         self.target = self._unescape(target)
@@ -109,6 +110,7 @@ class ApiViewReview:
         self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
         self.summary = None
         self.outline = outline
+        self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
         self.executor = concurrent.futures.ThreadPoolExecutor()
 
     def __del__(self):
@@ -416,10 +418,8 @@ class ApiViewReview:
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
-        filter_prompt_file = "final_comment_filter.prompty"
+        filter_prompt_file = "comment_filter.prompty"
         filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
-
-        print(f"Filtering comments...")
 
         # Submit each comment to the executor for parallel processing
         futures = {}
@@ -434,9 +434,10 @@ class ApiViewReview:
                 },
             )
 
-        # Collect results as they complete
+        # Collect results as they complete, with % complete logging
         keep_comments = []
         discard_comments = []
+        total = len(futures)
         for idx, future in futures.items():
             try:
                 response = future.result()
@@ -447,10 +448,68 @@ class ApiViewReview:
                     discard_comments.append(response_json)
             except Exception as e:
                 logger.error(f"Error filtering comment at index {idx}: {str(e)}")
+            # Log % complete
+            percent = int(((idx + 1) / total) * 100) if total else 100
+            print(f"Filtering comments... {percent}% complete", end="\r", flush=True)
+        print()  # Ensure the progress bar is visible before the summary
 
         # Update the results with the filtered comments
         print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
         self.results.comments = [Comment(**comment) for comment in keep_comments]
+
+    def _filter_preexisting_comments(self):
+        """
+        Check if there are any preexisting comments on the same line as new proposed comments. If so,
+        resolve them with the LLM to either discard or update the proposed comment.
+        """
+        comments_to_remove = []
+        # Prepare tasks for comments that have preexisting comments
+        tasks = []
+        indices = []
+        for idx, comment in enumerate(self.results.comments):
+            existing_comments = [e for e in self.existing_comments if e.line_no == comment.line_no]
+            if not existing_comments:
+                continue
+            inputs = {
+                "comment": comment.model_dump(),
+                "existing": [e.model_dump() for e in existing_comments],
+                "language": self._get_language_pretty_name(),
+            }
+            prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
+            tasks.append((idx, comment, prompt_path, inputs))
+            indices.append(idx)
+
+        total = len(tasks)
+        futures = {}
+        for i, (idx, comment, prompt_path, inputs) in enumerate(tasks):
+            futures[idx] = self.executor.submit(self._run_prompt, prompt_path, inputs)
+
+        for i, (idx, comment, prompt_path, inputs) in enumerate(tasks):
+            try:
+                response = futures[idx].result()
+                response_json = json.loads(response)
+                if response_json.get("status") == "KEEP":
+                    comment.comment = response_json.get("comment")
+                elif response_json.get("status") == "DISCARD":
+                    comments_to_remove.append(idx)
+            except Exception as e:
+                logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
+                logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
+            percent = int(((i + 1) / total) * 100) if total else 100
+            print(f"Filtering preexisting comments... {percent}% complete", end="\r", flush=True)
+        print()  # Ensure the progress bar is visible before the summary
+
+        # remove comments that were marked for removal
+        if not comments_to_remove:
+            return
+        initial_comment_count = len(self.results.comments)
+        self.results.comments = [
+            comment for idx, comment in enumerate(self.results.comments) if idx not in comments_to_remove
+        ]
+        final_comment_count = len(self.results.comments)
+        print(
+            f"Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
+        )
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
@@ -470,7 +529,7 @@ class ApiViewReview:
 
         def execute_prompt() -> str:
             if in_ci():
-                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
+                configuration = {"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
             else:
                 configuration = {}
 
@@ -535,6 +594,13 @@ class ApiViewReview:
             # Add the summary to the results
             if self.summary:
                 self.results.comments.append(self.summary)
+
+            # Track time for _filter_preexisting_comments
+            preexisting_start_time = time()
+            self._filter_preexisting_comments()
+            preexisting_end_time = time()
+            print(f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds.")
+
             results = self.results.sorted()
 
             overall_end_time = time()

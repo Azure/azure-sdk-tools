@@ -17,17 +17,17 @@ import {
   DiffLocation,
   DiffPair,
   DiffReasons,
-  FindMappingConstructorLikeDeclaration,
+  FindMappingCallSignatureLikeDeclaration,
   AssignDirection,
   NameNode,
-  ConstructorLikeDeclaration,
+  CallSignatureLikeDeclaration,
 } from '../common/types';
 import {
   getCallableEntityParametersFromSymbol,
   isMethodOrArrowFunction,
   isPropertyArrowFunction,
   isPropertyMethod,
-  isSameConstructorLikeDeclaration,
+  isSameCallSignatureLikeDeclaration,
 } from '../../utils/ast-utils';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
@@ -36,9 +36,15 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   // return it, it will be used to compare later
   // Otherwise, it's a non-funtion/method/signature node, return its type node
   const getTypeNode = (node: Node): TypeNode => {
+    const symbol = node.getSymbol();
+    const isTyped = Node.isTyped(node);
+    if (symbol && isPropertyArrowFunction(symbol)) {
+      if (isTyped) return node.getTypeNodeOrThrow().asKindOrThrow(SyntaxKind.FunctionType).getReturnTypeNodeOrThrow();
+      else throw new Error(`Should not reach here: "${node.getText()}"`);
+    }
     // Note: if the node is a constructor, the return type is the instance type
     if (Node.isReturnTyped(node)) return node.getReturnTypeNodeOrThrow();
-    if (Node.isTyped(node)) return node.getTypeNodeOrThrow();
+    if (isTyped) return node.getTypeNodeOrThrow();
     throw new Error(`Unsupported ${node.getKindName()} node: "${node.getText()}"`);
   };
   let breakingReasons = DiffReasons.None;
@@ -78,20 +84,20 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   return breakingReasons;
 }
 
-const findMappingConstructorLikeDeclaration: FindMappingConstructorLikeDeclaration<ConstructorLikeDeclaration> = (
-  target: ConstructorLikeDeclaration,
-  declarations: ConstructorLikeDeclaration[]
-) => {
-  const declaration = declarations.find((s) => isSameConstructorLikeDeclaration(target, s, false));
+// TODO: fix target signature map to the same signatures
+const defaultFindMappingCallSignatureLikeDeclaration: FindMappingCallSignatureLikeDeclaration<
+  CallSignatureLikeDeclaration
+> = (target: CallSignatureLikeDeclaration, declarations: CallSignatureLikeDeclaration[]) => {
+  const declaration = declarations.find((s) => isSameCallSignatureLikeDeclaration(target, s));
   if (!declaration) return undefined;
   const id = declaration.getText();
   return { id, declaration };
 };
 
-function findConstructorLikeDeclarationBreakingChanges<T extends ConstructorLikeDeclaration>(
+function findCallSignatureLikeDeclarationBreakingChanges<T extends CallSignatureLikeDeclaration>(
   sourceDeclarations: T[],
   targetDeclarations: T[],
-  findMappingConstructorLikeDeclaration: FindMappingConstructorLikeDeclaration<T>
+  findMappingConstructorLikeDeclaration: FindMappingCallSignatureLikeDeclaration<T>
 ): DiffPair[] {
   const pairs = targetDeclarations.reduce((result, targetDeclaration) => {
     const sourceContext = findMappingConstructorLikeDeclaration(targetDeclaration, sourceDeclarations);
@@ -159,7 +165,6 @@ function findClassicPropertyBreakingChanges(sourceProperty: Symbol, targetProper
   );
 }
 
-// NOTE: this function compares methods and arrow functions in interface
 function findPropertyBreakingChanges(sourceProperties: Symbol[], targetProperties: Symbol[]): DiffPair[] {
   const sourcePropMap = sourceProperties.reduce((map, p) => {
     map.set(p.getName(), p);
@@ -303,12 +308,20 @@ function findFunctionPropertyBreakingChangeDetails(sourceMethod: Symbol, targetM
   return [...returnTypePairs, ...parameterPairs];
 }
 
+function updateDiffPairForNewFeature(p: DiffPair): DiffPair {
+  p.reasons = DiffReasons.Added;
+  const temp = p.source;
+  p.source = p.target;
+  p.target = temp;
+  return p;
+}
+
 // TODO: support readonly properties
 // TODO: add generic test case: parameter with generic, return type with generic
-export function findInterfaceBreakingChanges(
+export function findInterfaceDifferences(
   source: InterfaceDeclaration,
   target: InterfaceDeclaration,
-  findMappingCallSignature: FindMappingConstructorLikeDeclaration<CallSignatureDeclaration>
+  findMappingCallSignature = defaultFindMappingCallSignatureLikeDeclaration
 ): DiffPair[] {
   const getDeclaration = (s: Signature): CallSignatureDeclaration =>
     s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
@@ -321,33 +334,58 @@ export function findInterfaceBreakingChanges(
     .getType()
     .getCallSignatures()
     .map((c) => getDeclaration(c));
-  const callSignatureBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
+  const callSignatureBreakingChanges = findCallSignatureLikeDeclarationBreakingChanges(
     sourceSignatures,
     targetSignatures,
     findMappingCallSignature
   );
+  const callSignatureNewFeatures = findCallSignatureLikeDeclarationBreakingChanges(
+    targetSignatures,
+    sourceSignatures,
+    findMappingCallSignature
+  )
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map(updateDiffPairForNewFeature);
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
 
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+  const propertyNewFeatures = findPropertyBreakingChanges(targetProperties, sourceProperties)
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map(updateDiffPairForNewFeature);
 
-  return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
+  return [
+    ...callSignatureBreakingChanges,
+    ...callSignatureNewFeatures,
+    ...propertyBreakingChanges,
+    ...propertyNewFeatures,
+  ];
 }
 
 // TODO: detect static properties and methods
-export function findClassBreakingChanges(source: ClassDeclaration, target: ClassDeclaration) {
+export function findClassDifferences(source: ClassDeclaration, target: ClassDeclaration) {
   // find constructor breaking changes
-  const constructorBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
+  const constructorBreakingChanges = findCallSignatureLikeDeclarationBreakingChanges(
     source.getConstructors(),
     target.getConstructors(),
-    findMappingConstructorLikeDeclaration
+    defaultFindMappingCallSignatureLikeDeclaration
   );
+  const constructorNewFeatures = findCallSignatureLikeDeclarationBreakingChanges(
+    target.getConstructors(),
+    source.getConstructors(),
+    defaultFindMappingCallSignatureLikeDeclaration
+  )
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map(updateDiffPairForNewFeature);
+
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
-
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+  const propertyNewFeatures = findPropertyBreakingChanges(targetProperties, sourceProperties)
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map(updateDiffPairForNewFeature);
 
-  return [...constructorBreakingChanges, ...propertyBreakingChanges];
+  return [...constructorBreakingChanges, ...constructorNewFeatures, ...propertyBreakingChanges, ...propertyNewFeatures];
 }
 
 function findRemovedFunctionOverloads(
@@ -371,7 +409,7 @@ function findRemovedFunctionOverloads(
 }
 
 // TODO: support arrow function
-export function findFunctionBreakingChanges(source: FunctionDeclaration, target: FunctionDeclaration): DiffPair[] {
+export function findFunctionDifferences(source: FunctionDeclaration, target: FunctionDeclaration): DiffPair[] {
   const sourceOverloads = source.getOverloads();
   const targetOverloads = target.getOverloads();
 
@@ -383,6 +421,7 @@ export function findFunctionBreakingChanges(source: FunctionDeclaration, target:
         node: t,
       })
     );
+
     const addedPairs = findRemovedFunctionOverloads(targetOverloads, sourceOverloads).map(
       (t) =>
         createDiffPair(DiffLocation.Signature_Overload, DiffReasons.Added, {

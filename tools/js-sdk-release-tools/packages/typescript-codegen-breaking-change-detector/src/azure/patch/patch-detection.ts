@@ -1,31 +1,24 @@
-import {
-  CallSignatureDeclaration,
-  ClassDeclaration,
-  FunctionDeclaration,
-  Node,
-  SourceFile,
-  SyntaxKind,
-} from 'ts-morph';
+import { CallSignatureDeclaration, FunctionDeclaration, Node, SourceFile, SyntaxKind } from 'ts-morph';
 import {
   AstContext,
   DiffLocation,
   DiffPair,
   DiffReasons,
   AssignDirection,
-  FindMappingConstructorLikeDeclaration,
+  FindMappingCallSignatureLikeDeclaration,
 } from '../common/types';
 import {
-  findFunctionBreakingChanges,
-  findInterfaceBreakingChanges,
+  findFunctionDifferences,
+  findInterfaceDifferences,
   findTypeAliasBreakingChanges,
   checkRemovedDeclaration,
   createDiffPair,
   checkAddedDeclaration,
-  findClassBreakingChanges,
+  findClassDifferences,
 } from '../diff/declaration-diff';
 import { logger } from '../../logging/logger';
 
-const findMappingCallSignature: FindMappingConstructorLikeDeclaration<CallSignatureDeclaration> = (
+const findMappingCallSignatureForRoutes: FindMappingCallSignatureLikeDeclaration<CallSignatureDeclaration> = (
   target: CallSignatureDeclaration,
   signatures: CallSignatureDeclaration[]
 ) => {
@@ -60,31 +53,13 @@ export function patchRoutes(astContext: AstContext): DiffPair[] {
   const removePair = checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
   if (removePair) return [removePair];
 
-  const breakingChangePairs = patchDeclaration(
+  return patchDeclaration(
     AssignDirection.CurrentToBaseline,
-    findInterfaceBreakingChanges,
+    findInterfaceDifferences,
     baseline!,
     current!,
-    findMappingCallSignature
+    findMappingCallSignatureForRoutes
   );
-
-  const newFeaturePairs = patchDeclaration(
-    AssignDirection.BaselineToCurrent,
-    findInterfaceBreakingChanges,
-    baseline!,
-    current!,
-    findMappingCallSignature
-  )
-    .filter((p) => p.reasons === DiffReasons.Removed)
-    .map((p) => {
-      p.reasons = DiffReasons.Added;
-      p.assignDirection = AssignDirection.CurrentToBaseline;
-      const temp = p.source;
-      p.source = p.target;
-      p.target = temp;
-      return p;
-    });
-  return [...breakingChangePairs, ...newFeaturePairs];
 }
 
 export function patchTypeAlias(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
@@ -138,9 +113,10 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     return [createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, getNameNode(baselineFunctions[0]))];
   }
 
+  // TODO: add both assign directions like routes
   const pairs = patchDeclaration(
     AssignDirection.CurrentToBaseline,
-    findFunctionBreakingChanges,
+    findFunctionDifferences,
     baselineFunctions[0],
     currentFunctions[0]
   );
@@ -158,7 +134,24 @@ export function patchClass(name: string, astContext: AstContext, assignDirection
 
   const removePair = checkRemovedDeclaration(DiffLocation.Class, baseline, current);
   if (removePair) return [removePair];
-  return patchDeclaration(assignDirection, findClassBreakingChanges, baseline!, current!);
+
+  return patchDeclaration(assignDirection, findClassDifferences, baseline!, current!);
+}
+
+export function patchInterface(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+  const baseline = astContext.baseline.getInterface(name);
+  const current = astContext.current.getInterface(name);
+
+  if (!baseline && !current) throw new Error(`Failed to find interface '${name}' in baseline and current package`);
+
+  const addPair = checkAddedDeclaration(DiffLocation.Interface, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
+  if (removePair) return [removePair];
+
+  const diffPairs = patchDeclaration(assignDirection, findInterfaceDifferences, baseline!, current!);
+  return diffPairs;
 }
 
 export function patchDeclaration<T extends Node>(

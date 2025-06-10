@@ -119,9 +119,9 @@ export enum AssignDirection {
   CurrentToBaseline, // e.g. output model
 }
 
-export type ConstructorLikeDeclaration = CallSignatureDeclaration | ConstructorDeclaration;
+export type CallSignatureLikeDeclaration = CallSignatureDeclaration | ConstructorDeclaration;
 
-export type FindMappingConstructorLikeDeclaration<T extends ConstructorLikeDeclaration> = (
+export type FindMappingCallSignatureLikeDeclaration<T extends CallSignatureLikeDeclaration> = (
   target: T,
   declarations: T[]
 ) => { declaration: T; id: string } | undefined;

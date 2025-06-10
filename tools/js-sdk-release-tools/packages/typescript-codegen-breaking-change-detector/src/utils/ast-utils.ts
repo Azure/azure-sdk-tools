@@ -194,8 +194,16 @@ export function getCallableEntityParameters(node: Node): ParameterDeclaration[] 
       return getCallableEntityReturnTypeNode(node)?.asKindOrThrow(SyntaxKind.FunctionType).getParameters() ?? [];
     case SyntaxKind.CallSignature:
       return node.asKindOrThrow(SyntaxKind.CallSignature).getParameters();
-      case SyntaxKind.MethodDeclaration:
-        return node.asKindOrThrow(SyntaxKind.MethodDeclaration).getParameters();
+    case SyntaxKind.MethodDeclaration:
+      return node.asKindOrThrow(SyntaxKind.MethodDeclaration).getParameters();
+    case SyntaxKind.PropertyDeclaration:
+      return (
+        node
+          .asKindOrThrow(SyntaxKind.PropertyDeclaration)
+          .getTypeNode()
+          ?.asKindOrThrow(SyntaxKind.FunctionType)
+          .getParameters() ?? []
+      );
     default:
       throw new Error(`Unsupported function kind: ${node.getKindName()}`);
   }
@@ -206,27 +214,35 @@ export function getCallableEntityParametersFromSymbol(symbol: Symbol): Parameter
   return getCallableEntityParameters(node);
 }
 
-// Note: return true when parameters list is the same in name and type 
-export function isSameConstructorLikeDeclaration<T extends CallSignatureDeclaration | ConstructorDeclaration>(
+// Note: return true when parameters list is the same in name and type
+export function isSameCallSignatureLikeDeclaration<T extends CallSignatureDeclaration | ConstructorDeclaration>(
   left: T,
-  right: T,
-  compareParameterName = true
+  right: T
 ): boolean {
+  const leftReturnType = left.getReturnTypeNode()?.getType();
+  const rightReturnType = right.getReturnTypeNode()?.getType();
+  if (
+    leftReturnType &&
+    rightReturnType &&
+    (!leftReturnType.isAssignableTo(rightReturnType) || !rightReturnType.isAssignableTo(leftReturnType))
+  ) {
+    return false;
+  }
+
   if (left.getTypeParameters().length !== right.getTypeParameters().length) return false;
   if (left.getParameters().length !== right.getParameters().length) return false;
 
-  const sameParameters = left.getParameters().filter((leftParameter, i) => {
+  const isEveryParameterSame = left.getParameters().filter((leftParameter, i) => {
     const rightParameter = right.getParameters()[i];
-    if (compareParameterName && leftParameter.getName() !== rightParameter.getName()) return false;
 
     const leftParaType = leftParameter.getType();
     const rightParaType = rightParameter.getType();
-    if (!leftParaType && !rightParaType) return true;
+    if (leftParaType === undefined && rightParaType === undefined) return true;
     if (!leftParaType || !rightParaType) return false;
     if (!leftParaType.isAssignableTo(rightParaType) || !rightParaType.isAssignableTo(leftParaType)) return false;
     return true;
   });
-  return sameParameters.length === left.getParameters().length;
+  return isEveryParameterSame.length === left.getParameters().length;
 }
 
 export function isPropertyMethod(p: Symbol) {
@@ -234,9 +250,11 @@ export function isPropertyMethod(p: Symbol) {
 }
 
 export function isPropertyArrowFunction(p: Symbol) {
-  return (
-    p.getFlags() === SymbolFlags.Property && p.getValueDeclarationOrThrow().getType().getCallSignatures().length > 0
-  );
+  const isClassicProperty = (p.getFlags() & SymbolFlags.Property) > 0;
+  const hasArrowFunctionType = p.getValueDeclaration()
+    ? p.getValueDeclarationOrThrow().getType().getCallSignatures().length > 0
+    : false;
+  return isClassicProperty && hasArrowFunctionType;
 }
 
 export function isMethodOrArrowFunction(p: Symbol) {

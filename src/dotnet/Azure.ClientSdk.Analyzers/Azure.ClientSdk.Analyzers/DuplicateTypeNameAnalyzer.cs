@@ -37,16 +37,20 @@ namespace Azure.ClientSdk.Analyzers
                     var content = reader.ReadToEnd();
                     var names = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                     
-                    // Verify that names are sorted
-                    for (int i = 1; i < names.Length; i++)
-                    {
-                        if (StringComparer.Ordinal.Compare(names[i - 1], names[i]) > 0)
-                        {
-                            throw new InvalidOperationException($"Reserved type names file is not sorted. '{names[i - 1]}' comes before '{names[i]}'");
-                        }
-                    }
+                    VerifyNamesSorted(names);
                     
                     return names;
+                }
+            }
+        }
+
+        private static void VerifyNamesSorted(string[] names)
+        {
+            for (int i = 1; i < names.Length; i++)
+            {
+                if (StringComparer.Ordinal.Compare(names[i - 1], names[i]) > 0)
+                {
+                    throw new InvalidOperationException($"Reserved type names file is not sorted. '{names[i - 1]}' comes before '{names[i]}'");
                 }
             }
         }

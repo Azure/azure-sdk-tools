@@ -71,9 +71,74 @@
                         else 
                         {
                             <tr class="package-data-row"> 
-                                <td colspan="5">No new reviews require approval.</td>
+                                <td colspan="6">No new reviews require approval.</td>
                             </tr>
-                    
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="mt-3 row">
+            <h3>Pending Namespace Approvals</h3>
+            <div class="col-12 p-0 border rounded table-responsive shadow-sm">
+                <table id="namespace-reviews-table" class="table table-sm table-hover m-0" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="pl-4">Name</th>
+                            <th scope="col" class="border-left pl-3">Author</th>
+                            <th scope="col" class="border-left pl-3">Last Updated</th>
+                            <th scope="col" class="border-left pl-3">Type</th>
+                            <th scope="col" class="border-left pl-3">Namespace Review Requested</th>
+                            <th scope="col" class="border-left pl-3">Requested by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.NamespaceApprovalRequestedAPIRevisions.Any())
+                        {
+                            @foreach (var apiRevision in Model.NamespaceApprovalRequestedAPIRevisions)
+                            {
+                                var assignment = apiRevision.AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var approvalRequestedOn = assignment.AssingedOn;
+                                var requestBy = assignment.AssignedBy;
+
+                                var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
+                                <tr class="package-data-row">
+                                    <td class="align-middle pl-4 pt-0 pb-0">
+                                        @if (apiRevision.Language != null)
+                                        {
+                                            string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
+                                            @if (!string.IsNullOrEmpty(apiRevision.Files.FirstOrDefault().LanguageVariant) && apiRevision.Files.FirstOrDefault().LanguageVariant != "default")
+                                            {
+                                                iconClassName += "-" + apiRevision.Files.FirstOrDefault().LanguageVariant.ToLower();
+                                            }
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @apiRevision.Files.FirstOrDefault().LanguageVariant"></span>
+                                        }
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId" asp-route-revisionId="@apiRevision.Id">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
+                                        <i class="fas fa-exclamation-triangle text-warning ml-2" title="Namespace approval requested"></i>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <a username="@apiRevision.CreatedBy">@apiRevision.CreatedBy</a>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@apiRevision.LastUpdatedOn.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span>@apiRevision.APIRevisionType.ToString()</span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <span data-placement="left" data-toggle="tooltip" title="@approvalRequestedOn" date="@approvalRequestedOn.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <a username="@requestBy">@requestBy</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else 
+                        {
+                            <tr class="package-data-row">
+                                <td colspan="6">No reviews with pending namespace approval requests.</td>
+                            </tr>
                         }
                     </tbody>
                 </table>

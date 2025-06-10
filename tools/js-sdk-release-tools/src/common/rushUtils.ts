@@ -10,7 +10,6 @@ import { runCommand, runCommandOptions } from './utils.js';
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
-import { migratePackage } from './migration.js';
 import { existsSync } from 'fs';
 import { formatSdk, updateSnippets } from './devToolUtils.js';
 
@@ -92,7 +91,6 @@ export async function buildPackage(
         await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
         logger.info(`Rush update successfully.`);
 
-        await migratePackage(options.sdkRepoRoot, packageDirectory);
         logger.info(`Start to build package '${name}'.`);
         await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     } else {

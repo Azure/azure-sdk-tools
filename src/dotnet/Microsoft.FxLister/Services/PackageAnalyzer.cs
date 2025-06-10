@@ -11,7 +11,7 @@ public class PackageAnalyzer
     {
     }
     
-    public async Task<List<string>> DiscoverAzurePackagesAsync(int batchSize = 20)
+    public async Task<List<string>> DiscoverAzurePackagesAsync(int maxPackages = 100)
     {
         var azurePackages = new List<string>();
         
@@ -41,16 +41,16 @@ public class PackageAnalyzer
             };
             
             int skip = 0;
-            int take = batchSize;
+            const int batchSize = 20; // Hardcoded batch size for pagination
             bool hasMore = true;
             
-            while (hasMore)
+            while (hasMore && azurePackages.Count < maxPackages)
             {
                 var searchResults = await searchResource.SearchAsync(
                     "Azure",
                     searchFilter,
                     skip,
-                    take,
+                    batchSize,
                     NullLogger.Instance,
                     CancellationToken.None);
                 
@@ -63,6 +63,9 @@ public class PackageAnalyzer
                 
                 foreach (var package in packages)
                 {
+                    if (azurePackages.Count >= maxPackages)
+                        break;
+                        
                     var packageId = package.Identity.Id;
                     
                     // Filter packages that start with "Azure" and don't contain "ResourceManager" or "Provisioning"
@@ -74,7 +77,7 @@ public class PackageAnalyzer
                     }
                 }
                 
-                skip += take;
+                skip += batchSize;
             }
         }
         catch (Exception ex)

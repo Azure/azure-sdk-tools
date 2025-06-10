@@ -14,18 +14,18 @@ public static class TypesCommand
             IsRequired = true
         };
 
-        var batchSizeOption = new Option<int>(
-            new[] { "-b", "--batch-size" },
-            () => 20,
-            "Number of packages to process in each batch");
+        var maxPackagesOption = new Option<int>(
+            new[] { "-m", "--max-packages" },
+            () => 100,
+            "Maximum number of packages to process");
 
         var command = new Command("types", "Extract type names from Azure NuGet packages")
         {
             outputOption,
-            batchSizeOption
+            maxPackagesOption
         };
 
-        command.SetHandler(async (outputPath, batchSize) =>
+        command.SetHandler(async (outputPath, maxPackages) =>
         {
             try
             {
@@ -34,7 +34,7 @@ public static class TypesCommand
                 var typeExtractor = new RealTypeExtractor();
                 
                 Console.WriteLine("Discovering Azure NuGet packages...");
-                var packages = await packageAnalyzer.DiscoverAzurePackagesAsync(batchSize);
+                var packages = await packageAnalyzer.DiscoverAzurePackagesAsync(maxPackages);
                 
                 Console.WriteLine($"Found {packages.Count} Azure packages. Extracting types...");
                 var types = await typeExtractor.ExtractTypesFromPackagesAsync(packages);
@@ -49,7 +49,7 @@ public static class TypesCommand
                 Console.Error.WriteLine($"Error: {ex.Message}");
                 Environment.Exit(1);
             }
-        }, outputOption, batchSizeOption);
+        }, outputOption, maxPackagesOption);
 
         return command;
     }

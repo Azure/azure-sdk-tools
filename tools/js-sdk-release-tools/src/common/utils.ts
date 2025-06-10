@@ -350,7 +350,8 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
 export async function cleanUpDirectory(
     directory: string, 
     entriesToPreserve: string[] = []
-): Promise<void> {      // If nothing to preserve, remove the entire directory and create an empty one
+): Promise<void> {      
+    // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
         await rm(directory, { recursive: true, force: true });

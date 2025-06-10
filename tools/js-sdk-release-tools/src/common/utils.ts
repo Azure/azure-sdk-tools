@@ -346,7 +346,7 @@ export async function cleanUpPackageDirectory(
     runMode?: string,
 ): Promise<void> {
     // Preserve test directory and assets.json file in SpecPullRequest mode
-    const shouldPreserveTestAndAssets = runMode === RunMode.SpecPullRequest;
+    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest;
 
     if (shouldPreserveTestAndAssets) {
         logger.info(

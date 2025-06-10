@@ -33,7 +33,7 @@ extends:
         inputs:
           command: custom
           custom: 'tool'
-          arguments: install --global Microsoft.Playwright.CLI
+          arguments: install Microsoft.Playwright.CLI
 
       - script: playwright --version
         displayName: Verify Playwright CLI Installation

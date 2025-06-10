@@ -350,7 +350,7 @@ export async function cleanUpPackageDirectory(
 
     if (shouldPreserveTestAndAssets) {
         logger.info(
-            `Cleaning ${packageDirectory} directory, but preserving test directory and assets.json file`,
+            `Cleaning ${packageDirectory} directory, but preserving test directory and assets.json file in ${runMode} mode`,
         );
     } else {
         logger.info(`Completely cleaning ${packageDirectory} directory`);

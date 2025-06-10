@@ -34,12 +34,9 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
-      - task: DotNetCoreCLI@2
-        displayName: Install Playwright CLI
-        inputs:
-          command: custom
-          custom: 'tool '
-          arguments: install Microsoft.Playwright.CLI
+
+      - script: playwright --version
+        displayName: Verify Playwright CLI Installation
     
       - task: DotNetCoreCLI@2
         displayName: Build all projects and libraries
@@ -53,6 +50,9 @@ extends:
           command: custom
           custom: 'tool '
           arguments: run playwright install
+    
+      - script: playwright install --check
+        displayName: Verify Playwright Browsers Installation
 
       - task: CopyFiles@2
         displayName: Copy appsettings.json to output directory
@@ -67,3 +67,4 @@ extends:
           SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation
           Contents: 'ignore.json'
           TargetFolder: $(System.DefaultWorkingDirectory)/artifacts/bin
+        

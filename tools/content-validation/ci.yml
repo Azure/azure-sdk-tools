@@ -34,13 +34,3 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
-    StandaloneExeMatrix:
-      - rid: win-x64
-        framework: net8.0
-        assembly: content-validation
-      - rid: linux-x64
-        framework: net8.0
-        assembly: content-validation
-      - rid: osx-x64
-        framework: net8.0
-        assembly: content-validation

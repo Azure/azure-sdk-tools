@@ -1,6 +1,6 @@
 import { getSDKType } from "../../common/utils.js";
 import { ApiVersionType, SDKType } from "../../common/types.js";
-import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
+import { IApiVersionTypeExtractor, IModelOnlyChecker } from "../../common/interfaces.js";
 import * as mlcApi from '../../mlc/apiVersion/apiVersionTypeExtractor.js'
 import * as hlcApi from '../../hlc/apiVersion/apiVersionTypeExtractor.js'
 import * as rlcApi from '../../llc/apiVersion/apiVersionTypeExtractor.js'
@@ -18,5 +18,20 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: s
         default:
             logger.warn(`Unsupported SDK type ${sdkType} to get detact api version`);
             return ApiVersionType.None;
+    }
+}
+
+export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
+    const sdkType = getSDKType(packageRoot);
+    switch (sdkType) {
+        case SDKType.ModularClient:
+            return await mlcApi.isModelOnly(packageRoot);
+        case SDKType.HighLevelClient:
+            return false;
+        case SDKType.RestLevelClient:
+            return await rlcApi.isModelOnly(packageRoot); 
+        default:
+            logger.warn(`Unsupported SDK type ${sdkType} to check if package is model-only`);
+            return false;
     }
 }

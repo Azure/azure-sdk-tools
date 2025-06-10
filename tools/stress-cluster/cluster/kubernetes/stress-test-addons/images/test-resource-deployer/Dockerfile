@@ -7,7 +7,7 @@ RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 RUN kubectl version --client
 
 # For local testing, run prepare.ps1 before building the docker image
-COPY ./docker_build/common /common
+COPY ./docker_build/common /eng/common
 COPY test-resources-post.ps1 /scripts/stress-test/
 COPY deploy-stress-test-resources.ps1 /scripts/stress-test/
 

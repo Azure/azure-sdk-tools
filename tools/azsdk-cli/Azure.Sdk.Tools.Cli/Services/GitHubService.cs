@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
+        public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
     }
 
     public class GitHubService : IGitHubService
@@ -236,6 +237,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                 checkResults.Add($"Failed to get Github pull request checks, Error: {ex.Message}");
             }
             return checkResults;
+        }
+
+        /// <summary>
+        /// Gets the issue details for a given issue number in a specified repository.
+        /// </summary>
+        /// <param name="repoOwner"></param>
+        /// <param name="repoName"></param>
+        /// <param name="issueNumber"></param>
+        /// <returns></returns>
+        public async Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)
+        {
+            return await gitHubClient.Issue.Get(repoOwner, repoName, issueNumber);
         }
     }
 }

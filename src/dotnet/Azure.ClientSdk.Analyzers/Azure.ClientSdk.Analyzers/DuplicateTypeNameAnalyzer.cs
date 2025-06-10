@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -14,26 +17,8 @@ namespace Azure.ClientSdk.Analyzers
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0034);
         public override SymbolKind[] SymbolKinds { get; } = { SymbolKind.NamedType };
 
-        // Common .NET platform type names that Azure SDK types should avoid conflicting with
-        private static readonly HashSet<string> PlatformTypeNames = new HashSet<string>
-        {
-            // Common System types
-            "Object", "String", "Boolean", "Char", "Byte", "SByte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64",
-            "Single", "Double", "Decimal", "DateTime", "DateTimeOffset", "TimeSpan", "Guid", "Uri", "Version", "Type",
-            // Common collection types
-            "Array", "List", "Dictionary", "HashSet", "Queue", "Stack", "Collection", "Enumerable", "Enumerator",
-            // Common exception types
-            "Exception", "ArgumentException", "ArgumentNullException", "InvalidOperationException", "NotSupportedException",
-            "NotImplementedException", "FormatException", "OverflowException", "OutOfMemoryException",
-            // Common async types
-            "Task", "ValueTask", "CancellationToken", "CancellationTokenSource",
-            // Common interface types
-            "IDisposable", "IComparable", "IEquatable", "IEnumerable", "ICollection", "IList", "IDictionary",
-            // Common attribute types
-            "Attribute", "ObsoleteAttribute", "SerializableAttribute",
-            // Other common types
-            "Console", "Environment", "Math", "Random", "Buffer", "Convert", "Encoding", "Stream", "TextReader", "TextWriter"
-        };
+        // Sorted array of reserved type names loaded from embedded resource
+        private static readonly string[] ReservedTypeNames = LoadReservedTypeNames();
 
         // Names that should only be used as nested types in Azure SDK
         private static readonly HashSet<string> NestedOnlyTypeNames = new HashSet<string>
@@ -41,6 +26,34 @@ namespace Azure.ClientSdk.Analyzers
             "ServiceVersion",
             "Enumerator"
         };
+
+        private static string[] LoadReservedTypeNames()
+        {
+            var assembly = typeof(DuplicateTypeNameAnalyzer).GetTypeInfo().Assembly;
+            var resourceName = "Azure.ClientSdk.Analyzers.reserved-type-names.txt";
+            
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    // Fallback to empty array if resource not found
+                    return new string[0];
+                }
+                
+                using (var reader = new StreamReader(stream))
+                {
+                    var content = reader.ReadToEnd();
+                    var names = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    Array.Sort(names, StringComparer.Ordinal);
+                    return names;
+                }
+            }
+        }
+
+        private static bool IsReservedTypeName(string typeName)
+        {
+            return Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal) >= 0;
+        }
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
@@ -78,7 +91,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             // Check for conflicts with platform types
-            if (PlatformTypeNames.Contains(typeName))
+            if (IsReservedTypeName(typeName))
             {
                 foreach (var location in namedTypeSymbol.Locations)
                 {

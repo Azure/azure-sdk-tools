@@ -72,6 +72,18 @@ export async function discoverEntrypointFile(
   return entryTsp;
 }
 
+export function tryParseEmitterOptionAsObject(value: string): object | string {
+  try {
+    const obj = JSON.parse(value);
+    if (typeof obj === "object" && obj !== null && !Array.isArray(obj)) {
+      return obj;
+    }
+  } catch {
+    // no-op
+  }
+  return value;
+}
+
 export async function compileTsp({
   emitterPackage,
   outputPath,

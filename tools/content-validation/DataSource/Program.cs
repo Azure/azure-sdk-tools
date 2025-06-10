@@ -46,7 +46,7 @@ namespace DataSource
             ExportData(allPages);
         }
 
-        static string GetPackagePageOverview(string? language, string readme, string versionSuffix, string branch = "")
+        static string GetPackagePageOverview(string? language, string? readme, string versionSuffix, string branch = "")
         {
             language = language?.ToLower();
 

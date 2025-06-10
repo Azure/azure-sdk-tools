@@ -16,9 +16,9 @@ public class RealTypeExtractor
     {
     }
     
-    public async Task<List<string>> ExtractTypesFromPackagesAsync(List<string> packageIds)
+    public async Task<List<TypeInfo>> ExtractTypesFromPackagesAsync(List<string> packageIds)
     {
-        var allTypes = new HashSet<string>();
+        var allTypes = new Dictionary<string, TypeInfo>(); // Use dictionary to avoid duplicates based on short name
         
         try
         {
@@ -33,7 +33,11 @@ public class RealTypeExtractor
                     
                     foreach (var type in types)
                     {
-                        allTypes.Add(type);
+                        // Use short name as key to avoid duplicates, but keep first occurrence
+                        if (!allTypes.ContainsKey(type.ShortName))
+                        {
+                            allTypes[type.ShortName] = type;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -47,12 +51,12 @@ public class RealTypeExtractor
             throw new InvalidOperationException($"Failed to extract types: {ex.Message}", ex);
         }
         
-        return allTypes.ToList();
+        return allTypes.Values.ToList();
     }
     
-    private async Task<List<string>> ExtractTypesFromSinglePackageAsync(string packageId)
+    private async Task<List<TypeInfo>> ExtractTypesFromSinglePackageAsync(string packageId)
     {
-        var types = new List<string>();
+        var types = new List<TypeInfo>();
         var tempDir = Path.Combine(Path.GetTempPath(), "FxLister", Guid.NewGuid().ToString());
         
         try
@@ -99,7 +103,7 @@ public class RealTypeExtractor
             using var fileStream = File.OpenRead(packagePath);
             using var packageReader = new PackageArchiveReader(fileStream);
             
-            types = ExtractTypesFromPackage(packageReader);
+            types = ExtractTypesFromPackage(packageReader, packageId);
         }
         finally
         {
@@ -117,9 +121,9 @@ public class RealTypeExtractor
         return types;
     }
     
-    private List<string> ExtractTypesFromPackage(PackageArchiveReader packageReader)
+    private List<TypeInfo> ExtractTypesFromPackage(PackageArchiveReader packageReader, string packageId)
     {
-        var types = new List<string>();
+        var types = new List<TypeInfo>();
         
         try
         {
@@ -144,7 +148,7 @@ public class RealTypeExtractor
                             stream.CopyTo(memoryStream);
                             memoryStream.Position = 0;
                             
-                            var assemblyTypes = ExtractTypesFromAssembly(memoryStream);
+                            var assemblyTypes = ExtractTypesFromAssembly(memoryStream, packageId);
                             types.AddRange(assemblyTypes);
                         }
                         catch
@@ -164,9 +168,9 @@ public class RealTypeExtractor
         return types;
     }
     
-    private List<string> ExtractTypesFromAssembly(Stream assemblyStream)
+    private List<TypeInfo> ExtractTypesFromAssembly(Stream assemblyStream, string packageId)
     {
-        var types = new List<string>();
+        var types = new List<TypeInfo>();
         
         try
         {
@@ -190,7 +194,33 @@ public class RealTypeExtractor
                     typeName.Equals("<Module>"))
                     continue;
                 
-                types.Add(typeName);
+                // Get namespace
+                var namespaceName = typeDef.Namespace.IsNil ? string.Empty : metadataReader.GetString(typeDef.Namespace);
+                
+                // Build qualified name, avoiding duplication when namespace equals package name
+                string qualifiedName;
+                if (string.IsNullOrEmpty(namespaceName))
+                {
+                    // No namespace, just package.typename
+                    qualifiedName = $"{packageId}.{typeName}";
+                }
+                else if (namespaceName.Equals(packageId, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Namespace is same as package, don't duplicate
+                    qualifiedName = $"{packageId}.{typeName}";
+                }
+                else
+                {
+                    // Different namespace, include both package and namespace
+                    qualifiedName = $"{packageId}.{namespaceName}.{typeName}";
+                }
+                
+                types.Add(new TypeInfo
+                {
+                    ShortName = typeName,
+                    FullName = qualifiedName,
+                    PackageName = packageId
+                });
             }
         }
         catch

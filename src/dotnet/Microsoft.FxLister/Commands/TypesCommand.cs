@@ -9,7 +9,7 @@ public static class TypesCommand
     {
         var outputOption = new Option<string>(
             new[] { "-o", "--output" },
-            "Output file path for the type list")
+            "Output file path for the type list (without extension - will generate .txt and .qualified.txt)")
         {
             IsRequired = true
         };
@@ -37,12 +37,28 @@ public static class TypesCommand
                 var packages = await packageAnalyzer.DiscoverAzurePackagesAsync(maxPackages);
                 
                 Console.WriteLine($"Found {packages.Count} Azure packages. Extracting types...");
-                var types = await typeExtractor.ExtractTypesFromPackagesAsync(packages);
+                var typeInfos = await typeExtractor.ExtractTypesFromPackagesAsync(packages);
                 
-                Console.WriteLine($"Found {types.Count} types. Writing to {outputPath}...");
-                await File.WriteAllLinesAsync(outputPath, types.OrderBy(t => t));
+                // Sort by short name
+                var sortedTypeInfos = typeInfos.OrderBy(t => t.ShortName).ToList();
                 
-                Console.WriteLine($"Successfully wrote {types.Count} type names to {outputPath}");
+                // Generate output file names
+                var baseOutputPath = Path.GetFileNameWithoutExtension(outputPath);
+                var outputDir = Path.GetDirectoryName(outputPath) ?? "";
+                var shortNamesFile = Path.Combine(outputDir, $"{baseOutputPath}.txt");
+                var qualifiedNamesFile = Path.Combine(outputDir, $"{baseOutputPath}.qualified.txt");
+                
+                // Write short names file (sorted)
+                var shortNames = sortedTypeInfos.Select(t => t.ShortName);
+                await File.WriteAllLinesAsync(shortNamesFile, shortNames);
+                
+                // Write qualified names file (same order as sorted short names)
+                var qualifiedNames = sortedTypeInfos.Select(t => t.FullName);
+                await File.WriteAllLinesAsync(qualifiedNamesFile, qualifiedNames);
+                
+                Console.WriteLine($"Successfully wrote {typeInfos.Count} type names to:");
+                Console.WriteLine($"  Short names: {shortNamesFile}");
+                Console.WriteLine($"  Qualified names: {qualifiedNamesFile}");
             }
             catch (Exception ex)
             {

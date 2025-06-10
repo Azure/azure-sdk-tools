@@ -217,21 +217,39 @@ describe("getReleaseStatus", () => {
 });
 
 describe("cleanUpPackageDirectory", () => {
-    test("preserves test directory and assets.json in non-SpecPullRequest mode", async () => {
-        const tempPackageDir = path.join(
-            __dirname,
-            `tmp/package-${getRandomInt(10000)}`
-        );
+    async function createTestDirectoryStructure(baseDir: string): Promise<string> {
+        const tempPackageDir = path.join(baseDir, `tmp/package-${getRandomInt(10000)}`);
         
-        try {
-            // Create a test directory structure
-            await ensureDir(tempPackageDir);
-            await ensureDir(path.join(tempPackageDir, "src"));
-            await ensureDir(path.join(tempPackageDir, "dist"));
-            await ensureDir(path.join(tempPackageDir, "test"));
-            await writeFile(path.join(tempPackageDir, "assets.json"), "{}", "utf8");
-            await writeFile(path.join(tempPackageDir, "package.json"), "{}", "utf8");
-            
+        // Create main directories
+        await ensureDir(tempPackageDir);
+        await ensureDir(path.join(tempPackageDir, "dist"));
+        
+        // Create src directory with subfolders and files
+        await ensureDir(path.join(tempPackageDir, "src"));
+        await ensureDir(path.join(tempPackageDir, "src", "common"));
+        await ensureDir(path.join(tempPackageDir, "src", "utils"));
+        await writeFile(path.join(tempPackageDir, "src", "index.ts"), "export * from './common';\nexport * from './utils';", "utf8");
+        await writeFile(path.join(tempPackageDir, "src", "common", "index.ts"), "// Common module exports", "utf8");
+        await writeFile(path.join(tempPackageDir, "src", "utils", "helpers.ts"), "// Helper functions", "utf8");
+        
+        // Create test directory with subfolders and files
+        await ensureDir(path.join(tempPackageDir, "test"));
+        await ensureDir(path.join(tempPackageDir, "test", "common"));
+        await ensureDir(path.join(tempPackageDir, "test", "utils"));
+        await writeFile(path.join(tempPackageDir, "test", "index.test.ts"), "import { describe, test } from 'vitest';\n\ndescribe('index', () => {\n  test('exports', () => {});\n});", "utf8");
+        await writeFile(path.join(tempPackageDir, "test", "common", "utils.test.ts"), "// Common utils tests", "utf8");
+        
+        // Create root files
+        await writeFile(path.join(tempPackageDir, "assets.json"), "{}", "utf8");
+        await writeFile(path.join(tempPackageDir, "package.json"), "{}", "utf8");
+        
+        return tempPackageDir;
+    }
+    
+    test("preserves test directory and assets.json in non-SpecPullRequest mode", async () => {
+        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        
+        try {            
             // Run the function with Release mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
@@ -241,8 +259,21 @@ describe("cleanUpPackageDirectory", () => {
             const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
             const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
             
+            // Check if test subfolders and files are preserved
+            const testCommonDirExists = await pathExists(path.join(tempPackageDir, "test", "common"));
+            const testUtilsDirExists = await pathExists(path.join(tempPackageDir, "test", "utils"));
+            const testIndexFileExists = await pathExists(path.join(tempPackageDir, "test", "index.test.ts"));
+            const testUtilsFileExists = await pathExists(path.join(tempPackageDir, "test", "common", "utils.test.ts"));
+            
+            // Assertions for directories and files
             expect(testDirExists).toBe(true);
+            expect(testCommonDirExists).toBe(true);
+            expect(testUtilsDirExists).toBe(true);
+            expect(testIndexFileExists).toBe(true);
+            expect(testUtilsFileExists).toBe(true);
             expect(assetsFileExists).toBe(true);
+
+            // Verify removed directories and files
             expect(srcDirExists).toBe(false);
             expect(packageJsonExists).toBe(false);
         } finally {
@@ -251,20 +282,9 @@ describe("cleanUpPackageDirectory", () => {
     });
     
     test("removes all files and directories in SpecPullRequest mode", async () => {
-        const tempPackageDir = path.join(
-            __dirname,
-            `tmp/package-${getRandomInt(10000)}`
-        );
+        const tempPackageDir = await createTestDirectoryStructure(__dirname);
         
         try {
-            // Create a test directory structure
-            await ensureDir(tempPackageDir);
-            await ensureDir(path.join(tempPackageDir, "src"));
-            await ensureDir(path.join(tempPackageDir, "dist"));
-            await ensureDir(path.join(tempPackageDir, "test"));
-            await writeFile(path.join(tempPackageDir, "assets.json"), "{}", "utf8");
-            await writeFile(path.join(tempPackageDir, "package.json"), "{}", "utf8");
-
             // Run the function with SpecPullRequest mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.SpecPullRequest);
 
@@ -298,5 +318,5 @@ describe("cleanUpPackageDirectory", () => {
         } finally {
             await remove(tempPackageDir);
         }
-    }); 
+    });
 });

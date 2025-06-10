@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Reflection;
@@ -34,12 +35,20 @@ namespace Azure.ClientSdk.Analyzers
                 
                 using (var reader = new StreamReader(stream))
                 {
-                    var content = reader.ReadToEnd();
-                    var names = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    var names = new List<string>();
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            names.Add(line);
+                        }
+                    }
+                    var nameArray = names.ToArray();
                     
-                    VerifyNamesSorted(names);
+                    VerifyNamesSorted(nameArray);
                     
-                    return names;
+                    return nameArray;
                 }
             }
         }
@@ -54,8 +63,6 @@ namespace Azure.ClientSdk.Analyzers
                 }
             }
         }
-
-
 
         public override void Analyze(ISymbolAnalysisContext context)
         {

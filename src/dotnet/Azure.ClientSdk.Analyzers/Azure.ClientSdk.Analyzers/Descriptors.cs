@@ -166,6 +166,15 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticSeverity.Warning,
             true,
             "Suffix is not recommended. Consider to remove or modify it.");
+
+        public static readonly DiagnosticDescriptor AZC0034 = new DiagnosticDescriptor(
+            nameof(AZC0034),
+            "Avoid duplicate type names",
+            "Type name '{0}' conflicts with a common type name or should be used as a nested type. Consider renaming to avoid confusion.",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Warning,
+            true,
+            "Type names should not conflict with common .NET types or be reserved for specific nested type usage.");
         #endregion
 
         #region General

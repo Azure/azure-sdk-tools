@@ -197,22 +197,17 @@ public class RealTypeExtractor
                 // Get namespace
                 var namespaceName = typeDef.Namespace.IsNil ? string.Empty : metadataReader.GetString(typeDef.Namespace);
                 
-                // Build qualified name, avoiding duplication when namespace equals package name
+                // Build qualified name, ensuring package name is always included
                 string qualifiedName;
                 if (string.IsNullOrEmpty(namespaceName))
                 {
-                    // No namespace, just package.typename
-                    qualifiedName = $"{packageId}.{typeName}";
-                }
-                else if (namespaceName.Equals(packageId, StringComparison.OrdinalIgnoreCase))
-                {
-                    // Namespace is same as package, don't duplicate
+                    // No namespace, use package.typename
                     qualifiedName = $"{packageId}.{typeName}";
                 }
                 else
                 {
-                    // Different namespace, include both package and namespace
-                    qualifiedName = $"{packageId}.{namespaceName}.{typeName}";
+                    // Use full namespace with typename (namespace typically already contains package name)
+                    qualifiedName = $"{namespaceName}.{typeName}";
                 }
                 
                 types.Add(new TypeInfo

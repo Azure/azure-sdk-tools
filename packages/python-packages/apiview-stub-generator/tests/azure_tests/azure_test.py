@@ -15,9 +15,9 @@ from apistub import ApiView, StubGenerator
 import json
 
 SDK_PARAMS = [
-    ("azure-core", "1.32.0", "core", "azure.core", "src"),
-    ("azure-core", "1.32.0", "core", "azure.core", "whl"),
-    ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
+    ("azure-core", "1.33.0", "core", "azure.core", "src"),
+    ("azure-core", "1.33.0", "core", "azure.core", "whl"),
+    ("azure-core", "1.33.0", "core", "azure.core", "sdist"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),

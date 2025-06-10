@@ -346,14 +346,14 @@ export async function cleanUpPackageDirectory(
     runMode?: string,
 ): Promise<void> {
     // Preserve test directory and assets.json file in SpecPullRequest mode
-    const shouldPreserveTestAndAssets = runMode === RunMode.SpecPullRequest;
+    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest;
 
     if (shouldPreserveTestAndAssets) {
         logger.info(
-            `Cleaning ${packageDirectory} directory, but preserving test directory and assets.json file`,
+            `Cleaning ${packageDirectory} directory, but preserving test directory and assets.json file in ${runMode} mode`,
         );
     } else {
-        logger.info(`Completely cleaning ${packageDirectory} directory`);
+        logger.info(`Completely cleaning ${packageDirectory} directory in ${runMode} mode`);
     }
 
     // Get all subdirectories and files

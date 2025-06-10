@@ -34,43 +34,6 @@ namespace MyCompany.Data
             await Verifier.VerifyAnalyzerAsync(code);
         }
 
-
-
-        [Fact]
-        public async Task AZC0034NotProducedForAllowedNestedServiceVersion()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public class MyDataClient
-    {
-        public enum ServiceVersion
-        {
-            V2020_02_10,
-            V2021_04_10
-        }
-    }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-
-
-        [Fact]
-        public async Task AZC0034ProducedForTopLevelServiceVersion()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public enum {|AZC0034:ServiceVersion|}
-    {
-        V2020_02_10
-    }
-}";
-
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
         [Fact]
         public async Task AZC0034ProducedForAzureSDKTypeConflicts()
         {

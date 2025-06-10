@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Reflection;
@@ -19,13 +18,6 @@ namespace Azure.ClientSdk.Analyzers
 
         // Sorted array of reserved type names loaded from embedded resource
         private static readonly string[] ReservedTypeNames = LoadReservedTypeNames();
-
-        // Names that should only be used as nested types in Azure SDK
-        private static readonly HashSet<string> NestedOnlyTypeNames = new HashSet<string>
-        {
-            "ServiceVersion",
-            "Enumerator"
-        };
 
         private static string[] LoadReservedTypeNames()
         {
@@ -44,7 +36,16 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     var content = reader.ReadToEnd();
                     var names = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    Array.Sort(names, StringComparer.Ordinal);
+                    
+                    // Verify that names are sorted
+                    for (int i = 1; i < names.Length; i++)
+                    {
+                        if (StringComparer.Ordinal.Compare(names[i - 1], names[i]) > 0)
+                        {
+                            throw new InvalidOperationException($"Reserved type names file is not sorted. '{names[i - 1]}' comes before '{names[i]}'");
+                        }
+                    }
+                    
                     return names;
                 }
             }
@@ -71,23 +72,7 @@ namespace Azure.ClientSdk.Analyzers
 
             var typeName = namedTypeSymbol.Name;
 
-            // Allow exceptions for standard nested types
-            if (namedTypeSymbol.ContainingType != null && NestedOnlyTypeNames.Contains(typeName))
-            {
-                return;
-            }
-
-            // Check for types that should only be nested (prioritize this check)
-            if (namedTypeSymbol.ContainingType == null && NestedOnlyTypeNames.Contains(typeName))
-            {
-                foreach (var location in namedTypeSymbol.Locations)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName), namedTypeSymbol);
-                }
-                return; // Don't check platform types if already flagged for nested-only
-            }
-
-            // Check for conflicts with platform types
+            // Check for conflicts with reserved types
             if (Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal) >= 0)
             {
                 foreach (var location in namedTypeSymbol.Locations)

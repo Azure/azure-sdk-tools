@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="reserved-type-names.txt" />
-    <EmbeddedResource Include="reserved-type-qualified-names.txt" />
   </ItemGroup>
 
 </Project>

@@ -9,40 +9,24 @@ namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0034Tests
     {
-        [Fact]
-        public async Task AZC0034ProducedForPlatformTypeNameConflicts()
+        [Theory]
+        [InlineData("Azure.Data", "String", true)]
+        [InlineData("Azure.MyService", "BlobClient", true)]
+        [InlineData("Azure.MyService", "CosmosClient", true)]
+        [InlineData("MyCompany.Data", "String", false)]
+        public async Task AZC0034ProducedForReservedTypeNames(string namespaceName, string typeName, bool shouldReport)
         {
-            const string code = @"
-namespace Azure.Data
-{
-    public class {|AZC0034:String|} { }
-}";
-
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-
-
-        [Fact]
-        public async Task AZC0034NotProducedForNonAzureNamespaces()
-        {
-            const string code = @"
-namespace MyCompany.Data
-{
-    public class String { }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-        [Fact]
-        public async Task AZC0034ProducedForAzureSDKTypeConflicts()
-        {
-            const string code = @"
-namespace Azure.MyService
-{
-    public class {|AZC0034:BlobClient|} { }
-    public class {|AZC0034:CosmosClient|} { }
-}";
+            var code = shouldReport 
+                ? $@"
+namespace {namespaceName}
+{{
+    public class {{|AZC0034:{typeName}|}} {{ }}
+}}"
+                : $@"
+namespace {namespaceName}
+{{
+    public class {typeName} {{ }}
+}}";
 
             await Verifier.VerifyAnalyzerAsync(code);
         }

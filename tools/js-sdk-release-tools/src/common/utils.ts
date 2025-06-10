@@ -353,7 +353,7 @@ export async function cleanUpPackageDirectory(
             `Cleaning ${packageDirectory} directory, but preserving test directory and assets.json file in ${runMode} mode`,
         );
     } else {
-        logger.info(`Completely cleaning ${packageDirectory} directory`);
+        logger.info(`Completely cleaning ${packageDirectory} directory in ${runMode} mode`);
     }
 
     // Get all subdirectories and files

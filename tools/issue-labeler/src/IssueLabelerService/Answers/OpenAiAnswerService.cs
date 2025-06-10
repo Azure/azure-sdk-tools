@@ -34,7 +34,7 @@ namespace IssueLabelerService
 
         public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels)
         {
-            string modelName = _config.AnswerModelName;
+            var modelName = _config.AnswerModelName;
             var instructions = _config.KnowledgeAgentInstruction;
             var replacements = new Dictionary<string, string>
             {

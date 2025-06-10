@@ -21,7 +21,6 @@ namespace APIViewWeb.LeanModels
         Approved,
         ApprovalReverted,
         NamespaceApproved,
-        NamespaceApprovalReverted,
         NamespaceReviewRequested,
         Deleted,
         UnDeleted

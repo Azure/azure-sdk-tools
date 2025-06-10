@@ -328,41 +328,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Add new NamespaceApproved or NamespaceApprovalReverted action to the ChangeHistory of a Review. Serves as namespace approval for TypeSpec
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="id"></param>
-        /// <param name="revisionId"></param>
-        /// <param name="notes"></param>
-        /// <returns></returns>
-        public async Task<ReviewListItemModel> ToggleNamespaceApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
-        {
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
-            var userId = user.GetGitHubLogin();
-            var updatedReview = await ToggleNamespaceApproval(user, review, notes);
-            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveNamespaceApprovalSelf", id, revisionId, review.IsNamespaceApproved);
-            await _signalRHubContext.Clients.All.SendAsync("ReceiveNamespaceApproval", id, revisionId, userId, review.IsNamespaceApproved);
-            return updatedReview;
-        }
-
-        /// <summary>
-        /// ApproveNamespaceAsync
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="reviewId"></param>
-        /// <param name="notes"></param>
-        /// <returns></returns>
-        public async Task<ReviewListItemModel> ApproveNamespaceAsync(ClaimsPrincipal user, string reviewId, string notes = "")
-        {
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
-            if (review.IsNamespaceApproved)
-            {
-                return review;
-            }
-            return await ToggleNamespaceApproval(user, review, notes);
-        }
-
-        /// <summary>
         /// Request namespace review for TypeSpec and mark related SDK language reviews as namespace approval requested
         /// </summary>
         /// <param name="user"></param>
@@ -591,28 +556,6 @@ namespace APIViewWeb.Managers
                 await CheckAndAutoApproveNamespaceForTypeSpec(review.PackageName, userId);
             }
             
-            return review;
-        }
-
-        private async Task<ReviewListItemModel> ToggleNamespaceApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
-        {
-            await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
-            var userId = user.GetGitHubLogin();
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                review.ChangeHistory, ReviewChangeAction.NamespaceApproved, userId, notes);
-            review.ChangeHistory = changeUpdate.ChangeHistory;
-            review.IsNamespaceApproved = changeUpdate.ChangeStatus;
-            
-            if (changeUpdate.ChangeStatus)
-            {
-                review.NamespaceApprovers.Add(userId);
-            }
-            else
-            {
-                review.NamespaceApprovers.Remove(userId);
-            }
-            
-            await _reviewsRepository.UpsertReviewAsync(review);
             return review;
         }
 

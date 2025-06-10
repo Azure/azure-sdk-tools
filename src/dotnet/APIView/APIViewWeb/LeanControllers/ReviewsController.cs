@@ -128,34 +128,6 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Endpoint used by Client SPA for Toggling Namespace Approval
-        /// </summary>
-        /// <param name="reviewId"></param>
-        /// <param name="apiRevisionId"></param>
-        /// <returns></returns>
-        [HttpPost("{reviewId}/{apiRevisionId}/toggleNamespaceApproval", Name = "ToggleNamespaceApproval")]
-        public async Task<ActionResult> ToggleNamespaceApprovalAsync(string reviewId, string apiRevisionId)
-        {
-            var updatedReview = await _reviewManager.ToggleNamespaceApprovalAsync(User, reviewId, apiRevisionId);
-            await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
-            return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
-        }
-
-        /// <summary>
-        /// Endpoint used by Client SPA for Direct Namespace Approval
-        /// </summary>
-        /// <param name="reviewId"></param>
-        /// <param name="notes"></param>
-        /// <returns></returns>
-        [HttpPost("{reviewId}/approveNamespace", Name = "ApproveNamespace")]
-        public async Task<ActionResult> ApproveNamespaceAsync(string reviewId, [FromBody] string notes = "")
-        {
-            var updatedReview = await _reviewManager.ApproveNamespaceAsync(User, reviewId, notes);
-            await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
-            return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
-        }
-
-        /// <summary>
         /// Endpoint used by Client SPA for Requesting Namespace Review
         /// </summary>
         /// <param name="reviewId"></param>

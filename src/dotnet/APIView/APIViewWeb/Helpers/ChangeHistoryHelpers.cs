@@ -234,14 +234,9 @@ namespace APIViewWeb.Helpers
                     actionReverted = action;
                     break;
                 case "NamespaceApproved":
-                    Enum.TryParse(typeof(E), "NamespaceApprovalReverted", out object nar);
+                    // This is a one-way action, no revert (only automatic approval)
                     actionAdded = action;
-                    actionReverted = (E)nar;
-                    break;
-                case "NamespaceApprovalReverted":
-                    Enum.TryParse(typeof(E), "NamespaceApproved", out object na);
-                    actionAdded = (E)na;
-                    actionReverted = action;
+                    actionReverted = default(E);
                     break;
                 case "NamespaceReviewRequested":
                     // This is a one-way action, no revert

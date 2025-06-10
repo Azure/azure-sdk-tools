@@ -24,8 +24,6 @@ namespace APIViewWeb.Managers
         public Task ToggleReviewIsClosedAsync(ClaimsPrincipal user, string id);
         public Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="");
         public Task ApproveReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "");
-        public Task<ReviewListItemModel> ToggleNamespaceApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="");
-        public Task<ReviewListItemModel> ApproveNamespaceAsync(ClaimsPrincipal user, string reviewId, string notes = "");
         public Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "");
         public Task<int> GenerateAIReview(string reviewId, string revisionId);
         public Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly, string packageNameFilterForUpgrade);

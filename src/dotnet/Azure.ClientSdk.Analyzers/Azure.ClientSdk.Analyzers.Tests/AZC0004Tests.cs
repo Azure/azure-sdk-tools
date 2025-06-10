@@ -396,5 +396,26 @@ namespace RandomNamespace
             await Verifier.CreateAnalyzer(code)
                 .RunAsync();
         }
+
+        [Theory]
+        [InlineData("Pipeline")]
+        [InlineData("PipelineAsync")]
+        public async Task AZC0004NotProducedForProperties(string propertyName)
+        {
+            string code = $@"
+using Azure.Core.Pipeline;
+
+namespace RandomNamespace
+{{
+    public class SomeClient
+    {{
+        private HttpPipeline _pipeline;
+
+        public virtual HttpPipeline {propertyName} => _pipeline;
+    }}
+}}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
     }
 }

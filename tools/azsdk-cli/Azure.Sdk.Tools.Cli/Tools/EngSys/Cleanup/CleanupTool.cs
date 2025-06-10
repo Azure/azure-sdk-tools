@@ -29,7 +29,7 @@ public class CleanupTool: MCPTool
 
         CommandHierarchy =
         [
-            CommandVerbDescriptions.EngSys, CommandVerbDescriptions.Cleanup
+            SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup
         ];
     }
 

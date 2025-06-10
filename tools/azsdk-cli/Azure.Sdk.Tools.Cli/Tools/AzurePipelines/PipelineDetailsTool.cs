@@ -40,7 +40,7 @@ public class PipelineDetailsTool : MCPTool
 
         CommandHierarchy =
         [
-            CommandVerbDescriptions.AzurePipelines
+            SharedCommandGroups.AzurePipelines
         ];
     }
 
@@ -55,6 +55,8 @@ public class PipelineDetailsTool : MCPTool
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         Initialize();
+
+        var haha = ctx.ParseResult.GetValueForOption(SharedCommandGroups.CheckThisOption);
 
         var cmd = ctx.ParseResult.CommandResult.Command.Name;
         var buildId = ctx.ParseResult.GetValueForOption(buildIdOpt);

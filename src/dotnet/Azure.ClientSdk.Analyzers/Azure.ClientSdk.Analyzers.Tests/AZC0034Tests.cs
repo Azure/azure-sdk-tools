@@ -146,5 +146,66 @@ namespace Azure.Data
 
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0034NotProducedForMultipleNestingLevels()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public class BlobClient
+    {
+        public class Options
+        {
+            public enum ServiceVersion
+            {
+                V2020_02_10
+            }
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0034NotProducedForProtectedNestedTypes()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public class BlobClient
+    {
+        protected enum ServiceVersion
+        {
+            V2020_02_10
+        }
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0034ProducedForInterfaceConflicts()
+        {
+            const string code = @"
+namespace Azure.Data
+{
+    public interface {|AZC0034:IDisposable|} { }
+    public interface {|AZC0034:IComparable|} { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0034NotProducedInNonAzureSubNamespace()
+        {
+            const string code = @"
+namespace MyCompany.Azure.Data
+{
+    public class String { }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

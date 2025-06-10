@@ -50,10 +50,7 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private static bool IsReservedTypeName(string typeName)
-        {
-            return Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal) >= 0;
-        }
+
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
@@ -91,7 +88,7 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             // Check for conflicts with platform types
-            if (IsReservedTypeName(typeName))
+            if (Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal) >= 0)
             {
                 foreach (var location in namedTypeSymbol.Locations)
                 {

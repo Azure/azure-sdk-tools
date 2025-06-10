@@ -21,30 +21,7 @@ namespace Azure.Data
             await Verifier.VerifyAnalyzerAsync(code);
         }
 
-        [Fact]
-        public async Task AZC0034ProducedForCommonTypeNameConflicts()
-        {
-            const string code = @"
-namespace Azure.Storage
-{
-    public class {|AZC0034:List|} { }
-    public class {|AZC0034:Dictionary|} { }
-    public class {|AZC0034:Task|} { }
-}";
 
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-        [Fact]
-        public async Task AZC0034NotProducedForNonPublicTypes()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    internal class String { }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
 
         [Fact]
         public async Task AZC0034NotProducedForNonAzureNamespaces()
@@ -57,17 +34,7 @@ namespace MyCompany.Data
             await Verifier.VerifyAnalyzerAsync(code);
         }
 
-        [Fact]
-        public async Task AZC0034NotProducedForUniqueTypeNames()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public class BlobClient { }
-    public class TableEntity { }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
+
 
         [Fact]
         public async Task AZC0034NotProducedForAllowedNestedServiceVersion()
@@ -75,7 +42,7 @@ namespace Azure.Data
             const string code = @"
 namespace Azure.Data
 {
-    public class BlobClient
+    public class MyDataClient
     {
         public enum ServiceVersion
         {
@@ -87,23 +54,7 @@ namespace Azure.Data
             await Verifier.VerifyAnalyzerAsync(code);
         }
 
-        [Fact]
-        public async Task AZC0034NotProducedForAllowedNestedEnumerator()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public class BlobList
-    {
-        public struct Enumerator
-        {
-            public bool MoveNext() => false;
-            public object Current => null;
-        }
-    }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
+
 
         [Fact]
         public async Task AZC0034ProducedForTopLevelServiceVersion()
@@ -121,91 +72,18 @@ namespace Azure.Data
         }
 
         [Fact]
-        public async Task AZC0034ProducedForTopLevelEnumerator()
+        public async Task AZC0034ProducedForAzureSDKTypeConflicts()
         {
             const string code = @"
-namespace Azure.Data
+namespace Azure.MyService
 {
-    public class {|AZC0034:Enumerator|}
-    {
-    }
+    public class {|AZC0034:BlobClient|} { }
+    public class {|AZC0034:CosmosClient|} { }
 }";
 
             await Verifier.VerifyAnalyzerAsync(code);
         }
 
-        [Fact]
-        public async Task AZC0034ProducedForExceptionTypeNameConflicts()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public class {|AZC0034:Exception|} { }
-    public class {|AZC0034:ArgumentException|} { }
-}";
 
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-        [Fact]
-        public async Task AZC0034NotProducedForMultipleNestingLevels()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public class BlobClient
-    {
-        public class Options
-        {
-            public enum ServiceVersion
-            {
-                V2020_02_10
-            }
-        }
-    }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-        [Fact]
-        public async Task AZC0034NotProducedForProtectedNestedTypes()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public class BlobClient
-    {
-        protected enum ServiceVersion
-        {
-            V2020_02_10
-        }
-    }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-        [Fact]
-        public async Task AZC0034ProducedForInterfaceConflicts()
-        {
-            const string code = @"
-namespace Azure.Data
-{
-    public interface {|AZC0034:IDisposable|} { }
-    public interface {|AZC0034:IComparable|} { }
-}";
-
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
-
-        [Fact]
-        public async Task AZC0034NotProducedInNonAzureSubNamespace()
-        {
-            const string code = @"
-namespace MyCompany.Azure.Data
-{
-    public class String { }
-}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
     }
 }

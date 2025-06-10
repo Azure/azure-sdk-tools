@@ -35,13 +35,6 @@ namespace Azure.ClientSdk.Analyzers
             "Console", "Environment", "Math", "Random", "Buffer", "Convert", "Encoding", "Stream", "TextReader", "TextWriter"
         };
 
-        // Allowed nested type names that are standard across Azure SDK
-        private static readonly HashSet<string> AllowedNestedTypeNames = new HashSet<string>
-        {
-            "ServiceVersion",
-            "Enumerator"
-        };
-
         // Names that should only be used as nested types in Azure SDK
         private static readonly HashSet<string> NestedOnlyTypeNames = new HashSet<string>
         {
@@ -69,7 +62,7 @@ namespace Azure.ClientSdk.Analyzers
             var typeName = namedTypeSymbol.Name;
 
             // Allow exceptions for standard nested types
-            if (namedTypeSymbol.ContainingType != null && AllowedNestedTypeNames.Contains(typeName))
+            if (namedTypeSymbol.ContainingType != null && NestedOnlyTypeNames.Contains(typeName))
             {
                 return;
             }

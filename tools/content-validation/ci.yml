@@ -39,10 +39,10 @@ extends:
         inputs:
           SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation/ContentValidation.Test
           Contents: 'appsettings.json'
-          TargetFolder: $(Build.ArtifactStagingDirectory)/bin
+          TargetFolder: $(System.DefaultWorkingDirectory)/artifacts/bin
       - task: CopyFiles@2
         displayName: Copy ignore.json to output directory
         inputs:
-          SourceFolder: $(System.DefaultWorkingDirectory)
+          SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation
           Contents: 'ignore.json'
-          TargetFolder: $(Build.ArtifactStagingDirectory)/bin
+          TargetFolder: $(System.DefaultWorkingDirectory)/artifacts/bin

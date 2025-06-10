@@ -98,15 +98,20 @@ async def api_reviewer(language: str, request: Request):
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat_thread_endpoint(request: AgentChatRequest):
-    # Load agent instructions from prompty file
-    prompty_path = os.path.join(os.path.dirname(__file__), "prompts", "main_agent.prompty")
-    with open(prompty_path, "r", encoding="utf-8") as f:
-        agent_instructions = f.read()
     user_input = request.user_input
-    thread_id = request.thread_id or str(uuid.uuid4())
+    thread_id = request.thread_id
     messages = request.messages or []
-    messages.append(user_input)
+    # Only append user_input if not already the last message
+    if not messages or messages[-1] != user_input:
+        messages.append(user_input)
     async with get_main_agent() as agent:
-        thread = AzureAIAgentThread(client=agent.client, id=thread_id)
+        # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
+        thread = None
+        if thread_id and isinstance(thread_id, str) and thread_id.startswith("thread"):
+            thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
+        else:
+            thread = AzureAIAgentThread(client=agent.client)
         response = await agent.get_response(messages=messages, thread=thread)
-    return AgentChatResponse(response=str(response), thread_id=thread_id, messages=messages)
+        # Get the thread id from the thread object if available
+        thread_id_out = getattr(thread, "id", None) or thread_id
+    return AgentChatResponse(response=str(response), thread_id=thread_id_out, messages=messages)

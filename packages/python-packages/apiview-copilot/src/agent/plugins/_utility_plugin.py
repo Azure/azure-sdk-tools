@@ -2,7 +2,9 @@ import json
 import os
 import prompty
 import prompty.azure_beta
+import requests
 from semantic_kernel.functions import kernel_function
+from urllib.parse import urlparse
 
 from src._diff import create_diff_with_line_numbers
 
@@ -12,6 +14,23 @@ _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
 
 class UtilityPlugin:
+
+    def _download_if_url(self, file_path: str) -> str:
+        """
+        If file_path is a URL, download it to a temp file and return the local path.
+        Otherwise, return the original file_path.
+        """
+        parsed = urlparse(file_path)
+        if parsed.scheme in ("http", "https"):
+            import tempfile
+
+            response = requests.get(file_path)
+            response.raise_for_status()
+            suffix = os.path.splitext(parsed.path)[-1]
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode="wb") as tmp:
+                tmp.write(response.content)
+                return tmp.name
+        return file_path
 
     @kernel_function(description="Summarize the provided API.")
     async def summarize_api(self, api: str, language: str):
@@ -43,13 +62,14 @@ class UtilityPlugin:
         response = prompty.execute(prompt_path, inputs={"content": api_diff, "language": language}, configuration={})
         return response
 
-    @kernel_function(description="Load a JSON file from the specified path.")
+    @kernel_function(description="Load a JSON file from the specified path or URL.")
     async def load_json_file(self, file_path: str):
         """
-        Load a JSON file from the specified path.
+        Load a JSON file from the specified path or URL.
         Args:
-            file_path (str): The path to the JSON file.
+            file_path (str): The path or URL to the JSON file.
         """
+        file_path = self._download_if_url(file_path)
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
         try:
@@ -59,13 +79,14 @@ class UtilityPlugin:
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding JSON from file {file_path}: {e}")
 
-    @kernel_function(description="Load a text file from the specified path.")
+    @kernel_function(description="Load a text file from the specified path or URL.")
     async def load_text_file(self, file_path: str):
         """
-        Load a text file from the specified path.
+        Load a text file from the specified path or URL.
         Args:
-            file_path (str): The path to the text file.
+            file_path (str): The path or URL to the text file.
         """
+        file_path = self._download_if_url(file_path)
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
         try:

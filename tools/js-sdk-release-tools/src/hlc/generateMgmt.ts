@@ -15,7 +15,6 @@ import {getOutputPackageInfo} from "../utils/getOutputPackageInfo.js";
 import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
-import { migratePackage } from "../common/migration.js";
 import { isRushRepo } from "../common/rushUtils.js";
 
 export async function generateMgmt(options: {
@@ -119,9 +118,7 @@ export async function generateMgmt(options: {
             if (isRushRepo(options.sdkRepo)) {
                 logger.info(`Start to run command: 'rush update'.`);
                 execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-    
-                await migratePackage(options.sdkRepo,packagePath);
-    
+        
                 logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');

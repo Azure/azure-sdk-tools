@@ -209,8 +209,7 @@ namespace APIViewWeb.Controllers
                         // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
                         // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
 
-                        var packageSemVer = new AzureEngSemanticVersion(codeFile.PackageVersion, codeFile.Language);
-                        var considerPackageVersion = (!packageSemVer.IsPrerelease) ? true : false;
+                        bool considerPackageVersion = !String.IsNullOrWhiteSpace(codeFile.PackageVersion) && !(new AzureEngSemanticVersion(codeFile.PackageVersion, codeFile.Language).IsPrerelease);
 
                         if (compareAllRevisions)
                         {

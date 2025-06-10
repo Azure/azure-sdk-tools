@@ -38,7 +38,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
-        makeChangesForFirstRelease(packageFolderPath, isStableRelease);
+        await makeChangesForFirstRelease(packageFolderPath, isStableRelease);
         logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ' : ' stable'} release successfully`);
     } else {
         if (!stableVersion) {
@@ -132,11 +132,11 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     if (oriVersionReleased) {
                         newVersion = isBetaVersion(oriVersion) ? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
                     }
-                    makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
+                    await makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
+                    await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
                     return changelog;
                 }
@@ -144,7 +144,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 logger.info(`Package ${packageName} released before is track1 sdk.`);
                 logger.info('Start to generate changelog of migrating track1 to track2 sdk.');
                 const newVersion = getNewVersion(stableVersion, usedVersions, true, isStableRelease);
-                makeChangesForMigrateTrack1ToTrack2(packageFolderPath, newVersion);
+                await makeChangesForMigrateTrack1ToTrack2(packageFolderPath, newVersion);
                 logger.info('Generated changelogs and setting version for migrating track1 to track2 successfully.');
             }
         } finally {

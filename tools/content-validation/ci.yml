@@ -26,7 +26,7 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/content-validation
-    TestDirectory: tools/content-validation/tests
+    TestDirectory: tools/content-validation/ContentValidation.Test
     ReleaseBinaries: true
     TestPreSteps:
       - task: DotNetCoreCLI@2
@@ -35,7 +35,29 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
+      - script: |
+          echo "Running tests..."
+          dotnet test
+        displayName: Run Tests
+        workingDirectory: tools/content-validation/ContentValidation.Test
     StandaloneExeMatrix:
+      - rid: win-x64
+        framework: net8.0
+        assembly: content-validation
       - rid: linux-x64
         framework: net8.0
         assembly: content-validation
+      - rid: osx-x64
+        framework: net8.0
+        assembly: content-validation
+    PublishArtifacts:
+      - script: |
+          echo "Publishing linux-x64 artifacts..."
+          ls -R $(Build.ArtifactStagingDirectory)/linux-x64
+        displayName: Debug linux-x64 Directory
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: $(Build.ArtifactStagingDirectory)/linux-x64
+          artifact: standalone-linux-x64
+          publishLocation: pipeline
+        displayName: Publish standalone-linux-x64 Artifacts

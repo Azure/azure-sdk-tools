@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
 
         [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
-        public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
+        public async Task<string> GetReleasePlanForPullRequestAsync(string pullRequestLink)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var sdkReleaseType = commandParser.GetValueForOption(sdkReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValueForOption(isTestReleasePlanOpt);
                     var userEmail = commandParser.GetValueForOption(userEmailOpt);
-                    var releasePlan = await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
+                    var releasePlan = await CreateReleasePlanAsync(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
                     output.Output($"Release plan created: {releasePlan}");
                     return;
 
@@ -147,7 +147,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Create Release Plan work item.")]
-        public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
+        public async Task<string> CreateReleasePlanAsync(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
             {
@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         [McpServerTool, Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
             " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
-        public async Task<string> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
+        public async Task<string> UpdateSDKDetailsInReleasePlanAsync(int releasePlanWorkItemId, string sdkDetails)
         {
             try
             {

@@ -9,11 +9,11 @@ namespace Azure.Sdk.Tools.Cli.Services
 {
     public interface IGitHubService
     {
-        public Task<User> GetGitUserDetails();
-        public Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string repoName, string repoOwner);
+        public Task<User> GetGitUserDetailsAsync();
+        public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
-        public Task<string> GetGitHubParentRepoUrl(string owner, string repoName);
-        public Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
+        public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName);
+        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<User> GetGitUserDetails()
+        public async Task<User> GetGitUserDetailsAsync()
         {
             var user = await gitHubClient.User.Current();
             return user;
@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public async Task<string> GetGitHubParentRepoUrl(string owner, string repoName)
+        public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)
         {
             var repository = await gitHubClient.Repository.Get(owner, repoName);
             if (repository == null)
@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        private async Task<bool> IsDiffMergeable(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
+        private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return comparison?.MergeBaseCommit != null;
         }
 
-        public async Task<List<string>> CreatePullRequest(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body)
+        public async Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body)
         {
             var responseList = new List<string>();
             // Check if a pull request already exists for the branch
@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 responseList.Add($"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...");
-                var isMergeable = await IsDiffMergeable(repoOwner, repoName, baseBranch, headBranch);
+                var isMergeable = await IsDiffMergeableAsync(repoOwner, repoName, baseBranch, headBranch);
                 if (!isMergeable)
                 {
                     responseList.Add($"Changes from [{repoOwner}] are not mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Please resolve the conflicts and try again.");
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        public async Task<List<String>> GetPullRequestChecks(int pullRequestNumber, string repoName, string repoOwner)
+        public async Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner)
         {
             var checkResults = new List<string>();
             try

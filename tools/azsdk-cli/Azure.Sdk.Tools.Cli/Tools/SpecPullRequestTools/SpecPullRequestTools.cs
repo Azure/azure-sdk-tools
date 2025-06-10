@@ -42,11 +42,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
 
         [McpServerTool, Description("Connect to GitHub using personal access token.")]
-        public async Task<string> GetGitHubUserDetails()
+        public async Task<string> GetGitHubUserDetailsAsync()
         {
             try
             {
-                var user = await gitHubService.GetGitUserDetails();
+                var user = await gitHubService.GetGitUserDetailsAsync();
                 return user != null
                     ? output.Format($"Connected to GitHub as {user.Login}")
                     : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Get pull request link for current branch in the repo. Provide absolute path to TypeSpec project root as param. This tool call GetPullRequest to get pull request details.")]
-        public async Task<string> GetPullRequestForCurrentBranch(string typeSpecProjectPath)
+        public async Task<string> GetPullRequestForCurrentBranchAsync(string typeSpecProjectPath)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     return output.Format("Failed to get repo root path. Please make sure to select the TypeSpec project path.");
                 }
-                var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
+                var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
                 var headBranchName = gitHelper.GetBranchName(repoRootPath);
                 var headBranchRef = $"{headRepoOwner}:{headBranchName}";
                 logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 string response = $"Pull request found: {pullRequest.HtmlUrl}";
-                response += await GetPullRequest(pullRequest.Number);
+                response += await GetPullRequestAsync(pullRequest.Number);
                 return output.Format(response);
             }
             catch (Exception ex)
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Create pull request for spec changes. Provide title, description and absolute path to TypeSpec project root as params. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main")
+        public async Task<List<string>> CreatePullRequestAsync(string title, string description, string typeSpecProjectPath, string targetBranch = "main")
         {
             try
             {
@@ -130,13 +130,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     }
 
                     //Get repo details like target owner, head owner, repo name
-                    var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
+                    var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
 
                     var headBranch = $"{headRepoOwner}:{headBranchName}";
                     logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
                     logger.LogInformation($"Creating pull request in {REPO_OWNER}:{REPO_NAME}");
                     //Create pull request
-                    var createResponseList = await gitHubService.CreatePullRequest(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
+                    var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
                     results.AddRange(createResponseList);
                     return results;
                 }
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner)
+        private async Task<List<string>> GetPullRequestCommentsAsync(int pullRequestNumber, string repoName, string repoOwner)
         {
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
             if (comments == null || comments.Count == 0)
@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
 
         [McpServerTool, Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
-        public async Task<string> GetPullRequest(int pullRequestNumber, string repoOwner = "Azure", string repoName = "azure-rest-api-specs")
+        public async Task<string> GetPullRequestAsync(int pullRequestNumber, string repoOwner = "Azure", string repoName = "azure-rest-api-specs")
         {
             try
             {
@@ -184,12 +184,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     Author = pullRequest.User.Name,
                     AssignedTo = pullRequest.Assignee?.Name ?? "",
                     Labels = pullRequest.Labels?.ToList() ?? [],
-                    Comments = await GetPullRequestComments(pullRequestNumber, repoName, repoOwner)
+                    Comments = await GetPullRequestCommentsAsync(pullRequestNumber, repoName, repoOwner)
                 };
 
                 // Get PR check statuses
                 logger.LogInformation("Getting pull request checks");
-                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecks(pullRequestNumber, repoName, repoOwner));
+                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecksAsync(pullRequestNumber, repoName, repoOwner));
 
                 // Parse APi reviews and add the information
                 logger.LogInformation("Searching for API review links in comments");
@@ -237,7 +237,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     logger.LogInformation("Is spec in public repo: {isPublic}", isPublic);
                     return 0;
                 case getPullRequestForCurrentBranchCommandName:
-                    var pullRequestLink = await GetPullRequestForCurrentBranch(commandParser.GetValueForOption(typeSpecProjectPathOpt));
+                    var pullRequestLink = await GetPullRequestForCurrentBranchAsync(commandParser.GetValueForOption(typeSpecProjectPathOpt));
                     logger.LogInformation("Pull request link: {pullRequestLink}", pullRequestLink);
                     return 0;
                 case createPullRequestCommandName:
@@ -245,14 +245,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var description = commandParser.GetValueForOption(descriptionOpt);
                     var typeSpecProject = commandParser.GetValueForOption(typeSpecProjectPathOpt);
                     var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
-                    var createPullRequestResponse = await CreatePullRequest(title, description, typeSpecProject, targetBranch);
+                    var createPullRequestResponse = await CreatePullRequestAsync(title, description, typeSpecProject, targetBranch);
                     logger.LogInformation("Create pull request response: {createPullRequestResponse}", createPullRequestResponse);
                     return 0;
                 case getPullRequestCommandName:
                     var pullRequestNumber = commandParser.GetValueForOption(pullRequestNumberOpt);
                     var repoOwner = commandParser.GetValueForOption(repoOwnerOpt);
                     var repoName = commandParser.GetValueForOption(repoNameOpt);
-                    var pullRequestDetails = await GetPullRequest(pullRequestNumber, repoOwner, repoName);
+                    var pullRequestDetails = await GetPullRequestAsync(pullRequestNumber, repoOwner, repoName);
                     logger.LogInformation("Pull request details: {pullRequestDetails}", pullRequestDetails);
                     return 0;
                 default:

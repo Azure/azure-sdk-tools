@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 List<string> releasePlanList = [];
-                var releasePlan = await devOpsService.GetReleasePlan(pullRequestLink);
+                var releasePlan = await devOpsService.GetReleasePlanAsync(pullRequestLink);
                 var _out = releasePlan == null ? "Failed to get release plan details." :
                     $"Release Plan: {JsonSerializer.Serialize(releasePlan)}";
                 return output.Format(_out);
@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case getReleasePlanDetailsCommandName:
                     var workItemId = commandParser.GetValueForOption(workItemIdOpt);
                     var releasePlanNumber = commandParser.GetValueForOption(releasePlanNumberOpt);
-                    var releasePlanDetails = await GetReleasePlan(workItem: workItemId, releasePlanId: releasePlanNumber);
+                    var releasePlanDetails = await GetReleasePlanAsync(workItem: workItemId, releasePlanId: releasePlanNumber);
                     output.Output($"Release plan details: {releasePlanDetails}");
                     return;
 
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return;
 
                 case linkNamespaceApprovalIssueCommandName:
-                    var linkResponse = await LinkNameSpaceApprovalIssue(commandParser.GetValueForOption(workItemIdOpt), commandParser.GetValueForOption(namespaceApprovalIssueOpt));
+                    var linkResponse = await LinkNamespaceApprovalIssueAsync(commandParser.GetValueForOption(workItemIdOpt), commandParser.GetValueForOption(namespaceApprovalIssueOpt));
                     output.Output($"Link namespace approval issue response: {linkResponse}");
                     return;
 
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
-        public async Task<string> GetReleasePlan(int workItem = 0, int releasePlanId = 0)
+        public async Task<string> GetReleasePlanAsync(int workItem = 0, int releasePlanId = 0)
         {
             try
             {
@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     return "Either work item ID or release plan number must be provided.";
                 }
-                var releasePlan = workItem != 0 ? await devOpsService.GetReleasePlanForWorkItem(workItem) : await devOpsService.GetReleasePlan(releasePlanId);
+                var releasePlan = workItem != 0 ? await devOpsService.GetReleasePlanForWorkItemAsync(workItem) : await devOpsService.GetReleasePlanAsync(releasePlanId);
                 var releasePlanText = releasePlan != null ? JsonSerializer.Serialize(releasePlan) :
                        "Failed to get release plan details.";
                 return releasePlanText;
@@ -199,7 +199,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     IsCreatedByAgent = true,
                     ReleasePlanSubmittedByEmail = userEmail
                 };
-                var workItem = await devOpsService.CreateReleasePlanWorkItem(releasePlan);
+                var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan);
                 if (workItem == null)
                 {
                     SetFailure();
@@ -246,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
                 }
 
-                var updated = await devOpsService.UpdateReleasePlanSDKDetails(releasePlanWorkItemId, SdkInfos);
+                var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos);
                 if (!updated)
                 {
                     SetFailure();
@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
-        public async Task<string> LinkNameSpaceApprovalIssue(int releasePlanWorkItemId, string namespaceApprovalIssue)
+        public async Task<string> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string namespaceApprovalIssue)
         {
             try
             {
@@ -281,7 +281,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Get release plan and verify if it is a management plane release plan before linking namespace approval issue
-                var releasePlan = await devOpsService.GetReleasePlanForWorkItem(releasePlanWorkItemId);
+                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
                 if (releasePlan == null)
                 {
                     return $"Release plan with ID {releasePlanWorkItemId} not found.";
@@ -323,7 +323,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Append($"Package namespace has been approved.");
                 }
 
-                var updated = await devOpsService.LinkNamespaceApprovalIssue(releasePlanWorkItemId, issue.HtmlUrl);
+                var updated = await devOpsService.LinkNamespaceApprovalIssueAsync(releasePlanWorkItemId, issue.HtmlUrl);
                 if (!updated)
                 {
                     SetFailure();

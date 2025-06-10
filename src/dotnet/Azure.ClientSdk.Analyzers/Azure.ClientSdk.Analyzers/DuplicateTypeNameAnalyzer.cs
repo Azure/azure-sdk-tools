@@ -19,6 +19,9 @@ namespace Azure.ClientSdk.Analyzers
 
         // Sorted array of reserved type names loaded from embedded resource
         private static readonly string[] ReservedTypeNames = LoadReservedTypeNames();
+        
+        // Corresponding qualified type names loaded from embedded resource
+        private static readonly string[] QualifiedTypeNames = LoadQualifiedTypeNames();
 
         private static string[] LoadReservedTypeNames()
         {
@@ -64,6 +67,35 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
+        private static string[] LoadQualifiedTypeNames()
+        {
+            var assembly = typeof(DuplicateTypeNameAnalyzer).GetTypeInfo().Assembly;
+            var resourceName = "Azure.ClientSdk.Analyzers.reserved-type-qualified-names.txt";
+            
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                {
+                    // Fallback to empty array if resource not found
+                    return new string[0];
+                }
+                
+                using (var reader = new StreamReader(stream))
+                {
+                    var names = new List<string>();
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            names.Add(line);
+                        }
+                    }
+                    return names.ToArray();
+                }
+            }
+        }
+
         public override void Analyze(ISymbolAnalysisContext context)
         {
             var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
@@ -84,11 +116,15 @@ namespace Azure.ClientSdk.Analyzers
             var typeName = namedTypeSymbol.Name;
 
             // Check for conflicts with reserved types
-            if (Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal) >= 0)
+            int index = Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal);
+            if (index >= 0)
             {
+                // Get the qualified name at the same index
+                string qualifiedTypeName = index < QualifiedTypeNames.Length ? QualifiedTypeNames[index] : typeName;
+                
                 foreach (var location in namedTypeSymbol.Locations)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName), namedTypeSymbol);
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName, qualifiedTypeName), namedTypeSymbol);
                 }
             }
         }

@@ -34,22 +34,35 @@ namespace DataSource
             string? cookieValue = config["CookieValue"];
 
             string? versionSuffix = ChooseGAOrPreview(language, package);
-            
+            if (versionSuffix == null)
+            {
+                throw new ArgumentNullException(nameof(versionSuffix), "VersionSuffix cannot be null.");
+            }
+
             string? pageLink = GetPackagePageOverview(language, readme, versionSuffix, branch);
 
             Console.WriteLine($"Page link: {pageLink}");
 
             List<string> allPages = new List<string>();
 
-            await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName, cookieValue, branch);
+            if (string.IsNullOrEmpty(language) || string.IsNullOrEmpty(versionSuffix) || string.IsNullOrEmpty(pageLink))
+            {
+                throw new ArgumentException("Language, VersionSuffix, and PageLink cannot be null or empty.");
+            }
+
+            await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName ?? string.Empty ?? string.Empty, cookieValue, branch);
 
             ExportData(allPages);
         }
 
         static string GetPackagePageOverview(string? language, string? readme, string versionSuffix, string branch = "")
         {
-            language = language?.ToLower();
+            if (string.IsNullOrEmpty(readme) || string.IsNullOrEmpty(versionSuffix))
+            {
+                throw new ArgumentException("Readme and VersionSuffix cannot be null or empty.");
+            }
 
+            language = language?.ToLower();
             
             if (branch != "main")
             {
@@ -535,9 +548,9 @@ namespace DataSource
 
     public class PackageCSV
     {
-        public string Package { get; set; }
-        public string VersionGA { get; set; }
-        public string VersionPreview { get; set; }
+        public string Package { get; set; } = string.Empty;
+        public string VersionGA { get; set; } = string.Empty;
+        public string VersionPreview { get; set; } = string.Empty;
     }
 
     public class PythonPackageMap : ClassMap<PackageCSV>

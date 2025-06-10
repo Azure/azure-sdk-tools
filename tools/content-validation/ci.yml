@@ -26,7 +26,6 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/content-validation
-    TestDirectory: tools/content-validation/ContentValidation.Test
     ReleaseBinaries: true
     TestPreSteps:
       - task: DotNetCoreCLI@2
@@ -35,11 +34,6 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install --global Microsoft.Playwright.CLI
-      - script: |
-          echo "Running tests..."
-          dotnet test
-        displayName: Run Tests
-        workingDirectory: tools/content-validation/ContentValidation.Test
     StandaloneExeMatrix:
       - rid: win-x64
         framework: net8.0

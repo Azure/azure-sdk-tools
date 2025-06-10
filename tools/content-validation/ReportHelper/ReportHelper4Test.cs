@@ -325,7 +325,7 @@ public class GithubHelper
                 {
                     if (element.ValueKind == JsonValueKind.String)
                     {
-                        locations.Add(element.GetString());
+                        locations.Add(element.GetString() ?? string.Empty);
                     }
                 }
 
@@ -577,11 +577,11 @@ public class GithubHelper
  
         var matchingObjects = new List<Dictionary<string, object>>();
  
-        if (ruleToTestCaseMap.TryGetValue(rule, out string testCase))
+        if (ruleToTestCaseMap.TryGetValue(rule, out string? testCase))
         {
             // Find all TestCase objects whose fields match
             var matchedObjects = jsonArray.Where(obj =>
-                obj.ContainsKey("TestCase") && obj["TestCase"]?.ToString().Equals(testCase, StringComparison.OrdinalIgnoreCase) == true);
+                obj.ContainsKey("TestCase") && (obj["TestCase"]?.ToString() ?? string.Empty).Equals(testCase, StringComparison.OrdinalIgnoreCase) == true);
 
             if (maxCount > 0)
             {
@@ -642,7 +642,7 @@ public class GithubHelper
                         }
                     }
 
-                    if (response.Headers.TryGetValues("Link", out IEnumerable<string> linkValues))
+                    if (response.Headers.TryGetValues("Link", out IEnumerable<string>? linkValues))
                     {
                         linkHeader = linkValues.FirstOrDefault();
                         var links = ParseLinkHeader(linkHeader);
@@ -666,7 +666,7 @@ public class GithubHelper
         {
             Console.WriteLine("An error occurred:");
             Console.WriteLine(ex.Message);
-            return null;
+            return new List<JsonNode>();
         }
         return allIssues;
     }
@@ -731,6 +731,11 @@ public class GithubHelper
 
     public static List<TResult4Json> DeduplicateList(List<TResult4Json> differentList)
     {
+        if (differentList == null)
+        {
+            return new List<TResult4Json>();
+        }
+
         var deduplicateList = differentList
             .GroupBy(item => item.ErrorInfo)
             .SelectMany(group =>
@@ -740,16 +745,16 @@ public class GithubHelper
                     var first = group.First();
                     string note = $"{first.ErrorInfo} - this type of issues appears {group.Count()} times, currently only one is shown here. For more details, please click on the excel download link below to view.";
                     first.Note = note;
-                    return [first];
+                    return new List<TResult4Json> { first }; ;
                 }
                 else
                 {
-                    return group;
+                    return group.ToList();
                 }
             })
             .ToList();
 
-        return deduplicateList;
+        return deduplicateList ?? new List<TResult4Json>();
     }
 }
 

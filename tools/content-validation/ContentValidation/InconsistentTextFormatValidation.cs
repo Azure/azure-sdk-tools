@@ -30,10 +30,10 @@ public class InconsistentTextFormatValidation : IValidation
             {
                 var text = await element.InnerTextAsync();
 
-                string headerId = null;
+                string? headerId = null;
                 try
                 {
-                    headerId = await element.GetAttributeAsync("id");
+                    headerId = await element.GetAttributeAsync("id") ?? string.Empty;
                 }
                 catch (Exception ex)
                 {

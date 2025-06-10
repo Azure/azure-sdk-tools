@@ -88,6 +88,11 @@ namespace IssueLabelerService
 
         private string GetContextBlock(KnowledgeAgentRetrievalResponse retrievalResult)
         {
+            if (retrievalResult.Response.Count == 0)
+            {
+                return null;
+            }
+
             var snippets = retrievalResult.Response[0].Content
                 .OfType<KnowledgeAgentMessageTextContent>()
                 .Select(content => content.Text)

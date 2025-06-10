@@ -54,13 +54,9 @@ namespace SearchIndexCreator
                 var agent = await _indexClient.GetKnowledgeAgentAsync(agentName);
                 return agent != null;
             }
-            catch (RequestFailedException ex) when (ex.Status == 404)
-            {
-                return false;
-            }
             catch (Exception ex)
             {
-                throw;
+                return false;
             }
         }
     }

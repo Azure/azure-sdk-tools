@@ -50,14 +50,3 @@ extends:
       - rid: osx-x64
         framework: net8.0
         assembly: content-validation
-steps:
-  - script: |
-      echo "Publishing linux-x64 artifacts..."
-      ls -R $(Build.ArtifactStagingDirectory)/linux-x64
-    displayName: Debug linux-x64 Directory
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: $(Build.ArtifactStagingDirectory)/linux-x64
-      artifact: standalone-linux-x64
-      publishLocation: pipeline
-    displayName: Publish standalone-linux-x64 Artifacts

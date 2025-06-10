@@ -35,13 +35,13 @@ jobs:
       Write-Host "Reviews: $($reviews)"
       echo "##vso[task.setvariable variable=Reviews]$reviews"
     displayName: "Setup Reviews Variable"
-    condition: eq(variables['Reviews'], '')
+    condition: and(succeeded(), eq(variables['Reviews'], ''))
 
   - pwsh: |
       $url = "${{parameters.APIViewURL}}"
       echo "##vso[task.setvariable variable=APIViewURL]$url"
     displayName: "Setup APIViewURL Variable"
-    condition: eq(variables['APIViewURL'], '')
+    condition: and(succeeded(), eq(variables['APIViewURL'], ''))
 
   - task: Powershell@2
     displayName: 'Generate APIView Token files'

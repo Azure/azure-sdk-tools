@@ -50,7 +50,7 @@ namespace DataSource
                 throw new ArgumentException("Language, VersionSuffix, and PageLink cannot be null or empty.");
             }
 
-            await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName ?? string.Empty ?? string.Empty, cookieValue, branch);
+            await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName ?? string.Empty, cookieValue ?? string.Empty, branch);
 
             ExportData(allPages);
         }
@@ -384,7 +384,7 @@ namespace DataSource
                 CookieContainer = new CookieContainer()
             };
 
-            var cookie = new System.Net.Cookie(cookieName, cookieVal)
+            var cookie = new System.Net.Cookie(cookieName ?? string.Empty, cookieVal ?? string.Empty)
             {
                 Domain = "review.learn.microsoft.com",
             };
@@ -404,7 +404,7 @@ namespace DataSource
             return doc;
         }
 
-        static async Task GetAllDataSource(List<string> allPages, string language, string versionSuffix, string pageLink, string cookieName, string cookieValue, string branch)
+        static async Task GetAllDataSource(List<string> allPages, string? language, string versionSuffix, string pageLink, string cookieName, string cookieValue, string branch)
         {
             List<string> pages = new List<string>();
             List<string> childPage = new List<string>();
@@ -496,7 +496,7 @@ namespace DataSource
 
         static List<string> GetLanguageChildPage(string? language, string versionSuffix, List<string> childPage, List<string> childLink, string branch = "")
         {
-            string link = null;
+            string? link = null;
             language = language?.ToLower();
             if(language == "python"){
                 foreach (var page in childPage)

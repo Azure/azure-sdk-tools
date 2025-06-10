@@ -93,9 +93,19 @@ function updateIgnoreLink(packageName: string) {
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
     let content = fs.readFileSync(ignoreLinksPath, "utf8");
     const newLine = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
+    
+    // Check if the link already exists in the file
+    if (content.includes(newLine)) {
+        logger.info(`Link for ${packageName} already exists in ignore-links.txt, skipping.`);
+        return;
+    }
+    
+    // Ensure the content ends with a newline
     if (!content.endsWith("\n")) {
         content += "\n";
     }
+    
     const updatedContent = content + newLine + "\n";
     fs.writeFileSync(ignoreLinksPath, updatedContent);
+    logger.info(`Added link for ${packageName} to ignore-links.txt`);
 }

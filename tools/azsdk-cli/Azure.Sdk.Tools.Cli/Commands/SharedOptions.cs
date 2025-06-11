@@ -11,6 +11,21 @@ namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
+        public static readonly List<Type> ToolsList = new List<Type>(){
+            typeof(AnalyzePipelinesTool),
+            typeof(PipelineDetailsTool),
+            typeof(CleanupTool),
+            typeof(HostServerTool),
+            typeof(ReleasePlanTool),
+            typeof(SpecCommonTools),
+            typeof(SpecPullRequestTools),
+            typeof(SpecWorkflowTool),
+            #if DEBUG
+            // only add this tool in debug mode
+            typeof(HelloWorldTool),
+            #endif
+        };
+
         public static Option<string> ToolOption = new("--tools")
         {
             Description = "If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.",
@@ -71,30 +86,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static List<Type> GetFilteredToolTypes(string[] args)
         {
             var toolMatchList = SharedOptions.GetToolsFromArgs(args);
-            var toolsList = new List<Type>(){
-                typeof(AnalyzePipelinesTool), 
-                typeof(PipelineDetailsTool),
-                typeof(CleanupTool),
-                typeof(HostServerTool),
-                typeof(ReleasePlanTool),
-                typeof(SpecCommonTools),
-                typeof(SpecPullRequestTools),
-                typeof(SpecWorkflowTool)
-            };
-
-            #if DEBUG
-            // only add this tool in debug mode
-            toolsList.Add(typeof(HelloWorldTool));
-            #endif
 
             if (toolMatchList.Length > 0)
             {
-                toolsList = toolsList
+                return ToolsList
                              .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name) || t.Name.StartsWith("HostServer")))
                              .ToList();
             }
 
-            return toolsList;
+            return ToolsList;
         }
     }
 }

@@ -53,7 +53,7 @@ extends:
         displayName: Build all projects and libraries
         inputs:
           command: 'build'
-          projects: 'content-validation.sln'
+          projects: 'tools/content-validation/content-validation.sln'
 
       - task: DotNetCoreCLI@2
         displayName: Run Playwright Install

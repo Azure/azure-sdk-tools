@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Protocol;
@@ -11,9 +12,10 @@ public class PackageAnalyzer
     {
     }
     
-    public async Task<List<string>> DiscoverAzurePackagesAsync(int maxPackages = 100)
+    public async Task<List<string>> DiscoverAzurePackagesAsync(int maxPackages = 100, string packagePattern = @"^Azure\.(?!ResourceManager)(?!Provisioning)")
     {
         var azurePackages = new List<string>();
+        var regex = new Regex(packagePattern, RegexOptions.IgnoreCase);
         
         try
         {
@@ -68,10 +70,8 @@ public class PackageAnalyzer
                         
                     var packageId = package.Identity.Id;
                     
-                    // Filter packages that start with "Azure" and don't contain "ResourceManager" or "Provisioning"
-                    if (packageId.StartsWith("Azure", StringComparison.OrdinalIgnoreCase) &&
-                        !packageId.Contains("ResourceManager", StringComparison.OrdinalIgnoreCase) &&
-                        !packageId.Contains("Provisioning", StringComparison.OrdinalIgnoreCase))
+                    // Filter packages using the regex pattern
+                    if (regex.IsMatch(packageId))
                     {
                         azurePackages.Add(packageId);
                     }

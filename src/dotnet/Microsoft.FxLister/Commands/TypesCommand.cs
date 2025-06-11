@@ -19,13 +19,19 @@ public static class TypesCommand
             () => 100,
             "Maximum number of packages to process");
 
+        var packagePatternOption = new Option<string>(
+            new[] { "-p", "--package-pattern" },
+            () => @"^Azure\.(?!ResourceManager)(?!Provisioning)",
+            "Regex pattern to filter package names");
+
         var command = new Command("types", "Extract type names from Azure NuGet packages")
         {
             outputOption,
-            maxPackagesOption
+            maxPackagesOption,
+            packagePatternOption
         };
 
-        command.SetHandler(async (outputPath, maxPackages) =>
+        command.SetHandler(async (outputPath, maxPackages, packagePattern) =>
         {
             try
             {
@@ -34,7 +40,7 @@ public static class TypesCommand
                 var typeExtractor = new RealTypeExtractor();
                 
                 Console.WriteLine("Discovering Azure NuGet packages...");
-                var packages = await packageAnalyzer.DiscoverAzurePackagesAsync(maxPackages);
+                var packages = await packageAnalyzer.DiscoverAzurePackagesAsync(maxPackages, packagePattern);
                 
                 Console.WriteLine($"Found {packages.Count} Azure packages. Extracting types...");
                 var typeInfos = await typeExtractor.ExtractTypesFromPackagesAsync(packages);
@@ -65,7 +71,7 @@ public static class TypesCommand
                 Console.Error.WriteLine($"Error: {ex.Message}");
                 Environment.Exit(1);
             }
-        }, outputOption, maxPackagesOption);
+        }, outputOption, maxPackagesOption, packagePatternOption);
 
         return command;
     }

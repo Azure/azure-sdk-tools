@@ -106,12 +106,12 @@ async function automationGenerateInPipeline(
                 break;
         }
 
-        await generateCodeOwnersAndIgnoreLink(sdkType, {
-            typespecProject: typespecProject,
-            typeSpecDirectory: specFolder,
-            sdkRepo: String(shell.pwd()),
-            skipGeneration: skipGeneration ?? false
-           });
+        await generateCodeOwnersAndIgnoreLink({
+            sdkType: sdkType,
+            typeSpecDirectory: path.posix.join(specFolder, typespecProject!),
+            sdkRepoRoot: String(shell.pwd()).replaceAll("\\", "/"),
+            skipGeneration: skipGeneration ?? false,
+        });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);

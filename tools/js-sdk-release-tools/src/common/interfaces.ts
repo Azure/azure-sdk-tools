@@ -9,13 +9,10 @@ export interface IModelOnlyChecker {
 }
 
 export interface ICodeOwnersAndIgnoreLinkGenerator {
-    (
-        sdkType: SDKType,
-        options: {
-            typespecProject?: string;
-            typeSpecDirectory: string;
-            sdkRepo: string;
-            skipGeneration: boolean;
-        },
-    ): Promise<void>;
+    (options: {
+        sdkType: SDKType;
+        typeSpecDirectory: string;
+        sdkRepoRoot: string;
+        skipGeneration: boolean;
+    }): Promise<void>;
 }

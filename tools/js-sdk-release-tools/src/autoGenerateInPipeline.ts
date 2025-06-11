@@ -109,7 +109,6 @@ async function automationGenerateInPipeline(
         await generateCodeOwnersAndIgnoreLink({
             sdkType: sdkType,
             typeSpecDirectory: path.posix.join(specFolder, typespecProject!),
-            sdkRepoRoot: String(shell.pwd()).replaceAll("\\", "/"),
             skipGeneration: skipGeneration ?? false,
         });
     } catch (e) {

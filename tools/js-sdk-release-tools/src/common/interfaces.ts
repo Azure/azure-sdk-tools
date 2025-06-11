@@ -12,7 +12,6 @@ export interface ICodeOwnersAndIgnoreLinkGenerator {
     (options: {
         sdkType: SDKType;
         typeSpecDirectory: string;
-        sdkRepoRoot: string;
         skipGeneration: boolean;
     }): Promise<void>;
 }

@@ -105,11 +105,10 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
+
         await generateCodeOwnersAndIgnoreLink({
             sdkType: sdkType,
-            specFolder: specFolder,
-            typespecProject: typespecProject,
-            skipGeneration: skipGeneration ?? false,
+            packages: outputJson.packages,
         });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;

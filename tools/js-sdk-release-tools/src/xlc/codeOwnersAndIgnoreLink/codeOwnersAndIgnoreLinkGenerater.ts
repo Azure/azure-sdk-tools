@@ -3,27 +3,21 @@ import { SDKType } from "../../common/types.js";
 import { logger } from "../../utils/logger.js";
 import * as mlcApi from "../../mlc/codeownersAndignorelink/codeOwnersAndIgnoreLinkGenerater.js";
 import * as hlcApi from "../../hlc/codeownersAndignorelink/codeOwnersAndIgnoreLinkGenerater.js";
-import shell from 'shelljs';
-import * as path from 'path';
 
 export const generateCodeOwnersAndIgnoreLink: ICodeOwnersAndIgnoreLinkGenerator =
-    async (options: {
-        sdkType: SDKType;
-        specFolder: string;
-        typespecProject?: string;
-        skipGeneration: boolean;
-    }): Promise<void> => {
+    async (options: { sdkType: SDKType; packages: any }): Promise<void> => {
+        if (options.packages.length === 0) {
+            logger.warn("No packages found in the packages");
+            return;
+        }
         switch (options.sdkType) {
             case SDKType.ModularClient:
-                const typeSpecDirectory = path.posix.join(options.specFolder, options.typespecProject!);
-                const sdkRepoRoot = String(shell.pwd()).replaceAll('\\', '/');
-                return await mlcApi.generateCodeOwnersAndIgnoreLink({
-                    typeSpecDirectory: typeSpecDirectory,
-                    sdkRepoRoot: sdkRepoRoot,
-                });
+                return await mlcApi.generateCodeOwnersAndIgnoreLink(
+                    options.packages,
+                );
             case SDKType.HighLevelClient:
                 return await hlcApi.generateCodeOwnersAndIgnoreLink(
-                    options.skipGeneration,
+                    options.packages,
                 );
             default:
                 logger.warn(

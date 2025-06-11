@@ -69,7 +69,7 @@ export async function generateMgmt(options: {
     for (const changedPackageDirectory of changedPackageDirectories) {
         const packagePath: string = path.join(options.sdkRepo, changedPackageDirectory);
         let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, undefined);
-
+        outputPackageInfo['packageFolder'] = changedPackageDirectory;
         try {
             logger.info(`Start to install dependencies for ${changedPackageDirectory}.`);
             const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));

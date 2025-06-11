@@ -25,6 +25,8 @@ export async function generateCodeOwnersAndIgnoreLinkForPackage(
         logger.info(
             `Generated updates for CODEOWNERS and ignore link successfully`,
         );
+    } else {
+        logger.info(`Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`);
     }
 }
 

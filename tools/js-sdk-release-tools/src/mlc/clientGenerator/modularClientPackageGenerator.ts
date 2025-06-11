@@ -6,7 +6,7 @@ import { posix } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
@@ -30,7 +30,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
-        await remove(packageDirectory);
+        await cleanUpPackageDirectory(packageDirectory, options.runMode);
         if (options.apiVersion) {
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }

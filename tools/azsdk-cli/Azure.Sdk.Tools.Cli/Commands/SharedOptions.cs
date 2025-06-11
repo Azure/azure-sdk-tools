@@ -1,12 +1,9 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
-using Azure.Sdk.Tools.Cli.Contract;
 using System.IO.Enumeration;
-using System.Reflection;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
-using AzureSDKDevToolsMCP.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {

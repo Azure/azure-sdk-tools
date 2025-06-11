@@ -106,7 +106,6 @@ export async function buildPackage(
     logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
     await updateSnippets(packageDirectory);

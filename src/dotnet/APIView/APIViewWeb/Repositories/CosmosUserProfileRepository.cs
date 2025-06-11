@@ -31,7 +31,9 @@ namespace APIViewWeb
             {
                 if (createIfNotExist)
                 {
-                    return new UserProfileModel(UserName);
+                    var profile = new UserProfileModel(UserName);
+                    profile.Preferences.UserName = UserName;
+                    return profile;
                 }
                 throw;
             }

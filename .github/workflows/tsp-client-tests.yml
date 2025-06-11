@@ -18,5 +18,5 @@ jobs:
     steps:
       - name: Curl ping endpoint
         run: |
-          echo "curl app service"
+          echo "curl app service 2"
           curl -f https://pingservicetest.azurewebsites.net

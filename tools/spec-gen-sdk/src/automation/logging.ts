@@ -39,7 +39,8 @@ type WinstonInfo = {
   showInComment?: boolean;
   lineResult?: SDKAutomationState;
 };
-const formatLog = (info: WinstonInfo) => {
+
+export const formatLog = (info: WinstonInfo) => {
   let extra = info.showInComment ? ' C' : '';
   if (info.lineResult) {
     extra = {

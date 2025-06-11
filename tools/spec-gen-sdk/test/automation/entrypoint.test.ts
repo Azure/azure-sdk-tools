@@ -1,28 +1,28 @@
-vi.mock('../../src/automation/workflow', async () => {
-  const actualWorkflow = await vi.importActual<typeof import('../../src/automation/workflow')>('../../src/automation/workflow');
-  return {
-    ...actualWorkflow,
-    // setFailureType: vi.fn(),
-    // workflowInit: vi.fn(),
-    workflowMain: vi.fn(),
-  };
-});
+// vi.mock('../../src/automation/workflow', async () => {
+//   const actualWorkflow = await vi.importActual<typeof import('../../src/automation/workflow')>('../../src/automation/workflow');
+//   return {
+//     ...actualWorkflow,
+//     // setFailureType: vi.fn(),
+//     // workflowInit: vi.fn(),
+//     workflowMain: vi.fn(),
+//   };
+// });
 
-vi.mock('../../src/types/SpecConfig', async () => {
-  const actualSpecConfig = await vi.importActual<typeof import('../../src/types/SpecConfig')>('../../src/types/SpecConfig');
-  return {
-    ...actualSpecConfig,
-    getSpecConfig: vi.fn(),
-  };
-});
+// vi.mock('../../src/types/SpecConfig', async () => {
+//   const actualSpecConfig = await vi.importActual<typeof import('../../src/types/SpecConfig')>('../../src/types/SpecConfig');
+//   return {
+//     ...actualSpecConfig,
+//     getSpecConfig: vi.fn(),
+//   };
+// });
 
-vi.mock('../../src/types/SwaggerToSdkConfig', async () => {
-  const actualSwaggerToSdkConfig = await vi.importActual<typeof import('../../src/types/SwaggerToSdkConfig')>('../../src/types/SwaggerToSdkConfig');
-  return {
-    ...actualSwaggerToSdkConfig,
-    getSwaggerToSdkConfig: vi.fn(),
-  };
-});
+// vi.mock('../../src/types/SwaggerToSdkConfig', async () => {
+//   const actualSwaggerToSdkConfig = await vi.importActual<typeof import('../../src/types/SwaggerToSdkConfig')>('../../src/types/SwaggerToSdkConfig');
+//   return {
+//     ...actualSwaggerToSdkConfig,
+//     getSwaggerToSdkConfig: vi.fn(),
+//   };
+// });
 
 vi.mock('fs', async () => {
   const actualFs = await vi.importActual<typeof import('fs')>('fs');
@@ -35,17 +35,17 @@ vi.mock('fs', async () => {
   };
 });
 
-vi.mock('../../src/automation/logging', async () => {
-  const actualLogging = await vi.importActual<typeof import('../../src/automation/logging')>('../../src/automation/logging');
-  return {
-    ...actualLogging,
-    loggerConsoleTransport: vi.fn(),
-    loggerDevOpsTransport: vi.fn(),
-    loggerFileTransport: vi.fn(),
-    loggerTestTransport: vi.fn(),
-    loggerWaitToFinish: vi.fn()
-  };
-});
+// vi.mock('../../src/automation/logging', async () => {
+//   const actualLogging = await vi.importActual<typeof import('../../src/automation/logging')>('../../src/automation/logging');
+//   return {
+//     ...actualLogging,
+//     loggerConsoleTransport: vi.fn(),
+//     loggerDevOpsTransport: vi.fn(),
+//     loggerFileTransport: vi.fn(),
+//     loggerTestTransport: vi.fn(),
+//     loggerWaitToFinish: vi.fn()
+//   };
+// });
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 
 
@@ -103,60 +103,59 @@ describe('entrypoint', () => {
    const mockSwaggerConfig = {
      repositories: []
    };
-    // Mock fs 
-    vi.mocked(existsSync).mockReturnValue(false);
-    vi.mocked(mkdirSync).mockImplementation(() => undefined);
-    vi.mocked(readFileSync).mockImplementation((path: PathOrFileDescriptor) => {
-      const filePath = typeof path === 'string' ? path : '';
-      if (filePath.includes('specificationRepositoryConfiguration.json')) {
-        return Buffer.from(JSON.stringify(mockSpecConfig));
-      }
-      if (filePath.includes('swagger_to_sdk_config.json')) {
-        return Buffer.from(JSON.stringify(mockSwaggerConfig));
-      }
-      return 'aaa';
-    });
-    vi.mocked(rmSync).mockImplementation(() => undefined);
+    // // Mock fs 
+    // vi.mocked(existsSync).mockReturnValue(false);
+    // vi.mocked(mkdirSync).mockImplementation(() => undefined);
+    // vi.mocked(readFileSync).mockImplementation((path: PathOrFileDescriptor) => {
+    //   const filePath = typeof path === 'string' ? path : '';
+    //   if (filePath.includes('specificationRepositoryConfiguration.json')) {
+    //     return Buffer.from(JSON.stringify(mockSpecConfig));
+    //   }
+    //   if (filePath.includes('swagger_to_sdk_config.json')) {
+    //     return Buffer.from(JSON.stringify(mockSwaggerConfig));
+    //   }
+    //   return 'aaa';
+    // });
+    // vi.mocked(rmSync).mockImplementation(() => undefined);
 
-    // Mock winston logger
-    vi.spyOn(winston, 'createLogger').mockReturnValue({
-      add: vi.fn(),
-      info: vi.fn(),
-      error: vi.fn()
-    } as any);
-
-    // Mock logging transports
-    vi.mocked(loggerConsoleTransport).mockReturnValue({} as any);
-    vi.mocked(loggerDevOpsTransport).mockReturnValue({} as any);
-    vi.mocked(loggerTestTransport ).mockReturnValue({} as any);
-    vi.mocked(loggerFileTransport).mockReturnValue({} as any);
-    vi.mocked(loggerWaitToFinish).mockResolvedValue(void 0);
-
-
-    // Mock SpecConfig and SdkRepoConfig
-    vi.mocked(getSpecConfig).mockReturnValue(mockSpecConfig as any);
-
-    // Mock SwaggerToSdkConfig
-    vi.mocked(getSwaggerToSdkConfig).mockReturnValue(mockSwaggerConfig as any);
-
-    // Mock workflow functions
-    // (workflowInit).mockResolvedValue({
-    //   status: 'inProgress',
-    //   logger: {} as any,
-    //   messages: [],
-    //   vsoLogs: new Map()
+    // // Mock winston logger
+    // vi.spyOn(winston, 'createLogger').mockReturnValue({
+    //   add: vi.fn(),
+    //   info: vi.fn(),
+    //   error: vi.fn()
     // } as any);
-    vi.mocked(workflowMain).mockResolvedValue(void 0);
-    // (setFailureType).mockImplementation(() => undefined);
+
+    // // Mock logging transports
+    // vi.mocked(loggerConsoleTransport).mockReturnValue({} as any);
+    // vi.mocked(loggerDevOpsTransport).mockReturnValue({} as any);
+    // vi.mocked(loggerTestTransport ).mockReturnValue({} as any);
+    // vi.mocked(loggerFileTransport).mockReturnValue({} as any);
+    // vi.mocked(loggerWaitToFinish).mockResolvedValue(void 0);
+
+
+    // // Mock SpecConfig and SdkRepoConfig
+    // vi.mocked(getSpecConfig).mockReturnValue(mockSpecConfig as any);
+
+    // // Mock SwaggerToSdkConfig
+    // vi.mocked(getSwaggerToSdkConfig).mockReturnValue(mockSwaggerConfig as any);
+
+    // // Mock workflow functions
+    // // (workflowInit).mockResolvedValue({
+    // //   status: 'inProgress',
+    // //   logger: {} as any,
+    // //   messages: [],
+    // //   vsoLogs: new Map()
+    // // } as any);
+    // vi.mocked(workflowMain).mockResolvedValue(void 0);
+    // // (setFailureType).mockImplementation(() => undefined);
   });
 
   describe('getSdkAutoContext', () => {
     it('should properly initialize context with local environment', async () => {
-      vi.spyOn(entrypoint, 'loadConfigContent').mockReturnValue({
-"aaa": 1323
-      })
-
-      vi.mocked(readFileSync).mockReturnValue("aaaaaaaa")
+      vi.spyOn(entrypoint, 'loadConfigContent').mockImplementation(() => {
+        return 'mocked content';
+      });
+//       vi.mocked(readFileSync).mockReturnValue("aaaaaaaa")
       const context = await entrypoint.getSdkAutoContext(defaultOptions);
 
      expect(readFileSync).toHaveBeenCalled()

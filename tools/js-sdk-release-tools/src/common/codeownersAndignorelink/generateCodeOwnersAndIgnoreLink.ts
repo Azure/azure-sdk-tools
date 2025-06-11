@@ -5,8 +5,6 @@ import { logger } from "../../utils/logger.js";
 import { getNpmPackageName } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
 
-import { getChangedPackageDirectory } from "../../utils/git.js"; // Corrected import path
-
 export async function generateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
 ) {

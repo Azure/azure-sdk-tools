@@ -144,6 +144,17 @@ namespace Azure.ClientSdk.Analyzers
                     throw new InvalidOperationException($"Type name mismatch: expected '{typeName}' but qualified name contains '{extractedTypeName}' at index {index}");
                 }
                 
+                // Check if this is exactly the same type (same namespace, name, and package)
+                var currentFullTypeName = namedTypeSymbol.ToDisplayString();
+                var currentAssemblyName = namedTypeSymbol.ContainingAssembly?.Name ?? "";
+                
+                // Don't report if it's exactly the same type
+                if (string.Equals(currentFullTypeName, qualifiedTypeName, StringComparison.Ordinal) && 
+                    string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                
                 // Create the error message including package name if available
                 var conflictDescription = string.IsNullOrEmpty(packageName) 
                     ? qualifiedTypeName 

@@ -8,7 +8,7 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
-import { generateCodeOwnersAndIgnoreLink } from './common/codeownersAndignorelink/generateCodeOwnersAndIgnoreLink.js';
+import { generateCodeOwnersAndIgnoreLink } from './xlc/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerater.js'
 
 import shell from 'shelljs';
 import fs from 'fs';
@@ -43,10 +43,9 @@ async function automationGenerateInPipeline(
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
-        let changedPackagePaths: string[] = [];
         switch (sdkType) {
             case SDKType.HighLevelClient:
-                changedPackagePaths = await generateMgmt({
+                await generateMgmt({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: specFolder,
                     readmeMd: readmeMd!,
@@ -108,10 +107,10 @@ async function automationGenerateInPipeline(
         }
 
         await generateCodeOwnersAndIgnoreLink(sdkType, {
-            changedPackagePaths: changedPackagePaths!,
             typespecProject: typespecProject,
             typeSpecDirectory: specFolder,
             sdkRepo: String(shell.pwd()),
+            skipGeneration: skipGeneration ?? false
            });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;

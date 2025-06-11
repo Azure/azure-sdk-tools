@@ -30,5 +30,18 @@ namespace {namespaceName}
 
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0034IncludesPackageNameInMessage()
+        {
+            var code = @"
+namespace Azure.Test
+{
+    public class String { }
+}";
+
+            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 18, 4, 24).WithArguments("String", "System.String (from System.Runtime)");
+            await Verifier.VerifyAnalyzerAsync(code, expected);
+        }
     }
 }

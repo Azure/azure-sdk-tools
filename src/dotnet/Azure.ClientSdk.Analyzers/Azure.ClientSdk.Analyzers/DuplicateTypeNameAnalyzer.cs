@@ -119,7 +119,22 @@ namespace Azure.ClientSdk.Analyzers
             int index = Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal);
             if (index >= 0)
             {
-                var qualifiedTypeName = index < QualifiedTypeNames.Length ? QualifiedTypeNames[index] : "unknown type";
+                var qualifiedEntry = index < QualifiedTypeNames.Length ? QualifiedTypeNames[index] : "unknown type";
+                
+                // Parse the qualified entry to extract the type name and package name
+                string qualifiedTypeName;
+                string packageName = "";
+                
+                var semicolonIndex = qualifiedEntry.IndexOf(';');
+                if (semicolonIndex >= 0)
+                {
+                    qualifiedTypeName = qualifiedEntry.Substring(0, semicolonIndex);
+                    packageName = qualifiedEntry.Substring(semicolonIndex + 1);
+                }
+                else
+                {
+                    qualifiedTypeName = qualifiedEntry;
+                }
                 
                 // Verify that the qualified name corresponds to the same type name with proper casing
                 var lastDotIndex = qualifiedTypeName.LastIndexOf('.');
@@ -129,9 +144,14 @@ namespace Azure.ClientSdk.Analyzers
                     throw new InvalidOperationException($"Type name mismatch: expected '{typeName}' but qualified name contains '{extractedTypeName}' at index {index}");
                 }
                 
+                // Create the error message including package name if available
+                var conflictDescription = string.IsNullOrEmpty(packageName) 
+                    ? qualifiedTypeName 
+                    : $"{qualifiedTypeName} (from {packageName})";
+                
                 foreach (var location in namedTypeSymbol.Locations)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName, qualifiedTypeName), namedTypeSymbol);
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName, conflictDescription), namedTypeSymbol);
                 }
             }
         }

@@ -197,17 +197,17 @@ public class RealTypeExtractor
                 // Get namespace
                 var namespaceName = typeDef.Namespace.IsNil ? string.Empty : metadataReader.GetString(typeDef.Namespace);
                 
-                // Build qualified name in the format "namespace.typename in packagename"
+                // Build qualified name in the format "namespace.typename;packagename"
                 string qualifiedName;
                 if (string.IsNullOrEmpty(namespaceName))
                 {
                     // No namespace, use just typename with package
-                    qualifiedName = $"{typeName} in {packageId}";
+                    qualifiedName = $"{typeName};{packageId}";
                 }
                 else
                 {
                     // Use full namespace with typename and package
-                    qualifiedName = $"{namespaceName}.{typeName} in {packageId}";
+                    qualifiedName = $"{namespaceName}.{typeName};{packageId}";
                 }
                 
                 types.Add(new TypeInfo

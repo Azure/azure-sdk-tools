@@ -22,102 +22,39 @@ namespace IssueLabelerService
 
         public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
-            // Configuration for Azure services
             var modelName = _config.LabelModelName;
-            var issueIndexName = _config.IssueIndexName;
-            var documentIndexName = _config.DocumentIndexName;
+            double solutionThreshold = double.Parse(_config.SolutionThreshold);
 
-            // Issue specific configurations
-            var issueSemanticName = _config.IssueSemanticName;
-            string issueFieldName = _config.IssueIndexFieldName;
+            var searchContentResults = await GetSearchContentResults(issue);
 
-            // Document specific configurations
-            var documentSemanticName = _config.DocumentSemanticName;
-            string documentFieldName = _config.DocumentIndexFieldName;
-
-            // Query + Filtering configurations
-            string query = $"{issue.Title} {issue.Body}";
-            int top = int.Parse(_config.SourceCount);
-            double scoreThreshold = double.Parse(_config.ScoreThreshold);
-
-            // Search for issues and documents
-            var issues = await _ragService.SearchIssuesAsync(issueIndexName, issueSemanticName, issueFieldName, query, top, scoreThreshold);
-            var docs = await _ragService.SearchDocumentsAsync(documentIndexName, documentSemanticName, documentFieldName, query, top, scoreThreshold);
-
-            // Filtered out all sources for either one then not enough information to answer the issue. 
-            if (docs.Count == 0 || issues.Count == 0)
-            {
-                throw new InvalidDataException($"Not enough relevant sources found for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}.");
-            }
-
-            double highestScore = _ragService.GetHighestScore(issues, docs, issue.RepositoryName, issue.IssueNumber);
-
-            _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
-
-            // Format issues 
-            var printableIssues = string.Join("\n\n", issues.Select(issue =>
-                $"Title: {issue.Title}\nDescription: {issue.chunk}\nService: {issue.Service}\nScore: {issue.Score}"));
-
-            // Format documents 
-            var printableDocs = string.Join("\n\n", docs.Select(doc =>
-                $"Content: {doc.chunk}\nService: {doc.Service}\nScore: {doc.Score}"));
-
-            // Get labels for this repository
             var labels = await GetLabelsAsync(issue.RepositoryName);
+
             var categoryLabels = GetCategoryLabelsForPrompt(labels, issue.RepositoryName);
-
-            // Will replace variables inside of the user prompt configuration.
-            var replacements = new Dictionary<string, string>
-            {
-                { "Title", issue.Title },
-                { "Description", issue.Body },
-                { "PrintableDocs", printableDocs },
-                { "PrintableIssues", printableIssues },
-                { "PrintableLabels", categoryLabels }
-            };
-
-            string instructions = _config.LabelInstructions;
-            string userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelUserPrompt, replacements, _logger);
+            var printableContent = string.Join("\n\n", searchContentResults.Select(searchContent =>
+                $"Title: {searchContent.Title}\nDescription: {searchContent.Chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
+            var userPrompt = FormatUserPrompt(issue, categoryLabels, printableContent);
 
             var structure = BuildSearchStructure();
-
-            var result = await _ragService.SendMessageQnaAsync(instructions, userPrompt, modelName, structure);
-            var output = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+            var result = await _ragService.SendMessageQnaAsync(_config.LabelInstructions, userPrompt, modelName, structure);
 
             if (string.IsNullOrEmpty(result))
             {
                 throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} had an empty response.");
             }
 
+            var output = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
+
             // Filter the output to exclude keys containing "ConfidenceScore"
             var filteredOutput = output
                 .Where(kv => !kv.Key.Contains("ConfidenceScore", StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            if(!ValidateLabels(labels, filteredOutput))
+            if (!ValidateLabels(labels, filteredOutput))
             {
                 throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided invalid labels: {string.Join(", ", filteredOutput.Select(kv => $"{kv.Key}: {kv.Value}"))}");
             }
 
-            foreach (var label in filteredOutput)
-            {
-                try
-                {
-                    var confidence = double.Parse(output[$"{label.Key}ConfidenceScore"]);
-                    if(label.Value == "UNKNOWN")
-                    {
-                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
-                    }
-                    if (confidence < double.Parse(_config.ConfidenceThreshold))
-                    {
-                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");
-                    }
-                }
-                catch(FormatException)
-                {
-                    throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an invalid confidence scoreor config score threshold not setup: {output[$"{label.Key}ConfidenceScore"]}");
-                }
-            }
+            ValidateConfidenceScores(filteredOutput, output, issue);
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}: {string.Join(", ", filteredOutput.Select(kv => $"{kv.Key}: {kv.Value}"))}");
 
@@ -131,6 +68,7 @@ namespace IssueLabelerService
             var properties = string.Join(", ", labelKeys.Select(key => $"\"{key}\": {{ \"type\": \"string\" }}"));
             var scores = string.Join(", ", labelKeys.Select(key => $"\"{key}ConfidenceScore\": {{ \"type\": \"string\" }}"));
             var required = string.Join(", ", labelKeys.Select(key => $"\"{key}\""));
+
             return BinaryData.FromString($$"""
             {
               "type": "object",
@@ -191,5 +129,76 @@ namespace IssueLabelerService
             // Validate that all values in the dictionary exist in the label names
             return labelsToValidate.Values.All(label => labelNames.Contains(label));
         }
+
+        private async Task<List<IndexContent>> GetSearchContentResults(IssuePayload issue)
+        {
+            var indexName = _config.IndexName;
+            var semanticName = _config.SemanticName;
+            var query = $"{issue.Title} {issue.Body}";
+            var top = int.Parse(_config.SourceCount);
+            var scoreThreshold = double.Parse(_config.ScoreThreshold);
+            var fieldName = _config.IssueIndexFieldName;
+
+            _logger.LogInformation($"Searching content index '{indexName}' with query: {query}");
+            var searchContentResults = await _ragService.IssueTriageContentIndexAsync(
+                indexName,
+                semanticName,
+                fieldName,
+                query,
+                top,
+                scoreThreshold
+            );
+
+            // If no results are found, throw an exception
+            if (searchContentResults.Count == 0)
+            {
+                throw new InvalidDataException($"Not enough relevant sources found for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}.");
+            }
+
+            _logger.LogInformation($"Found {searchContentResults.Count} issues with score >= {scoreThreshold}");
+
+            return searchContentResults;
+        }
+
+        private string FormatUserPrompt(IssuePayload issue, string categoryLabels, string printableContent)
+        {
+            var replacements = new Dictionary<string, string>
+            {
+                { "Title", issue.Title },
+                { "Description", issue.Body },
+                { "PrintableLabels", categoryLabels },
+                { "PrintableContent", printableContent }
+            };
+            var userPrompt = AzureSdkIssueLabelerService.FormatTemplate(_config.LabelPrompt, replacements, _logger);
+
+            return userPrompt;
+        }
+
+        private void ValidateConfidenceScores(Dictionary<string, string> filteredOutput, Dictionary<string, string> output, IssuePayload issue)
+        {
+            foreach (var label in filteredOutput)
+            {
+
+                try
+                {
+
+                    var confidence = double.Parse(output[$"{label.Key}ConfidenceScore"]);
+
+                    if (label.Value == "UNKNOWN")
+                    {
+                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
+                    }
+                    
+                    if (confidence < double.Parse(_config.ConfidenceThreshold))
+                    {
+                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");
+                    }
+                }
+                catch (FormatException)
+                {
+                    throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an invalid confidence score or config score threshold not setup: {output[$"{label.Key}ConfidenceScore"]}");
+                }
+            }
+         }
     }
 }

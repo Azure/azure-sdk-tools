@@ -96,6 +96,7 @@ class ApiViewReview:
         outline: Optional[str] = None,
         comments: Optional[list] = None,
         mode: str = DEFAULT_CONTEXT_MODE,
+        include_general_guidelines: bool = False,
     ):
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
@@ -112,6 +113,9 @@ class ApiViewReview:
         self.outline = outline
         self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
         self.executor = concurrent.futures.ThreadPoolExecutor()
+        self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
+        if include_general_guidelines:
+            self.filter_expression += " or language eq '' or language eq null"
 
     def __del__(self):
         # Ensure the executor is properly shut down

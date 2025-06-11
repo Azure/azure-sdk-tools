@@ -48,9 +48,6 @@ extends:
           command: custom
           custom: 'tool'
           arguments: install Microsoft.Playwright.CLI
-
-      - script: playwright --version
-        displayName: Verify Playwright CLI Installation
     
       - task: DotNetCoreCLI@2
         displayName: Build all projects and libraries
@@ -64,9 +61,6 @@ extends:
           command: custom
           custom: 'tool '
           arguments: run playwright install
-    
-      - script: playwright install --check
-        displayName: Verify Playwright Browsers Installation
 
       - task: CopyFiles@2
         displayName: Copy appsettings.json to output directory

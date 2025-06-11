@@ -3,6 +3,9 @@ using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.IO.Enumeration;
 using System.Reflection;
+using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
+using Azure.Sdk.Tools.Cli.Tools.HostServer;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -68,42 +71,30 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static List<Type> GetFilteredToolTypes(string[] args)
         {
             var toolMatchList = SharedOptions.GetToolsFromArgs(args);
-            List<Type> toolsList;
+            var toolsList = new List<Type>(){
+                typeof(AnalyzePipelinesTool), 
+                typeof(PipelineDetailsTool),
+                typeof(CleanupTool),
+                typeof(HostServerTool),
+                typeof(ReleasePlanTool),
+                typeof(SpecCommonTools),
+                typeof(SpecPullRequestTools),
+                typeof(SpecWorkflowTool)
+            };
+
+            #if DEBUG
+            // only add this tool in debug mode
+            toolsList.Add(typeof(HelloWorldTool));
+            #endif
 
             if (toolMatchList.Length > 0)
             {
-                toolsList = AppDomain.CurrentDomain
-                             .GetAssemblies()
-                             .SelectMany(a => SafeGetTypes(a))
-                             .Where(t => !t.IsAbstract &&
-                             typeof(MCPTool).IsAssignableFrom(t))
+                toolsList = toolsList
                              .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name) || t.Name.StartsWith("HostServer")))
-                             .ToList();
-            }
-            else
-            {
-                // defaults to everything
-                toolsList = AppDomain.CurrentDomain
-                             .GetAssemblies()
-                             .SelectMany(a => SafeGetTypes(a))
-                             .Where(t => !t.IsAbstract &&
-                             typeof(MCPTool).IsAssignableFrom(t))
                              .ToList();
             }
 
             return toolsList;
-        }
-
-        public static IEnumerable<Type> SafeGetTypes(Assembly asm)
-        {
-            try
-            {
-                return asm.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                return ex.Types!.Where(t => t != null)!;
-            }
         }
     }
 }

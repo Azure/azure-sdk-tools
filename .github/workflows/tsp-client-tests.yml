@@ -14,7 +14,7 @@ on:
 
 jobs:
   ping:
-    runs-on: [self-hosted, 1ES.Pool=azsdk-github-pool]
+    runs-on: [self-hosted, 1ES.Pool=azsdk-github-tools]
     steps:
       - name: Curl ping endpoint
         run: |

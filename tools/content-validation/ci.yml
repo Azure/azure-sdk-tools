@@ -28,6 +28,20 @@ extends:
     ToolDirectory: tools/content-validation
     ReleaseBinaries: true
     TestPreSteps:
+      - task: UseDotNet@2
+        displayName: 'Install .NET Core SDK'
+        inputs:
+          packageType: 'sdk'
+          version: '8.0.x'
+          installationPath: $(Agent.ToolsDirectory)/dotnet 
+
+      - task: DotNetCoreCLI@2
+        displayName: New Manifest for tool
+        inputs:
+          command: custom
+          custom: 'new '
+          arguments: tool-manifest
+
       - task: DotNetCoreCLI@2
         displayName: Install Playwright CLI
         inputs:

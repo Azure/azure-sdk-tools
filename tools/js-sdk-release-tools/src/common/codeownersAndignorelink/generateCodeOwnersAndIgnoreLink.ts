@@ -51,6 +51,7 @@ function updateCODEOWNERS(packagePath: string) {
         }
     }
     fs.writeFileSync(codeownersPath, content);
+    logger.info(`Updated CODEOWNERS for package: ${packagePath}`);
 }
 
 function updateIgnoreLink(packageName: string) {

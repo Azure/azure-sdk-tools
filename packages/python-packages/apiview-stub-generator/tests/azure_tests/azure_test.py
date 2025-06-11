@@ -146,11 +146,23 @@ def _add_init_for_whl(pkg_path):
                 azure_dir = root
                 break
 
-        # Add __init__.py if azure directory exists and file doesn't already exist
-        if azure_dir and not os.path.exists(os.path.join(azure_dir, '__init__.py')):
-            with open(os.path.join(azure_dir, '__init__.py'), 'w') as f:
-                pass  # Create an empty file
-            print(f"Added __init__.py to {azure_dir}")
+        # Add __init__.py recursively up the directory tree inside azure if needed
+        def add_init_recursively(folder):
+            # Stop if __init__.py exists in this folder
+            if os.path.exists(os.path.join(folder, '__init__.py')):
+                return
+            # Add __init__.py to this folder
+            with open(os.path.join(folder, '__init__.py'), 'w') as f:
+                pass
+            # Check if this folder contains exactly one subfolder (and no files except __init__.py)
+            entries = [e for e in os.listdir(folder) if e != '__init__.py']
+            subfolders = [e for e in entries if os.path.isdir(os.path.join(folder, e))]
+            if len(subfolders) == 1 and not any(os.path.isfile(os.path.join(folder, e)) for e in entries):
+                # Recurse into the single subfolder
+                add_init_recursively(os.path.join(folder, subfolders[0]))
+
+        if azure_dir:
+            add_init_recursively(azure_dir)
 
         # Repackage the wheel
         # Save the original filename

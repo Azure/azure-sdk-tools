@@ -18,8 +18,9 @@ export class ChangelogItemGenerator {
         switch (this.sdkType) {
             case SDKType.HighLevelClient:
                 return this.diffPairs.filter((p) => {
-                    p.location === DiffLocation.Interface && isPropertyMethod;
-                    p.source?.node;
+                    const source = p.source?.node.asKindOrThrow(SyntaxKind.InterfaceDeclaration);
+                    const target = p.target?.node.asKindOrThrow(SyntaxKind.InterfaceDeclaration);
+                    source?.getMethods().length === source?.getMembers().length &&  ; 
                 });
         }
     }

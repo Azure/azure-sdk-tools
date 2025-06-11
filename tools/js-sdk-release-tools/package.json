@@ -42,7 +42,7 @@
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
     "tslib": "^2.8.1",
-    "typescript-codegen-breaking-change-detector": "0.5.6",
+    "typescript-codegen-breaking-change-detector": "0.7.7",
     "unixify": "^1.0.0",
     "winston": "^3.17.0",
     "yaml": "^2.7.0"

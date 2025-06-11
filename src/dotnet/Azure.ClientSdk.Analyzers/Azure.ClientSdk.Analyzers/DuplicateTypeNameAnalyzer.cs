@@ -120,6 +120,15 @@ namespace Azure.ClientSdk.Analyzers
             if (index >= 0)
             {
                 var qualifiedTypeName = index < QualifiedTypeNames.Length ? QualifiedTypeNames[index] : "unknown type";
+                
+                // Verify that the qualified name corresponds to the same type name with proper casing
+                var lastDotIndex = qualifiedTypeName.LastIndexOf('.');
+                var extractedTypeName = lastDotIndex >= 0 ? qualifiedTypeName.Substring(lastDotIndex + 1) : qualifiedTypeName;
+                if (!string.Equals(typeName, extractedTypeName, StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException($"Type name mismatch: expected '{typeName}' but qualified name contains '{extractedTypeName}' at index {index}");
+                }
+                
                 foreach (var location in namedTypeSymbol.Locations)
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0034, location, typeName, qualifiedTypeName), namedTypeSymbol);

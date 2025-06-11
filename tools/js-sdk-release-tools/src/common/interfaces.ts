@@ -11,7 +11,8 @@ export interface IModelOnlyChecker {
 export interface ICodeOwnersAndIgnoreLinkGenerator {
     (options: {
         sdkType: SDKType;
-        typeSpecDirectory: string;
+        specFolder: string;
+        typespecProject?: string;
         skipGeneration: boolean;
     }): Promise<void>;
 }

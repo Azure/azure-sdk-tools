@@ -105,10 +105,10 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
-
         await generateCodeOwnersAndIgnoreLink({
             sdkType: sdkType,
-            typeSpecDirectory: path.posix.join(specFolder, typespecProject!),
+            specFolder: specFolder,
+            typespecProject: typespecProject,
             skipGeneration: skipGeneration ?? false,
         });
     } catch (e) {

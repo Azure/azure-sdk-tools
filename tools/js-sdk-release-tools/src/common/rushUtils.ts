@@ -11,6 +11,7 @@ import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
 import { existsSync } from 'fs';
+import { formatSdk, updateSnippets } from './devToolUtils.js';
 
 interface ProjectItem {
     packageName: string;
@@ -107,6 +108,7 @@ export async function buildPackage(
     // note: these commands will delete temp folder
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
+    await updateSnippets(packageDirectory);
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');
@@ -130,21 +132,6 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     } catch (err) {
         logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
     }
-}
-
-export async function formatSdk(packageDirectory: string) {
-    logger.info(`Start to format code in '${packageDirectory}'.`);
-    const cwd = packageDirectory;
-    const options = { ...runCommandOptions, cwd };
-    const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
-
-    try {
-        await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
-        logger.info(`format sdk successfully.`);
-    } catch (error) {
-        logger.warn(`Failed to format code due to: ${(error as Error)?.stack ?? error}`);
-    }
-
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

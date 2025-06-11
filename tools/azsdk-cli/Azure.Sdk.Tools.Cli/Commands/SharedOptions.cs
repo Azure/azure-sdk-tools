@@ -1,8 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
-using Azure.Sdk.Tools.Cli.Contract;
 using System.IO.Enumeration;
-using System.Reflection;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
@@ -20,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecCommonTools),
             typeof(SpecPullRequestTools),
             typeof(SpecWorkflowTool),
+            typeof(SpecValidationTools),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

@@ -15,7 +15,6 @@ export async function generateCodeOwnersAndIgnoreLinkForPackage(
     const packageAbsolutePath = path.join(jsSdkRepoPath, packageFolderPath);
     const packageName = getNpmPackageName(packageAbsolutePath);
     const npmViewResult = await tryGetNpmView(packageName);
-    logger.info(`npmViewResult: ${npmViewResult}`);
     const isFirstPackageToNpm = npmViewResult === undefined;
     if (isFirstPackageToNpm) {
         logger.info(

@@ -25,7 +25,7 @@ Attribute
 AttributeTargets
 AttributeUsageAttribute
 Authorization
-AutocompleteResult
+AutoCompleteResult
 AzureCliCredential
 BinaryData
 BinaryReader

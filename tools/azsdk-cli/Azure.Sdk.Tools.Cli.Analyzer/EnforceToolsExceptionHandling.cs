@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Azure.Sdk.Tools.Cli.Analyzer
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class MCPAnalyzer : DiagnosticAnalyzer
+    public class EnforceToolsExceptionHandlingAnalyzer : DiagnosticAnalyzer
     {
         public const string Id = "MCP001";
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(

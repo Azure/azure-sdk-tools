@@ -60,7 +60,7 @@ function updateIgnoreLink(packageName: string) {
     
     // Check if the link already exists in the file
     if (content.includes(newLine)) {
-        logger.info(`Link for ${packageName} already exists in ignore-links.txt, skipping.`);
+        logger.warn(`Link for ${packageName} already exists in ignore-links.txt, skipping.`);
         return;
     }
     

@@ -35,16 +35,16 @@ public class LocalData
     static LocalData()
     {
         
-        // string filePath = "../../../LocalHtmlData.json";
+        string filePath = "../../../LocalHtmlData.json";
 
-        // if (!File.Exists(filePath))
-        // {
-        //     throw new FileNotFoundException("File not found", filePath);
-        // }
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException("File not found", filePath);
+        }
 
-        // string jsonContent = File.ReadAllText(filePath);
+        string jsonContent = File.ReadAllText(filePath);
 
-        // Items = JsonSerializer.Deserialize<List<LocalHTMLDataItem>>(jsonContent) ?? new List<LocalHTMLDataItem>();
+        Items = JsonSerializer.Deserialize<List<LocalHTMLDataItem>>(jsonContent) ?? new List<LocalHTMLDataItem>();
 
     }
 }

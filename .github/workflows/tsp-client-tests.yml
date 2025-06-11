@@ -14,9 +14,9 @@ on:
 
 jobs:
   ping:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, 1ES.Pool=azsdk-github-pool]
     steps:
       - name: Curl ping endpoint
         run: |
-          echo "curl app service 3"
+          echo "curl app service 4"
           curl -f https://pingservicetest.azurewebsites.net

@@ -155,13 +155,13 @@ namespace Azure.ClientSdk.Analyzers
                     modelType = operationType.TypeArguments.FirstOrDefault();
                 }
             }
-            else if (IsOrImplements(returnType, PageableTypeName, AzureNamespace) ||
-                     IsOrImplements(returnType, AsyncPageableTypeName, AzureNamespace) ||
-                     IsOrImplements(returnType, CollectionResultTypeName, AzureNamespace) ||
-                     IsOrImplements(returnType, AsyncCollectionResultTypeName, AzureNamespace) ||
-                     IsOrImplements(returnType, PageableOperationTypeName, AzureNamespace))
+            else if (IsOrImplements(unwrappedType, PageableTypeName, AzureNamespace) ||
+                     IsOrImplements(unwrappedType, AsyncPageableTypeName, AzureNamespace) ||
+                     IsOrImplements(unwrappedType, CollectionResultTypeName, AzureNamespace) ||
+                     IsOrImplements(unwrappedType, AsyncCollectionResultTypeName, AzureNamespace) ||
+                     IsOrImplements(unwrappedType, PageableOperationTypeName, AzureNamespace))
             {
-                if (returnType is INamedTypeSymbol pageableType && pageableType.IsGenericType)
+                if (unwrappedType is INamedTypeSymbol pageableType && pageableType.IsGenericType)
                 {
                     modelType = pageableType.TypeArguments.FirstOrDefault();
                 }

@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
@@ -32,13 +31,14 @@ namespace APIViewWeb.Managers
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICodeFileManager _codeFileManager;
         private readonly IConfiguration _configuration;
+        private readonly IEnumerable<LanguageService> _languageServices;
         private readonly int _pullRequestCleanupDays;
         private readonly bool _isGitClientAvailable;
 
         public PullRequestManager(
             ICosmosPullRequestsRepository pullRequestsRepository, ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IAPIRevisionsManager apiRevisionsManager, IConfiguration configuration, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, TelemetryClient telemetryClient, ILogger<PullRequestManager> logger)
+            IReviewManager reviewManager, TelemetryClient telemetryClient, ILogger<PullRequestManager> logger, IEnumerable<LanguageService> languageServices)
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -47,6 +47,7 @@ namespace APIViewWeb.Managers
             _configuration = configuration;
             _codeFileManager = codeFileManager;
             _telemetryClient = telemetryClient;
+            _languageServices = languageServices;
             _logger = logger;
 
             var ghToken = _configuration["github-access-token"];
@@ -164,7 +165,7 @@ namespace APIViewWeb.Managers
             {
                 // PR commit is already processed. No need to reprocess it again.
                 responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed.");
-                return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName) : "";
+                return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices) : "";
             }
 
             pullRequestModel.Commits.Add(commitSha);
@@ -210,7 +211,7 @@ namespace APIViewWeb.Managers
             }
 
             // Return review URL created for current package if exists
-            return string.IsNullOrEmpty(pullRequestModel.APIRevisionId) ? "" : ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName);
+            return string.IsNullOrEmpty(pullRequestModel.APIRevisionId) ? "" : ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices);
         }
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)

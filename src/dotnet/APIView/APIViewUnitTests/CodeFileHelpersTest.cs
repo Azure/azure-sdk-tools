@@ -7,7 +7,6 @@ using APIView.Model.V2;
 using APIView.TreeToken;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
-using SharpCompress.Common;
 using Xunit;
 using Xunit.Abstractions;
 

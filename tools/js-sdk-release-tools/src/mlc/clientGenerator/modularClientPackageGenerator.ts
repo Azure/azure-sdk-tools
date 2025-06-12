@@ -1,12 +1,12 @@
 import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types.js';
-import { buildPackage, createArtifact } from '../../common/rushUtils.js';
+import { buildPackage, createArtifact, tryBuildSamples } from '../../common/rushUtils.js';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
 import { posix } from 'node:path';
 
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
@@ -30,7 +30,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
-        await remove(packageDirectory);
+        await cleanUpPackageDirectory(packageDirectory, options.runMode);
         if (options.apiVersion) {
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }
@@ -45,6 +45,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: to be compatible with current tool, input relative generated package dir
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
+        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(

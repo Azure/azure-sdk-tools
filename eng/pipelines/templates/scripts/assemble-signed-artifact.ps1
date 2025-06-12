@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Assembles a signed file + artifact into an output artifact. 
+Assembles a signed file + artifact into an output artifact.
 
 
 .DESCRIPTION
@@ -48,7 +48,7 @@ $ErrorActionPreference = "Stop"
 
 function CopyCodeSignArtifacts {
    param(
-      $SourceDir,   
+      $SourceDir,
       $TargetDir
    )
 
@@ -66,7 +66,7 @@ For a sample run against rid osx-x64:
 
 prepare-artifact-for-signing.ps1 runs -> unzips and readies for signing
 signing stage runs, replaces dropped files in place
-assemble-signed-artifact.ps1 runs -> moves files into the correct place if necessary, rezips 
+assemble-signed-artifact.ps1 runs -> moves files into the correct place if necessary, rezips
 
 The file structure that this script will operate against will look like the following
 
@@ -83,7 +83,7 @@ try {
    Push-Location $BinariesDirectory
 
    if ($Rid.StartsWith("win")) {
-      $unzippedArtifactName = [System.IO.Path]::GetFileNameWithoutExtension($SignedFileDirectory)
+      $unzippedArtifactName = (Split-Path $SignedFileDirectory -Leaf).ToString()
       $summaryDirectory = Join-Path -Path $BinariesDirectory -ChildPath (Join-Path -Path "CodeSignSummaries" -ChildPath $unzippedArtifactName)
       $destinationDirectory = Join-Path -Path $BinariesDirectory -ChildPath $unzippedArtifactName
 

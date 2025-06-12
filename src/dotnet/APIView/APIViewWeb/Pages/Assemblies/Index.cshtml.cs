@@ -24,7 +24,6 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IHubContext<SignalRHub> _notificationHubContext;
         public readonly UserProfileCache _userProfileCache;
-        public readonly IUserProfileManager _userProfileManager;
         private readonly ICodeFileManager _codeFileManager;
 
         public const int _defaultPageSize = 50;
@@ -37,7 +36,6 @@ namespace APIViewWeb.Pages.Assemblies
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _userProfileCache = userProfileCache;
-            _userProfileManager = userProfileManager;
             _codeFileManager = codeFileManager;
         }
         [FromForm]
@@ -56,7 +54,7 @@ namespace APIViewWeb.Pages.Assemblies
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
             IEnumerable<string> status, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            await _userProfileManager.SetUserEmailIfNullOrEmpty(User);
+            await _userProfileCache.SetUserEmailIfNullOrEmpty(User);
             var userPreference = (await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin())).Preferences;
             var spaUrl = "https://spa." + Request.Host.ToString();
             if (userPreference.UseBetaIndexPage == true)

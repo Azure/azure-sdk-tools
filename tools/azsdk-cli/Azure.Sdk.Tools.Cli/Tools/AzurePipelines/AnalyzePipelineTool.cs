@@ -1,39 +1,37 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using ModelContextProtocol.Server;
-using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.ComponentModel;
 using System.Text.Json;
+using Azure.Core;
+using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
-using Microsoft.VisualStudio.Services.WebApi;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Microsoft.VisualStudio.Services.OAuth;
-using Azure.Core;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Helpers;
+using Microsoft.VisualStudio.Services.TestResults.WebApi;
+using Microsoft.VisualStudio.Services.WebApi;
+using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.AzurePipelinesTool;
+namespace Azure.Sdk.Tools.Cli.Tools;
 
-[McpServerToolType, Description("Fetches data from Azure Pipelines")]
-public class AzurePipelinesTool(
-    IAzureService azureService,
-    IAzureAgentServiceFactory azureAgentServiceFactory,
-    IOutputService output,
-    ILogger<AzurePipelinesTool> logger) : MCPTool
+[McpServerToolType, Description("Fetches data from an Azure Pipelines run.")]
+public class AnalyzePipelinesTool : MCPTool
 {
     private BuildHttpClient buildClient;
     private TestResultsHttpClient testClient;
     private IAzureAgentService azureAgentService;
     private TokenUsageHelper usage;
-    private readonly Boolean initialized = false;
+    private readonly bool initialized = false;
 
-    // Commands
-    private readonly string getPipelineRunCommandName = "pipeline";
-    private readonly string analyzePipelineCommandName = "analyze";
+    private IAzureService azureService;
+    private IAzureAgentServiceFactory azureAgentServiceFactory;
+    private IOutputService output;
+    private ILogger<AnalyzePipelinesTool> logger;
 
     // Options
     private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "Pipeline/Build ID") { IsRequired = true };
@@ -42,23 +40,32 @@ public class AzurePipelinesTool(
     private readonly Option<string> projectEndpointOpt = new(["--ai-endpoint", "-e"], "The ai foundry project endpoint for the Azure AI Agent service");
     private readonly Option<string> aiModelOpt = new(["--ai-model"], "The model to use for the Azure AI Agent");
 
+    public AnalyzePipelinesTool(
+        IAzureService azureService,
+        IAzureAgentServiceFactory azureAgentServiceFactory,
+        IOutputService output,
+        ILogger<AnalyzePipelinesTool> logger
+    ) : base()
+    {
+        this.azureService = azureService;
+        this.azureAgentServiceFactory = azureAgentServiceFactory;
+        this.output = output;
+        this.logger = logger;
+
+        CommandHierarchy =
+        [
+            SharedCommandGroups.AzurePipelines   // azsdk azp
+        ];
+    }
+
     public override Command GetCommand()
     {
-        Command command = new("azp", "Azure Pipelines Tool");
-        var pipelineRunCommand = new Command(getPipelineRunCommandName, "Get details for a pipeline run") { buildIdOpt, projectOpt };
-        var analyzePipelineCommand = new Command(analyzePipelineCommandName, "Analyze a pipeline run") {
+        var analyzePipelineCommand = new Command("analyze", "Analyze a pipeline run") {
             buildIdOpt, projectOpt, logIdOpt, projectEndpointOpt, aiModelOpt
         };
+        analyzePipelineCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
-        // Do not add a handler for the 'azp' command, that way System.CommandLine can fall back to the
-        // root command handler and print help text.
-        foreach (var subCommand in new[] { pipelineRunCommand, analyzePipelineCommand })
-        {
-            subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            command.AddCommand(subCommand);
-        }
-
-        return command;
+        return analyzePipelineCommand;
     }
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -69,41 +76,26 @@ public class AzurePipelinesTool(
         var buildId = ctx.ParseResult.GetValueForOption(buildIdOpt);
         var project = ctx.ParseResult.GetValueForOption(projectOpt);
 
-        if (cmd == getPipelineRunCommandName)
+        var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
+        var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
+        var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
+
+        logger.LogInformation("Analyzing pipeline {buildId}...", buildId);
+        azureAgentService = azureAgentServiceFactory.Create(projectEndpoint, aiModel);
+
+        if (logId != 0)
         {
-            logger.LogInformation("Getting pipeline run {buildId}...", buildId);
-            var result = await GetPipelineRun(project, buildId);
+            var result = await AnalyzePipelineFailureLog(project, buildId, [logId], ct);
             ctx.ExitCode = ExitCode;
+            usage?.LogCost();
             output.Output(result);
-        }
-        else if (cmd == analyzePipelineCommandName)
-        {
-            var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
-            var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
-            var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
-
-            logger.LogInformation("Analyzing pipeline {buildId}...", buildId);
-            azureAgentService = azureAgentServiceFactory.Create(projectEndpoint, aiModel);
-
-            if (logId != 0)
-            {
-                var result = await AnalyzePipelineFailureLog(project, buildId, [logId], ct);
-                ctx.ExitCode = ExitCode;
-                usage?.LogCost();
-                output.Output(result);
-            }
-            else
-            {
-                var result = await AnalyzePipeline(project, buildId, ct);
-                ctx.ExitCode = ExitCode;
-                usage?.LogCost();
-                output.Output(result);
-            }
         }
         else
         {
-            logger.LogError("Command {cmd} not implemented", cmd);
-            SetFailure();
+            var result = await AnalyzePipeline(project, buildId, ct);
+            ctx.ExitCode = ExitCode;
+            usage?.LogCost();
+            output.Output(result);
         }
     }
 

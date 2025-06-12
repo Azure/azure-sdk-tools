@@ -6,8 +6,10 @@ using System.Threading;
 using Microsoft.Extensions.Primitives;
 using APIViewWeb.Managers;
 using APIViewWeb.DTOs;
-using APIViewWeb.LeanControllers;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
+using System.Linq;
+using APIView.Identity;
 
 namespace APIViewWeb.Repositories
 {
@@ -98,6 +100,22 @@ namespace APIViewWeb.Repositories
                 var profile = await _userProfileManager.TryGetUserProfileByNameAsync(userName, createIfNotExist: createIfNotExist);
                 UpdateCache(profile, userName);
                 return profile;
+            }
+        }
+
+        public async Task SetUserEmailIfNullOrEmpty(ClaimsPrincipal User)
+        {
+            var userProfile = await GetUserProfileAsync(userName: User.GetGitHubLogin());
+
+            if (string.IsNullOrWhiteSpace(userProfile.Email))
+            {
+                var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimConstants.Email)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(microsoftEmail))
+                {
+                    userProfile.Email = microsoftEmail;
+                    await UpdateUserProfileAsync(userProfile.UserName, userProfile.Email, userProfile.Preferences);
+                }
             }
         }
 

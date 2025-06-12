@@ -37,7 +37,7 @@
 /tools/issue-labeler/                   @jsquire @jeo02
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
 /tools/perf-automation/                 @mikeharder @benbp
-/tools/perf-automation/**/*Rust*.cs     @gearama @heaths @LarryOsterman @RickWinter
+/tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
 /tools/sdk-ai-bots/                     @raych1

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return ("timeout", $"/t {timeInSeconds}");
+                return ("powershell", $"Start-Sleep -Seconds {timeInSeconds}");
             }
             return ("sleep", $"{timeInSeconds}");
         }
@@ -23,12 +23,17 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                string loadCommandPS = $"$sw = [Diagnostics.Stopwatch]::StartNew(); while ($sw.Elapsed.TotalSeconds -lt {timeInSeconds}) {{ 1..10000 | ForEach-Object {{ [Math]::Sqrt($_) }} }}";
-                return ("powershell", loadCommandPS);
+                string loadCommandWin = $"$sw = [Diagnostics.Stopwatch]::StartNew(); while ($sw.Elapsed.TotalSeconds -lt {timeInSeconds}) {{ 1..10000 | ForEach-Object {{ [Math]::Sqrt($_) }} }}";
+                return ("powershell", loadCommandWin);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                string loadCommandMac = $"-e 'use Time::HiRes qw(time); $end = time + {timeInSeconds}; $x++ while time < $end' &";
+                return ("perl", loadCommandMac);
             }
 
-            string loadCommandUnix = $"{timeInSeconds} bash -c 'while :; do :; done'";
-            return ("timeout", loadCommandUnix);
+            string loadCommandLinux = $"{timeInSeconds} bash -c 'while :; do :; done'";
+            return ("timeout", loadCommandLinux);
         }
 
 
@@ -45,7 +50,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         [Test]
         public void RunAsync_Timeout([Values(true, false)] bool stats)
         {
-            (string filename, string arguments) = GetSleepCommand(2);
+            (string filename, string arguments) = GetSleepCommand(3);
 
             TimeSpan timeout = TimeSpan.FromMilliseconds(100);
             Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -57,7 +62,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         [Test]
         public void RunAsync_Cancellation([Values(true, false)] bool stats)
         {
-            (string filename, string arguments) = GetSleepCommand(2);
+            (string filename, string arguments) = GetSleepCommand(3);
 
             CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
             Assert.ThrowsAsync<InvalidOperationException>(async () =>

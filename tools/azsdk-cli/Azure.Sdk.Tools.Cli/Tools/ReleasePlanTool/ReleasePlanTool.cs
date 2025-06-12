@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
 
         [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
-        public async Task<string> GetReleasePlanForPullRequestAsync(string pullRequestLink)
+        public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
         {
             try
             {
@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case getReleasePlanDetailsCommandName:
                     var workItemId = commandParser.GetValueForOption(workItemIdOpt);
                     var releasePlanNumber = commandParser.GetValueForOption(releasePlanNumberOpt);
-                    var releasePlanDetails = await GetReleasePlanAsync(workItem: workItemId, releasePlanId: releasePlanNumber);
+                    var releasePlanDetails = await GetReleasePlan(workItem: workItemId, releasePlanId: releasePlanNumber);
                     output.Output($"Release plan details: {releasePlanDetails}");
                     return;
 
@@ -109,12 +109,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var sdkReleaseType = commandParser.GetValueForOption(sdkReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValueForOption(isTestReleasePlanOpt);
                     var userEmail = commandParser.GetValueForOption(userEmailOpt);
-                    var releasePlan = await CreateReleasePlanAsync(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
+                    var releasePlan = await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
                     output.Output($"Release plan created: {releasePlan}");
                     return;
 
                 case linkNamespaceApprovalIssueCommandName:
-                    var linkResponse = await LinkNamespaceApprovalIssueAsync(commandParser.GetValueForOption(workItemIdOpt), commandParser.GetValueForOption(namespaceApprovalIssueOpt));
+                    var linkResponse = await LinkNamespaceApprovalIssue(commandParser.GetValueForOption(workItemIdOpt), commandParser.GetValueForOption(namespaceApprovalIssueOpt));
                     output.Output($"Link namespace approval issue response: {linkResponse}");
                     return;
 
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
-        public async Task<string> GetReleasePlanAsync(int workItem = 0, int releasePlanId = 0)
+        public async Task<string> GetReleasePlan(int workItem = 0, int releasePlanId = 0)
         {
             try
             {
@@ -147,7 +147,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Create Release Plan work item.")]
-        public async Task<string> CreateReleasePlanAsync(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
+        public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
             {
@@ -219,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         [McpServerTool, Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
             " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
-        public async Task<string> UpdateSDKDetailsInReleasePlanAsync(int releasePlanWorkItemId, string sdkDetails)
+        public async Task<string> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
         {
             try
             {
@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
-        public async Task<string> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string namespaceApprovalIssue)
+        public async Task<string> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string namespaceApprovalIssue)
         {
             try
             {

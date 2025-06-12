@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import Optional
 from semantic_kernel.functions import kernel_function
 
 from src._models import Memory
@@ -34,7 +35,13 @@ class DatabasePlugin:
 
     @kernel_function(description="Add a memory related to a guideline in the ArchAgent Knowledge Base.")
     async def add_guideline_memory(
-        self, title: str, content: str, is_exception: bool, service: str, language: str, guideline_id: str
+        self,
+        title: str,
+        content: str,
+        guideline_id: str,
+        is_exception: bool,
+        service: Optional[str],
+        language: Optional[str],
     ):
         """
         Add a memory related to a guideline in the ArchAgent Knowledge Base.

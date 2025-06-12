@@ -22,6 +22,10 @@ namespace Azure.ClientSdk.Analyzers
         private const string NullableResponseTypeName = "NullableResponse";
         private const string OperationTypeName = "Operation";
         private const string TaskTypeName = "Task";
+        private const string ClientResultTypeName = "ClientResult";
+        private const string CollectionResultTypeName = "CollectionResult";
+        private const string AsyncCollectionResultTypeName = "AsyncCollectionResult";
+        private const string PageableOperationTypeName = "PageableOperation";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
             Descriptors.AZC0035
@@ -136,7 +140,8 @@ namespace Azure.ClientSdk.Analyzers
 
             // Check for Azure client method return types and extract the model type
             if (IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace) ||
-                IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace))
+                IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, ClientResultTypeName, AzureNamespace))
             {
                 if (unwrappedType is INamedTypeSymbol responseType && responseType.IsGenericType)
                 {
@@ -151,7 +156,10 @@ namespace Azure.ClientSdk.Analyzers
                 }
             }
             else if (IsOrImplements(returnType, PageableTypeName, AzureNamespace) ||
-                     IsOrImplements(returnType, AsyncPageableTypeName, AzureNamespace))
+                     IsOrImplements(returnType, AsyncPageableTypeName, AzureNamespace) ||
+                     IsOrImplements(returnType, CollectionResultTypeName, AzureNamespace) ||
+                     IsOrImplements(returnType, AsyncCollectionResultTypeName, AzureNamespace) ||
+                     IsOrImplements(returnType, PageableOperationTypeName, AzureNamespace))
             {
                 if (returnType is INamedTypeSymbol pageableType && pageableType.IsGenericType)
                 {
@@ -176,19 +184,7 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            // Filter out system types (those in System namespace or Microsoft namespaces)
-            var containingNamespace = typeSymbol.ContainingNamespace;
-            while (containingNamespace != null && !containingNamespace.IsGlobalNamespace)
-            {
-                var namespaceName = containingNamespace.Name;
-                if (namespaceName == "System" || namespaceName == "Microsoft")
-                {
-                    return false;
-                }
-                containingNamespace = containingNamespace.ContainingNamespace;
-            }
-
-            // Only consider class types
+            // Only consider class types - all types in the assembly are candidates
             return typeSymbol.TypeKind == TypeKind.Class;
         }
 

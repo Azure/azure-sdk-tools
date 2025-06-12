@@ -9,197 +9,40 @@ namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class ModelFactoryAnalyzerTests
     {
-        private const string DiagnosticId = "AZC0035";
+        [Theory]
+        [InlineData("Response<TestModel>")]
+        [InlineData("Task<Response<TestModel>>")]
+        [InlineData("NullableResponse<TestModel>")]
+        [InlineData("Operation<TestModel>")]
+        [InlineData("Task<Operation<TestModel>>")]
+        [InlineData("Pageable<TestModel>")]
+        [InlineData("AsyncPageable<TestModel>")]
+        public async Task AZC0035_ProducedWhenOutputModelMissingFromModelFactory(string returnType)
+        {
+            string code = $@"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{{
+    public class {{|AZC0035:TestModel|}}
+    {{
+    }}
+
+    public class TestClient
+    {{
+        public virtual {returnType} GetTestModel()
+        {{
+            return null;
+        }}
+    }}
+}}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
 
         [Fact]
         public async Task AZC0035_NotProducedWhenOutputModelHasCorrespondingModelFactory()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class TestModel
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Response<TestModel> GetTestModel()
-        {
-            return null;
-        }
-    }
-
-    public static class TestModelFactory
-    {
-        public static TestModel TestModel()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_ProducedWhenOutputModelMissingFromModelFactory()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class {|AZC0035:TestModel|}
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Response<TestModel> GetTestModel()
-        {
-            return null;
-        }
-    }
-
-    public static class TestModelFactory
-    {
-        public static string SomeOtherMethod()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_ProducedWhenNoModelFactoryExists()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class {|AZC0035:TestModel|}
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Response<TestModel> GetTestModel()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_WorksWithTaskWrappedReturnTypes()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class {|AZC0035:TestModel|}
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Task<Response<TestModel>> GetTestModelAsync()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_WorksWithOperationReturnTypes()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class TestModel
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Operation<TestModel> StartOperation()
-        {
-            return null;
-        }
-    }
-
-    public static class TestModelFactory
-    {
-        public static TestModel TestModel()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_WorksWithPageableReturnTypes()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class TestModel
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Pageable<TestModel> GetTestModels()
-        {
-            return null;
-        }
-
-        public virtual AsyncPageable<TestModel> GetTestModelsAsync()
-        {
-            return null;
-        }
-    }
-
-    public static class TestModelFactory
-    {
-        public static TestModel TestModel()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_WorksWithMultipleModelsAndFactories()
         {
             const string code = @"
 using Azure;
@@ -215,10 +58,6 @@ namespace Azure.Test
     {
     }
 
-    public class {|AZC0035:TestModel3|}
-    {
-    }
-
     public class TestClient
     {
         public virtual Response<TestModel1> GetTestModel1()
@@ -226,12 +65,7 @@ namespace Azure.Test
             return null;
         }
 
-        public virtual Response<TestModel2> GetTestModel2()
-        {
-            return null;
-        }
-
-        public virtual Response<TestModel3> GetTestModel3()
+        public virtual Task<Operation<TestModel2>> GetTestModel2Async()
         {
             return null;
         }
@@ -243,11 +77,8 @@ namespace Azure.Test
         {
             return null;
         }
-    }
 
-    public static class AnotherModelFactory
-    {
-        public static TestModel2 CreateTestModel2()
+        public static TestModel2 TestModel2()
         {
             return null;
         }
@@ -258,7 +89,7 @@ namespace Azure.Test
         }
 
         [Fact]
-        public async Task AZC0035_IgnoresNonClientClasses()
+        public async Task AZC0035_IgnoresNonClientClassesAndBuiltInTypes()
         {
             const string code = @"
 using Azure;
@@ -277,86 +108,7 @@ namespace Azure.Test
             return null;
         }
     }
-}";
 
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_IgnoresNonStaticModelFactoryClasses()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class {|AZC0035:TestModel|}
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Response<TestModel> GetTestModel()
-        {
-            return null;
-        }
-    }
-
-    public class TestModelFactory
-    {
-        public TestModel TestModel()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_IgnoresPrivateModelFactoryMethods()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class {|AZC0035:TestModel|}
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual Response<TestModel> GetTestModel()
-        {
-            return null;
-        }
-    }
-
-    public static class TestModelFactory
-    {
-        private static TestModel TestModel()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_IgnoresNonModelReturnTypes()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
     public class TestClient
     {
         public virtual Response GetResponse()
@@ -370,39 +122,6 @@ namespace Azure.Test
         }
 
         public virtual Response<int> GetInt()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0035_WorksWithNullableResponseReturnTypes()
-        {
-            const string code = @"
-using Azure;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    public class TestModel
-    {
-    }
-
-    public class TestClient
-    {
-        public virtual NullableResponse<TestModel> GetTestModel()
-        {
-            return null;
-        }
-    }
-
-    public static class TestModelFactory
-    {
-        public static TestModel TestModel()
         {
             return null;
         }

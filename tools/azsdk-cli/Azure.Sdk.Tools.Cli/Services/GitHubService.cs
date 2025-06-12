@@ -230,7 +230,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 checkResults.Add($"Total checks found: {checkResults.Count}");
                 int pendingRequiredChecks = checkRuns.Count(check => check.Status != CheckStatus.Completed || check.Conclusion == CheckConclusion.Failure);
                 checkResults.Add($"Failed checks: {checkRuns.Count(check => check.Conclusion == CheckConclusion.Failure)}");
-                checkResults.Add($"Pending required checks to merge the PR: { pendingRequiredChecks}.");
+                checkResults.Add($"Pending required checks to merge the PR: {pendingRequiredChecks}.");
             }
             catch (Exception ex)
             {

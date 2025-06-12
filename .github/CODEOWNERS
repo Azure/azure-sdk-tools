@@ -31,6 +31,7 @@
 /tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @maririos
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @weshaggard
+/tools/fxlister/                        @KrzysztofCwalina
 /tools/github/                          @jsquire @ronniegeraghty
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @weshaggard

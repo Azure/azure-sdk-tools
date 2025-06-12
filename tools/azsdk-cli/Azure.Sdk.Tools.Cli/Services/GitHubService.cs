@@ -228,9 +228,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                     checkResults.Add($"Name: {check.Name}, Status: {check.Status}, Output: {check.Output.Summary}, Conclusion: {check.Conclusion}, Link: {check.HtmlUrl}");
                 }
                 checkResults.Add($"Total checks found: {checkResults.Count}");
-                int pendingRequiedChecks = checkRuns.Count(check => check.Status != CheckStatus.Completed || check.Conclusion == CheckConclusion.Failure);
+                int pendingRequiredChecks = checkRuns.Count(check => check.Status != CheckStatus.Completed || check.Conclusion == CheckConclusion.Failure);
                 checkResults.Add($"Failed checks: {checkRuns.Count(check => check.Conclusion == CheckConclusion.Failure)}");
-                checkResults.Add($"Pending required checks to merge the PR: {pendingRequiedChecks}.");
+                checkResults.Add($"Pending required checks to merge the PR: { pendingRequiredChecks}.");
             }
             catch (Exception ex)
             {

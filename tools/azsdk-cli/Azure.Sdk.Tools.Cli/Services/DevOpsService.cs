@@ -189,7 +189,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<ReleasePlan> GetReleasePlan(string pullRequestUrl)
         {
-            // First find the API sepc work item
+            // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.RESTAPIReviews] CONTAINS WORDS '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
             var apiSpecWorkItems = await FetchWorkItems(query);
             if (apiSpecWorkItems.Count == 0)
@@ -250,14 +250,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                var errorMesage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
-                _logger.LogError(errorMesage);
+                var errorMessage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
+                _logger.LogError(errorMessage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
                 if (apiSpecWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(apiSpecWorkItemId);
-                throw new Exception(errorMesage);
+                throw new Exception(errorMessage);
             }
         }
 
@@ -334,8 +334,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                var errorMesage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
-                throw new Exception(errorMesage);
+                var errorMessage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
+                throw new Exception(errorMessage);
             }
         }
 

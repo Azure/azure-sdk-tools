@@ -11,14 +11,14 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string ProjectRootPath { get; set; }
        
         public bool IsDataPlane { get;}
-        public string sdkServicePath { get; set; }
+        public string SdkServicePath { get; set; }
 
 
         private TypeSpecProject()
         {
             Name = string.Empty;
             ProjectRootPath = string.Empty;
-            sdkServicePath = string.Empty;
+            SdkServicePath = string.Empty;
             TypeSpecConfigYaml = string.Empty;
         }
 

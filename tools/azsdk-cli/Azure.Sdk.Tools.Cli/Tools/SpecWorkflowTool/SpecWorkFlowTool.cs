@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 if (string.IsNullOrEmpty(typeSpecProjectRoot) && pullRequestNumber == 0)
                 {
-                    response.Details.Add("Invalid value for both TypeSpec project root and pull request number. Provide atleast the TypeSpec project root path for modified project or provide a pull request number.");
+                    response.Details.Add("Invalid value for both TypeSpec project root and pull request number. Provide at least the TypeSpec project root path for modified project or provide a pull request number.");
                     return response;
                 }
 

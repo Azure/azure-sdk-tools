@@ -10,7 +10,7 @@
                     </div>
                 </ng-container>
                 <ng-template #cantToggleApproveAPIRevision>
-                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision." 
+                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision."
                         tooltipPosition="bottom">
                         <button class="{{apiRevisionApprovalBtnClass}}" type="button"
                             disabled>
@@ -36,17 +36,34 @@
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" type="button" id="first-release-approval-button"
                             (click)="handleReviewApprovalAction()"
-                            pTooltip="Package name must be approved before first preview release of a new package." 
+                            pTooltip="Package name must be approved before first preview release of a new package."
                             tooltipPosition="bottom">
                             Approve first release
                         </button>
                     </div>
                     <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
                 </div>
-            </ng-template>
-            <ng-template #userIsNotAPreferedApprover>
+            </ng-template>            <ng-template #userIsNotAPreferedApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
+        </li>        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
+                <span *ngIf="namespaceReviewMessage" class="small text-muted">{{namespaceReviewMessage}}</span>
+                <div class="d-grid gap-2">
+                    <button class="{{namespaceReviewBtnClass}}" type="button"
+                            (click)="handleNamespaceReviewAction()"
+                            [disabled]="isNamespaceReviewRequested">
+                        {{namespaceReviewBtnLabel}}
+                    </button>
+                </div>
+            </ng-container>
+            <span *ngIf="!userProfile || !preferredApprovers.includes(userProfile?.userName!)" class="small text-muted mt-1">
+                <ng-container *ngIf="isNamespaceReviewRequested; else noNamespaceReviewRequested">
+                    Namespace review has been requested
+                </ng-container>
+                <ng-template #noNamespaceReviewRequested>
+                    Namespace review not yet requested
+                </ng-template>
+            </span>
         </li>
     </ul>
     </app-page-options-section>
@@ -72,7 +89,7 @@
 
     <app-page-options-section sectionName="Page Utils">
     <ul class="list-group">
-        <li class="list-group-item"> 
+        <li class="list-group-item">
             <p-iconField iconPosition="left" class="w-full">
                 <p-inputIcon styleClass="pi pi-search" />
                 <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" style="width: 100%; box-sizing: border-box;"/>
@@ -86,7 +103,7 @@
                 </span>
             </div>
         </li>
-        <li class="list-group-item" *ngIf="showCommentsSwitch">                
+        <li class="list-group-item" *ngIf="showCommentsSwitch">
             <label class="small mx-1 fw-semibold">Comment:</label>
             <div class="d-grid gap-2">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
@@ -142,7 +159,7 @@
             <label class="ms-2">Hidden APIs</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch" 
+            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch"
             (onChange)="onShowLineNumbersSwitchChange($event)" />
             <label class="ms-2">Line numbers</label>
         </li>
@@ -158,9 +175,9 @@
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff style :</label>
-            <p-dropdown 
+            <p-dropdown
                 (onChange)="onDiffStyleChange($event)"
-                [options]="diffStyleOptions" 
+                [options]="diffStyleOptions"
                 [(ngModel)]="selectedDiffStyle"
                 [disabled]="!contentHasDiff"
                 inputId="diff-style-select"
@@ -179,9 +196,9 @@
         </li>
         <li class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
-            <p-multiSelect 
-                [options]="preferredApprovers" 
-                [(ngModel)]="selectedApprovers" 
+            <p-multiSelect
+                [options]="preferredApprovers"
+                [(ngModel)]="selectedApprovers"
                 placeholder="Request Reviewers"
                 [showClear]="true"
                 [style]="{'width':'100%'}"
@@ -194,7 +211,7 @@
                     </ng-template>
                     <ng-template let-approver pTemplate="item">
                         <div class="flex align-items-center gap-2">
-                            <img 
+                            <img
                                 src="https://github.com/{{ approver }}.png?size=30"
                                 class="me-2 rounded"
                                 style="width: 30px" />
@@ -232,10 +249,9 @@
                 </ng-template>
             </p-timeline>
         </li>
-    </ul>
-    </app-page-options-section>
+    </ul>    </app-page-options-section>
 
-    <p-dialog header="Approve APIRevision" 
+    <p-dialog header="Approve APIRevision"
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
@@ -265,7 +281,7 @@
       </div>
     </p-dialog>
 
-    <p-dialog header="Disable Lazy Loading" 
+    <p-dialog header="Disable Lazy Loading"
     [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
     [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
     <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>

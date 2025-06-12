@@ -211,6 +211,16 @@ namespace APIViewWeb.Helpers
                     actionAdded = (E)r;
                     actionReverted = action;
                     break;
+                case "NamespaceApproved":
+                    Enum.TryParse(typeof(E), "NamespaceApproved", out object na);
+                    actionAdded = action;
+                    actionReverted = default(E);
+                    break;
+                case "NamespaceReviewRequested":
+                    Enum.TryParse(typeof(E), "NamespaceReviewRequested", out object nr);
+                    actionAdded = action;
+                    actionReverted = default(E);
+                    break;
                 default:
                     actionInvalid = true;
                     break;

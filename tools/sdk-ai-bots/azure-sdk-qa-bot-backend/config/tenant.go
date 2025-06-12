@@ -9,9 +9,9 @@ type TenantConfig struct {
 
 var typespecSources = []model.Source{
 	model.Source_TypeSpecAzure,
-	model.Source_TypeSpec,
-	model.Source_TypeSpecQA,
 	model.Source_AzureRestAPISpec,
+	model.Source_TypeSpecQA,
+	model.Source_TypeSpec,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{

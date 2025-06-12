@@ -163,6 +163,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			ContextID: result.ContextID,
 			Header1:   result.Header1,
 		})
+		log.Printf("Complete chunk: %s/%s", result.ContextID, result.Title)
 	}
 	var wg sync.WaitGroup
 	wg.Add(len(mergedChunks))

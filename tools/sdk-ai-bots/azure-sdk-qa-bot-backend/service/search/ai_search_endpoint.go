@@ -127,7 +127,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		filteredResults := []model.Index{}
 		for _, doc := range resp.Value {
 			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
-				log.Printf("Skipping result with low score: %s/%s, score: %f", doc.ContextID, doc.Title, doc.RerankScore)
 				continue
 			}
 

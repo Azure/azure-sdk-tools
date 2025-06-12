@@ -28,6 +28,7 @@
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @maririos
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @JimSuplizio
 /tools/github/                          @jsquire @ronniegeraghty
@@ -49,19 +50,19 @@
 ###########
 # Stress
 ###########
-/eng/common/scripts/stress-testing/     @benbp @ckairen @richardpark-msft
-/tools/stress-cluster/                  @benbp @ckairen @richardpark-msft
+/eng/common/scripts/stress-testing/     @benbp @richardpark-msft
+/tools/stress-cluster/                  @benbp @richardpark-msft
 
 ###########
 # .NET Client Tools
 ###########
 /src/dotnet/Azure.ClientSdk.Analyzers/  @jsquire @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @m-nash
-/src/dotnet/APIView/                    @chidozieononiwu
+/src/dotnet/APIView/                    @chidozieononiwu @praveenkuttappan @helen229
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @chidozieononiwu
+/tools/apiview/                           @chidozieononiwu @praveenkuttappan @helen229
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @christothes

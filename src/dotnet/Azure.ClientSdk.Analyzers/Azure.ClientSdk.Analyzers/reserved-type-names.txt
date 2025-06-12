@@ -242,7 +242,7 @@ SerializableAttribute
 ServiceBusAdministrationClient
 ServiceBusClient
 ServiceBusMessage
-ServiceBusNamespace
+ServiceBusNamespaceResource
 ServiceBusProcessor
 ServiceBusReceiver
 ServiceBusSender

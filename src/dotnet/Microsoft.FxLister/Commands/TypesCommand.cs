@@ -35,15 +35,12 @@ public static class TypesCommand
         {
             try
             {
-                // Use real implementations
-                var packageAnalyzer = new PackageAnalyzer();
-                var typeExtractor = new RealTypeExtractor();
-                
+                // Use static methods
                 Console.WriteLine("Discovering Azure NuGet packages...");
-                var packages = await packageAnalyzer.DiscoverAzurePackagesAsync(maxPackages, packagePattern);
+                var packages = await PackageAnalyzer.DiscoverAzurePackagesAsync(maxPackages, packagePattern);
                 
                 Console.WriteLine($"Found {packages.Count} Azure packages. Extracting types...");
-                var typeInfos = await typeExtractor.ExtractTypesFromPackagesAsync(packages);
+                var typeInfos = await RealTypeExtractor.ExtractTypesFromPackagesAsync(packages);
                 
                 // Sort by short name
                 var sortedTypeInfos = typeInfos.OrderBy(t => t.ShortName).ToList();

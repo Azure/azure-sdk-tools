@@ -11,16 +11,9 @@ using System.Reflection.PortableExecutable;
 
 namespace Microsoft.FxLister.Services;
 
-public class TypeExtractor
+public static class TypeExtractor
 {
-    private readonly ILogger _logger;
-    
-    public TypeExtractor()
-    {
-        _logger = NullLogger.Instance;
-    }
-    
-    public async Task<List<string>> ExtractTypesFromPackagesAsync(List<string> packageIds)
+    public static async Task<List<string>> ExtractTypesFromPackagesAsync(List<string> packageIds)
     {
         var allTypes = new HashSet<string>();
         var tempDir = Path.Combine(Path.GetTempPath(), "FxLister", Guid.NewGuid().ToString());
@@ -57,7 +50,7 @@ public class TypeExtractor
                         includePrerelease: false,
                         includeUnlisted: false,
                         new SourceCacheContext(),
-                        _logger,
+                        NullLogger.Instance,
                         CancellationToken.None);
                     
                     var latestVersion = metadata
@@ -74,7 +67,7 @@ public class TypeExtractor
                         packageIdentity,
                         new PackageDownloadContext(new SourceCacheContext()),
                         globalPackagesFolder: tempDir,
-                        logger: _logger,
+                        logger: NullLogger.Instance,
                         token: CancellationToken.None);
                     
                     if (downloadResult?.PackageStream == null)
@@ -120,7 +113,7 @@ public class TypeExtractor
         return allTypes.ToList();
     }
     
-    private List<string> ExtractTypesFromPackage(PackageArchiveReader packageReader)
+    private static List<string> ExtractTypesFromPackage(PackageArchiveReader packageReader)
     {
         var types = new List<string>();
         
@@ -175,7 +168,7 @@ public class TypeExtractor
         return types;
     }
     
-    private List<string> ExtractTypesFromAssembly(Stream assemblyStream)
+    private static List<string> ExtractTypesFromAssembly(Stream assemblyStream)
     {
         var types = new List<string>();
         

@@ -6,13 +6,9 @@ using NuGet.Protocol.Core.Types;
 
 namespace Microsoft.FxLister.Services;
 
-public class PackageAnalyzer
+public static class PackageAnalyzer
 {
-    public PackageAnalyzer()
-    {
-    }
-    
-    public async Task<List<string>> DiscoverAzurePackagesAsync(int maxPackages = 100, string packagePattern = @"^Azure\.(?!ResourceManager)(?!Provisioning)")
+    public static async Task<List<string>> DiscoverAzurePackagesAsync(int maxPackages = 100, string packagePattern = @"^Azure\.(?!ResourceManager)(?!Provisioning)")
     {
         var azurePackages = new List<string>();
         var regex = new Regex(packagePattern, RegexOptions.IgnoreCase);

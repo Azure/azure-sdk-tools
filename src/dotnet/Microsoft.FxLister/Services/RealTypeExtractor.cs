@@ -10,13 +10,9 @@ using System.Reflection.PortableExecutable;
 
 namespace Microsoft.FxLister.Services;
 
-public class RealTypeExtractor
+public static class RealTypeExtractor
 {
-    public RealTypeExtractor()
-    {
-    }
-    
-    public async Task<List<TypeInfo>> ExtractTypesFromPackagesAsync(List<string> packageIds)
+    public static async Task<List<TypeInfo>> ExtractTypesFromPackagesAsync(List<string> packageIds)
     {
         var allTypes = new Dictionary<string, TypeInfo>(); // Use dictionary to avoid duplicates based on short name
         
@@ -54,7 +50,7 @@ public class RealTypeExtractor
         return allTypes.Values.ToList();
     }
     
-    private async Task<List<TypeInfo>> ExtractTypesFromSinglePackageAsync(string packageId)
+    private static async Task<List<TypeInfo>> ExtractTypesFromSinglePackageAsync(string packageId)
     {
         var types = new List<TypeInfo>();
         var tempDir = Path.Combine(Path.GetTempPath(), "FxLister", Guid.NewGuid().ToString());
@@ -121,7 +117,7 @@ public class RealTypeExtractor
         return types;
     }
     
-    private List<TypeInfo> ExtractTypesFromPackage(PackageArchiveReader packageReader, string packageId)
+    private static List<TypeInfo> ExtractTypesFromPackage(PackageArchiveReader packageReader, string packageId)
     {
         var types = new List<TypeInfo>();
         
@@ -168,7 +164,7 @@ public class RealTypeExtractor
         return types;
     }
     
-    private List<TypeInfo> ExtractTypesFromAssembly(Stream assemblyStream, string packageId)
+    private static List<TypeInfo> ExtractTypesFromAssembly(Stream assemblyStream, string packageId)
     {
         var types = new List<TypeInfo>();
         

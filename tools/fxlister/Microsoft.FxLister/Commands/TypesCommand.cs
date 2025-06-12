@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using Microsoft.FxLister.Services;
 
@@ -42,8 +43,8 @@ public static class TypesCommand
                 Console.WriteLine($"Found {packages.Count} Azure packages. Extracting types...");
                 var typeInfos = await RealTypeExtractor.ExtractTypesFromPackagesAsync(packages);
                 
-                // Sort by short name
-                var sortedTypeInfos = typeInfos.OrderBy(t => t.ShortName).ToList();
+                // Sort by short name using ordinal comparison for consistent sorting
+                var sortedTypeInfos = typeInfos.OrderBy(t => t.ShortName, StringComparer.Ordinal).ToList();
                 
                 // Generate output file names
                 var baseOutputPath = Path.GetFileNameWithoutExtension(outputPath);

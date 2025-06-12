@@ -34,7 +34,7 @@
 /tools/github/                          @jsquire @ronniegeraghty
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @weshaggard
-/tools/issue-labeler/                   @jsquire @jeo02
+/tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @gearama @heaths @LarryOsterman @RickWinter
@@ -56,8 +56,10 @@
 ###########
 # .NET Client Tools
 ###########
-/src/dotnet/Azure.ClientSdk.Analyzers/  @jsquire @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @m-nash
+/src/dotnet/                            @azure/azadknet @jsquire
 /src/dotnet/APIView/                    @chidozieononiwu @praveenkuttappan @helen229
+/tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang @
+/tools/snippet-generator/               @azure/azadknet @jsquire
 
 ###########
 # APIView parsers
@@ -65,7 +67,7 @@
 /tools/apiview/                           @chidozieononiwu @praveenkuttappan @helen229
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
-/tools/apiview/parsers/csharp-api-parser/ @christothes
+/tools/apiview/parsers/csharp-api-parser/ @azure/azadknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
 /src/swift/                               @tjprescott
 /src/java/apiview-java-processor/         @JonathanGiles

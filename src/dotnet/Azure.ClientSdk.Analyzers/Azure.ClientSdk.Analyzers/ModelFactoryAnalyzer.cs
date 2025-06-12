@@ -141,29 +141,17 @@ namespace Azure.ClientSdk.Analyzers
             // Check for Azure client method return types and extract the model type
             if (IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace) ||
-                IsOrImplements(unwrappedType, ClientResultTypeName, AzureNamespace))
+                IsOrImplements(unwrappedType, ClientResultTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, PageableTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, AsyncPageableTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, CollectionResultTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, AsyncCollectionResultTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, PageableOperationTypeName, AzureNamespace))
             {
-                if (unwrappedType is INamedTypeSymbol responseType && responseType.IsGenericType)
+                if (unwrappedType is INamedTypeSymbol genericType && genericType.IsGenericType)
                 {
-                    modelType = responseType.TypeArguments.FirstOrDefault();
-                }
-            }
-            else if (IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace))
-            {
-                if (unwrappedType is INamedTypeSymbol operationType && operationType.IsGenericType)
-                {
-                    modelType = operationType.TypeArguments.FirstOrDefault();
-                }
-            }
-            else if (IsOrImplements(unwrappedType, PageableTypeName, AzureNamespace) ||
-                     IsOrImplements(unwrappedType, AsyncPageableTypeName, AzureNamespace) ||
-                     IsOrImplements(unwrappedType, CollectionResultTypeName, AzureNamespace) ||
-                     IsOrImplements(unwrappedType, AsyncCollectionResultTypeName, AzureNamespace) ||
-                     IsOrImplements(unwrappedType, PageableOperationTypeName, AzureNamespace))
-            {
-                if (unwrappedType is INamedTypeSymbol pageableType && pageableType.IsGenericType)
-                {
-                    modelType = pageableType.TypeArguments.FirstOrDefault();
+                    modelType = genericType.TypeArguments.FirstOrDefault();
                 }
             }
 

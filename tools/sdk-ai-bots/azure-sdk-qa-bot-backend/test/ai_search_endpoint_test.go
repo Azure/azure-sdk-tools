@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
@@ -20,7 +21,7 @@ func TestQueryIndex(t *testing.T) {
 		VectorQueries: []model.VectorQuery{
 			{
 				Text:       "how can i install typespec",
-				K:          5,
+				K:          to.Ptr(5),
 				Fields:     "text_vector",
 				Kind:       "text",
 				Exhaustive: true,

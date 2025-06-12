@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
@@ -90,19 +91,30 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		return resp.Value, nil
 	}
 
-	// Search with priority based on source order
-	var allResults []model.Index
-	remainingK := k
+	// Query each source and apply weighted scoring
+	allResults := []model.Index{}
 
-	// Search one source at a time in priority order
-	for _, source := range sources {
-		if remainingK <= 0 {
-			break
+	// First, query all sources to get potential candidates
+	// We'll request more results than needed to account for filtering
+	expandedK := k * 3 // Request more results to ensure we have enough candidates after filtering
+
+	// Store results by source for weighted scoring
+	sourceResults := make(map[model.Source][]model.Index)
+
+	// Calculate weights for each source based on priority (position in sources array)
+	weights := make(map[model.Source]float64)
+	for i, source := range sources {
+		// Weight decreases by 0.1 for each lower priority source, starting from 1.0
+		weights[source] = 1.0 - float64(i)*0.1
+		if weights[source] < 0.3 {
+			weights[source] = 0.3 // Minimum weight threshold
 		}
+	}
 
-		// Create a new request for this source
+	// Query each source separately
+	for _, source := range sources {
 		req := baseReq
-		req.Top = remainingK
+		req.Top = expandedK
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
@@ -111,17 +123,81 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 			continue
 		}
 
+		// Filter results by relevance threshold
+		filteredResults := []model.Index{}
 		for _, doc := range resp.Value {
 			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
 				log.Printf("Skipping result with low score: %s/%s, score: %f", doc.ContextID, doc.Title, doc.RerankScore)
 				continue
 			}
-			allResults = append(allResults, doc)
-			remainingK--
+
+			// Apply source weight to the rerank score
+			doc.RerankScore = doc.RerankScore * weights[model.Source(doc.ContextID)]
+
+			filteredResults = append(filteredResults, doc)
 		}
+
+		sourceResults[source] = filteredResults
+		allResults = append(allResults, filteredResults...)
 	}
 
+	// Sort all results by rerank score in descending order
+	sortResultsByScore(allResults)
+
+	// Take top K results
+	if len(allResults) > k {
+		allResults = allResults[:k]
+	}
+
+	// Sort the top K results by source priority exactly
+	sortResultsBySource(allResults, sources)
+
+	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(sources))
+
 	return allResults, nil
+}
+
+// Helper function to sort results by rerank score in descending order
+func sortResultsByScore(results []model.Index) {
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].RerankScore > results[j].RerankScore
+	})
+}
+
+// Helper function to sort results by source priority
+func sortResultsBySource(results []model.Index, sources []model.Source) {
+	sort.Slice(results, func(i, j int) bool {
+		// Find priority index for sources
+		sourceI := model.Source(results[i].ContextID)
+		sourceJ := model.Source(results[j].ContextID)
+
+		priorityI := -1
+		priorityJ := -1
+		for idx, source := range sources {
+			if source == sourceI {
+				priorityI = idx
+			}
+			if source == sourceJ {
+				priorityJ = idx
+			}
+		}
+
+		// If both sources are in the priority list, sort by priority
+		if priorityI >= 0 && priorityJ >= 0 {
+			return priorityI < priorityJ // Lower index = higher priority
+		}
+
+		// If one source is in priority list and the other isn't, prioritize the one in the list
+		if priorityI >= 0 && priorityJ < 0 {
+			return true // i is in priority list, j is not
+		}
+		if priorityI < 0 && priorityJ >= 0 {
+			return false // j is in priority list, i is not
+		}
+
+		// If neither source is in priority list, keep original order based on score
+		return results[i].RerankScore > results[j].RerankScore
+	})
 }
 
 func (s *SearchClient) GetCompleteContext(chunk model.Index) ([]model.Index, error) {

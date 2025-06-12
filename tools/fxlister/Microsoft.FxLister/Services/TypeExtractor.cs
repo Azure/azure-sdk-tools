@@ -1,4 +1,3 @@
-using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Frameworks;
 using NuGet.Packaging;
@@ -50,7 +49,7 @@ public static class TypeExtractor
                         includePrerelease: false,
                         includeUnlisted: false,
                         new SourceCacheContext(),
-                        NullLogger.Instance,
+                        null,
                         CancellationToken.None);
                     
                     var latestVersion = metadata
@@ -67,7 +66,7 @@ public static class TypeExtractor
                         packageIdentity,
                         new PackageDownloadContext(new SourceCacheContext()),
                         globalPackagesFolder: tempDir,
-                        logger: NullLogger.Instance,
+                        logger: null,
                         token: CancellationToken.None);
                     
                     if (downloadResult?.PackageStream == null)

@@ -187,7 +187,7 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   context.logger.log('endsection', 'Validate SDK configuration');
 };
 
-const workflowGenerateSdk = async (context: WorkflowContext) => {
+export const workflowGenerateSdk = async (context: WorkflowContext) => {
   context.logger.add(context.messageCaptureTransport);
   let readmeMdList: string[] = [];
   let typespecProjectList: string[] = [];
@@ -310,7 +310,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
 
 const fileInitInput = 'initInput.json';
 const fileInitOutput = 'initOutput.json';
-const workflowCallInitScript = async (context: WorkflowContext) => {
+export const workflowCallInitScript = async (context: WorkflowContext) => {
   let message = "";
   context.logger.add(context.messageCaptureTransport);
   const initScriptConfig = context.swaggerToSdkConfig.initOptions?.initScript;
@@ -344,7 +344,7 @@ const workflowCallInitScript = async (context: WorkflowContext) => {
 
 const fileGenerateInput = 'generateInput.json';
 const fileGenerateOutput = 'generateOutput.json';
-const workflowCallGenerateScript = async (
+export const workflowCallGenerateScript = async (
   context: WorkflowContext,
   changedFiles: string[],
   relatedReadmeMdFiles: string[],
@@ -414,7 +414,7 @@ const workflowCallGenerateScript = async (
   return { ...statusContext, generateInput, generateOutput };
 };
 
-const workflowDetectChangedPackages = (context: WorkflowContext) => {
+export const workflowDetectChangedPackages = (context: WorkflowContext) => {
   context.logger.log('section', 'Detect changed packages');
   context.logger.info(`${context.pendingPackages.length} packages found after generation:`);
   for (const pkg of context.pendingPackages) {

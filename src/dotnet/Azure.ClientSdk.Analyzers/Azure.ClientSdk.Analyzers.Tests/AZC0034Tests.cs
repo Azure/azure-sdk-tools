@@ -10,10 +10,10 @@ namespace Azure.ClientSdk.Analyzers.Tests
     public class AZC0034Tests
     {
         [Theory]
-        [InlineData("Azure.Data", "String", true)]
+        [InlineData("Azure.Data", "BlobClient", true)]
         [InlineData("Azure.MyService", "BlobClient", true)]
-        [InlineData("Azure.MyService", "CosmosClient", true)]
-        [InlineData("MyCompany.Data", "String", false)]
+        [InlineData("Azure.MyService", "PageBlobClient", true)]
+        [InlineData("MyCompany.Data", "BlobClient", false)]
         public async Task AZC0034ProducedForReservedTypeNames(string namespaceName, string typeName, bool shouldReport)
         {
             var code = shouldReport 
@@ -37,10 +37,10 @@ namespace {namespaceName}
             var code = @"
 namespace Azure.Test
 {
-    public class String { }
+    public class BlobClient { }
 }";
 
-            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 18, 4, 24).WithArguments("String", "System.String (from System.Runtime)");
+            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 18, 4, 28).WithArguments("BlobClient", "Azure.Storage.Blobs.BlobClient (from Azure.Storage.Blobs)");
             await Verifier.VerifyAnalyzerAsync(code, expected);
         }
     }

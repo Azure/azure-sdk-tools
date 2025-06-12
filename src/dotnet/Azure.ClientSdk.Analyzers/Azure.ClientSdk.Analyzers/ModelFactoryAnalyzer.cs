@@ -16,6 +16,7 @@ namespace Azure.ClientSdk.Analyzers
         private const string ModelFactorySuffix = "ModelFactory";
 
         private const string AzureNamespace = "Azure";
+        private const string SystemClientModelNamespace = "System.ClientModel";
         private const string PageableTypeName = "Pageable";
         private const string AsyncPageableTypeName = "AsyncPageable";
         private const string ResponseTypeName = "Response";
@@ -141,12 +142,12 @@ namespace Azure.ClientSdk.Analyzers
             // Check for Azure client method return types and extract the model type
             if (IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace) ||
-                IsOrImplements(unwrappedType, ClientResultTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, ClientResultTypeName, SystemClientModelNamespace) ||
                 IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, PageableTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, AsyncPageableTypeName, AzureNamespace) ||
-                IsOrImplements(unwrappedType, CollectionResultTypeName, AzureNamespace) ||
-                IsOrImplements(unwrappedType, AsyncCollectionResultTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, CollectionResultTypeName, SystemClientModelNamespace) ||
+                IsOrImplements(unwrappedType, AsyncCollectionResultTypeName, SystemClientModelNamespace) ||
                 IsOrImplements(unwrappedType, PageableOperationTypeName, AzureNamespace))
             {
                 if (unwrappedType is INamedTypeSymbol genericType && genericType.IsGenericType)
@@ -178,9 +179,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName, string namespaceName)
         {
-            if (typeSymbol.Name == typeName && 
-                typeSymbol.ContainingNamespace.Name == namespaceName && 
-                typeSymbol.ContainingNamespace.ContainingNamespace.Name == "")
+            if (typeSymbol.Name == typeName && GetFullNamespaceName(typeSymbol.ContainingNamespace) == namespaceName)
             {
                 return true;
             }
@@ -191,6 +190,24 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             return false;
+        }
+
+        private static string GetFullNamespaceName(INamespaceSymbol namespaceSymbol)
+        {
+            if (namespaceSymbol.IsGlobalNamespace)
+            {
+                return "";
+            }
+
+            var parts = new List<string>();
+            var current = namespaceSymbol;
+            while (current != null && !current.IsGlobalNamespace)
+            {
+                parts.Insert(0, current.Name);
+                current = current.ContainingNamespace;
+            }
+
+            return string.Join(".", parts);
         }
 
         private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol namespaceSymbol)

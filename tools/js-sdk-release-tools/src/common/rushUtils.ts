@@ -7,11 +7,11 @@ const { ensureDir, readFile, writeFile } = pkg;
 import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
 import { runCommand, runCommandOptions } from './utils.js';
 
-import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
 import { existsSync } from 'fs';
 import { formatSdk, updateSnippets } from './devToolUtils.js';
+import { findFiles } from './fsUtils.js';
 
 interface ProjectItem {
     packageName: string;
@@ -55,7 +55,7 @@ async function addApiViewInfo(
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
     const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**/*.api.json');
-    const apiViews = await glob(apiViewPathPattern);
+    const apiViews = await findFiles(posix.join(packageDirectory, 'temp'), '**/*.api.json');
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = relative(sdkRoot, apiViews[0]);

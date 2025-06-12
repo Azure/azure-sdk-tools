@@ -15,7 +15,7 @@ import { exists, outputFile, readFile, remove } from 'fs-extra';
 
 import { TSESLint } from '@typescript-eslint/utils';
 import ignoreInlineDeclarationsInOperationGroup from './common/rules/ignore-inline-declarations-in-operation-group';
-import { glob } from 'glob';
+import { promises as fs } from 'node:fs';
 import { logger } from '../logging/logger';
 import { Project, ScriptTarget } from 'ts-morph';
 
@@ -180,7 +180,7 @@ export async function detectBreakingChangesBetweenPackages(
     tempFolder = toPosixPath(tempFolder);
 
     const apiViewPathPattern = posix.join(baselinePackageFolder, 'review/*.api.md');
-    const baselineApiViewPaths = await glob(apiViewPathPattern);
+    const baselineApiViewPaths = await findFilesByPattern(apiViewPathPattern);
     const messsagesPromises = baselineApiViewPaths.map(async (baselineApiViewPath) => {
       const relativeApiViewPath = relative(baselinePackageFolder!, baselineApiViewPath);
       const apiViewBasename = basename(relativeApiViewPath);
@@ -204,4 +204,57 @@ export async function detectBreakingChangesBetweenPackages(
       }
     }
   }
+}
+
+/**
+ * A Node.js-based implementation of glob functionality
+ * @param pattern The glob pattern to match
+ * @returns A Promise that resolves to an array of matching file paths
+ */
+async function findFilesByPattern(pattern: string): Promise<string[]> {
+  // Extract the base directory from the pattern
+  const segments = pattern.split(/[\/\\]/);
+  const wildcardIndex = segments.findIndex((segment) => segment.includes('*'));
+  const baseDir =
+    wildcardIndex > 0
+      ? segments.slice(0, wildcardIndex).join(posix.sep)
+      : '.';
+
+  // Convert glob pattern to regex
+  const regexPattern = new RegExp(
+    `^${pattern
+      .replace(/\//g, '[\\\\/]')
+      .replace(/\./g, '\\.')
+      .replace(/\*\*/g, '.*')
+      .replace(/\*/g, '[^\\\\/]*')}$`
+  );
+
+  const results: string[] = [];
+
+  // Recursively search for files
+  async function scanDir(dir: string, remainingDepth = 20): Promise<void> {
+    if (remainingDepth <= 0) return;
+
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+        const posixPath = toPosixPath(fullPath);
+
+        if (regexPattern.test(posixPath)) {
+          results.push(posixPath);
+        }
+
+        if (entry.isDirectory()) {
+          await scanDir(fullPath, remainingDepth - 1);
+        }
+      }
+    } catch (error) {
+      // Silently ignore if directory doesn't exist or cannot be read
+    }
+  }
+
+  await scanDir(baseDir);
+  return results;
 }

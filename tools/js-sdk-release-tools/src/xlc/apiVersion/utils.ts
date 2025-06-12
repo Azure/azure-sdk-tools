@@ -4,7 +4,7 @@ import path, { basename } from 'node:path';
 import shell from 'shelljs';
 import { FunctionDeclaration, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
-import { glob } from 'glob';
+import { promises as fs } from 'node:fs';
 import { exists } from 'fs-extra';
 import { getNpmPackageName } from "../../common/utils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
@@ -100,7 +100,7 @@ export const tryFindRestClientPath = async (
     clientPattern: string
 ): Promise<string | undefined> => {
     const pattern = unixify(path.join(packageRoot, clientPattern));
-    const clientFiles = await glob(pattern);
+    const clientFiles = await findFilesByPattern(pattern);
     if (clientFiles.length !== 1) {
         logger.warn(`Failed to find extactly one REST client in pattern '${pattern}', got '${clientFiles}'.`);
         return undefined;
@@ -142,3 +142,55 @@ export const getApiVersionTypeFromNpm = async (packageRoot: string): Promise<Api
     const isBeta = isBetaVersion(latestVersion);
     return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
 };
+
+/**
+ * A Node.js-based implementation of glob functionality
+ * @param pattern The glob pattern to match
+ * @returns A Promise that resolves to an array of matching file paths
+ */
+async function findFilesByPattern(pattern: string): Promise<string[]> {
+    // Extract the base directory from the pattern
+    const segments = pattern.split(/[\/\\]/);
+    const wildcardIndex = segments.findIndex(segment => segment.includes('*'));
+    const baseDir = wildcardIndex > 0 
+        ? segments.slice(0, wildcardIndex).join(path.sep) 
+        : '.';
+
+    // Convert glob pattern to regex
+    const regexPattern = new RegExp(
+        `^${pattern
+            .replace(/\//g, '[\\\\/]')
+            .replace(/\./g, '\\.')
+            .replace(/\*\*/g, '.*')
+            .replace(/\*/g, '[^\\\\/]*')}$`
+    );
+
+    const results: string[] = [];
+
+    // Recursively search for files
+    async function scanDir(dir: string, remainingDepth = 20): Promise<void> {
+        if (remainingDepth <= 0) return;
+
+        try {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                const unixPath = unixify(fullPath);
+
+                if (regexPattern.test(unixPath)) {
+                    results.push(unixPath);
+                }
+
+                if (entry.isDirectory()) {
+                    await scanDir(fullPath, remainingDepth - 1);
+                }
+            }
+        } catch (error) {
+            // Silently ignore if directory doesn't exist or cannot be read
+        }
+    }
+
+    await scanDir(baseDir);
+    return results;
+}

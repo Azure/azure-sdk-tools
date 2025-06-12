@@ -21,7 +21,7 @@ To get around this warning, a user only needs to ensure that the **entire body**
 
 See examples in `SpecPullRequestTools.GetGitHubUserDetails` and `SpecPullRequestTools.GenerateSDK`.
 
-## To quickly dev loop on just your class.
+## To quickly dev loop on just your class
 
 - Ensure that your class in `Tools` is inheriting from the abstract class `MCPHubTool.`
 - Update the `debug` properties for the `hub` project to target a specific tool `--tool <nameofyourclass>`

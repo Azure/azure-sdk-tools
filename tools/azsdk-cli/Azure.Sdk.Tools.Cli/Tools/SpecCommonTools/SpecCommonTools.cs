@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     if (process.ExitCode != 0)
                     {
                         SetFailure(process.ExitCode);
-                        List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {process.StandardError.ReadToEnd()}"];
+                        List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure PowerShell Core is installed. Error {process.StandardError.ReadToEnd()}"];
                         return output.Format(_err);
                     }
                     var stdout = process.StandardOutput.ReadToEnd();
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 catch (Exception ex)
                 {
                     SetFailure();
-                    return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {ex.Message}";
+                    return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure PowerShell Core is installed. Error {ex.Message}";
                 }
             }
             catch (Exception ex)

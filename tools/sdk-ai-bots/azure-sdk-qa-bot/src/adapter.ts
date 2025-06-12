@@ -1,7 +1,7 @@
 import { TeamsAdapter } from '@microsoft/teams-ai';
 
 // This bot's main dialog.
-import config from './config.js';
+import config from './config/config.js';
 import { LogMiddleware } from './middleware/LogMiddleware.js';
 import { logger } from './logging/logger.js';
 import { getTurnContextLogMeta } from './logging/utils.js';
@@ -14,7 +14,8 @@ const onTurnErrorHandler = async (context, error) => {
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
-  logger.error(`\n [onTurnError] unhandled error: ${error}`, getTurnContextLogMeta(context));
+  const stack = 'stack' in error ? (error.stack as string).replace(/\n/g, ' ') : '';
+  logger.error(`\n [onTurnError] unhandled error: ${error}, call stack: ${stack}`, getTurnContextLogMeta(context));
 
   // Only send error message for user messages, not for other message types so the bot doesn't spam a channel or chat.
   if (context.activity.type === 'message') {
@@ -27,7 +28,10 @@ const onTurnErrorHandler = async (context, error) => {
     );
 
     // Send a message to the user
-    await context.sendActivity('The bot encountered an internal error or bug.');
+    const errorMessage =
+      `The bot encountered an error or bug.` +
+      (process.env.IS_LOCAL === 'true' ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
+    await context.sendActivity(errorMessage);
   }
 };
 

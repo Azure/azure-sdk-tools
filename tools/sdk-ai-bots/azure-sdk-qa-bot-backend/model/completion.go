@@ -3,7 +3,7 @@ package model
 type TenantID string
 
 const (
-	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot"
+	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
 	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
 	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
 )
@@ -16,6 +16,7 @@ const (
 	Source_AzureRestAPISpec      Source = "azure_rest_api_specs_wiki"
 	Source_AzureSDKForPython     Source = "azure_sdk_for_python_docs"
 	Source_AzureSDKForPythonWiki Source = "azure_sdk_for_python_wiki"
+	Source_TypeSpecQA            Source = "static_typespec_qa"
 )
 
 type Role string
@@ -27,8 +28,10 @@ const (
 )
 
 type Message struct {
-	Role    Role   `json:"role" jsonschema:"required,description=The role of the message sender"`
-	Content string `json:"content" jsonschema:"required,description=The content of the message"`
+	Role       Role    `json:"role" jsonschema:"required,description=The role of the message sender"`
+	Content    string  `json:"content" jsonschema:"required,description=The content of the message"`
+	RawContent *string `json:"raw_content,omitempty" jsonschema:"omitempty,description=The raw content of the message, used for searching"`
+	Name       *string `json:"name,omitempty" jsonschema:"omitempty,description=The name of the message sender, used for system messages"`
 }
 
 type Reference struct {
@@ -47,9 +50,11 @@ type CompletionReq struct {
 	Message                 Message   `json:"message" jsonschema:"required,description=The message to send to the agent"`
 	History                 []Message `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
 	WithFullContext         *bool     `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
+	WithPreprocess          *bool     `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
 }
 
 type CompletionResp struct {
+	ID          string           `json:"id" jsonschema:"required,description=The unique ID of the completion"`
 	Answer      string           `json:"answer" jsonschema:"required,description=The answer from the agent"`
 	HasResult   bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
 	References  []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`

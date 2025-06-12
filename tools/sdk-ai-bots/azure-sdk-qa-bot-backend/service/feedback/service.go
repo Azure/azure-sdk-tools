@@ -16,6 +16,7 @@ type FeedbackService struct{}
 func NewFeedbackService() *FeedbackService {
 	return &FeedbackService{}
 }
+
 func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	timestamp := time.Now()
 	filename := fmt.Sprintf("feedback_%s.csv", timestamp.Format("2006-01-02"))
@@ -46,11 +47,13 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	defer f.Close()
 	messageStr, _ := json.Marshal(feedback.Messages)
 	// Format and write the new record
-	record := fmt.Sprintf("%s,%s,%s,%s\n",
+	record := fmt.Sprintf("%s,%s,%s,%s,%s\n",
 		timestamp.Format(time.RFC3339),
 		feedback.TenantID,
 		messageStr,
-		feedback.Reaction)
+		feedback.Reaction,
+		feedback.Comment,
+	)
 
 	_, err = f.WriteString(record)
 

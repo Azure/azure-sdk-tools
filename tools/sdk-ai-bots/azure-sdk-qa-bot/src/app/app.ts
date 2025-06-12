@@ -1,24 +1,18 @@
 import { ActivityTypes, MemoryStorage, TurnContext } from 'botbuilder';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import config from '../config.js';
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from '@microsoft/teams-ai';
 import { FakeModel } from '../models/FakeModel.js';
-import { FeedbackReaction, sendFeedback } from '../backend/feedback.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
+import { FeedbackReaction, RAGOptions, sendFeedback } from '../backend/rag.js';
+import config from '../config/config.js';
+import { getRagTanent } from '../config/utils.js';
 
 // Create AI components
-const model = new FakeModel({
-  rag: {
-    apiKey: config.azureOpenAIKey,
-    tenantId: config.azureOpenAIDeploymentName,
-    // TODO: make /completion endpoint configurable
-    endpoint: config.azureOpenAIEndpoint + '/completion',
-  },
-});
+const model = new FakeModel();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,15 +45,22 @@ const isSubmitMessage = async (ctx: TurnContext) =>
   ctx.activity.type === ActivityTypes.Message && !!ctx.activity.value?.action;
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
+  const channelId = context.activity.channelId;
+  const ragTanentId = getRagTanent(channelId);
+  const ragOptions: RAGOptions = {
+    endpoint: config.ragEndpoint,
+    apiKey: config.ragApiKey,
+    tenantId: ragTanentId,
+  };
   const action = context.activity.value?.action;
   // const conversation = context.activity.value?.conversation;
   switch (action) {
     case 'feedback-like':
-      await sendFeedback(['test good'], FeedbackReaction.good);
+      await sendFeedback(['test good'], FeedbackReaction.good, ragOptions);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
       break;
     case 'feedback-dislike':
-      await sendFeedback(['test bad'], FeedbackReaction.bad);
+      await sendFeedback(['test bad'], FeedbackReaction.bad, ragOptions);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');
       break;
     default:

@@ -185,7 +185,14 @@ async def process_file(input_file: str, output_file: str) -> None:
     except Exception as e:
         print(f"Error processing file {input_file}: {str(e)}")
 
-async def main():
+async def main(file_prefix: str = None):
+    """
+    Process markdown files in the data directory and generate Q&A pairs.
+    
+    Args:
+        file_prefix: Optional prefix to filter which markdown files to process.
+                    If provided, only files starting with this prefix will be processed.
+    """
     data_dir = Path("data")
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
@@ -199,11 +206,24 @@ async def main():
         # Create corresponding output file for each input folder
         output_file = output_dir / f"{data_folder}_generated_qa.jsonl"
         
-        # Process all markdown files in the folder
-        for file_path in folder_path.glob('*.md'):
-            await process_file(str(file_path), str(output_file))
+        # Process markdown files in the folder, optionally filtered by prefix
+        glob_pattern = f"{file_prefix}*.md" if file_prefix else "*.md"
+        matching_files = list(folder_path.glob(glob_pattern))
+        
+        if matching_files:
+            print(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_folder}/")
+            for file_path in matching_files:
+                await process_file(str(file_path), str(output_file))
+        elif file_prefix:
+            print(f"No files found matching prefix '{file_prefix}' in {data_folder}/")
             
     print("Processing complete. Results written to output directory.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Process Q&A pairs from markdown files.")
+    parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
+    args = parser.parse_args()
+    
+    asyncio.run(main(args.prefix))

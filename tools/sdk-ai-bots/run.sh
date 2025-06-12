@@ -1,23 +1,21 @@
 #!/bin/bash
 
+GO_SERVICE_DIR="azure-sdk-qa-bot-backend"
+SHARED_SERVICE_DIR="azure-sdk-qa-bot-backend-shared"
 PID_FILE="service.pid"
-NGROK_PID_FILE="ngrok.pid"
+SHARED_PID_FILE="shared_service.pid"
 DEV_MODE=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -dev)
-            DEV_MODE=true
-            shift
-            ;;
         start|stop|restart|status)
             COMMAND=$1
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [-dev] {start|stop|restart|status}"
+            echo "Usage: $0 {start|stop|restart|status}"
             exit 1
             ;;
     esac
@@ -25,12 +23,16 @@ done
 
 start_service() {
     if [ -f "$PID_FILE" ]; then
-        echo "Service appears to be already running. PID file exists."
+        echo "Go service appears to be already running. PID file exists."
         return 1
     fi
     
-    # Start the Go application
-    nohup go run . > service.log 2>&1 &
+    # Start the Go application from the correct directory
+    cd "$GO_SERVICE_DIR" || { echo "Error: Cannot change to Go service directory"; return 1; }
+    echo "Starting Go service from $(pwd)..."
+    nohup go run . > ../service.log 2>&1 &
+    cd ..
+    
     # Wait briefly for the actual service to start
     sleep 2
     # Get the PID of the actual service process listening on port 8088
@@ -42,13 +44,17 @@ start_service() {
         echo "Warning: Could not find service PID listening on port 8088"
     fi
     
-    # Only start ngrok in dev mode
-    if [ "$DEV_MODE" = true ]; then
-        echo "Starting ngrok in development mode..."
-        nohup ngrok http 8088 --url https://neutral-pleasant-gecko.ngrok-free.app > ngrok.log 2>&1 &
-        NGROK_PID=$!
-        echo $NGROK_PID > "$NGROK_PID_FILE"
-        echo "Started ngrok with PID: $NGROK_PID"
+    # Start the shared service (always run this)
+    if [ -f "$SHARED_PID_FILE" ]; then
+        echo "Shared service appears to be already running. Shared PID file exists."
+    else
+        echo "Starting shared service from $SHARED_SERVICE_DIR..."
+        cd "$SHARED_SERVICE_DIR" || { echo "Error: Cannot change to shared service directory"; return 1; }
+        nohup npm run dev:local > ../shared_service.log 2>&1 &
+        SHARED_PID=$!
+        cd ..
+        echo $SHARED_PID > "$SHARED_PID_FILE"
+        echo "Started shared service with PID: $SHARED_PID"
     fi
 }
 
@@ -75,15 +81,16 @@ stop_service() {
         echo "Go service PID file not found, tried stopping by port"
     fi
     
-    # Only start ngrok in dev mode
-    if [ "$DEV_MODE" = true ]; then
-        if [ -f "$NGROK_PID_FILE" ]; then
-            echo "Stopping ngrok..."
-            kill $(cat "$NGROK_PID_FILE") 2>/dev/null
-            rm "$NGROK_PID_FILE"
-        else
-            echo "Ngrok PID file not found"
-        fi
+    # Stop shared service
+    if [ -f "$SHARED_PID_FILE" ]; then
+        echo "Stopping shared service..."
+        SHARED_PID=$(cat "$SHARED_PID_FILE")
+        kill $SHARED_PID 2>/dev/null
+        # Kill any potential child processes
+        pkill -P $SHARED_PID 2>/dev/null
+        rm "$SHARED_PID_FILE"
+    else
+        echo "Shared service PID file not found"
     fi
 }
 
@@ -108,10 +115,16 @@ status_service() {
         fi
     fi
     
-    if [ -f "$NGROK_PID_FILE" ] && kill -0 $(cat "$NGROK_PID_FILE") 2>/dev/null; then
-        echo "Ngrok is running with PID: $(cat $NGROK_PID_FILE)"
+    # Check shared service status
+    if [ -f "$SHARED_PID_FILE" ]; then
+        SHARED_PID=$(cat "$SHARED_PID_FILE")
+        if kill -0 $SHARED_PID 2>/dev/null; then
+            echo "Shared service is running with PID: $SHARED_PID"
+        else
+            echo "Shared service PID file exists but process is not running"
+        fi
     else
-        echo "Ngrok is not running"
+        echo "Shared service is not running"
     fi
 }
 

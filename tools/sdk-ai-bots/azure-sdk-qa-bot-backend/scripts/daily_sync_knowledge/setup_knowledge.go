@@ -256,6 +256,11 @@ func deleteExpiredBlobs(currentFiles []string) error {
 	blobs := storageService.GetBlobs(config.STORAGE_KNOWLEDGE_CONTAINER)
 	// Iterate through blobs and delete those not in the current files list
 	for _, blob := range blobs {
+		if strings.HasPrefix(blob, "static_") {
+			// Skip static files
+			fmt.Printf("Skipping static blob %s\n", blob)
+			continue
+		}
 		if _, exists := currentFileMap[blob]; !exists {
 			if err := storageService.DeleteBlob(config.STORAGE_KNOWLEDGE_CONTAINER, blob); err != nil {
 				fmt.Printf("Error deleting blob %s: %v\n", blob, err)

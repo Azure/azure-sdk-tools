@@ -5,9 +5,9 @@
   "id": "${{TEAMS_APP_ID}}",
   "developer": {
     "name": "Azure SDK Team",
-    "websiteUrl": "https://aka.ms/azure-sdk-qa-bot",
-    "privacyUrl": "https://aka.ms/azure-sdk-qa-bot-privacy",
-    "termsOfUseUrl": "https://aka.ms/azure-sdk-qa-bot-termofuse"
+    "websiteUrl": "https://eng.ms/docs/products/azure-developer-experience",
+    "privacyUrl": "https://eng.ms/docs/products/azure-developer-experience",
+    "termsOfUseUrl": "https://eng.ms/docs/products/azure-developer-experience"
   },
   "icons": {
     "color": "color.png",
@@ -18,14 +18,14 @@
     "full": "${{TEAMS_BOT_FULL_DISPLAY_NAME}}"
   },
   "description": {
-    "short": "A bot to help you with Azure SDK development.",
-    "full": "A bot to help you with Azure SDK development."
+    "short": "A Teams bot for Azure SDK development",
+    "full": "An AI-powered bot that provides comprehensive support throughout the SDK development lifecycle, including authoring TypeSpec, generating and releasing SDKs, and assisting with troubleshooting generation and releasing failures."
   },
   "accentColor": "#FFFFFF",
   "bots": [
     {
       "botId": "${{BOT_ID}}",
-      "scopes": ["personal", "team", "groupChat"],
+      "scopes": ["team"],
       "supportsFiles": false,
       "isNotificationOnly": false,
       "commandLists": []

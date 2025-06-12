@@ -21,7 +21,7 @@ type QueryIndexRequest struct {
 
 type VectorQuery struct {
 	Text       string `json:"text"`
-	K          int    `json:"k"`
+	K          *int   `json:"k,omitempty"`
 	Fields     string `json:"fields"`
 	Kind       string `json:"kind"`
 	Exhaustive bool   `json:"exhaustive"`
@@ -52,21 +52,29 @@ func GetIndexLink(chunk Index) string {
 		return "Please reference link from document content"
 	}
 	path := strings.Join(strings.Split(chunk.Title, "#"), "/")
-	path = strings.TrimSuffix(path, ".md")
-	path = strings.TrimSuffix(path, ".mdx")
-	path = strings.TrimPrefix(path, "docs/")
 	switch Source(chunk.ContextID) {
 	case Source_TypeSpec:
+		path = TrimFileFormat(path)
 		return "https://typespec.io/docs/" + path
 	case Source_TypeSpecAzure:
+		path = TrimFileFormat(path)
 		return "https://azure.github.io/typespec-azure/docs/" + path
 	case Source_AzureRestAPISpec:
+		path = TrimFileFormat(path)
 		return "https://github.com/Azure/azure-rest-api-specs/wiki/" + path
 	case Source_AzureSDKForPython:
 		return "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/" + path
 	case Source_AzureSDKForPythonWiki:
+		path = TrimFileFormat(path)
 		return "https://github.com/Azure/azure-sdk-for-python/wiki/" + path
 	default:
 		return ""
 	}
+}
+
+func TrimFileFormat(path string) string {
+	path = strings.TrimSuffix(path, ".md")
+	path = strings.TrimSuffix(path, ".mdx")
+	path = strings.TrimPrefix(path, "docs/")
+	return path
 }

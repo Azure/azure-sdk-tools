@@ -31,9 +31,9 @@ export class GithubClient {
   private readonly authToken?: string;
   private readonly perPage = 100;
   private readonly octokit: Octokit;
-  private logMeta?: object;
+  private logMeta: object;
 
-  constructor(authToken?: string, logMeta?: object) {
+  constructor(authToken?: string, logMeta: object = {}) {
     this.logMeta = logMeta;
     this.authToken = authToken;
     this.octokit = new Octokit({ auth: this.authToken });
@@ -43,7 +43,7 @@ export class GithubClient {
     // 1. Parse owner, repo, pull_number from URL
     const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
     if (!match) {
-      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, this.logMeta);
+      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta: this.logMeta });
       return { comments: { review: [], issue: [] }, reviews: [], basic: { labels: [], title: '' }, diff: '' };
     }
 

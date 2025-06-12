@@ -10,13 +10,23 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 
 ## TODO
 
-- [ ] Decide the scope of links to support
-- [x] Refactor code, messy for now, since I reuse the template or samples directly
-- [x] Remove `Create IcM` button
-- [x] Hide `reference` button when there's no reference
-- [x] Still return true when `has_result` == false
+### Infra
+
+- [] Split envs for computer vision
+- [] Add bicep for grant managed identity in storage
+- [] Add `Storage Account Contributor` and `Storage Table Data Contributor` in IAM
+
+### Test
+
+- [] Add test for conversation context
+
+---
+
+> Below are the auto generated readme
+> [TODO]: update the below content 
 
 ## Get started with the template
+
 
 > **Prerequisites**
 >
@@ -29,7 +39,7 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 > For local debugging using Teams Toolkit CLI, you need to do some extra steps described in [Set up your Teams Toolkit CLI for local debugging](https://aka.ms/teamsfx-cli-debugging).
 
 1. First, select the Teams Toolkit icon on the left in the VS Code toolbar.
-1. In file _env/.env.testtool.user_, fill in your Azure OpenAI key `SECRET_AZURE_OPENAI_API_KEY=<your-key>`, endpoint `AZURE_OPENAI_ENDPOINT=<your-endpoint>`, and deployment name `AZURE_OPENAI_DEPLOYMENT_NAME=<your-deployment>`.
+1. In file _env/.env.testtool.user_, fill in your Azure OpenAI key `SECRET_RAG_API_KEY=<your-key>`, endpoint `RAG_ENDPOINT=<your-endpoint>`, and deployment name `RAG_TANENT_ID=<your-deployment>`.
 1. Press F5 to start debugging which launches your app in Teams App Test Tool using a web browser. Select `Debug in Test Tool`.
 1. You can send any message to get a response from the bot.
 
@@ -52,6 +62,9 @@ The following files can be customized and demonstrate an example implementation 
 | File                            | Contents                                          |
 | ------------------------------- | ------------------------------------------------- |
 | `src/index.ts`                  | Sets up the bot app server.                       |
+| `src/input/ConversationHandler.ts` | Handles conversation message storage in Cosmos DB. |
+
+For details about setting up and using Cosmos DB storage for conversation history, see the [Cosmos DB Storage documentation](./docs/cosmos-db-storage.md).
 | `src/adapter.ts`                | Sets up the bot adapter.                          |
 | `src/config.ts`                 | Defines the environment variables.                |
 | `src/prompts/chat/skprompt.txt` | Defines the prompt.                               |

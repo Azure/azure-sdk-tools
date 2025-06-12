@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -12,8 +11,10 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/google/uuid"
 )
 
 type CompletionService struct {
@@ -51,6 +52,8 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 
 func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.CompletionResp, error) {
 	startTime := time.Now()
+	requestID := uuid.New().String()
+	log.SetPrefix(fmt.Sprintf("[RequestID: %s] ", requestID))
 	if err := s.CheckArgs(req); err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -64,48 +67,58 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		if message.Role == model.Role_Assistant {
 			messages = append(messages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
 		} else if message.Role == model.Role_User {
-			messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(message.Content)})
+			messages = append(messages, &azopenai.ChatRequestUserMessage{
+				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
+				Name:    message.Name,
+			})
 		}
 	}
-	userMessage := req.Message.Content
-	// lower case
-	userMessage = strings.ToLower(userMessage)
-	// replace keyword
-	for k, v := range model.KeywordReplaceMap {
-		userMessage = strings.ReplaceAll(userMessage, fmt.Sprintf(" %s ", k), fmt.Sprintf(" %s ", v))
+
+	if req.WithPreprocess != nil && *req.WithPreprocess {
+		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
+		if preProcessedMessage == "" {
+			log.Println("User message is empty after preprocessing, skipping completion.")
+			return result, nil
+		}
+		log.Println("user message with additional info:", preProcessedMessage)
+		messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(preProcessedMessage)})
+	} else {
+		messages = append(messages, &azopenai.ChatRequestUserMessage{
+			Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content),
+			Name:    req.Message.Name,
+		})
 	}
 
-	// The user asks a question
-	messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content)})
+	query := req.Message.Content
+	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
+		query = *req.Message.RawContent
+	}
+	query = preprocess.NewPreprocessService().PreprocessInput(query)
+	log.Printf("User query: %s", query)
 
 	intentStart := time.Now()
 	intentResult, err := s.RecongnizeIntension(messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
-		log.Printf("category: %v, question: %v", intentResult.Category, intentResult.Question)
 		if len(req.Sources) == 0 {
 			if intentResult.Category == model.QuestionCategory_Unbranded {
 				req.Sources = []model.Source{model.Source_TypeSpec}
 			} else {
 				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecAzure, model.Source_AzureRestAPISpec}
 			}
+			req.Sources = append(req.Sources, model.Source_TypeSpecQA)
 		}
 		if len(intentResult.Question) > 0 {
-			userMessage = intentResult.Question
+			query = intentResult.Question
 		}
 	}
+	log.Printf("category: %v, intension: %v", intentResult.Category, intentResult.Question)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-
-	// Filter empty messages
-	if userMessage == "" {
-		return result, nil
-	}
-	log.Println("msg:", userMessage)
 
 	searchStart := time.Now()
 	searchClient := search.NewSearchClient()
-	results, err := searchClient.SearchTopKRelatedDocuments(userMessage, *req.TopK, req.Sources)
+	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}
@@ -124,11 +137,11 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			log.Printf("Adding result with high score: %s, score: %f", result.Title, result.RerankScore)
 			continue
 		}
-		log.Printf("Result: %s, score: %f", result.Title, result.RerankScore)
+		log.Printf("Result: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
 		normalResult = append(normalResult, result)
 	}
 	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
-		log.Printf("No results found with high relevance score, using normal results")
+		log.Printf("No results found with high relevance score, supply with normal results")
 		supplyNum := 5
 		if len(normalResult) < supplyNum {
 			supplyNum = len(normalResult)
@@ -148,6 +161,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		mergedChunks = append(mergedChunks, model.Index{
 			Title:     result.Title,
 			ContextID: result.ContextID,
+			Header1:   result.Header1,
 		})
 	}
 	var wg sync.WaitGroup
@@ -162,10 +176,8 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	wg.Wait()
 
 	chunks := make([]string, 0)
-	var chunkTitles []string
 	for _, result := range mergedChunks {
 		chunk := processDocument(result)
-		chunkTitles = append(chunkTitles, result.Title)
 		chunks = append(chunks, chunk)
 	}
 	for _, result := range normalResult {
@@ -209,6 +221,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 		result = answer
 	}
+	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")
 		result.FullContext = &fullContext
@@ -243,14 +256,6 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 	}
 
 	for _, choice := range resp.Choices {
-		if choice.Message != nil && choice.Message.Content != nil {
-			fmt.Fprintf(os.Stderr, "Content[%d]: %s\n", *choice.Index, *choice.Message.Content)
-		}
-
-		if choice.FinishReason != nil {
-			// this choice's conversation is complete.
-			fmt.Fprintf(os.Stderr, "Finish reason[%d]: %s\n", *choice.Index, *choice.FinishReason)
-		}
 		result, error := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
 		if error != nil {
 			log.Printf("ERROR: %s", error)

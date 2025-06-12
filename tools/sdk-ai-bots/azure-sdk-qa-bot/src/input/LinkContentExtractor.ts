@@ -4,9 +4,9 @@ import { URLNotSupportedError } from '../error/inputErrors.js';
 
 export class LinkContentExtractor {
   private readonly githubClient = new GithubClient();
-  private logMeta?: object;
+  private logMeta: object;
 
-  constructor(logMeta?: object) {
+  constructor(logMeta: object = {}) {
     this.logMeta = logMeta;
     this.githubClient = new GithubClient(undefined, logMeta);
   }
@@ -33,7 +33,7 @@ export class LinkContentExtractor {
       let text = ``;
       for (const key in prDetails) {
         const detail = JSON.stringify(prDetails[key], null, 2);
-        text += `### ${key}\n\n${detail}\n\n`;
+        text += `### ${key}\n${detail}\n`;
       }
       contents.push({ text, url, id });
     }

@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.11.0",
+  "version": "2.11.1",
   "description": "",
   "files": [
     "dist"
@@ -43,7 +43,8 @@
     "typescript-codegen-breaking-change-detector": "0.5.6",
     "unixify": "^1.0.0",
     "winston": "^3.17.0",
-    "yaml": "^2.7.0"
+    "yaml": "^2.7.0",
+    "minimatch": "10.0.1"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

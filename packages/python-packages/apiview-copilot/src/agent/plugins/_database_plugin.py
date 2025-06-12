@@ -2,6 +2,7 @@ import os
 import uuid
 from typing import Optional
 from semantic_kernel.functions import kernel_function
+import logging
 
 from src._models import Memory
 
@@ -29,8 +30,14 @@ class DatabasePlugin:
             guideline_id (str): The ID of the guideline to retrieve.
         """
         client = get_database_client()
-        container = client.get_database(COSMOS_DB_NAME).get_container("guidelines")
+        container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
+
+        # replace .html# with =html= in guideline_id
+        guideline_id = guideline_id.replace(".html#", "=html=")
+
         guideline = container.read_item(item=guideline_id, partition_key=guideline_id)
+        # TODO: Expand the guideline into a context object with links resolved
+
         return guideline
 
     @kernel_function(description="Add a memory related to a guideline in the ArchAgent Knowledge Base.")
@@ -40,7 +47,7 @@ class DatabasePlugin:
         content: str,
         guideline_id: str,
         is_exception: bool,
-        service: Optional[str],
+        service_name: Optional[str],
         language: Optional[str],
     ):
         """
@@ -50,12 +57,15 @@ class DatabasePlugin:
             content (str): The memory content to add.
             title (str): The title of the memory.
             is_exception (bool): Whether the memory is an exception to established guidelines.
-            service (str): The service related to the memory, if any.
+            service_name (str): The service related to the memory, if any.
             language (str): The programming language of the memory.
         """
         client = get_database_client()
-        guideline_container = client.get_database(COSMOS_DB_NAME).get_container("guidelines")
-        memory_container = client.get_database(COSMOS_DB_NAME).get_container("memories")
+        guideline_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
+        memory_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("memories")
+
+        # replace .html# with =html= in guideline_id
+        guideline_id = guideline_id.replace(".html#", "=html=")
 
         guideline = guideline_container.read_item(item=guideline_id, partition_key=guideline_id)
         memory_id = str(uuid.uuid4())
@@ -66,10 +76,12 @@ class DatabasePlugin:
             content=content,
             source="agent",
             is_exception=is_exception,
-            service=service,
+            service=service_name,
             language=language,
         )
-        guideline.get("related_memories", []).append(memory_id)
+        related_memories = guideline.get("related_memories", [])
+        related_memories.append(memory_id)
+        guideline["related_memories"] = related_memories
         guideline_container.upsert_item(guideline)
-        memory_container.upsert_item(memory)
+        memory_container.upsert_item(memory.model_dump())
         return {"status": "Memory added successfully"}

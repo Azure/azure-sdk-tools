@@ -1,10 +1,10 @@
 # Microsoft.FxLister
 
-A command line tool that analyzes Azure NuGet packages and extracts type information.
+A command line tool that analyzes NuGet packages and extracts type information.
 
 ## Overview
 
-Microsoft.FxLister is a .NET 8.0 console application that discovers NuGet packages, downloads and analyzes their assemblies, and extracts public type names. The tool is particularly designed for analyzing Azure SDK libraries.
+Microsoft.FxLister is a console application that discovers NuGet packages, downloads and analyzes their assemblies, and extracts public type names. The tool is particularly designed for analyzing Azure SDK libraries.
 
 ## Features
 
@@ -17,10 +17,10 @@ Microsoft.FxLister is a .NET 8.0 console application that discovers NuGet packag
 
 ## Installation
 
-Build the project using .NET 8.0:
+Build the project:
 
 ```bash
-cd src/dotnet/Microsoft.FxLister
+cd tools/fxlister/Microsoft.FxLister
 dotnet build
 ```
 
@@ -81,11 +81,11 @@ StorageSharedKeyCredential
 
 ### Qualified Names File (.qualified.txt)
 ```
-Azure.Core.AccessToken in Azure.Core
-Azure.Storage.Blobs.BlobClient in Azure.Storage.Blobs
-Azure.Identity.DefaultAzureCredential in Azure.Identity
-Azure.Security.KeyVault.Secrets.KeyVaultSecret in Azure.Security.KeyVault.Secrets
-Azure.Storage.StorageSharedKeyCredential in Azure.Storage.Common
+Azure.Core.AccessToken;Azure.Core
+Azure.Storage.Blobs.BlobClient;Azure.Storage.Blobs
+Azure.Identity.DefaultAzureCredential;Azure.Identity
+Azure.Security.KeyVault.Secrets.KeyVaultSecret;Azure.Security.KeyVault.Secrets
+Azure.Storage.StorageSharedKeyCredential;Azure.Storage.Common
 ```
 
 ## Regex Pattern Examples
@@ -97,12 +97,3 @@ The package pattern option uses .NET regular expressions to filter package names
 - `^Azure\.Storage` - Only Azure Storage packages
 - `^Azure\.(Identity|KeyVault)` - Azure Identity and KeyVault packages
 - `^Azure\..*(?<!Test)$` - Azure packages not ending with "Test"
-
-## Technical Details
-
-The tool consists of:
-- **PackageAnalyzer**: Discovers NuGet packages using NuGet APIs
-- **RealTypeExtractor**: Analyzes assemblies using reflection metadata
-- **TypesCommand**: Command-line interface using System.CommandLine
-
-The tool targets .NET Standard 2.0 assemblies and builds as a single-file executable for easy distribution.

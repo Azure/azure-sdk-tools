@@ -4,7 +4,7 @@ import * as utilsModule from "../../../common/utils.js";
 import * as fsModule from "fs";
 import * as pathModule from "path";
 import shellModule from "shelljs";
-import * as codeOwnersModule from "../../../common/codeownersAndignorelink/generateCodeOwnersAndIgnoreLink.js";
+import * as codeOwnersModule from "../../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js";
 
 // Create module mocks
 vi.mock("../../../common/npmUtils.js");
@@ -104,7 +104,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         });
 
         // Call the function
-        await codeOwnersModule.generateCodeOwnersAndIgnoreLinkForPackage(
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
         );
 
@@ -115,7 +115,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
     test("should update both CODEOWNERS and ignore-links.txt for first beta release", async () => {
         // Setup mock for tryGetNpmView to return undefined (package doesn't exist)
         vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined); // Call the function
-        await codeOwnersModule.generateCodeOwnersAndIgnoreLinkForPackage(
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
         );
 
@@ -179,7 +179,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             }
             return "";
         }); // Call the function
-        await codeOwnersModule.generateCodeOwnersAndIgnoreLinkForPackage(
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
         );
 
@@ -214,7 +214,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             }
             return "";
         }); // Call the function
-        await codeOwnersModule.generateCodeOwnersAndIgnoreLinkForPackage(
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
         );
 

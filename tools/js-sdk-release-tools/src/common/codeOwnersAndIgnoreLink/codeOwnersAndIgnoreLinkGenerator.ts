@@ -4,8 +4,55 @@ import shell from "shelljs";
 import { logger } from "../../utils/logger.js";
 import { getNpmPackageName } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
+import { SDKType } from "../types.js";
 
-export async function generateCodeOwnersAndIgnoreLinkForPackage(
+export const codeOwnersAndIgnoreLinkGenerator = async (options: {
+    sdkType: SDKType;
+    packages: Array<{
+        packageName?: string;
+        packageFolder?: string;
+        result?: string;
+    }>;
+}): Promise<void> => {
+    logger.info(`Generating CODEOWNERS and ignore link for packages`);
+
+    if (options.sdkType === SDKType.RestLevelClient) {
+        logger.warn(
+            "Unsupported rest level client SDK to generate CODEOWNERS and ignore link.",
+        );
+        return;
+    }
+
+    if (options.packages.length === 0) {
+        logger.warn("No packages found in the packages array");
+        return;
+    }
+
+    // Process each package
+    for (const pkg of options.packages) {
+        // Check if package generation was successful
+        if (pkg.result !== "succeeded") {
+            logger.warn(
+                `Package ${pkg.packageName} generation result is not successful. Skipping CODEOWNERS and ignore link generation.`,
+            );
+            continue;
+        }
+
+        if (!pkg.packageFolder) {
+            logger.error(
+                `Package folder not found for ${pkg.packageName || "unknown package"}`,
+            );
+            continue;
+        }
+
+        logger.info(
+            `Processing package: ${pkg.packageName} using folder: ${pkg.packageFolder}`,
+        );
+        await tryGenerateCodeOwnersAndIgnoreLinkForPackage(pkg.packageFolder);
+    }
+};
+
+export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
 ) {
     logger.info(
@@ -26,7 +73,9 @@ export async function generateCodeOwnersAndIgnoreLinkForPackage(
             `Generated updates for CODEOWNERS and ignore link successfully`,
         );
     } else {
-        logger.info(`Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`);
+        logger.info(
+            `Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`,
+        );
     }
 }
 
@@ -58,18 +107,20 @@ function updateIgnoreLink(packageName: string) {
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
     let content = fs.readFileSync(ignoreLinksPath, "utf8");
     const newLine = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
-    
+
     // Check if the link already exists in the file
     if (content.includes(newLine)) {
-        logger.warn(`Link for ${packageName} already exists in ignore-links.txt, skipping.`);
+        logger.warn(
+            `Link for ${packageName} already exists in ignore-links.txt, skipping.`,
+        );
         return;
     }
-    
+
     // Ensure the content ends with a newline
     if (!content.endsWith("\n")) {
         content += "\n";
     }
-    
+
     const updatedContent = content + newLine + "\n";
     fs.writeFileSync(ignoreLinksPath, updatedContent);
     logger.info(`Added link for ${packageName} to ignore-links.txt`);

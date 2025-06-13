@@ -7,10 +7,3 @@ export interface IApiVersionTypeExtractor {
 export interface IModelOnlyChecker {
     (packageRoot: string): Promise<boolean>;
 }
-
-export interface ICodeOwnersAndIgnoreLinkGenerator {
-    (options: {
-        sdkType: SDKType;
-        packages : any;
-    }): Promise<void>;
-}

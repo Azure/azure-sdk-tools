@@ -59,7 +59,7 @@
 /src/dotnet/                            @azure/azsdknet @jsquire
 /src/dotnet/APIView/                    @chidozieononiwu @praveenkuttappan @helen229
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
-/tools/snippet-generator/               @azure/azadknet @jsquire
+/tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers

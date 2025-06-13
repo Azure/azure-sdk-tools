@@ -36,7 +36,6 @@ namespace SearchIndexCreator
                 DefaultRerankerThreshold = 1.0f
             };
 
-
             var agent = new KnowledgeAgent(
                 name: _config["KnowledgeAgentName"],
                 models: new[] { agentModel },

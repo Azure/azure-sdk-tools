@@ -1,12 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.Search.Documents.Agents;
+using Azure.Search.Documents.Agents.Models;
 using IssueLabeler.Shared;
 using Microsoft.Extensions.Logging;
-using System.Linq;
-using System.Collections.Generic;
-using Azure.Search.Documents.Agents;
-using Azure.Identity;
-using Azure.Search.Documents.Agents.Models;
 using Newtonsoft.Json.Linq;
 
 namespace IssueLabelerService

@@ -4,10 +4,11 @@ import {
     createAstContext,
     DiffPair,
     patchClass,
+    patchFunction,
     patchInterface,
     patchTypeAlias,
 } from "typescript-codegen-breaking-change-detector";
-import { SDKType } from "../common/types.js";
+import { SDKType } from "../../common/types.js";
 import { join } from "path";
 
 export interface ApiViewOptions {
@@ -15,10 +16,25 @@ export interface ApiViewOptions {
     sdkType: SDKType;
 }
 
+export interface DetectResult {
+    interfaces: Map<string, DiffPair[]>;
+    classes: Map<string, DiffPair[]>;
+    typeAliases: Map<string, DiffPair[]>;
+    functions: Map<string, DiffPair[]>;
+}
+
+export interface DetectContext {
+    sdkTypes: {
+        baseline: SDKType;
+        current: SDKType;
+    };
+    context: AstContext;
+}
+
 export class DifferenceDetector {
     private tempFolder: string;
     private context: AstContext | undefined;
-    private preprocessFn: ((astContext: AstContext) => {}) | undefined =
+    private preprocessFn: ((astContext: AstContext) => Promise<void>) | undefined =
         undefined;
 
     constructor(
@@ -31,9 +47,19 @@ export class DifferenceDetector {
         );
     }
 
+    public getDetectContext(): DetectContext {
+        return {
+            sdkTypes: {
+                baseline: this.baseline.sdkType,
+                current: this.current.sdkType,
+            },
+            context: this.context!,
+        };
+    }
+
     public async detect() {
         await this.load();
-        await this.preprocess();
+        await this.preprocessFn?.(this.context!);
 
         if (this.baseline.sdkType !== this.current.sdkType)
             return this.detectAcrossSdkTypes();
@@ -63,7 +89,7 @@ export class DifferenceDetector {
         this.preprocessFn = fn;
     }
 
-    private async detectCore(): Promise<DiffPair[]> {
+    private async detectCore(): Promise<DetectResult> {
         const interfaceNamesHasDuplicate = [
             ...this.context!.baseline.getInterfaces().map((i) => i.getName()),
             ...this.context!.current.getInterfaces().map((i) => i.getName()),
@@ -90,21 +116,34 @@ export class DifferenceDetector {
         const functionNames = uniquefy(functionsHasDuplicate);
 
         // TODO: be careful about input models and output models
-        const interfaceDiffPairs = interfaceNames.map((n) =>
-            patchInterface(n, this.context!, AssignDirection.CurrentToBaseline),
-        );
-        const classDiffPairs = classNames.map((n) =>
-            patchClass(n, this.context!, AssignDirection.CurrentToBaseline),
-        );
-        const typeAliasDiffPairs = typeAliasNames.map((n) =>
-            patchTypeAlias(n, this.context!, AssignDirection.CurrentToBaseline),
-        );
-        const functionDiffPairs = functionNames.map((n) =>
-            patchInterface(n, this.context!, AssignDirection.CurrentToBaseline),
-        );
-        return [
-            // TODO
-        ];
+        const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
+            const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
+            map.set(n, diffPairs);
+            return map;
+        }, new Map<string, DiffPair[]>());
+        const classDiffPairs = classNames.reduce((map, n) => {
+            const diffPairs = patchClass(n, this.context!, AssignDirection.CurrentToBaseline);
+            map.set(n, diffPairs);
+            return map;
+        }, new Map<string, DiffPair[]>());
+        const typeAliasDiffPairs = typeAliasNames.reduce((map, n) => {
+            const diffPairs = patchTypeAlias(n, this.context!, AssignDirection.CurrentToBaseline);
+            map.set(n, diffPairs);
+            return map;
+        }, new Map<string, DiffPair[]>());
+        const functionDiffPairs = functionNames.reduce((map, n) => {
+            // TODO: add assign direction
+            const diffPairs = patchFunction(n, this.context!);
+            map.set(n, diffPairs);
+            return map;
+        }, new Map<string, DiffPair[]>());
+
+        return {
+            interfaces: interfaceDiffPairs,
+            classes: classDiffPairs,
+            typeAliases: typeAliasDiffPairs,
+            functions: functionDiffPairs,
+        };
     }
 
     private async detectAcrossSdkTypes() {

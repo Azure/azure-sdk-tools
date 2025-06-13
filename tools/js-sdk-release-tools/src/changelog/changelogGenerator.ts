@@ -1176,6 +1176,7 @@ export const changelogGenerator = (
     const changLog = new Changelog();
 
     // features
+    // migrated
     changLog.addedOperationGroup = findAddedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
     changLog.addedOperation = findAddedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
     changLog.addedInterface = findAddedInterface(metaDataOld, metadataNew);

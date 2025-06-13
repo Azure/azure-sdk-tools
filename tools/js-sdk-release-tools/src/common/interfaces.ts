@@ -1,4 +1,4 @@
-import { ApiVersionType, SDKType } from "./types.js";
+import { ApiVersionType } from "./types.js";
 
 export interface IApiVersionTypeExtractor {
     (packageRoot: string): Promise<ApiVersionType>;

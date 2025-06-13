@@ -217,7 +217,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	for _, choice := range resp.Choices {
 		answer, err := promptParser.ParseResponse(*choice.Message.Content, *req.PromptTemplate)
 		if err != nil {
-			log.Printf("ERROR: %s", err)
+			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
 			return nil, err
 		}
 		result = answer
@@ -259,7 +259,7 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 	for _, choice := range resp.Choices {
 		result, error := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
 		if error != nil {
-			log.Printf("ERROR: %s", error)
+			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
 			return nil, error
 		}
 		return result, nil

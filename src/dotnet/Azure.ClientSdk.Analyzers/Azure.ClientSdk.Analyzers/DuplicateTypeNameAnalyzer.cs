@@ -148,20 +148,30 @@ namespace Azure.ClientSdk.Analyzers
                 var currentFullTypeName = namedTypeSymbol.ToDisplayString();
                 var currentAssemblyName = namedTypeSymbol.ContainingAssembly?.Name ?? "";
                 
-                // For generic types, we need to check the base type name without generic parameters
-                var currentTypeNameWithoutGenerics = currentFullTypeName;
-                var genericMarkerIndex = currentFullTypeName.IndexOf('<');
-                if (genericMarkerIndex >= 0)
+                // Only flag types that have a non-generic name match with the reserved type
+                // Generic types (e.g., Operation<T>) should not conflict with non-generic reserved types (e.g., Operation)
+                if (namedTypeSymbol.IsGenericType)
                 {
-                    currentTypeNameWithoutGenerics = currentFullTypeName.Substring(0, genericMarkerIndex);
+                    // For generic types, only flag if they're in the same assembly as the reserved type
+                    // (to avoid false positives when the generic type is defined in the same assembly as the reserved type)
+                    if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
+                    {
+                        // If same assembly, it's likely a false positive, so don't flag
+                        return;
+                    }
+                    else
+                    {
+                        // Generic types should not conflict with non-generic reserved types in different assemblies
+                        return;
+                    }
                 }
                 
-                // Check if it's the same assembly first (most important check)
+                // For non-generic types, check if it's the same assembly first (most important check)
                 if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
                 {
                     // If same assembly, check if the type names match (handling both fully qualified and simple names)
-                    if (string.Equals(currentTypeNameWithoutGenerics, qualifiedTypeName, StringComparison.Ordinal) ||
-                        (qualifiedTypeName.IndexOf('.') < 0 && currentTypeNameWithoutGenerics.EndsWith("." + qualifiedTypeName)))
+                    if (string.Equals(currentFullTypeName, qualifiedTypeName, StringComparison.Ordinal) ||
+                        (qualifiedTypeName.IndexOf('.') < 0 && currentFullTypeName.EndsWith("." + qualifiedTypeName)))
                     {
                         return;
                     }

@@ -148,11 +148,23 @@ namespace Azure.ClientSdk.Analyzers
                 var currentFullTypeName = namedTypeSymbol.ToDisplayString();
                 var currentAssemblyName = namedTypeSymbol.ContainingAssembly?.Name ?? "";
                 
-                // Don't report if it's exactly the same type
-                if (string.Equals(currentFullTypeName, qualifiedTypeName, StringComparison.Ordinal) && 
-                    string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
+                // For generic types, we need to check the base type name without generic parameters
+                var currentTypeNameWithoutGenerics = currentFullTypeName;
+                var genericMarkerIndex = currentFullTypeName.IndexOf('<');
+                if (genericMarkerIndex >= 0)
                 {
-                    return;
+                    currentTypeNameWithoutGenerics = currentFullTypeName.Substring(0, genericMarkerIndex);
+                }
+                
+                // Check if it's the same assembly first (most important check)
+                if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
+                {
+                    // If same assembly, check if the type names match (handling both fully qualified and simple names)
+                    if (string.Equals(currentTypeNameWithoutGenerics, qualifiedTypeName, StringComparison.Ordinal) ||
+                        (qualifiedTypeName.IndexOf('.') < 0 && currentTypeNameWithoutGenerics.EndsWith("." + qualifiedTypeName)))
+                    {
+                        return;
+                    }
                 }
                 
                 // Create the error message including package name if available

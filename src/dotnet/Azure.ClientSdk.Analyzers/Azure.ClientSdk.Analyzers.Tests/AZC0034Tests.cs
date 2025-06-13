@@ -118,5 +118,19 @@ namespace Azure.Core
             // Should not produce any diagnostics since these are the same types defined in Azure.Core
             await test.RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0034ProducedForGenericTypeConflictInDifferentAssembly()
+        {
+            // This test verifies that generic types can properly conflict with reserved generic types
+            // when they are in different assemblies
+            var code = @"
+namespace Azure
+{
+    public abstract class Operation<T> { }
+}";
+            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 27, 4, 36).WithArguments("Operation`1", "Azure.Operation`1 (from Azure.Core)");
+            await Verifier.VerifyAnalyzerAsync(code, expected);
+        }
     }
 }

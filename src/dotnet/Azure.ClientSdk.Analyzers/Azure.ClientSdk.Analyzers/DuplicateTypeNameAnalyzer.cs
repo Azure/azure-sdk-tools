@@ -113,7 +113,7 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            var typeName = namedTypeSymbol.Name;
+            var typeName = namedTypeSymbol.MetadataName;
 
             // Check for conflicts with reserved types
             int index = Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal);
@@ -148,30 +148,20 @@ namespace Azure.ClientSdk.Analyzers
                 var currentFullTypeName = namedTypeSymbol.ToDisplayString();
                 var currentAssemblyName = namedTypeSymbol.ContainingAssembly?.Name ?? "";
                 
-                // Only flag types that have a non-generic name match with the reserved type
-                // Generic types (e.g., Operation<T>) should not conflict with non-generic reserved types (e.g., Operation)
-                if (namedTypeSymbol.IsGenericType)
-                {
-                    // For generic types, only flag if they're in the same assembly as the reserved type
-                    // (to avoid false positives when the generic type is defined in the same assembly as the reserved type)
-                    if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
-                    {
-                        // If same assembly, it's likely a false positive, so don't flag
-                        return;
-                    }
-                    else
-                    {
-                        // Generic types should not conflict with non-generic reserved types in different assemblies
-                        return;
-                    }
-                }
+                // Get the metadata name for proper generic type comparison
+                // For generic types, this includes the backtick notation (e.g., "Operation`1" for Operation<T>)
+                var currentMetadataName = namedTypeSymbol.MetadataName;
+                var currentNamespaceName = namedTypeSymbol.ContainingNamespace?.ToDisplayString() ?? "";
+                var currentFullMetadataName = string.IsNullOrEmpty(currentNamespaceName) 
+                    ? currentMetadataName 
+                    : currentNamespaceName + "." + currentMetadataName;
                 
-                // For non-generic types, check if it's the same assembly first (most important check)
+                // Check if it's the same assembly first (most important check for false positives)
                 if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
                 {
-                    // If same assembly, check if the type names match (handling both fully qualified and simple names)
-                    if (string.Equals(currentFullTypeName, qualifiedTypeName, StringComparison.Ordinal) ||
-                        (qualifiedTypeName.IndexOf('.') < 0 && currentFullTypeName.EndsWith("." + qualifiedTypeName)))
+                    // If same assembly, check if the type names match (using metadata names for proper generic comparison)
+                    if (string.Equals(currentFullMetadataName, qualifiedTypeName, StringComparison.Ordinal) ||
+                        (qualifiedTypeName.IndexOf('.') < 0 && currentMetadataName.Equals(qualifiedTypeName, StringComparison.Ordinal)))
                     {
                         return;
                     }

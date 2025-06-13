@@ -48,5 +48,5 @@
   </div>
 </div>
 <div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !codePanelRowSource">
-  <h5>{{ loadFailedMessage }}</h5>
+  <h5 [innerHTML]="loadFailedMessage"></h5>
 </div>

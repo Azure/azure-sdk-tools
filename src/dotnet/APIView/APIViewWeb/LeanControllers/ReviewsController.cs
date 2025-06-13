@@ -27,12 +27,14 @@ namespace APIViewWeb.LeanControllers
         public readonly UserProfileCache _userProfileCache;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
+        private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserProfileCache userProfileCache,
+            IEnumerable<LanguageService> languageServices,
             IHubContext<SignalRHub> signalRHub,
             INotificationManager notificationManager, IWebHostEnvironment env)
         {
@@ -43,6 +45,7 @@ namespace APIViewWeb.LeanControllers
             _codeFileRepository = codeFileRepository;
             _configuration = configuration;
             _userProfileCache = userProfileCache;
+            _languageServices = languageServices;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
             _env = env;
@@ -174,6 +177,12 @@ namespace APIViewWeb.LeanControllers
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
                 var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+
+                if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
+                {
+                    var languageServices = LanguageServiceHelpers.GetLanguageService(activeAPIRevision.Language, _languageServices);
+                    return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
+                }
 
                 var codePanelRawData = new CodePanelRawData()
                 {

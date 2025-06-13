@@ -16,16 +16,20 @@ namespace APIViewWeb
     {
         private readonly TelemetryClient _telemetryClient;
         private string _typeSpecSpecificPathPrefix;
+        private readonly string _reviewGenerationPipelineId;
 
         public override string Name { get; } = "TypeSpec";
         public override string [] Extensions { get; } = { ".tsp", ".cadl" };
         public override string VersionString { get; } = "0.5.0";
+        public override string ReviewGenerationPipelineId => _reviewGenerationPipelineId;
+
         public override string ProcessName => throw new NotImplementedException();
 
         public TypeSpecLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             IsReviewGenByPipeline = true;
             _typeSpecSpecificPathPrefix = "/specification";
+            _reviewGenerationPipelineId = configuration["TypeSpecReviewGenerationPipelineId"] ?? String.Empty;
             _telemetryClient = telemetryClient;
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)

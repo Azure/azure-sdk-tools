@@ -1,15 +1,15 @@
 import { default as FileHound } from 'filehound';
 import * as path from 'path';
 import * as fs from 'fs';
-import { WorkflowContext } from './workflow';
 import { CommentCaptureTransport } from './logging';
 import { PackageData } from '../types/PackageData';
 import { InstallInstructionScriptInput } from '../types/InstallInstructionScriptInput';
 import { getInstallInstructionScriptOutput } from '../types/InstallInstructionScriptOutput';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import { getLanguageByRepoName } from './entrypoint';
 import { toolWarning } from '../utils/messageUtils';
+import { WorkflowContext } from '../types/Workflow';
+import { getLanguageByRepoName } from '../utils/workflowUtils';
 
 export const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: PackageData) => {
   const runOptions = context.swaggerToSdkConfig.packageOptions.buildScript;

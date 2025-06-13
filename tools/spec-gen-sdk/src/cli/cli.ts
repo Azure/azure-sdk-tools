@@ -1,10 +1,10 @@
-import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { getRepository } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { sdkAutoMain } from '../automation/entrypoint';
 import { requireJsonc } from "../utils/requireJsonc";
 import path from 'path';
+import yargs from "yargs";
 import { homedir } from "os";
 
 export const usageText = `

@@ -1,9 +1,9 @@
-import { workflowValidateSdkConfig } from '../src/automation/workflow';
 import { findSDKToGenerateFromTypeSpecProject } from '../src/utils/typespecUtils';
 import { findSwaggerToSDKConfiguration } from '../src/utils/readme';
 import * as fs from 'fs';
 import * as path from 'path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { workflowValidateSdkConfig } from '../src/automation/workflowSteps';
 
 // Mock validator
 vi.mock('../src/types/validator', () => ({

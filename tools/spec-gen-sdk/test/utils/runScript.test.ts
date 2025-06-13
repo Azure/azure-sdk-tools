@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RunResult, StatusContainer, setSdkAutoStatus, isLineMatch, runSdkAutoCustomScript, listenOnStream } from '../../src/utils/runScript';
-import { WorkflowContext } from '../../src/automation/workflow';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
 import { Readable } from 'stream';
 import path from 'path';
+import { WorkflowContext } from '../../src/types/Workflow';
 
 describe('runScript utils', () => {
   describe('setSdkAutoStatus', () => {

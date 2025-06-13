@@ -2,6 +2,7 @@ import * as winston from 'winston';
 import { default as Transport } from 'winston-transport';
 import { SDKAutomationState } from './sdkAutomationState';
 import { setTimeout } from 'timers/promises';
+import { WorkflowContext } from '../types/Workflow';
 
 export const sdkAutoLogLevels = {
   levels: {
@@ -15,7 +16,7 @@ export const sdkAutoLogLevels = {
     github: 10, // Perform a github operation
     info: 15,
     endsection: 20,
-    debug: 50
+    debug: 50,
   },
   colors: {
     error: 'red',
@@ -28,8 +29,8 @@ export const sdkAutoLogLevels = {
     command: 'cyan bold',
     git: 'cyan bold',
     github: 'cyan bold',
-    debug: 'blue'
-  }
+    debug: 'blue',
+  },
 } as const;
 
 type WinstonInfo = {
@@ -43,10 +44,11 @@ type WinstonInfo = {
 export const formatLog = (info: WinstonInfo) => {
   let extra = info.showInComment ? ' C' : '';
   if (info.lineResult) {
-    extra = {
-      failed: ' E',
-      warning: ' W'
-    }[info.lineResult] ?? '';
+    extra =
+      {
+        failed: ' E',
+        warning: ' W',
+      }[info.lineResult] ?? '';
   }
 
   return `${info.timestamp} ${info.level}${extra} \t${info.message}`;
@@ -58,15 +60,15 @@ export const loggerConsoleTransport = () => {
     format: winston.format.combine(
       winston.format.colorize({ colors: sdkAutoLogLevels.colors }),
       winston.format.timestamp({ format: 'hh:mm:ss.SSS' }),
-      winston.format.printf(formatLog)
-    )
+      winston.format.printf(formatLog),
+    ),
   });
 };
 
 export const loggerTestTransport = () => {
   return new winston.transports.Console({
     level: 'error',
-    format: winston.format.simple()
+    format: winston.format.simple(),
   });
 };
 
@@ -92,8 +94,8 @@ export const loggerDevOpsTransport = () => {
           default:
             return msg;
         }
-      })
-    )
+      }),
+    ),
   });
 };
 
@@ -109,10 +111,12 @@ export class CommentCaptureTransport extends Transport {
 
   public log(info: WinstonInfo, callback: () => void): void {
     if (info.showInComment === false) {
-      callback(); return;
+      callback();
+      return;
     }
     if (this.opts.extraLevelFilter.indexOf(info.level) === -1 && info.showInComment === undefined) {
-      callback(); return;
+      callback();
+      return;
     }
     this.opts.output.push(`${info.level}\t${info.message}`);
     callback();
@@ -123,10 +127,7 @@ export const loggerFileTransport = (fileName: string) => {
   return new winston.transports.File({
     filename: fileName,
     level: 'info',
-    format: winston.format.combine(
-      winston.format.timestamp({ format: 'hh:mm:ss.SSS' }),
-      winston.format.printf(formatLog)
-    ),
+    format: winston.format.combine(winston.format.timestamp({ format: 'hh:mm:ss.SSS' }), winston.format.printf(formatLog)),
   });
 };
 
@@ -135,9 +136,9 @@ export const loggerWaitToFinish = async (logger: winston.Logger) => {
   for (const transport of logger.transports) {
     if (transport instanceof winston.transports.File) {
       if (transport.end) {
-          await setTimeout(2000);
-          transport.end();
-        }
+        await setTimeout(2000);
+        transport.end();
+      }
     }
   }
 };
@@ -146,7 +147,52 @@ export function vsoAddAttachment(name: string, path: string): void {
   console.log(`##vso[task.addattachment type=Distributedtask.Core.Summary;name=${name};]${path}`);
 }
 
-export function vsoLogIssue(message: string, type = "error"): void {
+export function vsoLogIssue(message: string, type = 'error'): void {
   console.log(`##vso[task.logissue type=${type}]${message}`);
 }
 
+export function vsoLogError(context: WorkflowContext, message, task: string = 'spec-gen-sdk'): void {
+  vsoLogErrors(context, [message], task);
+}
+
+export function vsoLogWarning(context: WorkflowContext, message, task: string = 'spec-gen-sdk'): void {
+  vsoLogWarnings(context, [message], task);
+}
+
+export function vsoLogErrors(context: WorkflowContext, errors: string[], task: string = 'spec-gen-sdk'): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { errors: [...errors] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.errors) {
+    logEntry.errors.push(...errors);
+  } else {
+    logEntry!.errors = [...errors];
+  }
+}
+
+export function vsoLogWarnings(context: WorkflowContext, warnings: string[], task: string = 'spec-gen-sdk'): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { warnings: [...warnings] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.warnings) {
+    logEntry.warnings.push(...warnings);
+  } else {
+    logEntry!.warnings = [...warnings];
+  }
+}

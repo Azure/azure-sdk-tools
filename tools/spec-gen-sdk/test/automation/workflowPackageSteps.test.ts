@@ -84,7 +84,6 @@ vi.mock('../../src/types/InstallInstructionScriptOutput', () => {
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorkflowContext } from '../../src/automation/workflow';
 import { PackageData } from '../../src/types/PackageData';
 import { getInstallInstructionScriptOutput, InstallInstructionScriptOutput } from '../../src/types/InstallInstructionScriptOutput';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../../src/utils/fsUtils';
@@ -99,6 +98,7 @@ import {
   workflowPkgSaveApiViewArtifact,
   workflowPkgSaveSDKArtifact,
 } from '../../src/automation/workflowPackageSteps';
+import { WorkflowContext } from '../../src/types/Workflow';
 
 describe('workflowPackageSteps', () => {
   let mockContext: WorkflowContext;
@@ -258,7 +258,7 @@ describe('workflowPackageSteps', () => {
       expect(mockContext.logger.info).toHaveBeenCalledWith('Skip installInstructionScript');
     });
 
-    it('should not generate installation instructions', async () => {
+    it('Handle generate installation instructions faild', async () => {
       vi.mocked(runSdkAutoCustomScript).mockResolvedValue('failed');
       await workflowPkgCallInstallInstructionScript(mockContext, mockPackage);
       expect(mockPackage.installationInstructions).toBe('mockInstallationInstructions');

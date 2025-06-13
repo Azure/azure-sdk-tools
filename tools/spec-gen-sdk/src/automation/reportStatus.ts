@@ -5,15 +5,15 @@ import * as prettier from 'prettier';
 import * as Handlebars from 'handlebars';
 import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomationState';
 import { setSdkAutoStatus } from '../utils/runScript';
-import { FailureType, setFailureType, WorkflowContext } from './workflow';
-import { formatSuppressionLine } from '../utils/reportFormat';
 import { extractPathFromSpecConfig, mapToObject, removeAnsiEscapeCodes } from '../utils/utils';
-import { vsoAddAttachment } from './logging';
+import { vsoAddAttachment, vsoLogError, vsoLogWarning } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { marked } from "marked";
-import { vsoLogError, vsoLogWarning } from './entrypoint';
 import { toolError, toolWarning } from '../utils/messageUtils';
+import { FailureType, WorkflowContext } from '../types/Workflow';
+import { setFailureType } from '../utils/workflowUtils';
+import { formatSuppressionLine } from '../utils/handleSuppressionLines';
 
 const commentLimit = 60;
 

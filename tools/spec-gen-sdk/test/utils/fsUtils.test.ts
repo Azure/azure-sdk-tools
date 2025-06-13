@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { WorkflowContext } from '../../src/automation/workflow';
 import * as fsUtils from '../../src/utils/fsUtils';
+import { WorkflowContext } from '../../src/types/Workflow';
 
 describe('fsUtils', () => {
   beforeEach(() => {

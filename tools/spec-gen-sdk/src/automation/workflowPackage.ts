@@ -1,7 +1,6 @@
 import { setSdkAutoStatus } from '../utils/runScript';
 import { CommentCaptureTransport } from './logging';
 import { PackageData } from '../types/PackageData';
-import { WorkflowContext } from './workflow';
 import {
   workflowPkgCallBuildScript,
   workflowPkgCallChangelogScript,
@@ -10,6 +9,7 @@ import {
   workflowPkgSaveApiViewArtifact,
   workflowPkgSaveSDKArtifact,
 } from './workflowPackageSteps';
+import { WorkflowContext } from '../types/Workflow';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);

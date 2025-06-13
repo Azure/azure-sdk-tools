@@ -1,12 +1,13 @@
 import path from 'path';
 import { spawn } from 'child_process';
-import { FailureType, setFailureType, WorkflowContext } from '../automation/workflow';
 import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/SwaggerToSdkConfig';
 import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { removeAnsiEscapeCodes } from './utils';
-import { vsoLogErrors, vsoLogWarnings } from '../automation/entrypoint';
 import { externalError, externalWarning } from './messageUtils';
+import { FailureType, WorkflowContext } from '../types/Workflow';
+import { setFailureType } from './workflowUtils';
+import { vsoLogErrors, vsoLogWarnings } from '../automation/logging';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending' | 'notEnabled'>;
 export type StatusContainer = { status: SDKAutomationState };

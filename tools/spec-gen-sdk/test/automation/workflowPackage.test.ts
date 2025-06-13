@@ -70,7 +70,6 @@ vi.mock('../../src/types/InstallInstructionScriptOutput', () => {
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { WorkflowContext } from '../../src/automation/workflow';
 import { PackageData } from '../../src/types/PackageData';
 import { getInstallInstructionScriptOutput, InstallInstructionScriptOutput } from '../../src/types/InstallInstructionScriptOutput';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../../src/utils/fsUtils';
@@ -78,6 +77,7 @@ import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../../src
 import {workflowPkgMain} from '../../src/automation/workflowPackage';
 import * as workflowPackageSteps from '../../src/automation/workflowPackageSteps';
 import { CommentCaptureTransport } from '../../src/automation/logging';
+import { WorkflowContext } from '../../src/types/Workflow';
 
 describe('workflowPackage', () => {
   let mockContext: WorkflowContext;

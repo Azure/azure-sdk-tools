@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import { WorkflowContext } from '../automation/workflow';
 import { toolError } from './messageUtils';
+import { WorkflowContext } from '../types/Workflow';
 
 export const writeTmpJsonFile = (context: WorkflowContext, fileName: string, content: unknown) => {
   const filePath = path.join(context.tmpFolder, fileName);

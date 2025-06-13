@@ -1,31 +1,33 @@
+vi.mock('timers/promises', async () => {
+  const actual = await vi.importActual<typeof import('timers/promises')>('timers/promises');
+  return {
+    ...actual,
+    setTimeout: vi.fn(() => Promise.resolve()),
+  };
+});
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as winston from 'winston';
-import { 
-  sdkAutoLogLevels, 
-  loggerConsoleTransport, 
-  loggerTestTransport, 
+import {
+  sdkAutoLogLevels,
+  loggerConsoleTransport,
+  loggerTestTransport,
   loggerDevOpsTransport,
   CommentCaptureTransport,
   loggerFileTransport,
   loggerWaitToFinish,
   vsoAddAttachment,
   vsoLogIssue,
-  formatLog
+  vsoLogError,
+  vsoLogWarning,
+  vsoLogErrors,
+  vsoLogWarnings,
+  formatLog,
 } from '../../src/automation/logging';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
 import { mkdir, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
-
-vi.mock('timers/promises', async () => {
-  const actual = await vi.importActual<typeof import('timers/promises')>('timers/promises');
-
-  return {
-    ...actual,
-    setTimeout: vi.fn(() => Promise.resolve()), 
-  };
-});
-
 
 import { setTimeout } from 'timers/promises';
 
@@ -35,9 +37,9 @@ describe('logging utils', () => {
       const info = {
         level: 'info' as const,
         message: 'test message',
-        timestamp: '12:34:56.789'
+        timestamp: '12:34:56.789',
       };
-      
+
       const result = formatLog(info);
       expect(result).toBe('12:34:56.789 info \ttest message');
     });
@@ -47,9 +49,9 @@ describe('logging utils', () => {
         level: 'info' as const,
         message: 'test message',
         timestamp: '12:34:56.789',
-        showInComment: true
+        showInComment: true,
       };
-      
+
       const result = formatLog(info);
       expect(result).toBe('12:34:56.789 info C \ttest message');
     });
@@ -59,9 +61,9 @@ describe('logging utils', () => {
         level: 'error' as const,
         message: 'test message',
         timestamp: '12:34:56.789',
-        lineResult: 'failed' as SDKAutomationState
+        lineResult: 'failed' as SDKAutomationState,
       };
-      
+
       const result = formatLog(info);
       expect(result).toBe('12:34:56.789 error E \ttest message');
     });
@@ -71,9 +73,9 @@ describe('logging utils', () => {
         level: 'warn' as const,
         message: 'test message',
         timestamp: '12:34:56.789',
-        lineResult: 'warning' as SDKAutomationState
+        lineResult: 'warning' as SDKAutomationState,
       };
-      
+
       const result = formatLog(info);
       expect(result).toBe('12:34:56.789 warn W \ttest message');
     });
@@ -84,9 +86,9 @@ describe('logging utils', () => {
         message: 'test message',
         timestamp: '12:34:56.789',
         showInComment: true,
-        lineResult: 'failed' as SDKAutomationState
+        lineResult: 'failed' as SDKAutomationState,
       };
-      
+
       const result = formatLog(info);
       expect(result).toBe('12:34:56.789 error E \ttest message');
     });
@@ -96,9 +98,9 @@ describe('logging utils', () => {
         level: 'info' as const,
         message: 'test message',
         timestamp: '12:34:56.789',
-        lineResult: 'succeeded' as SDKAutomationState
+        lineResult: 'succeeded' as SDKAutomationState,
       };
-      
+
       const result = formatLog(info);
       expect(result).toBe('12:34:56.789 info \ttest message');
     });
@@ -113,7 +115,7 @@ describe('logging utils', () => {
     });
 
     it('should have defined colors for all levels', () => {
-      Object.keys(sdkAutoLogLevels.levels).forEach(level => {
+      Object.keys(sdkAutoLogLevels.levels).forEach((level) => {
         expect(sdkAutoLogLevels.colors[level as keyof typeof sdkAutoLogLevels.levels]).toBeDefined();
       });
     });
@@ -144,14 +146,17 @@ describe('logging utils', () => {
       const output: string[] = [];
       const transport = new CommentCaptureTransport({
         extraLevelFilter: ['info', 'error'],
-        output
+        output,
       });
 
-      transport.log({ 
-        level: 'info', 
-        message: 'test message', 
-        timestamp: '12:34:56.789' 
-      }, () => {});
+      transport.log(
+        {
+          level: 'info',
+          message: 'test message',
+          timestamp: '12:34:56.789',
+        },
+        () => {},
+      );
 
       expect(output).toHaveLength(1);
       expect(output[0]).toBe('info\ttest message');
@@ -161,15 +166,18 @@ describe('logging utils', () => {
       const output: string[] = [];
       const transport = new CommentCaptureTransport({
         extraLevelFilter: ['info'],
-        output
+        output,
       });
 
-      transport.log({ 
-        level: 'info', 
-        message: 'test message', 
-        timestamp: '12:34:56.789',
-        showInComment: false
-      }, () => {});
+      transport.log(
+        {
+          level: 'info',
+          message: 'test message',
+          timestamp: '12:34:56.789',
+          showInComment: false,
+        },
+        () => {},
+      );
 
       expect(output).toHaveLength(0);
     });
@@ -198,7 +206,6 @@ describe('logging utils', () => {
   });
 
   describe('loggerWaitToFinish', () => {
-    
     afterEach(() => {
       vi.clearAllMocks();
     });
@@ -229,21 +236,143 @@ describe('logging utils', () => {
 
     it('should format vsoAddAttachment correctly', () => {
       vsoAddAttachment('testName', 'testPath');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '##vso[task.addattachment type=Distributedtask.Core.Summary;name=testName;]testPath'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('##vso[task.addattachment type=Distributedtask.Core.Summary;name=testName;]testPath');
     });
 
     it('should format vsoLogIssue correctly', () => {
       vsoLogIssue('test message');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '##vso[task.logissue type=error]test message'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('##vso[task.logissue type=error]test message');
 
       vsoLogIssue('test message', 'warning');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '##vso[task.logissue type=warning]test message'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('##vso[task.logissue type=warning]test message');
+    });
+  });
+
+  describe('VSO logging functions', () => {
+    let mockContext;
+
+    beforeEach(() => {
+      mockContext = {
+        config: {
+          runEnv: 'azureDevOps',
+        },
+        vsoLogs: new Map(),
+      };
+    });
+
+    describe('vsoLogError', () => {
+      it('should add single error to vsoLogs map', () => {
+        const message = 'Test error message';
+        vsoLogError(mockContext, message);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          errors: [message],
+        });
+      });
+
+      it('should use custom task name when provided', () => {
+        const message = 'Test error message';
+        const taskName = 'custom-task';
+        vsoLogError(mockContext, message, taskName);
+
+        expect(mockContext.vsoLogs.get(taskName)).toEqual({
+          errors: [message],
+        });
+      });
+
+      it('should not log when not in Azure DevOps environment', () => {
+        mockContext.config.runEnv = 'local';
+        vsoLogError(mockContext, 'Test error');
+
+        expect(mockContext.vsoLogs.size).toBe(0);
+      });
+    });
+
+    describe('vsoLogWarning', () => {
+      it('should add single warning to vsoLogs map', () => {
+        const message = 'Test warning message';
+        vsoLogWarning(mockContext, message);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          warnings: [message],
+        });
+      });
+
+      it('should use custom task name when provided', () => {
+        const message = 'Test warning message';
+        const taskName = 'custom-task';
+        vsoLogWarning(mockContext, message, taskName);
+
+        expect(mockContext.vsoLogs.get(taskName)).toEqual({
+          warnings: [message],
+        });
+      });
+
+      it('should not log when not in Azure DevOps environment', () => {
+        mockContext.config.runEnv = 'local';
+        vsoLogWarning(mockContext, 'Test warning');
+
+        expect(mockContext.vsoLogs.size).toBe(0);
+      });
+    });
+
+    describe('vsoLogErrors', () => {
+      it('should add multiple errors to vsoLogs map', () => {
+        const errors = ['Error 1', 'Error 2', 'Error 3'];
+        vsoLogErrors(mockContext, errors);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          errors: errors,
+        });
+      });
+
+      it('should append errors to existing task entry', () => {
+        const initialErrors = ['Error 1'];
+        const additionalErrors = ['Error 2', 'Error 3'];
+
+        vsoLogErrors(mockContext, initialErrors);
+        vsoLogErrors(mockContext, additionalErrors);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          errors: [...initialErrors, ...additionalErrors],
+        });
+      });
+    });
+
+    describe('vsoLogWarnings', () => {
+      it('should add multiple warnings to vsoLogs map', () => {
+        const warnings = ['Warning 1', 'Warning 2', 'Warning 3'];
+        vsoLogWarnings(mockContext, warnings);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          warnings: warnings,
+        });
+      });
+
+      it('should append warnings to existing task entry', () => {
+        const initialWarnings = ['Warning 1'];
+        const additionalWarnings = ['Warning 2', 'Warning 3'];
+
+        vsoLogWarnings(mockContext, initialWarnings);
+        vsoLogWarnings(mockContext, additionalWarnings);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          warnings: [...initialWarnings, ...additionalWarnings],
+        });
+      });
+
+      it('should handle mixed errors and warnings for same task', () => {
+        const warnings = ['Warning 1', 'Warning 2'];
+        const errors = ['Error 1', 'Error 2'];
+
+        vsoLogWarnings(mockContext, warnings);
+        vsoLogErrors(mockContext, errors);
+
+        expect(mockContext.vsoLogs.get('spec-gen-sdk')).toEqual({
+          warnings: warnings,
+          errors: errors,
+        });
+      });
     });
   });
 });

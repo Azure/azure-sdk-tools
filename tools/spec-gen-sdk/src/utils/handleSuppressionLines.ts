@@ -1,7 +1,7 @@
 
 import { diffStringArrays } from './utils';
 import { SdkSuppressionsYml, SdkPackageSuppressionsEntry } from '../types/sdkSuppressions';
-import { WorkflowContext } from '../automation/workflow';
+import { WorkflowContext } from '../types/Workflow';
 
 export type SDKSuppressionContentList = Map<string, {content: SdkSuppressionsYml| null, sdkSuppressionFilePath: string | undefined, errors: string[]}>
 /**
@@ -74,4 +74,11 @@ export function getSuppressionLines(
   }
 
   return suppressionLines;
+}
+
+export function formatSuppressionLine(suppressionLines: string[]): string[] {
+  return suppressionLines
+    .map(lineItem => lineItem.startsWith('+\t') ? lineItem.replace('+\t', '') : lineItem)
+    .map(newlineItem => newlineItem.includes('\n') ? `"${newlineItem.replace(/\n/g, '\\n')}"` : newlineItem)
+    .map(_newlineItem => `- ${_newlineItem}`)
 }

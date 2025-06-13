@@ -113,7 +113,7 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            var typeName = namedTypeSymbol.Name;
+            var typeName = namedTypeSymbol.MetadataName;
 
             // Check for conflicts with reserved types
             int index = Array.BinarySearch(ReservedTypeNames, typeName, StringComparer.Ordinal);
@@ -148,11 +148,23 @@ namespace Azure.ClientSdk.Analyzers
                 var currentFullTypeName = namedTypeSymbol.ToDisplayString();
                 var currentAssemblyName = namedTypeSymbol.ContainingAssembly?.Name ?? "";
                 
-                // Don't report if it's exactly the same type
-                if (string.Equals(currentFullTypeName, qualifiedTypeName, StringComparison.Ordinal) && 
-                    string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
+                // Get the metadata name for proper generic type comparison
+                // For generic types, this includes the backtick notation (e.g., "Operation`1" for Operation<T>)
+                var currentMetadataName = namedTypeSymbol.MetadataName;
+                var currentNamespaceName = namedTypeSymbol.ContainingNamespace?.ToDisplayString() ?? "";
+                var currentFullMetadataName = string.IsNullOrEmpty(currentNamespaceName) 
+                    ? currentMetadataName 
+                    : currentNamespaceName + "." + currentMetadataName;
+                
+                // Check if it's the same assembly first (most important check for false positives)
+                if (string.Equals(currentAssemblyName, packageName, StringComparison.Ordinal))
                 {
-                    return;
+                    // If same assembly, check if the type names match (using metadata names for proper generic comparison)
+                    if (string.Equals(currentFullMetadataName, qualifiedTypeName, StringComparison.Ordinal) ||
+                        (qualifiedTypeName.IndexOf('.') < 0 && currentMetadataName.Equals(qualifiedTypeName, StringComparison.Ordinal)))
+                    {
+                        return;
+                    }
                 }
                 
                 // Create the error message including package name if available

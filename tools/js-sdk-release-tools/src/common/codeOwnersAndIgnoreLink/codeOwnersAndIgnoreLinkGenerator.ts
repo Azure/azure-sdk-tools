@@ -16,9 +16,10 @@ export const codeOwnersAndIgnoreLinkGenerator = async (options: {
 }): Promise<void> => {
     logger.info(`Generating CODEOWNERS and ignore link for packages`);
 
-    if (options.sdkType === SDKType.RestLevelClient) {
+    // Only proceed for management + Modular clients
+    if (options.sdkType !== SDKType.ModularClient) {
         logger.warn(
-            "Unsupported rest level client SDK to generate CODEOWNERS and ignore link.",
+            `Unsupported SDK type ${options.sdkType} for CODEOWNERS and ignore link generation. Only ModularClient with management is supported.`,
         );
         return;
     }

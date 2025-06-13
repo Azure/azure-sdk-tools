@@ -1,6 +1,6 @@
 # Release
 
-## 2025-06-12 - 0.22.0
+## 2025-06-13 - 0.22.0
 
 - Add support for emitter options of `object` type.
 

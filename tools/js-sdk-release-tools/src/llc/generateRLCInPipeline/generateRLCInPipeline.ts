@@ -22,6 +22,7 @@ import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
+import { updateSnippets } from "../../common/devToolUtils.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -261,6 +262,8 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
             execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
         }
+
+        await updateSnippets(packagePath);
         
         if (!options.skipGeneration) {
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);

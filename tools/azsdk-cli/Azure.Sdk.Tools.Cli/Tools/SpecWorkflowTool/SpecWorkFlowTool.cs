@@ -62,11 +62,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber = 0)
 #pragma warning restore MCP001
         {
-            var response = await IsSpecReadyToGenerateSDK(typeSpecProjectRoot, pullRequestNumber);
+            var response = await IsSpecReadyToGenerateSDKAsync(typeSpecProjectRoot, pullRequestNumber);
             return output.Format(response);
         }
 
-        private async Task<GenericResponse> IsSpecReadyToGenerateSDK(string typeSpecProjectRoot, int pullRequestNumber)
+        private async Task<GenericResponse> IsSpecReadyToGenerateSDKAsync(string typeSpecProjectRoot, int pullRequestNumber)
         {
             var response = new GenericResponse()
             {
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 if (string.IsNullOrEmpty(typeSpecProjectRoot) && pullRequestNumber == 0)
                 {
-                    response.Details.Add("Invalid value for both TypeSpec project root and pull request number. Provide atleast the TypeSpec project root path for modified project or provide a pull request number.");
+                    response.Details.Add("Invalid value for both TypeSpec project root and pull request number. Provide at least the TypeSpec project root path for modified project or provide a pull request number.");
                     return response;
                 }
 
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Verify if spec is read to generate SDK
-                var readiness = await IsSpecReadyToGenerateSDK(typespecProjectRoot, pullRequestNumber);
+                var readiness = await IsSpecReadyToGenerateSDKAsync(typespecProjectRoot, pullRequestNumber);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);
@@ -227,12 +227,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Spec readiness passed. So mark the spec status as approved if release plan exists.
                 if (workItemId != 0)
                 {
-                    await devopsService.UpdateApiSpecStatus(workItemId, "Approved");
+                    await devopsService.UpdateApiSpecStatusAsync(workItemId, "Approved");
                 }
 
                 string typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
                 string branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
-                var pipelineRun = await devopsService.RunSDKGenerationPipeline(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId);
+                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId);
                 response = new GenericResponse()
                 {
                     Status = "Success",
@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 var response = new GenericResponse();
-                var pipeline = await devopsService.GetPipelineRun(buildId);
+                var pipeline = await devopsService.GetPipelineRunAsync(buildId);
                 if (pipeline != null)
                 {
                     response.Status = pipeline.Result?.ToString() ?? "Not available";
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (buildId == 0)
                 {
                     sb.AppendLine("Build Id is not available. Checking for SDK pull request details in release plan work item.");
-                    var releasePlan = await devopsService.GetReleasePlan(workItemId);
+                    var releasePlan = await devopsService.GetReleasePlanAsync(workItemId);
                     var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
                     if (sdkInfo != null && !string.IsNullOrEmpty(sdkInfo.SdkPullRequestUrl))
                     {
@@ -316,7 +316,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Find SDK details from build pipeline run
-                var pipeline = await devopsService.GetPipelineRun(buildId);
+                var pipeline = await devopsService.GetPipelineRunAsync(buildId);
                 if (pipeline == null)
                 {
                     return $"Failed to get SDK generation pipeline run with build ID {buildId}";
@@ -332,7 +332,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
-                var data = await devopsService.GetSDKPullRequestFromPipelineRun(buildId, language, workItemId);
+                var data = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
                 return data;
             }
             catch (Exception ex)
@@ -388,13 +388,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 
                 // Add PR to release plan
-                var releasePlan = workItemId == 0 ? await devopsService.GetReleasePlan(releasePlanId) : await devopsService.GetReleasePlanForWorkItem(workItemId);
+                var releasePlan = workItemId == 0 ? await devopsService.GetReleasePlanAsync(releasePlanId) : await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
                 if (releasePlan == null || releasePlan.WorkItemId == 0)
                 {
                     return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";
                 }
 
-                await devopsService.AddSdkInfoInReleasePlan(releasePlan.WorkItemId, language, "", parsedLink);
+                await devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}";
             }
             catch(Exception ex)

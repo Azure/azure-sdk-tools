@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
-using ApiView;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -35,6 +34,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly IConfiguration _configuration;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly IEnumerable<LanguageService> _languageServices;
 
         public ReviewPageModel(
             IReviewManager reviewManager,
@@ -46,7 +46,8 @@ namespace APIViewWeb.Pages.Assemblies
             UserProfileCache userProfileCache,
             ICosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration,
-            IHubContext<SignalRHub> signalRHub)
+            IHubContext<SignalRHub> signalRHub,
+            IEnumerable<LanguageService> languageServices)
         {
             _reviewManager = reviewManager;
             _apiRevisionsManager = reviewRevisionManager;
@@ -58,6 +59,7 @@ namespace APIViewWeb.Pages.Assemblies
             _userProfileRepository = userProfileRepository;
             _configuration = configuration;
             _signalRHubContext = signalRHub;
+            _languageServices = languageServices;
         }
 
         public ReviewContentModel ReviewContent { get; set; }
@@ -93,7 +95,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
             {
-                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={ReviewContent.ActiveAPIRevision.Id}";
+                var uri = ManagerHelpers.ResolveReviewUrl(reviewId: id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id,
+                    language: ReviewContent.ActiveAPIRevision.Language, configuration: _configuration, languageServices: _languageServices, diffRevisionId: DiffRevisionId);
                 return Redirect(uri);
             }
 

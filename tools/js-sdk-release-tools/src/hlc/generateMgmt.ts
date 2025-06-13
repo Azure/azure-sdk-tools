@@ -16,6 +16,7 @@ import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
 import { isRushRepo } from "../common/rushUtils.js";
+import { updateSnippets } from "../common/devToolUtils.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -140,6 +141,8 @@ export async function generateMgmt(options: {
                 execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
             }
             
+            await updateSnippets(packagePath);
+
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
             }

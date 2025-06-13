@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface IGitHelper
     {
         // Get the owner 
-        public Task<string> GetRepoOwnerName(string path, bool findForkParent = true);
+        public Task<string> GetRepoOwnerNameAsync(string path, bool findForkParent = true);
         public Uri GetRepoRemoteUri(string path);
         public string GetBranchName(string path);
         public string GetMergeBaseCommitSha(string path, string targetBranch);
@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             throw new InvalidOperationException("Unable to determine remote URL.");
         }
 
-        public async Task<string> GetRepoOwnerName(string path, bool findForkParent = true)
+        public async Task<string> GetRepoOwnerNameAsync(string path, bool findForkParent = true)
         {
             var uri = GetRepoRemoteUri(path);
             var segments = uri.Segments;
@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             if(findForkParent) {
                 // Check if the repo is a fork and get the parent repo
-                var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrl(repoOwner, repoName);
+                var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrlAsync(repoOwner, repoName);
                 logger.LogInformation($"Parent repo URL: {parentRepoUrl}");
                 if (!string.IsNullOrEmpty(parentRepoUrl))
                 {

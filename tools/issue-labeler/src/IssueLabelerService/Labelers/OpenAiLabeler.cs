@@ -35,8 +35,8 @@ namespace IssueLabelerService
             var userPrompt = FormatUserPrompt(issue, categoryLabels, printableContent);
 
             var structure = BuildSearchStructure();
-            var result = await _ragService.SendMessageQnaAsync(_config.LabelInstructions, userPrompt, modelName, structure);
-
+            var result = await _ragService.SendMessageQnaAsync(_config.LabelInstructions, userPrompt, modelName, null, structure);
+        
             if (string.IsNullOrEmpty(result))
             {
                 throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} had an empty response.");
@@ -188,7 +188,7 @@ namespace IssueLabelerService
                     {
                         throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
                     }
-                    
+
                     if (confidence < double.Parse(_config.ConfidenceThreshold))
                     {
                         throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");

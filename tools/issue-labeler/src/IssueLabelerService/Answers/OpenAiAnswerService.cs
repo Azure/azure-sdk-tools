@@ -1,10 +1,13 @@
 using System;
-using System.Threading.Tasks;
-using IssueLabeler.Shared;
-using Newtonsoft.Json;
-using Microsoft.Extensions.Logging;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.Search.Documents.Agents;
+using Azure.Search.Documents.Agents.Models;
+using IssueLabeler.Shared;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace IssueLabelerService
 {
@@ -15,89 +18,111 @@ namespace IssueLabelerService
         private RepositoryConfiguration _config;
         private TriageRag _ragService;
         private ILogger<AnswerFactory> _logger;
-        
+        private readonly KnowledgeAgentRetrievalClient _retrievalClient;
+
         public OpenAiAnswerService(ILogger<AnswerFactory> logger, RepositoryConfiguration config, TriageRag ragService)
         {
             _config = config;
             _ragService = ragService;
             _logger = logger;
+            _retrievalClient = new KnowledgeAgentRetrievalClient(
+                endpoint: new Uri(_config.SearchEndpoint),
+                agentName: _config.KnowledgeAgentName,
+                tokenCredential: new DefaultAzureCredential()
+            );
         }
+
         public async Task<AnswerOutput> AnswerQuery(IssuePayload issue, Dictionary<string, string> labels)
         {
             var modelName = _config.AnswerModelName;
+            var instructions = _config.KnowledgeAgentInstruction;
+            var replacements = new Dictionary<string, string>
+            {
+                { "Title", issue.Title },
+                { "Body", issue.Body },
+            };
+            var message = AzureSdkIssueLabelerService.FormatTemplate(_config.KnowledgeAgentMessage, replacements, _logger);
 
-            var solutionThreshold = double.Parse(_config.SolutionThreshold);
+            KnowledgeAgentRetrievalRequest retrievalRequest = BuildRetrievalRequest(instructions, message);
 
-            var searchContentResults = await GetSearchContentResults(issue, labels);
+            var retrievalResult = await _retrievalClient.RetrieveAsync(retrievalRequest);
 
-            var printableContent = string.Join("\n\n", searchContentResults.Select(searchContent =>
-                $"Title: {searchContent.Title}\nDescription: {searchContent.Chunk}\nURL: {searchContent.Url}\nScore: {searchContent.Score}"));
+            var contextBlock = GetContextBlock(retrievalResult);
 
-            var highestScore = _ragService.GetHighestScoreForContent(searchContentResults, issue.RepositoryName, issue.IssueNumber);
-            _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
+            var response = await _ragService.SendMessageQnaAsync(instructions, message, modelName, contextBlock);
 
-            var answerType = highestScore >= solutionThreshold ? SolutionAnswerType : SuggestionsAnswerType;
-            _logger.LogInformation($"Solution status for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}: {answerType}");
-
-            var userPrompt = FormatUserPrompt(issue, answerType, printableContent);
-
-            var response = await _ragService.SendMessageQnaAsync(_config.Instructions, userPrompt, modelName);
-
-            var formattedResponse = FormatResponse(answerType, issue, response);
+            var formattedResponse = FormatResponse(SuggestionsAnswerType, issue, response);
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{formattedResponse}");
 
             return new AnswerOutput
             {
                 Answer = formattedResponse,
-                AnswerType = answerType
+                AnswerType = SuggestionsAnswerType
             };
         }
 
-        private async Task<List<IndexContent>> GetSearchContentResults(IssuePayload issue, Dictionary<string, string> labels)
+        private KnowledgeAgentRetrievalRequest BuildRetrievalRequest(string instructions, string message)
         {
-            var indexName = _config.IndexName;
-            var semanticName = _config.SemanticName;
-            var fieldName = _config.IssueIndexFieldName;
-            var top = int.Parse(_config.SourceCount);
-            var scoreThreshold = double.Parse(_config.ScoreThreshold);
-            var query = $"{issue.Title} {issue.Body}";
-
-            _logger.LogInformation($"Searching content index '{indexName}' with query: {query}");
-            var searchContentResults = await _ragService.IssueTriageContentIndexAsync(
-                indexName,
-                semanticName,
-                fieldName,
-                query,
-                top,
-                scoreThreshold,
-                labels
-            );
-
-            if (searchContentResults.Count == 0)
+            var agentMessages = new[]
             {
-                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
+                new KnowledgeAgentMessage("assistant", new KnowledgeAgentMessageContent[] { new KnowledgeAgentMessageTextContent(instructions) }),
+                new KnowledgeAgentMessage("user", new KnowledgeAgentMessageContent[] { new KnowledgeAgentMessageTextContent(message) }),
+            };
+
+
+            var retrievalRequest = new KnowledgeAgentRetrievalRequest(agentMessages)
+            {
+                TargetIndexParams =
+                {
+                    new KnowledgeAgentIndexParams
+                    {
+                        IndexName = _config.IndexName,
+                        RerankerThreshold = 1.0f,
+                        MaxDocsForReranker = 200,
+                    }
+                }
+            };
+            return retrievalRequest;
+        }
+
+        private string GetContextBlock(KnowledgeAgentRetrievalResponse retrievalResult)
+        {
+            if (retrievalResult.Response.Count == 0)
+            {
+                return null;
             }
 
-            _logger.LogInformation($"Found {searchContentResults.Count} relevant issues for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
+            var snippets = retrievalResult.Response[0].Content
+                .OfType<KnowledgeAgentMessageTextContent>()
+                .Select(content => content.Text)
+                .ToList();
 
-            return searchContentResults;
-        }
+            var allSources = new List<JObject>();
 
-        private string FormatUserPrompt(IssuePayload issue, string answerType, string printableContent)
-        {
-            var replacements = new Dictionary<string, string>
+            foreach (var snippet in snippets)
             {
-                { "Title", issue.Title },
-                { "Description", issue.Body },
-                { "AnswerType", answerType },
-                { "PrintableContent", printableContent }
-            };
+                try
+                {
+                    var arr = JArray.Parse(snippet);
+                    foreach (var obj in arr)
+                    {
+                        if (obj is JObject jobj)
+                            allSources.Add(jobj);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to parse snippet as JSON array: {ex.Message}");
+                }
+            }
 
-            return AzureSdkIssueLabelerService.FormatTemplate(
-                _config.Prompt,
-                replacements,
-                _logger
+            _logger.LogInformation($"Number of sources retrieved: {allSources.Count}");
+
+            return string.Join(
+                "\n\n",
+                allSources.Select((obj, i) =>
+                    $"Title: {obj["title"]}\nDescription: {obj["content"]}\nTerms: {obj["terms"]}")
             );
         }
 
@@ -105,7 +130,7 @@ namespace IssueLabelerService
         {
             string intro;
             string outro;
-            
+
             var replacementsIntro = new Dictionary<string, string>
             {
                 { "IssueUserLogin", issue.IssueUserLogin },

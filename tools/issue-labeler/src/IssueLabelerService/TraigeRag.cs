@@ -58,27 +58,6 @@ namespace IssueLabelerService
             return filteredIssues;
         }
 
-        public double GetHighestScoreForContent(IEnumerable<IndexContent> issues, string repositoryName, int issueNumber)
-        {
-
-            var maxScore = double.MinValue;
-
-            foreach (var issue in issues)
-            {
-                if (issue.Score == null)
-                {
-                    throw new Exception($"An issue in the search results for {repositoryName} using the Open AI Labeler for issue #{issueNumber} has a null score.");
-                }
-
-                if (issue.Score > maxScore)
-                {
-                    maxScore = issue.Score.Value;
-                }
-            }
-
-            return maxScore;
-        }
-
         public async Task<List<(T, double)>> AzureSearchQueryAsync<T>(
             string indexName,
             string semanticConfigName,
@@ -130,11 +109,11 @@ namespace IssueLabelerService
             return results;
         }
 
-        public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, BinaryData structure = null)
+        public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, string contextBlock = null, BinaryData structure = null)
         {
-            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
-
+            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
+            
             ChatCompletionOptions options = new ChatCompletionOptions();
 
             if (modelName.Contains("gpt"))
@@ -142,28 +121,35 @@ namespace IssueLabelerService
                 options.Temperature = 0;
             }
 
-            if(modelName.Contains("o3-mini"))
+            if (modelName.Contains("o3-mini"))
             {
                 options.ReasoningEffortLevel = ChatReasoningEffortLevel.Medium;
             }
 
-            if(structure != null)
+            if (structure != null)
+            {
                 options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
                     jsonSchemaFormatName: "IssueOutput",
                     jsonSchema: structure
                 );
+            }
 
-            ChatCompletion answers = await chatClient.CompleteChatAsync(
-                [
-                    new DeveloperChatMessage(instructions),
-                    new UserChatMessage(message)
-                ],
-                options
-            );
+            var chatMessages = new List<ChatMessage>
+            {
+                new DeveloperChatMessage(instructions),
+                new UserChatMessage(message)
+            };
+
+            if (contextBlock != null)
+            {
+                chatMessages.Add(new AssistantChatMessage(contextBlock));
+            }
+
+            ChatCompletion result = await chatClient.CompleteChatAsync(chatMessages, options);
 
             _logger.LogInformation($"\n\nFinished loading Open AI response.");
 
-            return answers.Content[0].Text;
+            return result.Content[0].Text;
         }
     }
 }

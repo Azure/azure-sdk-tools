@@ -58,6 +58,10 @@ namespace IssueLabelerService
         public string LabelPrompt => GetItem("LabelPrompt");
         public string LabelInstructions => GetItem("LabelInstructions");
         public string LabelNames => GetItem("LabelNames");
+        public string KnowledgeAgentName => GetItem("KnowledgeAgentName");
+        public string KnowledgeAgentInstruction => GetItem("KnowledgeAgentInstruction");
+        public string KnowledgeAgentMessage => GetItem("KnowledgeAgentMessage");
+        public string KnowledgeAgentModelName => GetItem("KnowledgeAgentModelName");
 
         public string GetItem(string name)
         {

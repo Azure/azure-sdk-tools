@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
-import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
@@ -21,12 +20,15 @@ export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() associatedCodeLine: CodePanelRowData | undefined;
   @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
+  @Input() preferredApprovers : string[] = [];
+
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
@@ -35,6 +37,7 @@ export class CommentThreadComponent {
   assetsPath : string = environment.assetsPath;
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
+  menuItemsLoggedInArchitects: MenuItem[] = [];
   allowAnyOneToResolve : boolean = true;
 
   threadResolvedBy : string | undefined = '';
@@ -49,13 +52,21 @@ export class CommentThreadComponent {
 
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  constructor(private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.menuItemsLoggedInUsers.push({
       label: '',
       items: [
         { label: 'Edit', icon: 'bi bi-pencil-square', command: (event) => this.showEditEditor(event) },
+        { label: 'Delete', icon: 'bi bi-trash', command: (event) => this.deleteComment(event) },
+        { separator: true }
+      ]
+    });
+
+    this.menuItemsLoggedInArchitects.push({
+      label: '',
+      items: [
         { label: 'Delete', icon: 'bi bi-trash', command: (event) => this.deleteComment(event) },
         { separator: true }
       ]
@@ -138,6 +149,8 @@ export class CommentThreadComponent {
     const menu : MenuItem[] = [];
     if (comment && this.userProfile?.userName === comment.createdBy) {
       menu.push(...this.menuItemsLoggedInUsers);
+    } else if (comment && comment.createdBy == "azure-sdk" && this.preferredApprovers.includes(this.userProfile?.userName!)) {
+      menu.push(...this.menuItemsLoggedInArchitects);
     }
     if (this.instanceLocation !== "samples") {
       menu.push(...this.menuItemAllUsers);
@@ -262,13 +275,14 @@ export class CommentThreadComponent {
     }
 
     const HTML_STRIP_REGEX = /<\/?[^>]+(>|$)/g
-    const emptyCommentContentWarning = "Comment content is empty. No action taken.";
+    const emptyCommentContentWarningMessage = { severity: 'info', icon: 'bi bi-info-circle', summary: "Comment Info", detail: "Comment content is empty. No action taken.", key: 'bc', life: 3000 };
+
 
     if (replyEditorContainer) {
       const content = this.getEditorContent("replyEditor");
       const contentText = content.replace(HTML_STRIP_REGEX, '');
       if (contentText.length === 0) {
-        this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: emptyCommentContentWarning, key: 'bl', life: 3000 });
+        this.messageService.add(emptyCommentContentWarningMessage);
       } else {
         this.saveCommentActionEmitter.emit(
           { 
@@ -290,7 +304,7 @@ export class CommentThreadComponent {
       const content = this.getEditorContent(commentId!);
       const contentText = content.replace(HTML_STRIP_REGEX, '');
       if (contentText.length === 0) {
-        this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: emptyCommentContentWarning, key: 'bl', life: 3000 });
+        this.messageService.add(emptyCommentContentWarningMessage);
       } else {
         this.saveCommentActionEmitter.emit(
           { 
@@ -323,6 +337,19 @@ export class CommentThreadComponent {
     this.commentUpvoteActionEmitter.emit(
       { 
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
+        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        commentId: commentId,
+        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+      } as CommentUpdatesDto
+    );
+  }
+
+  toggleDownVoteAction(event: Event) {
+    const target = (event.target as Element).closest("button") as Element;
+    const commentId = target.getAttribute("data-btn-id");
+    this.commentDownvoteActionEmitter.emit(
+      { 
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDownVoteToggled,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup

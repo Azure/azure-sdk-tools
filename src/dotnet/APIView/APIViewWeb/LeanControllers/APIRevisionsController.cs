@@ -10,6 +10,8 @@ using APIViewWeb.Managers;
 using System.Collections.Generic;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.ApplicationInsights.DataContracts;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -19,7 +21,6 @@ namespace APIViewWeb.LeanControllers
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
-        private readonly IPullRequestManager _pullRequestManager;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
@@ -31,7 +32,6 @@ namespace APIViewWeb.LeanControllers
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
             _signalRHubContext = signalRHub;
-            _pullRequestManager = pullRequestManager;
         }
 
         /// <summary>
@@ -148,6 +148,21 @@ namespace APIViewWeb.LeanControllers
             await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
 
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        [HttpPost("{reviewId}/generateReview", Name = "GenerateAIReview")]
+        public async Task<ActionResult<int>> GenerateAIReview(string reviewId, [FromQuery]string activeApiRevisionId, [FromQuery]string diffApiRevisionId = null)
+        {
+            try
+            {
+                var violations = await _reviewManager.GenerateAIReview(User, reviewId, activeApiRevisionId, diffApiRevisionId);
+                return new LeanJsonResult(violations, StatusCodes.Status200OK);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error generating AI review" + ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
     }
 }

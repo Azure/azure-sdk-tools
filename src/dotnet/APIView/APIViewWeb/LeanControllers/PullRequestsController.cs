@@ -16,9 +16,9 @@ namespace APIViewWeb.LeanControllers
 {
     public class PullRequestsController  : BaseApiController
     {
-        private readonly ILogger<PullRequestsController> _logger;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
         private readonly IEnumerable<LanguageService> _languageServices;
 
         string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };

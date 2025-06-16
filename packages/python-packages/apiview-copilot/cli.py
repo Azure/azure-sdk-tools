@@ -7,7 +7,6 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -89,7 +88,6 @@ def local_review(
         target=target_apiview,
         base=base_apiview,
         language=language,
-        mode=DEFAULT_CONTEXT_MODE,
         outline=outline_text,
         comments=comments_obj,
     )
@@ -320,7 +318,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 choices=SUPPORTED_LANGUAGES,
             )
 
-        mode_choices = [v for k, v in vars(ApiViewContextMode).items() if isinstance(v, str) and not k.startswith("_")]
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(

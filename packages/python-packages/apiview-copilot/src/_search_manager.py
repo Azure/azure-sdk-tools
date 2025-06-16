@@ -319,8 +319,8 @@ class SearchManager:
         """
         filter_expr = (
             f"kind eq 'guidelines' and language eq '{language}'"
-            " and not search.in(tags, 'vague', ',')"
-            " and not search.in(tags, 'documentation', ',')"
+            " and not tags/any(t: t eq 'vague')"
+            " and not tags/any(t: t eq 'documentation')"
         )
         results = self.client.search(search_text="*", filter=filter_expr, query_type=QueryType.SIMPLE, top=1000)
         return [doc for doc in results]

@@ -59,14 +59,6 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 CREDENTIAL = DefaultAzureCredential()
 
 
-class ApiViewContextMode:
-    STATIC = "static"
-    RAG = "rag"
-
-
-DEFAULT_CONTEXT_MODE = ApiViewContextMode.RAG
-
-
 def in_ci():
     return os.getenv("TF_BUILD", False)
 
@@ -95,7 +87,6 @@ class ApiViewReview:
         language: str,
         outline: Optional[str] = None,
         comments: Optional[list] = None,
-        mode: str = DEFAULT_CONTEXT_MODE,
         include_general_guidelines: bool = False,
     ):
         self.target = self._unescape(target)
@@ -104,11 +95,10 @@ class ApiViewReview:
             self.base = None
         self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
-        self.context_mode = mode
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
-        static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
-        self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
+        language_guideline_ids = [x["id"] for x in self.search.language_guidelines]
+        self.results = ReviewResult(guideline_ids=language_guideline_ids, comments=[])
         self.summary = None
         self.outline = outline
         self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
@@ -258,18 +248,14 @@ class ApiViewReview:
             if cancel_event.is_set():
                 break
 
-            # Prepare context for guideline tasks
-            if self.context_mode == ApiViewContextMode.RAG:
-                context = self._retrieve_context(str(section))
-                if context:
-                    context_string = context.to_markdown()
-                else:
-                    logger.warning(
-                        f"Failed to retrieve guidelines for section {section_idx}, using static guidelines instead."
-                    )
-                    self.semantic_search_failed = True
-                    context_string = json.dumps(self.search.static_guidelines)
+            context = self._retrieve_context(str(section))
+            if context:
+                context_string = context.to_markdown()
             else:
+                logger.warning(
+                    f"Failed to retrieve guidelines for section {section_idx}, using static guidelines instead."
+                )
+                self.semantic_search_failed = True
                 context_string = json.dumps(self.search.static_guidelines)
 
             # Guideline prompt

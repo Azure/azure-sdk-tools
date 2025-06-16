@@ -14,9 +14,8 @@ from src._models import Guideline, Example, Memory
 
 from collections import deque
 import copy
-import json
 import os
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Optional
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -298,10 +297,9 @@ class SearchManager:
         self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
-        self.static_guidelines = self._retrieve_static_guidelines(
-            language, include_general_guidelines=include_general_guidelines
-        )
-        self._static_guidelines_map = {x["id"]: x for x in self.static_guidelines}
+        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+        self.client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
+        self.language_guidelines = self._fetch_language_guidelines(language)
 
     def _ensure_env_vars(self, vars: List[str]):
         """
@@ -314,31 +312,18 @@ class SearchManager:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def _retrieve_static_guidelines(self, language, include_general_guidelines: bool = False) -> List[object]:
+    def _fetch_language_guidelines(self, language: str) -> list:
         """
-        Retrieves the guidelines for the given language, optional with general guidelines.
-        This method retrieves guidelines statically from the file system. It does not
-        query any Azure service.
+        Fetch all language-specific guidelines (kind='guidelines') from Azure Search,
+        excluding those tagged 'vague' or 'documentation'.
         """
-        general_guidelines = []
-        if include_general_guidelines:
-            general_guidelines_path = os.path.join(_GUIDELINES_FOLDER, "general")
-            for filename in os.listdir(general_guidelines_path):
-                with open(os.path.join(general_guidelines_path, filename), "r") as f:
-                    items = json.loads(f.read())
-                    general_guidelines.extend(items)
-
-        language_guidelines = []
-        language_guidelines_path = os.path.join(_GUIDELINES_FOLDER, language)
-        try:
-            for filename in os.listdir(language_guidelines_path):
-                with open(os.path.join(language_guidelines_path, filename), "r") as f:
-                    items = json.loads(f.read())
-                    language_guidelines.extend(items)
-        except FileNotFoundError:
-            print(f"WARNING: No guidelines found for language {language}.")
-            return []
-        return general_guidelines + language_guidelines
+        filter_expr = (
+            f"kind eq 'guidelines' and language eq '{language}'"
+            " and not search.in(tags, 'vague', ',')"
+            " and not search.in(tags, 'documentation', ',')"
+        )
+        results = self.client.search(search_text="*", filter=filter_expr, query_type=QueryType.SIMPLE, top=1000)
+        return [doc for doc in results]
 
     def _search(self, query: str, *, filter: str, top: int = 20) -> SearchResult:
         """
@@ -346,8 +331,7 @@ class SearchManager:
         This method is used by the public search methods to perform the actual search.
         """
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
-        result = client.search(
+        result = self.client.search(
             search_text=query,
             filter=filter,
             semantic_configuration_name="semantic-search-config",

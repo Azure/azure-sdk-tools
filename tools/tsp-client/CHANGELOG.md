@@ -1,5 +1,9 @@
 # Release
 
+## 2025-06-13 - 0.22.0
+
+- Add support for emitter options of `object` type.
+
 ## 2025-05-01 - 0.21.0
 
 - Update `@typespec/compiler` dependency to `"1.0.0-rc.1 || >=1.0.0 <2.0.0"`.

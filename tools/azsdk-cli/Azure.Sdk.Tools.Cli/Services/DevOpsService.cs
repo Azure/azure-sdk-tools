@@ -490,11 +490,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                             }
             });
 
-            _logger.LogInformation($"Started pipeline run {build.Url} to generate SDK.");
+            var pipelineRunUrl = GetPipelineUrl(build.Id);
+            _logger.LogInformation($"Started pipeline run {pipelineRunUrl} to generate SDK.");
             if (workItemId != 0)
             {
                 _logger.LogInformation("Adding SDK generation pipeline link to release plan");
-                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(build.Id), "");
+                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "");
             }
 
             return build;

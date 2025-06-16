@@ -646,13 +646,13 @@ namespace APIViewWeb.Helpers
                 Data = new NavigationTreeNodeData()
             };
 
-            if(navItem.Tags != null)
+            if(navItem.Tags != null && navItem.Tags.Any())
             {
                 node.Data.Kind = navItem.Tags["TypeKind"];
                 node.Data.Icon = node.Data.Kind;
             }
 
-            if (nodeIdMap.ContainsKey(navItem.NavigationId))
+            if (navItem.NavigationId != null && nodeIdMap.ContainsKey(navItem.NavigationId))
                 node.Data.NodeIdHashed = nodeIdMap[navItem.NavigationId];
 
             foreach (var childItem in navItem.ChildItems)

@@ -31,17 +31,9 @@ export const codeOwnersAndIgnoreLinkGenerator = async (options: {
 
     // Process each package
     for (const pkg of options.packages) {
-        // Check if package generation was successful
-        if (pkg.result !== "succeeded") {
-            logger.warn(
-                `Package ${pkg.packageName} generation result is not successful. Skipping CODEOWNERS and ignore link generation.`,
-            );
-            continue;
-        }
-
         if (!pkg.packageFolder) {
             logger.error(
-                `Package folder not found for ${pkg.packageName || "unknown package"}`,
+                `Failed to find package folder for ${pkg.packageName || "unknown package"}`,
             );
             continue;
         }
@@ -108,11 +100,11 @@ function updateIgnoreLink(packageName: string) {
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
     let content = fs.readFileSync(ignoreLinksPath, "utf8");
     const newLine = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
-
+    
     // Check if the link already exists in the file
     if (content.includes(newLine)) {
         logger.warn(
-            `Link for ${packageName} already exists in ignore-links.txt, skipping.`,
+            `Failed to add link for ${packageName} to ignore-links.txt as it already exists, skipping.`,
         );
         return;
     }

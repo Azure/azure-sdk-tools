@@ -156,22 +156,26 @@ class ReviewResult(BaseModel):
     comments: List[Comment] = Field(description="List of comments, if any")
 
     # truly private, never part of Pydantic’s schema or serialization
-    _guideline_ids: Set[str] = PrivateAttr(default_factory=set)
+    _allowed_ids: Set[str] = PrivateAttr(default_factory=set)
 
     def __init__(
         self,
         *,
-        guideline_ids: Optional[List[str]] = None,
+        allowed_ids: Optional[List[str]] = None,
         **data,
     ):
         comments = data.pop("comments", [])
         data["comments"] = []
         super().__init__(**data)
+
+        # sanitize allowed_ids to convert the search IDs to the proper format
+        allowed_ids = [x.replace("=html=", ".html#") for x in allowed_ids] if allowed_ids else None
+
         # initialize private attr outside of Pydantic’s field system
         object.__setattr__(
             self,
-            "_guideline_ids",
-            set(guideline_ids) if guideline_ids else set(),
+            "_allowed_ids",
+            set(allowed_ids) if allowed_ids else set(),
         )
         self._process_comments(comments)
 
@@ -217,11 +221,16 @@ class ReviewResult(BaseModel):
                     result_comments.append(Comment(**comment_copy))
         self.comments.extend(result_comments)
 
-    def merge(self, other: "ReviewResult", *, section: Section):
+    def merge(
+        self,
+        other: "ReviewResult",
+        *,
+        section: Section,
+    ):
         """
         Merge two ReviewResult objects.
         """
-        self._guideline_ids.update(other._guideline_ids)
+        self._allowed_ids.update(other._allowed_ids)
         filtered_comments = [x for x in other.comments if self._validate(item=x, section=section)]
         self.comments.extend(filtered_comments)
 
@@ -282,11 +291,11 @@ class ReviewResult(BaseModel):
         This ensures that the links that appear in APIView should never be broken (404).
         Allows for specific partial matches.
         """
-        if rid in self._guideline_ids:
+        if rid in self._allowed_ids:
             return rid
 
         # check if the part of the guideline_id after the # matches the rule_id
-        for gid in self._guideline_ids:
+        for gid in self._allowed_ids:
             gid_end = gid.split("#")[-1]
             if rid == gid_end:
                 return gid

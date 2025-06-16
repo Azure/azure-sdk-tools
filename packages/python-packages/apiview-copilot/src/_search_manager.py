@@ -54,10 +54,11 @@ class SearchItem:
         self.is_exception = result.get("is_exception") or False
         self.example_type = result.get("example_type")
         self.source = result.get("source")
-        self.score = result.get("@search.score")
-        self.reranker_score = result.get("@search.reranker_score")
+        self.score = result.get("@search.score", None)
+        self.reranker_score = result.get("@search.reranker_score", None)
         self.captions = []
-        for caption in result.get("@search.captions", []):
+        captions = result.get("@search.captions", None)
+        for caption in captions or []:
             self.captions.append(SearchCaption(caption))
 
 
@@ -312,7 +313,7 @@ class SearchManager:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def _fetch_language_guidelines(self, language: str) -> list:
+    def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
         Fetch all language-specific guidelines (kind='guidelines') from Azure Search,
         excluding those tagged 'vague' or 'documentation'.
@@ -322,8 +323,9 @@ class SearchManager:
             " and not tags/any(t: t eq 'vague')"
             " and not tags/any(t: t eq 'documentation')"
         )
-        results = self.client.search(search_text="*", filter=filter_expr, query_type=QueryType.SIMPLE, top=1000)
-        return [doc for doc in results]
+        return SearchResult(
+            self.client.search(search_text="*", filter=filter_expr, query_type=QueryType.SIMPLE, top=1000)
+        )
 
     def _search(self, query: str, *, filter: str, top: int = 20) -> SearchResult:
         """
@@ -370,14 +372,29 @@ class SearchManager:
 
     def guidelines_for_ids(self, ids: List[str]) -> List[object]:
         """
-        Retrieves the guidelines for the given IDs.
-        This method retrieves guidelines statically from the file system. It does not
-        query any Azure service.
+        Retrieves the guidelines for the given IDs from CosmosDB.
         """
-        guidelines = []
-        for id in set(ids):
-            guidelines.append(self._static_guidelines_map.get(id))
-        return guidelines
+        ids = list(ids)  # Ensure ids is subscriptable
+        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
+        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
+        database = client.get_database_client(COSMOS_DB_NAME)
+        guidelines_container = database.get_container_client("guidelines")
+        batch_size = 50
+        results = []
+        for i in range(0, len(ids), batch_size):
+            batch = ids[i : i + batch_size]
+            placeholders = ",".join([f"@id{j}" for j in range(len(batch))])
+            query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
+            parameters = [{"name": f"@id{j}", "value": value} for j, value in enumerate(batch)]
+            items = list(
+                guidelines_container.query_items(
+                    query=query,
+                    parameters=parameters,
+                    enable_cross_partition_query=True,
+                )
+            )
+            results.extend([Guideline.model_validate(r) for r in items])
+        return results
 
     def build_context(self, items: List[SearchItem]) -> Context:
         """

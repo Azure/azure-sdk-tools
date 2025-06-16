@@ -7,45 +7,24 @@ using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
-    public interface IGitHubService
+public class GitConnection
     {
-        public Task<User> GetGitUserDetailsAsync();
-        public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner);
-        public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
-        public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName);
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
-        public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
-        public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
-        public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
-    }
+        private GitHubClient? _gitHubClient; // Backing field for the property
 
-    public class GitHubService : IGitHubService
-    {
-        private GitHubClient gitHubClient;
-        private ILogger<GitHubService> logger;
-
-        private const string CreatedByCopilotLabel = "Created by copilot";
-
-        public GitHubService(ILogger<GitHubService> _logger)
+        public GitHubClient gitHubClient
         {
-            logger = _logger;
-            var token = GetGitHubAuthToken();
-            gitHubClient = new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"))
+            get
             {
-                Credentials = new Credentials(token, AuthenticationType.Bearer)
-            };
-        }
-
-        public async Task<User> GetGitUserDetailsAsync()
-        {
-            var user = await gitHubClient.User.Current();
-            return user;
-        }
-
-        public async Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber)
-        {
-            var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
-            return pullRequest;
+                if (_gitHubClient == null)
+                {
+                    var token = GetGitHubAuthToken();
+                    _gitHubClient = new GitHubClient(new ProductHeaderValue("AzureSDKDevToolsMCP"))
+                    {
+                        Credentials = new Credentials(token, AuthenticationType.Bearer)
+                    };
+                }
+                return _gitHubClient;
+            }
         }
 
         private static string GetGitHubAuthToken()
@@ -77,6 +56,40 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return output.Trim();
             }
         }
+    }
+    public interface IGitHubService
+    {
+        public Task<User> GetGitUserDetailsAsync();
+        public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner);
+        public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
+        public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName);
+        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
+        public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
+        public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
+        public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
+    }
+
+    public class GitHubService : GitConnection, IGitHubService
+    {
+        private readonly ILogger<GitHubService> logger;
+        private const string CreatedByCopilotLabel = "Created by copilot";
+
+        public GitHubService(ILogger<GitHubService> _logger)
+        {
+            logger = _logger;
+        }
+
+        public async Task<User> GetGitUserDetailsAsync()
+        {
+            var user = await gitHubClient.User.Current();
+            return user;
+        }
+
+        public async Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber)
+        {
+            var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+            return pullRequest;
+        }        
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)
         {

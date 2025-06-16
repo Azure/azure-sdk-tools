@@ -25,7 +25,7 @@ export const codeOwnersAndIgnoreLinkGenerator = async (options: {
     }
 
     if (options.packages.length === 0) {
-        logger.warn("No packages found in the packages array");
+        logger.warn("Failed to find packages to update code onwners and ignored links");
         return;
     }
 

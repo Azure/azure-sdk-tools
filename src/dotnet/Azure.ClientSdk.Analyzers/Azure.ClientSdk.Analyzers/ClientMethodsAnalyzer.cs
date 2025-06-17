@@ -16,6 +16,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private const string AzureNamespace = "Azure";
         private const string SystemNamespace = "System";
+        private const string SystemClientModelNamespace = "System.ClientModel";
         private const string PageableTypeName = "Pageable";
         private const string AsyncPageableTypeName = "AsyncPageable";
         private const string BinaryDataTypeName = "BinaryData";
@@ -24,6 +25,9 @@ namespace Azure.ClientSdk.Analyzers
         private const string OperationTypeName = "Operation";
         private const string TaskTypeName = "Task";
         private const string BooleanTypeName = "Boolean";
+        private const string ClientResultTypeName = "ClientResult";
+        private const string CollectionResultTypeName = "CollectionResult";
+        private const string AsyncCollectionResultTypeName = "AsyncCollectionResult";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
@@ -233,7 +237,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName, string namespaceName)
         {
-            if (typeSymbol.Name == typeName && typeSymbol.ContainingNamespace.Name == namespaceName && typeSymbol.ContainingNamespace.ContainingNamespace.Name == "")
+            if (typeSymbol.Name == typeName && GetFullNamespaceName(typeSymbol.ContainingNamespace) == namespaceName)
             {
                 return true;
             }
@@ -244,6 +248,24 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             return false;
+        }
+
+        private static string GetFullNamespaceName(INamespaceSymbol namespaceSymbol)
+        {
+            if (namespaceSymbol.IsGlobalNamespace)
+            {
+                return "";
+            }
+
+            var parts = new List<string>();
+            var current = namespaceSymbol;
+            while (current != null && !current.IsGlobalNamespace)
+            {
+                parts.Insert(0, current.Name);
+                current = current.ContainingNamespace;
+            }
+
+            return string.Join(".", parts);
         }
 
         private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
@@ -267,7 +289,10 @@ namespace Azure.ClientSdk.Analyzers
                 IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace) ||
                 IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace) ||
                 IsOrImplements(originalType, PageableTypeName, AzureNamespace) ||
-                IsOrImplements(originalType, AsyncPageableTypeName, AzureNamespace))
+                IsOrImplements(originalType, AsyncPageableTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, ClientResultTypeName, SystemClientModelNamespace) ||
+                IsOrImplements(unwrappedType, CollectionResultTypeName, SystemClientModelNamespace) ||
+                IsOrImplements(originalType, AsyncCollectionResultTypeName, SystemClientModelNamespace))
             {
                 return true;
             }

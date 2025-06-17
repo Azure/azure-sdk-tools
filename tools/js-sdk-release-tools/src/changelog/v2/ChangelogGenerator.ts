@@ -250,7 +250,6 @@ export class ChangelogGenerator {
           const message = format(this.modelPropertyOptionalToRequired, { interfaceName, propertyName: p.source!.name });
           p.messages.set(DiffReasons.OptionalToRequired, message);
         }
-        
       }
     });
   }

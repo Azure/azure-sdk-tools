@@ -7,7 +7,6 @@ import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -49,6 +48,7 @@ def local_review(
     base: str = None,
     outline: str = None,
     existing_comments: str = None,
+    debug_log: bool = False,
 ):
     """
     Generates a review using the locally installed code.
@@ -89,9 +89,9 @@ def local_review(
         target=target_apiview,
         base=base_apiview,
         language=language,
-        mode=DEFAULT_CONTEXT_MODE,
         outline=outline_text,
         comments=comments_obj,
+        debug_log=debug_log,
     )
     review = reviewer.run()
     reviewer.close()
@@ -320,7 +320,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 choices=SUPPORTED_LANGUAGES,
             )
 
-        mode_choices = [v for k, v in vars(ApiViewContextMode).items() if isinstance(v, str) and not k.startswith("_")]
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
@@ -346,8 +345,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 "existing_comments",
                 type=str,
                 help="Path to a JSON file containing existing comments.",
-                options_list=["--existing-comments"],
                 default=None,
+            )
+            ac.argument(
+                "debug_log",
+                options_list=["--debug-log"],
+                action="store_true",
+                help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

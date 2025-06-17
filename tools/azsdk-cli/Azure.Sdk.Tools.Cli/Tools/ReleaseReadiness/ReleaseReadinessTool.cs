@@ -5,13 +5,8 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Text;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Azure.Pipelines.WebApi;
-using Microsoft.Extensions.Logging;
-using Microsoft.Graph.Models;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 
@@ -57,15 +52,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 }
 
                 StringBuilder outputBuilder = new StringBuilder();
-                outputBuilder.AppendLine($"Package details: {JsonSerializer.Serialize(package)}");
-                
+                outputBuilder.AppendLine($"Name: {packageName}");
+                outputBuilder.AppendLine($"Version: {package.Version}");
+                outputBuilder.AppendLine($"Display name: {package.DisplayName}");
+                outputBuilder.AppendLine($"Type: {package.PackageType}");
+                outputBuilder.AppendLine($"Work item ID: {package.WorkItemId}");
+                outputBuilder.AppendLine($"Language: {package.Language}");
+                outputBuilder.AppendLine($"State: {package.State}");
+                outputBuilder.AppendLine($"Repo path: {package.PackageRepoPath}");
+                outputBuilder.AppendLine($"Latest pipeline run: {package.LatestPipelineRun}");
+                outputBuilder.AppendLine($"Release pipeline URL: {package.PipelineDefinitionUrl}");
+
                 bool isPackageReady = true;
 
                 //Check release date for latest version in planned release
                 var plannedRelDate = package.PlannedReleases.LastOrDefault()?.ReleaseDate;
                 if (plannedRelDate != null && !plannedRelDate.Equals("Unknown"))
                 {
-                    outputBuilder.AppendLine($"Latest planned release date: {plannedRelDate}");
+                    outputBuilder.AppendLine($"Planned release date: {plannedRelDate}");
                 }
                 else
                 {
@@ -92,19 +96,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 }
 
                 // Check if API view is approved if stable version for data plane or .NET
-                if (isDataPlanePackage || language.Equals(".NET"))
+                if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)
                 {
                     
                     if (!package.IsApiViewApproved)
                     {
                         isPackageReady = false;
-                        outputBuilder.AppendLine($"API view is not approved for GA release of package '{packageName}' in language '{language}'.");
-                        outputBuilder.AppendLine($"API View Status: {package.APIViewStatus}");
+                        outputBuilder.AppendLine($"API View Status: {package.APIViewStatus}. API view is not approved for GA release of package '{packageName}'.");
                         outputBuilder.AppendLine($"API View Validation Details: {package.ApiViewValidationDetails}");
                     }
                     else
                     {
-                        outputBuilder.AppendLine($"API view is approved for package '{packageName}' in language '{language}'.");
+                        outputBuilder.AppendLine($"API view is approved for package '{packageName}'.");
                     }
                 }
                 
@@ -112,22 +115,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 if (!package.IsChangeLogReady)
                 {
                     isPackageReady = false;
-                    outputBuilder.AppendLine($"Change log verification failed for package '{packageName}' in language '{language}'.");
                     outputBuilder.AppendLine($"Change Log Status: {package.changeLogStatus}");
-                    outputBuilder.AppendLine($"Change Log Validation Details: {package.ChangeLogValidationDetails}");
-                    outputBuilder.AppendLine($"Change log must contain an entry for version {package.Version} with planned release date");
+                    outputBuilder.AppendLine($"Change Log Validation Details: {package.ChangeLogValidationDetails}. Change log must contain an entry for version {package.Version} with planned release date.");
                 }
                 else
                 {
-                    outputBuilder.AppendLine($"Change log verification is valid for package '{packageName}' in language '{language}'.");
+                    outputBuilder.AppendLine($"Change log verification is valid for package '{packageName}'.");
                 }
 
                 // check last pipeline run status for the package and verify it completed successfully
-                var pipelineRunStatus = await GetPipelineRunDetails(package.LastPipelineRun);
+                var pipelineRunStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
                 if (string.IsNullOrEmpty(pipelineRunStatus))
                 {
                     isPackageReady = false;
-                    outputBuilder.AppendLine($"Latest pipeline run is not available for package '{packageName}' in language '{language}'.");
+                    outputBuilder.AppendLine($"Latest pipeline run is not available for package '{packageName}'.");
                 }
                 else
                 {
@@ -141,17 +142,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 // Package release readiness status
                 if (isPackageReady)
                 {
-                    outputBuilder.AppendLine($"Package '{packageName}' in language '{language}' is ready for release.");                    
+                    outputBuilder.AppendLine($"Package '{packageName}' is ready for release.");                    
                 }
                 else
                 {
-                    outputBuilder.AppendLine($"Package '{packageName}' in language '{language}' is not ready for release. Please address the issues mentioned above.");
-                }
-
-                // Pipeline URL for the package
-                if (!string.IsNullOrEmpty(package.PipelineDefinitionUrl))
-                {
-                    outputBuilder.AppendLine($"Release pipeline URL: {package.PipelineDefinitionUrl}");
+                    outputBuilder.AppendLine($"Package '{packageName}' is not ready for release. Please address the issues mentioned above.");
                 }
                 return output.Format(outputBuilder.ToString());
             }

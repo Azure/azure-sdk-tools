@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string DisplayName { get; set; } = string.Empty;
         public string PackageType { get; set; } = string.Empty;
         public string PackageRepoPath { get; set; } = string.Empty;        
-        public string LastPipelineRun { get; set; } = string.Empty;
+        public string LatestPipelineRun { get; set; } = string.Empty;
         public string PipelineDefinitionUrl { get; set; } = string.Empty;
         public bool IsChangeLogReady {
             get

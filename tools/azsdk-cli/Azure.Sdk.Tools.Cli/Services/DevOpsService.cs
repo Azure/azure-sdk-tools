@@ -794,7 +794,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// </summary>
         public async Task<Package> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
             if (!string.IsNullOrEmpty(packageVersion))
             {
                 query += $" AND [Custom.PackageVersion] = '{packageVersion}'";
@@ -833,7 +833,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 PackageNameStatus = GetWorkItemValue(workItem, "Custom.PackageNameApprovalStatus"),
                 PackageNameApprovalDetails = GetWorkItemValue(workItem, "Custom.PackageNameApprovalDetails"),
                 PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
-                LastPipelineRun = GetWorkItemValue(workItem, "Custom.LastPipelineRun")
+                LatestPipelineRun = GetWorkItemValue(workItem, "Custom.LatestPipelineRun")
             };
 
             var plannedPackages = GetWorkItemValue(workItem, "Custom.PlannedPackages");

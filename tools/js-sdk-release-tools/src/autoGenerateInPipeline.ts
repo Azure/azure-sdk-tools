@@ -8,6 +8,8 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
+import { codeOwnersAndIgnoreLinkGenerator } from './common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
+
 import shell from 'shelljs';
 import fs from 'fs';
 
@@ -105,6 +107,11 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
+
+        await codeOwnersAndIgnoreLinkGenerator({
+            sdkType: sdkType,
+            packages: outputJson.packages || [],
+        });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);

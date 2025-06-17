@@ -271,10 +271,9 @@ class ReviewResult(BaseModel):
             resolved_rule_id = self._resolve_rule_id(rule_id)
             if resolved_rule_id:
                 resolved_rule_ids.add(resolved_rule_id)
-        if not resolved_rule_ids:
-            return False
-        else:
-            item.rule_ids = list(resolved_rule_ids)
+        # rule IDs only apply to *guidelines* so the IDs associated with memories
+        # and examples aren't relevant here anyways.
+        item.rule_ids = list(resolved_rule_ids)
         return True
 
     def _resolve_rule_id(self, rid: str) -> str | None:
@@ -291,7 +290,6 @@ class ReviewResult(BaseModel):
             gid_end = gid.split("#")[-1]
             if rid == gid_end:
                 return gid
-        print(f"WARNING: Rule ID {rid} not found. Possible hallucination.")
         return None
 
     def _find_line_number(self, chunk: Section, comment: Comment) -> Optional[int]:

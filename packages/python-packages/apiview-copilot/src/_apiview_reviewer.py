@@ -421,6 +421,7 @@ class ApiViewReview:
                     "content": comment.model_dump(),
                     "language": self._get_language_pretty_name(),
                     "outline": self.outline,
+                    "exceptions": self._load_filter_metadata().get("exceptions", "None"),
                 },
             )
 

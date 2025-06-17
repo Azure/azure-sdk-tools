@@ -2,17 +2,13 @@ import fs from "fs";
 import path from "path";
 import shell from "shelljs";
 import { logger } from "../../utils/logger.js";
-import { getNpmPackageName } from "../utils.js";
+import { getGeneratedPackageDirectory, getNpmPackageName, getPackageNameFromTspConfig } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
 import { SDKType } from "../types.js";
 
 export const codeOwnersAndIgnoreLinkGenerator = async (options: {
     sdkType: SDKType;
-    packages: Array<{
-        packageName?: string;
-        packageFolder?: string;
-        result?: string;
-    }>;
+    typeSpecDirectory: string;
 }): Promise<void> => {
     logger.info(`Generating CODEOWNERS and ignore link for packages`);
 
@@ -23,39 +19,40 @@ export const codeOwnersAndIgnoreLinkGenerator = async (options: {
         );
         return;
     }
+    const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, '');
 
-    if (options.packages.length === 0) {
-        logger.warn("Failed to find packages to update code onwners and ignored links");
+    if (!packageDirectory) {
+        logger.warn("Failed to get package directory");
         return;
-    }
-
-    // Process each package
-    for (const pkg of options.packages) {
-        if (!pkg.packageFolder) {
-            logger.error(
-                `Failed to find package folder for ${pkg.packageName || "unknown package"}`,
-            );
-            continue;
-        }
-
-        logger.info(
-            `Processing package: ${pkg.packageName} using folder: ${pkg.packageFolder}`,
-        );
-        await tryGenerateCodeOwnersAndIgnoreLinkForPackage(pkg.packageFolder);
-    }
+    }   
+    const packageName = await getPackageNameFromTspConfig(options.typeSpecDirectory);
+    await tryGenerateCodeOwnersAndIgnoreLinkForPackage(packageDirectory, packageName);
 };
 
 export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
+    packageName: string
 ) {
     logger.info(
         `Start to generate CODEOWNERS and ignore link for ${packageFolderPath}`,
     );
+    
     const jsSdkRepoPath = String(shell.pwd());
     const packageAbsolutePath = path.join(jsSdkRepoPath, packageFolderPath);
-    const packageName = getNpmPackageName(packageAbsolutePath);
-    const npmViewResult = await tryGetNpmView(packageName);
-    const isFirstPackageToNpm = npmViewResult === undefined;
+    
+    let isFirstPackageToNpm = false;
+    
+    try {
+        const pkgName = getNpmPackageName(packageAbsolutePath);
+        const npmViewResult = await tryGetNpmView(pkgName);
+        isFirstPackageToNpm = npmViewResult === undefined;
+    } catch (error) {
+        logger.info(
+            `Failed to get NPM package name: ${error}. Treating as first package to NPM.`,
+        );
+        isFirstPackageToNpm = true;
+    }
+    
     if (isFirstPackageToNpm) {
         logger.info(
             `Package ${packageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`,
@@ -100,7 +97,7 @@ function updateIgnoreLink(packageName: string) {
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
     let content = fs.readFileSync(ignoreLinksPath, "utf8");
     const newLine = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
-    
+
     // Check if the link already exists in the file
     if (content.includes(newLine)) {
         logger.warn(

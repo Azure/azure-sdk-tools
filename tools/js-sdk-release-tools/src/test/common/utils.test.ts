@@ -296,6 +296,21 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
     
+    test("removes all files and directories in Batch mode", async () => {
+        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        
+        try {
+            // Run the function with Batch mode
+            await cleanUpPackageDirectory(tempPackageDir, RunMode.Batch);
+
+            // Check if everything is removed
+            const entries = await readdir(tempPackageDir);
+            expect(entries.length).toBe(0);
+        } finally {
+            await remove(tempPackageDir);
+        }
+    });
+    
     test("handles empty directory", async () => {
         const tempPackageDir = path.join(
             __dirname,
@@ -319,4 +334,39 @@ describe("cleanUpPackageDirectory", () => {
             await remove(tempPackageDir);
         }
     });
+    
+    test("creates directory if it doesn't exist", async () => {
+        const tempBaseDir = path.join(
+            __dirname,
+            `tmp/base-${getRandomInt(10000)}`
+        );
+        
+        const nonExistentPackageDir = path.join(
+            tempBaseDir,
+            "non-existent-package"
+        );
+        
+        try {
+            // Ensure the base directory exists but not the package directory
+            await ensureDir(tempBaseDir);
+            
+            // Verify the package directory doesn't exist yet
+            const existsBeforeCleanup = await pathExists(nonExistentPackageDir);
+            expect(existsBeforeCleanup).toBe(false);
+            
+            // Run the cleanUpPackageDirectory function
+            await cleanUpPackageDirectory(nonExistentPackageDir, RunMode.Release);
+            
+            // Verify the directory now exists
+            const existsAfterCleanup = await pathExists(nonExistentPackageDir);
+            expect(existsAfterCleanup).toBe(true);
+            
+            // Verify it's empty
+            const entries = await readdir(nonExistentPackageDir);
+            expect(entries.length).toBe(0);
+        } finally {
+            // Clean up the base directory (which includes the created package directory)
+            await remove(tempBaseDir);
+        }
+    });    
 });

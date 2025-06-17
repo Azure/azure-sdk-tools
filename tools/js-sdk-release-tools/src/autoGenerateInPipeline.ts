@@ -99,7 +99,7 @@ async function automationGenerateInPipeline(
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
                     runMode: runMode as RunMode,
-                };                
+                };
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;
@@ -107,10 +107,10 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
-
+       
         await codeOwnersAndIgnoreLinkGenerator({
             sdkType: sdkType,
-            packages: outputJson.packages || [],
+            typeSpecDirectory: path.posix.join(specFolder, typespecProject!),
         });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;

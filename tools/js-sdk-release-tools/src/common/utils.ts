@@ -351,6 +351,13 @@ export async function cleanUpDirectory(
     directory: string, 
     entriesToPreserve: string[] = []
 ): Promise<void> {      
+    // Check if directory exists first
+    if (!fs.existsSync(directory)) {
+        logger.info(`Directory ${directory} doesn't exist, creating it`);
+        await mkdir(directory, { recursive: true });
+        return;
+    }
+    
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
@@ -385,9 +392,29 @@ export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
 ): Promise<void> {
-    // Preserve test directory and assets.json file in non-SpecPullRequest mode
-    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest;
+    // Preserve test directory and assets.json file only in Release and Local modes
+    // In SpecPullRequest and Batch modes, remove everything
+    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
     const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
 
     await cleanUpDirectory(packageDirectory, entriesToPreserve);
+}
+
+export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string> {
+
+    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const emitterOptions = tspConfig.options?.[emitterName];
+    
+    // First try to get from package-details.name which is the actual NPM package name
+    if (emitterOptions?.['package-details']?.name) {
+        return emitterOptions['package-details'].name;
+    }
+        
+    let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
+    const packageDirFromEmitter = emitterOptions?.['package-dir'];
+    if (packageDirFromEmitter) {
+        packageDir = packageDirFromEmitter;
+    }
+
+    return `@azure/${packageDir}`;   
 }

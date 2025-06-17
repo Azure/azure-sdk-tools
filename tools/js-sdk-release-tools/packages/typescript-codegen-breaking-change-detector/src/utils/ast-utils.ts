@@ -246,15 +246,18 @@ export function isSameCallSignatureLikeDeclaration<T extends CallSignatureDeclar
 }
 
 export function isPropertyMethod(p: Symbol) {
-  return p.getFlags() === SymbolFlags.Method;
+  const node = p.getValueDeclaration();
+  return node && (node.getKind() === SyntaxKind.MethodSignature || node.getKind() === SyntaxKind.MethodDeclaration);
 }
 
 export function isPropertyArrowFunction(p: Symbol) {
-  const isClassicProperty = (p.getFlags() & SymbolFlags.Property) > 0;
-  const hasArrowFunctionType = p.getValueDeclaration()
-    ? p.getValueDeclarationOrThrow().getType().getCallSignatures().length > 0
-    : false;
-  return isClassicProperty && hasArrowFunctionType;
+  const node = p.getValueDeclaration();
+  return (
+    node &&
+    (node.getKind() === SyntaxKind.PropertySignature || node.getKind() === SyntaxKind.PropertyDeclaration) &&
+    Node.isTyped(node) &&
+    node.getTypeNodeOrThrow().isKind(SyntaxKind.FunctionType)
+  );
 }
 
 export function isMethodOrArrowFunction(p: Symbol) {

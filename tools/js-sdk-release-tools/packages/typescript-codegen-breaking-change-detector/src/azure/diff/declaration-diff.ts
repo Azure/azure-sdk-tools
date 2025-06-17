@@ -221,6 +221,10 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
       return [...result, ...functionPropertyDetails];
     }
 
+    const x = targetProperty.getValueDeclaration()?.getText() || '';
+    const y = sourceProperty.getValueDeclaration()?.getText() || '';
+    console.log('🚀 ~ changed ~ x:', x, isPropertyMethod(targetProperty), isPropertyArrowFunction(targetProperty), targetProperty.getFlags());
+    console.log('🚀 ~ changed ~ y:', y, isPropertyMethod(sourceProperty), isPropertyArrowFunction(sourceProperty), sourceProperty.getFlags());
     throw new Error('Should never reach here');
   }, new Array<DiffPair>());
   return [...removed, ...changed];

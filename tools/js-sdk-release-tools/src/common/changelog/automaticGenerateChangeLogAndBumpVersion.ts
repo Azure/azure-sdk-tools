@@ -2,8 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
-import { Changelog } from "../../changelog/changelogGenerator.js";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
@@ -24,6 +22,9 @@ import { SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
+import { exists, remove } from 'fs-extra';
+import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
+import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -80,7 +81,11 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
-                const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
+                const diffDetector = new DifferenceDetector({path: apiMdFileNPM, sdkType: oldSDKType}, {path: apiMdFileLocal, sdkType: newSDKType});
+                const detectResult = await diffDetector.detect();
+                const detectContext = diffDetector.getDetectContext();
+                const changelogGenerator = new ChangelogGenerator(detectContext, detectResult);
+                const changelog = changelogGenerator.generateContent();
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
                 const lastStableChangelog: NpmViewParameters = {
                     file: "CHANGELOG.md",
@@ -122,7 +127,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     originalChangeLogContent = originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart", "https://aka.ms/azsdk/js/mgmt/quickstart");
                 }
                 originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
-                if (!changelog.hasBreakingChange && !changelog.hasFeature) {
+                if (!changelogGenerator.hasBreakingChange && !changelogGenerator.hasFeature) {
                     logger.warn('Failed to generate changelog because the codes of local and npm may be the same.');
                     logger.info('Start to bump a fix version.');
                     const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, { encoding: 'utf-8' });
@@ -134,8 +139,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     }
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
-                    await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
-                    const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
+                    // TODO
+                    // await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
+                    const newVersion = getNewVersion(stableVersion, usedVersions, changelogGenerator.hasBreakingChange, isStableRelease);
                     makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
                     return changelog;
@@ -149,7 +155,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
             }
         } finally {
             shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
-            shell.rm('-r', `${path.join(packageFolderPath, '~/.tmp-breaking-change-detect')}`);
+            const tempFolderPath = path.join(packageFolderPath, "~/.tmp-breaking-change-detect");
+            if (await exists(tempFolderPath)) await remove(tempFolderPath);
             shell.cd(jsSdkRepoPath);
         }
     }

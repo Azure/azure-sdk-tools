@@ -139,6 +139,8 @@ export function patchClass(name: string, astContext: AstContext, assignDirection
 }
 
 export function patchInterface(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+  console.log('🚀 ~ patchInterface ~ name:', name);
+
   const baseline = astContext.baseline.getInterface(name);
   const current = astContext.current.getInterface(name);
 

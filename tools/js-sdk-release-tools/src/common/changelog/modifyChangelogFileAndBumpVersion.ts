@@ -73,7 +73,7 @@ function changePackageJSON(packageFolderPath: string, packageVersion: string) {
     fs.writeFileSync(path.join(packageFolderPath, 'package.json'), result, 'utf8');
 }
 
-export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
+export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: string, originalChangeLogContent: string, comparedVersion:string) {
     let pacakgeVersionDetail = `## ${packageVersion} (${date})`;
     if(packageVersion.includes("beta")){
         pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
@@ -82,7 +82,7 @@ export function makeChangesForReleasingTrack2(packageFolderPath: string, package
     
 ${pacakgeVersionDetail}
     
-${changeLog.displayChangeLog()}
+${changeLog}
     
 ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
 

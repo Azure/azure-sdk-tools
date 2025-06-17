@@ -62,16 +62,20 @@ export class DifferenceDetector {
     switch (this.sourceApiViewOptions.sdkType) {
       case SDKType.HighLevelClient:
       case SDKType.ModularClient:
-        return await this.detectCore();
+      // TODO: RLC has it special logic to handle Routes
       case SDKType.RestLevelClient:
-        break;
+        return await this.detectCore();
       default:
         throw new Error(`Unsupported SDK type: ${this.sourceApiViewOptions.sdkType} to detect differences.`);
     }
   }
 
   private async load() {
-    this.context = await createAstContext(this.baselineApiViewOptions.path, this.sourceApiViewOptions.path, this.tempFolder);
+    this.context = await createAstContext(
+      this.baselineApiViewOptions.path,
+      this.sourceApiViewOptions.path,
+      this.tempFolder
+    );
   }
 
   public async setPreprocessFn(fn: typeof this.preprocessFn) {
@@ -135,13 +139,22 @@ export class DifferenceDetector {
     };
   }
 
-  private async detectAcrossSdkTypes() {
-    if (this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient && this.sourceApiViewOptions.sdkType === SDKType.ModularClient) {
+  private async detectAcrossSdkTypes(): Promise<DetectResult> {
+    if (
+      this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
+      this.sourceApiViewOptions.sdkType === SDKType.ModularClient
+    ) {
       // TODO
     } else {
       const message = `Not supported SDK type: ${this.baselineApiViewOptions.sdkType} -> ${this.sourceApiViewOptions.sdkType} to detect differences.`;
       throw new Error(message);
     }
-    return;
+    // TODO
+    return {
+      interfaces: new Map<string, DiffPair[]>(),
+      classes: new Map<string, DiffPair[]>(),
+      typeAliases: new Map<string, DiffPair[]>(),
+      functions: new Map<string, DiffPair[]>(),
+    };
   }
 }

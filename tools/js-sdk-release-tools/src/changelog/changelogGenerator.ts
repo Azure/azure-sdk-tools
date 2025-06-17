@@ -1190,7 +1190,9 @@ export const changelogGenerator = (
     changLog.interfaceAddOptionalParam = findInterfaceAddOptinalParam(metaDataOld, metadataNew);
     // migrated
     changLog.interfaceParamTypeExtended = findInterfaceParamTypeExtended(metaDataOld, metadataNew);
+    // migrated
     changLog.typeAliasAddInherit = findTypeAliasAddInherit(metaDataOld, metadataNew);
+    // migrated
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);
     changLog.addedEnumValue = findAddedEnumValue(metaDataOld, metadataNew);
@@ -1211,14 +1213,21 @@ export const changelogGenerator = (
     changLog.interfaceParamDelete = findInterfaceParamDelete(metaDataOld, metadataNew);
     // migrated
     changLog.interfaceParamAddRequired = findInterfaceParamAddRequired(metaDataOld, metadataNew);
+    // TODO (not suported in v2)
     changLog.interfaceParamChangeRequired = findInterfaceParamChangeRequired(metaDataOld, metadataNew);
     // migrated
     changLog.interfaceParamTypeChanged = findInterfaceParamTypeChanged(metaDataOld, metadataNew);
+    // migrated
     changLog.classParamDelete = findClassParamDelete(metaDataOld, metadataNew);
+    // TODO (not suported in v2)
     changLog.classParamChangeRequired = findClassParamChangeRequired(metaDataOld, metadataNew);
+    // migrated
     changLog.typeAliasDeleteInherit = findTypeAliasDeleteInherit(metaDataOld, metadataNew);
+    // migrated
     changLog.typeAliasParamDelete = findTypeAliasDeleteParam(metaDataOld, metadataNew);
+    // migrated
     changLog.typeAliasAddRequiredParam = findTypeAliasAddRequiredParam(metaDataOld, metadataNew);
+    // migrated
     changLog.typeAliasParamChangeRequired = findTypeAliasParamChangeRequired(metaDataOld, metadataNew);
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);

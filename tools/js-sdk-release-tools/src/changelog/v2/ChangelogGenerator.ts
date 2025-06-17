@@ -1,23 +1,55 @@
-import { format } from 'string-template';
+import * as format from 'string-template';
 import { DetectContext, DetectResult } from './DifferenceDetector.js';
 import { DiffLocation, DiffPair, DiffReasons } from 'typescript-codegen-breaking-change-detector';
-import {
-  InterfaceDeclaration,
-  Node,
-  ParameterDeclaration,
-  PropertyDeclaration,
-  PropertySignature,
-  SyntaxKind,
-} from 'ts-morph';
+import { InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
 import { SDKType } from '../../common/types.js';
 
+export enum ChangelogItemCategory {
+  /** features */
+  OperationGroupAdded = 0,
+  OperationAdded = 1,
+  ModelAdded = 2,
+  ClassAdded = 3,
+  TypeAliasAdded = 4,
+  ModelOptionalPropertyAdded = 5,
+  // TODO: interfaceParamTypeExtended?
+  // TODO: type alias type change?
+  EnumAdded = 6,
+  EnumValueAdded = 7,
+  FunctionAdded = 8,
+  // TODO
+  FunctionOverloadAdded = 9,
+
+  /** breaking changes */
+  OperationGroupRemoved = 1000,
+  OperationRemoved = 1001,
+  OperationSignatureChanged = 1002,
+  ClassRemoved = 1003,
+  ClassChanged = 1004,
+  ClassPropertyRemoved = 1005,
+  ClassPropertyOptionalToRequired = 1006,
+  ModelRemoved = 1007,
+  ModelRequiredPropertyAdded = 1008,
+  ModelPropertyTypeChanged = 1009,
+  ModelPropertyRemoved = 1010,
+  ModelPropertyOptionalToRequired = 1011,
+  ModelPropertyRequiredToOptional = 1012,
+  TypeAliasRemoved = 1013,
+  TypeAliasTypeChanged = 1014,
+  FunctionRemoved = 1015,
+  FunctionOverloadRemoved = 1016,
+  EnumRemoved = 1017,
+  EnumValueRemoved = 1018,
+}
+
 export interface ChangelogItems {
-  features: string[];
-  breakingChanges: string[];
+  features: Map<ChangelogItemCategory, string[]>;
+  breakingChanges: Map<ChangelogItemCategory, string[]>;
 }
 
 // TODO: use consistent upper/lower case
 // TODO: use consistent word: removed/deleted
+// TODO: consider enum get wider or narrower
 export class ChangelogGenerator {
   /** operation group */
   private operationGroupAddedTemplate = 'Added operation group {interfaceName}';
@@ -45,17 +77,28 @@ export class ChangelogGenerator {
   /** class */
   private classAddedTemplate = 'Added Class {className}';
   private classRemovedTemplate = 'Deleted Class {className}';
+  private classPropertyRemovedTemplate = 'Class {className} no longer has parameter {propertyName}';
+  private classPropertyOptionalToRequired = 'Parameter {propertyName} of class {className} is now required';
   // NOTE: not detected in v1 except constructor and it's parameters
   private classChanged = 'Class {className} has a new signature';
 
+  // TODO: add detection for extended type
   /** type alias */
   private typeAliasAddedTemplate = 'Added type alias {typeName}';
   // NOTE: not in v1
   private typeAliasRemovedTemplate = 'Removed type alias {typeName}';
+  private typeAliasTypeChangedTemplate = 'Type of type alias {typeName} has been changed';
 
-  changelogItems: ChangelogItems = {
-    features: [],
-    breakingChanges: [],
+  /** function */
+  private functionAddedTemplate = 'Added function {functionName}';
+  private functionRemovedTemplate = 'Removed function {functionName}';
+
+  // TODO
+  /** enum */
+
+  private changelogItems: ChangelogItems = {
+    features: new Map<ChangelogItemCategory, string[]>(),
+    breakingChanges: new Map<ChangelogItemCategory, string[]>(),
   };
 
   constructor(
@@ -63,11 +106,79 @@ export class ChangelogGenerator {
     private detectResult: DetectResult
   ) {}
 
-  public generate(): ChangelogItems {
+  public generateContent(): string {
     this.detectResult.interfaces.forEach((diffPairs, name) => {
       this.generateForInterfaces(name, diffPairs);
       this.generateForClasses(name, diffPairs);
       this.generateForTypeAliases(name, diffPairs);
+      // TODO: add enum support
+      //   this.generateForEnums(name, diffPairs);
+      this.generateForFunctions(name, diffPairs);
+    });
+    const content = this.generateContentCore();
+    return content;
+  }
+
+  public get hasBreakingChange(): boolean {
+    return this.changelogItems.breakingChanges.size > 0;
+  }
+
+  public get hasFeature(): boolean {
+    return this.changelogItems.features.size > 0;
+  }
+
+  private getItemsFromCategoryMap(map: Map<ChangelogItemCategory, string[]>): string[] {
+    const items: string[] = [];
+    [...map.keys()].sort().forEach((category) => {
+      const categoryItems = map.get(category);
+      if (!categoryItems || categoryItems.length === 0) return;
+      categoryItems.forEach((item) => items.push(item));
+    });
+    return items;
+  }
+
+  private generateSection(items: string[], title: string): string {
+    if (items.length === 0) return '';
+    let content = `### ${title}\n`;
+    content += items.map((i) => `  - ${i}`).join('\n');
+    content += '\n';
+    return content;
+  }
+
+  private generateContentCore() {
+    let content = '';
+    const featureItems = this.getItemsFromCategoryMap(this.changelogItems.features);
+    content += this.generateSection(featureItems, 'Features Added');
+
+    const breakingChangeItems = this.getItemsFromCategoryMap(this.changelogItems.breakingChanges);
+    content += this.generateSection(breakingChangeItems, 'Breaking Changes');
+
+    return content;
+  }
+
+  private addChangelogItem(category: ChangelogItemCategory, message: string) {
+    if (category < 1000) {
+      this.changelogItems.features.get(category)?.push(message) ||
+        this.changelogItems.features.set(category, [message]);
+    } else {
+      this.changelogItems.breakingChanges.get(category)?.push(message) ||
+        this.changelogItems.breakingChanges.set(category, [message]);
+    }
+  }
+
+  private generateForFunctions(functionName: string, diffPairs: DiffPair[]): void {
+    diffPairs.forEach((p) => {
+      // function added
+      if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
+        const message = format(this.functionAddedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionAdded, message);
+      }
+      // function removed
+      if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
+        const message = format(this.functionRemovedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionRemoved, message);
+      }
+      // TODO: add more
     });
   }
 
@@ -76,13 +187,18 @@ export class ChangelogGenerator {
       // type alias added
       if (p.location === DiffLocation.TypeAlias && this.hasReasons(p.reasons, DiffReasons.Added)) {
         const message = format(this.typeAliasAddedTemplate, { typeName });
-        p.messages.set(DiffReasons.Added, message);
+        this.addChangelogItem(ChangelogItemCategory.TypeAliasAdded, message);
       }
       // NOTE: not detected in v1
       // type alias removed
       if (p.location === DiffLocation.TypeAlias && this.hasReasons(p.reasons, DiffReasons.Removed)) {
         const message = format(this.typeAliasRemovedTemplate, { typeName });
-        p.messages.set(DiffReasons.Removed, message);
+        this.addChangelogItem(ChangelogItemCategory.TypeAliasRemoved, message);
+      }
+      // type alias type changed
+      if (p.location === DiffLocation.TypeAlias && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
+        const message = format(this.typeAliasTypeChangedTemplate, { typeName });
+        this.addChangelogItem(ChangelogItemCategory.TypeAliasTypeChanged, message);
       }
     });
   }
@@ -92,12 +208,12 @@ export class ChangelogGenerator {
       // class added
       if (p.location === DiffLocation.Class && this.hasReasons(p.reasons, DiffReasons.Added)) {
         const message = format(this.classAddedTemplate, { className });
-        p.messages.set(DiffReasons.Added, message);
+        this.addChangelogItem(ChangelogItemCategory.ClassAdded, message);
       }
       // class removed
       if (p.location === DiffLocation.Class && this.hasReasons(p.reasons, DiffReasons.Removed)) {
         const message = format(this.classRemovedTemplate, { className });
-        p.messages.set(DiffReasons.Removed, message);
+        this.addChangelogItem(ChangelogItemCategory.ClassRemoved, message);
       }
       // class type changed
       // NOTE: not detected in v1 except constructor and it's parameters
@@ -107,8 +223,25 @@ export class ChangelogGenerator {
         (this.hasReasons(p.reasons, DiffReasons.Added) || this.hasReasons(p.reasons, DiffReasons.Removed))
       ) {
         const message = format(this.classChanged, { className });
-        // not good, remove it
-        p.messages.set(DiffReasons.Added, message);
+        this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
+      }
+      // class property removed
+      if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {
+        const message = format(this.classPropertyRemovedTemplate, {
+          className,
+          propertyName: p.target!.name,
+        });
+        this.addChangelogItem(ChangelogItemCategory.ClassPropertyRemoved, message);
+      }
+      // class property optional to required
+      // TODO: add new diff reason for optional to required
+      // NOTE: not supported in v2
+      if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
+        const message = format(this.classPropertyOptionalToRequired, {
+          className,
+          propertyName: p.source!.name,
+        });
+        this.addChangelogItem(ChangelogItemCategory.ClassPropertyOptionalToRequired, message);
       }
     });
   }
@@ -129,24 +262,24 @@ export class ChangelogGenerator {
         // operation group added
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Added)) {
           const message = format(this.operationGroupAddedTemplate, { interfaceName });
-          p.messages.set(DiffReasons.Added, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationGroupAdded, message);
         }
         // operation group removed
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
           const message = format(this.operationGroupRemovedTemplate, { interfaceName });
-          p.messages.set(DiffReasons.Removed, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationGroupRemoved, message);
         }
 
         /** operation changes */
         // operation added
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
           const message = format(this.operationAddedTemplate, { interfaceName, signatureName: p.source!.name });
-          p.messages.set(DiffReasons.Added, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationAdded, message);
         }
         // operation removed
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
           const message = format(this.operationRemovedTemplate, { interfaceName, signatureName: p.source!.name });
-          p.messages.set(DiffReasons.Removed, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationRemoved, message);
         }
         // operation signature's parameter type changed
         if (p.location === DiffLocation.Parameter && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
@@ -155,7 +288,7 @@ export class ChangelogGenerator {
             // TODO: get signature name
             signatureName: 'TODO',
           });
-          p.messages.set(DiffReasons.TypeChanged, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
         // operation signature's parameter list changed
         if (
@@ -166,7 +299,7 @@ export class ChangelogGenerator {
             interfaceName,
             signatureName: p.target!.name,
           });
-          p.messages.set(DiffReasons.TypeChanged, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
         // operation signature's return type changed
         // NOTE: not detected in v1
@@ -175,7 +308,7 @@ export class ChangelogGenerator {
             interfaceName,
             signatureName: p.target!.name,
           });
-          p.messages.set(DiffReasons.TypeChanged, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
         // operation parameter
         // TODO: v1 make it a breaking change when operation optional/required changed, while v2 only consider required-> optional is breaking change
@@ -185,30 +318,30 @@ export class ChangelogGenerator {
             // TODO: get signature name
             signatureName: 'TODO',
           });
-          p.messages.set(DiffReasons.TypeChanged, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
         // operation signature's parameter required/optional changed
-        // NOTE: not detected in v1
-        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
+        // NOTE: not detected in v2
+        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
           const message = format(this.operationSignatureChangedTemplate, {
             interfaceName,
             // TODO: get signature name
             signatureName: 'TODO',
           });
-          p.messages.set(DiffReasons.TypeChanged, message);
+          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
       } else {
         /** model changes */
         // model added
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Added)) {
           const message = format(this.modelAddedTemplate, { interfaceName });
-          p.messages.set(DiffReasons.Added, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelAdded, message);
         }
         // NOTE: not detected in v1
         // model removed
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
           const message = format(this.modelRemovedTemplate, { interfaceName });
-          p.messages.set(DiffReasons.Removed, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelRemoved, message);
         }
         // model's optional property added
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Added)) {
@@ -216,7 +349,7 @@ export class ChangelogGenerator {
             interfaceName,
             propertyName: p.source!.name,
           });
-          p.messages.set(DiffReasons.Added, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelOptionalPropertyAdded, message);
         }
         // model's required property added
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Added)) {
@@ -224,31 +357,32 @@ export class ChangelogGenerator {
             interfaceName,
             propertyName: p.source!.name,
           });
-          p.messages.set(DiffReasons.Added, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelRequiredPropertyAdded, message);
         }
-        // model's optional property type changed
+        // model's property type changed
         // NOTE: not detected in v1 except for union type
         // NOTE: discuss if extend union type to be breaking or not
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
           const getTypeText = (node: Node) =>
-            node.asKindOrThrow(SyntaxKind.PropertyDeclaration).getTypeNodeOrThrow().getText();
+            node.asKindOrThrow(SyntaxKind.PropertySignature).getTypeNodeOrThrow().getText();
           const message = format(this.modelPropertyTypeChangedTemplate, {
             interfaceName,
             newPropertyName: p.source!.name,
             oldPropertyType: getTypeText(p.target!.node),
             newPropertyType: getTypeText(p.source!.node),
           });
-          p.messages.set(DiffReasons.TypeChanged, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelPropertyTypeChanged, message);
         }
         // model's property removed
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {
           const message = format(this.modelPropertyRemovedTemplate, { interfaceName, propertyName: p.target!.name });
-          p.messages.set(DiffReasons.Removed, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelPropertyRemoved, message);
         }
-        // TODO: not detected in v2
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.OptionalToRequired)) {
+        // TODO: not supported in v2
+        // TODO: add new diff reason for optional to required
+        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
           const message = format(this.modelPropertyOptionalToRequired, { interfaceName, propertyName: p.source!.name });
-          p.messages.set(DiffReasons.OptionalToRequired, message);
+          this.addChangelogItem(ChangelogItemCategory.ModelPropertyOptionalToRequired, message);
         }
       }
     });
@@ -275,20 +409,6 @@ export class ChangelogGenerator {
         return false;
       default:
         throw new Error(`Unsupported SDK type ${sdkType} to distingush operation interface.`);
-    }
-  }
-
-  private isModelInterface(node: InterfaceDeclaration, sdkType: SDKType) {
-    const memberCount = node.getMembers().length;
-    switch (sdkType) {
-      case SDKType.HighLevelClient:
-        return memberCount > 0 && memberCount > node.getMethods().length;
-      case SDKType.ModularClient:
-        return memberCount > 0 && memberCount > node.getProperties().filter(this.isFunctionType).length;
-      case SDKType.RestLevelClient:
-        return false;
-      default:
-        throw new Error(`Unsupported SDK type ${sdkType} to distingush model interface.`);
     }
   }
 }

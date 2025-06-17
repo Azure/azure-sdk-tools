@@ -24,26 +24,25 @@ export const codeOwnersAndIgnoreLinkGenerator = async (options: {
     if (!packageDirectory) {
         logger.warn("Failed to get package directory");
         return;
-    }   
+    }
     const packageName = await getPackageNameFromTspConfig(options.typeSpecDirectory);
     await tryGenerateCodeOwnersAndIgnoreLinkForPackage(packageDirectory, packageName);
 };
 
 export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
-    packageName: string
+    packageName?: string
 ) {
     logger.info(
         `Start to generate CODEOWNERS and ignore link for ${packageFolderPath}`,
     );
-    
-    const jsSdkRepoPath = String(shell.pwd());
-    const packageAbsolutePath = path.join(jsSdkRepoPath, packageFolderPath);
-    
     let isFirstPackageToNpm = false;
-    
+    let pkgName: string = '';
+
     try {
-        const pkgName = getNpmPackageName(packageAbsolutePath);
+        const jsSdkRepoPath = String(shell.pwd());
+        const packageAbsolutePath = path.join(jsSdkRepoPath, packageFolderPath);
+        pkgName = getNpmPackageName(packageAbsolutePath);
         const npmViewResult = await tryGetNpmView(pkgName);
         isFirstPackageToNpm = npmViewResult === undefined;
     } catch (error) {
@@ -52,20 +51,17 @@ export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
         );
         isFirstPackageToNpm = true;
     }
-    
+
+    // Use pkgName as a fallback if packageName is undefined
+    const effectivePackageName = packageName || pkgName;
+
     if (isFirstPackageToNpm) {
-        logger.info(
-            `Package ${packageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`,
-        );
+        logger.info(`Package ${effectivePackageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`);
         updateCODEOWNERS(packageFolderPath);
-        updateIgnoreLink(packageName);
-        logger.info(
-            `Generated updates for CODEOWNERS and ignore link successfully`,
-        );
+        updateIgnoreLink(effectivePackageName);
+        logger.info(`Generated updates for CODEOWNERS and ignore link successfully`);
     } else {
-        logger.info(
-            `Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`,
-        );
+        logger.info(`Package ${effectivePackageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`);
     }
 }
 
@@ -100,9 +96,7 @@ function updateIgnoreLink(packageName: string) {
 
     // Check if the link already exists in the file
     if (content.includes(newLine)) {
-        logger.warn(
-            `Failed to add link for ${packageName} to ignore-links.txt as it already exists, skipping.`,
-        );
+        logger.warn(`Failed to add link for ${packageName} to ignore-links.txt as it already exists, skipping.`);
         return;
     }
 

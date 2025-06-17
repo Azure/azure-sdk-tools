@@ -1,8 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, beforeEach, afterEach } from "vitest";
 import {
     resolveOptions,
     specifyApiVersionToGenerateSDKByTypeSpec,
     cleanUpPackageDirectory,
+    getPackageNameFromTspConfig,
 } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
@@ -310,7 +311,7 @@ describe("cleanUpPackageDirectory", () => {
             await remove(tempPackageDir);
         }
     });
-    
+
     test("handles empty directory", async () => {
         const tempPackageDir = path.join(
             __dirname,
@@ -369,4 +370,182 @@ describe("cleanUpPackageDirectory", () => {
             await remove(tempBaseDir);
         }
     });    
+});
+
+describe("getPackageNameFromTspConfig", () => {
+    // Store the original function for spying
+    const originalResolveOptions = resolveOptions;
+    
+    // Create an interception wrapper
+    let mockConfigForTest;
+    const interceptResolveOptions = async (dir) => {
+        return mockConfigForTest;
+    };
+    
+    beforeEach(() => {
+        // Replace original function with our interceptor
+        global.resolveOptions = interceptResolveOptions;
+    });
+    
+    afterEach(() => {
+        // Restore original function
+        global.resolveOptions = originalResolveOptions;
+        mockConfigForTest = undefined;
+    });
+
+    // Test utilities
+    async function setupTempDirectory() {
+        const tempSpecFolder = path.join(
+            __dirname,
+            `tmp/spec-${getRandomInt(10000)}`
+        );
+        await ensureDir(tempSpecFolder);
+        return tempSpecFolder;
+    }
+
+    async function writeTspConfig(tempSpecFolder, config) {
+        await writeFile(
+            path.join(tempSpecFolder, "tspconfig.yaml"),
+            stringify(config),
+            { encoding: "utf8" }
+        );
+    }
+
+    // Test case 1: package-details.name exists
+    test("extracts package name from package-details.name when it exists", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {
+                    "package-dir": {
+                        default: "sdk/contoso"
+                    }
+                },
+                options: {
+                    "@azure-tools/typespec-ts": {
+                        "package-dir": "arm-something-else",
+                        "package-details": {
+                            name: "@azure/arm-contoso"
+                        }
+                    }
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBe("@azure/arm-contoso");
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });    
+    // Test case 2: Using package-dir from emitter options
+    test("extracts package name from emitter package-dir when available", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {
+                    "package-dir": {
+                        default: "sdk/contoso"
+                    }
+                },
+                options: {
+                    "@azure-tools/typespec-ts": {
+                        "package-dir": "arm-contoso"
+                    }
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBe("@azure/arm-contoso");
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
+    
+    // Test case 3: Using package-dir from parameters
+    test("extracts package name from parameters package-dir when emitter package-dir is not available", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {
+                    "package-dir": {
+                        default: "arm-contoso"
+                    }
+                },
+                options: {
+                    "@azure-tools/typespec-ts": {}
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBe("@azure/arm-contoso");
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
+    
+    // Test case 4: Missing package-dir
+    test("returns @azure/undefined when package-dir is missing", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {},
+                options: {
+                    "@azure-tools/typespec-ts": {}
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBe("@azure/undefined");
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
 });

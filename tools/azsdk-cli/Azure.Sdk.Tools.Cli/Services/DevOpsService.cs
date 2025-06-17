@@ -430,7 +430,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get release plan. Error: {ex.Message}");
+                throw new Exception($"Failed to get work item. Error: {ex.Message}");
             }
 
         }

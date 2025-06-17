@@ -84,14 +84,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                     if (!package.IsPackageNameApproved)
                     {
                         isPackageReady = false;
-                        outputBuilder.AppendLine($"Package name '{packageName}' is not approved for preview release in language '{language}'.");
+                        outputBuilder.AppendLine($"Package name '{packageName}' is not approved for preview release.");
                         outputBuilder.AppendLine($"Package Name Approval Status: {package.PackageNameStatus}");
                         outputBuilder.AppendLine($"Package Name Approval Details: {package.PackageNameApprovalDetails}");
                     }
-                    else
+                    else if (!package.ReleasedVersions.Any())
                     {
-                        outputBuilder.AppendLine($"Package name '{packageName}' is approved for preview release in language '{language}'.");
+                        outputBuilder.AppendLine($"Package name '{packageName}' is approved for preview release");
                     }
+                    // no need to show package name approval status if package name is approved and has at least one version already released
                 }
 
                 // Check if API view is approved if stable version for data plane or .NET

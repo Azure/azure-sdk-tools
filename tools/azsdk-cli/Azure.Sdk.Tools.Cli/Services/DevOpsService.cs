@@ -94,15 +94,19 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
+        public Task<Package> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
     }
 
-    public class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
+    public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
         public static readonly string DEVOPS_URL = "https://dev.azure.com/azure-sdk";
         public static readonly string RELEASE_PROJECT = "release";
         public static readonly string INTERNAL_PROJECT = "internal";
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
+
+        [GeneratedRegex("\\|\\s(Beta|Stable)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
+        private static partial Regex SdkReleaseDetailsRegex();
 
         public async Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId)
         {
@@ -151,13 +155,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
 
             var languages = new string[] { "Dotnet", "JavaScript", "Python", "Java", "Go" };
-            foreach(var lang in languages)
+            foreach (var lang in languages)
             {
                 var sdkGenPipelineUrl = workItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var sdkPullRequestUrl = workItem.Fields.TryGetValue($"Custom.SDKPullRequestFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var packageName = workItem.Fields.TryGetValue($"Custom.{lang}PackageName", out value) ? value?.ToString() ?? string.Empty : string.Empty;
 
-                if (!string.IsNullOrEmpty(sdkGenPipelineUrl) || !string.IsNullOrEmpty(sdkPullRequestUrl) || !string.IsNullOrEmpty(packageName) )
+                if (!string.IsNullOrEmpty(sdkGenPipelineUrl) || !string.IsNullOrEmpty(sdkPullRequestUrl) || !string.IsNullOrEmpty(packageName))
                 {
                     releasePlan.SDKInfo.Add(
                         new SDKInfo()
@@ -387,7 +391,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Value = sdkGenerationPipelineUrl
                         });
                 }
-                
+
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
                     jsonLinkDocument.Add(
@@ -595,7 +599,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     }
                 };
 
-                foreach(var sdk in sdkLanguages)
+                foreach (var sdk in sdkLanguages)
                 {
                     // Add package name in release plan for each language
                     if (!string.IsNullOrEmpty(sdk.Language) && !string.IsNullOrEmpty(sdk.PackageName))
@@ -781,6 +785,86 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new Exception($"Failed to link namespace approval issue. Error: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Get package work item for a given package name and language.
+        /// If package version is given, then it will find the package work item for that version.
+        /// If package version is empty, then it will find the latest package work item for that package name and language.
+        /// </summary>
+        public async Task<Package> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        {
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            if (!string.IsNullOrEmpty(packageVersion))
+            {
+                query += $" AND [Custom.PackageVersion] = '{packageVersion}'";
+            }
+            query += "  ORDER BY [System.Id] DESC"; // Order by package work item to find the most recently created
+            _logger.LogInformation($"Fetching package work item with package name {packageName}, package version {packageVersion} and language {language}.");
+
+            var packageWorkItems = await FetchWorkItemsAsync(query);
+            if (packageWorkItems.Count == 0)
+            {
+                throw new Exception($"Failed to find package work item with package name {packageName}. Please check package name, package version and language values.");
+            }
+            return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
+        }
+
+        public static Package MapPackageWorkItemToModel(WorkItem workItem)
+        {
+            if (workItem == null)
+                throw new ArgumentNullException(nameof(workItem), "Work item cannot be null.");
+
+            Package packageModel = new()
+            {
+                Name = GetWorkItemValue(workItem, "Custom.Package"),
+                Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),
+                Language = GetWorkItemValue(workItem, "Custom.Language"),
+                WorkItemId = workItem.Id ?? 0,
+                WorkItemUrl = workItem.Url,
+                State = GetWorkItemValue(workItem, "System.State"),
+                PackageType = GetWorkItemValue(workItem, "Custom.PackageType"),
+                DisplayName = GetWorkItemValue(workItem, "Custom.PackageDisplayName"),
+                PackageRepoPath = GetWorkItemValue(workItem, "Custom.PackageRepoPath"),
+                changeLogStatus = GetWorkItemValue(workItem, "Custom.ChangeLogStatus"),
+                ChangeLogValidationDetails = GetWorkItemValue(workItem, "Custom.ChangeLogValidationDetails"),
+                APIViewStatus = GetWorkItemValue(workItem, "Custom.APIReviewStatus"),
+                ApiViewValidationDetails = GetWorkItemValue(workItem, "Custom.APIReviewStatusDetails"),
+                PackageNameStatus = GetWorkItemValue(workItem, "Custom.PackageNameApprovalStatus"),
+                PackageNameApprovalDetails = GetWorkItemValue(workItem, "Custom.PackageNameApprovalDetails"),
+                PipelineDefinitionUrl = GetWorkItemValue(workItem, "Custom.PipelineDefinition"),
+                LastPipelineRun = GetWorkItemValue(workItem, "Custom.LastPipelineRun")
+            };
+
+            var plannedPackages = GetWorkItemValue(workItem, "Custom.PlannedPackages");
+            packageModel.PlannedReleases = ParseHtmlPackageData(plannedPackages);
+            var releasedPackages = GetWorkItemValue(workItem, "Custom.ShippedPackages");
+            packageModel.ReleasedVersions = ParseHtmlPackageData(releasedPackages);
+            return packageModel;
+        }
+        private static string GetWorkItemValue(WorkItem workItem, string fieldName)
+        {
+            if (workItem.Fields.TryGetValue(fieldName, out object? value))
+            {
+                return value?.ToString() ?? string.Empty; 
+            }
+            return string.Empty;
+        }
+
+        private static List<SDKReleaseInfo> ParseHtmlPackageData(string packageData)
+        {            
+            List<SDKReleaseInfo> sdkReleaseInfo = [];
+            var matches = SdkReleaseDetailsRegex().Matches(packageData);
+            foreach(Match m in matches)
+            {
+                sdkReleaseInfo.Add(new SDKReleaseInfo
+                {
+                    ReleaseType = m.Groups[1].Value,
+                    Version = m.Groups[2].Value,
+                    ReleaseDate = m.Groups[3].Value
+                });
+            }
+            return sdkReleaseInfo;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
+using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -19,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecPullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
+            typeof(ReleaseReadinessTool),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

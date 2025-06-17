@@ -1178,11 +1178,17 @@ export const changelogGenerator = (
     // features
     // migrated
     changLog.addedOperationGroup = findAddedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    // migrated
     changLog.addedOperation = findAddedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    // migrated
     changLog.addedInterface = findAddedInterface(metaDataOld, metadataNew);
+    // migrated
     changLog.addedClass = findAddedClass(metaDataOld, metadataNew);
+    // migrated
     changLog.addedTypeAlias = findAddedTypeAlias(metaDataOld, metadataNew);
+    // migrated
     changLog.interfaceAddOptionalParam = findInterfaceAddOptinalParam(metaDataOld, metadataNew);
+    // migrated
     changLog.interfaceParamTypeExtended = findInterfaceParamTypeExtended(metaDataOld, metadataNew);
     changLog.typeAliasAddInherit = findTypeAliasAddInherit(metaDataOld, metadataNew);
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
@@ -1191,14 +1197,22 @@ export const changelogGenerator = (
     changLog.addedFunction = findAddedFunction(metaDataOld, metadataNew);
 
     // breaking changes
+    // migrated
     changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    // migrated
     changLog.removedOperation = findRemovedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    // migrated
     changLog.operationSignatureChange = findOperationSignatureChange(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    // migrated
     changLog.deletedClass = findDeletedClass(metaDataOld, metadataNew);
+    // migrated
     changLog.classSignatureChange = findClassSignatureChange(metaDataOld, metadataNew);
+    // migrated
     changLog.interfaceParamDelete = findInterfaceParamDelete(metaDataOld, metadataNew);
+    // migrated
     changLog.interfaceParamAddRequired = findInterfaceParamAddRequired(metaDataOld, metadataNew);
     changLog.interfaceParamChangeRequired = findInterfaceParamChangeRequired(metaDataOld, metadataNew);
+    // migrated
     changLog.interfaceParamTypeChanged = findInterfaceParamTypeChanged(metaDataOld, metadataNew);
     changLog.classParamDelete = findClassParamDelete(metaDataOld, metadataNew);
     changLog.classParamChangeRequired = findClassParamChangeRequired(metaDataOld, metadataNew);

@@ -400,7 +400,7 @@ export async function cleanUpPackageDirectory(
     await cleanUpDirectory(packageDirectory, entriesToPreserve);
 }
 
-export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string> {
+export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
 
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
@@ -414,6 +414,11 @@ export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Pr
     const packageDirFromEmitter = emitterOptions?.['package-dir'];
     if (packageDirFromEmitter) {
         packageDir = packageDirFromEmitter;
+    }
+
+    // Return undefined if packageDir is undefined
+    if (!packageDir) {
+        return undefined;
     }
 
     return `@azure/${packageDir}`;   

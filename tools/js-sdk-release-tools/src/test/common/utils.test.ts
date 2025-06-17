@@ -411,7 +411,6 @@ describe("getPackageNameFromTspConfig", () => {
         );
     }
 
-    // Test case 1: package-details.name exists
     test("extracts package name from package-details.name when it exists", async () => {
         const tempSpecFolder = await setupTempDirectory();
         
@@ -449,7 +448,7 @@ describe("getPackageNameFromTspConfig", () => {
             await remove(tempSpecFolder);
         }
     });    
-    // Test case 2: Using package-dir from emitter options
+
     test("extracts package name from emitter package-dir when available", async () => {
         const tempSpecFolder = await setupTempDirectory();
         
@@ -485,7 +484,6 @@ describe("getPackageNameFromTspConfig", () => {
         }
     });
     
-    // Test case 3: Using package-dir from parameters
     test("extracts package name from parameters package-dir when emitter package-dir is not available", async () => {
         const tempSpecFolder = await setupTempDirectory();
         
@@ -518,9 +516,8 @@ describe("getPackageNameFromTspConfig", () => {
             await remove(tempSpecFolder);
         }
     });
-    
-    // Test case 4: Missing package-dir
-    test("returns @azure/undefined when package-dir is missing", async () => {
+
+    test("returns undefined when package-dir is missing", async () => {
         const tempSpecFolder = await setupTempDirectory();
         
         try {
@@ -543,7 +540,7 @@ describe("getPackageNameFromTspConfig", () => {
             
             // Call function and verify result
             const result = await getPackageNameFromTspConfig(tempSpecFolder);
-            expect(result).toBe("@azure/undefined");
+            expect(result).toBeUndefined();
         } finally {
             await remove(tempSpecFolder);
         }

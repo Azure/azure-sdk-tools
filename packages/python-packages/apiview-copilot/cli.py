@@ -48,6 +48,7 @@ def local_review(
     base: str = None,
     outline: str = None,
     existing_comments: str = None,
+    debug_log: bool = False,
 ):
     """
     Generates a review using the locally installed code.
@@ -90,6 +91,7 @@ def local_review(
         language=language,
         outline=outline_text,
         comments=comments_obj,
+        debug_log=debug_log,
     )
     review = reviewer.run()
     reviewer.close()
@@ -344,6 +346,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Path to a JSON file containing existing comments.",
                 default=None,
+            )
+            ac.argument(
+                "debug_log",
+                options_list=["--debug-log"],
+                action="store_true",
+                help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")

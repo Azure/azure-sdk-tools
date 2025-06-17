@@ -1,5 +1,6 @@
 from azure.identity import DefaultAzureCredential
 import concurrent.futures
+import datetime
 import json
 import logging
 import os
@@ -88,6 +89,7 @@ class ApiViewReview:
         outline: Optional[str] = None,
         comments: Optional[list] = None,
         include_general_guidelines: bool = False,
+        debug_log: bool = False,
     ):
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
@@ -106,6 +108,7 @@ class ApiViewReview:
         self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
+        self.debug_log = debug_log
 
     def __del__(self):
         # Ensure the executor is properly shut down
@@ -446,6 +449,21 @@ class ApiViewReview:
 
         # Update the results with the filtered comments
         print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
+
+        # Debug log: dump keep_comments and discard_comments to files if enabled
+        if self.debug_log:
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            debug_dir = os.path.join("scratch", "logs", self.language)
+            os.makedirs(debug_dir, exist_ok=True)
+            keep_path = os.path.join(debug_dir, f"debug_keep_comments_{ts}.json")
+            discard_path = os.path.join(debug_dir, f"debug_discard_comments_{ts}.json")
+            with open(keep_path, "w", encoding="utf-8") as f:
+                json.dump(keep_comments, f, indent=2)
+            with open(discard_path, "w", encoding="utf-8") as f:
+                json.dump(discard_comments, f, indent=2)
+            logger.debug(f"Kept comments written to {keep_path}")
+            logger.debug(f"Discarded comments written to {discard_path}")
+
         self.results.comments = [Comment(**comment) for comment in keep_comments]
 
     def _filter_preexisting_comments(self):

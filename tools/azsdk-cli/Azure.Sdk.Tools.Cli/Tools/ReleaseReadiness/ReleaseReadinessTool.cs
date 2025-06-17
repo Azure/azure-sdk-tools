@@ -43,7 +43,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
         {
             try
             {
-                logger.LogInformation($"Retrieving work item for package '{packageName}' in language '{language}' is not yet implemented.");
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language, packageVersion);
                 if (package == null)
                 {

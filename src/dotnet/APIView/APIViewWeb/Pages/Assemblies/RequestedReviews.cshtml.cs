@@ -10,22 +10,22 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace APIViewWeb.Pages.Assemblies
-{
+{    
     public class RequestedReviews: PageModel
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
+        private readonly IReviewManager _reviewManager;
         public readonly UserProfileCache _userProfileCache;
-
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ApprovedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
-
-        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, UserProfileCache userProfileCache)
+        public IEnumerable<APIRevisionListItemModel> NamespaceApprovalRequestedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();        
+        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, UserProfileCache userProfileCache)
         {
             _apiRevisionsManager = apiRevisionsManager;
+            _reviewManager = reviewManager;
             _userProfileCache = userProfileCache;
-        }
-
+        }        
         public async Task<IActionResult> OnGetAsync()
         {
             var userId = User.GetGitHubLogin();
@@ -33,20 +33,46 @@ namespace APIViewWeb.Pages.Assemblies
 
             List<APIRevisionListItemModel> activeAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
-            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.First(x => x.AssingedTo.Equals(userId)).AssingedOn))
-            {
-                if (!apiRevison.IsApproved)
-                {
-                    activeAPIRevs.Add(apiRevison);
-                }
+            List<APIRevisionListItemModel> namespaceApprovalRequestedAPIRevs = new List<APIRevisionListItemModel>();
 
-                if (apiRevison.IsApproved && apiRevison.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn >= DateTime.Now.AddDays(-7))
+            // Get all unique review IDs to minimize database calls
+            var reviewIds = APIRevisions.Select(r => r.ReviewId).Distinct().ToList();
+            var reviews = new Dictionary<string, ReviewListItemModel>();
+            
+            // Fetch all parent reviews in batch
+            foreach (var reviewId in reviewIds)
+            {
+                var review = await _reviewManager.GetReviewAsync(User, reviewId);
+                if (review != null)
                 {
-                    approvedAPIRevs.Add(apiRevison);
+                    reviews[reviewId] = review;
                 }
             }
+
+            foreach (var apiRevision in APIRevisions.OrderByDescending(r => r.AssignedReviewers.First(x => x.AssingedTo.Equals(userId)).AssingedOn))
+            {
+                if (!apiRevision.IsApproved)
+                {
+                    activeAPIRevs.Add(apiRevision);
+                }
+
+                if (apiRevision.IsApproved && apiRevision.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn >= DateTime.Now.AddDays(-7))
+                {
+                    approvedAPIRevs.Add(apiRevision);
+                }
+
+                // Check if the parent review has namespace approval requested using cached data
+                if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview) && 
+                    parentReview.IsNamespaceReviewRequested && 
+                    !parentReview.IsNamespaceApproved)
+                {
+                    namespaceApprovalRequestedAPIRevs.Add(apiRevision);
+                }
+            }
+            
             ActiveAPIRevisions = activeAPIRevs;
             ApprovedAPIRevisions = approvedAPIRevs;
+            NamespaceApprovalRequestedAPIRevisions = namespaceApprovalRequestedAPIRevs;
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
             return Page();

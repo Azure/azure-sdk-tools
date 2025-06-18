@@ -13,6 +13,7 @@ using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -127,6 +128,30 @@ namespace APIViewWeb.LeanControllers
             var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for Requesting Namespace Review
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        [HttpPost("{reviewId}/requestNamespaceReview", Name = "RequestNamespaceReview")]
+        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] string notes = "")
+        {
+            try
+            {
+                _logger.LogInformation("RequestNamespaceReview called for reviewId: {ReviewId}, notes: {Notes}", reviewId, notes);
+                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, notes);
+                await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
+                _logger.LogInformation("RequestNamespaceReview completed successfully for reviewId: {ReviewId}", reviewId);
+                return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in RequestNamespaceReview for reviewId: {ReviewId}", reviewId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
+            }
         }
 
         /// <summary>

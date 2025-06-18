@@ -7,7 +7,7 @@ pr:
     - eng/pipelines/agent-software-inventory.yml
 
 jobs:
-- job: inventory
+- job: inventory_azure_pipelines
   strategy:
     matrix:
       Linux:
@@ -22,6 +22,18 @@ jobs:
         Pool: Azure Pipelines
         OSVmImage: macOS-latest
         Host: MacOS
+
+
+  pool:
+    name: $(Pool)
+    vmImage: $(OSVmImage)
+
+  steps:
+  - template: /eng/pipelines/templates/steps/inventory-steps.yml
+
+- job: inventory_custom_agents
+  strategy:
+    matrix:
       CustomLinux22:
         Pool: azsdk-pool
         OSVmImage: ubuntu-22.04
@@ -37,133 +49,15 @@ jobs:
 
   pool:
     name: $(Pool)
-    vmImage: $(OSVmImage)
+    image: $(OSVmImage)
 
   steps:
-  - checkout: self
-
-  # Inventory files should be written without headers in the format:
-  # Host, VmImage, Package Manager, Package Name, Package Version, Package Architecture {unknown, x86, amd64, arm64, all}
-  - bash: sudo chown -R runner ~/.Azure
-    displayName: (MacOS) Grant access to ~/.Azure
-    condition: and(succeeded(), eq(variables.Host, 'MacOS'))
-
-  - bash: dpkg-query -Wf '$(Host), $(OSVmImage), dpkg, ${Package}, ${Version}, ${Architecture}\n' > dpkg-inventory.csv
-    displayName: (Ubuntu) dpkg inventory
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Ubuntu'))
-
-  # powershell returns CIM/WMI objects faster via Get-WmiObject than Get-CimInstance on either powershell or pwsh.
-  - powershell: >
-      Get-WmiObject Win32_Product
-      | ForEach-Object { "$(Host), $(OSVmImage), MSI, $($_.Name), $($_.Version), unknown" }
-      > msi-inventory.csv
-    displayName: (Windows) Windows Installer products
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
-
-  - pwsh: |
-      filter Write-NonWindowsInstaller($arch) {
-        if ($_.DisplayName -and $_.WindowsInstaller -ne 1) {
-          "$(Host), $(OSVmImage), MSI, $($_.DisplayName), $($_.DisplayVersion), $arch"
-        }
-      }
-      Get-ChildItem HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
-      Get-ChildItem HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'x86' >> arp-inventory.csv
-      Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
-      Get-ChildItem HKCU:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'x86' >> arp-inventory.csv
-    displayName: (Windows) Add/Remove Programs inventory
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
-
-  - pwsh: >
-      & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -format json -utf8
-      | ConvertFrom-Json
-      | ForEach-Object {
-        $arch = if ([Version]$_.installationVersion -lt [Version]'17.0') { "x86" } else { "amd64" };
-        "$(Host), $(OSVmImage), VSSetup, $($_.displayName) ($($_.channelId)), $($_.installationVersion), $arch"
-      }
-      > vssetup-inventory.csv
-    displayName: (Windows) Visual Studio inventory
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
-
-  - pwsh: >
-      az extension list
-      | ConvertFrom-Json
-      | ForEach-Object { "$(Host), $(OSVmImage), az, $($_.name), $($_.version), all" }
-      > az-inventory.csv
-    displayName: Azure CLI extensions
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-
-  - pwsh: >
-      dotnet --list-runtimes
-      | ForEach-Object {
-        $tokens = $_ -split ' ', 3;
-        "$(Host), $(OSVmImage), dotnet-runtime, $($tokens[0]), $($tokens[1]), all"
-      }
-      >> dotnet-inventory.csv
-    displayName: .NET runtimes
-
-  - pwsh: >
-      dotnet --list-sdks
-      | ForEach-Object {
-        $tokens = $_ -split ' ', 2;
-        "$(Host), $(OSVmImage), dotnet-sdk, SDK, $($tokens[0]), all"
-      }
-      >> dotnet-inventory.csv
-    displayName: .NET SDKs
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-
-  - pwsh: |
-      & "${env:BUILD_SOURCESDIRECTORY}/eng/common/scripts/Import-AzModules.ps1"
-      Get-Module -List | ForEach-Object {
-        "$(Host), $(OSVmImage), PowerShell, $($_.Name), $($_.Version), all"
-      } > powershell-inventory.csv
-    displayName: PowerShell modules
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-
-  - pwsh: |
-      Get-ChildItem "${env:ProgramFiles}" | ForEach-Object {
-        "$(Host), $(OSVmImage), ProgramFiles, $($_.Name), , all"
-      } > programfiles-inventory.csv
-    displayName: (Windows) Program Files
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
-
-  - pwsh: |
-      Get-ChildItem "${env:ProgramFiles(x86)}" | ForEach-Object {
-        "$(Host), $(OSVmImage), ProgramFilesX86, $($_.Name), , all"
-      } >> programfiles-inventory.csv
-    displayName: (Windows) Program Files (x86)
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
-
-  # - pwsh: |
-  #     Get-ChildItem env: | ForEach-Object {
-  #       "$(Host), $(OSVmImage), Environment, $($_.Name), $($_.Value), all"
-  #     } >> env-inventory.csv
-  #   displayName: Environment Variables
-  #   workingDirectory: $(Build.ArtifactStagingDirectory)
-
-  - pwsh: |
-      $root = $env:VCPKG_INSTALLATION_ROOT
-      if (!$root) {
-        $root = 'C:\vcpkg'
-      }
-      Get-ChildItem "$root\packages" -ErrorAction Ignore | ForEach-Object {
-        "$(Host), $(OSVmImage), Environment, $($_.Name), $($_.Value), all"
-      } >> vcpkg-inventory.csv
-    displayName: (Windows) Vcpkg Packages
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-    condition: and(succeeded(), eq(variables.Host, 'Windows'))
-
-  - publish: $(Build.ArtifactStagingDirectory)
-    displayName: Publish inventory-$(OSVmImage)
-    artifact: inventory-$(OSVmImage)
+  - template: /eng/pipelines/templates/steps/inventory-steps.yml
 
 - job: assemble
-  dependsOn: inventory
+  dependsOn:
+    - inventory_azure_pipelines
+    - inventory_custom_agents
   condition: succeededOrFailed()
   pool:
     vmImage: ubuntu-latest

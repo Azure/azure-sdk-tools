@@ -3,14 +3,15 @@ import { describe, expect, test } from 'vitest';
 import { patchInterface } from '../azure/patch/patch-detection';
 import { createTestAstContext } from './utils';
 import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/types';
+import { SyntaxKind } from 'ts-morph';
 
 describe('detect interface', () => {
   describe('detect on interface level', () => {
-    test('remove interface', () => {
+    test('remove interface', async () => {
       const baselineApiView = `export interface TestInterface {}`;
       const currentApiView = ``;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -19,11 +20,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('TestInterface');
     });
 
-    test('add interface', () => {
+    test('add interface', async () => {
       const baselineApiView = ``;
       const currentApiView = `export interface TestInterface {}`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -34,11 +35,11 @@ describe('detect interface', () => {
   });
 
   describe('detect on call signature', () => {
-    test('remove call signature', () => {
+    test('remove call signature', async () => {
       const baselineApiView = `export interface TestInterface { (para: string): void; }`;
       const currentApiView = `export interface TestInterface {}`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -47,11 +48,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('(para: string): void;');
     });
 
-    test('add call signature', () => {
+    test('add call signature', async () => {
       const baselineApiView = `export interface TestInterface {}`;
       const currentApiView = `export interface TestInterface { (para: string): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -64,7 +65,7 @@ describe('detect interface', () => {
       const baselineApiView = `export interface TestInterface { (para: string): void; }`;
       const currentApiView = `export interface TestInterface { (para: number): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(2);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -81,16 +82,16 @@ describe('detect interface', () => {
       const baselineApiView = `export interface TestInterface { (para: string): void; }`;
       const currentApiView = `export interface TestInterface { (para2: string): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
 
-    test('change parameter count', () => {
+    test('change parameter count', async () => {
       const baselineApiView = `export interface TestInterface { (para1: string, para2: number): void; }`;
       const currentApiView = `export interface TestInterface { (para1: string): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(2);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -103,11 +104,11 @@ describe('detect interface', () => {
       expect(diffPairs[1].source?.name).toBe('(para1: string): void;');
     });
 
-    test('change return type', () => {
+    test('change return type', async () => {
       const baselineApiView = `export interface TestInterface { (para: string): void; }`;
       const currentApiView = `export interface TestInterface { (para: string): number; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(2);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -122,11 +123,11 @@ describe('detect interface', () => {
   });
 
   describe('detect on classic property', () => {
-    test('add classic property', () => {
+    test('add classic property', async () => {
       const baselineApiView = `export interface TestInterface {}`;
       const currentApiView = `export interface TestInterface { prop: string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -135,11 +136,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].source?.name).toBe('prop');
     });
 
-    test('remove classic property', () => {
+    test('remove classic property', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface {}`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -148,24 +149,26 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    test('change classic property type', () => {
+    test('change classic property type', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { prop: number; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(diffPairs[0].location).toBe(DiffLocation.Property);
       expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
       expect(diffPairs[0].target?.name).toBe('prop');
+      expect(diffPairs[0].target?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('string');
+      expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('number');
     });
 
-    test('change classic property name', () => {
+    test('change classic property name', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { prop2: string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(2);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -178,11 +181,11 @@ describe('detect interface', () => {
       expect(diffPairs[1].source?.name).toBe('prop2');
     });
 
-    test('change classic property readonly to mutable', () => {
+    test('change classic property readonly to mutable', async () => {
       const baselineApiView = `export interface TestInterface { readonly prop: string; }`;
       const currentApiView = `export interface TestInterface { prop: string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -192,20 +195,20 @@ describe('detect interface', () => {
     });
 
     // TODO: this should be a breaking change?
-    test('change classic property mutable to readonly', () => {
+    test('change classic property mutable to readonly', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { readonly prop: string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
 
-    test('change classic property required to optional', () => {
+    test('change classic property required to optional', async () => {
       const baselineApiView = `export interface TestInterface { prop?: string; }`;
       const currentApiView = `export interface TestInterface { prop: string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -215,22 +218,22 @@ describe('detect interface', () => {
     });
 
     // TODO: this should be breaking change?
-    test('change classic property optional to required', () => {
+    test('change classic property optional to required', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { prop?: string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
   });
 
   describe('detect on arrow function property', () => {
-    test('add arrow function property', () => {
+    test('add arrow function property', async () => {
       const baselineApiView = `export interface TestInterface {}`;
       const currentApiView = `export interface TestInterface { prop: () => void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -239,11 +242,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].source?.name).toBe('prop');
     });
 
-    test('remove arrow function property', () => {
+    test('remove arrow function property', async () => {
       const baselineApiView = `export interface TestInterface { prop: () => void; }`;
       const currentApiView = `export interface TestInterface {}`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -252,11 +255,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    test('change arrow function property name', () => {
+    test('change arrow function property name', async () => {
       const baselineApiView = `export interface TestInterface { prop: () => void; }`;
       const currentApiView = `export interface TestInterface { prop2: () => void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(2);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -269,11 +272,11 @@ describe('detect interface', () => {
       expect(diffPairs[1].source?.name).toBe('prop2');
     });
 
-    test('change arrow function property return type', () => {
+    test('change arrow function property return type', async () => {
       const baselineApiView = `export interface TestInterface { prop: () => string; }`;
       const currentApiView = `export interface TestInterface { prop: () => number; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -282,33 +285,35 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    test('change arrow function property parameter type', () => {
+    test('change arrow function property parameter type', async () => {
       const baselineApiView = `export interface TestInterface { prop: (para: string) => string; }`;
       const currentApiView = `export interface TestInterface { prop: (para: number) => string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(diffPairs[0].location).toBe(DiffLocation.Parameter);
       expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
       expect(diffPairs[0].target?.name).toBe('para');
+      expect(diffPairs[0].target?.node.asKind(SyntaxKind.Parameter)?.getTypeNode()?.getText()).toBe('string');
+      expect(diffPairs[0].source?.node.asKind(SyntaxKind.Parameter)?.getTypeNode()?.getText()).toBe('number');
     });
 
-    test('change arrow function property parameter name', () => {
+    test('change arrow function property parameter name', async () => {
       const baselineApiView = `export interface TestInterface { prop: (para: string) => void; }`;
       const currentApiView = `export interface TestInterface { prop: (para2: string) => void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
 
-    test('change arrow function property parameters count', () => {
+    test('change arrow function property parameters count', async () => {
       const baselineApiView = `export interface TestInterface { prop: (para1: string, para2: number) => void; }`;
       const currentApiView = `export interface TestInterface { prop: (para1: string) => void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -319,11 +324,11 @@ describe('detect interface', () => {
   });
 
   describe('detect on member function property', () => {
-    test('add member function property', () => {
+    test('add member function property', async () => {
       const baselineApiView = `export interface TestInterface {}`;
       const currentApiView = `export interface TestInterface { prop(): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -332,11 +337,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].source?.name).toBe('prop');
     });
 
-    test('remove member function property', () => {
+    test('remove member function property', async () => {
       const baselineApiView = `export interface TestInterface { prop(): void; }`;
       const currentApiView = `export interface TestInterface {}`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -345,11 +350,11 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    test('change member function property name', () => {
+    test('change member function property name', async () => {
       const baselineApiView = `export interface TestInterface { prop(): void; }`;
       const currentApiView = `export interface TestInterface { prop2(): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(2);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -362,11 +367,11 @@ describe('detect interface', () => {
       expect(diffPairs[1].source?.name).toBe('prop2');
     });
 
-    test('change member function property return type', () => {
+    test('change member function property return type', async () => {
       const baselineApiView = `export interface TestInterface { prop(): string; }`;
       const currentApiView = `export interface TestInterface { prop(): number; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
@@ -375,33 +380,35 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    test('change member function property parameter type', () => {
+    test('change member function property parameter type', async () => {
       const baselineApiView = `export interface TestInterface { prop(para: string): string; }`;
       const currentApiView = `export interface TestInterface { prop(para: number): string; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(diffPairs[0].location).toBe(DiffLocation.Parameter);
       expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
       expect(diffPairs[0].target?.name).toBe('para');
+      expect(diffPairs[0].target?.node.asKind(SyntaxKind.Parameter)?.getTypeNode()?.getText()).toBe('string');
+      expect(diffPairs[0].source?.node.asKind(SyntaxKind.Parameter)?.getTypeNode()?.getText()).toBe('number');
     });
 
-    test('change member function property parameter name', () => {
+    test('change member function property parameter name', async () => {
       const baselineApiView = `export interface TestInterface { prop(para: string): void; }`;
       const currentApiView = `export interface TestInterface { prop(para2: string): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
 
-    test('change member function property parameters count', () => {
+    test('change member function property parameters count', async () => {
       const baselineApiView = `export interface TestInterface { prop(para1: string, para2: number): void; }`;
       const currentApiView = `export interface TestInterface { prop(para1: string): void; }`;
 
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
       expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);

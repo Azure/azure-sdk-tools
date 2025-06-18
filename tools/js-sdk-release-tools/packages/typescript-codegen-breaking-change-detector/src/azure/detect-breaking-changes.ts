@@ -63,6 +63,7 @@ function extractCodeFromApiView(content: string): string {
   marked(content, { renderer });
   if (codeBlocks.length !== 1) throw new Error(`Expected 1 code block, got ${codeBlocks.length}.`);
 
+  // return codeBlocks[0].replaceAll('export', 'declare');
   return codeBlocks[0];
 }
 
@@ -79,7 +80,9 @@ async function prepareProject(
 ): Promise<ProjectContext> {
   const [currentCode, baselineCode] = await Promise.all([
     currentOptions.apiView ? extractCodeFromApiView(currentOptions.apiView) : loadCodeFromApiView(currentOptions.path!),
-    baselineOptions.apiView ? extractCodeFromApiView(baselineOptions.apiView) : loadCodeFromApiView(baselineOptions.path!),
+    baselineOptions.apiView
+      ? extractCodeFromApiView(baselineOptions.apiView)
+      : loadCodeFromApiView(baselineOptions.path!),
   ]);
 
   const relativeCurrentPath = join('current', 'review', 'index.ts');
@@ -164,17 +167,26 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
 export async function createAstContext(
   baselineOptions: ApiViewOptions,
   currentOptions: ApiViewOptions,
-  tempFolder: string
+  tempFolder: string,
+  cleanUpAtTheEnd = false
 ) {
-  const projectContext = await prepareProject(currentOptions, baselineOptions, tempFolder);
-  const project = new Project({
-    compilerOptions: { target: ScriptTarget.ES2022 },
-  });
-  const baseline = project.createSourceFile('review/baseline/index.ts', projectContext.baseline.code);
-  const current = project.createSourceFile('review/current/index.ts', projectContext.current.code);
-  console.log("🚀 ~ projectContext.baseline.code:", projectContext.baseline.code)
-  console.log("🚀 ~ projectContext.current.code:", projectContext.current.code)
-  return { baseline, current };
+  try {
+    const projectContext = await prepareProject(currentOptions, baselineOptions, tempFolder);
+    const project = new Project({
+      compilerOptions: { target: ScriptTarget.ES2022 },
+    });
+    const baseline = project.createSourceFile('review/baseline/index.ts', projectContext.baseline.code);
+    const current = project.createSourceFile('review/current/index.ts', projectContext.current.code);
+    console.log('🚀 ~ projectContext.baseline.code:', projectContext.baseline.code);
+    console.log('🚀 ~ projectContext.current.code:', projectContext.current.code);
+    return { baseline, current };
+  } finally {
+    if (cleanUpAtTheEnd) {
+      if (await exists(tempFolder)) {
+        await remove(tempFolder);
+      }
+    }
+  }
 }
 
 export async function detectBreakingChangesBetweenPackages(

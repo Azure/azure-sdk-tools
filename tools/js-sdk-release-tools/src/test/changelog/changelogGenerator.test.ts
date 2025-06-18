@@ -25,17 +25,21 @@ const getItemsByCategory = (
         ? changelogItems.breakingChanges
         : changelogItems.features;
     if (!map) return [];
-    console.log("🚀 ~getItemsByCategory changelogItems:", changelogItems, category)
+    console.log(
+        "🚀 ~getItemsByCategory changelogItems:",
+        changelogItems,
+        category,
+    );
     return map.get(category) ?? [];
 };
 
 const generateChangelogItems = async (
-    oldApiViewOptions: ApiViewOptions,
-    newApiViewOptions: ApiViewOptions,
+    baselineApiViewOptions: ApiViewOptions,
+    currentApiViewOptions: ApiViewOptions,
 ) => {
     const detector = new DifferenceDetector(
-        oldApiViewOptions,
-        newApiViewOptions,
+        baselineApiViewOptions,
+        currentApiViewOptions,
     );
     const diff = await detector.detect();
     console.log(
@@ -1264,10 +1268,10 @@ export function processData(data: number): number;
             );
             const items = getItemsByCategory(
                 changelogItems,
-                ChangelogItemCategory.FunctionOverloadAdded,
+                ChangelogItemCategory.FunctionAdded,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added function overload for processData");
+            expect(items[0]).toBe("Added function processData");
         });
 
         test("Function Overload Removed", async () => {
@@ -1296,11 +1300,11 @@ export function processData(data: string): string;
             );
             const items = getItemsByCategory(
                 changelogItems,
-                ChangelogItemCategory.FunctionOverloadRemoved,
+                ChangelogItemCategory.FunctionRemoved,
                 true,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Removed function overload for processData");
+            expect(items[0]).toBe("Removed function processData");
         });
 
         test("Operation Signature Changed", async () => {
@@ -1346,7 +1350,6 @@ export interface DataProductsCatalogs {
 \`\`\`ts
 // @public
 export interface DataProduct {
-    name: string;
     version: string;
 }
 \`\`\`
@@ -1355,7 +1358,6 @@ export interface DataProduct {
 \`\`\`ts
 // @public
 export interface DataProduct {
-    name: string;
     version: number;
 }
 \`\`\`
@@ -1420,7 +1422,7 @@ export type DataProductStatus = "Running" | "Stopped";
 \`\`\`ts
 // @public
 export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string);
+    constructor(credential: string, subscriptionId: string);
     readonly dataProducts: DataProducts;
 }
 \`\`\`
@@ -1429,7 +1431,7 @@ export class DataProductClient {
 \`\`\`ts
 // @public
 export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptions);
+    constructor(credential: string, subscriptionId: string, resourceId: string);
     readonly dataProducts: DataProducts;
 }
 \`\`\`

@@ -151,17 +151,27 @@ function canConvertConcretTypeToAny(targetKind: SyntaxKind | undefined, sourceKi
 }
 
 function findClassicPropertyBreakingChanges(sourceProperty: Symbol, targetProperty: Symbol): DiffPair | undefined {
+  console.log(
+    '🚀 ~ findClassicPropertyBreakingChanges ~ sourceProperty.getValueDeclarationOrThrow():',
+    sourceProperty.getValueDeclarationOrThrow().getText()
+  );
+  console.log(
+    '🚀 ~ findClassicPropertyBreakingChanges ~ targetProperty.getValueDeclarationOrThrow():',
+    targetProperty.getValueDeclarationOrThrow().getText()
+  );
+
   const reasons = findBreakingReasons(
     sourceProperty.getValueDeclarationOrThrow(),
     targetProperty.getValueDeclarationOrThrow()
   );
+  console.log('🚀 ~ findClassicPropertyBreakingChanges ~ reasons:', reasons);
 
   if (reasons === DiffReasons.None) return undefined;
   return createDiffPair(
     DiffLocation.Property,
     reasons,
-    getNameNodeFromSymbol(targetProperty),
-    getNameNodeFromSymbol(sourceProperty)
+    getNameNodeFromSymbol(sourceProperty),
+    getNameNodeFromSymbol(targetProperty)
   );
 }
 
@@ -174,9 +184,9 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
   const removed = targetProperties.reduce((result, targetProperty) => {
     const name = targetProperty.getName();
     if (sourcePropMap.has(name)) {
-        return result;
+      return result;
     }
-    
+
     const isPropertyFunction = isMethodOrArrowFunction(targetProperty);
     const location = isPropertyFunction ? DiffLocation.Signature : DiffLocation.Property;
     const pair = createDiffPair(location, DiffReasons.Removed, undefined, getNameNodeFromSymbol(targetProperty));
@@ -190,7 +200,7 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
     if (!sourceProperty) return result;
 
     const isTargetPropertyClassic = isClassicProperty(targetProperty);
-    console.log("🚀 ~ changed ~ isTargetPropertyClassic:", isTargetPropertyClassic, targetProperty.getFlags())
+    console.log('🚀 ~ changed ~ isTargetPropertyClassic:', isTargetPropertyClassic, targetProperty.getFlags());
     const isSourcePropertyClassic = isClassicProperty(sourceProperty);
 
     // handle different property kinds
@@ -205,6 +215,8 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
         ),
       ];
     }
+    console.log('🚀 ~ changed ~ sourceProperty `:', sourceProperty.getValueDeclarationOrThrow().getText());
+    console.log('🚀 ~ changed ~ targetProperty `:', targetProperty.getValueDeclarationOrThrow().getText());
 
     // handle classic property
     if (isTargetPropertyClassic && isSourcePropertyClassic) {
@@ -213,23 +225,45 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
       return [...result, classicBreakingPair];
     }
 
-    console.log('🚀 ~ changed ~ targetProperty:', isPropertyMethod(targetProperty), isPropertyArrowFunction(targetProperty), targetProperty.getFlags());
-    console.log('🚀 ~ changed ~ sourceProperty:', isPropertyMethod(sourceProperty), isPropertyArrowFunction(sourceProperty), sourceProperty.getFlags());
-    
+    console.log(
+      '🚀 ~ changed ~ targetProperty:',
+      isPropertyMethod(targetProperty),
+      isPropertyArrowFunction(targetProperty),
+      targetProperty.getFlags()
+    );
+    console.log(
+      '🚀 ~ changed ~ sourceProperty:',
+      isPropertyMethod(sourceProperty),
+      isPropertyArrowFunction(sourceProperty),
+      sourceProperty.getFlags()
+    );
+
     // handle method and arrow function
     if (
       (isPropertyMethod(targetProperty) || isPropertyArrowFunction(targetProperty)) &&
       (isPropertyMethod(sourceProperty) || isPropertyArrowFunction(sourceProperty))
     ) {
       const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails(sourceProperty, targetProperty);
-      console.log("🚀 ~ changed ~ functionPropertyDetails:", functionPropertyDetails)
+      console.log('🚀 ~ changed ~ functionPropertyDetails:', functionPropertyDetails);
       return [...result, ...functionPropertyDetails];
     }
 
     const x = targetProperty.getValueDeclaration()?.getText() || '';
     const y = sourceProperty.getValueDeclaration()?.getText() || '';
-    console.log('🚀 ~ changed ~ x:', x, isPropertyMethod(targetProperty), isPropertyArrowFunction(targetProperty), targetProperty.getFlags());
-    console.log('🚀 ~ changed ~ y:', y, isPropertyMethod(sourceProperty), isPropertyArrowFunction(sourceProperty), sourceProperty.getFlags());
+    console.log(
+      '🚀 ~ changed ~ x:',
+      x,
+      isPropertyMethod(targetProperty),
+      isPropertyArrowFunction(targetProperty),
+      targetProperty.getFlags()
+    );
+    console.log(
+      '🚀 ~ changed ~ y:',
+      y,
+      isPropertyMethod(sourceProperty),
+      isPropertyArrowFunction(sourceProperty),
+      sourceProperty.getFlags()
+    );
     throw new Error('Should never reach here');
   }, new Array<DiffPair>());
   return [...removed, ...changed];
@@ -357,6 +391,16 @@ export function findInterfaceDifferences(
     .map(updateDiffPairForNewFeature);
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
+  console.log('🚀 ~ source:', source.getText());
+  console.log('🚀 ~ target:', target.getText());
+  console.log(
+    '🚀 ~ sourceProperties:',
+    sourceProperties.map((p) => p.getValueDeclarationOrThrow().getText())
+  );
+  console.log(
+    '🚀 ~ targetProperties:',
+    targetProperties.map((p) => p.getValueDeclarationOrThrow().getText())
+  );
 
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
   const propertyNewFeatures = findPropertyBreakingChanges(targetProperties, sourceProperties)
@@ -373,15 +417,39 @@ export function findInterfaceDifferences(
 
 // TODO: detect static properties and methods
 export function findClassDifferences(source: ClassDeclaration, target: ClassDeclaration) {
+  const getConstructors = (node: ClassDeclaration) => {
+    return node
+      .getChildSyntaxList()
+      ?.getChildrenOfKind(SyntaxKind.Constructor) ?? [];
+  };
+  const sourceConstructors = getConstructors(source);
+  const targetConstructors = getConstructors(target);
+  console.log(
+    '🚀 ~',
+    source.getText(),
+    '---',
+    source.getChildren().map((m) => m.getKindName())
+  );
+  console.log(
+    '🚀 ~ findClassDifferences ~ source.getConstructors().lenx:',
+    sourceConstructors,
+    // source
+    //   .getChildSyntaxList()
+    //   ?.getChildrenOfKind(SyntaxKind.Constructor)
+    //   .map((c) => c.getText())
+  );
+  console.log('🚀 ~ findClassDifferences ~ target.getConstructors().lenx:', targetConstructors);
+
   // find constructor breaking changes
   const constructorBreakingChanges = findCallSignatureLikeDeclarationBreakingChanges(
-    source.getConstructors(),
-    target.getConstructors(),
+    sourceConstructors,
+    targetConstructors,
     defaultFindMappingCallSignatureLikeDeclaration
   );
+
   const constructorNewFeatures = findCallSignatureLikeDeclarationBreakingChanges(
-    target.getConstructors(),
-    source.getConstructors(),
+    targetConstructors,
+    sourceConstructors,
     defaultFindMappingCallSignatureLikeDeclaration
   )
     .filter((p) => p.reasons === DiffReasons.Removed)

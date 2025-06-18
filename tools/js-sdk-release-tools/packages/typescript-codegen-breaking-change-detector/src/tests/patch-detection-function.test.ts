@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest';
 
-import { patchFunction, patchTypeAlias } from '../azure/patch/patch-detection';
+import { patchFunction } from '../azure/patch/patch-detection';
 import { createTestAstContext } from './utils';
 import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/types';
+import { Project, SyntaxKind } from 'ts-morph';
 
 describe('detect functions', () => {
   test('detect function overloads', async () => {
@@ -22,7 +23,7 @@ describe('detect functions', () => {
     export function isUnexpected(response: A | B): response is A;
     export function isUnexpected(response: C | E): response is C;`;
 
-    const astContext = createTestAstContext(baselineApiView, currentApiView);
+    const astContext = await createTestAstContext(baselineApiView, currentApiView);
     let diffPairs = patchFunction('isUnexpected', astContext);
 
     expect(diffPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
@@ -50,7 +51,7 @@ describe('detect functions', () => {
     export function funcParameterType(a: number): string
     export function funcAdd(a: string): string`;
 
-    const astContext = createTestAstContext(baselineApiView, currentApiView);
+    const astContext = await createTestAstContext(baselineApiView, currentApiView);
 
     let diffPairs = patchFunction('funcBasic', astContext);
     expect(diffPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
@@ -90,5 +91,50 @@ describe('detect functions', () => {
     expect(diffPairs[0].reasons).toBe(DiffReasons.Added);
     expect(diffPairs[0].location).toBe(DiffLocation.Signature);
     expect(diffPairs[0].source?.name).toBe('funcAdd');
+  });
+});
+
+// TODO: remove
+describe('debug', () => {
+  test('debug', async () => {
+    const project = new Project();
+    const sourceFile = project.createSourceFile(
+      'example.ts',
+      `
+export interface AAA {
+  func(p: number): string;
+}
+
+`,
+      { overwrite: true }
+    );
+
+    const iface = sourceFile.getInterfaceOrThrow('AAA');
+
+    // 找出所有 method signatures
+    const methodSigs = iface.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
+
+    for (const method of methodSigs) {
+      const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
+
+      const name = methodSig.getName();
+      const params = methodSig.getParameters().map((p) => ({
+        name: p.getName(),
+        type: p.getTypeNodeOrThrow().getText(),
+      }));
+      const returnType = methodSig.getReturnTypeNodeOrThrow().getText();
+
+      // 删除原来的 method signature
+      methodSig.remove();
+
+      // 添加箭头函数形式的 property signature
+      iface.addProperty({
+        name,
+        type: `(${params.map((p) => `${p.name}: ${p.type}`).join(', ')}) => ${returnType}`,
+      });
+    }
+
+    // 打印修改后的代码
+    console.log(sourceFile.getFullText());
   });
 });

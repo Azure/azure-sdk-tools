@@ -16,9 +16,8 @@ export enum ChangelogItemCategory {
   // TODO: type alias type change?
   EnumAdded = 6,
   EnumValueAdded = 7,
+  // NOTE: include function and overload function
   FunctionAdded = 8,
-  // TODO
-  FunctionOverloadAdded = 9,
 
   /** breaking changes */
   OperationGroupRemoved = 1000,
@@ -37,9 +36,9 @@ export enum ChangelogItemCategory {
   TypeAliasRemoved = 1013,
   TypeAliasTypeChanged = 1014,
   FunctionRemoved = 1015,
-  FunctionOverloadRemoved = 1016,
-  EnumRemoved = 1017,
-  EnumValueRemoved = 1018,
+  // NOTE: include function and overload function
+  EnumRemoved = 1016,
+  EnumValueRemoved = 1017,
 }
 
 export interface ChangelogResult {
@@ -179,11 +178,13 @@ export class ChangelogGenerator {
 
   private addChangelogItem(category: ChangelogItemCategory, message: string) {
     if (category < 1000) {
-      this.changelogItems.features.get(category)?.push(message) ||
-        this.changelogItems.features.set(category, [message]);
+      const messages = this.changelogItems.features.get(category) || [];
+      if (!messages.includes(message)) messages.push(message);
+      this.changelogItems.features.set(category, messages);
     } else {
-      this.changelogItems.breakingChanges.get(category)?.push(message) ||
-        this.changelogItems.breakingChanges.set(category, [message]);
+      const messages = this.changelogItems.breakingChanges.get(category) || [];
+      if (!messages.includes(message)) messages.push(message);
+      this.changelogItems.breakingChanges.set(category, messages);
     }
   }
 
@@ -199,7 +200,16 @@ export class ChangelogGenerator {
         const message = template(this.functionRemovedTemplate, { functionName });
         this.addChangelogItem(ChangelogItemCategory.FunctionRemoved, message);
       }
-      // TODO: add more
+      // overload function added
+      if (p.location === DiffLocation.Signature_Overload && this.hasReasons(p.reasons, DiffReasons.Added)) {
+        const message = template(this.functionAddedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionAdded, message);
+      }
+      // overload function removed
+      if (p.location === DiffLocation.Signature_Overload && this.hasReasons(p.reasons, DiffReasons.Removed)) {
+        const message = template(this.functionRemovedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionRemoved, message);
+      }
     });
   }
 
@@ -230,6 +240,7 @@ export class ChangelogGenerator {
   }
 
   private generateForClasses(diffPairs: DiffPair[], className: string): void {
+    console.log('🚀 ~ ChangelogGenerator ~ diffPairs.forEach ~ diffPairs:', diffPairs);
     diffPairs.forEach((p) => {
       // class added
       if (p.location === DiffLocation.Class && this.hasReasons(p.reasons, DiffReasons.Added)) {
@@ -411,8 +422,8 @@ export class ChangelogGenerator {
             const message = template(this.modelPropertyTypeChangedTemplate, {
               interfaceName,
               newPropertyName: p.source!.name,
-              oldPropertyType: getTypeText(p.target!.node),
-              newPropertyType: getTypeText(p.source!.node),
+              oldPropertyType: oldPropertyTypeText,
+              newPropertyType: newPropertyTypeText,
             });
             this.addChangelogItem(ChangelogItemCategory.ModelPropertyTypeChanged, message);
           }

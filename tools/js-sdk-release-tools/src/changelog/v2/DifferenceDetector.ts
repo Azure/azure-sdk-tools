@@ -126,11 +126,18 @@ export class DifferenceDetector {
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
+      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.baseline:", this.context?.baseline.getText())
+      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.current:", this.context?.current.getText())
+      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs:", diffPairs)
+      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs baseline:", diffPairs[0].target?.node.getText())
+      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs current:", diffPairs[0].source?.node.getText())
+
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const classDiffPairs = classNames.reduce((map, n) => {
       const diffPairs = patchClass(n, this.context!, AssignDirection.CurrentToBaseline);
+      console.log("🚀 ~ DifferenceDetector ~ classDiffPairs ~ diffPairs for class:", n, diffPairs)
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());

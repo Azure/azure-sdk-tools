@@ -6,7 +6,7 @@ import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/type
 
 describe('detect type alias', () => {
   // TODO: detect other types
-  test('detect union types', () => {
+  test('detect union types', async () => {
     const baselineApiView = `
     export type typesChange = "basic" | "remove";
     export type typesRemove = "basic" | "remove";
@@ -20,7 +20,7 @@ describe('detect type alias', () => {
     export type typesExpand = string | number | boolean;
     export type typesNarrow = string | number;`;
 
-    const astContext = createTestAstContext(baselineApiView, currentApiView);
+    const astContext = await createTestAstContext(baselineApiView, currentApiView);
     let diffPairs = patchTypeAlias('typesChange', astContext, AssignDirection.CurrentToBaseline);
     expect(diffPairs.length).toBe(1);
     expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);

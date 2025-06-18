@@ -1196,6 +1196,7 @@ export const changelogGenerator = (
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);
     changLog.addedEnumValue = findAddedEnumValue(metaDataOld, metadataNew);
+    // migrated
     changLog.addedFunction = findAddedFunction(metaDataOld, metadataNew);
 
     // breaking changes
@@ -1231,6 +1232,7 @@ export const changelogGenerator = (
     changLog.typeAliasParamChangeRequired = findTypeAliasParamChangeRequired(metaDataOld, metadataNew);
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
+    // migrated
     changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
 
     // patch RLC

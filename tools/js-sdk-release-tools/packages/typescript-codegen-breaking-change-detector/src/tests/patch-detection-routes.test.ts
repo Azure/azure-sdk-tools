@@ -34,7 +34,7 @@ describe('detect routes', async () => {
         (path: "change_para_type", subscriptionId: string, resourceGroupName: string, clusterName: number): ClusterGetOld;
     }`;
 
-    const astContext = createTestAstContext(baselineApiView, currentApiView);
+    const astContext = await createTestAstContext(baselineApiView, currentApiView);
     const diffPairs = patchRoutes(astContext);
     expect(diffPairs.length).toBe(5);
 

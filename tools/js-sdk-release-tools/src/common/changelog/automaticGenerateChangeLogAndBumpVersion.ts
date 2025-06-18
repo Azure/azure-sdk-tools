@@ -144,9 +144,10 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     }
                     await makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
-                    await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
+                    // TODO
+                    // await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
+                    await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog.content, originalChangeLogContent, stableVersion);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
                     return changelog;
                 }

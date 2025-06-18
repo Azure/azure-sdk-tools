@@ -152,6 +152,9 @@ export function patchInterface(name: string, astContext: AstContext, assignDirec
   const removePair = checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
   if (removePair) return [removePair];
 
+  console.log("🚀 ~ patchInterface ~ baseline:", baseline?.getText())
+  console.log("🚀 ~ patchInterface ~ current:", current?.getText())
+  
   const diffPairs = patchDeclaration(assignDirection, findInterfaceDifferences, baseline!, current!);
   return diffPairs;
 }
@@ -163,6 +166,8 @@ export function patchDeclaration<T extends Node>(
   current: T,
   ...extra: any
 ): DiffPair[] {
+  console.log("🚀 ~ baseline:", baseline.getText())
+  console.log("🚀 ~ current:", current.getText())
   const updateAssignDirection = (pair: DiffPair) => {
     pair.assignDirection = assignDirection;
     return pair;

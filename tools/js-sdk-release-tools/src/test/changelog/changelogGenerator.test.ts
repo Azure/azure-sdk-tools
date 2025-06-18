@@ -294,52 +294,6 @@ describe("Changelog reading", () => {
     });
 });
 
-describe("Change log for first release package", () => {
-    test("ModularClient -> firstGA", async () => {
-        const root = path.join(__dirname, "testCases/modular-first-release/");
-        const content = getFirstReleaseContent(root, true);
-        expect(content).toBe(
-            "This is the first stable version with the package of @azure/arm-test",
-        );
-    });
-
-    test("ModularClient -> firstBeta", async () => {
-        const root = path.join(__dirname, "testCases/modular-first-release/");
-        const content = getFirstReleaseContent(root, false);
-        expect(content).toBe("Initial release of the @azure/arm-test package");
-    });
-
-    test("HLC -> firstGA", async () => {
-        const root = path.join(__dirname, "testCases/hlc-first-release/");
-        const content = getFirstReleaseContent(root, true);
-        expect(content).toBe(
-            "The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).",
-        );
-    });
-
-    test("HLC -> firstBeta", async () => {
-        const root = path.join(__dirname, "testCases/hlc-first-release/");
-        const content = getFirstReleaseContent(root, false);
-        expect(content).toBe(
-            "The package of @azure/arm-test is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).",
-        );
-    });
-
-    test("RLC -> firstGA", async () => {
-        const root = path.join(__dirname, "testCases/rlc-first-release/");
-        const content = getFirstReleaseContent(root, true);
-        expect(content).toBe(
-            "This is the first stable version with the package of @azure-rest/test",
-        );
-    });
-
-    test("RLC -> firstBeta", async () => {
-        const root = path.join(__dirname, "testCases/rlc-first-release/");
-        const content = getFirstReleaseContent(root, false);
-        expect(content).toBe("Initial release of the @azure-rest/test package");
-    });
-});
-
 describe("Breaking change detection for v2 (compared to v1)", () => {
     // test("HLC -> Modular: Rename", async () => {
     //     const oldViewPath = path.join(

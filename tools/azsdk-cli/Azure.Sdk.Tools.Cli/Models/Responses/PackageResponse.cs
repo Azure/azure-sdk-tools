@@ -32,7 +32,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         [JsonPropertyName("Release pipeline URL")]
         public string PipelineDefinitionUrl { get; set; } = string.Empty;
         [JsonPropertyName("Change log verified")]
-        public bool IsChangeLogReady {
+        public bool IsChangeLogReady
+        {
             get
             {
                 return !changeLogStatus.Equals("Failed", StringComparison.OrdinalIgnoreCase);

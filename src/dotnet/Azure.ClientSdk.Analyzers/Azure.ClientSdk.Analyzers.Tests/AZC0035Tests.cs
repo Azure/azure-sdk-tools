@@ -130,5 +130,97 @@ namespace Azure.Test
 
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0035_ProducedForAzureTemplateSecretBundle()
+        {
+            const string code = @"
+using Azure;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Template.Models;
+
+namespace Azure.Template.Models
+{
+    public partial class {|AZC0035:SecretBundle|}
+    {
+        public string Value { get; }
+        public string Id { get; }
+        public string ContentType { get; }
+        public IReadOnlyDictionary<string, string> Tags { get; }
+        public string Kid { get; }
+        public bool? Managed { get; }
+    }
+}
+
+namespace Azure.Template
+{
+    public partial class TemplateClient
+    {
+        public virtual async Task<Response<SecretBundle>> GetSecretValueAsync(string secretName, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual Response<SecretBundle> GetSecretValue(string secretName, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_NotProducedForAzureTemplateWithModelFactory()
+        {
+            const string code = @"
+using Azure;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Template.Models;
+
+namespace Azure.Template.Models
+{
+    public partial class SecretBundle
+    {
+        public string Value { get; }
+        public string Id { get; }
+        public string ContentType { get; }
+        public IReadOnlyDictionary<string, string> Tags { get; }
+        public string Kid { get; }
+        public bool? Managed { get; }
+    }
+}
+
+namespace Azure.Template
+{
+    public partial class TemplateClient
+    {
+        public virtual async Task<Response<SecretBundle>> GetSecretValueAsync(string secretName, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual Response<SecretBundle> GetSecretValue(string secretName, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+
+    public static class TemplateModelFactory
+    {
+        public static SecretBundle SecretBundle(string value = null, string id = null, string contentType = null, IReadOnlyDictionary<string, string> tags = null, string kid = null, bool? managed = null)
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
     }
 }

@@ -57,10 +57,7 @@ jobs:
   - job: assemble
     dependsOn:
       - inventory_azure_pipelines
-      - inventory_custom_agents_linux_22_hardcoded
-      - inventory_custom_agents_linux_22_hardcoded_variable
-      - inventory_custom_agents_linux_22_strategy_variable
-      - inventory_custom_agents_windows
+      - inventory_1es_pipelines
     condition: succeededOrFailed()
     pool:
       vmImage: ubuntu-latest

@@ -52,16 +52,10 @@ jobs:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml
 
   - job: inventory_custom_agents_windows
-    strategy:
-      matrix:
-        CustomWindows:
-          Pool: azsdk-pool
-          OSVmImage: windows-2022
-          Host: Windows
 
     pool:
-      name: $(Pool)
-      image: $(OSVmImage)
+      name: azsdk-pool
+      image: windows-2022
       os: windows
 
     steps:

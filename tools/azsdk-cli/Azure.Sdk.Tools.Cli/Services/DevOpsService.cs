@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
         private AccessToken? _token;
-        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";        
+        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"; 
 
         private void RefreshConnection()
         {
@@ -400,7 +400,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Value = sdkGenerationPipelineUrl
                         });
                 }
-
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
                     jsonLinkDocument.Add(

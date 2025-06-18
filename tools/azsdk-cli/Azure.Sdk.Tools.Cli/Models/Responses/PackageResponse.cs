@@ -56,7 +56,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         [JsonPropertyName("API view validation details")]
         public string ApiViewValidationDetails { get; set; } = string.Empty;
         [JsonPropertyName("Is package name approved")]
-        public bool IsPackageNameApproved {
+        public bool IsPackageNameApproved
+        {
             get
             {
                 return PackageNameStatus.Equals("Approved", StringComparison.OrdinalIgnoreCase);

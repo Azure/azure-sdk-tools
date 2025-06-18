@@ -40,15 +40,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
         }
 
         [McpServerTool(Name = "CheckPackageReleaseReadiness"), Description("Checks the release readiness status of a specified SDK package for a language. This includes checking pipeline status, apiview status, change log status and namespace approval status.")]
-        public async Task<string> CheckPackageReleaseReadinessAsync(string packageName, string language)
+        public async Task<PackageResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
             {
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
-                    logger.LogWarning("No package work item found for the specified package and language.");
-                    return output.Format($"No work item found for package '{packageName}' in language '{language}'.");
+                    package = new PackageResponse
+                    {
+                        Name = packageName,
+                        Language = language,
+                        ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language."
+                    };
+                    SetFailure();
+                    return package;
                 }
 
                 package.IsPackageReady = package.IsChangeLogReady;
@@ -101,12 +107,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 {
                     package.PackageReadinessDetails += $"Package '{packageName}' is not ready for release. Please address the issues mentioned above.";
                 }
-                return output.Format(package);
+                return package;
             }
             catch (Exception ex)
             {
-                logger.LogError("{exception}", ex.Message);
-                return output.Format($"Failed to get package details. Error {ex.Message}");
+                var package = new PackageResponse
+                {
+                    Name = packageName,
+                    Language = language,
+                    IsPackageReady = false,
+                    ResponseError = $"Failed to check package readiness for '{packageName}' in language '{language}'. Error {ex.Message}"
+                };
+                SetFailure();
+                return package;
             }
         }
 

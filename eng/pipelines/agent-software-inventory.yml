@@ -37,15 +37,18 @@ jobs:
         CustomLinux22:
           Pool: azsdk-pool
           OSVmImage: ubuntu-22.04
+          Demands: ImageOverride -equals ubuntu-22.04
           Host: Ubuntu
         CustomLinux24:
           Pool: azsdk-pool
           OSVmImage: ubuntu-24.04
+          Demands: ImageOverride -equals ubuntu-24.04
           Host: Ubuntu
 
     pool:
       name: $(Pool)
       image: $(OSVmImage)
+      demands: $(Demands)
       os: linux
 
     steps:
@@ -53,10 +56,15 @@ jobs:
 
   - job: inventory_custom_agents_windows
 
+    variables:
+      Pool: azsdk-pool
+      OSVmImage: windows-2022
+      Host: Windows
+
     pool:
       name: azsdk-pool
-      image: windows-2022
       os: windows
+      demands: ImageOverride -equals windows-2022
 
     steps:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml

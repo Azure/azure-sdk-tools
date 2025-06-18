@@ -174,9 +174,9 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
   const removed = targetProperties.reduce((result, targetProperty) => {
     const name = targetProperty.getName();
     if (sourcePropMap.has(name)) {
-      return result;
+        return result;
     }
-
+    
     const isPropertyFunction = isMethodOrArrowFunction(targetProperty);
     const location = isPropertyFunction ? DiffLocation.Signature : DiffLocation.Property;
     const pair = createDiffPair(location, DiffReasons.Removed, undefined, getNameNodeFromSymbol(targetProperty));
@@ -190,6 +190,7 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
     if (!sourceProperty) return result;
 
     const isTargetPropertyClassic = isClassicProperty(targetProperty);
+    console.log("🚀 ~ changed ~ isTargetPropertyClassic:", isTargetPropertyClassic, targetProperty.getFlags())
     const isSourcePropertyClassic = isClassicProperty(sourceProperty);
 
     // handle different property kinds
@@ -212,12 +213,16 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
       return [...result, classicBreakingPair];
     }
 
+    console.log('🚀 ~ changed ~ targetProperty:', isPropertyMethod(targetProperty), isPropertyArrowFunction(targetProperty), targetProperty.getFlags());
+    console.log('🚀 ~ changed ~ sourceProperty:', isPropertyMethod(sourceProperty), isPropertyArrowFunction(sourceProperty), sourceProperty.getFlags());
+    
     // handle method and arrow function
     if (
       (isPropertyMethod(targetProperty) || isPropertyArrowFunction(targetProperty)) &&
       (isPropertyMethod(sourceProperty) || isPropertyArrowFunction(sourceProperty))
     ) {
       const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails(sourceProperty, targetProperty);
+      console.log("🚀 ~ changed ~ functionPropertyDetails:", functionPropertyDetails)
       return [...result, ...functionPropertyDetails];
     }
 

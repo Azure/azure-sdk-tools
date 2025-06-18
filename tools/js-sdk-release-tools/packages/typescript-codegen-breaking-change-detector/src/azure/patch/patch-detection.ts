@@ -77,6 +77,7 @@ export function patchTypeAlias(name: string, astContext: AstContext, assignDirec
 }
 
 export function patchFunction(name: string, astContext: AstContext): DiffPair[] {
+  console.log("🚀 ~ patchFunction ~ start:")
   const getFunctions = (source: SourceFile) =>
     source
       .getStatements()
@@ -99,6 +100,7 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
   );
+  console.log("🚀 ~ patchFunction ~ addPair:", addPair)
   if (addPair) return [addPair];
 
   const removePair = checkRemovedDeclaration(
@@ -139,8 +141,6 @@ export function patchClass(name: string, astContext: AstContext, assignDirection
 }
 
 export function patchInterface(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
-  console.log('🚀 ~ patchInterface ~ name:', name);
-
   const baseline = astContext.baseline.getInterface(name);
   const current = astContext.current.getInterface(name);
 

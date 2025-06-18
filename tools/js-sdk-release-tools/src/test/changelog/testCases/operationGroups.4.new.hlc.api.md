@@ -9,7 +9,7 @@ export interface DataProductsCatalogs_add {
 }
 
 export interface DataProductsCatalogs_sig_change {
-    get(resourceGroupName: int, options?: DataProductsCatalogsGetOptionalParams): Promise<DataProductsCatalogsGetResponse>;
+    get(resourceGroupName: number, options?: DataProductsCatalogsGetOptionalParams): Promise<DataProductsCatalogsGetResponse>;
 }
 // (No @packageDocumentation comment for this package)
 ```

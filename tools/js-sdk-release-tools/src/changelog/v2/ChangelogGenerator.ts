@@ -1,4 +1,4 @@
-import * as format from 'string-template';
+import template from 'string-template';
 import { DetectContext, DetectResult } from './DifferenceDetector.js';
 import { DiffLocation, DiffPair, DiffReasons } from 'typescript-codegen-breaking-change-detector';
 import { InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
@@ -42,6 +42,14 @@ export enum ChangelogItemCategory {
   EnumValueRemoved = 1018,
 }
 
+export interface ChangelogResult {
+  hasBreakingChange: boolean;
+  hasFeature: boolean;
+  changelogItems: ChangelogItems;
+  content: string;
+  breakingChangeItems?: string[];
+}
+
 export interface ChangelogItems {
   features: Map<ChangelogItemCategory, string[]>;
   breakingChanges: Map<ChangelogItemCategory, string[]>;
@@ -71,7 +79,7 @@ export class ChangelogGenerator {
   // TODO: should be called 'property'
   private modelPropertyTypeChangedTemplate =
     'Type of parameter {newPropertyName} of interface {interfaceName} is changed from {oldPropertyType} to {newPropertyType}';
-  private modelPropertyRemovedTemplate = 'Interface {interfaceName} no longer has parameter {parameterName}';
+  private modelPropertyRemovedTemplate = 'Interface {interfaceName} no longer has parameter {propertyName}';
   private modelPropertyOptionalToRequired = 'Parameter {propertyName} of interface {interfaceName} is now required';
 
   /** class */
@@ -106,25 +114,38 @@ export class ChangelogGenerator {
     private detectResult: DetectResult
   ) {}
 
-  public generateContent(): string {
+  // TODO: add enum support
+  public generate(): ChangelogResult {
     this.detectResult.interfaces.forEach((diffPairs, name) => {
-      this.generateForInterfaces(name, diffPairs);
-      this.generateForClasses(name, diffPairs);
-      this.generateForTypeAliases(name, diffPairs);
-      // TODO: add enum support
-      //   this.generateForEnums(name, diffPairs);
-      this.generateForFunctions(name, diffPairs);
+      this.generateForInterfaces(diffPairs, name);
+    });
+    this.detectResult.classes.forEach((diffPairs, name) => {
+      this.generateForClasses(diffPairs, name);
+    });
+    this.detectResult.typeAliases.forEach((diffPairs, name) => {
+      this.generateForTypeAliases(diffPairs, name);
+    });
+    this.detectResult.functions.forEach((diffPairs, name) => {
+      this.generateForFunctions(diffPairs, name);
     });
     const content = this.generateContentCore();
-    return content;
+    const hasBreakingChange = this.hasBreakingChange();
+    const hasFeature = this.hasFeature();
+    const changelogItems = this.getChangelogItems();
+    const breakingChangeItems = Array.from(this.changelogItems.breakingChanges).flatMap(([_, items]) => items);
+    return { content, changelogItems, hasBreakingChange, hasFeature, breakingChangeItems };
   }
 
-  public get hasBreakingChange(): boolean {
+  private hasBreakingChange(): boolean {
     return this.changelogItems.breakingChanges.size > 0;
   }
 
-  public get hasFeature(): boolean {
+  private hasFeature(): boolean {
     return this.changelogItems.features.size > 0;
+  }
+
+  private getChangelogItems(): ChangelogItems {
+    return this.changelogItems;
   }
 
   private getItemsFromCategoryMap(map: Map<ChangelogItemCategory, string[]>): string[] {
@@ -166,53 +187,58 @@ export class ChangelogGenerator {
     }
   }
 
-  private generateForFunctions(functionName: string, diffPairs: DiffPair[]): void {
+  private generateForFunctions(diffPairs: DiffPair[], functionName: string): void {
     diffPairs.forEach((p) => {
       // function added
       if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
-        const message = format(this.functionAddedTemplate, { functionName });
+        const message = template(this.functionAddedTemplate, { functionName });
         this.addChangelogItem(ChangelogItemCategory.FunctionAdded, message);
       }
       // function removed
       if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = format(this.functionRemovedTemplate, { functionName });
+        const message = template(this.functionRemovedTemplate, { functionName });
         this.addChangelogItem(ChangelogItemCategory.FunctionRemoved, message);
       }
       // TODO: add more
     });
   }
 
-  private generateForTypeAliases(typeName: string, diffPairs: DiffPair[]): void {
+  private generateForTypeAliases(diffPairs: DiffPair[], typeName: string): void {
     diffPairs.forEach((p) => {
       // type alias added
       if (p.location === DiffLocation.TypeAlias && this.hasReasons(p.reasons, DiffReasons.Added)) {
-        const message = format(this.typeAliasAddedTemplate, { typeName });
+        const message = template(this.typeAliasAddedTemplate, { typeName });
         this.addChangelogItem(ChangelogItemCategory.TypeAliasAdded, message);
       }
       // NOTE: not detected in v1
       // type alias removed
       if (p.location === DiffLocation.TypeAlias && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = format(this.typeAliasRemovedTemplate, { typeName });
+        const message = template(this.typeAliasRemovedTemplate, { typeName });
         this.addChangelogItem(ChangelogItemCategory.TypeAliasRemoved, message);
       }
       // type alias type changed
       if (p.location === DiffLocation.TypeAlias && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
-        const message = format(this.typeAliasTypeChangedTemplate, { typeName });
-        this.addChangelogItem(ChangelogItemCategory.TypeAliasTypeChanged, message);
+        // TODO: improve changelog to tell the most outer impacted declarations
+        const oldTypeText = p.target!.node.getText();
+        const newTypeText = p.source!.node.getText();
+        if (oldTypeText !== newTypeText) {
+          const message = template(this.typeAliasTypeChangedTemplate, { typeName });
+          this.addChangelogItem(ChangelogItemCategory.TypeAliasTypeChanged, message);
+        }
       }
     });
   }
 
-  private generateForClasses(className: string, diffPairs: DiffPair[]): void {
+  private generateForClasses(diffPairs: DiffPair[], className: string): void {
     diffPairs.forEach((p) => {
       // class added
       if (p.location === DiffLocation.Class && this.hasReasons(p.reasons, DiffReasons.Added)) {
-        const message = format(this.classAddedTemplate, { className });
+        const message = template(this.classAddedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassAdded, message);
       }
       // class removed
       if (p.location === DiffLocation.Class && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = format(this.classRemovedTemplate, { className });
+        const message = template(this.classRemovedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassRemoved, message);
       }
       // class type changed
@@ -222,12 +248,12 @@ export class ChangelogGenerator {
         // TODO: from v1, which treat adding constructor as breaking, is it true?
         (this.hasReasons(p.reasons, DiffReasons.Added) || this.hasReasons(p.reasons, DiffReasons.Removed))
       ) {
-        const message = format(this.classChanged, { className });
+        const message = template(this.classChanged, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
       }
       // class property removed
       if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = format(this.classPropertyRemovedTemplate, {
+        const message = template(this.classPropertyRemovedTemplate, {
           className,
           propertyName: p.target!.name,
         });
@@ -237,7 +263,7 @@ export class ChangelogGenerator {
       // TODO: add new diff reason for optional to required
       // NOTE: not supported in v2
       if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
-        const message = format(this.classPropertyOptionalToRequired, {
+        const message = template(this.classPropertyOptionalToRequired, {
           className,
           propertyName: p.source!.name,
         });
@@ -246,48 +272,61 @@ export class ChangelogGenerator {
     });
   }
 
-  private generateForInterfaces(interfaceName: string, diffPairs: DiffPair[]): void {
-    const isOperationGroupInterface = (diffPair: DiffPair) => {
-      const source = diffPair.source?.node.asKind(SyntaxKind.InterfaceDeclaration);
-      const target = diffPair.target?.node.asKind(SyntaxKind.InterfaceDeclaration);
-      return (
+  private generateForInterfaces(diffPairs: DiffPair[], interfaceName: string): void {
+    const isOperationGroupInterface = () => {
+      const source = this.detectContext.context.current.getInterface(interfaceName);
+      const target = this.detectContext.context.baseline.getInterface(interfaceName);
+      const isOperationGroup =
         (source && this.isOperationGroupInterfaceCore(source, this.detectContext.sdkTypes.source)) ||
-        (target && this.isOperationGroupInterfaceCore(target, this.detectContext.sdkTypes.target))
-      );
+        (target && this.isOperationGroupInterfaceCore(target, this.detectContext.sdkTypes.target));
+      return isOperationGroup;
     };
     /** operation group and operationchanges */
     diffPairs.forEach((p) => {
-      if (isOperationGroupInterface(p)) {
+      if (isOperationGroupInterface()) {
         /** operation group changes */
         // operation group added
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = format(this.operationGroupAddedTemplate, { interfaceName });
+          const message = template(this.operationGroupAddedTemplate, { interfaceName });
           this.addChangelogItem(ChangelogItemCategory.OperationGroupAdded, message);
         }
         // operation group removed
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = format(this.operationGroupRemovedTemplate, { interfaceName });
+          const message = template(this.operationGroupRemovedTemplate, { interfaceName });
           this.addChangelogItem(ChangelogItemCategory.OperationGroupRemoved, message);
         }
 
         /** operation changes */
         // operation added
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = format(this.operationAddedTemplate, { interfaceName, signatureName: p.source!.name });
+          const message = template(this.operationAddedTemplate, { interfaceName, signatureName: p.source!.name });
           this.addChangelogItem(ChangelogItemCategory.OperationAdded, message);
         }
         // operation removed
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = format(this.operationRemovedTemplate, { interfaceName, signatureName: p.source!.name });
+          const message = template(this.operationRemovedTemplate, { interfaceName, signatureName: p.target!.name });
           this.addChangelogItem(ChangelogItemCategory.OperationRemoved, message);
         }
         // operation signature's parameter type changed
         if (p.location === DiffLocation.Parameter && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
-          const message = format(this.operationSignatureChangedTemplate, {
+          const signatureName = () => {
+            const parent = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getParentOrThrow();
+            switch (parent.getKind()) {
+              case SyntaxKind.MethodSignature:
+                return parent.asKindOrThrow(SyntaxKind.MethodSignature).getName();
+              case SyntaxKind.FunctionType:
+                return parent
+                  .asKindOrThrow(SyntaxKind.FunctionType)
+                  .getParentOrThrow()
+                  .asKindOrThrow(SyntaxKind.PropertySignature)
+                  .getName();
+            }
+          };
+          const message = template(this.operationSignatureChangedTemplate, {
             interfaceName,
-            // TODO: get signature name
-            signatureName: 'TODO',
+            signatureName: signatureName(),
           });
+          console.log('🚀 ~ operation sig change:', message);
           this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
         // operation signature's parameter list changed
@@ -295,7 +334,7 @@ export class ChangelogGenerator {
           p.location === DiffLocation.Signature_ParameterList &&
           this.hasReasons(p.reasons, DiffReasons.CountChanged)
         ) {
-          const message = format(this.operationSignatureChangedTemplate, {
+          const message = template(this.operationSignatureChangedTemplate, {
             interfaceName,
             signatureName: p.target!.name,
           });
@@ -304,7 +343,7 @@ export class ChangelogGenerator {
         // operation signature's return type changed
         // NOTE: not detected in v1
         if (p.location === DiffLocation.Signature_ReturnType && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
-          const message = format(this.operationSignatureChangedTemplate, {
+          const message = template(this.operationSignatureChangedTemplate, {
             interfaceName,
             signatureName: p.target!.name,
           });
@@ -313,7 +352,7 @@ export class ChangelogGenerator {
         // operation parameter
         // TODO: v1 make it a breaking change when operation optional/required changed, while v2 only consider required-> optional is breaking change
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
-          const message = format(this.operationSignatureChangedTemplate, {
+          const message = template(this.operationSignatureChangedTemplate, {
             interfaceName,
             // TODO: get signature name
             signatureName: 'TODO',
@@ -323,7 +362,7 @@ export class ChangelogGenerator {
         // operation signature's parameter required/optional changed
         // NOTE: not detected in v2
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
-          const message = format(this.operationSignatureChangedTemplate, {
+          const message = template(this.operationSignatureChangedTemplate, {
             interfaceName,
             // TODO: get signature name
             signatureName: 'TODO',
@@ -334,18 +373,18 @@ export class ChangelogGenerator {
         /** model changes */
         // model added
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = format(this.modelAddedTemplate, { interfaceName });
+          const message = template(this.modelAddedTemplate, { interfaceName });
           this.addChangelogItem(ChangelogItemCategory.ModelAdded, message);
         }
         // NOTE: not detected in v1
         // model removed
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = format(this.modelRemovedTemplate, { interfaceName });
+          const message = template(this.modelRemovedTemplate, { interfaceName });
           this.addChangelogItem(ChangelogItemCategory.ModelRemoved, message);
         }
         // model's optional property added
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = format(this.modelOptionalPropertyAddedTemplate, {
+          const message = template(this.modelOptionalPropertyAddedTemplate, {
             interfaceName,
             propertyName: p.source!.name,
           });
@@ -353,7 +392,7 @@ export class ChangelogGenerator {
         }
         // model's required property added
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = format(this.modelRequiredPropertyAddedTemplate, {
+          const message = template(this.modelRequiredPropertyAddedTemplate, {
             interfaceName,
             propertyName: p.source!.name,
           });
@@ -365,23 +404,31 @@ export class ChangelogGenerator {
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
           const getTypeText = (node: Node) =>
             node.asKindOrThrow(SyntaxKind.PropertySignature).getTypeNodeOrThrow().getText();
-          const message = format(this.modelPropertyTypeChangedTemplate, {
-            interfaceName,
-            newPropertyName: p.source!.name,
-            oldPropertyType: getTypeText(p.target!.node),
-            newPropertyType: getTypeText(p.source!.node),
-          });
-          this.addChangelogItem(ChangelogItemCategory.ModelPropertyTypeChanged, message);
+          const oldPropertyTypeText = getTypeText(p.target!.node);
+          const newPropertyTypeText = getTypeText(p.source!.node);
+          // TODO: improve changelog to tell the most outer impacted declarations
+          if (oldPropertyTypeText !== newPropertyTypeText) {
+            const message = template(this.modelPropertyTypeChangedTemplate, {
+              interfaceName,
+              newPropertyName: p.source!.name,
+              oldPropertyType: getTypeText(p.target!.node),
+              newPropertyType: getTypeText(p.source!.node),
+            });
+            this.addChangelogItem(ChangelogItemCategory.ModelPropertyTypeChanged, message);
+          }
         }
         // model's property removed
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = format(this.modelPropertyRemovedTemplate, { interfaceName, propertyName: p.target!.name });
+          const message = template(this.modelPropertyRemovedTemplate, { interfaceName, propertyName: p.target!.name });
           this.addChangelogItem(ChangelogItemCategory.ModelPropertyRemoved, message);
         }
         // TODO: not supported in v2
         // TODO: add new diff reason for optional to required
         if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
-          const message = format(this.modelPropertyOptionalToRequired, { interfaceName, propertyName: p.source!.name });
+          const message = template(this.modelPropertyOptionalToRequired, {
+            interfaceName,
+            propertyName: p.source!.name,
+          });
           this.addChangelogItem(ChangelogItemCategory.ModelPropertyOptionalToRequired, message);
         }
       }

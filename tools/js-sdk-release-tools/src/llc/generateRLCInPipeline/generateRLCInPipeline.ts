@@ -479,9 +479,9 @@ export async function generateRLCInPipeline(options: {
                 options,
             );
             outputPackageInfo.changelog.breakingChangeItems =
-                changelog?.getBreakingChangeItems() ?? [];
+                changelog?.breakingChangeItems ?? [];
             outputPackageInfo.changelog.content =
-                changelog?.generateContent() ?? "";
+                changelog?.content ?? "";
             outputPackageInfo.changelog.hasBreakingChange =
                 changelog?.hasBreakingChange ?? false;
         }

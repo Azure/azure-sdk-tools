@@ -54,6 +54,7 @@
     "@types/npm-registry-fetch": "^8.0.7",
     "@types/npmcli__package-json": "^4.0.4",
     "@types/shelljs": "^0.8.15",
+    "@types/string-template": "^1.0.6",
     "@types/unixify": "^1.0.2",
     "@typespec/compiler": "^0.67.1",
     "rimraf": "^6.0.1",

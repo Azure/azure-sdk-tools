@@ -10,9 +10,11 @@ import {
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
+import { SourceFile, SyntaxKind } from 'ts-morph';
 
 export interface ApiViewOptions {
-  path: string;
+  path?: string;
+  apiView?: string;
   sdkType: SDKType;
 }
 
@@ -38,8 +40,10 @@ export class DifferenceDetector {
 
   constructor(
     private baselineApiViewOptions: ApiViewOptions,
-    private sourceApiViewOptions: ApiViewOptions
+    private currentApiViewOptions: ApiViewOptions
   ) {
+    console.log('🚀 ~ DifferenceDetector ~ currentApiViewOptions:', currentApiViewOptions);
+    console.log('🚀 ~ DifferenceDetector ~ baselineApiViewOptions:', baselineApiViewOptions);
     this.tempFolder = join('~/.tmp-breaking-change-detect-' + Math.random().toString(36).substring(7));
   }
 
@@ -47,7 +51,7 @@ export class DifferenceDetector {
     return {
       sdkTypes: {
         target: this.baselineApiViewOptions.sdkType,
-        source: this.sourceApiViewOptions.sdkType,
+        source: this.currentApiViewOptions.sdkType,
       },
       context: this.context!,
     };
@@ -57,23 +61,23 @@ export class DifferenceDetector {
     await this.load();
     await this.preprocessFn?.(this.context!);
 
-    if (this.baselineApiViewOptions.sdkType !== this.sourceApiViewOptions.sdkType) return this.detectAcrossSdkTypes();
+    if (this.baselineApiViewOptions.sdkType !== this.currentApiViewOptions.sdkType) return this.detectAcrossSdkTypes();
 
-    switch (this.sourceApiViewOptions.sdkType) {
+    switch (this.currentApiViewOptions.sdkType) {
       case SDKType.HighLevelClient:
       case SDKType.ModularClient:
       // TODO: RLC has it special logic to handle Routes
       case SDKType.RestLevelClient:
         return await this.detectCore();
       default:
-        throw new Error(`Unsupported SDK type: ${this.sourceApiViewOptions.sdkType} to detect differences.`);
+        throw new Error(`Unsupported SDK type: ${this.currentApiViewOptions.sdkType} to detect differences.`);
     }
   }
 
   private async load() {
     this.context = await createAstContext(
-      this.baselineApiViewOptions.path,
-      this.sourceApiViewOptions.path,
+      { path: this.baselineApiViewOptions.path, apiView: this.baselineApiViewOptions.apiView },
+      { path: this.currentApiViewOptions.path, apiView: this.currentApiViewOptions.apiView },
       this.tempFolder
     );
   }
@@ -83,6 +87,12 @@ export class DifferenceDetector {
   }
 
   private async detectCore(): Promise<DetectResult> {
+    const getFunctionNames = (sourceFile: SourceFile) => {
+      return sourceFile
+        .getStatements()
+        .filter((d) => d.getKind() === SyntaxKind.FunctionDeclaration)
+        .map((d) => d.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName());
+    };
     const interfaceNamesHasDuplicate = [
       ...this.context!.baseline.getInterfaces().map((i) => i.getName()),
       ...this.context!.current.getInterfaces().map((i) => i.getName()),
@@ -96,8 +106,8 @@ export class DifferenceDetector {
       ...this.context!.current.getClasses().map((i) => i.getName()),
     ];
     const functionsHasDuplicate = [
-      ...this.context!.baseline.getFunctions().map((i) => i.getName()),
-      ...this.context!.current.getFunctions().map((i) => i.getName()),
+      ...getFunctionNames(this.context!.baseline),
+      ...getFunctionNames(this.context!.current),
     ];
     const uniquefy = (arrays: (string | undefined)[]) => {
       const arr = arrays.filter((a) => a !== undefined).map((a) => a!);
@@ -107,6 +117,11 @@ export class DifferenceDetector {
     const classNames = uniquefy(classNamesHasDuplicate);
     const typeAliasNames = uniquefy(typeAliasNamesHasDuplicate);
     const functionNames = uniquefy(functionsHasDuplicate);
+    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ interfaceNames:', interfaceNames);
+    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ classNames:', classNames);
+    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ typeAliasNames:', typeAliasNames);
+    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ functionsHasDuplicate:', functionsHasDuplicate);
+    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ functionNames:', functionNames);
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
@@ -142,11 +157,11 @@ export class DifferenceDetector {
   private async detectAcrossSdkTypes(): Promise<DetectResult> {
     if (
       this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
-      this.sourceApiViewOptions.sdkType === SDKType.ModularClient
+      this.currentApiViewOptions.sdkType === SDKType.ModularClient
     ) {
       // TODO
     } else {
-      const message = `Not supported SDK type: ${this.baselineApiViewOptions.sdkType} -> ${this.sourceApiViewOptions.sdkType} to detect differences.`;
+      const message = `Not supported SDK type: ${this.baselineApiViewOptions.sdkType} -> ${this.currentApiViewOptions.sdkType} to detect differences.`;
       throw new Error(message);
     }
     // TODO

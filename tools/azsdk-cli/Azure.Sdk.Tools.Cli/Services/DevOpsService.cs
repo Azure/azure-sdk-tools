@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using System.Text.RegularExpressions;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -28,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
         private AccessToken? _token;
-        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
+        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";        
 
         private void RefreshConnection()
         {
@@ -94,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
-        public Task<Package> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
+        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -102,6 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public static readonly string DEVOPS_URL = "https://dev.azure.com/azure-sdk";
         public static readonly string RELEASE_PROJECT = "release";
         public static readonly string INTERNAL_PROJECT = "internal";
+        private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
 
@@ -364,6 +366,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             return lang switch
             {
                 "dotnet" => ".NET",
+                "csharp" => ".NET",
+                ".net" => ".NET",
+                "typescript" => "JavaScript",
+                "python" => "Python",
+                "javascript" => "JavaScript",
+                "java" => "Java",
+                "go" => "Go",
                 _ => language
             };
         }
@@ -792,9 +801,15 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// If package version is given, then it will find the package work item for that version.
         /// If package version is empty, then it will find the latest package work item for that package name and language.
         /// </summary>
-        public async Task<Package> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        public async Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS 'Release Planner App Test'";
+            language = MapLanguageIdToName(language);
+            if ( packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersion.Contains(' ') || packageVersion.Contains('\'') || packageVersion.Contains('"'))
+            {
+                throw new ArgumentException("Invalid data in one of the parameters.");
+            }
+
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
             if (!string.IsNullOrEmpty(packageVersion))
             {
                 query += $" AND [Custom.PackageVersion] = '{packageVersion}'";
@@ -810,12 +825,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             return MapPackageWorkItemToModel(packageWorkItems[0]); // Return the first package work item
         }
 
-        public static Package MapPackageWorkItemToModel(WorkItem workItem)
+        public static PackageResponse MapPackageWorkItemToModel(WorkItem workItem)
         {
             if (workItem == null)
+            {
                 throw new ArgumentNullException(nameof(workItem), "Work item cannot be null.");
+            }
 
-            Package packageModel = new()
+            PackageResponse packageModel = new()
             {
                 Name = GetWorkItemValue(workItem, "Custom.Package"),
                 Version = GetWorkItemValue(workItem, "Custom.PackageVersion"),

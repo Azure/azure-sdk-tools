@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Models
     {
         [JsonPropertyName("Language")]
         public string Language { get; set; } = string.Empty;
-        [JsonPropertyName("Package Name")]
+        [JsonPropertyName("PackageResponse Name")]
         public string PackageName { get; set; } = string.Empty;
         [JsonPropertyName("SDK API View Link")]
         public string ApiviewLink {  get; set; } = string.Empty;

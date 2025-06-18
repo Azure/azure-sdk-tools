@@ -6,13 +6,14 @@ using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
 {
-    [Description("This class contains MCP tool to check release readiness status of a package")]
+    [Description("This class contains an MCP tool that checks the release readiness status of a package")]
     [McpServerToolType]
     public class ReleaseReadinessTool(IDevOpsService devopsService,
         IOutputService output,
@@ -38,42 +39,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
             output.Output(result);
         }
 
-        [McpServerTool(Name = "CheckPackageReleaseReadiness"), Description("Checks the release readiness status of a specified SDK package for a language. This includes checking pipeline status, apiview status, change log status, namespace approval status")]
-        public async Task<string> CheckPackageReleaseReadinessAsync(string packageName, string language, string packageVersion = "")
+        [McpServerTool(Name = "CheckPackageReleaseReadiness"), Description("Checks the release readiness status of a specified SDK package for a language. This includes checking pipeline status, apiview status, change log status and namespace approval status.")]
+        public async Task<string> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
             {
-                var package = await devopsService.GetPackageWorkItemAsync(packageName, language, packageVersion);
+                var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
                     logger.LogWarning("No package work item found for the specified package and language.");
                     return output.Format($"No work item found for package '{packageName}' in language '{language}'.");
                 }
 
-                StringBuilder outputBuilder = new StringBuilder();
-                outputBuilder.AppendLine($"Name: {packageName}");
-                outputBuilder.AppendLine($"Version: {package.Version}");
-                outputBuilder.AppendLine($"Display name: {package.DisplayName}");
-                outputBuilder.AppendLine($"Type: {package.PackageType}");
-                outputBuilder.AppendLine($"Work item ID: {package.WorkItemId}");
-                outputBuilder.AppendLine($"Language: {package.Language}");
-                outputBuilder.AppendLine($"State: {package.State}");
-                outputBuilder.AppendLine($"Repo path: {package.PackageRepoPath}");
-                outputBuilder.AppendLine($"Latest pipeline run: {package.LatestPipelineRun}");
-                outputBuilder.AppendLine($"Release pipeline URL: {package.PipelineDefinitionUrl}");
-
-                bool isPackageReady = true;
+                package.IsPackageReady = package.IsChangeLogReady;
 
                 //Check release date for latest version in planned release
-                var plannedRelDate = package.PlannedReleases.LastOrDefault()?.ReleaseDate;
-                if (plannedRelDate != null && !plannedRelDate.Equals("Unknown"))
+                package.PlannedReleaseDate = package.PlannedReleases.LastOrDefault()?.ReleaseDate ?? string.Empty;
+                if (package.PlannedReleaseDate.Equals("Unknown"))
                 {
-                    outputBuilder.AppendLine($"Planned release date: {plannedRelDate}");
-                }
-                else
-                {
-                    isPackageReady = false;
-                    outputBuilder.AppendLine($"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct.");
+                    package.IsPackageReady = false;
+                    package.PackageReadinessDetails = $"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct. ";
                 }
 
                 bool isPreviewRelease = package.PlannedReleases.LastOrDefault()?.ReleaseType.Equals("Beta") ?? false;
@@ -83,16 +68,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 {
                     if (!package.IsPackageNameApproved)
                     {
-                        isPackageReady = false;
-                        outputBuilder.AppendLine($"Package name '{packageName}' is not approved for preview release.");
-                        outputBuilder.AppendLine($"Package Name Approval Status: {package.PackageNameStatus}");
-                        outputBuilder.AppendLine($"Package Name Approval Details: {package.PackageNameApprovalDetails}");
+                        package.IsPackageReady = false;
+                        package.PackageReadinessDetails += $"Package name '{packageName}' is not approved for preview release. ";
                     }
-                    else if (!package.ReleasedVersions.Any())
-                    {
-                        outputBuilder.AppendLine($"Package name '{packageName}' is approved for preview release");
-                    }
-                    // no need to show package name approval status if package name is approved and has at least one version already released
+                    // no need to add extra package name approval status if package name is approved or has at least one version already released
                 }
 
                 // Check if API view is approved if stable version for data plane or .NET
@@ -101,54 +80,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                     
                     if (!package.IsApiViewApproved)
                     {
-                        isPackageReady = false;
-                        outputBuilder.AppendLine($"API View Status: {package.APIViewStatus}. API view is not approved for GA release of package '{packageName}'.");
-                        outputBuilder.AppendLine($"API View Validation Details: {package.ApiViewValidationDetails}");
+                        package.IsPackageReady = false;
+                        package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";
                     }
-                    else
-                    {
-                        outputBuilder.AppendLine($"API view is approved for package '{packageName}'.");
-                    }
-                }
-                
-                //Check if change log verification is valid
-                if (!package.IsChangeLogReady)
-                {
-                    isPackageReady = false;
-                    outputBuilder.AppendLine($"Change Log Status: {package.changeLogStatus}");
-                    outputBuilder.AppendLine($"Change Log Validation Details: {package.ChangeLogValidationDetails}. Change log must contain an entry for version {package.Version} with planned release date.");
-                }
-                else
-                {
-                    outputBuilder.AppendLine($"Change log verification is valid for package '{packageName}'.");
-                }
+                } 
 
-                // check last pipeline run status for the package and verify it completed successfully
+                // Check last pipeline run status for the package and verify it completed successfully
                 var pipelineRunStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
-                if (string.IsNullOrEmpty(pipelineRunStatus))
+                if (string.IsNullOrEmpty(pipelineRunStatus) || !pipelineRunStatus.Contains("succeeded"))
                 {
-                    isPackageReady = false;
-                    outputBuilder.AppendLine($"Latest pipeline run is not available for package '{packageName}'.");
-                }
-                else
-                {
-                    if (!pipelineRunStatus.Contains("succeeded"))
-                    {
-                        isPackageReady = false;
-                    }
-                    outputBuilder.AppendLine($"Last pipeline run details: {pipelineRunStatus}");
+                    package.IsPackageReady = false;
                 }
 
-                // Package release readiness status
-                if (isPackageReady)
+                // PackageResponse release readiness status
+                if (package.IsPackageReady)
                 {
-                    outputBuilder.AppendLine($"Package '{packageName}' is ready for release.");                    
+                    package.PackageReadinessDetails = $"Package '{packageName}' is ready for release. Queue a release pipeline run using the link {package.PipelineDefinitionUrl} to release the package.";                    
                 }
                 else
                 {
-                    outputBuilder.AppendLine($"Package '{packageName}' is not ready for release. Please address the issues mentioned above.");
+                    package.PackageReadinessDetails += $"Package '{packageName}' is not ready for release. Please address the issues mentioned above.";
                 }
-                return output.Format(outputBuilder.ToString());
+                return output.Format(package);
             }
             catch (Exception ex)
             {
@@ -167,18 +120,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                     var pipelineRun = await devopsService.GetPipelineRunAsync(buildId);
                     if (pipelineRun != null)
                     {
-                        if (pipelineRun.Result != BuildResult.Succeeded && pipelineRun.Result != BuildResult.PartiallySucceeded)
+                        var status = pipelineRun.Result?.ToString() ?? "Unknown";
+                        if (!status.Contains("Succeeded"))
                         {
-                            return $"Latest pipeline run did not succeed. Status: {pipelineRun.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
+                            return $"Pipeline run with ID {buildId} did not succeed. Status: {status}. Please check the pipeline run details at {DevOpsService.GetPipelineUrl(buildId)} for more information.";
                         }
-                        else
-                        {
-                            return $"Latest pipeline run succeeded. Status: {pipelineRun.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
-                        }
+                        return status;
                     }
                 }
-                logger.LogWarning("Pipeline run URL is not valid or does not contain buildId.");
-                return "Pipeline run URL is not valid or does not contain buildId to find latest pipeline run status.";
+                return $"Failed to get pipeline run details. The pipeline run URL '{pipelineRunUrl}' is invalid or does not contain a valid build ID.";
             }
             catch(Exception ex)
             {

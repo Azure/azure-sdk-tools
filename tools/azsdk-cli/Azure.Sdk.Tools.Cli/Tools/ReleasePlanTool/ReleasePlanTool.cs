@@ -258,7 +258,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     sb.AppendLine();
                     foreach (var sdk in SdkInfos)
                     {
-                        sb.AppendLine($"Language: {sdk.Language}, PackageResponse name: {sdk.PackageName}");
+                        sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
                     }
                     return output.Format(sb.ToString());
                 }
@@ -320,7 +320,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 else
                 {
-                    response.Append($"PackageResponse namespace has been approved.");
+                    response.Append($"Package namespace has been approved.");
                 }
 
                 var updated = await devOpsService.LinkNamespaceApprovalIssueAsync(releasePlanWorkItemId, issue.HtmlUrl);

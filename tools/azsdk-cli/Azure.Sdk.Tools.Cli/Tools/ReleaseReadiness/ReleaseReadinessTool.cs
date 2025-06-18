@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                     package.IsPackageReady = false;
                 }
 
-                // PackageResponse release readiness status
+                // Package release readiness status
                 if (package.IsPackageReady)
                 {
                     package.PackageReadinessDetails = $"Package '{packageName}' is ready for release. Queue a release pipeline run using the link {package.PipelineDefinitionUrl} to release the package.";                    

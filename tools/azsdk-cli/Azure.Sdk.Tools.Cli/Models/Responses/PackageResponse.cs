@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
 
         public override string ToString()
         {
-            //Create an output string with all the properties of the PackageResponse
+            //Create an output string with all the properties of the Package
             StringBuilder output = new StringBuilder();
             output.AppendLine($"### Work Item ID: {WorkItemId}");
             output.AppendLine($"### Work Item URL: {WorkItemUrl}");

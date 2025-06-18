@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -77,7 +78,50 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
 
         public override string ToString()
         {
-            return JsonSerializer.Serialize(this);
+            //Create an output string with all the properties of the PackageResponse
+            StringBuilder output = new StringBuilder();
+            output.AppendLine($"### Work Item ID: {WorkItemId}");
+            output.AppendLine($"### Work Item URL: {WorkItemUrl}");
+            output.AppendLine($"### Package Work Item Status: {State}");
+            output.AppendLine($"### Package Name: {Name}");
+            output.AppendLine($"### Version: {Version}");
+            output.AppendLine($"### Language: {Language}");
+            output.AppendLine($"### Package Display Name: {DisplayName}");
+            output.AppendLine($"### Package Type: {PackageType}");
+            output.AppendLine($"### Package Repo Path: {PackageRepoPath}");
+            output.AppendLine($"### Latest Pipeline Run URL: {LatestPipelineRun}");
+            output.AppendLine($"### Latest Pipeline Run Status: {LatestPipelineStatus}");
+            output.AppendLine($"### Latest Pipeline Run Details: {LatestPipelineRunDetails}");
+            output.AppendLine($"### Release Pipeline URL: {PipelineDefinitionUrl}");
+            output.AppendLine($"### Change Log Verified: {IsChangeLogReady}");
+            output.AppendLine($"### Change Log Validation Details: {ChangeLogValidationDetails}");
+            output.AppendLine($"### Is API View Approved: {IsApiViewApproved}");
+            output.AppendLine($"### API View Status: {APIViewStatus}");
+            output.AppendLine($"### API View Validation Details: {ApiViewValidationDetails}");
+            output.AppendLine($"### Is Package Name Approved: {IsPackageNameApproved}");
+            output.AppendLine($"### Package Name Status: {PackageNameStatus}");
+            output.AppendLine($"### Package Name Approval Details: {PackageNameApprovalDetails}");
+            output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
+            output.AppendLine($"### Is Package Ready for Release: {IsPackageReady}");
+            output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");
+            if (PlannedReleases.Count > 0)
+            {
+                output.AppendLine("### Planned Releases:");
+                foreach (var release in PlannedReleases)
+                {
+                    output.AppendLine($"- Version: {release.Version}, Release Date: {release.ReleaseDate}, Release Type: {release.ReleaseType}");
+                }
+            }
+            output.AppendLine($"### Released Versions:");
+            output.AppendLine($"- Total Released Versions: {ReleasedVersions.Count}");
+            foreach (var release in ReleasedVersions)
+            {
+                output.AppendLine($"- Version: {release.Version}, Release Date: {release.ReleaseDate}, Release Type: {release.ReleaseType}");
+            }
+            output.AppendLine($"### Is Package Ready: {IsPackageReady}");
+            output.AppendLine($"### Package Readiness Details: {PackageReadinessDetails}");
+            output.AppendLine($"### Planned Release Date: {PlannedReleaseDate}");
+            return ToString(output.ToString());
         }
     }
 

@@ -239,53 +239,5 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             mockIgnoreLinksPath,
             expect.any(String),
         );
-    });
-
-    test("should update both CODEOWNERS and ignore-links.txt when getNpmPackageName throws an exception", async () => {
-        // Setup mock for getNpmPackageName to throw an exception
-        vi.mocked(utilsModule.getNpmPackageName).mockImplementation(() => {
-            throw new Error("Package.json not found");
-        });
-        
-        // Call the function
-        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
-            mockPackageFolderPath,
-            mockPackageName
-        );
-
-        // Check that fs.writeFileSync was called twice (for CODEOWNERS and ignore-links.txt)
-        expect(fsModule.writeFileSync).toHaveBeenCalledTimes(2);
-
-        // Check CODEOWNERS update
-        const newContentBeforeConfig = `# PRLabel: %Mgmt\n${mockPackageFolderPath}/ @qiaozha @MaryGao\n`;
-        const configSectionIndex = mockCODEOWNERSContent.indexOf(
-            "###########\n# Config\n###########",
-        );
-        const expectedCODEOWNERSContent =
-            mockCODEOWNERSContent.slice(0, configSectionIndex) +
-            newContentBeforeConfig +
-            "\n" +
-            mockCODEOWNERSContent.slice(configSectionIndex);
-
-        expect(fsModule.writeFileSync).toHaveBeenNthCalledWith(
-            1,
-            mockCodeOwnersPath,
-            expectedCODEOWNERSContent,
-        );
-
-        // Check ignore-links.txt update
-        const newIgnoreLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
-        // Check if mockIgnoreLinksContent already ends with a newline
-        let expectedIgnoreLinksContent = mockIgnoreLinksContent;
-        if (!expectedIgnoreLinksContent.endsWith("\n")) {
-            expectedIgnoreLinksContent += "\n";
-        }
-        expectedIgnoreLinksContent += newIgnoreLink + "\n";
-
-        expect(fsModule.writeFileSync).toHaveBeenNthCalledWith(
-            2,
-            mockIgnoreLinksPath,
-            expectedIgnoreLinksContent,
-        );
-    });
+    });    
 });

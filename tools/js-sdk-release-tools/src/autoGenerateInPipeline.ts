@@ -107,11 +107,6 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
-       
-        await codeOwnersAndIgnoreLinkGenerator({
-            sdkType: sdkType,
-            typeSpecDirectory: path.posix.join(specFolder, typespecProject!),
-        });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);

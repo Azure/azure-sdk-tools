@@ -353,8 +353,7 @@ export async function cleanUpDirectory(
 ): Promise<void> {      
     // Check if directory exists first
     if (!fs.existsSync(directory)) {
-        logger.info(`Directory ${directory} doesn't exist, creating it`);
-        await mkdir(directory, { recursive: true });
+        logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
         return;
     }
     
@@ -401,25 +400,13 @@ export async function cleanUpPackageDirectory(
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
-
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
     
-    // First try to get from package-details.name which is the actual NPM package name
+    // Get from package-details.name which is the actual NPM package name
     if (emitterOptions?.['package-details']?.name) {
         return emitterOptions['package-details'].name;
     }
-        
-    let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
-    const packageDirFromEmitter = emitterOptions?.['package-dir'];
-    if (packageDirFromEmitter) {
-        packageDir = packageDirFromEmitter;
-    }
-
-    // Return undefined if packageDir is undefined
-    if (!packageDir) {
-        return undefined;
-    }
-
-    return `@azure/${packageDir}`;   
+    
+    return undefined;
 }

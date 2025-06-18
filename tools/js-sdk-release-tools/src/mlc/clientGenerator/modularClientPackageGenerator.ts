@@ -9,8 +9,9 @@ import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
 import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
-import { exists, remove } from 'fs-extra';
+import { exists } from 'fs-extra';
 import unixify from 'unixify';
+import { codeOwnersAndIgnoreLinkGenerator } from '../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -78,6 +79,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         logger.error(`Failed to generate package due to ${(err as Error)?.stack ?? err}`);
         throw err;
     } finally {
+        await codeOwnersAndIgnoreLinkGenerator(options.typeSpecDirectory);
         return packageResult;
     }
 }

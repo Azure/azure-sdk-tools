@@ -335,8 +335,8 @@ describe("cleanUpPackageDirectory", () => {
             await remove(tempPackageDir);
         }
     });
-    
-    test("creates directory if it doesn't exist", async () => {
+
+    test("does not create directory if it doesn't exist and doesn't throw exception", async () => {
         const tempBaseDir = path.join(
             __dirname,
             `tmp/base-${getRandomInt(10000)}`
@@ -355,21 +355,17 @@ describe("cleanUpPackageDirectory", () => {
             const existsBeforeCleanup = await pathExists(nonExistentPackageDir);
             expect(existsBeforeCleanup).toBe(false);
             
-            // Run the cleanUpPackageDirectory function
-            await cleanUpPackageDirectory(nonExistentPackageDir, RunMode.Release);
+            // Expect the function to complete without throwing an exception
+            await expect(cleanUpPackageDirectory(nonExistentPackageDir, RunMode.Release)).resolves.not.toThrow();
             
-            // Verify the directory now exists
+            // Verify the directory still doesn't exist after cleanup
             const existsAfterCleanup = await pathExists(nonExistentPackageDir);
-            expect(existsAfterCleanup).toBe(true);
-            
-            // Verify it's empty
-            const entries = await readdir(nonExistentPackageDir);
-            expect(entries.length).toBe(0);
+            expect(existsAfterCleanup).toBe(false);
         } finally {
-            // Clean up the base directory (which includes the created package directory)
+            // Clean up the base directory
             await remove(tempBaseDir);
         }
-    });    
+    });
 });
 
 describe("getPackageNameFromTspConfig", () => {
@@ -449,14 +445,14 @@ describe("getPackageNameFromTspConfig", () => {
         }
     });    
 
-    test("extracts package name from emitter package-dir when available", async () => {
+    test("returns undefined when package-details.name doesn't exist", async () => {
         const tempSpecFolder = await setupTempDirectory();
         
         try {
             const tspConfig = {
                 parameters: {
                     "package-dir": {
-                        default: "sdk/contoso"
+                        default: "arm-contoso"
                     }
                 },
                 options: {
@@ -478,46 +474,13 @@ describe("getPackageNameFromTspConfig", () => {
             
             // Call function and verify result
             const result = await getPackageNameFromTspConfig(tempSpecFolder);
-            expect(result).toBe("@azure/arm-contoso");
+            expect(result).toBeUndefined();
         } finally {
             await remove(tempSpecFolder);
         }
-    });
-    
-    test("extracts package name from parameters package-dir when emitter package-dir is not available", async () => {
-        const tempSpecFolder = await setupTempDirectory();
-        
-        try {
-            const tspConfig = {
-                parameters: {
-                    "package-dir": {
-                        default: "arm-contoso"
-                    }
-                },
-                options: {
-                    "@azure-tools/typespec-ts": {}
-                }
-            };
-            
-            await writeTspConfig(tempSpecFolder, tspConfig);
-            
-            // Setup mock result for this test
-            mockConfigForTest = {
-                options: tspConfig.options,
-                configFile: {
-                    parameters: tspConfig.parameters
-                }
-            };
-            
-            // Call function and verify result
-            const result = await getPackageNameFromTspConfig(tempSpecFolder);
-            expect(result).toBe("@azure/arm-contoso");
-        } finally {
-            await remove(tempSpecFolder);
-        }
-    });
+    });   
 
-    test("returns undefined when package-dir is missing", async () => {
+    test("returns undefined when options are empty", async () => {
         const tempSpecFolder = await setupTempDirectory();
         
         try {

@@ -2,66 +2,55 @@ import fs from "fs";
 import path from "path";
 import shell from "shelljs";
 import { logger } from "../../utils/logger.js";
-import { getGeneratedPackageDirectory, getNpmPackageName, getPackageNameFromTspConfig } from "../utils.js";
+import { getGeneratedPackageDirectory, getPackageNameFromTspConfig } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
-import { SDKType } from "../types.js";
 
-export const codeOwnersAndIgnoreLinkGenerator = async (options: {
-    sdkType: SDKType;
-    typeSpecDirectory: string;
-}): Promise<void> => {
+export const codeOwnersAndIgnoreLinkGenerator = async (
+    typeSpecDirectory: string
+): Promise<void> => {
+    // Only proceed for management + Modular clients
     logger.info(`Generating CODEOWNERS and ignore link for packages`);
 
-    // Only proceed for management + Modular clients
-    if (options.sdkType !== SDKType.ModularClient) {
-        logger.warn(
-            `Unsupported SDK type ${options.sdkType} for CODEOWNERS and ignore link generation. Only ModularClient with management is supported.`,
-        );
-        return;
-    }
-    const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, '');
+    const packageDirectory = await getGeneratedPackageDirectory(typeSpecDirectory, '');
 
     if (!packageDirectory) {
         logger.warn("Failed to get package directory");
         return;
     }
-    const packageName = await getPackageNameFromTspConfig(options.typeSpecDirectory);
+    const packageName = await getPackageNameFromTspConfig(typeSpecDirectory);
+    if (!packageName) {
+        logger.warn("Failed to get package name");
+        return;
+    }
     await tryGenerateCodeOwnersAndIgnoreLinkForPackage(packageDirectory, packageName);
 };
 
 export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
-    packageName?: string
+    packageName: string
 ) {
     logger.info(
         `Start to generate CODEOWNERS and ignore link for ${packageFolderPath}`,
     );
     let isFirstPackageToNpm = false;
-    let pkgName: string = '';
 
-    try {
-        const jsSdkRepoPath = String(shell.pwd());
-        const packageAbsolutePath = path.join(jsSdkRepoPath, packageFolderPath);
-        pkgName = getNpmPackageName(packageAbsolutePath);
-        const npmViewResult = await tryGetNpmView(pkgName);
+    try {       
+        const npmViewResult = await tryGetNpmView(packageName);
         isFirstPackageToNpm = npmViewResult === undefined;
     } catch (error) {
         logger.info(
-            `Failed to get NPM package name: ${error}. Treating as first package to NPM.`,
+            `Failed to get NPM package information: ${error}. Treating as first package to NPM.`,
         );
         isFirstPackageToNpm = true;
     }
 
-    // Use pkgName as a fallback if packageName is undefined
-    const effectivePackageName = packageName || pkgName;
-
     if (isFirstPackageToNpm) {
-        logger.info(`Package ${effectivePackageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`);
+        logger.info(`Package ${packageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`);
         updateCODEOWNERS(packageFolderPath);
-        updateIgnoreLink(effectivePackageName);
+        updateIgnoreLink(packageName);
         logger.info(`Generated updates for CODEOWNERS and ignore link successfully`);
     } else {
-        logger.info(`Package ${effectivePackageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`);
+        logger.info(`Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`);
     }
 }
 

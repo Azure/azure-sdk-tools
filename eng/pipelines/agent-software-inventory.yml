@@ -7,77 +7,91 @@ pr:
     - eng/pipelines/agent-software-inventory.yml
 
 jobs:
-- job: inventory_azure_pipelines
-  strategy:
-    matrix:
-      Linux:
-        Pool: Azure Pipelines
-        OSVmImage: ubuntu-latest
-        Host: Ubuntu
-      Windows:
-        Pool: Azure Pipelines
-        OSVmImage: windows-latest
-        Host: Windows
-      MacOS:
-        Pool: Azure Pipelines
-        OSVmImage: macOS-latest
-        Host: MacOS
+  - job: inventory_azure_pipelines
+    strategy:
+      matrix:
+        Linux:
+          Pool: Azure Pipelines
+          OSVmImage: ubuntu-latest
+          Host: Ubuntu
+        Windows:
+          Pool: Azure Pipelines
+          OSVmImage: windows-latest
+          Host: Windows
+        MacOS:
+          Pool: Azure Pipelines
+          OSVmImage: macOS-latest
+          Host: MacOS
 
 
-  pool:
-    name: $(Pool)
-    vmImage: $(OSVmImage)
+    pool:
+      name: $(Pool)
+      vmImage: $(OSVmImage)
 
-  steps:
-  - template: /eng/pipelines/templates/steps/inventory-steps.yml
+    steps:
+    - template: /eng/pipelines/templates/steps/inventory-steps.yml
 
-- job: inventory_custom_agents
-  strategy:
-    matrix:
-      CustomLinux22:
-        Pool: azsdk-pool
-        OSVmImage: ubuntu-22.04
-        Host: Ubuntu
-      CustomLinux24:
-        Pool: azsdk-pool
-        OSVmImage: ubuntu-24.04
-        Host: Ubuntu
-      CustomWindows:
-        Pool: azsdk-pool
-        OSVmImage: windows-2022
-        Host: Windows
+  - job: inventory_custom_agents_linux
+    strategy:
+      matrix:
+        CustomLinux22:
+          Pool: azsdk-pool
+          OSVmImage: ubuntu-22.04
+          Host: Ubuntu
+        CustomLinux24:
+          Pool: azsdk-pool
+          OSVmImage: ubuntu-24.04
+          Host: Ubuntu
 
-  pool:
-    name: $(Pool)
-    image: $(OSVmImage)
+    pool:
+      name: $(Pool)
+      image: $(OSVmImage)
+      os: linux
 
-  steps:
-  - template: /eng/pipelines/templates/steps/inventory-steps.yml
+    steps:
+    - template: /eng/pipelines/templates/steps/inventory-steps.yml
 
-- job: assemble
-  dependsOn:
-    - inventory_azure_pipelines
-    - inventory_custom_agents
-  condition: succeededOrFailed()
-  pool:
-    vmImage: ubuntu-latest
-  steps:
-  - checkout: none
+  - job: inventory_custom_agents_windows
+    strategy:
+      matrix:
+        CustomWindows:
+          Pool: azsdk-pool
+          OSVmImage: windows-2022
+          Host: Windows
 
-  - download: current
-    displayName: Download artifacts
-    patterns: |
-      **/*.csv
+    pool:
+      name: $(Pool)
+      image: $(OSVmImage)
+      os: windows
 
-  - pwsh: >
-      Get-ChildItem -Filter *.csv -Recurse
-      | Get-Content
-      | ConvertFrom-Csv -Header Host, VmImage, Type, Name, Version, Architecture
-      | Sort-Object Host, VmImage, Type, Name, Version, Architecture
-      | ConvertTo-Csv
-      > inventory.csv
-    displayName: Combine and sort inventory
-    workingDirectory: $(Pipeline.Workspace)
+    steps:
+    - template: /eng/pipelines/templates/steps/inventory-steps.yml
 
-  - publish: $(Pipeline.Workspace)/inventory.csv
-    artifact: inventory
+  - job: assemble
+    dependsOn:
+      - inventory_azure_pipelines
+      - inventory_custom_agents_linux
+      - inventory_custom_agents_windows
+    condition: succeededOrFailed()
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: none
+
+    - download: current
+      displayName: Download artifacts
+      patterns: |
+        **/*.csv
+
+    - pwsh: >
+        Get-ChildItem -Filter *.csv -Recurse
+        | Get-Content
+        | ConvertFrom-Csv -Header Host, VmImage, Type, Name, Version, Architecture
+        | Sort-Object Host, VmImage, Type, Name, Version, Architecture
+        | ConvertTo-Csv
+        > inventory.csv
+      displayName: Combine and sort inventory
+      workingDirectory: $(Pipeline.Workspace)
+
+    - publish: $(Pipeline.Workspace)/inventory.csv
+      artifact: inventory

@@ -233,6 +233,7 @@ namespace APIViewWeb
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials()
+                        .WithExposedHeaders("location")
                         .SetPreflightMaxAge(TimeSpan.FromHours(20));
                 });
             });

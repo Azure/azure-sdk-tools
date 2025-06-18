@@ -39,15 +39,15 @@ jobs:
           OSVmImage: ubuntu-22.04
           Demands: ImageOverride -equals ubuntu-22.04
           Host: Ubuntu
-        CustomLinux24:
-          Pool: azsdk-pool
-          OSVmImage: ubuntu-24.04
-          Demands: ImageOverride -equals ubuntu-24.04
-          Host: Ubuntu
+        # CustomLinux24:
+        #   Pool: azsdk-pool
+        #   OSVmImage: ubuntu-24.04
+        #   Demands: ImageOverride -equals ubuntu-24.04
+        #   Host: Ubuntu
 
     pool:
       name: $(Pool)
-      demands: $(Demands)
+      demands: ImageOverride -equals ubuntu-22.04
       os: linux
 
     steps:

@@ -47,7 +47,6 @@ jobs:
 
     pool:
       name: $(Pool)
-      image: $(OSVmImage)
       demands: $(Demands)
       os: linux
 

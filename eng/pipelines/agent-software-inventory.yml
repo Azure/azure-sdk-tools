@@ -31,7 +31,7 @@ jobs:
     steps:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml
 
-  - job: inventory_custom_agents_linux
+  - job: inventory_custom_agents_linux_22_hardcoded
     strategy:
       matrix:
         CustomLinux22:
@@ -48,6 +48,41 @@ jobs:
     pool:
       name: $(Pool)
       demands: ImageOverride -equals ubuntu-22.04
+      os: linux
+
+    steps:
+    - template: /eng/pipelines/templates/steps/inventory-steps.yml
+
+
+  - job: inventory_custom_agents_linux_22_strategy_variable
+    strategy:
+      matrix:
+        CustomLinux24:
+          Pool: azsdk-pool
+          OSVmImage: ubuntu-22.04
+          Demands: ImageOverride -equals ubuntu-22.04
+          Host: Ubuntu
+
+    pool:
+      name: $(Pool)
+      demands: $(Demands)
+      os: linux
+
+    steps:
+    - template: /eng/pipelines/templates/steps/inventory-steps.yml
+
+
+  - job: inventory_custom_agents_linux_22_hardcoded_variable
+
+    variables:
+      Pool: azsdk-pool
+      OSVmImage: ubuntu-22.04
+      Demands: ImageOverride -equals ubuntu-22.04
+      Host: Ubuntu
+
+    pool:
+      name: $(Pool)
+      demands: $(Demands)
       os: linux
 
     steps:

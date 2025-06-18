@@ -8,6 +8,8 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
+import { codeOwnersAndIgnoreLinkGenerator } from './common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
+
 import shell from 'shelljs';
 import fs from 'fs';
 
@@ -59,6 +61,7 @@ async function automationGenerateInPipeline(
                 });
                 break;
             case SDKType.RestLevelClient:
+                // RLC + swagger is not supported.
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
@@ -95,6 +98,7 @@ async function automationGenerateInPipeline(
                     versionPolicyName: 'management',
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
+                    runMode: runMode as RunMode,
                 };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
@@ -103,6 +107,11 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
+
+        await codeOwnersAndIgnoreLinkGenerator({
+            sdkType: sdkType,
+            packages: outputJson.packages || [],
+        });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);

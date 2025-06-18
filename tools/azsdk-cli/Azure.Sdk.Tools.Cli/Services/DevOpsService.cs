@@ -82,18 +82,18 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IDevOpsService
     {
-        public Task<ReleasePlan> GetReleasePlan(int releasePlanId);
-        public Task<ReleasePlan> GetReleasePlanForWorkItem(int workItemId);
-        public Task<ReleasePlan> GetReleasePlan(string pullRequestUrl);
-        public Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan);
-        public Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
-        public Task<Build> GetPipelineRun(int buildId);
-        public Task<string> GetSDKPullRequestFromPipelineRun(int buildId, string language, int workItemId);
-        public Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
-        public Task<bool> UpdateReleasePlanSDKDetails(int workItemId, List<SDKInfo> sdkLanguages, string languageExclusionNote = "");
-        public Task<bool> UpdateApiSpecStatus(int workItemId, string status);
-        public Task<bool> UpdateSpecPullRequest(int releasePlanWorkItemId, string specPullRequest);
-        public Task<bool> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string url);
+        public Task<ReleasePlan> GetReleasePlanAsync(int releasePlanId);
+        public Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId);
+        public Task<ReleasePlan> GetReleasePlanAsync(string pullRequestUrl);
+        public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlan releasePlan);
+        public Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
+        public Task<Build> GetPipelineRunAsync(int buildId);
+        public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId);
+        public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
+        public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages);
+        public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
+        public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
+        public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
     }
 
     public class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -104,31 +104,31 @@ namespace Azure.Sdk.Tools.Cli.Services
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
 
-        public async Task<ReleasePlan> GetReleasePlanForWorkItem(int workItemId)
+        public async Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId)
         {
             _logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await _connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
             if (workItem?.Id == null)
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
-            var releasePlan = await MapWorkItemToReleasePlan(workItem);
+            var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
             return releasePlan;
         }
 
-        public async Task<ReleasePlan> GetReleasePlan(int releasePlanId)
+        public async Task<ReleasePlan> GetReleasePlanAsync(int releasePlanId)
         {
             // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
-            var releasePlanWorkItems = await FetchWorkItems(query);
+            var releasePlanWorkItems = await FetchWorkItemsAsync(query);
             if (releasePlanWorkItems.Count == 0)
             {
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
-            return await MapWorkItemToReleasePlan(releasePlanWorkItems[0]);
+            return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
         }
 
-        private async Task<ReleasePlan> MapWorkItemToReleasePlan(WorkItem workItem)
+        private async Task<ReleasePlan> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
             var releasePlan = new ReleasePlan()
             {
@@ -171,31 +171,27 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
             }
 
-            int releasePlanWorkItemId = workItem.Id ?? 0;
-            if (releasePlanWorkItemId != 0)
+            // Get details from API spec work item
+            try
             {
-                // Get details from API spec work item
-                try
-                {
-                    var apiSpecWorkItem = await GetApiSpecWorkItem(releasePlanWorkItemId);
-                    releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
-                    releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
-                    releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Failed to get API spec work item for release plan work item {releasePlanWorkItemId}. Error: {ex.Message}");
-                }
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId);
+                releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
+                releasePlan.SpecAPIVersion = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecversion", out Object? apiVersion) ? apiVersion?.ToString() ?? string.Empty : string.Empty;
+                releasePlan.SpecType = apiSpecWorkItem.Fields.TryGetValue("Custom.APISpecDefinitionType", out Object? specType) ? specType?.ToString() ?? string.Empty : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to get API spec work item for release plan work item {releasePlan.WorkItemId}. Error: {ex.Message}");
             }
 
             return releasePlan;
         }
 
-        public async Task<ReleasePlan> GetReleasePlan(string pullRequestUrl)
+        public async Task<ReleasePlan> GetReleasePlanAsync(string pullRequestUrl)
         {
-            // First find the API sepc work item
+            // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.RESTAPIReviews] CONTAINS WORDS '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
-            var apiSpecWorkItems = await FetchWorkItems(query);
+            var apiSpecWorkItems = await FetchWorkItemsAsync(query);
             if (apiSpecWorkItems.Count == 0)
             {
                 throw new Exception($"Failed to find API spec work item for pull request URL {pullRequestUrl}");
@@ -214,13 +210,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                     if (parentWorkItem == null || !parentWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? parentType))
                         continue;
                     if (parentType.Equals("Release Plan"))
-                        return await MapWorkItemToReleasePlan(parentWorkItem);
+                        return await MapWorkItemToReleasePlanAsync(parentWorkItem);
                 }
             }
             throw new Exception($"Failed to find a release plan with {pullRequestUrl} as spec pull request.");
         }
 
-        public async Task<WorkItem> CreateReleasePlanWorkItem(ReleasePlan releasePlan)
+        public async Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlan releasePlan)
         {
             int releasePlanWorkItemId = 0;
             int apiSpecWorkItemId = 0;
@@ -229,7 +225,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
-                WorkItem releasePlanWorkItem = await CreateWorkItem(releasePlan, "Release Plan", releasePlanTitle);
+                WorkItem releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;
                 if (releasePlanWorkItemId == 0)
                 {
@@ -238,7 +234,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
-                var apiSpecWorkItem = await CreateWorkItem(releasePlan, "API Spec", apiSpecTitle);
+                var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan, "API Spec", apiSpecTitle);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
@@ -246,7 +242,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
 
                 // Link API spec as child of release plan
-                await LinkWorkItemAsChild(releasePlanWorkItemId, apiSpecWorkItem.Url);
+                await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
                 if (releasePlanWorkItem != null)
                     return releasePlanWorkItem;
 
@@ -254,18 +250,18 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                var errorMesage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
-                _logger.LogError(errorMesage);
+                var errorMessage = $"Failed to create release plan and API spec work items, Error:{ex.Message}";
+                _logger.LogError(errorMessage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
                 if (apiSpecWorkItemId != 0)
                     await workItemClient.DeleteWorkItemAsync(apiSpecWorkItemId);
-                throw new Exception(errorMesage);
+                throw new Exception(errorMessage);
             }
         }
 
-        private async Task<WorkItem> CreateWorkItem(ReleasePlan releasePlan, string workItemType, string title)
+        private async Task<WorkItem> CreateWorkItemAsync(ReleasePlan releasePlan, string workItemType, string title)
         {
             var specDocument = releasePlan.GetPatchDocument();
             specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
@@ -316,7 +312,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        private async Task LinkWorkItemAsChild(int parentId, string childUrl)
+        private async Task LinkWorkItemAsChildAsync(int parentId, string childUrl)
         {
             try
             {
@@ -338,8 +334,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             catch (Exception ex)
             {
-                var errorMesage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
-                throw new Exception(errorMesage);
+                var errorMessage = $"Failed to link work item {childUrl} as child of {parentId}, Error: {ex.Message}";
+                throw new Exception(errorMessage);
             }
         }
 
@@ -368,7 +364,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<bool> AddSdkInfoInReleasePlan(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
+        public async Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
         {
             // Adds SDK generation and pull request link in release plan work item.
             try
@@ -412,7 +408,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<List<WorkItem>> FetchWorkItems(string query)
+        private async Task<List<WorkItem>> FetchWorkItemsAsync(string query)
         {
             try
             {
@@ -463,7 +459,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<Build> RunSDKGenerationPipeline(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId)
+        public async Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId)
         {
             int pipelineDefinitionId = GetPipelineDefinitionId(language);
             if (pipelineDefinitionId == 0)
@@ -494,23 +490,24 @@ namespace Azure.Sdk.Tools.Cli.Services
                             }
             });
 
-            _logger.LogInformation($"Started pipeline run {build.Url} to generate SDK.");
+            var pipelineRunUrl = GetPipelineUrl(build.Id);
+            _logger.LogInformation($"Started pipeline run {pipelineRunUrl} to generate SDK.");
             if (workItemId != 0)
             {
                 _logger.LogInformation("Adding SDK generation pipeline link to release plan");
-                await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(build.Id), "");
+                await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), pipelineRunUrl, "");
             }
 
             return build;
         }
 
-        public async Task<Build> GetPipelineRun(int buildId)
+        public async Task<Build> GetPipelineRunAsync(int buildId)
         {
             var buildClient = _connection.GetBuildClient();
             return await buildClient.GetBuildAsync(INTERNAL_PROJECT, buildId);
         }
 
-        public async Task<string> GetSDKPullRequestFromPipelineRun(int buildId, string language, int workItemId)
+        public async Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId)
         {
             var buildClient = _connection.GetBuildClient();
             var timeLine = await buildClient.GetBuildTimelineAsync(INTERNAL_PROJECT, buildId);
@@ -531,7 +528,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     if (workItemId != 0)
                     {
                         _logger.LogInformation("Adding SDK pull request to release plan");
-                        await AddSdkInfoInReleasePlan(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl);
+                        await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl);
                     }
                     return pullRequestUrl;
                 }
@@ -566,11 +563,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// </summary>
         /// <param name="workItemId"></param>
         /// <param name="sdkLanguages"></param>
-        /// <param name="languageExclusionNote"></param>
         /// <returns>bool</returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<bool> UpdateReleasePlanSDKDetails(int workItemId, List<SDKInfo> sdkLanguages, string languageExclusionNote = "")
+        public async Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages)
         {
             // Adds SDK languages in release plan work item.
             try
@@ -581,16 +577,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
 
                 HashSet<string> languageNames = [.. sdkLanguages.Select(s => s.Language)];
-                var releasePlan = await GetReleasePlanForWorkItem(workItemId);
+                var releasePlan = await GetReleasePlanForWorkItemAsync(workItemId);
                 if (releasePlan?.SDKInfo != null)
                 {
                     languageNames.UnionWith(releasePlan.SDKInfo.Select(s => s.Language));
-                }
-
-                // Make sure all languages are supported or exception note is provided
-                if (languageNames.Count < 5 && string.IsNullOrEmpty(languageExclusionNote))
-                {
-                    throw new ArgumentException("Please provide a language exclusion note if you are not releasing SDK for all languages.");
                 }
 
                 var languages = string.Join(",", languageNames);
@@ -604,18 +594,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                         Value = languages
                     }
                 };
-
-                if (!string.IsNullOrEmpty(languageExclusionNote))
-                {
-                    jsonLinkDocument.Add(
-                        new JsonPatchOperation
-                        {
-                            Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = "/fields/Custom.LanguageExclusionNote",
-                            Value = languageExclusionNote
-                        }
-                    );
-                }
 
                 foreach(var sdk in sdkLanguages)
                 {
@@ -651,7 +629,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <returns>bool</returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<bool> UpdateApiSpecStatus(int workItemId, string status)
+        public async Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status)
         {
             // Update API spec work item status in release plan
             try
@@ -681,7 +659,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <summary>
         /// Get API spec work item for a given release plan work item.
         /// </summary>
-        private async Task<WorkItem> GetApiSpecWorkItem(int releasePlanWorkItemId)
+        private async Task<WorkItem> GetApiSpecWorkItemAsync(int releasePlanWorkItemId)
         {
             var releasePlanWorkItem = await _connection.GetWorkItemClient().GetWorkItemAsync(releasePlanWorkItemId);
             if (releasePlanWorkItem?.Id == null)
@@ -718,7 +696,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <returns>bool</returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<bool> UpdateSpecPullRequest(int releasePlanWorkItemId, string specPullRequest)
+        public async Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest)
         {
             // Update Active spec PR and add link to spec pr list
             try
@@ -729,7 +707,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
 
                 // Find API spec work item
-                var apiSpecWorkItem = await GetApiSpecWorkItem(releasePlanWorkItemId);
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId);
                 int apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
@@ -778,7 +756,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task<bool> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string url)
+        public async Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url)
         {
             // Link namespace approval issue to release plan work item
             try

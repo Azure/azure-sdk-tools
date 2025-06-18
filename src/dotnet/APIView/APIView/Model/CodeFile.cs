@@ -54,6 +54,9 @@ namespace ApiView
         }
         public List<ReviewLine> ReviewLines { get; set; } = [];
 
+        // Thisis set to true when the content generation is in progress for this code file.
+        public bool ContentGenerationInProgress { get; set; } = false;
+
         public override string ToString()
         {
             return new CodeFileRenderer().Render(this).CodeLines.ToString();

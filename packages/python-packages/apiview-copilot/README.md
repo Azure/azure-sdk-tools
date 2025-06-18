@@ -11,54 +11,43 @@ The simplest way to get started with the project would be to follow these steps:
 
 ```
 AZURE_OPENAI_ENDPOINT="..." # The Azure OpenAI endpoint URL
+AZURE_SEARCH_NAME="..."     # The name of the Azure AI Search resource
+AZURE_COSMOS_ACC_NAME="..." # The name of the CosmosDB account
+AZURE_COSMOS_DB_NAME="..."  # The name of the CosmosDB database
 ```
 
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
-4. Generate a review using `python cli.py review generate --language <lang> --target <path_to_target_file> [--base <path_to_base_file>]`.
+4. Generate a review using `python cli.py review generate --language <lang> --target <path_to_target_file> [--base <path_to_base_file>] [--debug-log]`.
 5. Examine the output under `scratch/output/<lang>/<test_file>.json`.
 
-## Context Modes: RAG and Static
+## Review Process and Stages
 
-APIView Copilot supports two context modes for generating reviews:
+For each section of the APIView, the review process now consists of three distinct stages:
 
-- **RAG (Retrieval-Augmented Generation)**: Uses Azure AI Search and CosmosDB to retrieve relevant guidelines, examples, and memories for each code section. This is the default mode.
-- **Static**: Uses only the static guidelines bundled with the tool, without any retrieval from external services.
+- **Guideline Stage:** Reviews the section against language-specific guidelines retrieved from Azure Search and CosmosDB.
+- **Context Stage:** Reviews the section using the full context (guidelines, examples, and memories) retrieved for that section.
+- **Generic Stage:** Applies generic review rules and best practices.
 
-To use RAG mode (default), ensure your `.env` file includes:
+All context and guidelines are retrieved dynamically from Azure Search and CosmosDB. There is no static guideline mode.
 
-```
-AZURE_OPENAI_ENDPOINT="..." # The Azure OpenAI endpoint URL
-AZURE_SEARCH_NAME="..."     # The name of the Azure AI Search resource. Required for RAG
-AZURE_COSMOS_ACC_NAME="..." # The name of the CosmosDB account. Required for RAG
-AZURE_COSMOS_DB_NAME="..."  # The name of the CosmosDB database. Required for RAG
-```
-
-To use static mode, only `AZURE_OPENAI_ENDPOINT` is required.
-
-### Example: Generating a Review (RAG mode)
+### Example: Generating a Review
 
 ```
-python cli.py review generate --language <lang> --target <path_to_target_file> [--base <path_to_base_file>]
+python cli.py review generate --language <lang> --target <path_to_target_file> [--base <path_to_base_file>] [--debug-log]
 ```
 
-### Example: Generating a Review (Static mode)
-
-```
-python cli.py review generate --language <lang> --mode static --target <path_to_target_file> [--base <path_to_base_file>]
-```
-
-If you omit `--mode`, RAG is used by default.
+- Use `--debug-log` to dump kept and discarded comments to files for debugging purposes.
 
 ## Creating Reviews with Development Code
 
-- `cli.bat review local`: Generate a review using the development code. You can add `--mode static` or `--mode rag` to control the context mode.
+- `cli.bat review local`: Generate a review using the development code. Supports the `--debug-log` option.
 
 ## Flask App in App Service
 
 Commands available for working with the Flask app:
 
 - `cli.bat app deploy`: Deploy the Flask app to Azure App Service.
-- `cli.bat review remote`: Generate a review using the Flask app in Azure App Service. You can use `--mode static` or `--mode rag` as with local reviews.
+- `cli.bat review remote`: Generate a review using the Flask app in Azure App Service.
 
 ## Running Evaluations
 

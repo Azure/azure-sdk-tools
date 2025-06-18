@@ -46,7 +46,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
         -localGithubClonedRoot "$(Pipeline.Workspace)"
         -requestTimeoutSec 60 # For the nightly link checks increase timeout to handle some of the links that are redirects and can take longer
 
@@ -61,7 +60,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'java link check'
@@ -74,7 +72,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'js link check'
@@ -87,7 +84,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'net link check'
@@ -100,7 +96,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'python link check'
@@ -113,7 +108,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'tools link check'
@@ -127,7 +121,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - publish: $(cachefile)
     artifact: verify-links-cache.txt

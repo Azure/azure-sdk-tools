@@ -6,11 +6,13 @@ using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
     public class SwaggerLanguageService : LanguageProcessor
     {
+        private readonly string _reviewGenerationPipelineUrl;
         public override string Name { get; } = "Swagger";
 
         public override string[] Extensions { get; } = { ".swagger" };
@@ -20,10 +22,12 @@ namespace APIViewWeb
         public override string ProcessName => throw new NotImplementedException();
 
         public override bool UsesTreeStyleParser { get; } = false;
+        public override string ReviewGenerationPipelineUrl => _reviewGenerationPipelineUrl;
 
-        public SwaggerLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        public SwaggerLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             IsReviewGenByPipeline = true;
+            _reviewGenerationPipelineUrl = configuration["SwaggerReviewGenerationPipelineUrl"] ?? String.Empty;
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {

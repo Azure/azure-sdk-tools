@@ -2,9 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
@@ -15,15 +13,18 @@ namespace APIViewWeb
     public class PythonLanguageService : LanguageProcessor
     {
         private readonly string _pythonExecutablePath;
+        private readonly string _reviewGenerationPipelineUrl;
         private readonly TelemetryClient _telemetryClient;
         public override string Name { get; } = "Python";
         public override string[] Extensions { get; } = { ".whl" };
         public override string VersionString { get; } = "0.3.18";
         public override string ProcessName => _pythonExecutablePath;
+        public override string ReviewGenerationPipelineUrl => _reviewGenerationPipelineUrl;
 
         public PythonLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
+            _reviewGenerationPipelineUrl = configuration["PythonReviewGenerationPipelineUrl"] ?? String.Empty;
             _telemetryClient = telemetryClient;
 
             // Check if sandboxing is disabled for python

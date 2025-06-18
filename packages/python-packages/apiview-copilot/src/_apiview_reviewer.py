@@ -1,5 +1,6 @@
 from azure.identity import DefaultAzureCredential
 import concurrent.futures
+import datetime
 import json
 import logging
 import os
@@ -13,7 +14,7 @@ import yaml
 
 from ._diff import create_diff_with_line_numbers
 from ._models import ReviewResult, Comment, ExistingComment
-from ._search_manager import SearchManager
+from ._search_manager import SearchManager, SearchResult
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
 
@@ -59,14 +60,6 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 CREDENTIAL = DefaultAzureCredential()
 
 
-class ApiViewContextMode:
-    STATIC = "static"
-    RAG = "rag"
-
-
-DEFAULT_CONTEXT_MODE = ApiViewContextMode.RAG
-
-
 def in_ci():
     return os.getenv("TF_BUILD", False)
 
@@ -95,7 +88,8 @@ class ApiViewReview:
         language: str,
         outline: Optional[str] = None,
         comments: Optional[list] = None,
-        mode: str = DEFAULT_CONTEXT_MODE,
+        include_general_guidelines: bool = False,
+        debug_log: bool = False,
     ):
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
@@ -103,15 +97,18 @@ class ApiViewReview:
             self.base = None
         self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
-        self.context_mode = mode
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
-        static_guideline_ids = [x["id"] for x in self.search.static_guidelines]
-        self.results = ReviewResult(guideline_ids=static_guideline_ids, comments=[])
+        language_guideline_ids = [x.id for x in self.search.language_guidelines]
+        self.results = ReviewResult(allowed_ids=language_guideline_ids, comments=[])
         self.summary = None
         self.outline = outline
         self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
         self.executor = concurrent.futures.ThreadPoolExecutor()
+        self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
+        if include_general_guidelines:
+            self.filter_expression += " or language eq '' or language eq null"
+        self.debug_log = debug_log
 
     def __del__(self):
         # Ensure the executor is properly shut down
@@ -196,6 +193,7 @@ class ApiViewReview:
         guideline_tag = "guideline"
         generic_tag = "generic"
         outline_tag = "outline"
+        context_tag = "context"
 
         sectioned_doc = self._create_sectioned_document()
 
@@ -204,11 +202,13 @@ class ApiViewReview:
         # Select appropriate prompts based on mode
         if self.mode == ApiViewReviewMode.FULL:
             guideline_prompt_file = "guidelines_review.prompty"
+            context_prompt_file = "context_review.prompty"
             generic_prompt_file = "generic_review.prompty"
             summary_prompt_file = "summarize_api.prompty"
             summary_content = self.target
         elif self.mode == ApiViewReviewMode.DIFF:
             guideline_prompt_file = "guidelines_diff_review.prompty"
+            context_prompt_file = "context_diff_review.prompty"
             generic_prompt_file = "generic_diff_review.prompty"
             summary_prompt_file = "summarize_diff.prompty"
             summary_content = create_diff_with_line_numbers(old=self.base, new=self.target)
@@ -218,12 +218,16 @@ class ApiViewReview:
         # Set up progress tracking
         print("Processing sections: ", end="", flush=True)
 
-        total_prompts = 1 + (len(sections_to_process) * 2)  # 1 for summary, 2 for each section
+        total_prompts = 1 + (len(sections_to_process) * 3)  # 1 for summary, 3 for each section
         prompt_status = [self.PENDING] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation
         cancel_event = threading.Event()
         original_handler = signal.getsignal(signal.SIGINT)
+
+        # Retrieve guidelines as context for the guideline review phase
+        guideline_context = self._retrieve_guidelines_as_context()
+        guideline_context_string = guideline_context.to_markdown() if guideline_context else ""
 
         def keyboard_interrupt_handler(signal, frame):
             print("\n\nCancellation requested! Terminating process...")
@@ -234,6 +238,7 @@ class ApiViewReview:
 
         # Submit all jobs to the executor
         all_futures = {}
+        section_contexts = {}
 
         # 1. Summary task
         all_futures[summary_tag] = self.executor.submit(
@@ -254,20 +259,6 @@ class ApiViewReview:
             if cancel_event.is_set():
                 break
 
-            # Prepare context for guideline tasks
-            if self.context_mode == ApiViewContextMode.RAG:
-                context = self._retrieve_context(str(section))
-                if context:
-                    context_string = context.to_markdown()
-                else:
-                    logger.warning(
-                        f"Failed to retrieve guidelines for section {section_idx}, using static guidelines instead."
-                    )
-                    self.semantic_search_failed = True
-                    context_string = json.dumps(self.search.static_guidelines)
-            else:
-                context_string = json.dumps(self.search.static_guidelines)
-
             # Guideline prompt
             guideline_key = f"{guideline_tag}_{section_idx}"
             all_futures[guideline_key] = self.executor.submit(
@@ -275,11 +266,11 @@ class ApiViewReview:
                 prompt_path=os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
                 inputs={
                     "language": self._get_language_pretty_name(),
-                    "context": context_string,
+                    "context": guideline_context_string,
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=(idx * 2) + 1,
+                status_idx=(idx * 3) + 1,
                 status_array=prompt_status,
             )
 
@@ -295,13 +286,30 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=generic_key,
-                status_idx=(idx * 2) + 2,
+                status_idx=(idx * 3) + 2,
+                status_array=prompt_status,
+            )
+
+            # Context prompt
+            context_key = f"{context_tag}_{section_idx}"
+            context = self._retrieve_context(str(section))
+            section_contexts[section_idx] = [x.id for x in context]
+            context_string = context.to_markdown() if context else ""
+            all_futures[context_key] = self.executor.submit(
+                self._execute_prompt_task,
+                prompt_path=os.path.join(_PROMPTS_FOLDER, context_prompt_file),
+                inputs={
+                    "language": self._get_language_pretty_name(),
+                    "context": context_string,
+                    "content": section.numbered(),
+                },
+                task_name=context_key,
+                status_idx=(idx * 3) + 3,
                 status_array=prompt_status,
             )
 
         # Process results as they complete
         try:
-
             # Process summary result
             summary_response = all_futures[summary_tag].result()
             if summary_response:
@@ -345,7 +353,7 @@ class ApiViewReview:
             for section_idx, section_result in section_results.items():
                 if section_result and section_result["comments"]:
                     section = sections_to_process[section_idx][1]
-                    section_result = ReviewResult(**section_result)
+                    section_result = ReviewResult(allowed_ids=section_contexts[section_idx], **section_result)
                     self.results.merge(section_result, section=section)
         except KeyboardInterrupt:
             print("\n\nCancellation requested! Terminating process...")
@@ -431,6 +439,7 @@ class ApiViewReview:
                     "content": comment.model_dump(),
                     "language": self._get_language_pretty_name(),
                     "outline": self.outline,
+                    "exceptions": self._load_filter_metadata().get("exceptions", "None"),
                 },
             )
 
@@ -455,6 +464,21 @@ class ApiViewReview:
 
         # Update the results with the filtered comments
         print(f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments.")
+
+        # Debug log: dump keep_comments and discard_comments to files if enabled
+        if self.debug_log:
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            debug_dir = os.path.join("scratch", "logs", self.language)
+            os.makedirs(debug_dir, exist_ok=True)
+            keep_path = os.path.join(debug_dir, f"debug_keep_comments_{ts}.json")
+            discard_path = os.path.join(debug_dir, f"debug_discard_comments_{ts}.json")
+            with open(keep_path, "w", encoding="utf-8") as f:
+                json.dump(keep_comments, f, indent=2)
+            with open(discard_path, "w", encoding="utf-8") as f:
+                json.dump(discard_comments, f, indent=2)
+            logger.debug(f"Kept comments written to {keep_path}")
+            logger.debug(f"Discarded comments written to {discard_path}")
+
         self.results.comments = [Comment(**comment) for comment in keep_comments]
 
     def _filter_preexisting_comments(self):
@@ -660,6 +684,20 @@ class ApiViewReview:
             return context
         except Exception as e:
             logger.error(f"Error retrieving context: {type(e).__name__}: {e}", exc_info=True)
+            return None
+
+    def _retrieve_guidelines_as_context(self) -> List[object] | None:
+        """
+        Retrieves all guidelines for the current language as context.
+        """
+        try:
+            guidelines = self.search.language_guidelines
+            if not guidelines:
+                return None
+            context = self.search.build_context(self.search.language_guidelines)
+            return context
+        except Exception as e:
+            logger.error(f"Error retrieving guidelines: {type(e).__name__}: {e}", exc_info=True)
             return None
 
     def _load_generic_metadata(self):

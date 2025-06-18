@@ -21,6 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
     {
         private readonly Option<string> packageNameOpt = new(["--package-name"], "SDK package name") { IsRequired = true };
         private readonly Option<string> languageOpt = new(["--language"], "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]") { IsRequired = true };
+        private static readonly string Pipeline_Success_Status = "Succeeded";
 
         public override Command GetCommand()
         {
@@ -60,14 +61,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 package.IsPackageReady = package.IsChangeLogReady;
 
                 //Check release date for latest version in planned release
-                package.PlannedReleaseDate = package.PlannedReleases.LastOrDefault()?.ReleaseDate ?? string.Empty;
+                var plannedRelease = package.PlannedReleases.FirstOrDefault(r => r.Version.Equals(package.Version)) ?? package.PlannedReleases.LastOrDefault();
+                package.PlannedReleaseDate = plannedRelease?.ReleaseDate ?? "Unknown";
                 if (package.PlannedReleaseDate.Equals("Unknown"))
                 {
                     package.IsPackageReady = false;
                     package.PackageReadinessDetails = $"No planned release date found in package details for current package version {package.Version}. Please check the package version and verify that change log file is correct. ";
                 }
 
-                bool isPreviewRelease = package.PlannedReleases.LastOrDefault()?.ReleaseType.Equals("Beta") ?? false;
+                var releaseType = plannedRelease?.ReleaseType ?? "Unknown";
+                bool isPreviewRelease = releaseType.Equals("Beta");
                 bool isDataPlanePackage = !package.PackageType.Equals("mgmt");
                 // Check for namespace approval if preview release for data plane
                 if (isDataPlanePackage && isPreviewRelease)
@@ -79,6 +82,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                     }
                     // no need to add extra package name approval status if package name is approved or has at least one version already released
                 }
+                else
+                {
+                    package.PackageNameStatus = "Not required";
+                    package.PackageNameApprovalDetails = "Package name approval is not required for GA releases of data plane packages or for non-data plane packages.";
+                }
 
                 // Check if API view is approved if stable version for data plane or .NET
                 if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)
@@ -89,11 +97,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                         package.IsPackageReady = false;
                         package.PackageReadinessDetails += $"API view is not approved for GA release of package '{packageName}'. ";
                     }
-                } 
+                }
+                else
+                {
+                    package.APIViewStatus = "Not required";
+                    package.ApiViewValidationDetails = "API view is not required for preview releases of data plane packages or for non-data plane packages.";
+                }
 
                 // Check last pipeline run status for the package and verify it completed successfully
-                var pipelineRunStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
-                if (string.IsNullOrEmpty(pipelineRunStatus) || !pipelineRunStatus.Contains("succeeded"))
+                package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
+                if (string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status))
                 {
                     package.IsPackageReady = false;
                 }
@@ -127,16 +140,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
         {
             try
             {
+                logger.LogInformation("Getting pipeline run details for URL: {pipelineRunUrl}", pipelineRunUrl);
                 if (!string.IsNullOrEmpty(pipelineRunUrl) && pipelineRunUrl.Contains("buildId="))
                 {
                     var buildId = int.Parse(pipelineRunUrl.Split("buildId=").LastOrDefault());
+                    logger.LogInformation("Extracted build ID: {buildId}", buildId);
                     var pipelineRun = await devopsService.GetPipelineRunAsync(buildId);
                     if (pipelineRun != null)
                     {
-                        var status = pipelineRun.Result?.ToString() ?? "Unknown";
-                        if (!status.Contains("Succeeded"))
+                        logger.LogInformation($"Pipeline status: {pipelineRun.Status}, Result: {pipelineRun.Result}");
+                        var status = (pipelineRun.Status == BuildStatus.Completed ? pipelineRun.Result?.ToString() : pipelineRun.Status.ToString()) ?? "Unknown";
+                        if (!status.Contains(Pipeline_Success_Status))
                         {
-                            return $"Pipeline run with ID {buildId} did not succeed. Status: {status}. Please check the pipeline run details at {DevOpsService.GetPipelineUrl(buildId)} for more information.";
+                            status = $"Pipeline run with ID {buildId} did not succeed. Status: {status}. Please check the pipeline run details at {DevOpsService.GetPipelineUrl(buildId)} for more information.";
                         }
                         return status;
                     }

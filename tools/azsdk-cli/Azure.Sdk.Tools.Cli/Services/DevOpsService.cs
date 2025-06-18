@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private ILogger<DevOpsService> _logger = logger;
         private IDevOpsConnection _connection = connection;
 
-        [GeneratedRegex("\\|\\s(Beta|Stable)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
+        [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
         public async Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId)
@@ -875,9 +875,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 sdkReleaseInfo.Add(new SDKReleaseInfo
                 {
-                    ReleaseType = m.Groups[1].Value,
-                    Version = m.Groups[2].Value,
-                    ReleaseDate = m.Groups[3].Value
+                    ReleaseType = m.Groups[1].Value.Trim(),
+                    Version = m.Groups[2].Value.Trim(),
+                    ReleaseDate = m.Groups[3].Value.Trim()
                 });
             }
             return sdkReleaseInfo;

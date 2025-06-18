@@ -27,8 +27,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         public string LatestPipelineRun { get; set; } = string.Empty;
         [JsonPropertyName("Latest pipeline run status")]
         public string LatestPipelineStatus { get; set; } = string.Empty;
-        [JsonPropertyName("Latest pipeline run details")]
-        public string LatestPipelineRunDetails { get; set; } = string.Empty;
         [JsonPropertyName("Release pipeline URL")]
         public string PipelineDefinitionUrl { get; set; } = string.Empty;
         [JsonPropertyName("Change log verified")]
@@ -48,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         {
             get
             {
-                return APIViewStatus.Equals("Approved", StringComparison.OrdinalIgnoreCase);
+                return APIViewStatus.Equals("Approved") || APIViewStatus.Equals("Not required");
             }
         }
         [JsonPropertyName("API view status")]
@@ -60,9 +58,10 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         {
             get
             {
-                return PackageNameStatus.Equals("Approved", StringComparison.OrdinalIgnoreCase);
+                return PackageNameStatus.Equals("Approved") || PackageNameStatus.Equals("Not required");
             }
         }
+
         [JsonPropertyName("Package name status")]
         public string PackageNameStatus { get; set; } = string.Empty;
         [JsonPropertyName("Package name approval details")]
@@ -93,7 +92,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             output.AppendLine($"### Package Repo Path: {PackageRepoPath}");
             output.AppendLine($"### Latest Pipeline Run URL: {LatestPipelineRun}");
             output.AppendLine($"### Latest Pipeline Run Status: {LatestPipelineStatus}");
-            output.AppendLine($"### Latest Pipeline Run Details: {LatestPipelineRunDetails}");
             output.AppendLine($"### Release Pipeline URL: {PipelineDefinitionUrl}");
             output.AppendLine($"### Change Log Verified: {IsChangeLogReady}");
             output.AppendLine($"### Change Log Validation Details: {ChangeLogValidationDetails}");

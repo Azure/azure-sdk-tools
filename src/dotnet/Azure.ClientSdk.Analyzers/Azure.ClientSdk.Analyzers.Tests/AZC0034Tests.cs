@@ -132,5 +132,30 @@ namespace Azure
             var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 27, 4, 36).WithArguments("Operation`1", "Azure.Operation`1 (from Azure.Core)");
             await Verifier.VerifyAnalyzerAsync(code, expected);
         }
+
+        [Fact]
+        public async Task AZC0034NotProducedForNestedTypes()
+        {
+            // This test verifies that nested types are not flagged by AZC0034
+            // Even if they have names that would conflict with reserved types
+            var code = @"
+namespace Azure.Test
+{
+    public class ParentClass
+    {
+        public class BlobClient { }
+        public struct Response { }
+        public enum Operation { }
+        
+        public class Container
+        {
+            public class Enumerator { }
+        }
+    }
+}";
+
+            // No diagnostics should be produced for nested types
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

@@ -106,6 +106,12 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
+            // Skip nested types
+            if (namedTypeSymbol.ContainingType != null)
+            {
+                return;
+            }
+
             // Check if this is in an Azure namespace
             var namespaceName = namedTypeSymbol.ContainingNamespace?.ToDisplayString();
             if (string.IsNullOrEmpty(namespaceName) || !namespaceName.StartsWith("Azure"))

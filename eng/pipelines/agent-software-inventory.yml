@@ -64,7 +64,7 @@ jobs:
 
     pool:
       name: $(Pool)
-      demands: $(Demands)
+      demands: ImageOverride -equals $(OSVmImage)
 
     steps:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml

@@ -48,7 +48,6 @@ jobs:
     pool:
       name: $(Pool)
       demands: ImageOverride -equals ubuntu-22.04
-      os: linux
 
     steps:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml
@@ -66,7 +65,6 @@ jobs:
     pool:
       name: $(Pool)
       demands: $(Demands)
-      os: linux
 
     steps:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml
@@ -83,7 +81,6 @@ jobs:
     pool:
       name: $(Pool)
       demands: $(Demands)
-      os: linux
 
     steps:
     - template: /eng/pipelines/templates/steps/inventory-steps.yml
@@ -97,7 +94,6 @@ jobs:
 
     pool:
       name: azsdk-pool
-      os: windows
       demands: ImageOverride -equals windows-2022
 
     steps:

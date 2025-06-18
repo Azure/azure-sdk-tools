@@ -22,17 +22,17 @@ jobs:
         Pool: Azure Pipelines
         OSVmImage: macOS-latest
         Host: MacOS
-      CustomLinux20:
-        Pool: azsdk-pool-mms-ubuntu-2004-general
-        OSVmImage: MMSUbuntu20.04
-        Host: Ubuntu
       CustomLinux22:
-        Pool: azsdk-pool-mms-ubuntu-2204-general
-        OSVmImage: MMSUbuntu22.04
+        Pool: azsdk-pool
+        OSVmImage: ubuntu-22.04
+        Host: Ubuntu
+      CustomLinux24:
+        Pool: azsdk-pool
+        OSVmImage: ubuntu-24.04
         Host: Ubuntu
       CustomWindows:
-        Pool: azsdk-pool-mms-win-2022-general
-        OSVmImage: MMS2022
+        Pool: azsdk-pool
+        OSVmImage: windows-2022
         Host: Windows
 
   pool:
@@ -122,7 +122,7 @@ jobs:
       } > powershell-inventory.csv
     displayName: PowerShell modules
     workingDirectory: $(Build.ArtifactStagingDirectory)
-  
+
   - pwsh: |
       Get-ChildItem "${env:ProgramFiles}" | ForEach-Object {
         "$(Host), $(OSVmImage), ProgramFiles, $($_.Name), , all"

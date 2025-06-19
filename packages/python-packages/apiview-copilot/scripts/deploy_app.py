@@ -56,7 +56,7 @@ def deploy_app_to_azure(
     try:
         print("Deploying to Azure App Service...")
         cmd = [
-            "az.cmd",
+            "az",
             "webapp",
             "deploy",
             "--resource-group",
@@ -88,7 +88,7 @@ def deploy_app_to_azure(
             startup_command = f.read().strip()
         print(f"Setting Azure App Service startup command to: {startup_command}")
         cmd = [
-            "az.cmd",
+            "az",
             "webapp",
             "config",
             "set",

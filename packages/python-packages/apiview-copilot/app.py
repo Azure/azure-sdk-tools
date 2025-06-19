@@ -1,3 +1,4 @@
+from enum import Enum
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from src._apiview_reviewer import ApiViewReview
@@ -13,6 +14,16 @@ import asyncio
 from semantic_kernel.agents import AzureAIAgentThread
 import uuid
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
+import threading
+import time
+from typing import Dict, Any
+
+
+job_store: Dict[str, Dict[str, Any]] = {}
+job_store_lock = threading.RLock()
+
+# How long to keep completed jobs (seconds)
+JOB_RETENTION_SECONDS = 600  # 10 minutes
 
 app = FastAPI()
 app.include_router(agent_router)
@@ -32,6 +43,11 @@ supported_languages = [
     "typescript",
 ]
 
+class ApiReviewJobStatus(str, Enum):
+    InProgress = "InProgress"
+    Success = "Success"
+    Error = "Error"
+
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
 
@@ -48,6 +64,21 @@ class AgentChatResponse(BaseModel):
     messages: list
 
 
+# Models for job endpoints
+class ApiReviewJobRequest(BaseModel):
+    language: str
+    target: str
+    base: str = None
+    outline: str = None
+    comments: list = None
+    target_id: str = None
+
+class ApiReviewJobStatusResponse(BaseModel):
+    status: ApiReviewJobStatus
+    comments: list = None
+    details: str = None
+
+
 @app.post("/{language}")
 async def api_reviewer(language: str, request: Request):
     logger.info(f"Received request for language: {language}")
@@ -55,7 +86,7 @@ async def api_reviewer(language: str, request: Request):
 
     if language not in supported_languages:
         logger.warning(f"Unsupported language: {language}")
-        raise HTTPException(status_code=400, detail="Unsupported language")
+        raise HTTPException(status_code=400, detail=f"Unsupported language `{language}`")
 
     try:
         data = await request.json()
@@ -95,6 +126,79 @@ async def api_reviewer(language: str, request: Request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+
+@app.post("/api-review/start", status_code=202)
+async def submit_api_review_job(job_request: ApiReviewJobRequest):
+    # Validate language
+    if job_request.language not in supported_languages:
+        raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
+    job_id = str(uuid.uuid4())
+    # Store job as InProgress
+
+    now = time.time()
+    with job_store_lock:
+        job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "created": now}
+
+    async def run_review_job():
+        try:
+            reviewer = ApiViewReview(
+                language=job_request.language,
+                target=job_request.target,
+                base=job_request.base,
+                outline=job_request.outline,
+                comments=job_request.comments,
+            )
+            result = reviewer.run()
+            reviewer.close()
+            # Parse comments from result
+            result_json = json.loads(result.model_dump_json())
+            comments = result_json.get("comments", [])
+
+            with job_store_lock:
+                job_store[job_id] = {"status": ApiReviewJobStatus.Success, "comments": comments, "created": now}
+        except Exception as e:
+            with job_store_lock:
+                job_store[job_id] = {"status": ApiReviewJobStatus.Error, "details": str(e), "created": now}
+
+    # Schedule the job in the background
+    asyncio.create_task(run_review_job())
+    return {"job_id": job_id}
+
+
+@app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
+async def get_api_review_job_status(job_id: str):
+    # Do not lock for reads; allow concurrent polling
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    # Return status and result fields
+    # Remove internal 'created' field from response
+    if job and 'created' in job:
+        job = dict(job)
+        job.pop('created', None)
+    return job
+# At the end of the file, add a background cleanup task
+
+# Background cleanup task to remove old completed jobs
+def cleanup_job_store():
+    while True:
+        time.sleep(60)  # Run every 60 seconds
+        now = time.time()
+        with job_store_lock:
+            to_delete = []
+            for job_id, job in list(job_store.items()):
+                if job.get("status") in (ApiReviewJobStatus.Success, ApiReviewJobStatus.Error):
+                    created = job.get("created", now)
+                    if now - created > JOB_RETENTION_SECONDS:
+                        to_delete.append(job_id)
+            for job_id in to_delete:
+                del job_store[job_id]
+
+# Start the cleanup thread when the app starts
+cleanup_thread = threading.Thread(target=cleanup_job_store, daemon=True)
+cleanup_thread.start()
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)

@@ -1,8 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, beforeEach, afterEach } from "vitest";
 import {
     resolveOptions,
     specifyApiVersionToGenerateSDKByTypeSpec,
     cleanUpPackageDirectory,
+    getPackageNameFromTspConfig,
 } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
@@ -296,6 +297,21 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
     
+    test("removes all files and directories in Batch mode", async () => {
+        const tempPackageDir = await createTestDirectoryStructure(__dirname);
+        
+        try {
+            // Run the function with Batch mode
+            await cleanUpPackageDirectory(tempPackageDir, RunMode.Batch);
+
+            // Check if everything is removed
+            const entries = await readdir(tempPackageDir);
+            expect(entries.length).toBe(0);
+        } finally {
+            await remove(tempPackageDir);
+        }
+    });
+
     test("handles empty directory", async () => {
         const tempPackageDir = path.join(
             __dirname,
@@ -317,6 +333,179 @@ describe("cleanUpPackageDirectory", () => {
             expect(entries.length).toBe(0);
         } finally {
             await remove(tempPackageDir);
+        }
+    });
+
+    test("does not create directory if it doesn't exist and doesn't throw exception", async () => {
+        const tempBaseDir = path.join(
+            __dirname,
+            `tmp/base-${getRandomInt(10000)}`
+        );
+        
+        const nonExistentPackageDir = path.join(
+            tempBaseDir,
+            "non-existent-package"
+        );
+        
+        try {
+            // Ensure the base directory exists but not the package directory
+            await ensureDir(tempBaseDir);
+            
+            // Verify the package directory doesn't exist yet
+            const existsBeforeCleanup = await pathExists(nonExistentPackageDir);
+            expect(existsBeforeCleanup).toBe(false);
+            
+            // Expect the function to complete without throwing an exception
+            await expect(cleanUpPackageDirectory(nonExistentPackageDir, RunMode.Release)).resolves.not.toThrow();
+            
+            // Verify the directory still doesn't exist after cleanup
+            const existsAfterCleanup = await pathExists(nonExistentPackageDir);
+            expect(existsAfterCleanup).toBe(false);
+        } finally {
+            // Clean up the base directory
+            await remove(tempBaseDir);
+        }
+    });
+});
+
+describe("getPackageNameFromTspConfig", () => {
+    // Store the original function for spying
+    const originalResolveOptions = resolveOptions;
+    
+    // Create an interception wrapper
+    let mockConfigForTest;
+    const interceptResolveOptions = async (dir) => {
+        return mockConfigForTest;
+    };
+    
+    beforeEach(() => {
+        // Replace original function with our interceptor
+        global.resolveOptions = interceptResolveOptions;
+    });
+    
+    afterEach(() => {
+        // Restore original function
+        global.resolveOptions = originalResolveOptions;
+        mockConfigForTest = undefined;
+    });
+
+    // Test utilities
+    async function setupTempDirectory() {
+        const tempSpecFolder = path.join(
+            __dirname,
+            `tmp/spec-${getRandomInt(10000)}`
+        );
+        await ensureDir(tempSpecFolder);
+        return tempSpecFolder;
+    }
+
+    async function writeTspConfig(tempSpecFolder, config) {
+        await writeFile(
+            path.join(tempSpecFolder, "tspconfig.yaml"),
+            stringify(config),
+            { encoding: "utf8" }
+        );
+    }
+
+    test("extracts package name from package-details.name when it exists", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {
+                    "package-dir": {
+                        default: "sdk/contoso"
+                    }
+                },
+                options: {
+                    "@azure-tools/typespec-ts": {
+                        "package-dir": "arm-something-else",
+                        "package-details": {
+                            name: "@azure/arm-contoso"
+                        }
+                    }
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBe("@azure/arm-contoso");
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });    
+
+    test("returns undefined when package-details.name doesn't exist", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {
+                    "package-dir": {
+                        default: "arm-contoso"
+                    }
+                },
+                options: {
+                    "@azure-tools/typespec-ts": {
+                        "package-dir": "arm-contoso"
+                    }
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBeUndefined();
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });   
+
+    test("returns undefined when options are empty", async () => {
+        const tempSpecFolder = await setupTempDirectory();
+        
+        try {
+            const tspConfig = {
+                parameters: {},
+                options: {
+                    "@azure-tools/typespec-ts": {}
+                }
+            };
+            
+            await writeTspConfig(tempSpecFolder, tspConfig);
+            
+            // Setup mock result for this test
+            mockConfigForTest = {
+                options: tspConfig.options,
+                configFile: {
+                    parameters: tspConfig.parameters
+                }
+            };
+            
+            // Call function and verify result
+            const result = await getPackageNameFromTspConfig(tempSpecFolder);
+            expect(result).toBeUndefined();
+        } finally {
+            await remove(tempSpecFolder);
         }
     });
 });

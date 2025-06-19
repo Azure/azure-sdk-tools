@@ -3279,17 +3279,66 @@ class DoNotUseLoggingException(BaseChecker):
         ),
     }
 
-    def visit_call(self, node):
-        """Check that we aren't using logging.exception or logger.exception."""
+    def __init__(self, linter=None):
+        super().__init__(linter)
+        # Track variables assigned from logging.getLogger() calls
+        self._logger_variables = set()
+
+    def visit_assign(self, node):
+        """Track assignments of logger variables."""
         try:
-            if node.func.attrname == "exception":
-                self.add_message(
-                    msgid="do-not-use-logging-exception",
-                    node=node,
-                    confidence=None,
-                )
+            # Check if this is an assignment from logging.getLogger()
+            if (hasattr(node.value, 'func') and 
+                hasattr(node.value.func, 'expr') and
+                hasattr(node.value.func.expr, 'name') and
+                node.value.func.expr.name == 'logging' and
+                hasattr(node.value.func, 'attrname') and
+                node.value.func.attrname == 'getLogger'):
+                
+                # Track all target variable names as logger variables
+                for target in node.targets:
+                    if hasattr(target, 'name'):
+                        self._logger_variables.add(target.name)
         except:
             pass
+
+    def _is_logging_call(self, node):
+        """Check if this is a call to a logging method."""
+        try:
+            if not (hasattr(node.func, 'attrname') and node.func.attrname == "exception"):
+                return False
+            
+            # Check if it's a direct call to logging.exception()
+            if (hasattr(node.func, 'expr') and 
+                hasattr(node.func.expr, 'name') and 
+                node.func.expr.name == 'logging'):
+                return True
+            
+            # Check if it's a call on a variable that looks like a logger
+            if (hasattr(node.func, 'expr') and 
+                hasattr(node.func.expr, 'name')):
+                var_name = node.func.expr.name
+                
+                # Check if variable was assigned from logging.getLogger()
+                if var_name in self._logger_variables:
+                    return True
+                
+                # Check if variable name suggests it's a logger (common convention)
+                if 'log' in var_name.lower():
+                    return True
+            
+            return False
+        except:
+            return False
+
+    def visit_call(self, node):
+        """Check that we aren't using logging.exception or logger.exception."""
+        if self._is_logging_call(node):
+            self.add_message(
+                msgid="do-not-use-logging-exception",
+                node=node,
+                confidence=None,
+            )
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))

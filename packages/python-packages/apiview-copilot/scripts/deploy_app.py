@@ -3,6 +3,7 @@ import os
 import zipfile
 import subprocess
 from typing import Optional
+import sys
 
 load_dotenv(override=True)
 
@@ -53,10 +54,16 @@ def deploy_app_to_azure(
     zip_file = "repo.zip"
     _zip_current_repo(zip_file)
 
+    # Choose az CLI executable based on platform
+    if sys.platform.startswith("win"):
+        az_cli = "az.cmd"
+    else:
+        az_cli = "az"
+
     try:
         print("Deploying to Azure App Service...")
         cmd = [
-            "az",
+            az_cli,
             "webapp",
             "deploy",
             "--resource-group",
@@ -88,7 +95,7 @@ def deploy_app_to_azure(
             startup_command = f.read().strip()
         print(f"Setting Azure App Service startup command to: {startup_command}")
         cmd = [
-            "az",
+            az_cli,
             "webapp",
             "config",
             "set",

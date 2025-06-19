@@ -13,7 +13,7 @@ def retry_with_backoff(
     func,
     *,
     max_retries=5,
-    timeout=180,  # Timeout for each call in seconds (default: 3 minutes)
+    timeout=240,  # Timeout for each call in seconds (default: 4 minutes)
     retry_exceptions=(json.JSONDecodeError, TimeoutError, ConnectionError, TimeoutException),
     non_retryable_exceptions=(AttributeError, TypeError, NameError, SyntaxError, PermissionError),
     on_failure=None,

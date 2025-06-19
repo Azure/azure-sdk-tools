@@ -43,10 +43,12 @@ supported_languages = [
     "typescript",
 ]
 
+
 class ApiReviewJobStatus(str, Enum):
     InProgress = "InProgress"
     Success = "Success"
     Error = "Error"
+
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
@@ -73,12 +75,14 @@ class ApiReviewJobRequest(BaseModel):
     comments: list = None
     target_id: str = None
 
+
 class ApiReviewJobStatusResponse(BaseModel):
     status: ApiReviewJobStatus
     comments: list = None
     details: str = None
 
 
+# legacy endpoint for direct API review
 @app.post("/{language}")
 async def api_reviewer(language: str, request: Request):
     logger.info(f"Received request for language: {language}")
@@ -92,7 +96,6 @@ async def api_reviewer(language: str, request: Request):
         data = await request.json()
 
         target_apiview = data.get("target", None)
-        target_id = data.get("target_id", None)
         base_apiview = data.get("base", None)
         outline = data.get("outline", None)
         comments = data.get("comments", None)
@@ -116,9 +119,6 @@ async def api_reviewer(language: str, request: Request):
                 logger.error(f"Error log contents:\n{error_message}")
 
         logger.info("API review completed successfully")
-
-        # TODO: Add logic to post comments to the target_id, if provided
-
         return JSONResponse(content=json.loads(result.model_dump_json()))
 
     except HTTPException:
@@ -126,7 +126,6 @@ async def api_reviewer(language: str, request: Request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
-
 
 
 @app.post("/api-review/start", status_code=202)
@@ -175,11 +174,14 @@ async def get_api_review_job_status(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
     # Return status and result fields
     # Remove internal 'created' field from response
-    if job and 'created' in job:
+    if job and "created" in job:
         job = dict(job)
-        job.pop('created', None)
+        job.pop("created", None)
     return job
+
+
 # At the end of the file, add a background cleanup task
+
 
 # Background cleanup task to remove old completed jobs
 def cleanup_job_store():
@@ -195,6 +197,7 @@ def cleanup_job_store():
                         to_delete.append(job_id)
             for job_id in to_delete:
                 del job_store[job_id]
+
 
 # Start the cleanup thread when the app starts
 cleanup_thread = threading.Thread(target=cleanup_job_store, daemon=True)

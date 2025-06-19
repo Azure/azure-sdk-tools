@@ -27,6 +27,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
+        await codeOwnersAndIgnoreLinkGenerator(packageDirectory, options.typeSpecDirectory);
         const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
@@ -79,7 +80,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         logger.error(`Failed to generate package due to ${(err as Error)?.stack ?? err}`);
         throw err;
     } finally {
-        await codeOwnersAndIgnoreLinkGenerator(options.typeSpecDirectory);
+       
         return packageResult;
     }
 }

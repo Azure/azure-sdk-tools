@@ -2,17 +2,15 @@ import fs from "fs";
 import path from "path";
 import shell from "shelljs";
 import { logger } from "../../utils/logger.js";
-import { getGeneratedPackageDirectory, getPackageNameFromTspConfig } from "../utils.js";
+import { getPackageNameFromTspConfig } from "../utils.js";
 import { tryGetNpmView } from "../npmUtils.js";
 
 export const codeOwnersAndIgnoreLinkGenerator = async (
-    typeSpecDirectory: string
+    packageDirectory: string,
+    typeSpecDirectory: string,
 ): Promise<void> => {
     // Only proceed for management + Modular clients
     logger.info(`Generating CODEOWNERS and ignore link for packages`);
-
-    const packageDirectory = await getGeneratedPackageDirectory(typeSpecDirectory, '');
-
     if (!packageDirectory) {
         logger.warn("Failed to get package directory");
         return;
@@ -22,35 +20,45 @@ export const codeOwnersAndIgnoreLinkGenerator = async (
         logger.warn("Failed to get package name");
         return;
     }
-    await tryGenerateCodeOwnersAndIgnoreLinkForPackage(packageDirectory, packageName);
+    await tryGenerateCodeOwnersAndIgnoreLinkForPackage(
+        packageDirectory,
+        packageName,
+    );
 };
 
 export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     packageFolderPath: string,
-    packageName: string
+    packageName: string,
 ) {
     logger.info(
         `Start to generate CODEOWNERS and ignore link for ${packageFolderPath}`,
     );
     let isFirstPackageToNpm = false;
 
-    try {       
-        const npmViewResult = await tryGetNpmView(packageName);
-        isFirstPackageToNpm = npmViewResult === undefined;
-    } catch (error) {
+    // Check if package folder exists
+    if (!fs.existsSync(packageFolderPath)) {
         logger.info(
-            `Failed to get NPM package information: ${error}. Treating as first package to NPM.`,
+            `Package folder ${packageFolderPath} does not exist. Treating as first package to NPM.`,
         );
         isFirstPackageToNpm = true;
+    } else {
+        const npmViewResult = await tryGetNpmView(packageName);
+        isFirstPackageToNpm = npmViewResult === undefined;
     }
 
     if (isFirstPackageToNpm) {
-        logger.info(`Package ${packageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`);
+        logger.info(
+            `Package ${packageName} is first beta release, start to generate CODEOWNERS and ignore link for first beta release.`,
+        );
         updateCODEOWNERS(packageFolderPath);
         updateIgnoreLink(packageName);
-        logger.info(`Generated updates for CODEOWNERS and ignore link successfully`);
+        logger.info(
+            `Generated updates for CODEOWNERS and ignore link successfully`,
+        );
     } else {
-        logger.info(`Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`);
+        logger.info(
+            `Package ${packageName} is not first beta release, skipping CODEOWNERS and ignore link generation.`,
+        );
     }
 }
 
@@ -85,7 +93,9 @@ function updateIgnoreLink(packageName: string) {
 
     // Check if the link already exists in the file
     if (content.includes(newLine)) {
-        logger.warn(`Failed to add link for ${packageName} to ignore-links.txt as it already exists, skipping.`);
+        logger.warn(
+            `Failed to add link for ${packageName} to ignore-links.txt as it already exists, skipping.`,
+        );
         return;
     }
 

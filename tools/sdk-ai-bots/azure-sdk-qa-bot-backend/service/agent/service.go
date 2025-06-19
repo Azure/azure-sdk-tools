@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
@@ -60,6 +61,12 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	}
 	result := &model.CompletionResp{}
 
+	// avoid token limit error, we need to limit the number of messages in the history
+	if len(req.Message.Content) > config.AOAI_CHAT_MAX_TOKENS {
+		log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
+		req.Message.Content = req.Message.Content[:config.AOAI_CHAT_MAX_TOKENS]
+	}
+
 	// This is a conversation in progress.
 	// NOTE: all messages, regardless of role, count against token usage for this API.
 	messages := []azopenai.ChatRequestMessageClassification{}
@@ -81,6 +88,11 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 			return result, nil
 		}
 		log.Println("user message with additional info:", preProcessedMessage)
+		// avoid token limit error, we need to limit the number of messages in the history
+		if len(preProcessedMessage) > config.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
+			preProcessedMessage = preProcessedMessage[:config.AOAI_CHAT_MAX_TOKENS]
+		}
 		messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(preProcessedMessage)})
 	} else {
 		messages = append(messages, &azopenai.ChatRequestUserMessage{
@@ -246,7 +258,7 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
-		DeploymentName: &s.model,
+		DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
 		Temperature:    &temperature,
 	}, nil)
 

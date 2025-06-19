@@ -122,16 +122,12 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    try {
-        if (isRushRepo(sdkRepoRoot)) {
-            await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
-        } else {
-            await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, true);
-        }
-        logger.info(`built samples successfully.`);
-    } catch (err) {
-        logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
+    if (isRushRepo(sdkRepoRoot)) {
+        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
+    } else {
+        await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, true);
     }
+    logger.info(`built samples successfully.`);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

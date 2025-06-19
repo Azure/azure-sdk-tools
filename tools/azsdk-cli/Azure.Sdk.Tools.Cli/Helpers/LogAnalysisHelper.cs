@@ -85,8 +85,11 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
             }
         }
 
-        var before = new Queue<string>(beforeLines ?? 3);
-        var after = new Queue<string>(afterLines ?? 20);
+        beforeLines ??= 3;
+        afterLines ??= 20;
+        var before = new Queue<string>((int)beforeLines);
+        var after = new Queue<string>((int)afterLines);
+        var maxAfterLines = afterLines ?? 100;
 
         var errors = new List<LogEntry>();
         using var reader = new StreamReader(filePath);
@@ -96,7 +99,8 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         while ((line = await reader.ReadLineAsync()) != null)
         {
             lineNumber++;
-            if (before.Count == beforeLines)
+            // check > not >= because an error match will take up an extra slot
+            if (before.Count > beforeLines)
             {
                 before.Dequeue();
             }
@@ -111,7 +115,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
                     lineNumber++;
                     matchedKeywords = keywords.Where(k => k.Matches(line)).ToList();
                     // Keep seeking if we find new errors while collecting the trailing error context
-                    if (matchedKeywords.Count > 0)
+                    if (matchedKeywords.Count > 0 && afterLines < maxAfterLines)
                     {
                         logger.LogDebug("Found contiguous error matches at line {lineNumber}: {keywords}", lineNumber, string.Join(", ", matchedKeywords));
                         afterLines++;
@@ -120,6 +124,8 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
                 }
 
                 var fullContext = before.Concat(after).ToList();
+                before.Clear();
+                after.Clear();
                 errors.Add(new LogEntry
                 {
                     File = filePath,

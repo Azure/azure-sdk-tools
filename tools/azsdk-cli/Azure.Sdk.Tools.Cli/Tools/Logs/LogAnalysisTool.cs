@@ -113,14 +113,14 @@ public class LogAnalysisTool : MCPTool
             {
                 customKeywords ??= [];
                 customKeywords.Add("[31m");
-                var before = contextLines > 0 ? contextLines : 20;
-                var after = contextLines > 0 ? contextLines : 5;
+                var before = contextLines >= 0 ? contextLines : 20;
+                var after = contextLines >= 0 ? contextLines : 5;
                 errors = await logHelper.AnalyzeLogContent(filePath, customKeywords, before, after);
             }
             else
             {
-                var before = contextLines > 0 ? contextLines : DEFAULT_CONTEXT_LINES;
-                var after = contextLines > 0 ? contextLines : DEFAULT_CONTEXT_LINES;
+                var before = contextLines >= 0 ? contextLines : DEFAULT_CONTEXT_LINES;
+                var after = contextLines >= 0 ? contextLines : DEFAULT_CONTEXT_LINES;
                 errors = await logHelper.AnalyzeLogContent(filePath, customKeywords ?? null, before, after);
             }
 

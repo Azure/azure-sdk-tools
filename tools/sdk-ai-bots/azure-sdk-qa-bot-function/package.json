@@ -1,0 +1,26 @@
+{
+  "name": "azure-sdk-qa-bot-function",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "clean": "rimraf dist",
+    "prestart": "npm run clean && npm run build",
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@microsoft/microsoft-graph-types": "^2.40.0",
+    "botframework-schema": "^4.17.0-blobs1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "rimraf": "^5.0.0",
+    "typescript": "^4.0.0",
+    "@microsoft/microsoft-graph-types": "^2.40.0",
+    "botframework-schema": "^4.17.0-blobs1"
+  },
+  "main": "dist/src/{index.js,functions/*.js}"
+}

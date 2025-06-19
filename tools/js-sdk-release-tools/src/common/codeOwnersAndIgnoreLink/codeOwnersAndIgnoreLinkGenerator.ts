@@ -33,18 +33,9 @@ export async function tryGenerateCodeOwnersAndIgnoreLinkForPackage(
     logger.info(
         `Start to generate CODEOWNERS and ignore link for ${packageFolderPath}`,
     );
-    let isFirstPackageToNpm = false;
 
-    // Check if package folder exists
-    if (!fs.existsSync(packageFolderPath)) {
-        logger.info(
-            `Package folder ${packageFolderPath} does not exist. Treating as first package to NPM.`,
-        );
-        isFirstPackageToNpm = true;
-    } else {
-        const npmViewResult = await tryGetNpmView(packageName);
-        isFirstPackageToNpm = npmViewResult === undefined;
-    }
+    const npmViewResult = await tryGetNpmView(packageName);
+    const isFirstPackageToNpm = npmViewResult === undefined;
 
     if (isFirstPackageToNpm) {
         logger.info(

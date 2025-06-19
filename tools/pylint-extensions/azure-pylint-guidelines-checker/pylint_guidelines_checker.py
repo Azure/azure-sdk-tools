@@ -9,10 +9,73 @@ Pylint custom checkers for SDK guidelines: C4717 - C4767
 
 import logging
 import astroid
+import os
 from pylint.checkers import BaseChecker
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_full_package_name(node):
+    """
+    Get the full package name for a node, handling cases where __init__.py files are missing.
+    
+    When __init__.py files are missing (as in wheel packages), astroid may not construct
+    the full module path correctly. This function attempts to reconstruct the full package
+    name by analyzing the file path when the module name appears to be incomplete.
+    
+    :param node: astroid node
+    :return: Full package name string
+    """
+    try:
+        if not hasattr(node, 'root') or not callable(node.root):
+            return ""
+        
+        root_node = node.root()
+        module_name = root_node.name
+        
+        # If we have a file path, try to extract the full package name
+        if hasattr(root_node, 'file') and root_node.file and root_node.file != '<?>':
+            file_path = root_node.file
+            
+            # Convert file path to potential package path
+            # e.g., "/path/to/azure/core/something.py" -> "azure.core.something"
+            try:
+                # Split the path and find Python package structure
+                path_parts = os.path.normpath(file_path).split(os.sep)
+                
+                # Find where the actual package structure starts
+                # Look for common Azure package patterns
+                azure_idx = -1
+                for i, part in enumerate(path_parts):
+                    if part == 'azure':
+                        azure_idx = i
+                        break
+                
+                if azure_idx >= 0:
+                    # Extract package parts from azure onwards
+                    package_parts = []
+                    for i in range(azure_idx, len(path_parts)):
+                        part = path_parts[i]
+                        if part.endswith('.py'):
+                            # Remove .py extension for the module name
+                            part = part[:-3]
+                        package_parts.append(part)
+                    
+                    # Construct the full package name
+                    potential_full_name = '.'.join(package_parts)
+                    
+                    # Only use this if it appears more complete than the original
+                    if '.' in potential_full_name and potential_full_name.count('.') > module_name.count('.'):
+                        return potential_full_name
+            except (AttributeError, IndexError, ValueError):
+                # Fall back to original module name if path analysis fails
+                pass
+        
+        return module_name
+    except Exception:
+        # If anything goes wrong, return empty string
+        return ""
 
 
 class ClientConstructorTakesCorrectParameters(BaseChecker):
@@ -461,7 +524,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         :return: None
         """
         try:
-            path = node.root().name
+            path = get_full_package_name(node)
             split_path = path.split(".")
             new_path = ".".join(split_path[: len(split_path) - 1])
             if new_path.count("_") == 0:
@@ -500,7 +563,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         :return: None
         """
         try:
-            path = node.root().name
+            path = get_full_package_name(node)
             split_path = path.split(".")
             new_path = ".".join(split_path[: len(split_path) - 1])
             if new_path.count("_") == 0:
@@ -2408,14 +2471,14 @@ class NonCoreNetworkImport(BaseChecker):
 
     def visit_import(self, node):
         """Check that we dont have blocked imports."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
+        if get_full_package_name(node).startswith(self.AZURE_CORE_TRANSPORT_NAME) or get_full_package_name(node).startswith("corehttp") or get_full_package_name(node).startswith("azure.mgmt.core"):
             return
         for import_, _ in node.names:
             self._check_import(import_, node)
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from a blocked package."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME) or node.root().name.startswith("corehttp") or node.root().name.startswith("azure.mgmt.core"):
+        if get_full_package_name(node).startswith(self.AZURE_CORE_TRANSPORT_NAME) or get_full_package_name(node).startswith("corehttp") or get_full_package_name(node).startswith("azure.mgmt.core"):
             return
         self._check_import(node.modname, node)
 
@@ -2455,7 +2518,7 @@ class NonAbstractTransportImport(BaseChecker):
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from a blocked package."""
-        if node.root().name.startswith(self.AZURE_CORE_TRANSPORT_NAME):
+        if get_full_package_name(node).startswith(self.AZURE_CORE_TRANSPORT_NAME):
             return
         if node.modname == self.AZURE_CORE_TRANSPORT_NAME:
             for name, _ in node.names:
@@ -2721,9 +2784,9 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from azure.core.pipeline.transport import HttpResponse."""
-        if node.root().name.startswith(
+        if get_full_package_name(node).startswith(
             self.AZURE_CORE_NAME
-        ) or node.root().name.startswith(self.AZURE_MGMT_CORE):
+        ) or get_full_package_name(node).startswith(self.AZURE_MGMT_CORE):
             return
         if node.modname == self.AZURE_CORE_TRANSPORT_NAME:
             for name, _ in node.names:
@@ -2950,7 +3013,7 @@ class DoNotImportAsyncio(BaseChecker):
     def visit_importfrom(self, node):
         """Check that we aren't importing from asyncio directly."""
         try:
-            if node.modname == "asyncio" and not any(node.root().name.startswith(pkg) for pkg in self.IGNORE_PACKAGES):
+            if node.modname == "asyncio" and not any(get_full_package_name(node).startswith(pkg) for pkg in self.IGNORE_PACKAGES):
                 self.add_message(
                     msgid=f"do-not-import-asyncio",
                     node=node,
@@ -2963,7 +3026,7 @@ class DoNotImportAsyncio(BaseChecker):
         """Check that we aren't importing asyncio."""
         try:
             for name, _ in node.names:
-                if name == "asyncio" and not any(node.root().name.startswith(pkg) for pkg in self.IGNORE_PACKAGES):
+                if name == "asyncio" and not any(get_full_package_name(node).startswith(pkg) for pkg in self.IGNORE_PACKAGES):
                     self.add_message(
                         msgid=f"do-not-import-asyncio",
                         node=node,

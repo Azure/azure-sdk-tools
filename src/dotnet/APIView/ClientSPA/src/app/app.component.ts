@@ -70,4 +70,8 @@ export class AppComponent  implements OnInit{
     linkElement.id = 'highlight-theme';
     document.head.appendChild(linkElement);
   }
+
+  reloadPage(): void {
+    window.location.reload();
+  }
 }

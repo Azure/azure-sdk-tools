@@ -15,7 +15,15 @@ module.exports = {
   skipWaiting: true,
   clientsClaim: true,
   cleanupOutdatedCaches: true,
-  modifyURLPrefix: {
-    '': `?v=${version}`
-  }
+  manifestTransforms: [
+      async (manifestEntries) => {
+        return {
+          manifest: manifestEntries.map(entry => ({
+            ...entry,
+            url: entry.url + `?v=${version}`
+          })),
+          warnings: [],
+        };
+      }
+    ]
 };

@@ -16,6 +16,7 @@ export class CommentItemModel {
     changeHistory: ChangeHistory[] = [];
     isResolved: boolean = false;
     upvotes: string[] = [];
+    downvotes: string[] = [];
     taggedUsers: Set<string> = new Set<string>();
     commentType: CommentType | null = null;
     resolutionLocked: boolean = false;
@@ -36,6 +37,7 @@ export class CommentItemModel {
         this.changeHistory = [];
         this.isResolved = false;
         this.upvotes = [];
+        this.downvotes = [];
         this.taggedUsers = new Set<string>();
         this.commentType = CommentType.APIRevision;
         this.resolutionLocked = false;

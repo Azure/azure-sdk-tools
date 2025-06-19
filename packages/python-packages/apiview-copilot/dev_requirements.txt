@@ -11,6 +11,7 @@ prompty[azure]==0.1.49
 python-dotenv==1.0.1
 pydantic==2.10.6
 pyyaml==6.0.2
+semantic-kernel==1.32.2
 uvicorn[standard]==0.29.0
 
 # evals requirements

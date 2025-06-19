@@ -25,7 +25,8 @@ namespace SearchIndexCreator
             Console.WriteLine("2. Process Issue Examples");
             Console.WriteLine("3. Process Demo");
             Console.WriteLine("4. Create or Refresh Labels");
-            
+            Console.WriteLine("5. Create or Update Knowledge Agent");
+
             var input = Console.ReadLine();
 
             try
@@ -43,7 +44,10 @@ namespace SearchIndexCreator
                         break;
                     case "4":
                         await ProcessLabels(config);
-                        break;  
+                        break;
+                    case "5":
+                        await ProcessKnowledgeAgent(config);
+                        break;
                     default:
                         Console.WriteLine("Invalid option selected.");
                         break;
@@ -110,6 +114,14 @@ namespace SearchIndexCreator
             var tokenAuth = new Credentials(config["GithubKey"]);
             var labelRetrieval = new LabelRetrieval(tokenAuth, config);
             await labelRetrieval.CreateOrRefreshLabels("Azure");
+        }
+
+        private static async Task ProcessKnowledgeAgent(IConfigurationSection config)
+        {
+            var defaultCredential = new DefaultAzureCredential();
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
+            await issueKnowledgeAgent.CreateOrUpdateAsync();
         }
     }
 }

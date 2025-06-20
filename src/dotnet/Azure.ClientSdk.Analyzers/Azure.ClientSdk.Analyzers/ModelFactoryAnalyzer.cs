@@ -186,8 +186,8 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            // Filter out types that can be easily instantiated (have public constructors with all properties settable)
-            if (CanBeEasilyInstantiated(typeSymbol))
+            // Filter out types that can be easily instantiated (have public constructors with all properties settable)  
+            if (CanBeConstructedUsingPublicApis(typeSymbol))
             {
                 return false;
             }
@@ -195,7 +195,7 @@ namespace Azure.ClientSdk.Analyzers
             return true;
         }
 
-        private static bool CanBeEasilyInstantiated(ITypeSymbol typeSymbol)
+        private static bool CanBeConstructedUsingPublicApis(ITypeSymbol typeSymbol)
         {
             if (!(typeSymbol is INamedTypeSymbol namedType))
             {

@@ -5,7 +5,7 @@ trigger: none
 # by the Repository parameter below. It creates a branch with the name feature/tutorial/<alias>
 # and will be used in training to help training participants get a branch setup to merge their
 # code into to simulate real world CI/CD usage without poluting the main branch.
-# 
+#
 # The Alias parameter forms part of the branch name above, and the GitReference parameter which
 # has a default of refs/heads/feature/tutorial can be overriden if a different base branch is
 # desired (this parameter may be removed in the future once our approach is more settled).
@@ -40,12 +40,12 @@ parameters:
 variables:
   skipComponentGovernanceDetection: true
   NugetSecurityAnalysisWarningLevel: none
-  
+
 jobs:
 - job: SetupTutorialBranch
   pool:
-    name: azsdk-pool-mms-ubuntu-2004-general
-    vmImage: ubuntu-22.04
+    name: azsdk-pool
+    demands: ImageOverride -equals ubuntu-22.04
   steps:
     - task: PowerShell@2
       displayName: 'Setup Tutorial Branch'

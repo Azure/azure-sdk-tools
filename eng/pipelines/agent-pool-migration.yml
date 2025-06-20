@@ -1,4 +1,4 @@
-# The pipeline is mainly used to migrate our agent pool from one version to another version. 
+# The pipeline is mainly used to migrate our agent pool from one version to another version.
 # Here is how we use the pipeline:
 # 1. What repos are you going to work on for your migration? Put your repos in Parameter 'Repos'. Follow the format in default.
 # 2. The replacement map, e.g We will search all occurrences of the strings in Parameter 'MigrateFrom' and replace to the value in 'MigrateTo'. This is regex map, and you can define multiple replacement rules here.
@@ -15,8 +15,8 @@ pr: none
 # Notes on ExcludePaths and IncludeFromExcludedPaths:
 # 1. ExcludePaths is used to exclude the file pattern you don't want to scan against.
 # 2. IncludeFromExcludedPaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths. Pass empty if you only want exclude paths.
-# 3. Both excludePaths and IncludeFromExcludedPaths support standard powershell regex. 
-# 4. The paths here are relative to the repo folder. 
+# 3. Both excludePaths and IncludeFromExcludedPaths support standard powershell regex.
+# 4. The paths here are relative to the repo folder.
 #    E.g.
 #    In win agent pool, the path is like ".\eng\scripts\Repo-File-Content-Replacements.ps1", so the regex path can be like "^.\\eng\\"
 #    In linux agent pool, the path is like "./eng/scripts/Repo-File-Content-Replacements.ps1", so the regex path can be like "^./eng/"
@@ -74,7 +74,7 @@ parameters:
 # Default setting is an example of the map looks like:
 - name: MigrationMap
   type: object
-  default: 
+  default:
     - MigrateFrom: azsdk-pool-mms-win-2019-general
       MigrateTo: azsdk-pool-mms-win-2022-general
     - MigrateFrom: windows-2019
@@ -106,7 +106,8 @@ variables:
 jobs:
   - job: Migration
     pool:
-      name: azsdk-pool-mms-win-2022-general
+      name: azsdk-pool
+      demands: ImageOverride -equals windows-2022
     steps:
       - ${{ each repo in parameters.Repos }}:
         - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml

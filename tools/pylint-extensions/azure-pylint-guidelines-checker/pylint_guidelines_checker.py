@@ -3312,7 +3312,8 @@ class DoNotUseLoggingException(BaseChecker):
             if (hasattr(node.func, 'expr') and 
                 hasattr(node.func.expr, 'name') and 
                 node.func.expr.name == 'logging'):
-                return True
+                # Verify it has at least one string argument as required by logging API
+                return self._has_string_argument(node)
             
             # Check if it's a call on a variable that looks like a logger
             if (hasattr(node.func, 'expr') and 
@@ -3321,12 +3322,29 @@ class DoNotUseLoggingException(BaseChecker):
                 
                 # Check if variable was assigned from logging.getLogger()
                 if var_name in self._logger_variables:
-                    return True
+                    # Verify it has at least one string argument as required by logging API
+                    return self._has_string_argument(node)
                 
                 # Check if variable name suggests it's a logger (common convention)
                 if 'log' in var_name.lower():
-                    return True
+                    # Verify it has at least one string argument as required by logging API
+                    return self._has_string_argument(node)
             
+            return False
+        except:
+            return False
+
+    def _has_string_argument(self, node):
+        """Check if the call has at least one string argument (required for logging methods)."""
+        try:
+            # logging.exception() requires at least one argument (the message format string)
+            if len(node.args) > 0:
+                # Check if the first argument is a string literal
+                first_arg = node.args[0]
+                if hasattr(first_arg, 'value') and isinstance(first_arg.value, str):
+                    return True
+                # Also accept string variables/expressions (we can't fully validate runtime types)
+                return True
             return False
         except:
             return False

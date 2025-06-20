@@ -1,0 +1,5 @@
+azure-ai-evaluation==1.8.0
+azure-identity==1.19.1
+python-dotenv==1.0.1
+mcp==1.9.3
+openai==1.86.0

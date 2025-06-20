@@ -197,6 +197,39 @@ namespace Azure.Test
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
 
+        [Fact]
+        public async Task AZC0035_FlagsTypesWithPartiallySettableProperties()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // This has a public constructor but not all properties can be set - should be flagged
+    public class {|AZC0035:ExampleModel|}
+    {
+        public int Age { get; }
+        public string Name { get; }
+        
+        public ExampleModel(string name)
+        {
+            Name = name;
+        }
+    }
+
+    public class TestClient
+    {
+        public virtual Response<ExampleModel> GetExampleModel()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
 
 
         [Fact]

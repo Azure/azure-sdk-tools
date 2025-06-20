@@ -222,32 +222,45 @@ namespace Azure.ClientSdk.Analyzers
                 return true;
             }
 
-            // Check if all properties can be set either via constructor parameters or have public setters
-            foreach (var property in properties)
-            {
-                bool canBeSetViaConstructor = false;
-                bool hasPublicSetter = property.SetMethod?.DeclaredAccessibility == Accessibility.Public;
+            // Get properties that don't have public setters - these must be set via constructor
+            var propertiesNeedingConstructor = properties
+                .Where(p => p.SetMethod?.DeclaredAccessibility != Accessibility.Public)
+                .ToList();
 
-                // Check if any public constructor has a parameter that can set this property
-                foreach (var constructor in publicConstructors)
+            // If all properties have public setters, the type can be constructed
+            if (!propertiesNeedingConstructor.Any())
+            {
+                return true;
+            }
+
+            // Check if at least one public constructor can set all properties that need constructor parameters
+            foreach (var constructor in publicConstructors)
+            {
+                bool allPropertiesCanBeSet = true;
+
+                foreach (var property in propertiesNeedingConstructor)
                 {
-                    if (constructor.Parameters.Any(p => 
+                    // Check if this constructor has a parameter that can set this property
+                    bool hasMatchingParameter = constructor.Parameters.Any(p => 
                         string.Equals(p.Name, property.Name, StringComparison.OrdinalIgnoreCase) ||
-                        string.Equals(p.Name, property.Name.Substring(0, 1).ToLower() + property.Name.Substring(1), StringComparison.Ordinal)))
+                        string.Equals(p.Name, property.Name.Substring(0, 1).ToLower() + property.Name.Substring(1), StringComparison.Ordinal));
+
+                    if (!hasMatchingParameter)
                     {
-                        canBeSetViaConstructor = true;
+                        allPropertiesCanBeSet = false;
                         break;
                     }
                 }
 
-                // If property can't be set via constructor and doesn't have a public setter, it can't be easily instantiated
-                if (!canBeSetViaConstructor && !hasPublicSetter)
+                // If this constructor can set all required properties, the type can be constructed
+                if (allPropertiesCanBeSet)
                 {
-                    return false;
+                    return true;
                 }
             }
 
-            return true;
+            // No constructor can set all required properties
+            return false;
         }
 
         private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName, string namespaceName)

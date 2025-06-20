@@ -168,15 +168,20 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(job_id: str):
-    # Do not lock for reads; allow concurrent polling
+    start_time = time.time()
+    logger.info(f"[get_api_review_job_status] Called for job_id={job_id}")
     job = job_store.get(job_id)
     if not job:
+        logger.info(f"[get_api_review_job_status] Job {job_id} not found (404)")
         raise HTTPException(status_code=404, detail="Job not found")
-    # Return status and result fields
     # Remove internal 'created' field from response
     if job and "created" in job:
         job = dict(job)
         job.pop("created", None)
+    elapsed = time.time() - start_time
+    logger.info(
+        f"[get_api_review_job_status] Returning status={job.get('status')} for job_id={job_id} in {elapsed:.4f}s"
+    )
     return job
 
 

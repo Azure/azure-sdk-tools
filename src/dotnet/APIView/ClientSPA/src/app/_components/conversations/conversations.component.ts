@@ -21,6 +21,7 @@ export class ConversationsComponent implements OnChanges {
   @Input() comments: CommentItemModel[] = [];
   @Input() review : Review | undefined = undefined;
   @Input() userProfile : UserProfile | undefined;
+  @Input() preferredApprovers : string[] = [];
 
   @Output() scrollToNodeEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();

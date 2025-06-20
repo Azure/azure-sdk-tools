@@ -271,7 +271,7 @@ export class SamplesPageComponent {
           this.isCreatingSamples = false;
           this.createSamplesButton = "Save";
           this.uploadSamplesButton = "Upload";
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to create new Usage Sample', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to create new Usage Sample', key: 'bc', life: 3000 });
         }
       });
   }
@@ -295,7 +295,7 @@ export class SamplesPageComponent {
         error: (error: any) => {
           this.isUpdatingSamples = false;
           this.updateSamplesButton = "Save";
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to update Usage Sample', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to update Usage Sample', key: 'bc', life: 3000 });
         }
       });
   }
@@ -319,7 +319,7 @@ export class SamplesPageComponent {
           this.showSamplesDeleteModal = false;
           this.isDeletingSamples = false;
           this.deleteSamplesButton = "Delete";
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to delete Usage Sample', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to delete Usage Sample', key: 'bc', life: 3000 });
         }});
   }
 

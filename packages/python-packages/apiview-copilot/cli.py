@@ -532,12 +532,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The job ID to poll.",
                 options_list=["--job-id"],
             )
-            ac.argument(
-                "api_url",
-                type=str,
-                help="Override the API endpoint URL for /api-review/{job_id}.",
-                default=None,
-            )
 
         super(CliCommandsLoader, self).load_arguments(command)
 

@@ -168,7 +168,6 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(job_id: str):
-    start_time = time.time()
     job = job_store.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -176,15 +175,12 @@ async def get_api_review_job_status(job_id: str):
     if job and "created" in job:
         job = dict(job)
         job.pop("created", None)
-    elapsed = time.time() - start_time
     return job
 
 
-# At the end of the file, add a background cleanup task
-
-
-# Background cleanup task to remove old completed jobs
 def cleanup_job_store():
+    """Cleanup completed jobs from the job store periodically."""
+    global job_store
     while True:
         time.sleep(60)  # Run every 60 seconds
         now = time.time()

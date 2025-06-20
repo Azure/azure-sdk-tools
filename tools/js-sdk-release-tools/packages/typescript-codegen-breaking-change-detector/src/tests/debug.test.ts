@@ -1,15 +1,17 @@
 import { Project } from 'ts-morph';
 import { SyntaxKind } from 'typescript';
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
+import { createTestAstContext } from './utils';
+import { patchInterface } from '../azure/patch/patch-detection';
+import { AssignDirection, DiffLocation, DiffReasons } from '../azure/common/types';
 
 // TODO: remove
 describe('debug', () => {
-  test('debug', async () => {
+  test('HLC => MC migration', async () => {
     const project = new Project();
     const sourceFile = project.createSourceFile(
       'example.ts',
       `
-      import 
 export interface AAA {
   func(p: number): string;
 }
@@ -45,5 +47,21 @@ export interface AAA {
 
     // 打印修改后的代码
     console.log(sourceFile.getFullText());
+  });
+
+  test('Generic Type', async () => {
+    const baselineApiView = `export interface TestInterface<T> { prop: T; }`;
+    const currentApiView = `export interface TestInterface<T> { prop: T; }`;
+
+    const astContext = await createTestAstContext(baselineApiView, currentApiView);
+    const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+    console.log('🚀 ~ test ~ diffPairs:', diffPairs);
+    expect(diffPairs.length).toBe(1);
+    expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+    expect(diffPairs[0].location).toBe(DiffLocation.Property);
+    expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+    expect(diffPairs[0].target?.name).toBe('prop');
+    expect(diffPairs[0].target?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('T');
+    expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('T');
   });
 });

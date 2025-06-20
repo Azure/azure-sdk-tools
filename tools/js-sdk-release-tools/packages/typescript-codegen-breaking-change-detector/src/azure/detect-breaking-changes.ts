@@ -24,7 +24,7 @@ export interface ApiViewOptions {
   path?: string;
 }
 
-const tsconfig = `
+export const tsconfig = `
 {
   "compilerOptions": {
     "jsx": "preserve",

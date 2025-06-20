@@ -722,6 +722,44 @@ export interface DataProductsCatalogs {
             );
         });
 
+        test("Operation Signature Changed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProductsCatalogs {
+    get: (resourceGroupName: string) => Promise<DataProductsCatalogsGetResponse>;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProductsCatalogs {
+    get: (resourceGroupName: string, options: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationSignatureChanged,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Operation DataProductsCatalogs.get has a new signature",
+            );
+        });
+
         test("Model Added", async () => {
             const baselineApiView = `
 \`\`\`ts
@@ -787,130 +825,6 @@ export interface DataProduct {
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed Interface DataProduct");
-        });
-
-        test("Class Added", async () => {
-            const baselineApiView = `
-\`\`\`ts
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptions);
-    readonly dataProducts: DataProducts;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ClassAdded,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added Class DataProductClient");
-        });
-
-        test("Class Removed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptions);
-    readonly dataProducts: DataProducts;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ClassRemoved,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Deleted Class DataProductClient");
-        });
-
-        test("Type Alias Added", async () => {
-            const baselineApiView = `
-\`\`\`ts
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export type DataProductStatus = "Active" | "Inactive" | "Pending";
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.TypeAliasAdded,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added type alias DataProductStatus");
-        });
-
-        test("Type Alias Removed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export type DataProductStatus = "Active" | "Inactive" | "Pending";
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.TypeAliasRemoved,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Removed type alias DataProductStatus");
         });
 
         test("Model Optional Property Added", async () => {
@@ -1035,6 +949,365 @@ export interface DataProduct {
             );
         });
 
+        test("Model Property Type Changed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    version: string;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    version: number;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyTypeChanged,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Type of parameter version of interface DataProduct is changed from string to number",
+            );
+        });
+
+        test("Model Property Optional To Required", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    readonly id?: string;
+    name: string;
+    description?: string;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    readonly id?: string;
+    name: string;
+    description: string;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyOptionalToRequired,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Parameter description of interface DataProduct is now required",
+            );
+        });
+
+        test("Class Added", async () => {
+            const baselineApiView = `
+\`\`\`ts
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptions);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ClassAdded,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe("Added Class DataProductClient");
+        });
+
+        test("Class Removed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string, options?: DataProductClientOptions);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ClassRemoved,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe("Deleted Class DataProductClient");
+        });
+
+        test("Class Changed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: string, subscriptionId: string);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: string, subscriptionId: string, resourceId: string);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ClassChanged,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Class DataProductClient has a new signature",
+            );
+        });
+
+        test("Class Property Removed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    readonly dataProducts: DataProducts;
+    readonly analytics: Analytics;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ClassPropertyRemoved,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Class DataProductClient no longer has parameter analytics",
+            );
+        });
+
+        test("Class Property Optional To Required", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    readonly version?: string;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    readonly version: string;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ClassPropertyOptionalToRequired,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Parameter version of class DataProductClient is now required",
+            );
+        });
+
+        test("Type Alias Added", async () => {
+            const baselineApiView = `
+\`\`\`ts
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export type DataProductStatus = "Active" | "Inactive" | "Pending";
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.TypeAliasAdded,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe("Added type alias DataProductStatus");
+        });
+
+        test("Type Alias Removed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export type DataProductStatus = "Active" | "Inactive" | "Pending";
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.TypeAliasRemoved,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe("Removed type alias DataProductStatus");
+        });
+
+        test("Type Alias Type Changed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export type DataProductStatus = "Active" | "Inactive";
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export type DataProductStatus = "Running" | "Stopped";
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.TypeAliasTypeChanged,
+                true,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Type of type alias DataProductStatus has been changed",
+            );
+        });
+
         test("Enum Added", async () => {
             const baselineApiView = `
 \`\`\`ts
@@ -1134,7 +1407,7 @@ export enum DataProductType {
             );
             const items = getItemsByCategory(
                 changelogItems,
-                ChangelogItemCategory.EnumValueAdded,
+                ChangelogItemCategory.EnumMemberAdded,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1174,7 +1447,7 @@ export enum DataProductType {
             );
             const items = getItemsByCategory(
                 changelogItems,
-                ChangelogItemCategory.EnumValueRemoved,
+                ChangelogItemCategory.EnumMemberRemoved,
                 true,
             );
             expect(items).toHaveLength(1);
@@ -1305,320 +1578,6 @@ export function processData(data: string): string;
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed function processData");
-        });
-
-        test("Operation Signature Changed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export interface DataProductsCatalogs {
-    get: (resourceGroupName: string) => Promise<DataProductsCatalogsGetResponse>;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export interface DataProductsCatalogs {
-    get: (resourceGroupName: string, options: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.OperationSignatureChanged,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Operation DataProductsCatalogs.get has a new signature",
-            );
-        });
-
-        test("Model Property Type Changed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    version: string;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    version: number;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ModelPropertyTypeChanged,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Type of parameter version of interface DataProduct is changed from string to number",
-            );
-        });
-
-        test("Type Alias Type Changed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export type DataProductStatus = "Active" | "Inactive";
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export type DataProductStatus = "Running" | "Stopped";
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.TypeAliasTypeChanged,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Type of type alias DataProductStatus has been changed",
-            );
-        });
-
-        test("Class Changed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: string, subscriptionId: string);
-    readonly dataProducts: DataProducts;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: string, subscriptionId: string, resourceId: string);
-    readonly dataProducts: DataProducts;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ClassChanged,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Class DataProductClient has a new signature",
-            );
-        });
-
-        test("Class Property Removed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string);
-    readonly dataProducts: DataProducts;
-    readonly analytics: Analytics;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string);
-    readonly dataProducts: DataProducts;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ClassPropertyRemoved,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Class DataProductClient no longer has parameter analytics",
-            );
-        });
-
-        test("Class Property Optional To Required", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string);
-    readonly version?: string;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export class DataProductClient {
-    constructor(credential: TokenCredential, subscriptionId: string);
-    readonly version: string;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ClassPropertyOptionalToRequired,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Parameter version of class DataProductClient is now required",
-            );
-        });
-
-        test("Model Property Optional To Required", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    readonly id?: string;
-    name: string;
-    description?: string;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    readonly id?: string;
-    name: string;
-    description: string;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ModelPropertyOptionalToRequired,
-                true,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Parameter description of interface DataProduct is now required",
-            );
-        });
-
-        test("Model Property Required To Optional", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    readonly id?: string;
-    name: string;
-    description: string;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    readonly id?: string;
-    name: string;
-    description?: string;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ModelPropertyRequiredToOptional,
-            );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                "Parameter description of interface DataProduct is now optional",
-            );
         });
     });
 

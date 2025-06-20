@@ -15,7 +15,7 @@ export enum ChangelogItemCategory {
   // TODO: interfaceParamTypeExtended?
   // TODO: type alias type change?
   EnumAdded = 6,
-  EnumValueAdded = 7,
+  EnumMemberAdded = 7,
   // NOTE: include function and overload function
   FunctionAdded = 8,
 
@@ -27,18 +27,18 @@ export enum ChangelogItemCategory {
   ClassChanged = 1004,
   ClassPropertyRemoved = 1005,
   ClassPropertyOptionalToRequired = 1006,
-  ModelRemoved = 1007,
-  ModelRequiredPropertyAdded = 1008,
-  ModelPropertyTypeChanged = 1009,
-  ModelPropertyRemoved = 1010,
-  ModelPropertyOptionalToRequired = 1011,
-  ModelPropertyRequiredToOptional = 1012,
-  TypeAliasRemoved = 1013,
-  TypeAliasTypeChanged = 1014,
-  FunctionRemoved = 1015,
+  ModelRemoved = 1008,
+  ModelRequiredPropertyAdded = 1009,
+  ModelPropertyTypeChanged = 1010,
+  ModelPropertyRemoved = 1011,
+  ModelPropertyOptionalToRequired = 1012,
+  ModelPropertyRequiredToOptional = 1013,
+  TypeAliasRemoved = 1014,
+  TypeAliasTypeChanged = 1015,
   // NOTE: include function and overload function
-  EnumRemoved = 1016,
-  EnumValueRemoved = 1017,
+  FunctionRemoved = 1016,
+  EnumRemoved = 1017,
+  EnumMemberRemoved = 1018,
 }
 
 export interface ChangelogResult {
@@ -79,15 +79,15 @@ export class ChangelogGenerator {
   private modelPropertyTypeChangedTemplate =
     'Type of parameter {newPropertyName} of interface {interfaceName} is changed from {oldPropertyType} to {newPropertyType}';
   private modelPropertyRemovedTemplate = 'Interface {interfaceName} no longer has parameter {propertyName}';
-  private modelPropertyOptionalToRequired = 'Parameter {propertyName} of interface {interfaceName} is now required';
+  private modelPropertyOptionalToRequiredTemplate = 'Parameter {propertyName} of interface {interfaceName} is now required';
 
   /** class */
   private classAddedTemplate = 'Added Class {className}';
   private classRemovedTemplate = 'Deleted Class {className}';
   private classPropertyRemovedTemplate = 'Class {className} no longer has parameter {propertyName}';
-  private classPropertyOptionalToRequired = 'Parameter {propertyName} of class {className} is now required';
+  private classPropertyOptionalToRequiredTemplate = 'Parameter {propertyName} of class {className} is now required';
   // NOTE: not detected in v1 except constructor and it's parameters
-  private classChanged = 'Class {className} has a new signature';
+  private classChangedTemplate = 'Class {className} has a new signature';
 
   // TODO: add detection for extended type
   /** type alias */
@@ -100,8 +100,12 @@ export class ChangelogGenerator {
   private functionAddedTemplate = 'Added function {functionName}';
   private functionRemovedTemplate = 'Removed function {functionName}';
 
-  // TODO
+  // TODO: detect enum member's initializer change
   /** enum */
+  private enumAddedTemplate = 'Added Enum {enumName}';
+  private enumRemovedTemplate = 'Removed Enum {enumName}';
+  private enumMemberAddedTemplate = 'Enum {enumName} has a new value {valueName}';
+  private enumMemberRemovedTemplate = 'Enum {enumName} no longer has value {valueName}';
 
   private changelogItems: ChangelogItems = {
     features: new Map<ChangelogItemCategory, string[]>(),
@@ -126,6 +130,9 @@ export class ChangelogGenerator {
     });
     this.detectResult.functions.forEach((diffPairs, name) => {
       this.generateForFunctions(diffPairs, name);
+    });
+    this.detectResult.enums.forEach((diffPairs, name) => {
+      this.generateForEnums(diffPairs, name);
     });
     const content = this.generateContentCore();
     const hasBreakingChange = this.hasBreakingChange();
@@ -213,6 +220,37 @@ export class ChangelogGenerator {
     });
   }
 
+  private generateForEnums(diffPairs: DiffPair[], enumName: string): void {
+    diffPairs.forEach((p) => {
+      // enum added
+      if (p.location === DiffLocation.Enum && this.hasReasons(p.reasons, DiffReasons.Added)) {
+        const message = template(this.enumAddedTemplate, { enumName });
+        this.addChangelogItem(ChangelogItemCategory.EnumAdded, message);
+      }
+      // enum removed
+      if (p.location === DiffLocation.Enum && this.hasReasons(p.reasons, DiffReasons.Removed)) {
+        const message = template(this.enumRemovedTemplate, { enumName });
+        this.addChangelogItem(ChangelogItemCategory.EnumRemoved, message);
+      }
+      // overload enum member added
+      if (p.location === DiffLocation.EnumMember && this.hasReasons(p.reasons, DiffReasons.Added)) {
+        const message = template(this.enumMemberAddedTemplate, {
+          enumName,
+          valueName: p.source!.node.asKindOrThrow(SyntaxKind.EnumMember).getName(),
+        });
+        this.addChangelogItem(ChangelogItemCategory.EnumMemberAdded, message);
+      }
+      // overload enum member removed
+      if (p.location === DiffLocation.EnumMember && this.hasReasons(p.reasons, DiffReasons.Removed)) {
+        const message = template(this.enumMemberRemovedTemplate, {
+          enumName,
+          valueName: p.target!.node.asKindOrThrow(SyntaxKind.EnumMember).getName(),
+        });
+        this.addChangelogItem(ChangelogItemCategory.EnumMemberRemoved, message);
+      }
+    });
+  }
+
   private generateForTypeAliases(diffPairs: DiffPair[], typeName: string): void {
     diffPairs.forEach((p) => {
       // type alias added
@@ -259,7 +297,7 @@ export class ChangelogGenerator {
         // TODO: from v1, which treat adding constructor as breaking, is it true?
         (this.hasReasons(p.reasons, DiffReasons.Added) || this.hasReasons(p.reasons, DiffReasons.Removed))
       ) {
-        const message = template(this.classChanged, { className });
+        const message = template(this.classChangedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
       }
       // class property removed
@@ -270,11 +308,9 @@ export class ChangelogGenerator {
         });
         this.addChangelogItem(ChangelogItemCategory.ClassPropertyRemoved, message);
       }
-      // class property optional to required
-      // TODO: add new diff reason for optional to required
-      // NOTE: not supported in v2
-      if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
-        const message = template(this.classPropertyOptionalToRequired, {
+      // class property optional to required (baseline to current)
+      if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
+        const message = template(this.classPropertyOptionalToRequiredTemplate, {
           className,
           propertyName: p.source!.name,
         });
@@ -433,10 +469,9 @@ export class ChangelogGenerator {
           const message = template(this.modelPropertyRemovedTemplate, { interfaceName, propertyName: p.target!.name });
           this.addChangelogItem(ChangelogItemCategory.ModelPropertyRemoved, message);
         }
-        // TODO: not supported in v2
-        // TODO: add new diff reason for optional to required
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
-          const message = template(this.modelPropertyOptionalToRequired, {
+        // model's property optional to required
+        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
+          const message = template(this.modelPropertyOptionalToRequiredTemplate, {
             interfaceName,
             propertyName: p.source!.name,
           });

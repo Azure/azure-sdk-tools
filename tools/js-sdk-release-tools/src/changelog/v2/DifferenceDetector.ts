@@ -7,10 +7,12 @@ import {
   patchFunction,
   patchInterface,
   patchTypeAlias,
+  patchEnum,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
 import { SourceFile, SyntaxKind } from 'ts-morph';
+import { logger } from '../../utils/logger.js';
 
 export interface ApiViewOptions {
   path?: string;
@@ -23,6 +25,7 @@ export interface DetectResult {
   classes: Map<string, DiffPair[]>;
   typeAliases: Map<string, DiffPair[]>;
   functions: Map<string, DiffPair[]>;
+  enums: Map<string, DiffPair[]>;
 }
 
 export interface DetectContext {
@@ -36,7 +39,6 @@ export interface DetectContext {
 export class DifferenceDetector {
   private tempFolder: string;
   private context: AstContext | undefined;
-  private preprocessFn: ((astContext: AstContext) => Promise<void>) | undefined = undefined;
 
   constructor(
     private baselineApiViewOptions: ApiViewOptions,
@@ -59,7 +61,7 @@ export class DifferenceDetector {
 
   public async detect() {
     await this.load();
-    await this.preprocessFn?.(this.context!);
+    this.preprocess();
 
     if (this.baselineApiViewOptions.sdkType !== this.currentApiViewOptions.sdkType) return this.detectAcrossSdkTypes();
 
@@ -74,6 +76,18 @@ export class DifferenceDetector {
     }
   }
 
+  private preprocess() {
+    const baselineSdkType = this.baselineApiViewOptions.sdkType;
+    const currentSdkType = this.currentApiViewOptions.sdkType;
+    if (baselineSdkType === currentSdkType) return;
+    if (baselineSdkType !== SDKType.HighLevelClient || currentSdkType !== SDKType.ModularClient) {
+      logger.warn(
+        `Failed to preprocess baseline SDK type '${baselineSdkType}' and current SDK type '${currentSdkType}' for difference detection. Only ${SDKType.HighLevelClient} to ${SDKType.ModularClient} is supported.`
+      );
+      return;
+    }
+  }
+
   private async load() {
     this.context = await createAstContext(
       { path: this.baselineApiViewOptions.path, apiView: this.baselineApiViewOptions.apiView },
@@ -82,8 +96,13 @@ export class DifferenceDetector {
     );
   }
 
-  public async setPreprocessFn(fn: typeof this.preprocessFn) {
-    this.preprocessFn = fn;
+  private getUniqueDeclarationNames(getDeclarationFn: (sourceFile: SourceFile) => string[]) {
+    const uniquefy = (arrays: (string | undefined)[]) => {
+      const arr = arrays.filter((a) => a !== undefined).map((a) => a!);
+      return [...new Set(arr)];
+    };
+    const namesFromBoth = [...getDeclarationFn(this.context!.baseline), ...getDeclarationFn(this.context!.current)];
+    return uniquefy(namesFromBoth);
   }
 
   private async detectCore(): Promise<DetectResult> {
@@ -91,53 +110,47 @@ export class DifferenceDetector {
       return sourceFile
         .getStatements()
         .filter((d) => d.getKind() === SyntaxKind.FunctionDeclaration)
-        .map((d) => d.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName());
+        .map((d) => d.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName()!);
     };
-    const interfaceNamesHasDuplicate = [
-      ...this.context!.baseline.getInterfaces().map((i) => i.getName()),
-      ...this.context!.current.getInterfaces().map((i) => i.getName()),
-    ];
-    const typeAliasNamesHasDuplicate = [
-      ...this.context!.baseline.getTypeAliases().map((i) => i.getName()),
-      ...this.context!.current.getTypeAliases().map((i) => i.getName()),
-    ];
-    const classNamesHasDuplicate = [
-      ...this.context!.baseline.getClasses().map((i) => i.getName()),
-      ...this.context!.current.getClasses().map((i) => i.getName()),
-    ];
-    const functionsHasDuplicate = [
-      ...getFunctionNames(this.context!.baseline),
-      ...getFunctionNames(this.context!.current),
-    ];
-    const uniquefy = (arrays: (string | undefined)[]) => {
-      const arr = arrays.filter((a) => a !== undefined).map((a) => a!);
-      return [...new Set(arr)];
-    };
-    const interfaceNames = uniquefy(interfaceNamesHasDuplicate);
-    const classNames = uniquefy(classNamesHasDuplicate);
-    const typeAliasNames = uniquefy(typeAliasNamesHasDuplicate);
-    const functionNames = uniquefy(functionsHasDuplicate);
+
+    const interfaceNames = this.getUniqueDeclarationNames((s) => s.getInterfaces().map((i) => i.getName()));
+    const classNames = this.getUniqueDeclarationNames((s) => s.getClasses().map((i) => i.getName()!));
+    const typeAliasNames = this.getUniqueDeclarationNames((s) => s.getTypeAliases().map((i) => i.getName()));
+    const functionNames = this.getUniqueDeclarationNames((s) => getFunctionNames(s));
+    const enumNames = this.getUniqueDeclarationNames((s) => s.getEnums().map((i) => i.getName()));
+
     console.log('🚀 ~ DifferenceDetector ~ detectCore ~ interfaceNames:', interfaceNames);
     console.log('🚀 ~ DifferenceDetector ~ detectCore ~ classNames:', classNames);
     console.log('🚀 ~ DifferenceDetector ~ detectCore ~ typeAliasNames:', typeAliasNames);
-    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ functionsHasDuplicate:', functionsHasDuplicate);
     console.log('🚀 ~ DifferenceDetector ~ detectCore ~ functionNames:', functionNames);
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
-      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.baseline:", this.context?.baseline.getText())
-      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.current:", this.context?.current.getText())
-      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs:", diffPairs)
-      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs baseline:", diffPairs[0].target?.node.getText())
-      console.log("🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs current:", diffPairs[0].source?.node.getText())
+      console.log(
+        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.baseline:',
+        this.context?.baseline.getText()
+      );
+      console.log(
+        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.current:',
+        this.context?.current.getText()
+      );
+      console.log('🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs:', diffPairs);
+      console.log(
+        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs baseline:',
+        diffPairs[0].target?.node.getText()
+      );
+      console.log(
+        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs current:',
+        diffPairs[0].source?.node.getText()
+      );
 
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const classDiffPairs = classNames.reduce((map, n) => {
       const diffPairs = patchClass(n, this.context!, AssignDirection.CurrentToBaseline);
-      console.log("🚀 ~ DifferenceDetector ~ classDiffPairs ~ diffPairs for class:", n, diffPairs)
+      console.log('🚀 ~ DifferenceDetector ~ classDiffPairs ~ diffPairs for class:', n, diffPairs);
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
@@ -152,12 +165,18 @@ export class DifferenceDetector {
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
+    const enumDiffPairs = enumNames.reduce((map, n) => {
+      const diffPairs = patchEnum(n, this.context!, AssignDirection.CurrentToBaseline);
+      map.set(n, diffPairs);
+      return map;
+    }, new Map<string, DiffPair[]>());
 
     return {
       interfaces: interfaceDiffPairs,
       classes: classDiffPairs,
       typeAliases: typeAliasDiffPairs,
       functions: functionDiffPairs,
+      enums: enumDiffPairs,
     };
   }
 
@@ -177,6 +196,7 @@ export class DifferenceDetector {
       classes: new Map<string, DiffPair[]>(),
       typeAliases: new Map<string, DiffPair[]>(),
       functions: new Map<string, DiffPair[]>(),
+      enums: new Map<string, DiffPair[]>(),
     };
   }
 }

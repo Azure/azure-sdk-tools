@@ -204,7 +204,7 @@ describe('detect interface', () => {
       expect(diffPairs.length).toBe(0);
     });
 
-    test('change classic property required to optional', async () => {
+    test('change classic property required to optional (current to baseline)', async () => {
       const baselineApiView = `export interface TestInterface { prop?: string; }`;
       const currentApiView = `export interface TestInterface { prop: string; }`;
 
@@ -217,14 +217,17 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    // TODO: this should be breaking change?
-    test('change classic property optional to required', async () => {
+    test('change classic property optional to required (current to baseline)', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { prop?: string; }`;
 
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
+      expect(diffPairs.length).toBe(1);
+        expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+        expect(diffPairs[0].location).toBe(DiffLocation.Property);
+        expect(diffPairs[0].reasons).toBe(DiffReasons.OptionalToRequired);
+        expect(diffPairs[0].target?.name).toBe('prop');
     });
   });
 

@@ -220,30 +220,7 @@ describe('detect class', () => {
       expect(diffPairs[1].source?.name).toBe('prop2');
     });
 
-    test('change classic property readonly to mutable', async () => {
-      const baselineApiView = `export class TestClass { readonly prop: string; }`;
-      const currentApiView = `export class TestClass { prop: string; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(1);
-      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-      expect(diffPairs[0].location).toBe(DiffLocation.Property);
-      expect(diffPairs[0].reasons).toBe(DiffReasons.ReadonlyToMutable);
-      expect(diffPairs[0].target?.name).toBe('prop');
-    });
-
-    // TODO: this should be a breaking change?
-    test('change classic property mutable to readonly', async () => {
-      const baselineApiView = `export class TestClass { prop: string; }`;
-      const currentApiView = `export class TestClass { readonly prop: string; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
-    });
-
-    test('change classic property required to optional', async () => {
+    test('change classic property required to optional (current to baseline)', async () => {
       const baselineApiView = `export class TestClass { prop?: string; }`;
       const currentApiView = `export class TestClass { prop: string; }`;
 
@@ -256,13 +233,17 @@ describe('detect class', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    test('change classic property optional to required', async () => {
+    test('change classic property optional to required (current to baseline)', async () => {
       const baselineApiView = `export class TestClass { prop: string; }`;
       const currentApiView = `export class TestClass { prop?: string; }`;
 
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
+      expect(diffPairs.length).toBe(1);
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Property);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.OptionalToRequired);
+      expect(diffPairs[0].target?.name).toBe('prop');
     });
   });
 

@@ -174,8 +174,8 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            // Only consider class types
-            if (typeSymbol.TypeKind != TypeKind.Class)
+            // Only consider class and struct types, but not enums
+            if (typeSymbol.TypeKind != TypeKind.Class && typeSymbol.TypeKind != TypeKind.Struct)
             {
                 return false;
             }

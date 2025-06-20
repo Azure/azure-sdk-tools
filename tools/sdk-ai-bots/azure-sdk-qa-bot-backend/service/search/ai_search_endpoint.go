@@ -94,10 +94,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	// Query each source and apply weighted scoring
 	allResults := []model.Index{}
 
-	// First, query all sources to get potential candidates
-	// We'll request more results than needed to account for filtering
-	expandedK := k * 3 // Request more results to ensure we have enough candidates after filtering
-
 	// Store results by source for weighted scoring
 	sourceResults := make(map[model.Source][]model.Index)
 
@@ -114,7 +110,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	// Query each source separately
 	for _, source := range sources {
 		req := baseReq
-		req.Top = expandedK
+		req.Top = k
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
 
 		resp, err := s.QueryIndex(context.Background(), &req)

@@ -216,7 +216,7 @@ def review_apiview(query: str, language: str):
     )
 
     try:
-        reviewer = ApiViewReview(target=query, language=language, base=None)
+        reviewer = ApiViewReview(target=query, language=language, base=None, debug_log=True)
         review = reviewer.run()
         reviewer.close()
     except Exception as e:

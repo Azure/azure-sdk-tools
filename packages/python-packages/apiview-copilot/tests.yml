@@ -64,3 +64,4 @@ extends:
                   AZURE_SEARCH_NAME: archagent-search
                   AZURE_COSMOS_ACC_NAME: archagent-cosmos
                   AZURE_COSMOS_DB_NAME: archagent-db
+                  AZURE_LOG_LEVEL: 'DEBUG'

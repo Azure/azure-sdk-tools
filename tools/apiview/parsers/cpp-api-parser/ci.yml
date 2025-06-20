@@ -41,7 +41,7 @@ stages:
         timeoutInMinutes: 300
         pool:
           name: $(WINDOWSPOOL)
-          image: $(WINDOWSVMIMAGE)
+          demands: ImageOverride -equals $(WINDOWSVMIMAGE)
           os: windows
 
         steps:

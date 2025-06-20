@@ -27,6 +27,8 @@ namespace Azure.Test
 {{
     public class {{|AZC0035:TestModel|}}
     {{
+        private TestModel() {{ }}
+        public string Name {{ get; }}
     }}
 
     public class TestClient
@@ -122,6 +124,43 @@ namespace Azure.Test
         }
 
         public virtual Response<int> GetInt()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_IgnoresEmptyClassesWithPublicConstructors()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // Empty class with implicit public constructor - should NOT be flagged
+    public class EmptyModel
+    {
+    }
+
+    // Empty class with explicit public constructor - should NOT be flagged  
+    public class EmptyModelExplicit
+    {
+        public EmptyModelExplicit() { }
+    }
+
+    public class TestClient
+    {
+        public virtual Response<EmptyModel> GetEmptyModel()
+        {
+            return null;
+        }
+
+        public virtual Response<EmptyModelExplicit> GetEmptyModelExplicit()
         {
             return null;
         }

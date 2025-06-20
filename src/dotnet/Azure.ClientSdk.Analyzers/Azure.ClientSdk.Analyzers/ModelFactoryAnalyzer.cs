@@ -202,24 +202,24 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
+            // Check if there is at least one public constructor
+            var publicConstructors = namedType.Constructors.Where(c => c.DeclaredAccessibility == Accessibility.Public).ToList();
+            if (!publicConstructors.Any())
+            {
+                return false;
+            }
+
             // Get all instance properties
             var properties = namedType.GetMembers()
                 .OfType<IPropertySymbol>()
                 .Where(p => !p.IsStatic)
                 .ToList();
 
-            // If there are no properties, don't consider it easily instantiable
-            // (empty model classes should still be flagged for model factories)
+            // If there are no properties, it can be constructed via public constructor
+            // but we still want empty model classes to have model factories for consistency
             if (!properties.Any())
             {
-                return false;
-            }
-
-            // Check if there is at least one public constructor
-            var publicConstructors = namedType.Constructors.Where(c => c.DeclaredAccessibility == Accessibility.Public).ToList();
-            if (!publicConstructors.Any())
-            {
-                return false;
+                return true;
             }
 
             // Check if all properties can be set either via constructor parameters or have public setters

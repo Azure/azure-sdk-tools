@@ -48,16 +48,18 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         // custom keyword comparers
         new("error", (i) => {
             var falsePositives = new[] { "no error", "0 error", "any errors", "`error`", "error.type" };
-            if (falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase)))
-            {
-                return false;
-            }
-            return i.Contains("error", StringComparison.OrdinalIgnoreCase);
+            var hasFalsePositives = falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase));
+            return hasFalsePositives ? false : i.Contains("error", StringComparison.OrdinalIgnoreCase);
+        }),
+
+        new("fail", (i) => {
+            var falsePositives = new[] { "no fail", "0 fail", "any fail" };
+            var hasFalsePositives = falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase));
+            return hasFalsePositives ? false : i.Contains("fail", StringComparison.OrdinalIgnoreCase);
         }),
 
         // Common error indicators
-        "fail", "failure", "failed", "exception", "aborted",
-        "fatal", "critical", "panic", "crash", "crashed", "segfault", "stacktrace",
+        "exception", "aborted", "fatal", "critical", "panic", "crash", "crashed", "segfault", "stacktrace",
         // Network/connection errors
         "timeout", "timed out", "unreachable", "refused",
         // Permission/access errors
@@ -65,12 +67,11 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         // File/IO errors
         "file not found", "directory not found", "no such file", "permission denied", "disk full", "out of space",
         // Memory/resource errors
-        "out of memory", "memory leak", "resource exhausted", "quota exceeded",
-        "too many", "limit exceeded", "overflow", "underflow",
+        "out of memory", "memory leak", "resource exhausted", "quota exceeded", "too many", "limit exceeded", "overflow", "underflow",
         // Process/service errors
         "service unavailable", "service down", "process died", "killed", "terminated", "non-zero exit",
         // HTTP/API errors
-        "bad request", "service unavailable"
+        "bad request"
     ];
 
     public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines)

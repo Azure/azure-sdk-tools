@@ -216,7 +216,6 @@ namespace Azure.ClientSdk.Analyzers
                 .ToList();
 
             // If there are no properties, it can be constructed via public constructor
-            // but we still want empty model classes to have model factories for consistency
             if (!properties.Any())
             {
                 return true;

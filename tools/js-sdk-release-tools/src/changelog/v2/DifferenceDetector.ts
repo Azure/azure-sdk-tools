@@ -8,11 +8,14 @@ import {
   patchInterface,
   patchTypeAlias,
   patchEnum,
+  isPropertyMethod,
+  extractCodeFromApiView,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
-import { SourceFile, SyntaxKind } from 'ts-morph';
+import { ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
+import { JsxEmit } from 'typescript';
 
 export interface ApiViewOptions {
   path?: string;
@@ -61,9 +64,7 @@ export class DifferenceDetector {
 
   public async detect() {
     await this.load();
-    this.preprocess();
-
-    if (this.baselineApiViewOptions.sdkType !== this.currentApiViewOptions.sdkType) return this.detectAcrossSdkTypes();
+    await this.preprocess();
 
     switch (this.currentApiViewOptions.sdkType) {
       case SDKType.HighLevelClient:
@@ -76,7 +77,52 @@ export class DifferenceDetector {
     }
   }
 
-  private preprocess() {
+  convertHighLevelClientToModularClientCode(code: string): string {
+    const project = new Project({
+      compilerOptions: {
+        jsx: JsxEmit.Preserve,
+        target: ScriptTarget.ES5,
+        module: ModuleKind.CommonJS,
+        strict: true,
+        esModuleInterop: true,
+        lib: ['es2015', 'es2017', 'esnext'],
+        experimentalDecorators: true,
+        rootDir: '.',
+      },
+    });
+    const sourceFile = project.createSourceFile('index.ts', code, { overwrite: true });
+
+    console.log("🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ code:", code)
+    console.log("🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- before:", sourceFile.getFullText())
+    sourceFile
+      .getInterfaces()
+      .filter((i) => {
+        const isEveryMemberMethod = i.getMembers().every((m) => isPropertyMethod(m.getSymbolOrThrow()));
+        return isEveryMemberMethod;
+      })
+      .forEach((g) => {
+        const methodSigs = g.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
+        g.rename(g.getName() + 'Operations');
+        for (const method of methodSigs) {
+          const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
+          const name = methodSig.getName();
+          const params = methodSig.getParameters().map((p) => ({
+            name: p.getName(),
+            type: p.getTypeNodeOrThrow().getText(),
+          }));
+          const returnType = methodSig.getReturnTypeNodeOrThrow().getText();
+          methodSig.remove();
+          g.addProperty({
+            name,
+            type: `(${params.map((p) => `${p.name}: ${p.type}`).join(', ')}) => ${returnType}`,
+          });
+        }
+      });
+    console.log("🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- after:", sourceFile.getFullText())
+    return sourceFile.getFullText();
+  }
+
+  private async preprocess() {
     const baselineSdkType = this.baselineApiViewOptions.sdkType;
     const currentSdkType = this.currentApiViewOptions.sdkType;
     if (baselineSdkType === currentSdkType) return;
@@ -86,6 +132,20 @@ export class DifferenceDetector {
       );
       return;
     }
+
+    const highLevelCodeInModularWay = this.convertHighLevelClientToModularClientCode(this.context?.baseline.getFullText()!);
+    const generateApiView = (code: string) => {
+      return `
+\`\`\` ts
+    ${code}
+\`\`\`
+    `;
+    };
+    const baselineApiView = generateApiView(highLevelCodeInModularWay);
+    console.log('🚀 ~ DifferenceDetector ~ preprocess ~ baselineApiView:', baselineApiView);
+    const currentApiView = generateApiView(this.context!.current.getFullText()!);
+    console.log('🚀 ~ DifferenceDetector ~ preprocess ~ currentApiView:', currentApiView);
+    this.context = await createAstContext({ apiView: baselineApiView }, { apiView: currentApiView }, this.tempFolder);
   }
 
   private async load() {
@@ -177,26 +237,6 @@ export class DifferenceDetector {
       typeAliases: typeAliasDiffPairs,
       functions: functionDiffPairs,
       enums: enumDiffPairs,
-    };
-  }
-
-  private async detectAcrossSdkTypes(): Promise<DetectResult> {
-    if (
-      this.baselineApiViewOptions.sdkType === SDKType.HighLevelClient &&
-      this.currentApiViewOptions.sdkType === SDKType.ModularClient
-    ) {
-      // TODO
-    } else {
-      const message = `Not supported SDK type: ${this.baselineApiViewOptions.sdkType} -> ${this.currentApiViewOptions.sdkType} to detect differences.`;
-      throw new Error(message);
-    }
-    // TODO
-    return {
-      interfaces: new Map<string, DiffPair[]>(),
-      classes: new Map<string, DiffPair[]>(),
-      typeAliases: new Map<string, DiffPair[]>(),
-      functions: new Map<string, DiffPair[]>(),
-      enums: new Map<string, DiffPair[]>(),
     };
   }
 }

@@ -34,10 +34,10 @@ export const tsconfig = `
     "esModuleInterop": true,
     "lib": ["es2015", "es2017", "esnext"],
     "experimentalDecorators": true,
-  "rootDir": "."
+    "rootDir": "."
   },
   "include": [
-    "**/*.ts",
+    "**/*.ts"
   ],
   "exclude": ["**/node_modules/**/*.*"]
 }
@@ -51,20 +51,6 @@ interface ProjectContext {
   root: string;
   baseline: SubProjectContext;
   current: SubProjectContext;
-}
-
-function extractCodeFromApiView(content: string): string {
-  const codeBlocks: string[] = [];
-  const renderer = new Renderer();
-  renderer.code = ({ text }) => {
-    codeBlocks.push(text);
-    return '';
-  };
-  marked(content, { renderer });
-  if (codeBlocks.length !== 1) throw new Error(`Expected 1 code block, got ${codeBlocks.length}.`);
-
-  // return codeBlocks[0].replaceAll('export', 'declare');
-  return codeBlocks[0];
 }
 
 async function loadCodeFromApiView(path: string) {
@@ -164,12 +150,29 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
   }
 }
 
+export function extractCodeFromApiView(content: string): string {
+  console.log("🚀 ~ extractCodeFromApiView ~ content:", content)
+  const codeBlocks: string[] = [];
+  const renderer = new Renderer();
+  renderer.code = ({ text }) => {
+    codeBlocks.push(text);
+    return '';
+  };
+  marked(content, { renderer });
+  if (codeBlocks.length !== 1) throw new Error(`Expected 1 code block, got ${codeBlocks.length}.`);
+
+  console.log("🚀 ~ extractCodeFromApiView ~ codeBlocks:", codeBlocks)
+  return codeBlocks[0];
+}
+
 export async function createAstContext(
   baselineOptions: ApiViewOptions,
   currentOptions: ApiViewOptions,
   tempFolder: string,
   cleanUpAtTheEnd = false
 ) {
+  console.log("🚀 ~ baselineOptions apiview:", baselineOptions.apiView)
+  console.log("🚀 ~ currentOptions apiview:", currentOptions.apiView)
   try {
     const projectContext = await prepareProject(currentOptions, baselineOptions, tempFolder);
     const project = new Project({

@@ -65,7 +65,6 @@ export class ChangelogGenerator {
   /** operation */
   private operationAddedTemplate = 'Added operation {interfaceName}.{signatureName}';
   private operationRemovedTemplate = 'Removed operation {interfaceName}.{signatureName}';
-  // TODO: handle high-level-client to modular-client migration
   private operationSignatureChangedTemplate = 'Operation {interfaceName}.{signatureName} has a new signature';
 
   /** model */
@@ -79,7 +78,8 @@ export class ChangelogGenerator {
   private modelPropertyTypeChangedTemplate =
     'Type of parameter {newPropertyName} of interface {interfaceName} is changed from {oldPropertyType} to {newPropertyType}';
   private modelPropertyRemovedTemplate = 'Interface {interfaceName} no longer has parameter {propertyName}';
-  private modelPropertyOptionalToRequiredTemplate = 'Parameter {propertyName} of interface {interfaceName} is now required';
+  private modelPropertyOptionalToRequiredTemplate =
+    'Parameter {propertyName} of interface {interfaceName} is now required';
 
   /** class */
   private classAddedTemplate = 'Added Class {className}';
@@ -320,6 +320,14 @@ export class ChangelogGenerator {
   }
 
   private generateForInterfaces(diffPairs: DiffPair[], interfaceName: string): void {
+    // TODO: remove when there's no high level client any more
+    const getInterfaceNameInBaseline = (): string => {
+      if (this.detectContext.sdkTypes.source === SDKType.ModularClient &&
+        this.detectContext.sdkTypes.target === SDKType.HighLevelClient
+      ) return interfaceName.substring(0, interfaceName.length - 'Operations'.length);
+      return interfaceName;
+    }
+    const baselineInterfaceName = getInterfaceNameInBaseline();
     const isOperationGroupInterface = () => {
       const source = this.detectContext.context.current.getInterface(interfaceName);
       const target = this.detectContext.context.baseline.getInterface(interfaceName);
@@ -339,7 +347,7 @@ export class ChangelogGenerator {
         }
         // operation group removed
         if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = template(this.operationGroupRemovedTemplate, { interfaceName });
+          const message = template(this.operationGroupRemovedTemplate, { interfaceName: baselineInterfaceName });
           this.addChangelogItem(ChangelogItemCategory.OperationGroupRemoved, message);
         }
 
@@ -351,7 +359,7 @@ export class ChangelogGenerator {
         }
         // operation removed
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = template(this.operationRemovedTemplate, { interfaceName, signatureName: p.target!.name });
+          const message = template(this.operationRemovedTemplate, { interfaceName: baselineInterfaceName, signatureName: p.target!.name });
           this.addChangelogItem(ChangelogItemCategory.OperationRemoved, message);
         }
         // operation signature's parameter type changed
@@ -370,7 +378,7 @@ export class ChangelogGenerator {
             }
           };
           const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName,
+            interfaceName: baselineInterfaceName,
             signatureName: signatureName(),
           });
           console.log('🚀 ~ operation sig change:', message);
@@ -382,7 +390,7 @@ export class ChangelogGenerator {
           this.hasReasons(p.reasons, DiffReasons.CountChanged)
         ) {
           const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName,
+            interfaceName: baselineInterfaceName,
             signatureName: p.target!.name,
           });
           this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
@@ -391,16 +399,15 @@ export class ChangelogGenerator {
         // NOTE: not detected in v1
         if (p.location === DiffLocation.Signature_ReturnType && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
           const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName,
+            interfaceName: baselineInterfaceName,
             signatureName: p.target!.name,
           });
           this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
         }
         // operation parameter
-        // TODO: v1 make it a breaking change when operation optional/required changed, while v2 only consider required-> optional is breaking change
         if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
           const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName,
+            interfaceName: baselineInterfaceName,
             // TODO: get signature name
             signatureName: 'TODO',
           });
@@ -408,9 +415,9 @@ export class ChangelogGenerator {
         }
         // operation signature's parameter required/optional changed
         // NOTE: not detected in v2
-        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.NotComparable)) {
+        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.OptionalToRequired)) {
           const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName,
+            interfaceName: baselineInterfaceName,
             // TODO: get signature name
             signatureName: 'TODO',
           });
@@ -497,7 +504,11 @@ export class ChangelogGenerator {
       case SDKType.HighLevelClient:
         return memberCount > 0 && memberCount === node.getMethods().length;
       case SDKType.ModularClient:
-        return memberCount > 0 && memberCount === node.getProperties().filter(this.isFunctionType).length;
+        return (
+          memberCount > 0 &&
+          memberCount === node.getProperties().filter(this.isFunctionType).length &&
+          node.getName().endsWith('Operations')
+        );
       case SDKType.RestLevelClient:
         return false;
       default:

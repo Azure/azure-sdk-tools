@@ -32,9 +32,9 @@ export function createTestAstContext(baselineCode: string, currentCode: string):
   console.log("🚀 ~ createTestAstContext ~ currentCode:", currentCode)
   const tempFolder = join('.tmp-breaking-change-detect-' + Math.random().toString(36).substring(7));
   const generateApiView = (code: string) => `
-  \`\`\` ts
+\`\`\` ts
   ${code}
-  \`\`\`
+\`\`\`
   `;
   return createAstContext(
     { apiView: generateApiView(baselineCode) },

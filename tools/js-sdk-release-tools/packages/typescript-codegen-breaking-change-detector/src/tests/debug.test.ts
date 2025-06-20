@@ -1,52 +1,61 @@
-import { Project } from 'ts-morph';
-import { SyntaxKind } from 'typescript';
+import { ModuleKind, Project, ScriptTarget, SyntaxKind } from 'ts-morph';
+import { JsxEmit } from 'typescript';
 import { describe, expect, test } from 'vitest';
 import { createTestAstContext } from './utils';
 import { patchInterface } from '../azure/patch/patch-detection';
 import { AssignDirection, DiffLocation, DiffReasons } from '../azure/common/types';
+import { tsconfig } from '../azure/detect-breaking-changes';
+import { isPropertyMethod } from '../utils/ast-utils';
 
 // TODO: remove
 describe('debug', () => {
   test('HLC => MC migration', async () => {
-    const project = new Project();
-    const sourceFile = project.createSourceFile(
-      'example.ts',
-      `
-export interface AAA {
-  func(p: number): string;
-}
-
-`,
-      { overwrite: true }
-    );
-
-    const iface = sourceFile.getInterfaceOrThrow('AAA');
-
-    // 找出所有 method signatures
-    const methodSigs = iface.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
-
-    for (const method of methodSigs) {
-      const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
-
-      const name = methodSig.getName();
-      const params = methodSig.getParameters().map((p) => ({
-        name: p.getName(),
-        type: p.getTypeNodeOrThrow().getText(),
-      }));
-      const returnType = methodSig.getReturnTypeNodeOrThrow().getText();
-
-      // 删除原来的 method signature
-      methodSig.remove();
-
-      // 添加箭头函数形式的 property signature
-      iface.addProperty({
-        name,
-        type: `(${params.map((p) => `${p.name}: ${p.type}`).join(', ')}) => ${returnType}`,
+    const preprocessHighLevelClientCode = (code: string) => {
+      const project = new Project({
+        compilerOptions: {
+          jsx: JsxEmit.Preserve,
+          target: ScriptTarget.ES5,
+          module: ModuleKind.CommonJS,
+          strict: true,
+          esModuleInterop: true,
+          lib: ['es2015', 'es2017', 'esnext'],
+          experimentalDecorators: true,
+          rootDir: '.',
+        },
       });
-    }
+      const sourceFile = project.createSourceFile('index.ts', code, { overwrite: true });
 
-    // 打印修改后的代码
-    console.log(sourceFile.getFullText());
+      sourceFile
+        .getInterfaces()
+        .filter((i) => {
+          const isEveryMemberMethod = i.getMembers().every((m) => isPropertyMethod(m.getSymbolOrThrow()));
+          return isEveryMemberMethod;
+        })
+        .forEach((g) => {
+          const methodSigs = g.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
+          g.rename(g.getName() + 'Operations');
+          for (const method of methodSigs) {
+            const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
+            const name = methodSig.getName();
+            const params = methodSig.getParameters().map((p) => ({
+              name: p.getName(),
+              type: p.getTypeNodeOrThrow().getText(),
+            }));
+            const returnType = methodSig.getReturnTypeNodeOrThrow().getText();
+            methodSig.remove();
+            g.addProperty({
+              name,
+              type: `(${params.map((p) => `${p.name}: ${p.type}`).join(', ')}) => ${returnType}`,
+            });
+          }
+        });
+      return sourceFile.getFullText();
+    };
+
+    const processed = preprocessHighLevelClientCode(
+      `export interface TestInterface {get(): void; set(s: string): XXX}`
+    );
+    console.log('🚀 ~ processed:', processed);
   });
 
   test('Generic Type', async () => {

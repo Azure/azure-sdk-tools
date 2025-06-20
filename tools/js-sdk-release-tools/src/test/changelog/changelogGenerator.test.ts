@@ -19,11 +19,12 @@ import {
 const getItemsByCategory = (
     changelogItems: ChangelogItems,
     category: ChangelogItemCategory,
-    isBreakingChange = false,
 ) => {
+    const isBreakingChange = category >= 1000;
     const map = isBreakingChange
         ? changelogItems.breakingChanges
         : changelogItems.features;
+    console.log("🚀 ~ map:", map)
     if (!map) return [];
     console.log(
         "🚀 ~getItemsByCategory changelogItems:",
@@ -299,35 +300,62 @@ describe("Changelog reading", () => {
 });
 
 describe("Breaking change detection for v2 (compared to v1)", () => {
-    // test("HLC -> Modular: Rename", async () => {
-    //     const oldViewPath = path.join(
-    //         __dirname,
-    //         "testCases/operationGroups.1.old.hlc.api.md",
-    //     );
-    //     const newViewPath = path.join(
-    //         __dirname,
-    //         "testCases/operationGroups.1.new.modular.api.md",
-    //     );
-    //     const changelog = await extractExportAndGenerateChangelog(
-    //         oldViewPath,
-    //         newViewPath,
-    //         SDKType.HighLevelClient,
-    //         SDKType.ModularClient,
-    //     );
+    test("HLC -> Modular: Rename", async () => {
+        const oldViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.1.old.hlc.api.md",
+        );
+        const newViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.1.new.modular.api.md",
+        );
+        
+        const changelogItems = await generateChangelogItems(
+            { path: oldViewPath, sdkType: SDKType.HighLevelClient },
+            { path: newViewPath, sdkType: SDKType.ModularClient },
+        );
 
-    //     expect(changelog.addedOperationGroup.length).toBe(0);
-    //     expect(changelog.removedOperationGroup.length).toBe(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupAdded,
+            ).length,
+        ).toBe(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupRemoved,
+            ).length,
+        ).toBe(0);
 
-    //     expect(changelog.addedOperation.length).toBe(1);
-    //     expect(changelog.removedOperation.length).toBe(1);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationAdded,
+            ).length,
+        ).toBe(1);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationRemoved,
+            ).length,
+        ).toBe(1);
 
-    //     expect(changelog.addedOperation[0].line).toBe(
-    //         "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW",
-    //     );
-    //     expect(changelog.removedOperation[0].line).toBe(
-    //         "Removed operation DataProductsCatalogs.listByResourceGroup",
-    //     );
-    // });
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationAdded,
+            )[0],
+        ).toBe(
+            "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW",
+        );
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationRemoved,
+            )[0],
+        ).toBe("Removed operation DataProductsCatalogs.listByResourceGroup");
+    });
 
     test("HLC -> HLC: Change Op", async () => {
         const oldViewPath = path.join(
@@ -354,7 +382,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationGroupRemoved,
-                true,
             ),
         ).toHaveLength(0);
 
@@ -368,7 +395,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationRemoved,
-                true,
             ),
         ).toHaveLength(1);
 
@@ -382,7 +408,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationRemoved,
-                true,
             )[0],
         ).toBe("Removed operation DataProductsCatalogs.get");
     });
@@ -412,7 +437,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationGroupRemoved,
-                true,
             ),
         ).toHaveLength(0);
 
@@ -426,7 +450,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationRemoved,
-                true,
             ),
         ).toHaveLength(1);
 
@@ -442,7 +465,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationRemoved,
-                true,
             )[0],
         ).toBe(
             "Removed operation DataProductsCatalogsOperations.listByResourceGroup",
@@ -474,7 +496,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationGroupRemoved,
-                true,
             ),
         ).toHaveLength(1);
 
@@ -488,7 +509,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationRemoved,
-                true,
             ),
         ).toHaveLength(0);
 
@@ -496,7 +516,6 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationSignatureChanged,
-                true,
             ),
         ).toHaveLength(1);
 
@@ -510,14 +529,12 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationGroupRemoved,
-                true,
             )[0],
         ).toBe("Removed operation group DataProductsCatalogs_remove");
         expect(
             getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationSignatureChanged,
-                true,
             )[0],
         ).toBe(
             "Operation DataProductsCatalogs_sig_change.get has a new signature",
@@ -581,7 +598,7 @@ describe("Breaking change detection v2", () => {
 
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs_added {
+export interface DataProductsCatalogs_added_Operations {
     get: (resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
 }
 // (No @packageDocumentation comment for this package)
@@ -603,7 +620,7 @@ export interface DataProductsCatalogs_added {
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
-                "Added operation group DataProductsCatalogs_added",
+                "Added operation group DataProductsCatalogs_added_Operations",
             );
         });
 
@@ -611,7 +628,7 @@ export interface DataProductsCatalogs_added {
             const baselineApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs_removed {
+export interface DataProductsCatalogs_removed_Operations {
     get: (resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
 }
 // (No @packageDocumentation comment for this package)
@@ -639,11 +656,10 @@ export interface DataProductsCatalogs_removed {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationGroupRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
-                "Removed operation group DataProductsCatalogs_removed",
+                "Removed operation group DataProductsCatalogs_removed_Operations",
             );
         });
 
@@ -651,7 +667,7 @@ export interface DataProductsCatalogs_removed {
             const baselineApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs {
+export interface DataProductsCatalogsOperations {
     get: (resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
 }
 \`\`\`
@@ -659,7 +675,7 @@ export interface DataProductsCatalogs {
             const currentApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs {
+export interface DataProductsCatalogsOperations {
     get: (resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
     list: (options?: DataProductsCatalogsListOptionalParams) => Promise<DataProductsCatalogsListResponse>;
 }
@@ -680,14 +696,14 @@ export interface DataProductsCatalogs {
                 ChangelogItemCategory.OperationAdded,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added operation DataProductsCatalogs.list");
+            expect(items[0]).toBe("Added operation DataProductsCatalogsOperations.list");
         });
 
         test("Operation Removed", async () => {
             const baselineApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs {
+export interface DataProductsCatalogsOperations {
     get: (resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
     list: (options?: DataProductsCatalogsListOptionalParams) => Promise<DataProductsCatalogsListResponse>;
 }
@@ -696,7 +712,7 @@ export interface DataProductsCatalogs {
             const currentApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs {
+export interface DataProductsCatalogsOperations {
     get: (resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
 }
 \`\`\`
@@ -714,11 +730,10 @@ export interface DataProductsCatalogs {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
-                "Removed operation DataProductsCatalogs.list",
+                "Removed operation DataProductsCatalogsOperations.list",
             );
         });
 
@@ -726,7 +741,7 @@ export interface DataProductsCatalogs {
             const baselineApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs {
+export interface DataProductsCatalogsOperations {
     get: (resourceGroupName: string) => Promise<DataProductsCatalogsGetResponse>;
 }
 \`\`\`
@@ -734,7 +749,7 @@ export interface DataProductsCatalogs {
             const currentApiView = `
 \`\`\`ts
 // @public
-export interface DataProductsCatalogs {
+export interface DataProductsCatalogsOperations {
     get: (resourceGroupName: string, options: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalogsGetResponse>;
 }
 \`\`\`
@@ -752,11 +767,10 @@ export interface DataProductsCatalogs {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.OperationSignatureChanged,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
-                "Operation DataProductsCatalogs.get has a new signature",
+                "Operation DataProductsCatalogsOperations.get has a new signature",
             );
         });
 
@@ -821,7 +835,6 @@ export interface DataProduct {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ModelRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed Interface DataProduct");
@@ -900,7 +913,6 @@ export interface DataProduct {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ModelRequiredPropertyAdded,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -941,7 +953,6 @@ export interface DataProduct {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ModelPropertyRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -979,7 +990,6 @@ export interface DataProduct {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ModelPropertyTypeChanged,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1021,7 +1031,6 @@ export interface DataProduct {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ModelPropertyOptionalToRequired,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1088,7 +1097,6 @@ export class DataProductClient {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ClassRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Deleted Class DataProductClient");
@@ -1126,7 +1134,6 @@ export class DataProductClient {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ClassChanged,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1167,7 +1174,6 @@ export class DataProductClient {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ClassPropertyRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1207,7 +1213,6 @@ export class DataProductClient {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.ClassPropertyOptionalToRequired,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1268,7 +1273,6 @@ export type DataProductStatus = "Active" | "Inactive" | "Pending";
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.TypeAliasRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed type alias DataProductStatus");
@@ -1300,7 +1304,6 @@ export type DataProductStatus = "Running" | "Stopped";
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.TypeAliasTypeChanged,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1369,7 +1372,6 @@ export enum DataProductType {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.EnumRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed Enum DataProductType");
@@ -1448,7 +1450,6 @@ export enum DataProductType {
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.EnumMemberRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
@@ -1509,7 +1510,6 @@ export function createDataProduct(name: string, type: DataProductType): DataProd
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.FunctionRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed function createDataProduct");
@@ -1574,7 +1574,6 @@ export function processData(data: string): string;
             const items = getItemsByCategory(
                 changelogItems,
                 ChangelogItemCategory.FunctionRemoved,
-                true,
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe("Removed function processData");
@@ -1583,6 +1582,10 @@ export function processData(data: string): string;
 
     // TODO: add tests
 });
+
+describe("Breaking change detection from high level client to modular client", () => {
+
+})
 
 describe("Changelog reading", () => {
     test("Read changelog that doesn't exist", () => {

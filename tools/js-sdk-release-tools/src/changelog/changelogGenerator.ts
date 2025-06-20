@@ -256,6 +256,7 @@ export class Changelog {
     }
 }
 
+// NOTE: done in v2
 // todo: special rules for HLC convert to Modular, will use a more generic method to replace
 function getRenamedOperationGroupFromToMap(from: TSExportedMetaData): { [id: string]: string } {
     const map: { [id: string]: string } = {};

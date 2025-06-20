@@ -15,7 +15,7 @@ jobs:
       displayName: 'Provision'
     pool:
       name: azsdk-pool
-      demands: ImageOverride -equals ubuntu-22.04
+      demands: ImageOverride -equals ubuntu-24.04
     steps:
       - task: AzureCLI@2
         displayName: Provision Stress Cluster

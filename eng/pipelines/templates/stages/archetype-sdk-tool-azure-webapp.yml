@@ -23,7 +23,7 @@ stages:
       - job: BuildPackage
         pool:
           name: azsdk-pool
-          demands: ImageOverride -equals ubuntu-22.04
+          demands: ImageOverride -equals ubuntu-24.04
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
           - pwsh: |
@@ -50,7 +50,7 @@ stages:
             environment: ${{ parameters.Staging.EnvironmentName }}
             pool:
               name: azsdk-pool
-              demands: ImageOverride -equals ubuntu-22.04
+              demands: ImageOverride -equals ubuntu-24.04
             strategy:
               runOnce:
                 deploy:
@@ -63,7 +63,7 @@ stages:
             dependsOn: PublishArm
           pool:
             name: azsdk-pool
-            demands: ImageOverride -equals ubuntu-22.04
+            demands: ImageOverride -equals ubuntu-24.04
           strategy:
             runOnce:
               deploy:
@@ -92,7 +92,7 @@ stages:
             environment: ${{ parameters.Production.EnvironmentName }}
             pool:
               name: azsdk-pool
-              demands: ImageOverride -equals ubuntu-22.04
+              demands: ImageOverride -equals ubuntu-24.04
             strategy:
               runOnce:
                 deploy:
@@ -105,7 +105,7 @@ stages:
             dependsOn: PublishArm
           pool:
             name: azsdk-pool
-            demands: ImageOverride -equals ubuntu-22.04
+            demands: ImageOverride -equals ubuntu-24.04
           strategy:
             runOnce:
                 deploy:

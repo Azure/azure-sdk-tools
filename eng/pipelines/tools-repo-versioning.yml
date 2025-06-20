@@ -5,7 +5,7 @@ pr: none
 
 pool:
   name: azsdk-pool
-  demands: ImageOverride -equals ubuntu-22.04
+  demands: ImageOverride -equals ubuntu-24.04
 
 jobs:
   - job: TagToolsRepo

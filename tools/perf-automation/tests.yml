@@ -93,7 +93,7 @@ parameters:
   default: 'azsdk-pool'
 - name: LinuxVmImage
   type: string
-  default: 'ubuntu-22.04'
+  default: 'ubuntu-24.04'
 - name: WindowsPool
   type: string
   default: 'azsdk-pool'
@@ -311,7 +311,7 @@ stages:
   displayName: Print Results
   pool:
     name: azsdk-pool
-    demands: ImageOverride -equals ubuntu-22.04
+    demands: ImageOverride -equals ubuntu-24.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

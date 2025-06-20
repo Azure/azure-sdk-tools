@@ -22,7 +22,7 @@ jobs:
 
     pool:
       name: azsdk-pool
-      demands: ImageOverride -equals ubuntu-22.04
+      demands: ImageOverride -equals ubuntu-24.04
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml

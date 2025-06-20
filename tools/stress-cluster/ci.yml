@@ -20,7 +20,7 @@ jobs:
   - job: Analyze
     pool:
       name: azsdk-pool
-      demands: ImageOverride -equals ubuntu-22.04
+      demands: ImageOverride -equals ubuntu-24.04
     steps:
       - template: /eng/common/pipelines/templates/steps/verify-links.yml
         parameters:

@@ -12,7 +12,7 @@ parameters:
 
 pool:
   name: azsdk-pool
-  demands: ImageOverride -equals ubuntu-22.04
+  demands: ImageOverride -equals 4.04
 
 variables:
   NodeVersion: '18.x'

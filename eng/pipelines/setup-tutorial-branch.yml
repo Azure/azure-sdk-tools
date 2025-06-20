@@ -45,7 +45,7 @@ jobs:
 - job: SetupTutorialBranch
   pool:
     name: azsdk-pool
-    demands: ImageOverride -equals ubuntu-22.04
+    demands: ImageOverride -equals ubuntu-24.04
   steps:
     - task: PowerShell@2
       displayName: 'Setup Tutorial Branch'

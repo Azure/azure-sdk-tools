@@ -2,8 +2,8 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-22.04
 
 variables:
   cachefile: verify-links-cache.txt
@@ -36,7 +36,7 @@ jobs:
     displayName: 'Clone repos to optimize github link checking'
 
   - task: PowerShell@2
-    displayName: 'azure-sdk link check' 
+    displayName: 'azure-sdk link check'
     condition: succeededOrFailed()
     inputs:
       pwsh: true
@@ -117,7 +117,7 @@ jobs:
       filePath: eng/common/scripts/Verify-Links.ps1
       arguments: >
         -urls (Get-ChildItem -Path ./eng/common -Recurse -Include *.md)
-        -rootUrl "file://$(System.DefaultWorkingDirectory)"        
+        -rootUrl "file://$(System.DefaultWorkingDirectory)"
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
@@ -133,9 +133,9 @@ jobs:
     inputs:
       azureSubscription: 'Azure SDK Artifacts'
       ScriptType: 'InlineScript'
-      azurePowerShellVersion: LatestVersion 
+      azurePowerShellVersion: LatestVersion
       pwsh: true
       Inline: |
         azcopy copy '$(cachefile)' 'https://azuresdkartifacts.blob.core.windows.net/verify-links-cache'
-    env: 
+    env:
       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'

@@ -34,7 +34,8 @@ jobs:
     displayName: "Delete ${{parameters.TagName}} tag from ${{parameters.Repository}} repository"
     environment: github-operation-approvals
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-22.04
     strategy:
       runOnce:
         deploy:

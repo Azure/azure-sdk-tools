@@ -3,8 +3,8 @@ pr: none
 trigger: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-22.04
 
 parameters:
   - name: Reviews
@@ -12,7 +12,7 @@ parameters:
     default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","FileID":"<fileid>","FileName":"<fileName>"}]'
   - name: APIViewURL
     type: string
-    default: 'https://apiview.dev' 
+    default: 'https://apiview.dev'
   - name: StorageContainerUrl
     type: string
     default: ''

@@ -8,7 +8,7 @@ from azure.search.documents.models import (
     QueryCaptionType,
     SemanticErrorMode,
 )
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, AzurePipelinesCredential
 
 from src._models import Guideline, Example, Memory
 
@@ -33,7 +33,19 @@ COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
 AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
 SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
 
-CREDENTIAL = DefaultAzureCredential()
+if os.getenv("TF_BUILD"):
+    service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+    client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+    tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+    system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+    CREDENTIAL = AzurePipelinesCredential(
+            service_connection_id=service_connection_id,
+            client_id=client_id,
+            tenant_id=tenant_id,
+            system_access_token=system_access_token,
+        )
+else:
+    CREDENTIAL = DefaultAzureCredential()
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")

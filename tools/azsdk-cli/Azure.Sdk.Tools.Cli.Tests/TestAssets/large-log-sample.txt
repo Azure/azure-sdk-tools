@@ -1,0 +1,34 @@
+2024-01-15 10:00:01 INFO Starting application
+2024-01-15 10:00:02 INFO Loading configuration
+2024-01-15 10:00:03 INFO Connecting to database
+2024-01-15 10:00:04 INFO Database connection established
+2024-01-15 10:00:05 INFO Starting web server
+2024-01-15 10:00:06 INFO Web server listening on port 8080
+2024-01-15 10:00:07 INFO Application startup completed
+2024-01-15 10:00:08 DEBUG Processing request /api/health
+2024-01-15 10:00:09 DEBUG Health check passed
+2024-01-15 10:00:10 INFO Request completed successfully
+2024-01-15 10:00:11 DEBUG Processing request /api/users
+2024-01-15 10:00:12 DEBUG Querying user database
+2024-01-15 10:00:13 ERROR Database connection failed: timeout after 30 seconds
+2024-01-15 10:00:14 ERROR Failed to execute query: SELECT * FROM users
+2024-01-15 10:00:15 ERROR Stack trace: at DatabaseService.Query()
+2024-01-15 10:00:16 ERROR Connection pool exhausted
+2024-01-15 10:00:17 WARN Retrying database connection
+2024-01-15 10:00:18 INFO Database connection restored
+2024-01-15 10:00:19 INFO Query executed successfully
+2024-01-15 10:00:20 DEBUG Returning user data
+2024-01-15 10:00:21 INFO Request completed successfully
+2024-01-15 10:00:22 DEBUG Processing request /api/orders
+2024-01-15 10:00:23 DEBUG Validating order data
+2024-01-15 10:00:24 INFO Order validation passed
+2024-01-15 10:00:25 DEBUG Saving order to database
+2024-01-15 10:00:26 INFO Order saved successfully
+2024-01-15 10:00:27 INFO Request completed successfully
+2024-01-15 10:00:28 DEBUG Processing request /api/payment
+2024-01-15 10:00:29 DEBUG Validating payment information
+2024-01-15 10:00:30 FATAL Payment service unavailable
+2024-01-15 10:00:31 FATAL Unable to process payment
+2024-01-15 10:00:32 FATAL Application shutting down due to critical error
+2024-01-15 10:00:33 INFO Cleanup completed
+2024-01-15 10:00:34 INFO Application terminated

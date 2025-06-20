@@ -32,7 +32,6 @@ extends:
 
               - script: |
                   python -m pip install -r requirements.txt
-                  python -m pip install -e .
                 displayName: 'Install Test Requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/ai-evals/azure-mcp
 

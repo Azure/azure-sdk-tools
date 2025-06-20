@@ -245,17 +245,22 @@ if __name__ == "__main__":
     else:
         kwargs = {}
 
-    tool_call_accuracy = ToolCallAccuracyEvaluator(
-        model_config=model_config, is_reasoning_model=True
+    result = evaluate_azure_mcp(
+        query="List my Azure storage account",
+        expected_tool_calls=["azmcp-storage-account-list"],
     )
+    print(result)
+    # tool_call_accuracy = ToolCallAccuracyEvaluator(
+    #     model_config=model_config, is_reasoning_model=True
+    # )
 
-    test_file = pathlib.Path(__file__).parent / "data.jsonl"
-    result = evaluate(
-        data=str(test_file),
-        evaluators={
-            "tool_call_accuracy": tool_call_accuracy,
-        },
-        target=evaluate_azure_mcp,
-        azure_ai_project=azure_ai_project,
-        **kwargs,
-    )
+    # test_file = pathlib.Path(__file__).parent / "data.jsonl"
+    # result = evaluate(
+    #     data=str(test_file),
+    #     evaluators={
+    #         "tool_call_accuracy": tool_call_accuracy,
+    #     },
+    #     target=evaluate_azure_mcp,
+    #     azure_ai_project=azure_ai_project,
+    #     **kwargs,
+    # )

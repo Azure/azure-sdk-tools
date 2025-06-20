@@ -170,6 +170,33 @@ namespace Azure.Test
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
 
+        [Fact]
+        public async Task AZC0035_FlagsEmptyClassesWithNoPublicConstructor()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // Empty class with no public constructor - should be flagged
+    public class {|AZC0035:EmptyModelPrivate|}
+    {
+        private EmptyModelPrivate() { }
+    }
+
+    public class TestClient
+    {
+        public virtual Response<EmptyModelPrivate> GetEmptyModel()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
 
 
         [Fact]

@@ -35,8 +35,28 @@ model_config: dict[str, str] = {
     "api_version": API_VERSION,
 }
 
+
+def in_ci() -> bool:
+    return os.getenv("TF_BUILD") is not None
+
+
+if in_ci():
+    service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+    client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+    tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+    system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+    CREDENTIAL = AzurePipelinesCredential(
+        service_connection_id=service_connection_id,
+        client_id=client_id,
+        tenant_id=tenant_id,
+        system_access_token=system_access_token,
+    )
+else:
+    CREDENTIAL = DefaultAzureCredential()
+
+
 token_provider = get_bearer_token_provider(
-    DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+    CREDENTIAL, "https://cognitiveservices.azure.com/.default"
 )
 client = AzureOpenAI(
     azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
@@ -52,9 +72,6 @@ followup_answers = pathlib.Path(__file__).parent / "followup.json"
 with open(str(followup_answers), "r") as f:
     options = json.load(f)
 
-
-def in_ci() -> bool:
-    return os.getenv("TF_BUILD") is not None
 
 
 def reshape_tools(
@@ -230,18 +247,7 @@ if __name__ == "__main__":
         "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
     }
     if in_ci():
-        service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-        client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-        tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-        system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
-        kwargs = {
-            "credential": AzurePipelinesCredential(
-                service_connection_id=service_connection_id,
-                client_id=client_id,
-                tenant_id=tenant_id,
-                system_access_token=system_access_token,
-            )
-        }
+        kwargs = {"credential": CREDENTIAL}
     else:
         kwargs = {}
 

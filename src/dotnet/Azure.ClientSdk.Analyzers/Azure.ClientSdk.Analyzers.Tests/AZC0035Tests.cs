@@ -238,5 +238,84 @@ namespace Azure.Test
 
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0035_RealWorldExamples()
+        {
+            const string code = @"
+using Azure;
+using System;
+using System.Threading.Tasks;
+
+namespace Azure.Storage.Blobs
+{
+    // Client type - should be ignored
+    public class BlobContainerClient
+    {
+        public string Name { get; set; }
+        public string AccountName { get; set; }
+    }
+
+    // Easily instantiable via setters - should be ignored
+    public class BlobServiceProperties
+    {
+        public string Version { get; set; }
+        public bool LoggingEnabled { get; set; }
+        public int RetentionDays { get; set; }
+    }
+
+    // Easily instantiable via constructor - should be ignored
+    public class BlobImmutabilityPolicy
+    {
+        public BlobImmutabilityPolicy(string policyType, int retentionDays)
+        {
+            PolicyType = policyType;
+            RetentionDays = retentionDays;
+        }
+
+        public string PolicyType { get; }
+        public int RetentionDays { get; }
+    }
+
+    // Easily instantiable via constructor + setters - should be ignored
+    public class ReleasedObjectInfo
+    {
+        public ReleasedObjectInfo(string objectId)
+        {
+            ObjectId = objectId;
+        }
+
+        public string ObjectId { get; }
+        public string Status { get; set; }
+        public DateTime? ReleasedAt { get; set; }
+    }
+
+    // Should still be flagged - private constructor
+    public class {|AZC0035:PrivateConstructorModel|}
+    {
+        private PrivateConstructorModel() { }
+        public string Name { get; set; }
+    }
+
+    // Should still be flagged - read-only properties without constructor params
+    public class {|AZC0035:ReadOnlyModel|}
+    {
+        public string Name { get; }
+        public int Value { get; }
+    }
+
+    public class TestClient
+    {
+        public virtual Response<BlobContainerClient> GetBlobContainer() => null;
+        public virtual Response<BlobServiceProperties> GetServiceProperties() => null;
+        public virtual Response<BlobImmutabilityPolicy> GetImmutabilityPolicy() => null;
+        public virtual Response<ReleasedObjectInfo> GetReleasedObjectInfo() => null;
+        public virtual Response<PrivateConstructorModel> GetPrivateConstructorModel() => null;
+        public virtual Response<ReadOnlyModel> GetReadOnlyModel() => null;
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
     }
 }

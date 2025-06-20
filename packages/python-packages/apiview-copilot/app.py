@@ -134,8 +134,6 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
     if job_request.language not in supported_languages:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
     job_id = str(uuid.uuid4())
-    # Store job as InProgress
-
     now = time.time()
     with job_store_lock:
         job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "created": now}
@@ -149,7 +147,9 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
                 outline=job_request.outline,
                 comments=job_request.comments,
             )
-            result = reviewer.run()
+            loop = asyncio.get_running_loop()
+            # Run the blocking review in a thread pool executor
+            result = await loop.run_in_executor(None, reviewer.run)
             reviewer.close()
             # Parse comments from result
             result_json = json.loads(result.model_dump_json())
@@ -169,19 +169,14 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(job_id: str):
     start_time = time.time()
-    logger.info(f"[get_api_review_job_status] Called for job_id={job_id}")
     job = job_store.get(job_id)
     if not job:
-        logger.info(f"[get_api_review_job_status] Job {job_id} not found (404)")
         raise HTTPException(status_code=404, detail="Job not found")
     # Remove internal 'created' field from response
     if job and "created" in job:
         job = dict(job)
         job.pop("created", None)
     elapsed = time.time() - start_time
-    logger.info(
-        f"[get_api_review_job_status] Returning status={job.get('status')} for job_id={job_id} in {elapsed:.4f}s"
-    )
     return job
 
 

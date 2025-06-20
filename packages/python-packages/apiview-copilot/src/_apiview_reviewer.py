@@ -7,7 +7,6 @@ import os
 import prompty
 import prompty.azure_beta
 import signal
-import threading
 from time import time
 from typing import Optional, List
 import yaml
@@ -221,20 +220,24 @@ class ApiViewReview:
         total_prompts = 1 + (len(sections_to_process) * 3)  # 1 for summary, 3 for each section
         prompt_status = [self.PENDING] * total_prompts
 
-        # Set up keyboard interrupt handler for more responsive cancellation
+        # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
         cancel_event = threading.Event()
-        original_handler = signal.getsignal(signal.SIGINT)
+        import threading
+
+        is_main_thread = threading.current_thread() == threading.main_thread()
+        if is_main_thread:
+            original_handler = signal.getsignal(signal.SIGINT)
+
+            def keyboard_interrupt_handler(signalnum, frame):
+                print("\n\nCancellation requested! Terminating process...")
+                cancel_event.set()
+                os._exit(1)
+
+            signal.signal(signal.SIGINT, keyboard_interrupt_handler)
 
         # Retrieve guidelines as context for the guideline review phase
         guideline_context = self._retrieve_guidelines_as_context()
         guideline_context_string = guideline_context.to_markdown() if guideline_context else ""
-
-        def keyboard_interrupt_handler(signal, frame):
-            print("\n\nCancellation requested! Terminating process...")
-            cancel_event.set()
-            os._exit(1)
-
-        signal.signal(signal.SIGINT, keyboard_interrupt_handler)
 
         # Submit all jobs to the executor
         all_futures = {}
@@ -360,8 +363,9 @@ class ApiViewReview:
             cancel_event.set()
             os._exit(1)
         finally:
-            # Restore original signal handler
-            signal.signal(signal.SIGINT, original_handler)
+            # Restore original signal handler if it was set
+            if is_main_thread:
+                signal.signal(signal.SIGINT, original_handler)
 
     def _deduplicate_comments(self):
         """

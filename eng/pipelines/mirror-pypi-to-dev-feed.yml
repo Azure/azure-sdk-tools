@@ -21,8 +21,8 @@ jobs:
     displayName: Mirror From PyPI
 
     pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml

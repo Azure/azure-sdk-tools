@@ -7,6 +7,7 @@ import os
 import prompty
 import prompty.azure_beta
 import signal
+import threading
 from time import time
 from typing import Optional, List
 import yaml
@@ -222,7 +223,6 @@ class ApiViewReview:
 
         # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
         cancel_event = threading.Event()
-        import threading
 
         is_main_thread = threading.current_thread() == threading.main_thread()
         if is_main_thread:

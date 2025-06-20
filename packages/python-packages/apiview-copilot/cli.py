@@ -262,6 +262,7 @@ def generate_review_from_app(
         # Handle error responses which are strings
         print(response)
 
+
 def review_job_start(
     language: str,
     target: str,
@@ -270,7 +271,7 @@ def review_job_start(
     existing_comments: Optional[str] = None,
 ):
     """Start an API review job."""
-    
+
     with open(target, "r", encoding="utf-8") as f:
         target_content = f.read()
     if base:
@@ -305,10 +306,10 @@ def review_job_start(
 
     resp = requests.post(api_endpoint, json=payload)
     if resp.status_code == 202:
-        job_id = resp.json().get("job_id")
-        print(f"Job started. Job ID: {job_id}")
+        pprint(resp.json(), indent=2)
     else:
         print(f"Error: {resp.status_code} {resp.text}")
+
 
 def review_job_get(job_id: str):
     """Get the status/result of an API review job."""
@@ -320,6 +321,7 @@ def review_job_get(job_id: str):
         pprint(resp.json(), indent=2)
     else:
         print(f"Error: {resp.status_code} {resp.text}")
+
 
 def search_knowledge_base(
     language: str,

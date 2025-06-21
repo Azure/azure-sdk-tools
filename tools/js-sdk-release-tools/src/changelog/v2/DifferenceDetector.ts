@@ -9,7 +9,8 @@ import {
   patchTypeAlias,
   patchEnum,
   isPropertyMethod,
-  extractCodeFromApiView,
+  findAllRenameAbleDeclarationsInNodeV2,
+  NodeContext,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
@@ -42,6 +43,7 @@ export interface DetectContext {
 export class DifferenceDetector {
   private tempFolder: string;
   private context: AstContext | undefined;
+  private result: DetectResult | undefined;
 
   constructor(
     private baselineApiViewOptions: ApiViewOptions,
@@ -62,22 +64,43 @@ export class DifferenceDetector {
     };
   }
 
-  public async detect() {
+  public async detect(): Promise<DetectResult> {
     await this.load();
     await this.preprocess();
+    await this.detectCore();
+    //this.postprocess();
+    return this.result!;
+  }
 
-    switch (this.currentApiViewOptions.sdkType) {
-      case SDKType.HighLevelClient:
-      case SDKType.ModularClient:
-      // TODO: RLC has it special logic to handle Routes
-      case SDKType.RestLevelClient:
-        return await this.detectCore();
-      default:
-        throw new Error(`Unsupported SDK type: ${this.currentApiViewOptions.sdkType} to detect differences.`);
+  private postprocess() {
+    if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
+    const getRenameAbleInlineDeclarationNameSet = (sourceFile: SourceFile) => {
+      const routes = sourceFile.getInterfaceOrThrow('Routes');
+      const declarations = findAllRenameAbleDeclarationsInNodeV2(routes);
+      const inlineDeclarationMap = new Map<string, NodeContext>();
+      declarations.interfaces.forEach((d) => inlineDeclarationMap.set(d.getName(), { node: d, used: false }));
+      declarations.typeAliases.forEach((t) => inlineDeclarationMap.set(t.getName(), { node: t, used: false }));
+      declarations.enums.forEach((e) => inlineDeclarationMap.set(e.getName(), { node: e, used: false }));
+      return inlineDeclarationMap;
+    };
+    const baselineInlineNameSet = getRenameAbleInlineDeclarationNameSet(this.context!.baseline);
+    const currentInlineNameSet = getRenameAbleInlineDeclarationNameSet(this.context!.current);
+    const handleResult = () => {
+      const ignorePairSet = new Set<DiffPair>();
+      this.result?.classes.forEach((diffPairs, className) => {
+        const baselineContext = baselineInlineNameSet.get(className);
+        const currentContext = currentInlineNameSet.get(className);
+        if (!baselineContext || !currentContext) return;
+        const baselineType = baselineContext.node.getType();
+        const currentType = currentContext.node.getType();
+        if (currentType.isAssignableTo(baselineType)) {
+
+        }
+      });
     }
   }
 
-  convertHighLevelClientToModularClientCode(code: string): string {
+  private convertHighLevelClientToModularClientCode(code: string): string {
     const project = new Project({
       compilerOptions: {
         jsx: JsxEmit.Preserve,
@@ -92,8 +115,11 @@ export class DifferenceDetector {
     });
     const sourceFile = project.createSourceFile('index.ts', code, { overwrite: true });
 
-    console.log("🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ code:", code)
-    console.log("🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- before:", sourceFile.getFullText())
+    console.log('🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ code:', code);
+    console.log(
+      '🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- before:',
+      sourceFile.getFullText()
+    );
     sourceFile
       .getInterfaces()
       .filter((i) => {
@@ -118,7 +144,10 @@ export class DifferenceDetector {
           });
         }
       });
-    console.log("🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- after:", sourceFile.getFullText())
+    console.log(
+      '🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- after:',
+      sourceFile.getFullText()
+    );
     return sourceFile.getFullText();
   }
 
@@ -127,13 +156,15 @@ export class DifferenceDetector {
     const currentSdkType = this.currentApiViewOptions.sdkType;
     if (baselineSdkType === currentSdkType) return;
     if (baselineSdkType !== SDKType.HighLevelClient || currentSdkType !== SDKType.ModularClient) {
-      logger.warn(
+      logger.error(
         `Failed to preprocess baseline SDK type '${baselineSdkType}' and current SDK type '${currentSdkType}' for difference detection. Only ${SDKType.HighLevelClient} to ${SDKType.ModularClient} is supported.`
       );
       return;
     }
 
-    const highLevelCodeInModularWay = this.convertHighLevelClientToModularClientCode(this.context?.baseline.getFullText()!);
+    const highLevelCodeInModularWay = this.convertHighLevelClientToModularClientCode(
+      this.context?.baseline.getFullText()!
+    );
     const generateApiView = (code: string) => {
       return `
 \`\`\` ts
@@ -165,7 +196,7 @@ export class DifferenceDetector {
     return uniquefy(namesFromBoth);
   }
 
-  private async detectCore(): Promise<DetectResult> {
+  private async detectCore(): Promise<void> {
     const getFunctionNames = (sourceFile: SourceFile) => {
       return sourceFile
         .getStatements()
@@ -231,7 +262,7 @@ export class DifferenceDetector {
       return map;
     }, new Map<string, DiffPair[]>());
 
-    return {
+    this.result = {
       interfaces: interfaceDiffPairs,
       classes: classDiffPairs,
       typeAliases: typeAliasDiffPairs,

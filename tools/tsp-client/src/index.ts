@@ -2,7 +2,6 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { checkDebugLogging, Logger, printBanner, usageText } from "./log.js";
 import {
-  compareCommand,
   convertCommand,
   generateCommand,
   generateConfigFilesCommand,
@@ -290,18 +289,6 @@ const parser = yargs(hideBin(process.argv))
     async (argv: any) => {
       commandPreamble(argv);
       await sortSwaggerCommand(argv);
-    },
-  )
-  .command(
-    "compare",
-    "Compare two Swaggers for functional equivalency. This is typically used to compare a source Swagger with a TypeSpec project or TypeSpec generated Swagger to ensure that the TypeSpec project is functionally equivalent to the source Swagger.",
-    (yargs: any) => {
-      return yargs.help(false);
-    },
-    async (argv: any) => {
-      argv["output-dir"] = resolveOutputDir(argv);
-      const rawArgs = process.argv.slice(3);
-      await compareCommand(argv, rawArgs);
     },
   )
   .command(

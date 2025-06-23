@@ -349,18 +349,6 @@ export async function generateCommand(argv: any) {
   }
 }
 
-export async function compareCommand(argv: any, args: string[]) {
-  let outputDir = argv["output-dir"];
-  const openApiDiffPath = await getPathToDependency("@azure-tools/rest-api-diff");
-  const command = [openApiDiffPath, ...args];
-  try {
-    await nodeCommand(outputDir, command);
-  } catch (err) {
-    Logger.error(`Error occurred while attempting to compare: ${err}`);
-    process.exit(1);
-  }
-}
-
 export async function updateCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repo = argv["repo"];

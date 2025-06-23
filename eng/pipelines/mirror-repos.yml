@@ -4,8 +4,8 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-24.04
 
 jobs:
   - job: SyncRepos
@@ -142,15 +142,3 @@ jobs:
           microsoft/mcp:
             TargetRepos:
               microsoft/mcp-pr:
-
-    - template: ./templates/steps/sync-repo-branch.yml
-      parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
-        Repos:
-
-          Azure/azure-sdk-for-python:
-            Branch: release/v3
-            TargetRepos:
-              Azure/azure-sdk-for-python-pr:
-              azure-sdk/azure-sdk-for-python:
-              azure-sdk/azure-sdk-for-python-pr:

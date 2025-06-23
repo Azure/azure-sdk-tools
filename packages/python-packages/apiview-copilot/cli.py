@@ -3,11 +3,11 @@ from collections import OrderedDict
 import json
 import os
 from pprint import pprint
+import requests
 import sys
 import pathlib
 
 from src._search_manager import SearchManager
-from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -19,6 +19,13 @@ helps[
 ] = """
     type: group
     short-summary: Commands for creating APIView reviews.
+"""
+
+helps[
+    "review job"
+] = """
+    type: group
+    short-summary: Commands for managing API review jobs.
 """
 
 helps[
@@ -49,6 +56,7 @@ def local_review(
     base: str = None,
     outline: str = None,
     existing_comments: str = None,
+    debug_log: bool = False,
 ):
     """
     Generates a review using the locally installed code.
@@ -89,9 +97,9 @@ def local_review(
         target=target_apiview,
         base=base_apiview,
         language=language,
-        mode=DEFAULT_CONTEXT_MODE,
         outline=outline_text,
         comments=comments_obj,
+        debug_log=debug_log,
     )
     review = reviewer.run()
     reviewer.close()
@@ -255,6 +263,66 @@ def generate_review_from_app(
         print(response)
 
 
+def review_job_start(
+    language: str,
+    target: str,
+    base: Optional[str] = None,
+    outline: Optional[str] = None,
+    existing_comments: Optional[str] = None,
+):
+    """Start an API review job."""
+
+    with open(target, "r", encoding="utf-8") as f:
+        target_content = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base_content = f.read()
+    else:
+        base_content = None
+
+    outline_text = None
+    if outline:
+        with open(outline, "r", encoding="utf-8") as f:
+            outline_text = f.read()
+
+    comments_obj = None
+    if existing_comments:
+        with open(existing_comments, "r", encoding="utf-8") as f:
+            comments_obj = json.load(f)
+
+    payload = {
+        "language": language,
+        "target": target_content,
+    }
+    if base_content is not None:
+        payload["base"] = base_content
+    if outline_text is not None:
+        payload["outline"] = outline_text
+    if comments_obj is not None:
+        payload["comments"] = comments_obj
+
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/start"
+
+    resp = requests.post(api_endpoint, json=payload)
+    if resp.status_code == 202:
+        pprint(resp.json(), indent=2)
+    else:
+        print(f"Error: {resp.status_code} {resp.text}")
+
+
+def review_job_get(job_id: str):
+    """Get the status/result of an API review job."""
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review"
+    url = f"{api_endpoint.rstrip('/')}/{job_id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        pprint(resp.json(), indent=2)
+    else:
+        print(f"Error: {resp.status_code} {resp.text}")
+
+
 def search_knowledge_base(
     language: str,
     text: Optional[str] = None,
@@ -308,6 +376,9 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
+        with CommandGroup(self, "review job", "__main__#{}") as g:
+            g.command("start", "review_job_start")
+            g.command("get", "review_job_get")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
@@ -320,7 +391,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 choices=SUPPORTED_LANGUAGES,
             )
 
-        mode_choices = [v for k, v in vars(ApiViewContextMode).items() if isinstance(v, str) and not k.startswith("_")]
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
@@ -346,8 +416,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 "existing_comments",
                 type=str,
                 help="Path to a JSON file containing existing comments.",
-                options_list=["--existing-comments"],
                 default=None,
+            )
+            ac.argument(
+                "debug_log",
+                options_list=["--debug-log"],
+                action="store_true",
+                help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
@@ -414,6 +489,48 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+        with ArgumentsContext(self, "review job start") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the APIView file",
+                options_list=("--language", "-l"),
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "target",
+                type=str,
+                help="The path to the APIView file to review.",
+                options_list=("--target", "-t"),
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file to compare against.",
+                options_list=("--base", "-b"),
+                default=None,
+            )
+            ac.argument(
+                "outline",
+                type=str,
+                help="Path to a plain text file containing the outline text.",
+                options_list=["--outline"],
+                default=None,
+            )
+            ac.argument(
+                "existing_comments",
+                type=str,
+                help="Path to a JSON file containing existing comments.",
+                default=None,
+            )
+
+        with ArgumentsContext(self, "review job get") as ac:
+            ac.argument(
+                "job_id",
+                type=str,
+                help="The job ID to poll.",
+                options_list=["--job-id"],
             )
 
         super(CliCommandsLoader, self).load_arguments(command)

@@ -3,6 +3,8 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
+using System.Text;
+using System.Text.Json;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
@@ -84,8 +86,9 @@ public class PipelineDetailsTool : MCPTool
     {
         try
         {
-            logger.LogDebug("Getting pipeline run for {project} {buildId}", project, buildId);
-            var build = await buildClient.GetBuildAsync(project ?? "public", buildId);
+            var _project = project ?? "public";
+            logger.LogDebug("Getting pipeline run for {project} {buildId}", _project, buildId);
+            var build = await buildClient.GetBuildAsync(_project, buildId);
             return build;
         }
         catch (Exception ex)

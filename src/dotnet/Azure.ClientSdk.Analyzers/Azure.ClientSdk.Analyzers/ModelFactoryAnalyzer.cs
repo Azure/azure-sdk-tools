@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -173,8 +174,92 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            // Only consider class types - all types in the assembly are candidates
-            return typeSymbol.TypeKind == TypeKind.Class;
+            // Only consider class and struct types, but not enums
+            if (typeSymbol.TypeKind != TypeKind.Class && typeSymbol.TypeKind != TypeKind.Struct)
+            {
+                return false;
+            }
+
+            // Filter out client types - they are not models
+            if (typeSymbol.Name.EndsWith(ClientSuffix))
+            {
+                return false;
+            }
+
+            // Filter out types that can be easily instantiated (have public constructors with all properties settable)  
+            if (CanBeConstructedUsingPublicApis(typeSymbol))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool CanBeConstructedUsingPublicApis(ITypeSymbol typeSymbol)
+        {
+            if (!(typeSymbol is INamedTypeSymbol namedType))
+            {
+                return false;
+            }
+
+            // Check if there is at least one public constructor
+            var publicConstructors = namedType.Constructors.Where(c => c.DeclaredAccessibility == Accessibility.Public).ToList();
+            if (!publicConstructors.Any())
+            {
+                return false;
+            }
+
+            // Get all instance properties
+            var properties = namedType.GetMembers()
+                .OfType<IPropertySymbol>()
+                .Where(p => !p.IsStatic)
+                .ToList();
+
+            // If there are no properties, it can be constructed via public constructor
+            if (!properties.Any())
+            {
+                return true;
+            }
+
+            // Get properties that don't have public setters - these must be set via constructor
+            var propertiesNeedingConstructor = properties
+                .Where(p => p.SetMethod?.DeclaredAccessibility != Accessibility.Public)
+                .ToList();
+
+            // If all properties have public setters, the type can be constructed
+            if (!propertiesNeedingConstructor.Any())
+            {
+                return true;
+            }
+
+            // Check if at least one public constructor can set all properties that need constructor parameters
+            foreach (var constructor in publicConstructors)
+            {
+                bool allPropertiesCanBeSet = true;
+
+                foreach (var property in propertiesNeedingConstructor)
+                {
+                    // Check if this constructor has a parameter that can set this property
+                    bool hasMatchingParameter = constructor.Parameters.Any(p => 
+                        string.Equals(p.Name, property.Name, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(p.Name, property.Name.Substring(0, 1).ToLower() + property.Name.Substring(1), StringComparison.Ordinal));
+
+                    if (!hasMatchingParameter)
+                    {
+                        allPropertiesCanBeSet = false;
+                        break;
+                    }
+                }
+
+                // If this constructor can set all required properties, the type can be constructed
+                if (allPropertiesCanBeSet)
+                {
+                    return true;
+                }
+            }
+
+            // No constructor can set all required properties
+            return false;
         }
 
         private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName, string namespaceName)

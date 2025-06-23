@@ -25,7 +25,7 @@ export class UserProfileService {
       });
   }
 
-  updateUserPrefernece(userPreferenceModel : UserPreferenceModel) : Observable<any> {   
+  updateUserPrefernece(userPreferenceModel : UserPreferenceModel) : Observable<any> {
     return this.http.put(this.baseUrl + "/preference", userPreferenceModel, { withCredentials: true });
   }
 

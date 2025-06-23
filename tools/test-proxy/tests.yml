@@ -12,17 +12,23 @@ stages:
       strategy:
         matrix:
           Windows:
-            Pool: 'azsdk-pool-mms-win-2022-general'
+            Pool: 'azsdk-pool'
             OS: 'Windows'
+            Image: 'windows-2022'
           Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
+            Pool: 'azsdk-pool'
             OS: 'Linux'
+            Image: "ubuntu-24.04"
           Mac:
             Pool: 'Azure Pipelines'
             OS: 'Mac'
+            Image: 'macos-latest'
 
       pool:
         name: $(Pool)
+        demands: ImageOverride -equals $(Image)
+
+        # we are ok with default image on each
 
       steps:
         - template: /eng/pipelines/templates/steps/install-dotnet.yml
@@ -49,17 +55,21 @@ stages:
       strategy:
         matrix:
           Windows:
-            Pool: 'azsdk-pool-mms-win-2022-general'
+            Pool: 'azsdk-pool'
             OS: 'Windows'
+            Image: 'windows-2022'
           Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
+            Pool: 'azsdk-pool'
             OS: 'Linux'
+            Image: "ubuntu-24.04"
           Mac:
             Pool: 'Azure Pipelines'
             OS: 'Mac'
+            Image: 'macos-latest'
 
       pool:
         name: $(Pool)
+        demands: ImageOverride -equals $(Image)
 
       steps:
         - template: /eng/pipelines/templates/steps/install-dotnet.yml
@@ -89,17 +99,21 @@ stages:
       strategy:
         matrix:
           Windows:
-            Pool: 'azsdk-pool-mms-win-2022-general'
+            Pool: 'azsdk-pool'
             OS: 'Windows'
+            Image: 'windows-2022'
           Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
+            Pool: 'azsdk-pool'
             OS: 'Linux'
+            Image: "ubuntu-24.04"
           Mac:
             Pool: 'Azure Pipelines'
             OS: 'Mac'
+            Image: 'macos-latest'
 
       pool:
         name: $(Pool)
+        demands: ImageOverride -equals $(Image)
 
       variables:
         REPO: "Azure/azure-sdk-for-js"
@@ -145,17 +159,21 @@ stages:
       strategy:
         matrix:
           Windows:
-            Pool: 'azsdk-pool-mms-win-2022-general'
+            Pool: 'azsdk-pool'
             OS: 'Windows'
+            Image: 'windows-2022'
           Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
+            Pool: 'azsdk-pool'
             OS: 'Linux'
+            Image: "ubuntu-24.04"
           Mac:
             Pool: 'Azure Pipelines'
             OS: 'Mac'
+            Image: 'macos-latest'
 
       pool:
         name: $(Pool)
+        demands: ImageOverride -equals $(Image)
 
       variables:
         REPO: "Azure/azure-sdk-for-net"
@@ -213,17 +231,21 @@ stages:
       strategy:
         matrix:
           Windows:
-            Pool: 'azsdk-pool-mms-win-2022-general'
+            Pool: 'azsdk-pool'
             OS: 'Windows'
+            Image: 'windows-2022'
           Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
+            Pool: 'azsdk-pool'
             OS: 'Linux'
+            Image: "ubuntu-24.04"
           Mac:
             Pool: 'Azure Pipelines'
             OS: 'Mac'
+            Image: 'macos-latest'
 
       pool:
         name: $(Pool)
+        demands: ImageOverride -equals $(Image)
 
       variables:
         REPO: "Azure/azure-sdk-for-python"
@@ -266,11 +288,13 @@ stages:
       strategy:
         matrix:
           Windows:
-            Pool: 'azsdk-pool-mms-win-2022-general'
+            Pool: 'azsdk-pool'
             OS: 'Windows'
+            Image: 'windows-2022'
 
       pool:
         name: $(Pool)
+        demands: ImageOverride -equals $(Image)
 
       variables:
         REPO: "Azure/azure-sdk-for-java"

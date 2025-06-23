@@ -236,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response = new GenericResponse()
                 {
                     Status = "Success",
-                    Details = [$"Azure DevOps pipeline {pipelineRun.Url} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
+                    Details = [$"Azure DevOps pipeline {DevOpsService.GetPipelineUrl(pipelineRun.Id)} has been initiated to generate the SDK. Build ID is {pipelineRun.Id}. Once the pipeline job completes, an SDK pull request for {language} will be created."]
                 };
                 return output.Format(response);
             }

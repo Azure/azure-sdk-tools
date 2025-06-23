@@ -39,6 +39,7 @@
 
 .btn-outline-primary.disabled, .btn-outline-primary:disabled {
     color: var(--link-color);
+    border-color: var(--link-color);
 }
 
 .btn-link {

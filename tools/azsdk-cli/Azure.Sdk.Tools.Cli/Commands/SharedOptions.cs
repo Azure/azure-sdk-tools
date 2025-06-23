@@ -4,6 +4,7 @@ using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
+using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -13,12 +14,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(AnalyzePipelinesTool),
             typeof(PipelineDetailsTool),
             typeof(CleanupTool),
+            typeof(LogAnalysisTool),
             typeof(HostServerTool),
             typeof(ReleasePlanTool),
             typeof(SpecCommonTools),
             typeof(SpecPullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
+            typeof(ReleaseReadinessTool),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),
@@ -72,7 +75,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var result = parser.Parse(args);
 
             var raw = result.GetValueForOption(ToolOption);
-            if (string.IsNullOrWhiteSpace(raw)) {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
                 return new string[] { };
             }
 

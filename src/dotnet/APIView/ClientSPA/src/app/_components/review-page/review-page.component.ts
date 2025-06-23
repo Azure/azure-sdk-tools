@@ -220,7 +220,14 @@ export class ReviewPageComponent implements OnInit {
             this.loadFailedMessage += (diffApiRevisionId) ? " active and/or diff API-Revision(s)" : " active API-Revision";
             this.loadFailedMessage += " may have been deleted.";
             return;
-          } else {
+          } else if (response.status == 202) {
+            const location = response.headers.get('location');
+            this.loadFailed = true;
+            this.loadFailedMessage = `API-Revision content is being generated at <a href="${location}">${location}</a></br>`
+            this.loadFailedMessage += "Please refresh this page after few minutes to see generated API review.";
+            return;
+          }
+          else {
             const apiTreeBuilderData : ApiTreeBuilderData = {
               diffStyle: this.diffStyle!,
               showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,

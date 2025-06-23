@@ -12,8 +12,8 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: ubuntu-22.04
+          name: azsdk-pool
+          demands: ImageOverride -equals ubuntu-24.04
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
           - pwsh: |
@@ -37,8 +37,8 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.StagingEnvironmentName }}
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
           strategy:
             runOnce:
               deploy:
@@ -56,7 +56,7 @@ stages:
                     appType: functionApp
                     appName: ${{ parameters.StagingEnvironmentName }}
                     package: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
-                  
+
 
       - stage: Production
         dependsOn: Staging
@@ -64,8 +64,8 @@ stages:
         - deployment: PublishFunction
           environment: ${{ parameters.ProductionEnvironmentName }}
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
           strategy:
             runOnce:
                 deploy:

@@ -54,6 +54,9 @@ namespace ApiView
         }
         public List<ReviewLine> ReviewLines { get; set; } = [];
 
+        // Thisis set to true when the content generation is in progress for this code file.
+        public bool ContentGenerationInProgress { get; set; } = false;
+
         public override string ToString()
         {
             return new CodeFileRenderer().Render(this).CodeLines.ToString();
@@ -166,6 +169,19 @@ namespace ApiView
                 line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language), TokensFilter.Outline);
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Generates a list of API lines with line text and their line id.
+        /// </summary>
+        public List<(string lineText, string lineId)> GetApiLines(bool skipDocs = true)
+        {
+            List<(string lineText, string lineId)> builder = new List<(string lineText, string lineId)>();
+            foreach (var line in ReviewLines)
+            {
+                line.AppendApiTextToBuilder(builder, 0, skipDocs, GetIndentationForLanguage(Language));
+            }
+            return builder;
         }
 
         public static int GetIndentationForLanguage(string language)

@@ -6,9 +6,7 @@ using Octokit;
 using Azure.Identity;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents.Indexes;
-using IssueLabelerService;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace SearchIndexCreator
 {
@@ -23,12 +21,11 @@ namespace SearchIndexCreator
             var config = configuration.GetSection("Values");
 
             Console.WriteLine("Select an option:");
-            Console.WriteLine("1. Process Issues");
-            Console.WriteLine("2. Process Docs");
-            Console.WriteLine("3. Process Issue Examples");
-            Console.WriteLine("4. Process Demo");
-            Console.WriteLine("5. Create or Refresh Labels");
-
+            Console.WriteLine("1. Process Search Content");
+            Console.WriteLine("2. Process Issue Examples");
+            Console.WriteLine("3. Process Demo");
+            Console.WriteLine("4. Create or Refresh Labels");
+            Console.WriteLine("5. Create or Update Knowledge Agent");
 
             var input = Console.ReadLine();
 
@@ -37,19 +34,19 @@ namespace SearchIndexCreator
                 switch (input)
                 {
                     case "1":
-                        await ProcessIssues(config);
+                        await ProcessSearchContent(config);
                         break;
                     case "2":
-                        await ProcessDocs(config);
-                        break;
-                    case "3":
                         await ProcessIssueExamples(config);
                         break;
-                    case "4":
+                    case "3":
                         await ProcessDemo(config);
                         break;
-                    case "5":
+                    case "4":
                         await ProcessLabels(config);
+                        break;
+                    case "5":
+                        await ProcessKnowledgeAgent(config);
                         break;
                     default:
                         Console.WriteLine("Invalid option selected.");
@@ -62,56 +59,32 @@ namespace SearchIndexCreator
             }
         }
 
-
-        // Retrieve issues from GitHub, upload to Azure Blob Storage, and create an Azure Search Index
-        private static async Task ProcessIssues(IConfigurationSection config)
+        private static async Task ProcessSearchContent(IConfigurationSection config)
         {
             // 1. Retrieve all issues from a repository
-            var tokenAuth = new Credentials(config["GithubKey"]);
-            var issueRetrieval = new IssueRetrieval(tokenAuth, config);
-            var issues = await issueRetrieval.RetrieveAllIssues("Azure", config["repo"]);
+            var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
+            var issueTriageContent = await issueTriageContentRetrieval.RetrieveContent("Azure");
+            Console.WriteLine($"Retrieved {issueTriageContent.Count} search contents from the repository.");
 
-            // 2. Upload the issues to Azure CosmosDB
+            // 2. Upload the search contents to Azure Blob Storage
+            await issueTriageContentRetrieval.UploadSearchContent(issueTriageContent);
+            Console.WriteLine("Search contents uploaded to Azure Blob Storage.");
+
+            //  3. Create an Azure Search Index
+            var index = new IssueTriageContentIndex(config);
             var defaultCredential = new DefaultAzureCredential();
-            await issueRetrieval.UploadIssues(issues, config["IssueStorageName"], $"{config["IssueIndexName"]}-blob");
-
-            // 3. Create an Azure Search Index
-            var index = new IssueIndex(config);
             var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
             var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-
             await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
         }
-
-
-        //Retrieve documents from GitHub, upload to Azure Blob Storage, and create an Azure Search Index
-        private static async Task ProcessDocs(IConfigurationSection config)
-        {
-            // 1. Retrieve all documents from a repository
-            var docsRetrieval = new DocumentRetrieval(config["GithubKey"]);
-            var readmeFiles = await docsRetrieval.GetDocuments("Azure", config["repo"]);
-
-            // 2. Upload the documents to Azure Blob Storage
-            await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], $"{config["DocumentIndexName"]}-blob");
-
-            // 3. Create an Azure Search Index
-            var defaultCredential = new DefaultAzureCredential();
-            var index = new DocumentIndex(config);
-            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
-            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-            var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-
-            await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
-        }
-
-
         private static async Task ProcessIssueExamples(IConfigurationSection config)
         {
             // Retrieve examples of issues for testing from a repository
-            var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
-            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", config["repo"], 7);
-            issueRetrieval.DownloadIssue(issues);
+            var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
+            var issues = await issueTriageContentRetrieval.RetrieveIssueExamples("Azure", config["repo"], 7);
+            string jsonString = JsonSerializer.Serialize(issues);
+            File.WriteAllText("issues.json", jsonString);
         }
 
 
@@ -119,17 +92,12 @@ namespace SearchIndexCreator
         private static async Task ProcessDemo(IConfigurationSection config)
         {
             int days = 14;
-
-            // Retrieve examples of issues for testing from a repository
-            var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
-            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", config["repo"], days);
-
+            var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
+            var issues = await issueTriageContentRetrieval.RetrieveIssueExamples("Azure", config["repo"], days);
             var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"))
             {
                 Credentials = new Credentials(config["GithubKeyPrivate"])
             };
-
-            // Upload recent issues into private repository
             foreach (var issue in issues)
             {
                 var newIssue = new NewIssue(issue.Title)
@@ -146,6 +114,14 @@ namespace SearchIndexCreator
             var tokenAuth = new Credentials(config["GithubKey"]);
             var labelRetrieval = new LabelRetrieval(tokenAuth, config);
             await labelRetrieval.CreateOrRefreshLabels("Azure");
+        }
+
+        private static async Task ProcessKnowledgeAgent(IConfigurationSection config)
+        {
+            var defaultCredential = new DefaultAzureCredential();
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
+            await issueKnowledgeAgent.CreateOrUpdateAsync();
         }
     }
 }

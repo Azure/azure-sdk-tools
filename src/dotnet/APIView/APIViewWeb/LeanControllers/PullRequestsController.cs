@@ -3,7 +3,6 @@ using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,15 +11,14 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static MongoDB.Libmongocrypt.CryptContext;
 
 namespace APIViewWeb.LeanControllers
 {
     public class PullRequestsController  : BaseApiController
     {
-        private readonly ILogger<PullRequestsController> _logger;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
         private readonly IEnumerable<LanguageService> _languageServices;
 
         string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };
@@ -80,11 +78,6 @@ namespace APIViewWeb.LeanControllers
             IEnumerable<PullRequestModel> pullRequestModels = await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: pullRequestNumber, repoName: repoName);
             var prsForCommit = pullRequestModels.Where(c => c.Commits.Contains(commitSHA));
 
-            var host = _configuration["APIVIew-Host-Url"];
-            var spaHost = _configuration["APIVIew-SPA-Host-Url"];
-            var reviewSpaUrlTemplate = "{0}/review/{1}?activeApiRevisionId={2}";
-            var reviewUrlTemplate = "{0}/Assemblies/Review/{1}?revisionId={2}";
-
             List<PullRequestReviewDto> pullRequestReviewDtos = new List<PullRequestReviewDto>();
             var statusCode = StatusCodes.Status204NoContent;
 
@@ -94,15 +87,7 @@ namespace APIViewWeb.LeanControllers
                 {
                     var prDto = new PullRequestReviewDto();
                     var language = LanguageServiceHelpers.MapLanguageAlias(pr.Language);
-                    var languageService = LanguageServiceHelpers.GetLanguageService(language: language, languageServices: _languageServices);
-                    if (languageService.UsesTreeStyleParser) // Languages using treestyle parser are also using the spa UI
-                    {
-                        prDto.Url = string.Format(reviewSpaUrlTemplate, spaHost, pr.ReviewId, pr.APIRevisionId);
-                    }
-                    else 
-                    {
-                        prDto.Url = string.Format(reviewUrlTemplate, host, pr.ReviewId, pr.APIRevisionId);
-                    }
+                    prDto.Url = ManagerHelpers.ResolveReviewUrl(reviewId: pr.ReviewId, apiRevisionId: pr.APIRevisionId, language: language, configuration: _configuration, languageServices: _languageServices);
                     prDto.PackageName = pr.PackageName;
                     prDto.Language = language;
                     pullRequestReviewDtos.Add(prDto);

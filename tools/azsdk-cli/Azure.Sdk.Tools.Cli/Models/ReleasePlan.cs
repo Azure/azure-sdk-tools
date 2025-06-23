@@ -28,6 +28,10 @@ namespace Azure.Sdk.Tools.Cli.Models
         public List<SDKInfo> SDKInfo { get; set; } = [];
         public string ReleasePlanSubmittedByEmail { get; set; } = string.Empty;
         public bool IsCreatedByAgent { get; set; }
+        public string ActiveSpecPullRequest { get; set; } = string.Empty;
+        public string SDKLanguages { get; set; } = string.Empty;
+        public bool IsSpecApproved { get; set; } = false;
+        public int ApiSpecWorkItemId { get; set; } = 0;
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
@@ -121,11 +125,6 @@ namespace Azure.Sdk.Tools.Cli.Models
             }
             return jsonDocument;
         }
-
-        public static string WrapSpecPullRequestAsHref(string pullRequest)
-        {
-            return $"<a href=\"{pullRequest}\">{pullRequest}</a>";
-        }
     }
 
     public class SDKInfo
@@ -133,5 +132,6 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string Language { get; set; } = string.Empty;
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl {  get; set; } = string.Empty;
+        public string PackageName { get; set; } = string.Empty;
     }
 }

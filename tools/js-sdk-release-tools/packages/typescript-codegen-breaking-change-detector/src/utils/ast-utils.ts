@@ -7,10 +7,11 @@ import {
   TypeReferenceNode,
   createWrappedNode,
   TypeNode,
-  Signature,
   ParameterDeclaration,
   SymbolFlags,
   Symbol,
+  CallSignatureDeclaration,
+  ConstructorDeclaration,
 } from 'ts-morph';
 import { ParserServices, ParserServicesWithTypeInformation } from '@typescript-eslint/typescript-estree';
 import { Scope, ScopeManager } from '@typescript-eslint/scope-manager';
@@ -203,7 +204,11 @@ export function getCallableEntityParametersFromSymbol(symbol: Symbol): Parameter
   return getCallableEntityParameters(node);
 }
 
-export function isSameSignature(left: Signature, right: Signature): boolean {
+// Note: return true when parameters list is the same in name and type 
+export function isSameConstructorLikeDeclaration<T extends CallSignatureDeclaration | ConstructorDeclaration>(
+  left: T,
+  right: T
+): boolean {
   if (left.getTypeParameters().length !== right.getTypeParameters().length) return false;
   if (left.getParameters().length !== right.getParameters().length) return false;
 
@@ -211,11 +216,8 @@ export function isSameSignature(left: Signature, right: Signature): boolean {
     const rightParameter = right.getParameters()[i];
     if (leftParameter.getName() !== rightParameter.getName()) return false;
 
-    const getParameterType = (parameter: Symbol) =>
-      (parameter.getValueDeclaration() as ParameterDeclaration)?.getTypeNode()?.getType();
-    const leftParaType = getParameterType(leftParameter);
-    const rightParaType = getParameterType(rightParameter);
-
+    const leftParaType = leftParameter.getType();
+    const rightParaType = rightParameter.getType();
     if (!leftParaType && !rightParaType) return true;
     if (!leftParaType || !rightParaType) return false;
     if (!leftParaType.isAssignableTo(rightParaType) || !rightParaType.isAssignableTo(leftParaType)) return false;

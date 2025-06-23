@@ -1,17 +1,16 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType } from './types.js';
+import { SDKType, RunMode } from './types.js';
 import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
-import { access } from 'node:fs/promises';
+import { access, readdir, rm, mkdir } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
-
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -340,4 +339,55 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
 // Get the spec repo where the project is defined to set into tsp-location.yaml
 export function generateRepoDataInTspLocation(repoUrl: string) {
     return repoUrl.replace("https://github.com/", "")
+}
+
+/**
+ * Removes entries from a directory, with optional filtering of entries to preserve
+ * @param directory - Directory to clean up
+ * @param entriesToPreserve - Optional array of entry names to preserve (not remove)
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanUpDirectory(
+    directory: string, 
+    entriesToPreserve: string[] = []
+): Promise<void> {      
+    // If nothing to preserve, remove the entire directory and create an empty one
+    if (entriesToPreserve.length === 0) {
+        logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
+        await rm(directory, { recursive: true, force: true });
+        await mkdir(directory, { recursive: true });
+        return;
+    }
+    
+    // If we need to preserve some entries, selectively remove others
+    logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
+    
+    // Get all subdirectories and files
+    const entries = await readdir(directory);
+    
+    // Filter entries to exclude those that should be preserved
+    const filteredEntries = entries.filter(entry => !entriesToPreserve.includes(entry));
+
+    // Process each entry
+    for (const entry of filteredEntries) {
+        const entryPath = posix.join(directory, entry);
+        await rm(entryPath, { recursive: true, force: true });
+    }
+}
+
+/**
+ * Cleans up a package directory based on the run mode
+ * @param packageDirectory - Package directory to clean up
+ * @param runMode - Current run mode determining what to preserve
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanUpPackageDirectory(
+    packageDirectory: string,
+    runMode: RunMode,
+): Promise<void> {
+    // Preserve test directory and assets.json file in non-SpecPullRequest mode
+    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest;
+    const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
+
+    await cleanUpDirectory(packageDirectory, entriesToPreserve);
 }

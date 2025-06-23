@@ -42,8 +42,8 @@ extends:
         jobs:
           - job: Build
             pool:
-              name: $(LINUXNEXTPOOL)
-              image: $(LINUXNEXTVMIMAGE)
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
               os: linux
             steps:
             - task: NodeTool@0

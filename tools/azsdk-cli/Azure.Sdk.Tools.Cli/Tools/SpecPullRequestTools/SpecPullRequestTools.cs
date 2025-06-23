@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var user = await gitHubService.GetGitUserDetails();
+                var user = await gitHubService.GetGitUserDetailsAsync();
                 return user != null
                     ? output.Format($"Connected to GitHub as {user.Login}")
                     : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
@@ -86,7 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     return output.Format("Failed to get repo root path. Please make sure to select the TypeSpec project path.");
                 }
-                var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
+                var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
                 var headBranchName = gitHelper.GetBranchName(repoRootPath);
                 var headBranchRef = $"{headRepoOwner}:{headBranchName}";
                 logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranchRef}");
@@ -130,13 +130,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     }
 
                     //Get repo details like target owner, head owner, repo name
-                    var headRepoOwner = await gitHelper.GetRepoOwnerName(repoRootPath, false);
+                    var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
 
                     var headBranch = $"{headRepoOwner}:{headBranchName}";
                     logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
                     logger.LogInformation($"Creating pull request in {REPO_OWNER}:{REPO_NAME}");
                     //Create pull request
-                    var createResponseList = await gitHubService.CreatePullRequest(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
+                    var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
                     results.AddRange(createResponseList);
                     return results;
                 }
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<List<string>> GetPullRequestComments(int pullRequestNumber, string repoName, string repoOwner)
+        private async Task<List<string>> GetPullRequestCommentsAsync(int pullRequestNumber, string repoName, string repoOwner)
         {
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
             if (comments == null || comments.Count == 0)
@@ -184,12 +184,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     Author = pullRequest.User.Name,
                     AssignedTo = pullRequest.Assignee?.Name ?? "",
                     Labels = pullRequest.Labels?.ToList() ?? [],
-                    Comments = await GetPullRequestComments(pullRequestNumber, repoName, repoOwner)
+                    Comments = await GetPullRequestCommentsAsync(pullRequestNumber, repoName, repoOwner)
                 };
 
                 // Get PR check statuses
                 logger.LogInformation("Getting pull request checks");
-                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecks(pullRequestNumber, repoName, repoOwner));
+                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecksAsync(pullRequestNumber, repoName, repoOwner));
 
                 // Parse APi reviews and add the information
                 logger.LogInformation("Searching for API review links in comments");

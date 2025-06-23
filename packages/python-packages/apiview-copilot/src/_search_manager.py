@@ -14,9 +14,8 @@ from src._models import Guideline, Example, Memory
 
 from collections import deque
 import copy
-import json
 import os
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Optional
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -55,10 +54,11 @@ class SearchItem:
         self.is_exception = result.get("is_exception") or False
         self.example_type = result.get("example_type")
         self.source = result.get("source")
-        self.score = result.get("@search.score")
-        self.reranker_score = result.get("@search.reranker_score")
+        self.score = result.get("@search.score", None)
+        self.reranker_score = result.get("@search.reranker_score", None)
         self.captions = []
-        for caption in result.get("@search.captions", []):
+        captions = result.get("@search.captions", None)
+        for caption in captions or []:
             self.captions.append(SearchCaption(caption))
 
 
@@ -94,8 +94,10 @@ class SearchResult:
         self.answers = []
         for result in result_list:
             self.results.append(SearchItem(result))
-        for answer in search_results.get_answers():
-            self.answers.append(SearchAnswer(answer))
+        answers = search_results.get_answers()
+        if answers:
+            for answer in answers:
+                self.answers.append(SearchAnswer(answer))
 
     def __len__(self):
         return len(self.results)
@@ -296,10 +298,9 @@ class SearchManager:
         self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
-        self.static_guidelines = self._retrieve_static_guidelines(
-            language, include_general_guidelines=include_general_guidelines
-        )
-        self._static_guidelines_map = {x["id"]: x for x in self.static_guidelines}
+        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
+        self.client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
+        self.language_guidelines = self._fetch_language_guidelines(language)
 
     def _ensure_env_vars(self, vars: List[str]):
         """
@@ -312,41 +313,29 @@ class SearchManager:
         if missing:
             raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
-    def _retrieve_static_guidelines(self, language, include_general_guidelines: bool = False) -> List[object]:
+    def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
-        Retrieves the guidelines for the given language, optional with general guidelines.
-        This method retrieves guidelines statically from the file system. It does not
-        query any Azure service.
+        Fetch all language-specific guidelines (kind='guidelines') from Azure Search,
+        excluding those tagged 'vague' or 'documentation'.
         """
-        general_guidelines = []
-        if include_general_guidelines:
-            general_guidelines_path = os.path.join(_GUIDELINES_FOLDER, "general")
-            for filename in os.listdir(general_guidelines_path):
-                with open(os.path.join(general_guidelines_path, filename), "r") as f:
-                    items = json.loads(f.read())
-                    general_guidelines.extend(items)
+        filter_expr = (
+            f"kind eq 'guidelines' and language eq '{language}'"
+            " and not tags/any(t: t eq 'vague')"
+            " and not tags/any(t: t eq 'documentation')"
+        )
+        return SearchResult(
+            self.client.search(search_text="*", filter=filter_expr, query_type=QueryType.SIMPLE, top=1000)
+        )
 
-        language_guidelines = []
-        language_guidelines_path = os.path.join(_GUIDELINES_FOLDER, language)
-        try:
-            for filename in os.listdir(language_guidelines_path):
-                with open(os.path.join(language_guidelines_path, filename), "r") as f:
-                    items = json.loads(f.read())
-                    language_guidelines.extend(items)
-        except FileNotFoundError:
-            print(f"WARNING: No guidelines found for language {language}.")
-            return []
-        return general_guidelines + language_guidelines
-
-    def search_all(self, query: str, *, top: int = 20) -> SearchResult:
+    def _search(self, query: str, *, filter: str, top: int = 20) -> SearchResult:
         """
-        Searches the unified index for the given query and returns the results as a SearchResult object.
+        Internal method to perform a search on the Azure Search index.
+        This method is used by the public search methods to perform the actual search.
         """
         self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
-        result = client.search(
+        result = self.client.search(
             search_text=query,
-            filter=self.filter_expression,
+            filter=filter,
             semantic_configuration_name="semantic-search-config",
             semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,
@@ -357,16 +346,55 @@ class SearchManager:
         )
         return SearchResult(result)
 
+    def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
+        filter = "kind eq 'guidelines'"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        return self._search(query, filter=filter, top=top)
+
+    def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
+        filter = "kind eq 'examples'"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        return self._search(query, filter=filter, top=top)
+
+    def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
+        filter = "kind eq 'memories'"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        return self._search(query, filter=filter, top=top)
+
+    def search_all(self, query: str, *, top: int = 20) -> SearchResult:
+        """
+        Searches the unified index for the given query and returns the results as a SearchResult object.
+        """
+        return self._search(query, filter=self.filter_expression, top=top)
+
     def guidelines_for_ids(self, ids: List[str]) -> List[object]:
         """
-        Retrieves the guidelines for the given IDs.
-        This method retrieves guidelines statically from the file system. It does not
-        query any Azure service.
+        Retrieves the guidelines for the given IDs from CosmosDB.
         """
-        guidelines = []
-        for id in set(ids):
-            guidelines.append(self._static_guidelines_map.get(id))
-        return guidelines
+        ids = list(ids)  # Ensure ids is subscriptable
+        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
+        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
+        database = client.get_database_client(COSMOS_DB_NAME)
+        guidelines_container = database.get_container_client("guidelines")
+        batch_size = 50
+        results = []
+        for i in range(0, len(ids), batch_size):
+            batch = ids[i : i + batch_size]
+            placeholders = ",".join([f"@id{j}" for j in range(len(batch))])
+            query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
+            parameters = [{"name": f"@id{j}", "value": value} for j, value in enumerate(batch)]
+            items = list(
+                guidelines_container.query_items(
+                    query=query,
+                    parameters=parameters,
+                    enable_cross_partition_query=True,
+                )
+            )
+            results.extend([Guideline.model_validate(r) for r in items])
+        return results
 
     def build_context(self, items: List[SearchItem]) -> Context:
         """

@@ -32,7 +32,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20250307.1
+      ref: refs/tags/azure-sdk-build-tools_20250603.2
 
 stages:
   - stage: 'Build'
@@ -41,7 +41,7 @@ stages:
         timeoutInMinutes: 300
         pool:
           name: $(WINDOWSPOOL)
-          image: $(WINDOWSVMIMAGE)
+          demands: ImageOverride -equals $(WINDOWSVMIMAGE)
           os: windows
 
         steps:
@@ -55,7 +55,7 @@ stages:
               cd ./vcpkg
               git fetch --tags
               git checkout $(VcpkgRelease)
-            displayName: Clone vcpkg 
+            displayName: Clone vcpkg
             workingDirectory: '$(Build.SourcesDirectory)'
           - pwsh: |
                 ./vcpkg/bootstrap-vcpkg
@@ -118,11 +118,11 @@ stages:
           # Use GitHub environment as it's used for other C++ releases
           environment: github
           pool:
-            name: azsdk-pool-mms-win-2022-general
-            vmImage: windows-2022
-          
-          strategy: 
-            runOnce: 
+            name: azsdk-pool
+            demands: ImageOverride -equals windows-2022
+
+          strategy:
+            runOnce:
               deploy:
                 steps:
                   - download: current
@@ -135,7 +135,7 @@ stages:
                     inputs:
                       azureSubscription: 'Azure SDK Artifacts'
                       ScriptType: 'InlineScript'
-                      azurePowerShellVersion: LatestVersion 
+                      azurePowerShellVersion: LatestVersion
                       pwsh: true
                       Inline: |
                         azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(OfficialBuildId)" --recursive

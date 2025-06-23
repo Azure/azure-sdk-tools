@@ -37,7 +37,7 @@ namespace APIViewWeb.Models
         public bool ShowSystemComments { get; set; }
         public bool DisableCodeLinesLazyLoading { get; set; }
         public bool UseBetaIndexPage { get; set; }
-        public string Theme { get; set; }
+        public string Theme { get; set; } = "light-theme";
         public ScrollBarSizes ScrollBarSize { get; set; } = ScrollBarSizes.Small;
     }
 }

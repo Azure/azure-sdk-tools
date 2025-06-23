@@ -349,6 +349,23 @@ def search_knowledge_base(
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
 
 
+def review_summarize(language: str, target: str, base: str = None):
+    """
+    Summarize an API or a diff of two APIs using the deployed API review service.
+    """
+    payload = {"language": language, "target": target}
+    if base:
+        payload["base"] = base
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/summarize"
+    response = requests.post(api_endpoint, json=payload)
+    if response.status_code == 200:
+        summary = response.json().get("summary")
+        print(summary)
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -368,6 +385,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("local", "local_review")
             g.command("remote", "generate_review_from_app")
+            g.command("summarize", "review_summarize")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
@@ -530,6 +548,23 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The job ID to poll.",
                 options_list=["--job-id"],
+            )
+        with ArgumentsContext(self, "review summarize") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the APIView file",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "target", type=str, help="The path to the APIView file to summarize.", options_list=["--target", "-t"]
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file for diff summarization.",
+                options_list=["--base", "-b"],
             )
 
         super(CliCommandsLoader, self).load_arguments(command)

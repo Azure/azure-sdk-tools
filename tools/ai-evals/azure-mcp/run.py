@@ -30,7 +30,6 @@ API_VERSION = "2025-03-01-preview"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-    "api_key": os.environ["AZURE_OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
     "api_version": API_VERSION,
 }

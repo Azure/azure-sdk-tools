@@ -53,7 +53,6 @@ extends:
                     exit $?
                 env:
                   AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)
-                  AZURE_OPENAI_API_KEY: $(python-openai-key)
                   AZURE_SUBSCRIPTION_ID: faa080af-c1d8-40ad-9cce-e1a450ca5b57
                   AZURE_TENANT_ID: 2f4a9838-26b7-47ee-be60-ccc1fdec5953
                   AZURE_FOUNDRY_RESOURCE_GROUP: openai-shared

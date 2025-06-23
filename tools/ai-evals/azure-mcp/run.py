@@ -28,12 +28,6 @@ MODEL = "gpt-4o"
 MODEL_JUDGE = "o3-mini"
 API_VERSION = "2025-03-01-preview"
 
-model_config: dict[str, str] = {
-    "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-    "azure_deployment": MODEL_JUDGE,
-    "api_version": API_VERSION,
-}
-
 
 def in_ci() -> bool:
     return os.getenv("TF_BUILD") is not None
@@ -66,23 +60,17 @@ def patched_load(cls, source, **kwargs):
 AsyncPrompty.load = classmethod(patched_load)
 
 
-token_provider = get_bearer_token_provider(
-    CREDENTIAL, "https://cognitiveservices.azure.com/.default"
-)
 client = AzureOpenAI(
     azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
     api_version=API_VERSION,
-    azure_ad_token_provider=token_provider,
+    azure_ad_token_provider=get_bearer_token_provider(
+        CREDENTIAL, "https://cognitiveservices.azure.com/.default"
+    ),
 )
 
 server_params = StdioServerParameters(
     command="npx", args=["-y", "@azure/mcp@latest", "server", "start"], env=None
 )
-
-followup_answers = pathlib.Path(__file__).parent / "followup.json"
-with open(str(followup_answers), "r") as f:
-    options = json.load(f)
-
 
 
 def reshape_tools(
@@ -166,6 +154,10 @@ async def make_request(
 def evaluate_azure_mcp(query: str, expected_tool_calls: list):
     messages = [{"role": "user", "content": query}]
     available_tools = asyncio.run(get_tools())
+
+    followup_answers = pathlib.Path(__file__).parent / "followup.json"
+    with open(str(followup_answers), "r") as f:
+        options = json.load(f)
 
     attempts = 0
     while True:
@@ -257,10 +249,12 @@ if __name__ == "__main__":
         "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
         "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
     }
-    if in_ci():
-        kwargs = {"credential": CREDENTIAL}
-    else:
-        kwargs = {}
+
+    model_config: dict[str, str] = {
+        "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
+        "azure_deployment": MODEL_JUDGE,
+        "api_version": API_VERSION,
+    }
 
     tool_call_accuracy = ToolCallAccuracyEvaluator(
         model_config=model_config, is_reasoning_model=True
@@ -274,7 +268,7 @@ if __name__ == "__main__":
         },
         target=evaluate_azure_mcp,
         azure_ai_project=azure_ai_project,
-        **kwargs,
+        credential=CREDENTIAL
     )
     print(f"Evaluation result: {result['studio_url']}")
 

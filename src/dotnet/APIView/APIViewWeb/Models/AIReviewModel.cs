@@ -23,10 +23,20 @@ namespace APIViewWeb.Models
         public string Source { get; set; }
     }
 
-    public class AIReviewModel
+    public class AIReviewJobPolledResponseModel
     {
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
         [JsonPropertyName("comments")]
         public List<AIReviewComment> Comments { get; set; }
+        [JsonPropertyName("details")]
+        public string Details { get; set; }
+    }
+
+    public class AIReviewJobStartedResponseModel
+    {
+        [JsonPropertyName("job_id")]
+        public string JobId { get; set; }
     }
 
     public class CommentModelForCopilot

@@ -3,26 +3,28 @@
 
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.Data;
-using System.Net.Http;
-using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using APIViewWeb.Helpers;
-using APIViewWeb.Managers.Interfaces;
 using Microsoft.ApplicationInsights;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Managers
 {
@@ -39,13 +41,15 @@ namespace APIViewWeb.Managers
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
         private readonly ICodeFileManager _codeFileManager;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public ReviewManager (
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient, ICodeFileManager codeFileManager)
+            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory)
 
         {
             _authorizationService = authorizationService;
@@ -58,6 +62,8 @@ namespace APIViewWeb.Managers
             _languageServices = languageServices;
             _telemetryClient = telemetryClient;
             _codeFileManager = codeFileManager;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
@@ -354,11 +360,12 @@ namespace APIViewWeb.Managers
                 }
             }
 
-            var url = $"https://apiview-gpt.azurewebsites.net/{LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language)}";
-            var client = new HttpClient();
-            client.Timeout = TimeSpan.FromMinutes(30);
+            var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
+            var startUrl = $"{copilotEndpoint}/api-review/start";
+            var client = _httpClientFactory.CreateClient();
             var payload = new Dictionary<string, object>
             {
+                { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language) },
                 { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
                 { "outline", activeApiOutline },
                 { "comments", existingCommentInfo }
@@ -372,14 +379,37 @@ namespace APIViewWeb.Managers
                 payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
             }
 
-            var result = new AIReviewModel();
+            var result = new AIReviewJobPolledResponseModel();
             try {
-                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                var response = await client.PostAsync(startUrl, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
-                result = JsonSerializer.Deserialize<AIReviewModel>(responseString);
+                var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                activeApiRevision.CopilotReviewInProgress = true;
+                await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
+
+                var poolUrl = $"{copilotEndpoint}/api-review/{jobStartedResponse.JobId}";
+                var poller = new Poller();
+                result = await poller.PollAsync<AIReviewJobPolledResponseModel>(
+                    operation: async () => {
+                        var response = await client.GetAsync(poolUrl);
+                        response.EnsureSuccessStatusCode();
+                        var pollResponseString = await response.Content.ReadAsStringAsync();
+                        var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
+                        return pollResponse;
+                    },
+                    isComplete: response => (response.Status != "InProgress"),
+                    initialInterval : 120, // Two minutes
+                    maxInterval: 120
+                );
+                if (result.Status == "Error")
+                {
+                    throw new Exception(result.Details);
+                }
             }
             catch (Exception e ) {
+                activeApiRevision.CopilotReviewInProgress = false;
+                await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
                 throw new Exception($"Copilot Failed: {e.Message}");
             }
            
@@ -415,6 +445,7 @@ namespace APIViewWeb.Managers
                 await _commentsRepository.UpsertCommentAsync(commentModel);
                 activeApiRevision.HasAutoGeneratedComments = true;
             }
+            activeApiRevision.CopilotReviewInProgress = false;
             await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
             return result.Comments.Count;
         }

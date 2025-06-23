@@ -4,7 +4,7 @@ from azure.identity import DefaultAzureCredential, AzurePipelinesCredential
 
 
 def in_ci():
-    return os.getenv("TF_BUILD", False)
+    return os.getenv("TF_BUILD", None) and "tests" in os.getenv("SYSTEM_DEFINITIONNAME", "")
 
 
 def get_credential():

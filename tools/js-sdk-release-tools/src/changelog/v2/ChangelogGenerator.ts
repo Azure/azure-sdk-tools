@@ -1,7 +1,7 @@
 import template from 'string-template';
 import { DetectContext, DetectResult } from './DifferenceDetector.js';
 import { DiffLocation, DiffPair, DiffReasons } from 'typescript-codegen-breaking-change-detector';
-import { InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
+import { CallSignatureDeclaration, InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
 import { SDKType } from '../../common/types.js';
 
 export enum ChangelogItemCategory {
@@ -12,12 +12,12 @@ export enum ChangelogItemCategory {
   ClassAdded = 3,
   TypeAliasAdded = 4,
   ModelOptionalPropertyAdded = 5,
-  // TODO: interfaceParamTypeExtended?
-  // TODO: type alias type change?
   EnumAdded = 6,
   EnumMemberAdded = 7,
-  // NOTE: include function and overload function
   FunctionAdded = 8,
+  FunctionOverloadAdded = 9,
+  RoutesGroupAdded = 10,
+  RoutesGroupRemoved = 11,
 
   /** breaking changes */
   OperationGroupRemoved = 1000,
@@ -35,10 +35,11 @@ export enum ChangelogItemCategory {
   ModelPropertyRequiredToOptional = 1013,
   TypeAliasRemoved = 1014,
   TypeAliasTypeChanged = 1015,
-  // NOTE: include function and overload function
   FunctionRemoved = 1016,
-  EnumRemoved = 1017,
-  EnumMemberRemoved = 1018,
+  FunctionOverloadRemoved = 1017,
+  FunctionSignatureChanged = 1018,
+  EnumRemoved = 1019,
+  EnumMemberRemoved = 1020,
 }
 
 export interface ChangelogResult {
@@ -67,6 +68,15 @@ export class ChangelogGenerator {
   private operationRemovedTemplate = 'Removed operation {interfaceName}.{signatureName}';
   private operationSignatureChangedTemplate = 'Operation {interfaceName}.{signatureName} has a new signature';
 
+  /** routes group */
+  private routesGroupAddedTemplate = 'Added Routes interface';
+  private routesGroupRemovedTemplate = 'Removed Routes interface';
+
+  /** routes operation */
+  private routesOperationAddedTemplate = 'Added operation in Routes for path: {path}';
+  private routesOperationRemovedTemplate = 'Removed operation in Routes for path: {path}';
+  private routesOperationSignatureChangedTemplate = 'Operation in "Routes" has a new signature for path: {path}';
+
   /** model */
   private modelAddedTemplate = 'Added Interface {interfaceName}';
   // NOTE: not in v1
@@ -91,14 +101,17 @@ export class ChangelogGenerator {
 
   // TODO: add detection for extended type
   /** type alias */
-  private typeAliasAddedTemplate = 'Added type alias {typeName}';
+  private typeAliasAddedTemplate = 'Added Type Alias {typeName}';
   // NOTE: not in v1
-  private typeAliasRemovedTemplate = 'Removed type alias {typeName}';
-  private typeAliasTypeChangedTemplate = 'Type of type alias {typeName} has been changed';
+  private typeAliasRemovedTemplate = 'Removed Type Alias {typeName}';
+  private typeAliasTypeChangedTemplate = 'Type alias "{typeName}" has been changed';
 
   /** function */
   private functionAddedTemplate = 'Added function {functionName}';
   private functionRemovedTemplate = 'Removed function {functionName}';
+  private functionAddedOverloadTemplate = 'Added function overload "{functionSignature}"';
+  private functionRemovedOverloadTemplate = 'Removed function overload "{functionSignature}"';
+  private functionSignatureChangedTemplate = 'Function {functionName} has a new signature';
 
   // TODO: detect enum member's initializer change
   /** enum */
@@ -209,13 +222,28 @@ export class ChangelogGenerator {
       }
       // overload function added
       if (p.location === DiffLocation.Signature_Overload && this.hasReasons(p.reasons, DiffReasons.Added)) {
-        const message = template(this.functionAddedTemplate, { functionName });
-        this.addChangelogItem(ChangelogItemCategory.FunctionAdded, message);
+        const message = template(this.functionAddedOverloadTemplate, { functionSignature: p.source!.node.getText() });
+        this.addChangelogItem(ChangelogItemCategory.FunctionOverloadAdded, message);
       }
       // overload function removed
       if (p.location === DiffLocation.Signature_Overload && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-        const message = template(this.functionRemovedTemplate, { functionName });
-        this.addChangelogItem(ChangelogItemCategory.FunctionRemoved, message);
+        const message = template(this.functionRemovedOverloadTemplate, { functionSignature: p.target!.node.getText() });
+        this.addChangelogItem(ChangelogItemCategory.FunctionOverloadRemoved, message);
+      }
+      // function return type changed
+      if (p.location === DiffLocation.Signature_ReturnType && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
+        const message = template(this.functionSignatureChangedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionSignatureChanged, message);
+      }
+      // function parameter list changed
+      if (p.location === DiffLocation.Signature_ParameterList && this.hasReasons(p.reasons, DiffReasons.CountChanged)) {
+        const message = template(this.functionSignatureChangedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionSignatureChanged, message);
+      }
+      //  function parameter type changed
+      if (p.location === DiffLocation.Parameter && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
+        const message = template(this.functionSignatureChangedTemplate, { functionName });
+        this.addChangelogItem(ChangelogItemCategory.FunctionSignatureChanged, message);
       }
     });
   }
@@ -319,15 +347,273 @@ export class ChangelogGenerator {
     });
   }
 
+  private generateForOperationGroupInterface(diffPair: DiffPair, interfaceName: string) {
+    const getInterfaceNameInBaseline = (): string => {
+      if (
+        this.detectContext.sdkTypes.source === SDKType.ModularClient &&
+        this.detectContext.sdkTypes.target === SDKType.HighLevelClient
+      )
+        return interfaceName.substring(0, interfaceName.length - 'Operations'.length);
+      return interfaceName;
+    };
+    const baselineInterfaceName = getInterfaceNameInBaseline();
+    /** operation group changes */
+    // operation group added
+    if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const message = template(this.operationGroupAddedTemplate, { interfaceName });
+      this.addChangelogItem(ChangelogItemCategory.OperationGroupAdded, message);
+    }
+    // operation group removed
+    if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Removed)) {
+      const message = template(this.operationGroupRemovedTemplate, { interfaceName: baselineInterfaceName });
+      this.addChangelogItem(ChangelogItemCategory.OperationGroupRemoved, message);
+    }
+
+    /** operation changes */
+    // operation added
+    if (diffPair.location === DiffLocation.Signature && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const message = template(this.operationAddedTemplate, { interfaceName, signatureName: diffPair.source!.name });
+      this.addChangelogItem(ChangelogItemCategory.OperationAdded, message);
+    }
+    // operation removed
+    if (diffPair.location === DiffLocation.Signature && this.hasReasons(diffPair.reasons, DiffReasons.Removed)) {
+      const message = template(this.operationRemovedTemplate, {
+        interfaceName: baselineInterfaceName,
+        signatureName: diffPair.target!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.OperationRemoved, message);
+    }
+    // operation signature's parameter type changed
+    if (diffPair.location === DiffLocation.Parameter && this.hasReasons(diffPair.reasons, DiffReasons.TypeChanged)) {
+      const signatureName = () => {
+        const parent = diffPair.source!.node.asKindOrThrow(SyntaxKind.Parameter).getParentOrThrow();
+        switch (parent.getKind()) {
+          case SyntaxKind.MethodSignature:
+            return parent.asKindOrThrow(SyntaxKind.MethodSignature).getName();
+          case SyntaxKind.FunctionType:
+            return parent
+              .asKindOrThrow(SyntaxKind.FunctionType)
+              .getParentOrThrow()
+              .asKindOrThrow(SyntaxKind.PropertySignature)
+              .getName();
+        }
+      };
+      const message = template(this.operationSignatureChangedTemplate, {
+        interfaceName: baselineInterfaceName,
+        signatureName: signatureName(),
+      });
+      console.log('🚀 ~ operation sig change:', message);
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation signature's parameter list changed
+    if (
+      diffPair.location === DiffLocation.Signature_ParameterList &&
+      this.hasReasons(diffPair.reasons, DiffReasons.CountChanged)
+    ) {
+      const message = template(this.operationSignatureChangedTemplate, {
+        interfaceName: baselineInterfaceName,
+        signatureName: diffPair.target!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation signature's return type changed
+    // NOTE: not detected in v1
+    if (
+      diffPair.location === DiffLocation.Signature_ReturnType &&
+      this.hasReasons(diffPair.reasons, DiffReasons.TypeChanged)
+    ) {
+      const message = template(this.operationSignatureChangedTemplate, {
+        interfaceName: baselineInterfaceName,
+        signatureName: diffPair.target!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation parameter
+    if (
+      diffPair.location === DiffLocation.Signature &&
+      this.hasReasons(diffPair.reasons, DiffReasons.RequiredToOptional)
+    ) {
+      const message = template(this.operationSignatureChangedTemplate, {
+        interfaceName: baselineInterfaceName,
+        // TODO: get signature name
+        signatureName: 'TODO',
+      });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation signature's parameter required/optional changed
+    // NOTE: not detected in v2
+    if (
+      diffPair.location === DiffLocation.Signature &&
+      this.hasReasons(diffPair.reasons, DiffReasons.OptionalToRequired)
+    ) {
+      const message = template(this.operationSignatureChangedTemplate, {
+        interfaceName: baselineInterfaceName,
+        // TODO: get signature name
+        signatureName: 'TODO',
+      });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+  }
+
+  private generateForRoutesInterface(diffPair: DiffPair, interfaceName: string) {
+    const getInterfaceNameInBaseline = (): string => {
+      if (
+        this.detectContext.sdkTypes.source === SDKType.ModularClient &&
+        this.detectContext.sdkTypes.target === SDKType.HighLevelClient
+      )
+        return interfaceName.substring(0, interfaceName.length - 'Operations'.length);
+      return interfaceName;
+    };
+    const baselineInterfaceName = getInterfaceNameInBaseline();
+    /** routes interface changes */
+    // routes interface added
+    if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const message = template(this.routesGroupAddedTemplate);
+      this.addChangelogItem(ChangelogItemCategory.RoutesGroupAdded, message);
+    }
+    // routes interface removed
+    if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Removed)) {
+      const message = template(this.routesGroupRemovedTemplate);
+      this.addChangelogItem(ChangelogItemCategory.RoutesGroupRemoved, message);
+    }
+
+    /** routes operation changes */
+    const getPath = (node?: Node) => {
+      const path = node?.asKind(SyntaxKind.CallSignature)?.getParameter('path')?.getTypeNode()?.getText();
+      if (!path) throw new Error('Failed to get path for Routes interface');
+      return path;
+    };
+
+    // operation added
+    if (diffPair.location === DiffLocation.Signature && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const path = getPath(diffPair.source?.node || diffPair.target?.node);
+      const message = template(this.routesOperationAddedTemplate, { path });
+      this.addChangelogItem(ChangelogItemCategory.OperationAdded, message);
+    }
+    // operation removed
+    if (diffPair.location === DiffLocation.Signature && this.hasReasons(diffPair.reasons, DiffReasons.Removed)) {
+      const path = getPath(diffPair.source?.node || diffPair.target?.node);
+      const message = template(this.routesOperationRemovedTemplate, { path });
+      this.addChangelogItem(ChangelogItemCategory.OperationRemoved, message);
+    }
+    // operation signature's parameter type changed
+    if (diffPair.location === DiffLocation.Parameter && this.hasReasons(diffPair.reasons, DiffReasons.TypeChanged)) {
+      const path = getPath(diffPair.source?.node.getParent() || diffPair.target?.node.getParent());
+      const message = template(this.routesOperationSignatureChangedTemplate, { path });
+      console.log('🚀 ~ operation sig change:', message);
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation signature's parameter list changed
+    if (
+      diffPair.location === DiffLocation.Signature_ParameterList &&
+      this.hasReasons(diffPair.reasons, DiffReasons.CountChanged)
+    ) {
+      const path = getPath(diffPair.source?.node || diffPair.target?.node);
+      const message = template(this.routesOperationSignatureChangedTemplate, { path });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation signature's return type changed
+    // NOTE: not detected in v1
+    if (
+      diffPair.location === DiffLocation.Signature_ReturnType &&
+      this.hasReasons(diffPair.reasons, DiffReasons.TypeChanged)
+    ) {
+      const path = getPath(diffPair.source?.node || diffPair.target?.node);
+      const message = template(this.routesOperationSignatureChangedTemplate, { path });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation parameter
+    if (
+      diffPair.location === DiffLocation.Signature &&
+      this.hasReasons(diffPair.reasons, DiffReasons.RequiredToOptional)
+    ) {
+      const path = getPath(diffPair.source?.node || diffPair.target?.node);
+      const message = template(this.routesOperationSignatureChangedTemplate, { path });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+    // operation signature's parameter required/optional changed
+    if (
+      diffPair.location === DiffLocation.Signature &&
+      this.hasReasons(diffPair.reasons, DiffReasons.OptionalToRequired)
+    ) {
+      const path = getPath(diffPair.source?.node || diffPair.target?.node);
+      const message = template(this.routesOperationSignatureChangedTemplate, { path });
+      this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
+    }
+  }
+
+  private generateForModelInterface(diffPair: DiffPair, interfaceName: string): void {
+    /** model changes */
+    // model added
+    if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const message = template(this.modelAddedTemplate, { interfaceName });
+      this.addChangelogItem(ChangelogItemCategory.ModelAdded, message);
+    }
+    // NOTE: not detected in v1
+    // model removed
+    if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Removed)) {
+      const message = template(this.modelRemovedTemplate, { interfaceName });
+      this.addChangelogItem(ChangelogItemCategory.ModelRemoved, message);
+    }
+    // model's optional property added
+    if (diffPair.location === DiffLocation.Property && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const message = template(this.modelOptionalPropertyAddedTemplate, {
+        interfaceName,
+        propertyName: diffPair.source!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.ModelOptionalPropertyAdded, message);
+    }
+    // model's required property added
+    if (diffPair.location === DiffLocation.Property && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
+      const message = template(this.modelRequiredPropertyAddedTemplate, {
+        interfaceName,
+        propertyName: diffPair.source!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.ModelRequiredPropertyAdded, message);
+    }
+    // model's property type changed
+    // NOTE: not detected in v1 except for union type
+    // NOTE: discuss if extend union type to be breaking or not
+    if (diffPair.location === DiffLocation.Property && this.hasReasons(diffPair.reasons, DiffReasons.TypeChanged)) {
+      const getTypeText = (node: Node) =>
+        node.asKindOrThrow(SyntaxKind.PropertySignature).getTypeNodeOrThrow().getText();
+      const oldPropertyTypeText = getTypeText(diffPair.target!.node);
+      const newPropertyTypeText = getTypeText(diffPair.source!.node);
+      // TODO: improve changelog to tell the most outer impacted declarations
+      if (oldPropertyTypeText !== newPropertyTypeText) {
+        const message = template(this.modelPropertyTypeChangedTemplate, {
+          interfaceName,
+          newPropertyName: diffPair.source!.name,
+          oldPropertyType: oldPropertyTypeText,
+          newPropertyType: newPropertyTypeText,
+        });
+        this.addChangelogItem(ChangelogItemCategory.ModelPropertyTypeChanged, message);
+      }
+    }
+    // model's property removed
+    if (diffPair.location === DiffLocation.Property && this.hasReasons(diffPair.reasons, DiffReasons.Removed)) {
+      const message = template(this.modelPropertyRemovedTemplate, {
+        interfaceName,
+        propertyName: diffPair.target!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.ModelPropertyRemoved, message);
+    }
+    // model's property optional to required
+    if (
+      diffPair.location === DiffLocation.Property &&
+      this.hasReasons(diffPair.reasons, DiffReasons.RequiredToOptional)
+    ) {
+      const message = template(this.modelPropertyOptionalToRequiredTemplate, {
+        interfaceName,
+        propertyName: diffPair.source!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.ModelPropertyOptionalToRequired, message);
+    }
+  }
+
   private generateForInterfaces(diffPairs: DiffPair[], interfaceName: string): void {
     // TODO: remove when there's no high level client any more
-    const getInterfaceNameInBaseline = (): string => {
-      if (this.detectContext.sdkTypes.source === SDKType.ModularClient &&
-        this.detectContext.sdkTypes.target === SDKType.HighLevelClient
-      ) return interfaceName.substring(0, interfaceName.length - 'Operations'.length);
-      return interfaceName;
-    }
-    const baselineInterfaceName = getInterfaceNameInBaseline();
+
     const isOperationGroupInterface = () => {
       const source = this.detectContext.context.current.getInterface(interfaceName);
       const target = this.detectContext.context.baseline.getInterface(interfaceName);
@@ -336,155 +622,14 @@ export class ChangelogGenerator {
         (target && this.isOperationGroupInterfaceCore(target, this.detectContext.sdkTypes.target));
       return isOperationGroup;
     };
+    const isRoutesInterface =
+      this.detectContext.sdkTypes.source === SDKType.RestLevelClient && interfaceName === 'Routes';
+
     /** operation group and operationchanges */
     diffPairs.forEach((p) => {
-      if (isOperationGroupInterface()) {
-        /** operation group changes */
-        // operation group added
-        if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = template(this.operationGroupAddedTemplate, { interfaceName });
-          this.addChangelogItem(ChangelogItemCategory.OperationGroupAdded, message);
-        }
-        // operation group removed
-        if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = template(this.operationGroupRemovedTemplate, { interfaceName: baselineInterfaceName });
-          this.addChangelogItem(ChangelogItemCategory.OperationGroupRemoved, message);
-        }
-
-        /** operation changes */
-        // operation added
-        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = template(this.operationAddedTemplate, { interfaceName, signatureName: p.source!.name });
-          this.addChangelogItem(ChangelogItemCategory.OperationAdded, message);
-        }
-        // operation removed
-        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = template(this.operationRemovedTemplate, { interfaceName: baselineInterfaceName, signatureName: p.target!.name });
-          this.addChangelogItem(ChangelogItemCategory.OperationRemoved, message);
-        }
-        // operation signature's parameter type changed
-        if (p.location === DiffLocation.Parameter && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
-          const signatureName = () => {
-            const parent = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getParentOrThrow();
-            switch (parent.getKind()) {
-              case SyntaxKind.MethodSignature:
-                return parent.asKindOrThrow(SyntaxKind.MethodSignature).getName();
-              case SyntaxKind.FunctionType:
-                return parent
-                  .asKindOrThrow(SyntaxKind.FunctionType)
-                  .getParentOrThrow()
-                  .asKindOrThrow(SyntaxKind.PropertySignature)
-                  .getName();
-            }
-          };
-          const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName: baselineInterfaceName,
-            signatureName: signatureName(),
-          });
-          console.log('🚀 ~ operation sig change:', message);
-          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
-        }
-        // operation signature's parameter list changed
-        if (
-          p.location === DiffLocation.Signature_ParameterList &&
-          this.hasReasons(p.reasons, DiffReasons.CountChanged)
-        ) {
-          const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName: baselineInterfaceName,
-            signatureName: p.target!.name,
-          });
-          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
-        }
-        // operation signature's return type changed
-        // NOTE: not detected in v1
-        if (p.location === DiffLocation.Signature_ReturnType && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
-          const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName: baselineInterfaceName,
-            signatureName: p.target!.name,
-          });
-          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
-        }
-        // operation parameter
-        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
-          const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName: baselineInterfaceName,
-            // TODO: get signature name
-            signatureName: 'TODO',
-          });
-          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
-        }
-        // operation signature's parameter required/optional changed
-        // NOTE: not detected in v2
-        if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.OptionalToRequired)) {
-          const message = template(this.operationSignatureChangedTemplate, {
-            interfaceName: baselineInterfaceName,
-            // TODO: get signature name
-            signatureName: 'TODO',
-          });
-          this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
-        }
-      } else {
-        /** model changes */
-        // model added
-        if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = template(this.modelAddedTemplate, { interfaceName });
-          this.addChangelogItem(ChangelogItemCategory.ModelAdded, message);
-        }
-        // NOTE: not detected in v1
-        // model removed
-        if (p.location === DiffLocation.Interface && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = template(this.modelRemovedTemplate, { interfaceName });
-          this.addChangelogItem(ChangelogItemCategory.ModelRemoved, message);
-        }
-        // model's optional property added
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = template(this.modelOptionalPropertyAddedTemplate, {
-            interfaceName,
-            propertyName: p.source!.name,
-          });
-          this.addChangelogItem(ChangelogItemCategory.ModelOptionalPropertyAdded, message);
-        }
-        // model's required property added
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Added)) {
-          const message = template(this.modelRequiredPropertyAddedTemplate, {
-            interfaceName,
-            propertyName: p.source!.name,
-          });
-          this.addChangelogItem(ChangelogItemCategory.ModelRequiredPropertyAdded, message);
-        }
-        // model's property type changed
-        // NOTE: not detected in v1 except for union type
-        // NOTE: discuss if extend union type to be breaking or not
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.TypeChanged)) {
-          const getTypeText = (node: Node) =>
-            node.asKindOrThrow(SyntaxKind.PropertySignature).getTypeNodeOrThrow().getText();
-          const oldPropertyTypeText = getTypeText(p.target!.node);
-          const newPropertyTypeText = getTypeText(p.source!.node);
-          // TODO: improve changelog to tell the most outer impacted declarations
-          if (oldPropertyTypeText !== newPropertyTypeText) {
-            const message = template(this.modelPropertyTypeChangedTemplate, {
-              interfaceName,
-              newPropertyName: p.source!.name,
-              oldPropertyType: oldPropertyTypeText,
-              newPropertyType: newPropertyTypeText,
-            });
-            this.addChangelogItem(ChangelogItemCategory.ModelPropertyTypeChanged, message);
-          }
-        }
-        // model's property removed
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.Removed)) {
-          const message = template(this.modelPropertyRemovedTemplate, { interfaceName, propertyName: p.target!.name });
-          this.addChangelogItem(ChangelogItemCategory.ModelPropertyRemoved, message);
-        }
-        // model's property optional to required
-        if (p.location === DiffLocation.Property && this.hasReasons(p.reasons, DiffReasons.RequiredToOptional)) {
-          const message = template(this.modelPropertyOptionalToRequiredTemplate, {
-            interfaceName,
-            propertyName: p.source!.name,
-          });
-          this.addChangelogItem(ChangelogItemCategory.ModelPropertyOptionalToRequired, message);
-        }
-      }
+      if (isRoutesInterface) this.generateForRoutesInterface(p, interfaceName);
+      else if (isOperationGroupInterface()) this.generateForOperationGroupInterface(p, interfaceName);
+      else this.generateForModelInterface(p, interfaceName);
     });
   }
 

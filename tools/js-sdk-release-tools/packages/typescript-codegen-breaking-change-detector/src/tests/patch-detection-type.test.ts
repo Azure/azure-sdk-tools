@@ -56,4 +56,13 @@ describe('detect type alias', () => {
     expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
     expect(diffPairs[0].source?.name).toBe('typesNarrow');
   });
+
+  test('detect Record types', async () => {
+    const baselineApiView = `export type typesRecord = { [propertyName: string]: string; };`;
+
+    const currentApiView = `export type typesRecord = Record<string, string>;`;
+    const astContext = await createTestAstContext(baselineApiView, currentApiView);
+    let diffPairs = patchTypeAlias('typesRecord', astContext, AssignDirection.CurrentToBaseline);
+    expect(diffPairs.length).toBe(0);
+  });
 });

@@ -24,7 +24,7 @@ const getItemsByCategory = (
     const map = isBreakingChange
         ? changelogItems.breakingChanges
         : changelogItems.features;
-    console.log("🚀 ~ map:", map)
+    console.log("🚀 ~ map:", map);
     if (!map) return [];
     console.log(
         "🚀 ~getItemsByCategory changelogItems:",
@@ -233,10 +233,6 @@ describe("Breaking change detection", () => {
     });
 
     test("Patch RLC -> RLC's basic breaking changes", async () => {
-        const root = path.join(
-            __dirname,
-            "../../../packages/typescript-codegen-breaking-change-detector/misc/test-cases/patch-detection/",
-        );
         const oldViewPath = path.join(
             __dirname,
             `testCases/patch.1.old.rlc.api.md`,
@@ -309,7 +305,7 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
             __dirname,
             "testCases/operationGroups.1.new.modular.api.md",
         );
-        
+
         const changelogItems = await generateChangelogItems(
             { path: oldViewPath, sdkType: SDKType.HighLevelClient },
             { path: newViewPath, sdkType: SDKType.ModularClient },
@@ -541,47 +537,56 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
         );
     });
 
-    //     test("Patch RLC -> RLC's basic breaking changes", async () => {
-    //         const oldViewPath = path.join(
-    //             __dirname,
-    //             `testCases/patch.1.old.rlc.api.md`,
-    //         );
-    //         const newViewPath = path.join(
-    //             __dirname,
-    //             `testCases/patch.1.new.rlc.api.md`,
-    //         );
-    //         const changelog = await extractExportAndGenerateChangelog(
-    //             oldViewPath,
-    //             newViewPath,
-    //             SDKType.RestLevelClient,
-    //             SDKType.RestLevelClient,
-    //         );
-    //         console.log("changelog --");
-    //         expect(changelog.displayChangeLog()).toBe(
-    //             `### Features Added
+    test("Patch RLC -> RLC's basic breaking changes", async () => {
+        const oldViewPath = path.join(
+            __dirname,
+            `testCases/patch.1.old.rlc.api.md`,
+        );
+        const newViewPath = path.join(
+            __dirname,
+            `testCases/patch.1.new.rlc.api.md`,
+        );
+        const changelogItems = await generateChangelogItems(
+            { path: oldViewPath, sdkType: SDKType.RestLevelClient },
+            { path: newViewPath, sdkType: SDKType.RestLevelClient },
+        );
 
-    //   - Added operation in Routes for path: "add"
-    //   - Added Interface ClusterGetOld
-    //   - Added Type Alias typesAdd
-    //   - Added function funcAdd
-    //   - Added function overload "export function isUnexpected(response: C | E): response is C;"
-
-    // ### Breaking Changes
-
-    //   - Removed operation Routes for path: "remove"
-    //   - Operation in "Routes" has a new signature for path: "change_return_type"
-    //   - Operation in "Routes" has a new signature for path: "change_para_count"
-    //   - Operation in "Routes" has a new signature for path: "change_para_type"
-    //   - Type of parameter a of interface ClustersGet is changed from number to string
-    //   - Removed function funcRemove
-    //   - Function funcReturnType has a new signature
-    //   - Function funcParameterCount has a new signature
-    //   - Function funcParameterType has a new signature
-    //   - Removed function overload "export function isUnexpected(response: C | D): response is A;"
-    //   - Removed Type Alias typesRemove
-    //   - Type alias "typesChange" has been changed`,
-    //         );
-    //     });
+        const expectedNewFeatures = [
+            `Added operation in Routes for path: "add"`,
+            `Added Interface ClusterGetOld`,
+            `Added Type Alias typesAdd`,
+            `Added function funcAdd`,
+            `Added function overload "export function isUnexpected(response: C | E): response is C;"`,
+        ].sort();
+        const expectedBreakingChanges = [
+            `Removed operation in Routes for path: "remove"`,
+            `Operation in "Routes" has a new signature for path: "change_return_type"`,
+            `Operation in "Routes" has a new signature for path: "change_para_count"`,
+            `Operation in "Routes" has a new signature for path: "change_para_type"`,
+            `Type of parameter a of interface ClustersGet is changed from number to string`,
+            `Removed function funcRemove`,
+            `Function funcReturnType has a new signature`,
+            `Function funcParameterCount has a new signature`,
+            `Function funcParameterType has a new signature`,
+            `Removed function overload "export function isUnexpected(response: C | D): response is A;"`,
+            `Removed Type Alias typesRemove`,
+            `Type alias "typesChange" has been changed`,
+        ].sort();
+        const getActualChangelogItems = (
+            map: Map<ChangelogItemCategory, string[]>,
+        ) => {
+            const items: string[] = [];
+            map.forEach((value) => items.push(...value));
+            items.sort();
+            return items;
+        };
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        const actualBreakingChanges = getActualChangelogItems(
+            changelogItems.breakingChanges,
+        );
+        expect(actualFeatures).toEqual(expectedNewFeatures);
+        expect(actualBreakingChanges).toEqual(expectedBreakingChanges);
+    });
 });
 
 describe("Breaking change detection v2", () => {
@@ -696,7 +701,9 @@ export interface DataProductsCatalogsOperations {
                 ChangelogItemCategory.OperationAdded,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added operation DataProductsCatalogsOperations.list");
+            expect(items[0]).toBe(
+                "Added operation DataProductsCatalogsOperations.list",
+            );
         });
 
         test("Operation Removed", async () => {
@@ -1246,7 +1253,7 @@ export type DataProductStatus = "Active" | "Inactive" | "Pending";
                 ChangelogItemCategory.TypeAliasAdded,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added type alias DataProductStatus");
+            expect(items[0]).toBe("Added Type Alias DataProductStatus");
         });
 
         test("Type Alias Removed", async () => {
@@ -1583,9 +1590,7 @@ export function processData(data: string): string;
     // TODO: add tests
 });
 
-describe("Breaking change detection from high level client to modular client", () => {
-
-})
+describe("Breaking change detection from high level client to modular client", () => {});
 
 describe("Changelog reading", () => {
     test("Read changelog that doesn't exist", () => {

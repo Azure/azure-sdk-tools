@@ -76,6 +76,7 @@ export class DeclarationDifferenceDetector {
 
     // check type
     const assignable = sourceTypeNode.getType().isAssignableTo(targetTypeNode.getType());
+    console.log("🚀 ~ DeclarationDifferenceDetector ~ findBreakingReasons ~ assignable:", assignable)
     if (!assignable) breakingReasons |= DiffReasons.TypeChanged;
 
     // check required -> optional (from source to target)
@@ -95,6 +96,7 @@ export class DeclarationDifferenceDetector {
     const incompatibleReadonly = isReadonly(target) && !isReadonly(source);
     if (incompatibleReadonly) breakingReasons |= DiffReasons.ReadonlyToMutable;
 
+    console.log("🚀 ~ DeclarationDifferenceDetector ~ findBreakingReasons ~ breakingReasons:", breakingReasons)
     return breakingReasons;
   }
 
@@ -405,13 +407,15 @@ export class DeclarationDifferenceDetector {
       targetSignatures,
       findMappingCallSignature
     );
+    console.log("🚀 ~ DeclarationDifferenceDetector ~ callSignatureBreakingChanges:", callSignatureBreakingChanges)
     const callSignatureNewFeatures = this.findCallSignatureLikeDeclarationBreakingChanges(
       targetSignatures,
       sourceSignatures,
       findMappingCallSignature
     )
-      .filter((p) => p.reasons === DiffReasons.Removed)
-      .map(this.updateDiffPairForNewFeature);
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map(this.updateDiffPairForNewFeature);
+    console.log("🚀 ~ DeclarationDifferenceDetector ~ callSignatureNewFeatures:", callSignatureNewFeatures)
     const targetProperties = target.getType().getProperties();
     const sourceProperties = source.getType().getProperties();
     console.log('🚀 ~ source:', source.getText());
@@ -426,6 +430,7 @@ export class DeclarationDifferenceDetector {
     );
 
     const propertyBreakingChanges = this.findPropertyBreakingChanges(sourceProperties, targetProperties);
+    console.log("🚀 ~ DeclarationDifferenceDetector ~ propertyBreakingChanges:", propertyBreakingChanges)
     const propertyNewFeatures = this.findPropertyBreakingChanges(targetProperties, sourceProperties)
       .filter((p) => p.reasons === DiffReasons.Removed)
       .map(this.updateDiffPairForNewFeature);

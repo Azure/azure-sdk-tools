@@ -164,6 +164,27 @@ describe('detect interface', () => {
       expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('number');
     });
 
+    test('detect property move to parent model', async () => {
+      const baselineApiView = `
+        export interface SystemData {} 
+        export interface Target extends ProxyResource {
+          systemdata?: SystemData;
+          location?: string;
+        }
+        export interface ProxyResource{}
+        `;
+      const currentApiView = `
+        export interface Target extends ProxyResource {
+        location?: string;
+        }
+        export interface SystemData {} 
+        export interface ProxyResource{systemdata?: SystemData;}
+        `;
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
+
     test('change classic property name', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { prop2: string; }`;
@@ -224,10 +245,10 @@ describe('detect interface', () => {
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(1);
-        expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-        expect(diffPairs[0].location).toBe(DiffLocation.Property);
-        expect(diffPairs[0].reasons).toBe(DiffReasons.OptionalToRequired);
-        expect(diffPairs[0].target?.name).toBe('prop');
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Property);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.OptionalToRequired);
+      expect(diffPairs[0].target?.name).toBe('prop');
     });
   });
 

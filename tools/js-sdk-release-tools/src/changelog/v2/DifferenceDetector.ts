@@ -11,12 +11,14 @@ import {
   isPropertyMethod,
   findAllRenameAbleDeclarationsInNodeV2,
   NodeContext,
+  patchRoutes,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
 import { ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { JsxEmit } from 'typescript';
+import { RestLevelClientDifferencesPostProcessor } from './RestLevelClientDifferencesPostProcessor.js';
 
 export interface ApiViewOptions {
   path?: string;
@@ -68,12 +70,20 @@ export class DifferenceDetector {
     await this.load();
     await this.preprocess();
     await this.detectCore();
-    //this.postprocess();
+    this.postprocess();
     return this.result!;
   }
 
   private postprocess() {
+    console.log("🚀 ~ DifferenceDetector ~ postprocess ~ sdkType:", this.currentApiViewOptions.sdkType)
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
+    console.log('🚀 ~ DifferenceDetector ~ postprocess ~ RLC');
+    // use Routes specific detection
+    this.result?.interfaces.delete('Routes');
+    const routesDiffPairs = patchRoutes(this.context!);
+    console.log("🚀 ~ DifferenceDetector ~ postprocess ~ routesDiffPairs:", routesDiffPairs)
+    this.result?.interfaces.set('Routes', routesDiffPairs);
+
     const getRenameAbleInlineDeclarationNameSet = (sourceFile: SourceFile) => {
       const routes = sourceFile.getInterfaceOrThrow('Routes');
       const declarations = findAllRenameAbleDeclarationsInNodeV2(routes);
@@ -85,19 +95,13 @@ export class DifferenceDetector {
     };
     const baselineInlineNameSet = getRenameAbleInlineDeclarationNameSet(this.context!.baseline);
     const currentInlineNameSet = getRenameAbleInlineDeclarationNameSet(this.context!.current);
-    const handleResult = () => {
-      const ignorePairSet = new Set<DiffPair>();
-      this.result?.classes.forEach((diffPairs, className) => {
-        const baselineContext = baselineInlineNameSet.get(className);
-        const currentContext = currentInlineNameSet.get(className);
-        if (!baselineContext || !currentContext) return;
-        const baselineType = baselineContext.node.getType();
-        const currentType = currentContext.node.getType();
-        if (currentType.isAssignableTo(baselineType)) {
 
-        }
-      });
-    }
+    const postProcessor = new RestLevelClientDifferencesPostProcessor(
+      this.result,
+      baselineInlineNameSet,
+      currentInlineNameSet
+    );
+    postProcessor.run();
   }
 
   private convertHighLevelClientToModularClientCode(code: string): string {
@@ -229,11 +233,11 @@ export class DifferenceDetector {
       console.log('🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs:', diffPairs);
       console.log(
         '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs baseline:',
-        diffPairs[0].target?.node.getText()
+        diffPairs.length > 0 ? diffPairs[0].target?.node.getText() : 'No target'
       );
       console.log(
         '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs current:',
-        diffPairs[0].source?.node.getText()
+        diffPairs.length > 0 ? diffPairs[0].source?.node.getText() : 'No source'
       );
 
       map.set(n, diffPairs);

@@ -46,6 +46,7 @@ const findMappingCallSignatureForRoutes: FindMappingCallSignatureLikeDeclaration
 };
 
 export function patchRoutes(astContext: AstContext): DiffPair[] {
+  console.log("🚀 ~ patchRoutes ~ ")
   const baseline = astContext.baseline.getInterface('Routes');
   const current = astContext.current.getInterface('Routes');
 

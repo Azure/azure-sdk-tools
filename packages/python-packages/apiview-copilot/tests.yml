@@ -49,7 +49,7 @@ extends:
                     # Verify the context
                     az account show --query '{subscription:name,tenant:tenantId}'
 
-                    python packages/python-packages/apiview-copilot/cli.py review local --language python --target packages/python-packages/apiview-copilot/scratch/apiviews/python/image_analysis.txt --debug-log
+                    python packages/python-packages/apiview-copilot/evals/run.py
 
                     exit $?
                 env:
@@ -64,4 +64,3 @@ extends:
                   AZURE_SEARCH_NAME: archagent-search
                   AZURE_COSMOS_ACC_NAME: archagent-cosmos
                   AZURE_COSMOS_DB_NAME: archagent-db
-                  AZURE_LOG_LEVEL: 'DEBUG'

@@ -215,12 +215,9 @@ def review_apiview(query: str, language: str):
         ApiViewReview,
     )
 
-    try:
-        reviewer = ApiViewReview(target=query, language=language, base=None, debug_log=True)
-        review = reviewer.run()
-        reviewer.close()
-    except Exception as e:
-        print(e)
+    reviewer = ApiViewReview(target=query, language=language, base=None, debug_log=True)
+    review = reviewer.run()
+    reviewer.close()
     return {"actual": review.model_dump_json()}
 
 
@@ -510,48 +507,43 @@ if __name__ == "__main__":
         else:
             kwargs = {}
 
-        with open(str(file), "r") as f:
-            query = f.readline().strip()
+        run_results = []
+        for run in range(args.num_runs):
+            print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
+            result = evaluate(
+                data=str(file),
+                evaluators={
+                    "metrics": custom_eval,
+                },
+                evaluator_config={
+                    "metrics": {
+                        "column_mapping": {
+                            "response": "${data.response}",
+                            "query": "${data.query}",
+                            "language": "${data.language}",
+                            "actual": "${target.actual}",
+                            "testcase": "${data.testcase}",
+                            "context": "${data.context}",
+                        },
+                    },
+                },
+                target=review_apiview,
+                fail_on_evaluator_errors=True,
+                azure_ai_project=azure_ai_project,
+                **kwargs
+            )
 
-        result = review_apiview(query=query, language="python")
-        print(result)
-    #     run_results = []
-    #     for run in range(args.num_runs):
-    #         print(f"Running evals {run + 1}/{args.num_runs} for {file.name}...")
-    #         result = evaluate(
-    #             data=str(file),
-    #             evaluators={
-    #                 "metrics": custom_eval,
-    #             },
-    #             evaluator_config={
-    #                 "metrics": {
-    #                     "column_mapping": {
-    #                         "response": "${data.response}",
-    #                         "query": "${data.query}",
-    #                         "language": "${data.language}",
-    #                         "actual": "${target.actual}",
-    #                         "testcase": "${data.testcase}",
-    #                         "context": "${data.context}",
-    #                     },
-    #                 },
-    #             },
-    #             target=review_apiview,
-    #             fail_on_evaluator_errors=True,
-    #             azure_ai_project=azure_ai_project,
-    #             **kwargs
-    #         )
+            run_result = record_run_result(result, rule_ids)
+            print(f"Average score for {file.name} run {run + 1}/{args.num_runs}: {run_result[-1]['average_score']:.2f}")
+            run_results.append(run_result)
 
-    #         run_result = record_run_result(result, rule_ids)
-    #         print(f"Average score for {file.name} run {run + 1}/{args.num_runs}: {run_result[-1]['average_score']:.2f}")
-    #         run_results.append(run_result)
+        # take the median run based on the average score
+        median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
+        all_results[file.name] = median_result
 
-    #     # take the median run based on the average score
-    #     median_result = sorted(run_results, key=lambda x: x[-1]["average_score"])[len(run_results) // 2]
-    #     all_results[file.name] = median_result
+    if not all_results:
+        raise ValueError(f"No tests found for arguments: {args}")
 
-    # if not all_results:
-    #     raise ValueError(f"No tests found for arguments: {args}")
-
-    # show_results(args, all_results)
-    # establish_baseline(args, all_results)
-    # calculate_coverage(args, rule_ids)
+    show_results(args, all_results)
+    establish_baseline(args, all_results)
+    calculate_coverage(args, rule_ids)

@@ -18,7 +18,6 @@ The Tool Call Accuracy evaluator assesses how accurately an AI uses tools by exa
   ```
 - Set the following environment variables (can be placed in a `.env` file):
   - `AZURE_OPENAI_ENDPOINT`
-  - `AZURE_OPENAI_API_KEY`
   - `AZURE_SUBSCRIPTION_ID`
   - `AZURE_FOUNDRY_RESOURCE_GROUP`
   - `AZURE_FOUNDRY_PROJECT_NAME`
@@ -42,8 +41,4 @@ The latter 3 variables are used to connect to the Azure Foundry project where th
 
 ## Reviewing Results
 
-Results are found in the Azure Foundry project. TODO add link.
-
-## CI pipeline
-
-- The script will automatically detect if it is running in CI and use Azure Pipelines credentials if available.
+Results are found in the Azure Foundry project under the `azure-mcp-evals` project.

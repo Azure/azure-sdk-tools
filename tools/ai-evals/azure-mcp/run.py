@@ -55,6 +55,7 @@ else:
 
 
 # Monkeypatch AsyncPrompty.load to accept token_credential
+# https://github.com/Azure/azure-sdk-for-python/issues/41295
 from azure.ai.evaluation._legacy.prompty import AsyncPrompty
 original_load = AsyncPrompty.load
 
@@ -275,3 +276,5 @@ if __name__ == "__main__":
         azure_ai_project=azure_ai_project,
         **kwargs,
     )
+    print(f"Evaluation result: {result['studio_url']}")
+

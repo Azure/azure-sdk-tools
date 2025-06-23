@@ -1,4 +1,3 @@
-from azure.identity import DefaultAzureCredential, AzurePipelinesCredential
 import concurrent.futures
 import datetime
 import json
@@ -12,6 +11,7 @@ from time import time
 from typing import Optional, List
 import yaml
 
+from ._credential import in_ci, get_credential
 from ._diff import create_diff_with_line_numbers
 from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager, SearchResult
@@ -58,23 +58,7 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
     dotenv.load_dotenv()
 
 
-def in_ci():
-    return os.getenv("TF_BUILD", False)
-
-
-if in_ci():
-    service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-    client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-    tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-    system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
-    CREDENTIAL = AzurePipelinesCredential(
-            service_connection_id=service_connection_id,
-            client_id=client_id,
-            tenant_id=tenant_id,
-            system_access_token=system_access_token,
-        )
-else:
-    CREDENTIAL = DefaultAzureCredential()
+CREDENTIAL = get_credential()
 
 
 # create enum for the ReviewMode

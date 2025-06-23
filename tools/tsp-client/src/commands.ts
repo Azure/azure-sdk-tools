@@ -30,6 +30,29 @@ import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
+async function createNewPackageDirAndTspLocation(
+  outputDir: string,
+  emitterName: string,
+  serviceDir: string,
+  tspLocationData: TspLocation,
+  packageDir?: string,
+): Promise<string> {
+    // The value of packageDir is configured in tspconfig.yaml under options.<emitter-name>.emitter-output-dir.
+    // If not specified, throw an error and show an example of a valid tspconfig.yaml.
+    if (!packageDir) {
+        throw new Error(
+        `Missing emitter-output-dir in ${emitterName} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
+        );
+    }
+    let newPackageDir = joinPaths(outputDir, packageDir.replace("{service-dir}", serviceDir));
+    if (!newPackageDir.includes(serviceDir)) {
+        newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
+    }
+    await mkdir(newPackageDir, { recursive: true });
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
+    return newPackageDir;
+}
+
 export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let tspConfig = argv["tsp-config"];
@@ -78,15 +101,6 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
-    const serviceDir = getServiceDir(configYaml, emitter);
-    const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
-    if (!packageDir) {
-      throw new Error(
-        `Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
-      );
-    }
-    const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!);
-    await mkdir(newPackageDir, { recursive: true });
     const tspLocationData: TspLocation = {
       directory: resolvedConfigUrl.path,
       commit: resolvedConfigUrl.commit,
@@ -99,10 +113,15 @@ export async function initCommand(argv: any) {
     if (argv["emitter-package-json-path"]) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
     }
-    await writeTspLocationYaml(tspLocationData, newPackageDir);
+    outputDir = await createNewPackageDirAndTspLocation(
+        outputDir,
+        emitter,
+        getServiceDir(configYaml, emitter),
+        tspLocationData,
+        configYaml?.options?.[emitter]?.["emitter-output-dir"]
+    );
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
-    outputDir = newPackageDir;
   } else {
     // Local directory scenario
     if (!tspConfig.endsWith("tspconfig.yaml")) {
@@ -118,15 +137,6 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
     }
     const configYaml = parseYaml(data);
-    const serviceDir = getServiceDir(configYaml, emitter);
-    const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
-    if (!packageDir) {
-      throw new Error(
-        `Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
-      );
-    }
-    const newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
-    await mkdir(newPackageDir, { recursive: true });
     tspConfig = tspConfig.replaceAll("\\", "/");
     const matchRes = tspConfig.match(".*/(?<path>specification/.*)/tspconfig.yaml$");
     var directory = "";
@@ -150,8 +160,13 @@ export async function initCommand(argv: any) {
       // store relative path to repo root
       tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
     }
-    await writeTspLocationYaml(tspLocationData, newPackageDir);
-    outputDir = newPackageDir;
+    outputDir = await createNewPackageDirAndTspLocation(
+        outputDir,
+        emitter,
+        getServiceDir(configYaml, emitter),
+        tspLocationData,
+        configYaml?.options?.[emitter]?.["emitter-output-dir"]
+    );
   }
 
   if (!skipSyncAndGenerate) {

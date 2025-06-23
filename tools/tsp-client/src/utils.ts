@@ -35,7 +35,7 @@ export async function makeSparseSpecDir(repoRoot: string): Promise<string> {
 
 export function getServiceDir(configYaml: any, emitter: string): string {
   // Check if service-dir is defined in the emitter specific configurations in tspconfig.yaml.
-  // Default to the top level service-dir parameter in tspconfig.yaml.
+  // If not present, default to the top level service-dir parameter in tspconfig.yaml.
   const serviceDir =
     configYaml?.options?.[emitter]?.["service-dir"] ??
     configYaml?.parameters?.["service-dir"]?.default;

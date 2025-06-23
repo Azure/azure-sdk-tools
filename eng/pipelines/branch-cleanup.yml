@@ -49,7 +49,7 @@ parameters:
     - MicrosoftDocs/azure-docs-sdk-node
     - MicrosoftDocs/azure-docs-sdk-python
     - MicrosoftDocs/azure-docs-sdk-java
-    - MicrosoftDocs/azure-docs-sdk-net
+    - MicrosoftDocs/azure-docs-sdk-dotnet
 
 - name: RestAPISpecsDocsRepos
   type: object

@@ -57,8 +57,6 @@ export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let tspConfig = argv["tsp-config"];
   const skipSyncAndGenerate = argv["skip-sync-and-generate"];
-  const commit = argv["commit"] ?? "<replace with your value>";
-  const repo = argv["repo"] ?? "<replace with your value>";
 
   const repoRoot = await getRepoRoot(outputDir);
 
@@ -80,6 +78,12 @@ export async function initCommand(argv: any) {
   } else if (await doesFileExist(tspConfig)) {
     isUrl = false;
   }
+  const tspLocationData: TspLocation = {
+    directory: "",
+    commit: "",
+    repo: "",
+    additionalDirectories: [],
+  };
   if (isUrl) {
     // URL scenario
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfig);
@@ -101,15 +105,12 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
-    const tspLocationData: TspLocation = {
-      directory: resolvedConfigUrl.path,
-      commit: resolvedConfigUrl.commit,
-      repo: resolvedConfigUrl.repo,
-      additionalDirectories:
-        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
-          "additionalDirectories"
-        ] ?? [],
-    };
+    tspLocationData.directory = resolvedConfigUrl.path;
+    tspLocationData.commit = resolvedConfigUrl.commit;
+    tspLocationData.repo = resolvedConfigUrl.repo;
+    tspLocationData.additionalDirectories = configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+    "additionalDirectories"
+    ] ?? [];
     if (argv["emitter-package-json-path"]) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
     }
@@ -139,22 +140,17 @@ export async function initCommand(argv: any) {
     const configYaml = parseYaml(data);
     tspConfig = tspConfig.replaceAll("\\", "/");
     const matchRes = tspConfig.match(".*/(?<path>specification/.*)/tspconfig.yaml$");
-    var directory = "";
     if (matchRes) {
       if (matchRes.groups) {
-        directory = matchRes.groups!["path"]!;
+        tspLocationData.directory = matchRes.groups!["path"]!;
       }
     }
-
-    const tspLocationData: TspLocation = {
-      directory: directory,
-      commit: commit ?? "",
-      repo: repo ?? "",
-      additionalDirectories:
-        configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
-          "additionalDirectories"
-        ] ?? [],
-    };
+    tspLocationData.commit = argv["commit"] ?? "<replace with your value>";
+    tspLocationData.repo = argv["repo"] ?? "<replace with your value>";
+    tspLocationData.additionalDirectories =
+    configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
+        "additionalDirectories"
+    ] ?? [];
     const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
     if (emitterPackageOverride) {
       // store relative path to repo root

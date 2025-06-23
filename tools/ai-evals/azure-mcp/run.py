@@ -54,6 +54,17 @@ else:
     CREDENTIAL = DefaultAzureCredential()
 
 
+# Monkeypatch AsyncPrompty.load to accept token_credential
+from azure.ai.evaluation._legacy.prompty import AsyncPrompty
+original_load = AsyncPrompty.load
+
+def patched_load(cls, source, **kwargs):
+    """Patched version of AsyncPrompty.load that accepts token_credential parameter"""
+    return original_load(source=source, token_credential=CREDENTIAL, **kwargs)
+
+AsyncPrompty.load = classmethod(patched_load)
+
+
 token_provider = get_bearer_token_provider(
     CREDENTIAL, "https://cognitiveservices.azure.com/.default"
 )

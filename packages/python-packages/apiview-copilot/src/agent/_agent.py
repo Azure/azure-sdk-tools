@@ -50,15 +50,22 @@ error message to the user.
 
 def create_kernel() -> Kernel:
     base_url = os.getenv("AZURE_OPENAI_ENDPOINT")
-    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT", "MCNOODLE")
+    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    if not base_url:
+        raise RuntimeError("AZURE_OPENAI_ENDPOINT environment variable is required.")
+    if not deployment_name:
+        raise RuntimeError("AZURE_OPENAI_DEPLOYMENT environment variable is required.")
+    if not api_key:
+        raise RuntimeError("AZURE_OPENAI_API_KEY environment variable is required.")
     logging.info(f"Using Azure OpenAI at {base_url} with deployment {deployment_name}")
     kernel = Kernel(
         plugins={},  # Register your plugins here if needed
         services={
             "AzureChatCompletion": AzureChatCompletion(
-                base_url=os.getenv("AZURE_OPENAI_ENDPOINT"),
-                deployment_name=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
-                api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+                base_url=base_url,
+                deployment_name=deployment_name,
+                api_key=api_key,
             )
         },
     )

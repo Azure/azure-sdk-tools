@@ -106,20 +106,21 @@ public class AnalyzePipelinesTool : MCPTool
             return;
         }
         var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
-        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
+        var msftCorpTenant = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+        var token = azureService.GetCredential(msftCorpTenant).GetToken(new TokenRequestContext(tokenScope));
         var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
         var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
         buildClient = connection.GetClient<BuildHttpClient>();
         testClient = connection.GetClient<TestResultsHttpClient>();
     }
 
-    [McpServerTool, Description("Gets details for a pipeline run")]
     public async Task<Build> GetPipelineRun(string? project, int buildId)
     {
         try
         {
-            logger.LogDebug("Getting pipeline run for {project} {buildId}", project, buildId);
-            var build = await buildClient.GetBuildAsync(project ?? "public", buildId);
+            var _project = project ?? "public";
+            logger.LogDebug("Getting pipeline run for {project} {buildId}", _project, buildId);
+            var build = await buildClient.GetBuildAsync(_project, buildId);
             return build;
         }
         catch (Exception ex)
@@ -133,7 +134,6 @@ public class AnalyzePipelinesTool : MCPTool
         }
     }
 
-    [McpServerTool, Description("Gets failures from tasks (non-test failures) in a pipeline run")]
     public async Task<List<TimelineRecord>?> GetPipelineTaskFailures(string project, int buildId, CancellationToken ct = default)
     {
         try
@@ -307,8 +307,8 @@ public class AnalyzePipelinesTool : MCPTool
                 var pipeline = await GetPipelineRun(project, buildId);
                 project = pipeline.Project.Name;
             }
-            var failedTasks = await GetPipelineTaskFailures(project, buildId);
-            var failedTests = await GetPipelineFailedTestResults(project, buildId);
+            var failedTasks = await GetPipelineTaskFailures(project, buildId, ct);
+            var failedTests = await GetPipelineFailedTestResults(project, buildId, ct);
 
             var taskAnalysis = new List<LogAnalysisResponse>();
 

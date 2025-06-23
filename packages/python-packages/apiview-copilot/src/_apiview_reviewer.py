@@ -19,6 +19,7 @@ from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager, SearchResult
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
+from ._utils import get_language_pretty_name
 
 
 # Set up paths
@@ -286,7 +287,7 @@ class ApiViewReview:
             self._execute_prompt_task,
             prompt_path=os.path.join(_PROMPTS_FOLDER, summary_prompt_file),
             inputs={
-                "language": self._get_language_pretty_name(),
+                "language": get_language_pretty_name(self.language),
                 "content": summary_content,
             },
             task_name=summary_tag,
@@ -306,7 +307,7 @@ class ApiViewReview:
                 self._execute_prompt_task,
                 prompt_path=os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
                 inputs={
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "context": guideline_context_string,
                     "content": section.numbered(),
                 },
@@ -322,7 +323,7 @@ class ApiViewReview:
                 self._execute_prompt_task,
                 prompt_path=os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
                 inputs={
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "custom_rules": generic_metadata["custom_rules"],
                     "content": section.numbered(),
                 },
@@ -340,7 +341,7 @@ class ApiViewReview:
                 self._execute_prompt_task,
                 prompt_path=os.path.join(_PROMPTS_FOLDER, context_prompt_file),
                 inputs={
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "context": context_string,
                     "content": section.numbered(),
                 },
@@ -479,7 +480,7 @@ class ApiViewReview:
                 filter_prompt_path,
                 inputs={
                     "content": comment.model_dump(),
-                    "language": self._get_language_pretty_name(),
+                    "language": get_language_pretty_name(self.language),
                     "outline": self.outline,
                     "exceptions": self._load_filter_metadata().get("exceptions", "None"),
                 },
@@ -541,7 +542,7 @@ class ApiViewReview:
             inputs = {
                 "comment": comment.model_dump(),
                 "existing": [e.model_dump() for e in existing_comments],
-                "language": self._get_language_pretty_name(),
+                "language": get_language_pretty_name(self.language),
             }
             prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
             tasks.append((idx, comment, prompt_path, inputs))
@@ -706,22 +707,6 @@ class ApiViewReview:
         except Exception as e:
             return f"Unexpected canary check error: {type(e).__name__}: {e}"
         return None
-
-    def _get_language_pretty_name(self) -> str:
-        """
-        Returns a pretty name for the language.
-        """
-        language_pretty_names = {
-            "android": "Android",
-            "cpp": "C++",
-            "dotnet": "C#",
-            "golang": "Go",
-            "ios": "Swift",
-            "java": "Java",
-            "python": "Python",
-            "typescript": "TypeScript",
-        }
-        return language_pretty_names.get(self.language, self.language.capitalize())
 
     def _retrieve_context(self, query: str) -> List[object] | None:
         """

@@ -1,11 +1,27 @@
-import { ModuleKind, Project, ScriptTarget, SyntaxKind, Type, Node, TypeParameter, SourceFile } from 'ts-morph';
-import { JsxEmit } from 'typescript';
+import {
+  ModuleKind,
+  Project,
+  ScriptTarget,
+  SyntaxKind,
+  Type,
+  Node,
+  TypeParameter,
+  SourceFile,
+  InterfaceDeclaration,
+  TypeChecker,
+  VariableDeclaration,
+  FunctionDeclaration,
+  TypeAliasDeclaration,
+  ClassDeclaration,
+} from 'ts-morph';
+import ts, { JsxEmit } from 'typescript';
 import { describe, expect, test } from 'vitest';
 import { createTestAstContext } from './utils';
-import { patchInterface } from '../azure/patch/patch-detection';
+import { patchClass, patchEnum, patchFunction, patchInterface, patchTypeAlias } from '../azure/patch/patch-detection';
 import { AssignDirection, DiffLocation, DiffReasons } from '../azure/common/types';
 import { isPropertyMethod } from '../utils/ast-utils';
 import { Variable } from '@typescript-eslint/scope-manager';
+import { createAstContext } from '../azure/detect-breaking-changes';
 
 // TODO: remove
 describe('debug', () => {
@@ -51,11 +67,6 @@ describe('debug', () => {
         });
       return sourceFile.getFullText();
     };
-
-    const processed = preprocessHighLevelClientCode(
-      `export interface TestInterface {get(): void; set(s: string): XXX}`
-    );
-    console.log('🚀 ~ processed:', processed);
   });
 
   test('Generic Type', async () => {
@@ -64,7 +75,6 @@ describe('debug', () => {
 
     const astContext = await createTestAstContext(baselineApiView, currentApiView);
     const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
-    console.log('🚀 ~ test ~ diffPairs:', diffPairs);
     expect(diffPairs.length).toBe(1);
     expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
     expect(diffPairs[0].location).toBe(DiffLocation.Property);
@@ -94,7 +104,6 @@ export const identity = <T>(value: T): T => value;
             const interfaceDeclaration = node.asKindOrThrow(SyntaxKind.InterfaceDeclaration);
             const name = interfaceDeclaration.getName();
             const typeParameters = interfaceDeclaration.getTypeParameters();
-            typeParameters[0].
             const statement = `type ______TEMP______${name} = ${name}<${typeParameters.map((p) => 'any').join(', ')}>;`;
             return statement;
           }
@@ -139,7 +148,6 @@ export const identity = <T>(value: T): T => value;
       const sourceFile = node.getSourceFile();
       const statement = generateStatement(node);
       if (statement) sourceFile.addStatements([statement]);
-      console.log('🚀 ~ instantiateSourceFile ~ sourceFile.getFullText():', sourceFile.getFullText());
       return sourceFile.getFullText();
     }
 
@@ -167,5 +175,135 @@ export const identity = <T>(value: T): T => value;
     // console.log('iface1<string> assignable to iface2<number>?', inst1!.isAssignableTo(inst2!)); // false
     // console.log('identity<string> return type assignable to string?', inst3!.isAssignableTo(typeChecker.string)); // true
     // console.log('testFn<boolean>() returns boolean?', inst4!.isAssignableTo(typeChecker.getBooleanType())); // true
+  });
+
+  test('generic type', async () => {
+    const project = new Project({ useInMemoryFileSystem: true });
+    const sourceFile = project.createSourceFile(
+      'temp.ts',
+      `
+export interface TestInterface1<T> { prop: T; }
+export interface TestInterface2<T> { prop: T; }
+export function testFn<T extends boolean>(): T;
+export const identity = <T>(value: T): T => value;
+export type TestTypeAlias<T> = { prop: T };
+export class TestClass<T> {
+  prop: T;
+  constructor(prop: T) {
+    this.prop = prop;
+  }
+}
+`
+    );
+
+    // 处理每个文件
+    {
+      let modified = false;
+
+      const nodesWithTypeParams = [
+        ...sourceFile.getInterfaces(),
+        ...sourceFile.getClasses(),
+        ...sourceFile.getTypeAliases(),
+        ...sourceFile.getFunctions(),
+        ...sourceFile.getVariableStatements().flatMap((v) =>
+          v.getDeclarations().flatMap((decl) => {
+            const initializer = decl.getInitializer();
+            if (initializer?.asKind?.(ts.SyntaxKind.ArrowFunction)) {
+              return [initializer];
+            }
+            return [];
+          })
+        ),
+      ];
+
+      for (const node of nodesWithTypeParams) {
+        // TODO: handle arrow function
+        const typeParams = (
+          node as InterfaceDeclaration | ClassDeclaration | TypeAliasDeclaration | FunctionDeclaration
+        ).getTypeParameters();
+        for (const typeParam of typeParams) {
+          if (!typeParam.getDefault()) {
+            typeParam.setDefault('any');
+            modified = true;
+          }
+        }
+      }
+
+      //   if (modified) {
+      // console.log("Modified:", sourceFile.getFilePath());
+      // sourceFile.saveSync();
+      console.log('Modified content:', sourceFile.getFullText());
+      //   }
+
+      const ass = sourceFile
+        .getInterfaceOrThrow('TestInterface1')
+        .getType()
+        .isAssignableTo(sourceFile.getInterfaceOrThrow('TestInterface2').getType()); // false
+      console.log('TestInterface1 is assignable to TestInterface2:', ass);
+    }
+  });
+
+  test('e2e', async () => {
+    /// RLC
+    // const baselinePath =
+    //   'C:/Users/wanl/workspace/azure-sdk-for-js/sdk/deviceupdate/iot-device-update-rest/review/iot-device-update.api.md';
+    // const currentPath =
+    //   'C:/Users/wanl/workspace/azure-sdk-for-js/sdk/deviceupdate/iot-device-update-rest/review/iot-device-update.api copy.md';
+
+    /// HLC
+    //  const baselinePath =
+    //       'C:/Users/wanl/workspace/azure-sdk-for-js/sdk/deviceupdate/arm-deviceupdate/review/arm-deviceupdate.api.md';
+    //     const currentPath =
+    //       'C:/Users/wanl/workspace/azure-sdk-for-js/sdk/deviceupdate/arm-deviceupdate/review/arm-deviceupdate.api copy.md';
+
+    /// MC
+    //  const baselinePath =
+    //       'C:/Users/wanl/workspace/azure-sdk-for-js/sdk/mongocluster/arm-mongocluster/review/arm-mongocluster.api.md';
+    //     const currentPath =
+    //       'C:/Users/wanl/workspace/azure-sdk-for-js/sdk/mongocluster/arm-mongocluster/review/arm-mongocluster.api copy.md';
+
+    /// HLC -> MC
+    const baselinePath = 'C:/Users/wanl/Downloads/hlc-mc/arm-chaos-hlc.api.md';
+    const currentPath = 'C:/Users/wanl/Downloads/hlc-mc/arm-chaos-mc.api.md';
+
+    const astContext = await createAstContext(
+      { path: baselinePath },
+      { path: currentPath },
+      '.tmp-breaking-change-detect',
+      true
+    );
+    const resInterfaces = astContext.baseline.getInterfaces().map((i) => {
+      const diffPairs = patchInterface(i.getName(), astContext, AssignDirection.CurrentToBaseline);
+      return { name: i.getName(), pairs: diffPairs };
+    });
+    const resFunctions = astContext.baseline.getFunctions().map((f) => {
+      const diffPairs = patchFunction(f.getName()!, astContext);
+      return { name: f.getName(), pairs: diffPairs };
+    });
+    const resTypeAliases = astContext.baseline.getTypeAliases().map((t) => {
+      const diffPairs = patchTypeAlias(t.getName()!, astContext, AssignDirection.CurrentToBaseline);
+      return { name: t.getName(), pairs: diffPairs };
+    });
+    const resEnums = astContext.baseline.getEnums().map((e) => {
+      const diffPairs = patchEnum(e.getName(), astContext, AssignDirection.CurrentToBaseline);
+      return { name: e.getName(), pairs: diffPairs };
+    });
+    const resClasses = astContext.baseline.getClasses().map((c) => {
+      const diffPairs = patchClass(c.getName()!, astContext, AssignDirection.CurrentToBaseline);
+      return { name: c.getName(), pairs: diffPairs };
+    });
+
+    let count = 0;
+    let names: string[] = [];
+    [...resInterfaces, ...resFunctions, ...resTypeAliases, ...resEnums, ...resClasses].forEach((r) => {
+      if (r.pairs.length === 0) return;
+      count++;
+      names.push(r.name!);
+      console.log('🚀 ~ e2e ~ res:', r.name);
+      r.pairs.forEach((pair) => {
+        console.log('🚀 ~ e2e ~ pair:', pair);
+      });
+    });
+    console.log('🚀 ~ e2e ~ count:', count, names);
   });
 });

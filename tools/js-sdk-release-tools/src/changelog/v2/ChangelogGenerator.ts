@@ -327,7 +327,6 @@ export class ChangelogGenerator {
   }
 
   private generateForClasses(diffPairs: DiffPair[], className: string): void {
-    console.log('🚀 ~ ChangelogGenerator ~ diffPairs.forEach ~ diffPairs:', diffPairs);
     diffPairs.forEach((p) => {
       // class added
       if (p.location === DiffLocation.Class && this.hasReasons(p.reasons, DiffReasons.Added)) {
@@ -425,7 +424,6 @@ export class ChangelogGenerator {
         interfaceName: baselineInterfaceName,
         signatureName: signatureName(),
       });
-      console.log('🚀 ~ operation sig change:', message);
       this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
     }
     // operation signature's parameter list changed
@@ -479,15 +477,6 @@ export class ChangelogGenerator {
   }
 
   private generateForRoutesInterface(diffPair: DiffPair, interfaceName: string) {
-    const getInterfaceNameInBaseline = (): string => {
-      if (
-        this.detectContext.sdkTypes.source === SDKType.ModularClient &&
-        this.detectContext.sdkTypes.target === SDKType.HighLevelClient
-      )
-        return interfaceName.substring(0, interfaceName.length - 'Operations'.length);
-      return interfaceName;
-    };
-    const baselineInterfaceName = getInterfaceNameInBaseline();
     /** routes interface changes */
     // routes interface added
     if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
@@ -523,7 +512,6 @@ export class ChangelogGenerator {
     if (diffPair.location === DiffLocation.Parameter && this.hasReasons(diffPair.reasons, DiffReasons.TypeChanged)) {
       const path = getPath(diffPair.source?.node.getParent() || diffPair.target?.node.getParent());
       const message = template(this.routesOperationSignatureChangedTemplate, { path });
-      console.log('🚀 ~ operation sig change:', message);
       this.addChangelogItem(ChangelogItemCategory.OperationSignatureChanged, message);
     }
     // operation signature's parameter list changed
@@ -578,22 +566,24 @@ export class ChangelogGenerator {
       const message = template(this.modelRemovedTemplate, { interfaceName });
       this.addChangelogItem(ChangelogItemCategory.ModelRemoved, message);
     }
-    // model's optional property added
     if (diffPair.location === DiffLocation.Property && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
-      const message = template(this.modelOptionalPropertyAddedTemplate, {
-        interfaceName,
-        propertyName: diffPair.source!.name,
-      });
-      this.addChangelogItem(ChangelogItemCategory.ModelOptionalPropertyAdded, message);
+      // model's optional property added
+      if (diffPair.source?.node.getSymbolOrThrow().isOptional()) {
+        const message = template(this.modelOptionalPropertyAddedTemplate, {
+          interfaceName,
+          propertyName: diffPair.source!.name,
+        });
+        this.addChangelogItem(ChangelogItemCategory.ModelOptionalPropertyAdded, message);
+        // model's required property added
+      } else {
+        const message = template(this.modelRequiredPropertyAddedTemplate, {
+          interfaceName,
+          propertyName: diffPair.source!.name,
+        });
+        this.addChangelogItem(ChangelogItemCategory.ModelRequiredPropertyAdded, message);
+      }
     }
-    // model's required property added
-    if (diffPair.location === DiffLocation.Property && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
-      const message = template(this.modelRequiredPropertyAddedTemplate, {
-        interfaceName,
-        propertyName: diffPair.source!.name,
-      });
-      this.addChangelogItem(ChangelogItemCategory.ModelRequiredPropertyAdded, message);
-    }
+
     // model's property type changed
     // NOTE: not detected in v1 except for union type
     // NOTE: discuss if extend union type to be breaking or not

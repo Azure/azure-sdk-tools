@@ -17,7 +17,7 @@ import { TSESLint } from '@typescript-eslint/utils';
 import ignoreInlineDeclarationsInOperationGroup from './common/rules/ignore-inline-declarations-in-operation-group';
 import { glob } from 'glob';
 import { logger } from '../logging/logger';
-import { Project, ScriptTarget } from 'ts-morph';
+import { Project, ScriptTarget, SourceFile, Node, SyntaxKind } from 'ts-morph';
 
 export interface ApiViewOptions {
   apiView?: string;
@@ -151,7 +151,6 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
 }
 
 export function extractCodeFromApiView(content: string): string {
-  console.log("🚀 ~ extractCodeFromApiView ~ content:", content)
   const codeBlocks: string[] = [];
   const renderer = new Renderer();
   renderer.code = ({ text }) => {
@@ -160,8 +159,6 @@ export function extractCodeFromApiView(content: string): string {
   };
   marked(content, { renderer });
   if (codeBlocks.length !== 1) throw new Error(`Expected 1 code block, got ${codeBlocks.length}.`);
-
-  console.log("🚀 ~ extractCodeFromApiView ~ codeBlocks:", codeBlocks)
   return codeBlocks[0];
 }
 
@@ -171,8 +168,6 @@ export async function createAstContext(
   tempFolder: string,
   cleanUpAtTheEnd = false
 ) {
-  console.log("🚀 ~ baselineOptions apiview:", baselineOptions.apiView)
-  console.log("🚀 ~ currentOptions apiview:", currentOptions.apiView)
   try {
     const projectContext = await prepareProject(currentOptions, baselineOptions, tempFolder);
     const project = new Project({
@@ -180,8 +175,6 @@ export async function createAstContext(
     });
     const baseline = project.createSourceFile('review/baseline/index.ts', projectContext.baseline.code);
     const current = project.createSourceFile('review/current/index.ts', projectContext.current.code);
-    console.log('🚀 ~ projectContext.baseline.code:', projectContext.baseline.code);
-    console.log('🚀 ~ projectContext.current.code:', projectContext.current.code);
     return { baseline, current };
   } finally {
     if (cleanUpAtTheEnd) {

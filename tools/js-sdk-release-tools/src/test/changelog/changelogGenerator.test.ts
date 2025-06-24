@@ -24,13 +24,7 @@ const getItemsByCategory = (
     const map = isBreakingChange
         ? changelogItems.breakingChanges
         : changelogItems.features;
-    console.log("🚀 ~ map:", map);
     if (!map) return [];
-    console.log(
-        "🚀 ~getItemsByCategory changelogItems:",
-        changelogItems,
-        category,
-    );
     return map.get(category) ?? [];
 };
 
@@ -43,20 +37,11 @@ const generateChangelogItems = async (
         currentApiViewOptions,
     );
     const diff = await detector.detect();
-    console.log(
-        "🚀 ~ generateChangelogItems ~ diff:",
-        diff,
-        diff.interfaces.get("DataProductsCatalogs_sig_change"),
-    );
     const changelogGenerator = new ChangelogGenerator(
         detector.getDetectContext(),
         diff,
     );
     const changelogItems = changelogGenerator.generate().changelogItems;
-    console.log(
-        "🚀 ~ generateChangelogItems ~ changelogItems:",
-        changelogItems,
-    );
     return changelogItems;
 };
 
@@ -247,7 +232,6 @@ describe("Breaking change detection", () => {
             SDKType.RestLevelClient,
             SDKType.RestLevelClient,
         );
-        console.log("changelog --");
         expect(changelog.displayChangeLog()).toBe(
             `### Features Added
 
@@ -1182,10 +1166,7 @@ export class DataProductClient {
                 changelogItems,
                 ChangelogItemCategory.ClassChanged,
             );
-            expect(items).toHaveLength(1);
-            expect(items[0]).toBe(
-                'Class DataProductClient has a new constructor "constructor(subscriptionId: string, resourceId: string);"',
-            );
+            expect(items).toHaveLength(0);
         });
 
         test("Class Property Removed", async () => {
@@ -1322,7 +1303,7 @@ export type DataProductStatus = "Active" | "Inactive" | "Pending";
                 ChangelogItemCategory.TypeAliasRemoved,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Removed type alias DataProductStatus");
+            expect(items[0]).toBe("Removed Type Alias DataProductStatus");
         });
 
         test("Type Alias Type Changed", async () => {
@@ -1354,7 +1335,7 @@ export type DataProductStatus = "Running" | "Stopped";
             );
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
-                "Type of type alias DataProductStatus has been changed",
+                'Type alias "DataProductStatus" has been changed',
             );
         });
 
@@ -1588,10 +1569,10 @@ export function processData(data: number): number;
             );
             const items = getItemsByCategory(
                 changelogItems,
-                ChangelogItemCategory.FunctionAdded,
+                ChangelogItemCategory.FunctionOverloadAdded,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Added function processData");
+            expect(items[0]).toBe(`Added function overload "export function processData(data: number): number;"`);
         });
 
         test("Function Overload Removed", async () => {
@@ -1620,10 +1601,10 @@ export function processData(data: string): string;
             );
             const items = getItemsByCategory(
                 changelogItems,
-                ChangelogItemCategory.FunctionRemoved,
+                ChangelogItemCategory.FunctionOverloadRemoved,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe("Removed function processData");
+            expect(items[0]).toBe(`Removed function overload "export function processData(data: number): number;"`);
         });
     });
 

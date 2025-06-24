@@ -71,15 +71,10 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
     if (file === "CHANGELOG.md") {
         sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
-        console.log("🚀 ~ tryCreateLastestStableNpmViewFromGithub changlog ~ sdkFilePath:", sdkFilePath)
         targetFilePath = path.join(npmPackagePath, file);
-        console.log("🚀 ~ tryCreateLastestStableNpmViewFromGithub changlog ~ targetFilePath:", targetFilePath)
     }
     else {
         sdkFilePath = relative(sdkRootPath, getApiReviewPath(packageFolderPath)).replace(/\\/g, "/");
-        console.log("🚀 ~ tryCreateLastestStableNpmViewFromGithub ~ sdkRootPath:", sdkRootPath)
-        console.log("🚀 ~ tryCreateLastestStableNpmViewFromGithub ~ getApiReviewPath(packageFolderPath):", getApiReviewPath(packageFolderPath))
-        console.log("🚀 ~ tryCreateLastestStableNpmViewFromGithub ~ sdkFilePath:", sdkFilePath)
         targetFilePath = getApiReviewPath(npmPackagePath)
     }
 

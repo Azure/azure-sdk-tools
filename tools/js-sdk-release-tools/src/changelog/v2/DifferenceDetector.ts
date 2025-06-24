@@ -15,7 +15,7 @@ import {
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
-import { ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
+import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { JsxEmit } from 'typescript';
 import { RestLevelClientDifferencesPostProcessor } from './RestLevelClientDifferencesPostProcessor.js';
@@ -51,8 +51,6 @@ export class DifferenceDetector {
     private baselineApiViewOptions: ApiViewOptions,
     private currentApiViewOptions: ApiViewOptions
   ) {
-    console.log('🚀 ~ DifferenceDetector ~ currentApiViewOptions:', currentApiViewOptions);
-    console.log('🚀 ~ DifferenceDetector ~ baselineApiViewOptions:', baselineApiViewOptions);
     this.tempFolder = join('~/.tmp-breaking-change-detect-' + Math.random().toString(36).substring(7));
   }
 
@@ -75,13 +73,10 @@ export class DifferenceDetector {
   }
 
   private postprocess() {
-    console.log("🚀 ~ DifferenceDetector ~ postprocess ~ sdkType:", this.currentApiViewOptions.sdkType)
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
-    console.log('🚀 ~ DifferenceDetector ~ postprocess ~ RLC');
     // use Routes specific detection
     this.result?.interfaces.delete('Routes');
     const routesDiffPairs = patchRoutes(this.context!);
-    console.log("🚀 ~ DifferenceDetector ~ postprocess ~ routesDiffPairs:", routesDiffPairs)
     this.result?.interfaces.set('Routes', routesDiffPairs);
 
     const getRenameAbleInlineDeclarationNameSet = (sourceFile: SourceFile) => {
@@ -119,14 +114,11 @@ export class DifferenceDetector {
     });
     const sourceFile = project.createSourceFile('index.ts', code, { overwrite: true });
 
-    console.log('🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ code:', code);
-    console.log(
-      '🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- before:',
-      sourceFile.getFullText()
-    );
     sourceFile
       .getInterfaces()
       .filter((i) => {
+        const hasMethod = i.getMembers().filter((m) => isPropertyMethod(m.getSymbolOrThrow())).length > 0;
+        if (!hasMethod) return false;
         const isEveryMemberMethod = i.getMembers().every((m) => isPropertyMethod(m.getSymbolOrThrow()));
         return isEveryMemberMethod;
       })
@@ -148,10 +140,6 @@ export class DifferenceDetector {
           });
         }
       });
-    console.log(
-      '🚀 ~ DifferenceDetector ~ convertHighLevelClientToModularClientCode ~ sourceFile -- after:',
-      sourceFile.getFullText()
-    );
     return sourceFile.getFullText();
   }
 
@@ -177,9 +165,7 @@ export class DifferenceDetector {
     `;
     };
     const baselineApiView = generateApiView(highLevelCodeInModularWay);
-    console.log('🚀 ~ DifferenceDetector ~ preprocess ~ baselineApiView:', baselineApiView);
     const currentApiView = generateApiView(this.context!.current.getFullText()!);
-    console.log('🚀 ~ DifferenceDetector ~ preprocess ~ currentApiView:', currentApiView);
     this.context = await createAstContext({ apiView: baselineApiView }, { apiView: currentApiView }, this.tempFolder);
   }
 
@@ -200,61 +186,68 @@ export class DifferenceDetector {
     return uniquefy(namesFromBoth);
   }
 
-  private async detectCore(): Promise<void> {
-    const getFunctionNames = (sourceFile: SourceFile) => {
-      return sourceFile
-        .getStatements()
-        .filter((d) => d.getKind() === SyntaxKind.FunctionDeclaration)
-        .map((d) => d.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName()!);
-    };
+  // TODO: support type parameters
+  private hasTypeParametersCore(name: string, kind: SyntaxKind, sourceFile: SourceFile): boolean {
+    switch (kind) {
+      case SyntaxKind.InterfaceDeclaration:
+        return (sourceFile.getInterface(name)?.getTypeParameters().length ?? 0) > 0;
+      case SyntaxKind.ClassDeclaration:
+        return (sourceFile.getClass(name)?.getTypeParameters().length ?? 0) > 0;
+      case SyntaxKind.TypeAliasDeclaration:
+        return (sourceFile.getTypeAlias(name)?.getTypeParameters().length ?? 0) > 0;
+      case SyntaxKind.FunctionDeclaration:
+        return (
+          (this.getFunctions(sourceFile)
+            .find((d) => d.getName() === name)
+            ?.getTypeParameters().length ?? 0) > 0
+        );
+      default:
+        return false;
+    }
+  }
 
+  private hasTypeParameters(name: string, kind: SyntaxKind): boolean {
+    return (
+      this.hasTypeParametersCore(name, kind, this.context!.baseline) ||
+      this.hasTypeParametersCore(name, kind, this.context!.current)
+    );
+  }
+
+  private getFunctions(sourceFile: SourceFile): FunctionDeclaration[] {
+    return sourceFile
+      .getStatements()
+      .filter((d) => d.getKind() === SyntaxKind.FunctionDeclaration)
+      .map((d) => d.asKindOrThrow(SyntaxKind.FunctionDeclaration));
+  }
+
+  private async detectCore(): Promise<void> {
     const interfaceNames = this.getUniqueDeclarationNames((s) => s.getInterfaces().map((i) => i.getName()));
     const classNames = this.getUniqueDeclarationNames((s) => s.getClasses().map((i) => i.getName()!));
     const typeAliasNames = this.getUniqueDeclarationNames((s) => s.getTypeAliases().map((i) => i.getName()));
-    const functionNames = this.getUniqueDeclarationNames((s) => getFunctionNames(s));
+    const functionNames = this.getUniqueDeclarationNames((s) => this.getFunctions(s).map((d) => d.getName()!));
     const enumNames = this.getUniqueDeclarationNames((s) => s.getEnums().map((i) => i.getName()));
-
-    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ interfaceNames:', interfaceNames);
-    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ classNames:', classNames);
-    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ typeAliasNames:', typeAliasNames);
-    console.log('🚀 ~ DifferenceDetector ~ detectCore ~ functionNames:', functionNames);
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
+      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) return map;
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
-      console.log(
-        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.baseline:',
-        this.context?.baseline.getText()
-      );
-      console.log(
-        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ this.context.current:',
-        this.context?.current.getText()
-      );
-      console.log('🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs:', diffPairs);
-      console.log(
-        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs baseline:',
-        diffPairs.length > 0 ? diffPairs[0].target?.node.getText() : 'No target'
-      );
-      console.log(
-        '🚀 ~ DifferenceDetector ~ interfaceDiffPairs ~ diffPairs current:',
-        diffPairs.length > 0 ? diffPairs[0].source?.node.getText() : 'No source'
-      );
-
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const classDiffPairs = classNames.reduce((map, n) => {
+      if (this.hasTypeParameters(n, SyntaxKind.ClassDeclaration)) return map;
       const diffPairs = patchClass(n, this.context!, AssignDirection.CurrentToBaseline);
-      console.log('🚀 ~ DifferenceDetector ~ classDiffPairs ~ diffPairs for class:', n, diffPairs);
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const typeAliasDiffPairs = typeAliasNames.reduce((map, n) => {
+      if (this.hasTypeParameters(n, SyntaxKind.TypeAliasDeclaration)) return map;
       const diffPairs = patchTypeAlias(n, this.context!, AssignDirection.CurrentToBaseline);
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const functionDiffPairs = functionNames.reduce((map, n) => {
+      if (this.hasTypeParameters(n, SyntaxKind.FunctionDeclaration)) return map;
       // TODO: add assign direction
       const diffPairs = patchFunction(n, this.context!);
       map.set(n, diffPairs);

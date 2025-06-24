@@ -28,8 +28,6 @@ export async function createTempFolder(tempFolderPrefix: string): Promise<string
 }
 
 export function createTestAstContext(baselineCode: string, currentCode: string): Promise<AstContext> {
-  console.log("🚀 ~ createTestAstContext ~ baselineCode:", baselineCode)
-  console.log("🚀 ~ createTestAstContext ~ currentCode:", currentCode)
   const tempFolder = join('.tmp-breaking-change-detect-' + Math.random().toString(36).substring(7));
   const generateApiView = (code: string) => `
 \`\`\` ts

@@ -163,6 +163,15 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('string');
       expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('number');
     });
+    
+    test('change classic property type to equivalent type alias', async () => {
+      const baselineApiView = `export interface TestInterface { prop: string; }`;
+      const currentApiView = `export type Str = string; export interface TestInterface { prop: Str; }`;
+
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
 
     test('detect property move to parent model', async () => {
       const baselineApiView = `
@@ -215,7 +224,6 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
-    // TODO: this should be a breaking change?
     test('change classic property mutable to readonly', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { readonly prop: string; }`;

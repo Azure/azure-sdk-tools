@@ -46,7 +46,6 @@ const findMappingCallSignatureForRoutes: FindMappingCallSignatureLikeDeclaration
 };
 
 export function patchRoutes(astContext: AstContext): DiffPair[] {
-  console.log("🚀 ~ patchRoutes ~ ")
   const baseline = astContext.baseline.getInterface('Routes');
   const current = astContext.current.getInterface('Routes');
 
@@ -82,7 +81,6 @@ export function patchTypeAlias(name: string, astContext: AstContext, assignDirec
 }
 
 export function patchFunction(name: string, astContext: AstContext): DiffPair[] {
-  console.log('🚀 ~ patchFunction ~ start:');
   const getFunctions = (source: SourceFile) =>
     source
       .getStatements()
@@ -105,7 +103,6 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
   );
-  console.log('🚀 ~ patchFunction ~ addPair:', addPair);
   if (addPair) return [addPair];
 
   const removePair = detector.checkRemovedDeclaration(
@@ -164,9 +161,6 @@ export function patchInterface(name: string, astContext: AstContext, assignDirec
   const removePair = detector.checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
   if (removePair) return [removePair];
 
-  console.log('🚀 ~ patchInterface ~ baseline:', baseline?.getText());
-  console.log('🚀 ~ patchInterface ~ current:', current?.getText());
-
   const diffPairs = patchDeclaration(
     assignDirection,
     detector.findInterfaceDifferences.bind(detector),
@@ -197,8 +191,6 @@ export function patchDeclaration<T extends Node>(
   current: T,
   ...extra: any
 ): DiffPair[] {
-  console.log('🚀 ~ baseline:', baseline.getText());
-  console.log('🚀 ~ current:', current.getText());
   const updateAssignDirection = (pair: DiffPair) => {
     pair.assignDirection = assignDirection;
     return pair;

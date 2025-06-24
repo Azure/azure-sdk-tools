@@ -229,25 +229,37 @@ export class DifferenceDetector {
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) return map;
+      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) {
+        logger.warn(`Generic interface '${n}' breaking change detection is not supported.`);
+        return map;
+      }
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const classDiffPairs = classNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.ClassDeclaration)) return map;
+      if (this.hasTypeParameters(n, SyntaxKind.ClassDeclaration)) {
+        logger.warn(`Generic class '${n}' breaking change detection is not supported.`);
+        return map;
+      }
       const diffPairs = patchClass(n, this.context!, AssignDirection.CurrentToBaseline);
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const typeAliasDiffPairs = typeAliasNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.TypeAliasDeclaration)) return map;
+      if (this.hasTypeParameters(n, SyntaxKind.TypeAliasDeclaration)) {
+        logger.warn(`Generic type alias '${n}' breaking change detection is not supported.`);
+        return map;
+      }
       const diffPairs = patchTypeAlias(n, this.context!, AssignDirection.CurrentToBaseline);
       map.set(n, diffPairs);
       return map;
     }, new Map<string, DiffPair[]>());
     const functionDiffPairs = functionNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.FunctionDeclaration)) return map;
+      if (this.hasTypeParameters(n, SyntaxKind.FunctionDeclaration)) {
+        logger.warn(`Generic interface '${n}' breaking change detection is not supported.`);
+        return map;
+      }
       // TODO: add assign direction
       const diffPairs = patchFunction(n, this.context!);
       map.set(n, diffPairs);

@@ -99,6 +99,8 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
       FirstReleaseApproval[this.firstReleaseApproval], sortField, sortOrder).subscribe({
       next: (response : any) => {
         if (response.result && response.pagination) {
+          console.log("Response Result: ", response.result);
+          console.log("Response Pagination: ", response.pagination);
           if (resetReviews) {
             const arraySize = Math.ceil(response.pagination!.totalCount + Math.min(20, (0.05 * response.pagination!.totalCount))) // Add 5% extra rows to avoid flikering
             this.reviews = Array.from({ length: arraySize  });
@@ -106,7 +108,9 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
           }
 
           if (response.result.length > 0) {
+            console.log("Reviews 111: ", this.reviews);
             this.reviews.splice(this.insertIndex, this.insertIndex + response.result.length, ...response.result);
+            console.log("Reviews 113: ", this.reviews);
             this.insertIndex = this.insertIndex + response.result.length;
             this.pagination = response.pagination;
             this.totalNumberOfReviews = this.pagination?.totalCount!;

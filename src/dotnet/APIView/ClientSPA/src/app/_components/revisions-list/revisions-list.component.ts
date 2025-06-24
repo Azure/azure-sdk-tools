@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
@@ -134,6 +134,8 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       this.showDeletedAPIRevisions, this.showAPIRevisionsAssignedToMe).subscribe({
       next: (response: any) => {
         if (response.result && response.pagination) {
+          console.log("Response Result: ", response.result);
+          console.log("Response Pagination: ", response.pagination);
           if (resetReviews)
           {
             const arraySize = Math.ceil(response.pagination!.totalCount + Math.min(20, (0.05 * response.pagination!.totalCount))) // Add 5% extra rows to avoid flikering
@@ -145,7 +147,9 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
           if (response.result.length > 0)
           {
+            console.log("Revision 150: ", this.revisions);
             this.revisions.splice(this.insertIndex, this.insertIndex + response.result.length, ...response.result);
+            console.log("Revision 152: ", this.revisions);
             this.insertIndex = this.insertIndex + response.result.length;
             this.pagination = response.pagination;
             this.totalNumberOfRevisions = this.pagination?.totalCount!;

@@ -32,18 +32,10 @@ const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.
 
 async function createNewPackageDirAndTspLocation(
   outputDir: string,
-  emitterName: string,
   serviceDir: string,
   tspLocationData: TspLocation,
-  packageDir?: string,
+  packageDir: string,
 ): Promise<string> {
-    // The value of packageDir is configured in tspconfig.yaml under options.<emitter-name>.emitter-output-dir.
-    // If not specified, throw an error and show an example of a valid tspconfig.yaml.
-    if (!packageDir) {
-        throw new Error(
-        `Missing emitter-output-dir in ${emitterName} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
-        );
-    }
     let newPackageDir = joinPaths(outputDir, packageDir.replace("{service-dir}", serviceDir));
     if (!newPackageDir.includes(serviceDir)) {
         newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
@@ -114,13 +106,17 @@ export async function initCommand(argv: any) {
     if (argv["emitter-package-json-path"]) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
     }
-    outputDir = await createNewPackageDirAndTspLocation(
+    argv["legacyBehavior"] = (!configYaml?.options?.[emitter]?.["emitter-output-dir"] && configYaml?.options?.[emitter]?.["package-dir"]) ? true : false;
+
+    if (argv["legacyBehavior"]) {
+      Logger.warn(`Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`);
+      outputDir = await createNewPackageDirAndTspLocation(
         outputDir,
-        emitter,
         getServiceDir(configYaml, emitter),
         tspLocationData,
-        configYaml?.options?.[emitter]?.["emitter-output-dir"]
-    );
+        configYaml?.options?.[emitter]?.["package-dir"]
+      );
+    }
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
   } else {
@@ -128,6 +124,7 @@ export async function initCommand(argv: any) {
     if (!tspConfig.endsWith("tspconfig.yaml")) {
       tspConfig = joinPaths(tspConfig, "tspconfig.yaml");
     }
+
     let data;
     try {
       data = await readFile(tspConfig, "utf8");
@@ -156,23 +153,27 @@ export async function initCommand(argv: any) {
       // store relative path to repo root
       tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
     }
-    outputDir = await createNewPackageDirAndTspLocation(
-        outputDir,
-        emitter,
-        getServiceDir(configYaml, emitter),
-        tspLocationData,
-        configYaml?.options?.[emitter]?.["emitter-output-dir"]
-    );
+    if (argv["legacyBehavior"]) {
+        Logger.warn(`Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`);
+        outputDir = await createNewPackageDirAndTspLocation(
+            outputDir,
+            getServiceDir(configYaml, emitter),
+            tspLocationData,
+            configYaml?.options?.[emitter]?.["package-dir"]
+        );
+    }
   }
 
   if (!skipSyncAndGenerate) {
-    // update argv in case anything changed and call into sync and generate
-    argv["output-dir"] = outputDir;
-    if (!isUrl) {
-      // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
-      argv["local-spec-repo"] = tspConfig;
+    if (argv["legacyBehavior"]) {
+        // update argv in case anything changed and call into sync and generate
+        argv["output-dir"] = outputDir;
+        if (!isUrl) {
+        // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
+        argv["local-spec-repo"] = tspConfig;
+        }
+        await syncCommand(argv);
     }
-    await syncCommand(argv);
     await generateCommand(argv);
   }
   return outputDir;

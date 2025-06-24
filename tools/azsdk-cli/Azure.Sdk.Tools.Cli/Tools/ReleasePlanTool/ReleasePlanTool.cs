@@ -151,6 +151,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
+                // Check for existing release plan for the given pull request URL.
+                if (string.IsNullOrEmpty(specPullRequestUrl))
+                {
+                    return "API spec pull request URL is required to create a release plan.";
+                }
+                logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
+                var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
+                if (existingReleasePlan != null)
+                {
+                    return $"Release plan already exists for the pull request: {specPullRequestUrl}. Release Plan ID: {existingReleasePlan.ReleasePlanId}";
+                }
+                logger.LogInformation("Release plan does not exist for the given pull request URL.");
+
                 if (string.IsNullOrEmpty(typeSpecProjectPath))
                 {
                     throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");

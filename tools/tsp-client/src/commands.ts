@@ -317,7 +317,7 @@ export async function generateCommand(argv: any) {
     }
     await npmCommand(srcDir, args);
   }
-  const [success, exampleCmd] = await compileTsp({
+  const result = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
     resolvedMainFilePath,
@@ -328,7 +328,7 @@ export async function generateCommand(argv: any) {
 
   if (argv["debug"]) {
     Logger.warn(`Example of how to compile using the tsp commandline. NOTE: tsp-client does NOT directly run this command, results may vary:
-        ${exampleCmd}
+        ${result.exampleCmd}
         `);
   }
 
@@ -339,7 +339,7 @@ export async function generateCommand(argv: any) {
     await removeDirectory(tempRoot);
   }
 
-  if (!success) {
+  if (!result.success) {
     Logger.error("Failed to generate client");
     process.exit(1);
   }

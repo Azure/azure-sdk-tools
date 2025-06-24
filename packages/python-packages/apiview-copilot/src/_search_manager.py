@@ -1,3 +1,8 @@
+from collections import deque
+import copy
+import os
+from typing import List, Dict, Optional
+
 from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient, SearchItemPaged
 from azure.search.documents.models import (
@@ -8,14 +13,9 @@ from azure.search.documents.models import (
     QueryCaptionType,
     SemanticErrorMode,
 )
-from azure.identity import DefaultAzureCredential
 
+from src._credential import get_credential
 from src._models import Guideline, Example, Memory
-
-from collections import deque
-import copy
-import os
-from typing import List, Dict, Optional
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -33,7 +33,7 @@ COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
 AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
 SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
 
-CREDENTIAL = DefaultAzureCredential()
+CREDENTIAL = get_credential()
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")

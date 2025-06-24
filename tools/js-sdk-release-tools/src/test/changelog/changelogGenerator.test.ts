@@ -20,7 +20,7 @@ const getItemsByCategory = (
     changelogItems: ChangelogItems,
     category: ChangelogItemCategory,
 ) => {
-    const isBreakingChange = category >= 1000;
+    const isBreakingChange = category >= 10000;
     const map = isBreakingChange
         ? changelogItems.breakingChanges
         : changelogItems.features;
@@ -1145,6 +1145,46 @@ export class DataProductClient {
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
                 "Class DataProductClient has a new signature",
+            );
+        });
+
+        test("Class constructor added", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: string, subscriptionId: string);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: string, subscriptionId: string);
+    constructor(subscriptionId: string, resourceId: string);
+    readonly dataProducts: DataProducts;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ClassChanged,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                'Class DataProductClient has a new constructor "constructor(subscriptionId: string, resourceId: string);"',
             );
         });
 

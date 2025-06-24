@@ -1,45 +1,63 @@
 import template from 'string-template';
 import { DetectContext, DetectResult } from './DifferenceDetector.js';
 import { DiffLocation, DiffPair, DiffReasons } from 'typescript-codegen-breaking-change-detector';
-import { CallSignatureDeclaration, InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
+import { InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
 import { SDKType } from '../../common/types.js';
 
+// NOTE: enum value matters for the order of output changelog items
 export enum ChangelogItemCategory {
   /** features */
+  // operation group
   OperationGroupAdded = 0,
-  OperationAdded = 1,
-  ModelAdded = 2,
-  ClassAdded = 3,
-  TypeAliasAdded = 4,
-  ModelOptionalPropertyAdded = 5,
-  EnumAdded = 6,
-  EnumMemberAdded = 7,
-  FunctionAdded = 8,
-  FunctionOverloadAdded = 9,
-  RoutesGroupAdded = 10,
-  RoutesGroupRemoved = 11,
+  // routes group (only for rest level client)
+  RoutesGroupAdded = 100,
+  // operation
+  OperationAdded = 200,
+  // class
+  ClassAdded = 300,
+  ClassConstructorAdded = 301,
+  // model
+  ModelAdded = 400,
+  ModelOptionalPropertyAdded = 401,
+  // type alias
+  TypeAliasAdded = 500,
+  // function
+  FunctionAdded = 600,
+  FunctionOverloadAdded = 601,
+  // enum
+  EnumAdded = 700,
+  EnumMemberAdded = 701,
 
   /** breaking changes */
-  OperationGroupRemoved = 1000,
-  OperationRemoved = 1001,
-  OperationSignatureChanged = 1002,
-  ClassRemoved = 1003,
-  ClassChanged = 1004,
-  ClassPropertyRemoved = 1005,
-  ClassPropertyOptionalToRequired = 1006,
-  ModelRemoved = 1008,
-  ModelRequiredPropertyAdded = 1009,
-  ModelPropertyTypeChanged = 1010,
-  ModelPropertyRemoved = 1011,
-  ModelPropertyOptionalToRequired = 1012,
-  ModelPropertyRequiredToOptional = 1013,
-  TypeAliasRemoved = 1014,
-  TypeAliasTypeChanged = 1015,
-  FunctionRemoved = 1016,
-  FunctionOverloadRemoved = 1017,
-  FunctionSignatureChanged = 1018,
-  EnumRemoved = 1019,
-  EnumMemberRemoved = 1020,
+  // operation group
+  OperationGroupRemoved = 10000,
+  // routes group
+  RoutesGroupRemoved = 20000,
+  // operation
+  OperationRemoved = 30000,
+  OperationSignatureChanged = 30001,
+  // class
+  ClassRemoved = 40000,
+  ClassChanged = 40001,
+  ClassPropertyRemoved = 40002,
+  ClassPropertyOptionalToRequired = 40003,
+  // model
+  ModelRemoved = 50000,
+  ModelRequiredPropertyAdded = 50001,
+  ModelPropertyTypeChanged = 50002,
+  ModelPropertyRemoved = 50003,
+  ModelPropertyOptionalToRequired = 50004,
+  ModelPropertyRequiredToOptional = 50005,
+  // type alias
+  TypeAliasRemoved = 60000,
+  TypeAliasTypeChanged = 60001,
+  // function
+  FunctionRemoved = 70000,
+  FunctionOverloadRemoved = 70001,
+  FunctionSignatureChanged = 70002,
+  // enum
+  EnumRemoved = 80000,
+  EnumMemberRemoved = 80001,
 }
 
 export interface ChangelogResult {
@@ -92,15 +110,18 @@ export class ChangelogGenerator {
     'Parameter {propertyName} of interface {interfaceName} is now required';
 
   /** class */
+  // TODO: add more detection for class changes
   private classAddedTemplate = 'Added Class {className}';
   private classRemovedTemplate = 'Deleted Class {className}';
   private classPropertyRemovedTemplate = 'Class {className} no longer has parameter {propertyName}';
   private classPropertyOptionalToRequiredTemplate = 'Parameter {propertyName} of class {className} is now required';
   // NOTE: not detected in v1 except constructor and it's parameters
   private classChangedTemplate = 'Class {className} has a new signature';
+  // NOTE: not in v1
+  private classConstructorAddedTemplate = 'Class {className} has a new constructor "{constructorSignature}"';
 
-  // TODO: add detection for extended type
   /** type alias */
+  // TODO: add more detection for class changes
   private typeAliasAddedTemplate = 'Added Type Alias {typeName}';
   // NOTE: not in v1
   private typeAliasRemovedTemplate = 'Removed Type Alias {typeName}';
@@ -318,13 +339,15 @@ export class ChangelogGenerator {
         const message = template(this.classRemovedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassRemoved, message);
       }
+      // class signature added
+      if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Added)) {
+        const constructorSignature = p.source!.node.getText();
+        const message = template(this.classConstructorAddedTemplate, { className, constructorSignature });
+        this.addChangelogItem(ChangelogItemCategory.ClassConstructorAdded, message);
+      }
       // class type changed
       // NOTE: not detected in v1 except constructor and it's parameters
-      if (
-        p.location === DiffLocation.Signature &&
-        // TODO: from v1, which treat adding constructor as breaking, is it true?
-        (this.hasReasons(p.reasons, DiffReasons.Added) || this.hasReasons(p.reasons, DiffReasons.Removed))
-      ) {
+      if (p.location === DiffLocation.Signature && this.hasReasons(p.reasons, DiffReasons.Removed)) {
         const message = template(this.classChangedTemplate, { className });
         this.addChangelogItem(ChangelogItemCategory.ClassChanged, message);
       }

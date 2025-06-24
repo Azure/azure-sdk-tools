@@ -5,6 +5,7 @@ from semantic_kernel.functions import kernel_function
 import logging
 
 from src._models import Memory
+from src._utils import get_architects_for_language
 
 from azure.cosmos import CosmosClient
 from azure.identity import DefaultAzureCredential
@@ -58,8 +59,17 @@ class DatabasePlugin:
             title (str): The title of the memory.
             is_exception (bool): Whether the memory is an exception to established guidelines.
             service_name (str): The service related to the memory, if any.
-            language (str): The programming language of the memory.
+            language (str): The programming language of the memory, if any.
         """
+        if not language:
+            return {"status": "error", "message": "Language must be specified."}
+
+        # Check architect permission
+        user = get_current_user()
+        allowed_architects = get_architects_for_language(language)
+        if user not in allowed_architects:
+            return {"status": "error", "message": f"User '{user}' is not an architect for language '{language}'."}
+
         client = get_database_client()
         guideline_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
         memory_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("memories")
@@ -85,3 +95,13 @@ class DatabasePlugin:
         guideline_container.upsert_item(guideline)
         memory_container.upsert_item(memory.model_dump())
         return {"status": "Memory added successfully"}
+
+
+def get_current_user() -> str:
+    """
+    Placeholder function to get the current user.
+    In a real application, this would retrieve the user from the authentication context.
+    """
+    # For demonstration purposes, we return a hardcoded user.
+    # Replace this with actual user retrieval logic.
+    return "tjprescott"

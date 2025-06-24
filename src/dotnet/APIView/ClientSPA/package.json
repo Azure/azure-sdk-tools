@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --output-path=../APIViewWeb/wwwroot/spa --configuration production",
+    "build": "ng build --output-path=../APIViewWeb/wwwroot/spa --configuration production --source-map",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

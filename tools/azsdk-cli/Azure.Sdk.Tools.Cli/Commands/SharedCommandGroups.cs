@@ -8,22 +8,28 @@ namespace Azure.Sdk.Tools.Cli.Commands
     public static class SharedCommandGroups
     {
 
-        public static readonly CommandGroup AzurePipelines = new CommandGroup(
+        public static readonly CommandGroup AzurePipelines = new(
             Verb: "azp",
             Description: "Azure Pipelines Tool",
-            Options: new List<Option>()
+            Options: []
         );
 
-        public static readonly CommandGroup EngSys = new CommandGroup(
+        public static readonly CommandGroup EngSys = new(
             Verb: "eng",
             Description: "Internal azsdk engineering system commands",
-            Options: new List<Option>()
+            Options: []
         );
 
-        public static readonly CommandGroup Cleanup = new CommandGroup(
+        public static readonly CommandGroup Cleanup = new(
             Verb: "cleanup",
             Description: "Cleanup commands",
-            Options: new List<Option>()
+            Options: []
+        );
+
+        public static readonly CommandGroup Log = new(
+            Verb: "log",
+            Description: "Log processing commands",
+            Options: []
         );
     }
 }

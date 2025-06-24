@@ -39,8 +39,8 @@ extends:
           - job: 'Build'
 
             pool:
-              name: $(LINUXNEXTPOOL)
-              image: $(LINUXNEXTVMIMAGE)
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
               os: linux
 
             steps:

@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(AnalyzePipelinesTool),
             typeof(PipelineDetailsTool),
             typeof(CleanupTool),
+            typeof(LogAnalysisTool),
             typeof(HostServerTool),
             typeof(ReleasePlanTool),
             typeof(SpecCommonTools),
@@ -74,7 +75,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var result = parser.Parse(args);
 
             var raw = result.GetValueForOption(ToolOption);
-            if (string.IsNullOrWhiteSpace(raw)) {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
                 return new string[] { };
             }
 

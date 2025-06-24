@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { UserProfileService } from './_services/user-profile/user-profile.service';
 import { ConfigService } from './_services/config/config.service';
 import { ScrollBarSize } from './_models/userPreferenceModel';
@@ -13,7 +14,7 @@ export class AppComponent  implements OnInit{
   scrollBarHeight: string = '10px';
   scrollBarWidth: string = '10px';
 
-  constructor(private userProfileService: UserProfileService, private configService: ConfigService) { }
+  constructor(private userProfileService: UserProfileService, private configService: ConfigService, private titleService: Title) { }
 
   ngOnInit(): void {
     this.setAppTheme();

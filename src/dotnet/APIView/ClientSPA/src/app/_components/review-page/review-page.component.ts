@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Observable, Subject, take, takeUntil } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
@@ -84,7 +85,7 @@ export class ReviewPageComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
-    private samplesRevisionService: SamplesRevisionService) {}
+    private samplesRevisionService: SamplesRevisionService, private titleService: Title) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -251,6 +252,7 @@ export class ReviewPageComponent implements OnInit {
         next: (review: Review) => {
           this.review = review;
           this.updateLoadingStateBasedOnReviewDeletionStatus();
+          this.updatePageTitle();
         }
       });
   }
@@ -599,6 +601,14 @@ export class ReviewPageComponent implements OnInit {
       return true;
     }
     return false;
+  }
+
+  updatePageTitle() {
+    if (this.review?.packageName) {
+      this.titleService.setTitle(`${this.review.packageName} - APIView`);
+    } else {
+      this.titleService.setTitle('APIView');
+    }
   }
   
   ngOnDestroy() {

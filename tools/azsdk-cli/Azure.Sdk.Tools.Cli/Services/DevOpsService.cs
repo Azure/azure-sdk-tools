@@ -39,10 +39,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 _token = (new DefaultAzureCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
-                if (_token == null)
-                {
-                    _token = (new InteractiveBrowserCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
-                }
             }
             catch
             {

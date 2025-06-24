@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from src.agent._api import router as agent_router
 from fastapi import APIRouter
 import prompty
-import azure.prompty
+import prompty.azure
 from pydantic import BaseModel
 from semantic_kernel.agents import AzureAIAgentThread
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException

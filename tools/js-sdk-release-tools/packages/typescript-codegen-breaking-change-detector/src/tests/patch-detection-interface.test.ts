@@ -317,6 +317,25 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
+    test('change arrow function property return type for paging case', async () => {
+      const baselineApiView = `
+        export interface Paging<T> {t: T};
+        export interface Pet {a: string};
+        export interface TestInterface { prop: () => Paging<Pet>; }`;
+      const currentApiView = `
+        export interface Paging<T> {t: T};
+        export interface Cat {a: string};
+        export interface TestInterface { prop: () => Cat; }`;
+
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(1);
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Signature_ReturnType);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(diffPairs[0].target?.name).toBe('prop');
+    });
+
     test('change arrow function property parameter type', async () => {
       const baselineApiView = `export interface TestInterface { prop: (para: string) => string; }`;
       const currentApiView = `export interface TestInterface { prop: (para: number) => string; }`;

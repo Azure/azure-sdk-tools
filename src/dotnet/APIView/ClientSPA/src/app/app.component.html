@@ -2,7 +2,7 @@
     <router-outlet></router-outlet>
     <p-toast position="bottom-center" key="bc" >
         <ng-template let-message pTemplate="message">
-            <div class="flex flex-col items-start flex-auto">
+            <div class="d-flex flex-column w-100" style="flex: 1; min-width: 0;">
                 <div class="fw-bolder"><i *ngIf="message.icon" class="{{ message.icon }} me-2"></i>{{ message.summary }}</div>
                 <div class="small mt-2" *ngIf="message.detail">{{ message.detail }}</div>
                 <div *ngIf="message.data && message.data.action === 'RefreshPage'" class="small mt-2"><button type="button" class="btn btn-warning btn-sm" (click)="reloadPage()">Refresh</button> page to see changes.</div>

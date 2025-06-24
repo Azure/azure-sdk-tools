@@ -29,7 +29,7 @@
     ],
     "author": "Microsoft Corporation",
     "license": "MIT",
-    "devDependencies": {
+    "dependencies": {
         "@autorest/codemodel": "^4.19.3",
         "@autorest/extension-base": "^3.5.0",
         "@azure-tools/codegen": "^3.0.283",
@@ -50,17 +50,12 @@
         "jest-junit": "^16.0.0",
         "jsonpath-plus": "^10.0.0",
         "lodash": "^4.17.21",
-        "oav": "3.6.0",
         "prettier": "^3.4.1",
         "reflect-metadata": "0.2.2",
         "source-map-support": "^0.5.19",
         "ts-jest": "^29.2.5",
         "typescript": "~5.8.3",
         "ts-loader": "^9.4.2"
-    },
-    "dependencies": {
-        "jsonpath-plus": "^10.0.0",
-        "oav": "3.6.0"
     },
     "files": [
         "dist/src",

@@ -11,6 +11,6 @@ var KeywordReplaceMap = map[string]string{
 	"common-types": "Common Types to Azure Resource Manager (ARM)",
 }
 
-const RerankScoreLowRelevanceThreshold = 2
+const RerankScoreLowRelevanceThreshold = 1.5
 const RerankScoreRelevanceThreshold = 3
 const RerankScoreHighRelevanceThreshold = 4

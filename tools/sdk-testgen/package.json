@@ -16,7 +16,7 @@
         "clean": "ver > nul 2>&1 nul && npm run --silent clean-cmd || npm run --silent clean-bash",
         "clean-cmd": "if exist dist rmdir /s /q dist && exit 0 || exit 0 ",
         "clean-bash": "rm nul && rm -rf dist && exit 0 || exit 0",
-        "build:prod": "webpack",
+        "build:prod": "tsc -p .",
         "prepack": "npm run clean && npm run build:prod"
     },
     "repository": {
@@ -56,9 +56,11 @@
         "source-map-support": "^0.5.19",
         "ts-jest": "^29.2.5",
         "typescript": "~5.8.3",
-        "ts-loader": "^9.4.2",
-        "webpack": "^5.88.2",
-        "webpack-cli": "^6.0.1"
+        "ts-loader": "^9.4.2"
+    },
+    "dependencies": {
+        "jsonpath-plus": "^10.0.0",
+        "oav": "3.6.0"
     },
     "files": [
         "dist/src",

@@ -66,9 +66,9 @@ export class RevisionPageComponent {
 
   updatePageTitle() {
     if (this.review?.packageName) {
-      this.titleService.setTitle(`${this.review.packageName} - Revisions - APIView`);
+      this.titleService.setTitle(this.review.packageName);
     } else {
-      this.titleService.setTitle('Revisions - APIView');
+      this.titleService.setTitle('APIView');
     }
   }
 }

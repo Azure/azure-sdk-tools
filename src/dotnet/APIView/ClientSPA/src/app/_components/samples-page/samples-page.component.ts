@@ -586,9 +586,9 @@ export class SamplesPageComponent {
 
   updatePageTitle() {
     if (this.review?.packageName) {
-      this.titleService.setTitle(`${this.review.packageName} - Samples - APIView`);
+      this.titleService.setTitle(this.review.packageName);
     } else {
-      this.titleService.setTitle('Samples - APIView');
+      this.titleService.setTitle('APIView');
     }
   }
 }

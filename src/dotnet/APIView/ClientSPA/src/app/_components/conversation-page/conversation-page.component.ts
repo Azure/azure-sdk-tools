@@ -93,9 +93,9 @@ export class ConversationPageComponent {
 
   updatePageTitle() {
     if (this.review?.packageName) {
-      this.titleService.setTitle(`${this.review.packageName} - Conversations - APIView`);
+      this.titleService.setTitle(this.review.packageName);
     } else {
-      this.titleService.setTitle('Conversations - APIView');
+      this.titleService.setTitle('APIView');
     }
   }
 }

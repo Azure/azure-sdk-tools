@@ -605,7 +605,7 @@ export class ReviewPageComponent implements OnInit {
 
   updatePageTitle() {
     if (this.review?.packageName) {
-      this.titleService.setTitle(`${this.review.packageName} - APIView`);
+      this.titleService.setTitle(this.review.packageName);
     } else {
       this.titleService.setTitle('APIView');
     }

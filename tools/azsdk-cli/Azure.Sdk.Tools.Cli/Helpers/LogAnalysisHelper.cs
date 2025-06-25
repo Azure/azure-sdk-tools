@@ -1,3 +1,4 @@
+using System.Security.Policy;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
@@ -39,6 +40,9 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
 {
     private readonly ILogger<LogAnalysisHelper> logger = logger;
 
+    public const int DEFAULT_BEFORE_LINES = 20;
+    public const int DEFAULT_AFTER_LINES = 20;
+
     // Built-in error keywords for robust error detection
     private static readonly HashSet<Keyword> defaultErrorKeywords =
     [
@@ -76,6 +80,12 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
 
     public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines)
     {
+        using var stream = new StreamReader(filePath);
+        return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath);
+    }
+
+    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "")
+    {
         var keywords = defaultErrorKeywords;
         if (keywordOverrides?.Count > 0)
         {
@@ -86,14 +96,13 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
             }
         }
 
-        beforeLines ??= 3;
-        afterLines ??= 20;
+        beforeLines ??= DEFAULT_BEFORE_LINES;
+        afterLines ??= DEFAULT_AFTER_LINES;
         var before = new Queue<string>((int)beforeLines);
         var after = new Queue<string>((int)afterLines);
         var maxAfterLines = afterLines ?? 100;
 
         var errors = new List<LogEntry>();
-        using var reader = new StreamReader(filePath);
 
         var lineNumber = 0;
         string? line;
@@ -127,12 +136,20 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
                 var fullContext = before.Concat(after).ToList();
                 before.Clear();
                 after.Clear();
-                errors.Add(new LogEntry
+                var entry = new LogEntry
                 {
-                    File = filePath,
                     Line = lineNumber,
                     Message = string.Join(Environment.NewLine, fullContext)
-                });
+                };
+                if (!string.IsNullOrEmpty(url))
+                {
+                    entry.Url = url;
+                }
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    entry.File = filePath;
+                }
+                errors.Add(entry);
             }
         }
 

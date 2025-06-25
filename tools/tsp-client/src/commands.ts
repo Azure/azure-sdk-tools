@@ -308,7 +308,7 @@ export async function generateCommand(argv: any) {
 
     // Log all package versions for diagnostics, ignoring errors
     try {
-      await npmCommand(srcDir, ["ls", "-a"]);
+      await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
     } catch (err) {}
 
   }

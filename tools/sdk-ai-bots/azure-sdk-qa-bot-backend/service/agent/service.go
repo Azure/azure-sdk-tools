@@ -70,16 +70,6 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	// This is a conversation in progress.
 	// NOTE: all messages, regardless of role, count against token usage for this API.
 	messages := []azopenai.ChatRequestMessageClassification{}
-	for _, message := range req.History {
-		if message.Role == model.Role_Assistant {
-			messages = append(messages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
-		} else if message.Role == model.Role_User {
-			messages = append(messages, &azopenai.ChatRequestUserMessage{
-				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
-				Name:    message.Name,
-			})
-		}
-	}
 
 	if len(req.AdditionalInfos) > 0 {
 		for _, info := range req.AdditionalInfos {
@@ -92,6 +82,17 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 					Content: azopenai.NewChatRequestSystemMessageContent(fmt.Sprintf("Image Content: %s", info.Content)),
 				})
 			}
+		}
+	}
+
+	for _, message := range req.History {
+		if message.Role == model.Role_Assistant {
+			messages = append(messages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
+		} else if message.Role == model.Role_User {
+			messages = append(messages, &azopenai.ChatRequestUserMessage{
+				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
+				Name:    message.Name,
+			})
 		}
 	}
 

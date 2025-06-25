@@ -9,8 +9,41 @@ import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
 import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
-import { exists, remove } from 'fs-extra';
+import fs from 'fs-extra';
+const { exists, remove, readdir, stat } = fs;
 import unixify from 'unixify';
+
+/**
+ * Recursively lists all files and directories in a given directory
+ * @param dir - The directory path to list
+ * @param prefix - Prefix for indentation (used for recursive calls)
+ * @returns Promise<string[]> - Array of formatted file/directory paths
+ */
+async function listDirectoryContents(dir: string, prefix: string = ''): Promise<string[]> {
+    const result: string[] = [];
+    try {
+        if (!(await exists(dir))) {
+            return [`${prefix}Directory does not exist: ${dir}`];
+        }
+
+        const items = await readdir(dir);
+        for (const item of items.sort()) {
+            const itemPath = posix.join(dir, item);
+            const stats = await stat(itemPath);
+            
+            if (stats.isDirectory()) {
+                result.push(`${prefix}📁 ${item}/`);
+                const subItems = await listDirectoryContents(itemPath, prefix + '  ');
+                result.push(...subItems);
+            } else {
+                result.push(`${prefix}📄 ${item} (${stats.size} bytes)`);
+            }
+        }
+    } catch (error) {
+        result.push(`${prefix}Error reading directory: ${error}`);
+    }
+    return result;
+}
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -31,6 +64,16 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await cleanUpPackageDirectory(packageDirectory, options.runMode);
+        
+        // Log directory contents after cleanup
+        logger.info(`Package directory contents after cleanup:`);
+        const directoryContents = await listDirectoryContents(packageDirectory);
+        if (directoryContents.length === 0) {
+            logger.info(`  Directory is empty: ${packageDirectory}`);
+        } else {
+            directoryContents.forEach(item => logger.info(`  ${item}`));
+        }
+        
         if (options.apiVersion) {
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }

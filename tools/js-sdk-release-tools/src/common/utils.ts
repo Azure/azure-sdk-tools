@@ -350,7 +350,13 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
 export async function cleanUpDirectory(
     directory: string, 
     entriesToPreserve: string[] = []
-): Promise<void> {      
+): Promise<void> {
+    // Check if directory exists first
+    if (!fs.existsSync(directory)) {
+        logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
+        return;
+    }
+     
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);

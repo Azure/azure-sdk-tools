@@ -454,6 +454,17 @@ export function applyLegacySettingsMapping(
                 delete emitterOptions[oldKey];
             }
         }
+        
+        // Handle package-dir mapping from package-details.name if package-dir doesn't exist
+        // This should be done after the mapping above, so we only need to check package-details
+        if (!emitterOptions['package-dir'] && emitterOptions['package-details']?.name) {
+            const packageName = emitterOptions['package-details'].name;
+            if (typeof packageName === 'string' && packageName.startsWith('@azure/')) {
+                const extractedName = packageName.replace('@azure/', '');
+                emitterOptions['package-dir'] = extractedName;
+                logger.info(`Generated 'package-dir' from package-details.name: '${packageName}' -> '${extractedName}' for emitter '${emitterName}'`);
+            }
+        }
     }
 
     logger.info('Legacy settings mapping completed.');

@@ -603,4 +603,99 @@ describe("applyLegacySettingsMapping", () => {
         // Custom key not in mapping should remain unchanged
         expect(result.options["@azure-tools/typespec-ts"]["customOldKey"]).toBe("custom-value");
     });
+
+    test("should generate package-dir from packageDetails.name when package-dir doesn't exist", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "packageDetails": {
+                        "name": "@azure/ai-agents"
+                    }
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // packageDetails should be mapped to package-details
+        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
+        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        // package-dir should be generated from package-details.name
+        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBe("ai-agents");
+    });
+
+    test("should generate package-dir from package-details.name when package-dir doesn't exist", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "package-details": {
+                        "name": "@azure/storage-blob"
+                    }
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBe("storage-blob");
+    });
+
+    test("should not override existing package-dir", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "package-dir": "existing-dir",
+                    "packageDetails": {
+                        "name": "@azure/ai-agents"
+                    }
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // package-dir should remain unchanged
+        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBe("existing-dir");
+        // packageDetails should be mapped to package-details
+        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
+        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+    });
+
+    test("should handle packageDetails.name without @azure/ prefix", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "packageDetails": {
+                        "name": "some-other-package"
+                    }
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // packageDetails should be mapped to package-details
+        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
+        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        // package-dir should not be generated since name doesn't start with @azure/
+        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBeUndefined();
+    });
+
+    test("should handle missing packageDetails.name", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "packageDetails": {}
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // packageDetails should be mapped to package-details
+        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
+        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        // package-dir should not be generated since name is missing
+        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBeUndefined();
+    });
 });

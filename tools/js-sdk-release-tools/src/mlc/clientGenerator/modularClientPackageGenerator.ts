@@ -6,44 +6,12 @@ import { posix } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory, logDirectoryContents } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import fs from 'fs-extra';
-const { exists, remove, readdir, stat } = fs;
+const { exists, remove } = fs;
 import unixify from 'unixify';
-
-/**
- * Recursively lists all files and directories in a given directory
- * @param dir - The directory path to list
- * @param prefix - Prefix for indentation (used for recursive calls)
- * @returns Promise<string[]> - Array of formatted file/directory paths
- */
-async function listDirectoryContents(dir: string, prefix: string = ''): Promise<string[]> {
-    const result: string[] = [];
-    try {
-        if (!(await exists(dir))) {
-            return [`${prefix}Directory does not exist: ${dir}`];
-        }
-
-        const items = await readdir(dir);
-        for (const item of items.sort()) {
-            const itemPath = posix.join(dir, item);
-            const stats = await stat(itemPath);
-            
-            if (stats.isDirectory()) {
-                result.push(`${prefix}📁 ${item}/`);
-                const subItems = await listDirectoryContents(itemPath, prefix + '  ');
-                result.push(...subItems);
-            } else {
-                result.push(`${prefix}📄 ${item} (${stats.size} bytes)`);
-            }
-        }
-    } catch (error) {
-        result.push(`${prefix}Error reading directory: ${error}`);
-    }
-    return result;
-}
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -66,22 +34,17 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         await cleanUpPackageDirectory(packageDirectory, options.runMode);
         
         // Log directory contents after cleanup
-        logger.info(`Package directory contents after cleanup:`);
-        const directoryContents = await listDirectoryContents(packageDirectory);
-        if (directoryContents.length === 0) {
-            logger.info(`  Directory is empty: ${packageDirectory}`);
-        } else {
-            directoryContents.forEach(item => logger.info(`  ${item}`));
-        }
+        await logDirectoryContents(packageDirectory, 'Package directory contents after cleanup');
         
         if (options.apiVersion) {
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
+        await logDirectoryContents(packageDirectory, 'Package directory contents after generateTypeScriptCodeFromTypeSpec');
+
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
 
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
-
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
@@ -89,6 +52,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
         await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
+        await logDirectoryContents(packageDirectory, 'Package directory contents after tryBuildSamples');
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(

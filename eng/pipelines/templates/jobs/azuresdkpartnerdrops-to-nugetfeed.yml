@@ -102,8 +102,8 @@ extends:
 
               pool:
                 name: azsdk-pool
-                image: ubuntu-24.04
-                os: linux
+                image: windows-2022 # Nuget publish requires .NET framework on windows to handle the auth
+                os: windows
 
               templateContext:
                 type: releaseJob  # Required, this indicates this deployment job is a release job

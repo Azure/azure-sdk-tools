@@ -1,4 +1,3 @@
-from azure.identity import DefaultAzureCredential
 import concurrent.futures
 import datetime
 import json
@@ -12,6 +11,7 @@ from time import time
 from typing import Optional, List
 import yaml
 
+from ._credential import in_ci, get_credential
 from ._diff import create_diff_with_line_numbers
 from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager, SearchResult
@@ -57,11 +57,8 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 
     dotenv.load_dotenv()
 
-CREDENTIAL = DefaultAzureCredential()
 
-
-def in_ci():
-    return os.getenv("TF_BUILD", False)
+CREDENTIAL = get_credential()
 
 
 # create enum for the ReviewMode

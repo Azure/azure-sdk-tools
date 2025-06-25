@@ -61,8 +61,7 @@
     "rimraf": "^6.0.1",
     "tsx": "^4.19.3",
     "typescript": "5.8.2",
-    "vitest": "3.2.4",
-    "@typespec/compiler": "^0.67.1"
+    "vitest": "3.2.4"
   },
   "optionalDependencies": {
     "@rollup/rollup-android-arm-eabi": "4.20.0",

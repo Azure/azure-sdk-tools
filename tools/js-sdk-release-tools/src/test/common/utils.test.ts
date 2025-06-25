@@ -4,6 +4,7 @@ import {
     specifyApiVersionToGenerateSDKByTypeSpec,
     cleanUpPackageDirectory,
     getPackageNameFromTspConfig,
+    applyLegacySettingsMapping,
 } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
@@ -507,5 +508,99 @@ describe("getPackageNameFromTspConfig", () => {
         } finally {
             await remove(tempSpecFolder);
         }
+    });
+});
+
+describe("applyLegacySettingsMapping", () => {
+    test("should not modify options when mapping is disabled", () => {
+        const originalOptions = {
+            configFile: {
+                parameters: {
+                    "service-dir": { default: "sdk/test" },
+                    "package-dir": { default: "arm-test" }
+                }
+            },
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "generateTest": true,
+                    "packageDetails": { name: "@azure/test" }
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, false);
+        
+        expect(result).toEqual(originalOptions);
+    });
+
+    test("should map legacy TypeSpec emitter options when mapping is enabled", () => {
+        const originalOptions = {
+            configFile: {
+                parameters: {
+                    "service-dir": { default: "sdk/test" },
+                    "package-dir": { default: "arm-test" }
+                }
+            },
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "generateTest": true,
+                    "packageDetails": { name: "@azure/test" },
+                    "generateMetadata": false
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // Check that TypeSpec emitter options are mapped
+        expect(result.options["@azure-tools/typespec-ts"]["generate-test"]).toBe(true);
+        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toEqual({ name: "@azure/test" });
+        expect(result.options["@azure-tools/typespec-ts"]["generate-metadata"]).toBe(false);
+        
+        // Check that old options are removed
+        expect(result.options["@azure-tools/typespec-ts"]["generateTest"]).toBeUndefined();
+        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        expect(result.options["@azure-tools/typespec-ts"]["generateMetadata"]).toBeUndefined();
+
+        // Check that configFile parameters are not affected
+        expect(result.configFile.parameters["service-dir"]).toEqual({ default: "sdk/test" });
+        expect(result.configFile.parameters["package-dir"]).toEqual({ default: "arm-test" });
+    });
+
+    test("should not overwrite existing new options", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "generateTest": true,
+                    "generate-test": false
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // New option should be preserved, old one should remain unchanged since new one exists
+        expect(result.options["@azure-tools/typespec-ts"]["generate-test"]).toBe(false);
+        expect(result.options["@azure-tools/typespec-ts"]["generateTest"]).toBe(true);
+    });
+
+    test("should handle options not in built-in mapping", () => {
+        const originalOptions = {
+            options: {
+                "@azure-tools/typespec-ts": {
+                    "customOldKey": "custom-value",
+                    "generateTest": true
+                }
+            }
+        };
+
+        const result = applyLegacySettingsMapping(originalOptions, true);
+
+        // Built-in mapping should work
+        expect(result.options["@azure-tools/typespec-ts"]["generate-test"]).toBe(true);
+        expect(result.options["@azure-tools/typespec-ts"]["generateTest"]).toBeUndefined();
+        
+        // Custom key not in mapping should remain unchanged
+        expect(result.options["@azure-tools/typespec-ts"]["customOldKey"]).toBe("custom-value");
     });
 });

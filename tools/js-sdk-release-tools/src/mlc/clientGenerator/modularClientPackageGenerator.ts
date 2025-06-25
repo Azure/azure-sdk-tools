@@ -25,7 +25,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     const rushxScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
 
     try {
-        const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
+        const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot, options.enableLegacySettingsMapping);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
         await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory);
         const packageJsonPath = posix.join(packageDirectory, 'package.json');

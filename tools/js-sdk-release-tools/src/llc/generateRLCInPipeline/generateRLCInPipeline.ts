@@ -41,13 +41,14 @@ export async function generateRLCInPipeline(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    enableLegacySettingsMapping?: boolean;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
-        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
+        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo, options.enableLegacySettingsMapping);
         await remove(generatedPackageDir);
 
         if (!options.skipGeneration) {

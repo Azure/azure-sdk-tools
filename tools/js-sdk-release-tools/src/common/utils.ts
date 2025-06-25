@@ -185,8 +185,14 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
-export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await resolveOptions(typeSpecDirectory);
+export async function getGeneratedPackageDirectory(
+    typeSpecDirectory: string, 
+    sdkRepoRoot: string, 
+    enableLegacySettingsMapping: boolean = false
+): Promise<string> {
+    const resolvedOptions = await resolveOptions(typeSpecDirectory);
+    const tspConfig = applyLegacySettingsMapping(resolvedOptions, enableLegacySettingsMapping);
+    
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
     const emitterOptions = tspConfig.options?.[emitterName];
@@ -410,3 +416,48 @@ export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Pr
     
     return undefined;
 }
+/**
+ * Applies legacy settings mapping to resolve options for backwards compatibility.
+ * This function contains hardcoded mappings for TypeSpec emitter options to maintain
+ * backwards compatibility with legacy configuration formats.
+ * @param resolvedOptions - The resolved TypeSpec configuration options
+ * @param enableMapping - Whether to apply legacy settings mapping
+ * @returns The options with legacy settings mapped to new settings
+ */
+export function applyLegacySettingsMapping(
+    resolvedOptions: any,
+    enableMapping: boolean = false
+): any {
+    if (!enableMapping) {
+        return resolvedOptions;
+    }
+
+    // Internal mapping for legacy TypeSpec emitter options to new kebab-case format
+    const mapping = {
+        'generateTest': 'generate-test',
+        'packageDetails': 'package-details',
+        'generateMetadata': 'generate-metadata'
+    };
+
+    const updatedOptions = JSON.parse(JSON.stringify(resolvedOptions)); // Deep clone
+
+    logger.info('Applying legacy settings mapping...');
+
+    // Apply mapping only to "@azure-tools/typespec-ts" emitter options
+    if (updatedOptions.options && updatedOptions.options[emitterName]) {
+        const emitterOptions = updatedOptions.options[emitterName];
+        
+        for (const [oldKey, newKey] of Object.entries(mapping)) {
+            if (oldKey in emitterOptions && !(newKey in emitterOptions)) {
+                logger.info(`Mapping legacy emitter option '${oldKey}' to '${newKey}' for emitter '${emitterName}'`);
+                emitterOptions[newKey] = emitterOptions[oldKey];
+                delete emitterOptions[oldKey];
+            }
+        }
+    }
+
+    logger.info('Legacy settings mapping completed.');
+    return updatedOptions;
+}
+
+// TODO: remove it after we generate and use options by ourselves

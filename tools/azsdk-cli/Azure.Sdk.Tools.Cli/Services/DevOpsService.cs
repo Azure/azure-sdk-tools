@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -248,6 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
+                logger.LogInformation($"Creating release plan with title: {releasePlanTitle}");
                 WorkItem releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;
                 if (releasePlanWorkItemId == 0)
@@ -257,6 +259,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
+                logger.LogInformation($"Creating api spec with title: {apiSpecTitle}");
                 var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan, "API Spec", apiSpecTitle);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
@@ -286,6 +289,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<WorkItem> CreateWorkItemAsync(ReleasePlan releasePlan, string workItemType, string title)
         {
+            logger.LogInformation($"Input work item json: {JsonSerializer.Serialize(releasePlan)}");
             var specDocument = releasePlan.GetPatchDocument();
             specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
             {
@@ -327,6 +331,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             logger.LogInformation($"Creating {workItemType} work item");
+            logger.LogInformation($"Request data to DeVops: {JsonSerializer.Serialize(specDocument)}");
             var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, RELEASE_PROJECT, workItemType);
             if (workItem == null)
             {
@@ -443,9 +448,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 var workItemClient = connection.GetWorkItemClient();
                 var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query });
-                if (result != null && result.WorkItems != null)
+                logger.LogInformation($"{result.ToString()}");
+                if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
-                    return await workItemClient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
+                    var ids = result.WorkItems.Select(wi => wi.Id).ToList();
+                    logger.LogInformation($"Fetching work item details: {string.Join(',', ids)}");
+                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All);
                 }
                 else
                 {

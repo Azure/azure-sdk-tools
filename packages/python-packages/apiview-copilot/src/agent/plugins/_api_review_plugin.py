@@ -13,7 +13,7 @@ class ApiReviewPlugin:
             language (str): The programming language of the APIs.
             target (str): The target (new) API to review.
         """
-        reviewer = ApiViewReview(target, None, language=language, mode=ApiViewReviewMode.FULL)
+        reviewer = ApiViewReview(target, None, language=language)
         results = reviewer.run()
         return json.dumps(results.model_dump(), indent=2)
 
@@ -26,6 +26,6 @@ class ApiReviewPlugin:
             target (str): The target (new) API to review.
             base (str): The base (old) API to compare against.
         """
-        reviewer = ApiViewReview(target, base, language=language, mode=ApiViewReviewMode.DIFF)
+        reviewer = ApiViewReview(target, base, language=language)
         results = reviewer.run()
         return json.dumps(results.model_dump(), indent=2)

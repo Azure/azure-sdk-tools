@@ -27,6 +27,8 @@ stages:
       RepoListFile: "$(Build.SourcesDirectory)/tools/github/data/repositories.txt"
 
     steps:
+      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
       - task: AzureCLI@2
         displayName: 'Fetch and store team/user data'
         inputs:

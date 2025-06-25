@@ -65,6 +65,7 @@ export class RestLevelClientDifferencesPostProcessor {
         const shouldIgnore = this.tryIgnoreInlineTypes(targetContext, this.currentInlineNameSet);
         return !shouldIgnore;
       });
+      map?.set(name, diffPairs);
     });
   }
 }

@@ -9,8 +9,6 @@ import {
   patchTypeAlias,
   patchEnum,
   isPropertyMethod,
-  findAllRenameAbleDeclarationsInNodeV2,
-  NodeContext,
   patchRoutes,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
@@ -18,7 +16,6 @@ import { join } from 'path';
 import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { JsxEmit } from 'typescript';
-import { RestLevelClientDifferencesPostProcessor } from './RestLevelClientDifferencesPostProcessor.js';
 
 export interface ApiViewOptions {
   path?: string;
@@ -78,25 +75,6 @@ export class DifferenceDetector {
     this.result?.interfaces.delete('Routes');
     const routesDiffPairs = patchRoutes(this.context!);
     this.result?.interfaces.set('Routes', routesDiffPairs);
-
-    const getRenameAbleInlineDeclarationNameSet = (sourceFile: SourceFile) => {
-      const routes = sourceFile.getInterfaceOrThrow('Routes');
-      const declarations = findAllRenameAbleDeclarationsInNodeV2(routes);
-      const inlineDeclarationMap = new Map<string, NodeContext>();
-      declarations.interfaces.forEach((d) => inlineDeclarationMap.set(d.getName(), { node: d, used: false }));
-      declarations.typeAliases.forEach((t) => inlineDeclarationMap.set(t.getName(), { node: t, used: false }));
-      declarations.enums.forEach((e) => inlineDeclarationMap.set(e.getName(), { node: e, used: false }));
-      return inlineDeclarationMap;
-    };
-    const baselineInlineNameSet = getRenameAbleInlineDeclarationNameSet(this.context!.baseline);
-    const currentInlineNameSet = getRenameAbleInlineDeclarationNameSet(this.context!.current);
-
-    const postProcessor = new RestLevelClientDifferencesPostProcessor(
-      this.result,
-      baselineInlineNameSet,
-      currentInlineNameSet
-    );
-    postProcessor.run();
   }
 
   private convertHighLevelClientToModularClientCode(code: string): string {

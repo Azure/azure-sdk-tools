@@ -100,21 +100,6 @@ function findDeclarationOfTypeReference(
   return declaration;
 }
 
-function findDeclarationOfTypeReferenceV2(
-  reference: TypeReferenceNode
-): (TypeAliasDeclaration | InterfaceDeclaration | EnumDeclaration) | undefined {
-  const declaration = reference.getSymbol()?.getValueDeclaration();
-  if (!declaration) return undefined;
-  const kind = declaration.getKind();
-  if (
-    kind !== SyntaxKind.InterfaceDeclaration &&
-    kind !== SyntaxKind.TypeAliasDeclaration &&
-    kind !== SyntaxKind.EnumDeclaration
-  )
-    return undefined;
-  return declaration as TypeAliasDeclaration | InterfaceDeclaration | EnumDeclaration;
-}
-
 function findAllRenameAbleDeclarationsInNodeCore(
   node: Node,
   scope: Scope,
@@ -130,22 +115,6 @@ function findAllRenameAbleDeclarationsInNodeCore(
     if (!declaration) return;
     updateRenameAbleDeclarations(declaration, renameAbleDeclarations, found);
     findAllRenameAbleDeclarationsInNodeCore(declaration, scope, service, renameAbleDeclarations, found);
-  });
-}
-
-function findAllRenameAbleDeclarationsInNodeCoreV2(
-  node: Node,
-  renameAbleDeclarations: RenameAbleDeclarations,
-  found: Set<string>
-): void {
-  if (!node) return;
-
-  const references = getAllTypeReferencesInNode(node, found);
-  references.forEach((reference) => {
-    const declaration = findDeclarationOfTypeReferenceV2(reference);
-    if (!declaration) return;
-    updateRenameAbleDeclarations(declaration, renameAbleDeclarations, found);
-    findAllRenameAbleDeclarationsInNodeCoreV2(declaration, renameAbleDeclarations, found);
   });
 }
 
@@ -192,21 +161,6 @@ export function findAllRenameAbleDeclarationsInNode(
   };
   const found = new Set<string>();
   findAllRenameAbleDeclarationsInNodeCore(node, scope, service, renameAbleDeclarations, found);
-  return renameAbleDeclarations;
-}
-
-export function findAllRenameAbleDeclarationsInNodeV2(node: Node): {
-  interfaces: InterfaceDeclaration[];
-  typeAliases: TypeAliasDeclaration[];
-  enums: EnumDeclaration[];
-} {
-  const renameAbleDeclarations: RenameAbleDeclarations = {
-    interfaces: [],
-    typeAliases: [],
-    enums: [],
-  };
-  const found = new Set<string>();
-  findAllRenameAbleDeclarationsInNodeCoreV2(node, renameAbleDeclarations, found);
   return renameAbleDeclarations;
 }
 

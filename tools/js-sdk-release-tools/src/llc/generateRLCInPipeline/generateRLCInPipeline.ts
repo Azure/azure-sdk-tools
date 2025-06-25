@@ -266,8 +266,14 @@ export async function generateRLCInPipeline(options: {
         await updateSnippets(packagePath);
         
         if (!options.skipGeneration) {
+            const getChangelogItems = () => {
+                const categories = changelog?.changelogItems.breakingChanges.keys();
+                if (!categories) return [];
+                const items = [...categories].sort().flatMap(cat => changelog?.changelogItems.breakingChanges.get(cat) ?? []);
+                return items;
+            };
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
-            outputPackageInfo.changelog.breakingChangeItems = changelog?.changelogItems ?? [];
+            outputPackageInfo.changelog.breakingChangeItems = getChangelogItems();
             outputPackageInfo.changelog.content = changelog?.content ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
         }

@@ -67,15 +67,8 @@ class ApiViewReviewMode:
     DIFF = "diff"
 
 
-class ApiViewReview:
 
-    # Define status characters with colors
-    PENDING = "░"
-    PROCESSING = "▒"
-    SUCCESS = "\033[32m█\033[0m"  # Green square
-    FAILURE = "\033[31m█\033[0m"  # Red square
-    RED_TEXT = "\033[31m"  # Red text
-    RESET_COLOR = "\033[0m"  # Reset to default text color
+class ApiViewReview:
 
     def __init__(
         self,
@@ -145,7 +138,7 @@ class ApiViewReview:
     def _execute_prompt_task(
         self, *, prompt_path: str, inputs: dict, task_name: str, status_idx: int, status_array: List[str]
     ) -> Optional[dict]:
-        """Execute a single prompt task with status tracking.
+        """Execute a single prompt task with percent progress tracking.
 
         Args:
             prompt_path (str): Path to the prompt file.
@@ -157,8 +150,11 @@ class ApiViewReview:
         Returns:
             Optional[dict]: The result of the prompt execution, or None if an error occurred.
         """
-        status_array[status_idx] = self.PROCESSING
-        print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+        # Numeric percent progress update (status_array is just a placeholder for counting)
+        total = len(status_array)
+        completed = sum(1 for s in status_array if s)
+        percent = int((completed / total) * 100) if total else 100
+        print(f"\rEvaluating prompts... {percent}% complete", end="", flush=True)
 
         try:
             # Run the prompt
@@ -171,14 +167,18 @@ class ApiViewReview:
                 # Parse JSON for guideline/generic tasks
                 result = json.loads(response)
 
-            # Update status and return result
-            status_array[status_idx] = self.SUCCESS
-            print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+            # Mark this task as done (for numeric progress only)
+            status_array[status_idx] = True
+            completed = sum(1 for s in status_array if s)
+            percent = int((completed / total) * 100) if total else 100
+            print(f"\rEvaluating prompts... {percent}% complete", end="", flush=True)
             return result
 
         except Exception as e:
-            status_array[status_idx] = self.FAILURE
-            print("\r" + "Evaluating prompts: " + "".join(status_array), end="", flush=True)
+            status_array[status_idx] = True  # Mark as done even on error
+            completed = sum(1 for s in status_array if s)
+            percent = int((completed / total) * 100) if total else 100
+            print(f"\rEvaluating prompts... {percent}% complete", end="", flush=True)
             logger.error(f"Error executing {task_name}: {str(e)}")
             return None
 
@@ -216,7 +216,7 @@ class ApiViewReview:
         print("Processing sections: ", end="", flush=True)
 
         total_prompts = 1 + (len(sections_to_process) * 3)  # 1 for summary, 3 for each section
-        prompt_status = [self.PENDING] * total_prompts
+        prompt_status = [False] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
         cancel_event = threading.Event()
@@ -591,9 +591,9 @@ class ApiViewReview:
             # Canary check: try authenticating against Search and CosmosDB before LLM calls
             canary_error = self._canary_check_search_and_cosmos()
             if canary_error:
-                print(f"{self.RED_TEXT}ERROR: {canary_error}{self.RESET_COLOR}")
-                logger.error(f"Aborting review due to canary check failure: {canary_error}")
-                raise RuntimeError(f"Aborting review: {canary_error}")
+            print(f"ERROR: {canary_error}")
+            logger.error(f"Aborting review due to canary check failure: {canary_error}")
+            raise RuntimeError(f"Aborting review: {canary_error}")
 
             # Track time for _generate_comments
             generate_start_time = time()
@@ -632,7 +632,7 @@ class ApiViewReview:
             print(f"Review generated in {overall_end_time - overall_start_time:.2f} seconds.")
 
             if self.semantic_search_failed:
-                print(f"{self.RED_TEXT}WARN: Semantic search failed for some chunks (see error.log).{self.RESET_COLOR}")
+                print(f"WARN: Semantic search failed for some chunks (see error.log).")
 
             return results
         finally:

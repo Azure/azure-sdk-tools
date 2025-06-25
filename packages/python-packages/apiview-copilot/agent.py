@@ -34,9 +34,8 @@ def chat():
             print("Exiting chat.")
             logging.info("User exited chat.")
             break
-        # Append the new user message in ThreadMessageOptions format
-        messages.append({"role": "user", "content": user_input})
         payload = {
+            "user_input": user_input,
             "thread_id": thread_id if thread_id is not None else "",
             "messages": messages,
         }
@@ -47,12 +46,9 @@ def chat():
             if resp.status_code == 200:
                 data = resp.json()
                 thread_id = data.get("thread_id", thread_id)
-                # Append the agent's response to the messages list for context
-                agent_response = data.get("response", "")
-                if agent_response:
-                    messages.append({"role": "assistant", "content": agent_response})
+                messages = data.get("messages", messages)
                 logging.info(f"Received response: {data}")
-                print(f"{BLUE}Agent:{RESET} {agent_response}\n")
+                print(f"{BLUE}Agent:{RESET} {data.get('response', '')}\n")
             else:
                 logging.error(f"Error {resp.status_code}: {resp.text}")
                 print(f"{BLUE}Agent:{RESET} [Error {resp.status_code}] {resp.text}\n")

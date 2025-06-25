@@ -117,6 +117,56 @@ setup_azure_python_sdk_docs() {
     log_message "Azure SDK for Python documentation setup completed."
 }
 
+setup_microsoft_api_guidelines() {
+    local repo_dir="$DOCS_ROOT/api-guidelines"
+    
+    log_message "Setting up Microsoft API Guidelines docs..."
+    
+    if [ -d "$repo_dir" ]; then
+        log_message "Updating existing Microsoft API Guidelines repo..."
+        cd "$repo_dir"
+        git fetch origin vNext
+        git reset --hard origin/vNext
+        cd ../..
+    else
+        mkdir -p "$DOCS_ROOT"
+        cd "$DOCS_ROOT"
+        git clone --filter=blob:none --sparse https://github.com/microsoft/api-guidelines.git
+        cd api-guidelines
+        git config core.sparseCheckout true
+        echo "/azure" > .git/info/sparse-checkout
+        git checkout vNext
+        cd ../..
+    fi
+    
+    log_message "Microsoft API Guidelines documentation setup completed."
+}
+
+setup_azure_resource_manager_rpc() {
+    local repo_dir="$DOCS_ROOT/azure-resource-manager-rpc"
+    
+    log_message "Setting up Azure Resource Manager RPC docs..."
+    
+    if [ -d "$repo_dir" ]; then
+        log_message "Updating existing Azure Resource Manager RPC repo..."
+        cd "$repo_dir"
+        git fetch origin master
+        git reset --hard origin/master
+        cd ../..
+    else
+        mkdir -p "$DOCS_ROOT"
+        cd "$DOCS_ROOT"
+        git clone --filter=blob:none --sparse https://github.com/Azure/azure-resource-manager-rpc.git
+        cd azure-resource-manager-rpc
+        git config core.sparseCheckout true
+        echo "/v1.0" > .git/info/sparse-checkout
+        git checkout master
+        cd ../..
+    fi
+    
+    log_message "Azure Resource Manager RPC documentation setup completed."
+}
+
 main() {
     log_message "Starting documentation update process..."
     
@@ -134,6 +184,8 @@ main() {
     setup_azure_typespec_docs
     setup_azure_rest_api_wiki
     setup_azure_python_sdk_docs
+    setup_microsoft_api_guidelines
+    setup_azure_resource_manager_rpc
 
     log_message "Documentation setup completed successfully!"
 

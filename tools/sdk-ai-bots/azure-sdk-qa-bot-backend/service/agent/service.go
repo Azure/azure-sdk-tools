@@ -81,6 +81,20 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		}
 	}
 
+	if len(req.AdditionalInfos) > 0 {
+		for _, info := range req.AdditionalInfos {
+			if info.Type == model.AdditionalInfoType_Link {
+				messages = append(messages, &azopenai.ChatRequestSystemMessage{
+					Content: azopenai.NewChatRequestSystemMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
+				})
+			} else if info.Type == model.AdditionalInfoType_Image {
+				messages = append(messages, &azopenai.ChatRequestSystemMessage{
+					Content: azopenai.NewChatRequestSystemMessageContent(fmt.Sprintf("Image Content: %s", info.Content)),
+				})
+			}
+		}
+	}
+
 	if req.WithPreprocess != nil && *req.WithPreprocess {
 		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
 		if preProcessedMessage == "" {

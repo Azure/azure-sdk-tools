@@ -11,12 +11,14 @@ const (
 type Source string
 
 const (
-	Source_TypeSpec              Source = "typespec_docs"
-	Source_TypeSpecAzure         Source = "typespec_azure_docs"
-	Source_AzureRestAPISpec      Source = "azure_rest_api_specs_wiki"
-	Source_AzureSDKForPython     Source = "azure_sdk_for_python_docs"
-	Source_AzureSDKForPythonWiki Source = "azure_sdk_for_python_wiki"
-	Source_TypeSpecQA            Source = "static_typespec_qa"
+	Source_TypeSpec                Source = "typespec_docs"
+	Source_TypeSpecAzure           Source = "typespec_azure_docs"
+	Source_AzureRestAPISpec        Source = "azure_rest_api_specs_wiki"
+	Source_AzureSDKForPython       Source = "azure_sdk_for_python_docs"
+	Source_AzureSDKForPythonWiki   Source = "azure_sdk_for_python_wiki"
+	Source_TypeSpecQA              Source = "static_typespec_qa"
+	Source_AzureAPIGuidelines      Source = "azure_api_guidelines"
+	Source_AzureResourceManagerRPC Source = "azure_resource_manager_rpc"
 )
 
 type Role string
@@ -41,16 +43,30 @@ type Reference struct {
 	Content string `json:"content" jsonschema:"required,description=The content of the document"`
 }
 
+type AdditionalInfoType string
+
+const (
+	AdditionalInfoType_Link  AdditionalInfoType = "link"
+	AdditionalInfoType_Image AdditionalInfoType = "image"
+)
+
+type AdditionalInfo struct {
+	Type    AdditionalInfoType `json:"type" jsonschema:"required,description=The type of the additional information"`
+	Content string             `json:"content" jsonschema:"required,description=The content of the additional information"`
+	Link    string             `json:"link" jsonschema:"required,description=The link to the additional information, required if type is link"`
+}
+
 type CompletionReq struct {
-	TenantID                TenantID  `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
-	PromptTemplate          *string   `json:"prompt_template" jsonschema:"omitempty,description=The prompt template to use for the agent"`
-	PromptTemplateArguments *string   `json:"prompt_template_arguments" jsonschema:"omitempty,description=The arguments to use for the prompt template"`
-	TopK                    *int      `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
-	Sources                 []Source  `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
-	Message                 Message   `json:"message" jsonschema:"required,description=The message to send to the agent"`
-	History                 []Message `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
-	WithFullContext         *bool     `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
-	WithPreprocess          *bool     `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
+	TenantID                TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
+	PromptTemplate          *string          `json:"prompt_template" jsonschema:"omitempty,description=The prompt template to use for the agent"`
+	PromptTemplateArguments *string          `json:"prompt_template_arguments" jsonschema:"omitempty,description=The arguments to use for the prompt template"`
+	TopK                    *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
+	Sources                 []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
+	Message                 Message          `json:"message" jsonschema:"required,description=The message to send to the agent"`
+	History                 []Message        `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
+	WithFullContext         *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
+	WithPreprocess          *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
+	AdditionalInfos         []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
 }
 
 type CompletionResp struct {

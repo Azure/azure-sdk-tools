@@ -97,16 +97,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	// Store results by source for weighted scoring
 	sourceResults := make(map[model.Source][]model.Index)
 
-	// Calculate weights for each source based on priority (position in sources array)
-	weights := make(map[model.Source]float64)
-	for i, source := range sources {
-		// Weight decreases by 0.1 for each lower priority source, starting from 1.0
-		weights[source] = 1.0 - float64(i)*0.1
-		if weights[source] < 0.3 {
-			weights[source] = 0.3 // Minimum weight threshold
-		}
-	}
-
 	// Query each source separately
 	for _, source := range sources {
 		req := baseReq
@@ -125,9 +115,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
 				continue
 			}
-
-			// Apply source weight to the rerank score
-			doc.RerankScore = doc.RerankScore * weights[model.Source(doc.ContextID)]
 
 			filteredResults = append(filteredResults, doc)
 		}

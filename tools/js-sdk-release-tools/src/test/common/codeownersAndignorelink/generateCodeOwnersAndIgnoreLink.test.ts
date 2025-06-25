@@ -215,9 +215,9 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             }
             if (path === mockIgnoreLinksPath) {
                 return contentWithExistingLink;
-            }            return "";
+            } return "";
         });
-        
+
         // Call the function
         await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
@@ -239,5 +239,5 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             mockIgnoreLinksPath,
             expect.any(String),
         );
-    });    
+    });
 });

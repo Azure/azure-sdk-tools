@@ -65,10 +65,11 @@ class DatabasePlugin:
             return {"status": "error", "message": "Language must be specified."}
 
         # Check architect permission
-        user = get_current_user()
-        allowed_architects = get_architects_for_language(language)
-        if user not in allowed_architects:
-            return {"status": "error", "message": f"User '{user}' is not an architect for language '{language}'."}
+        # TODO: Re-enable this check when user management is implemented
+        # user = get_current_user()
+        # allowed_architects = get_architects_for_language(language)
+        # if user not in allowed_architects:
+        #     return {"status": "error", "message": f"User '{user}' is not an architect for language '{language}'."}
 
         client = get_database_client()
         guideline_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")

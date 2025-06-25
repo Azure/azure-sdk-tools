@@ -17,6 +17,7 @@ from fastapi import APIRouter
 import prompty
 import prompty.azure
 from pydantic import BaseModel
+from azure.ai.agents.models import ThreadMessageOptions
 from semantic_kernel.agents import AzureAIAgentThread
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 import uuid
@@ -190,25 +191,24 @@ def cleanup_job_store():
 
 
 class AgentChatRequest(BaseModel):
-    user_input: str
     thread_id: str = None
-    messages: list = None  # Optional: for multi-turn
+    messages: list[dict]
 
 
 class AgentChatResponse(BaseModel):
     response: str
     thread_id: str
-    messages: list
+    messages: list[dict]
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat_thread_endpoint(request: AgentChatRequest):
-    user_input = request.user_input
     thread_id = request.thread_id
     messages = request.messages or []
-    # Only append user_input if not already the last message
-    if not messages or messages[-1] != user_input:
-        messages.append(user_input)
+    # Convert dicts to ThreadMessageOptions for SDK compatibility
+    sk_messages = [
+        ThreadMessageOptions(**msg) if not isinstance(msg, ThreadMessageOptions) else msg for msg in messages
+    ]
     try:
         async with get_main_agent() as agent:
             # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
@@ -217,7 +217,7 @@ async def agent_chat_thread_endpoint(request: AgentChatRequest):
                 thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
             else:
                 thread = AzureAIAgentThread(client=agent.client)
-            response = await agent.get_response(messages=messages, thread=thread)
+            response = await agent.get_response(messages=sk_messages, thread=thread)
             # Get the thread id from the thread object if available
             thread_id_out = getattr(thread, "id", None) or thread_id
         return AgentChatResponse(response=str(response), thread_id=thread_id_out, messages=messages)

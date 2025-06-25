@@ -545,9 +545,9 @@ namespace ApiView
         private bool IsHiddenFromIntellisense(ISymbol member) =>
             member.GetAttributes().Any(d => d.AttributeClass?.Name == "EditorBrowsableAttribute"
                                             && (EditorBrowsableState) d.ConstructorArguments[0].Value == EditorBrowsableState.Never)
-            || IsExplicitInterfaceImplementation(member);
+            || CodeFileBuilder.IsExplicitInterfaceImplementation(member);
 
-        private bool IsExplicitInterfaceImplementation(ISymbol symbol)
+        private static bool IsExplicitInterfaceImplementation(ISymbol symbol)
         {
             return symbol switch
             {

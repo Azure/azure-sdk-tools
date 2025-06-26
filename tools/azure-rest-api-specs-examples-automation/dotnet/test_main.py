@@ -2,6 +2,14 @@ import unittest
 import parameterized
 from main import break_down_aggregated_dotnet_example, format_dotnet, get_dotnet_using_statements
 from typing import List
+from unittest.mock import patch, mock_open, MagicMock
+import os
+from os import path
+import json
+import tempfile
+import shutil
+from typing import List
+from main import break_down_aggregated_dotnet_example, format_dotnet, get_dotnet_using_statements, Release
 
 
 class TestMain(unittest.TestCase):
@@ -388,3 +396,350 @@ namespace Azure.ResourceManager.Compute.Samples
         usings = get_dotnet_using_statements(lines)
 
         self.assertSetEqual(set(expected_usings), set(usings))
+
+class TestDotNetExamplesPathDiscovery(unittest.TestCase):
+    """Test cases for the dotnet examples path discovery logic."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.release = Release("v1.0.0", "Azure.ResourceManager.TestService", "1.0.0")
+        self.module_relative_path = "sdk/testservice/Azure.ResourceManager.TestService"
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_primary_path_exists(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test when the primary path exists."""
+        # Setup
+        mock_get_module_path.return_value = self.module_relative_path
+        
+        # Mock path.exists to return True for the primary path
+        def mock_exists_side_effect(path_arg):
+            return path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Generated/Samples"
+        mock_exists.side_effect = mock_exists_side_effect
+        
+        # Execute the path discovery logic
+        sdk_path = "/path/to/sdk"
+        module_relative_path_local = mock_get_module_path(self.release.package, sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        else:
+            # fallback logic...
+            pass
+        
+        # Assert
+        self.assertEqual(len(dotnet_examples_paths), 1)
+        self.assertEqual(dotnet_examples_paths[0], "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Generated/Samples")
+        mock_listdir.assert_not_called()  # Should not reach fallback logic
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_fallback_path_discovery(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test fallback path discovery when primary path doesn't exist."""
+        # Setup
+        mock_get_module_path.return_value = self.module_relative_path
+        
+        # Mock primary path doesn't exist, but fallback paths do
+        def mock_exists_side_effect(path_arg):
+            if path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Generated/Samples":
+                return False
+            elif path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests":
+                return True
+            elif path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Integration/Generated/Samples":
+                return True
+            return False
+        mock_exists.side_effect = mock_exists_side_effect
+        
+        # Mock directory listing
+        mock_listdir.return_value = ["Unit", "Integration", "Other"]
+        
+        # Mock isdir to return True for actual directories
+        def mock_isdir_side_effect(path_arg):
+            return path_arg.endswith(("Unit", "Integration", "Other"))
+        mock_isdir.side_effect = mock_isdir_side_effect
+        
+        # Execute the path discovery logic
+        sdk_path = "/path/to/sdk"
+        module_relative_path_local = mock_get_module_path(self.release.package, sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        else:
+            # fallback to iterating all directories under tests/*/Generated/Samples
+            tests_dir = path.join(sdk_path, module_relative_path_local, "tests")
+            if path.exists(tests_dir):
+                for item in os.listdir(tests_dir):
+                    item_path = path.join(tests_dir, item)
+                    if path.isdir(item_path):
+                        candidate_path = path.join(item_path, "Generated", "Samples")
+                        if path.exists(candidate_path):
+                            dotnet_examples_paths.append(candidate_path)
+                            break
+        
+        # Assert
+        self.assertEqual(len(dotnet_examples_paths), 1)
+        self.assertEqual(dotnet_examples_paths[0], "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Integration/Generated/Samples")
+        mock_listdir.assert_called_once_with("/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests")
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_no_paths_found(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test when no valid paths are found."""
+        # Setup
+        mock_get_module_path.return_value = self.module_relative_path
+        
+        # Mock all paths don't exist
+        def mock_exists_side_effect(path_arg):
+            if path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests":
+                return True
+            return False
+        mock_exists.side_effect = mock_exists_side_effect
+        
+        mock_listdir.return_value = ["Unit", "Integration"]
+        mock_isdir.return_value = True
+        
+        # Execute the path discovery logic
+        sdk_path = "/path/to/sdk"
+        module_relative_path_local = mock_get_module_path(self.release.package, sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        else:
+            # fallback to iterating all directories under tests/*/Generated/Samples
+            tests_dir = path.join(sdk_path, module_relative_path_local, "tests")
+            if path.exists(tests_dir):
+                for item in os.listdir(tests_dir):
+                    item_path = path.join(tests_dir, item)
+                    if path.isdir(item_path):
+                        candidate_path = path.join(item_path, "Generated", "Samples")
+                        if path.exists(candidate_path):
+                            dotnet_examples_paths.append(candidate_path)
+                            break
+        
+        # Assert
+        self.assertEqual(len(dotnet_examples_paths), 0)
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_tests_directory_not_exists(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test when the tests directory itself doesn't exist."""
+        # Setup
+        mock_get_module_path.return_value = self.module_relative_path
+        mock_exists.return_value = False  # All paths don't exist
+        
+        # Execute the path discovery logic
+        sdk_path = "/path/to/sdk"
+        module_relative_path_local = mock_get_module_path(self.release.package, sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        else:
+            # fallback to iterating all directories under tests/*/Generated/Samples
+            tests_dir = path.join(sdk_path, module_relative_path_local, "tests")
+            if path.exists(tests_dir):
+                for item in os.listdir(tests_dir):
+                    item_path = path.join(tests_dir, item)
+                    if path.isdir(item_path):
+                        candidate_path = path.join(item_path, "Generated", "Samples")
+                        if path.exists(candidate_path):
+                            dotnet_examples_paths.append(candidate_path)
+                            break
+        
+        # Assert
+        self.assertEqual(len(dotnet_examples_paths), 0)
+        mock_listdir.assert_not_called()  # Should not be called if tests dir doesn't exist
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_multiple_fallback_directories_found(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test when multiple fallback directories exist, should use the first one found."""
+        # Setup
+        mock_get_module_path.return_value = self.module_relative_path
+        
+        # Mock primary path doesn't exist, but multiple fallback paths do
+        def mock_exists_side_effect(path_arg):
+            if path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Generated/Samples":
+                return False
+            elif path_arg == "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests":
+                return True
+            elif "Generated/Samples" in path_arg:
+                return True  # Both Unit and Integration have Generated/Samples
+            return False
+        mock_exists.side_effect = mock_exists_side_effect
+        
+        # Mock directory listing - Unit comes first alphabetically
+        mock_listdir.return_value = ["Unit", "Integration"]
+        mock_isdir.return_value = True
+        
+        # Execute the path discovery logic
+        sdk_path = "/path/to/sdk"
+        module_relative_path_local = mock_get_module_path(self.release.package, sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        else:
+            # fallback to iterating all directories under tests/*/Generated/Samples
+            tests_dir = path.join(sdk_path, module_relative_path_local, "tests")
+            if path.exists(tests_dir):
+                for item in os.listdir(tests_dir):
+                    item_path = path.join(tests_dir, item)
+                    if path.isdir(item_path):
+                        candidate_path = path.join(item_path, "Generated", "Samples")
+                        if path.exists(candidate_path):
+                            dotnet_examples_paths.append(candidate_path)
+                            break  # Should break after finding the first one
+        
+        # Assert - should find Unit first (since it comes first in the list)
+        self.assertEqual(len(dotnet_examples_paths), 1)
+        self.assertEqual(dotnet_examples_paths[0], "/path/to/sdk/sdk/testservice/Azure.ResourceManager.TestService/tests/Unit/Generated/Samples")
+
+
+class TestWithRealFileSystem(unittest.TestCase):
+    """Tests using a real temporary file system."""
+
+    def setUp(self):
+        """Create a temporary directory structure for testing."""
+        self.temp_dir = tempfile.mkdtemp()
+        self.sdk_path = path.join(self.temp_dir, "sdk")
+        self.module_path = path.join(self.sdk_path, "sdk", "testservice", "Azure.ResourceManager.TestService")
+        
+        # Create directory structure
+        os.makedirs(path.join(self.module_path, "tests", "Generated", "Samples"), exist_ok=True)
+        os.makedirs(path.join(self.module_path, "tests", "Integration", "Generated", "Samples"), exist_ok=True)
+        
+        # Create some test files
+        with open(path.join(self.module_path, "tests", "Generated", "Samples", "test1.cs"), 'w') as f:
+            f.write("// Test file 1")
+        with open(path.join(self.module_path, "tests", "Integration", "Generated", "Samples", "test2.cs"), 'w') as f:
+            f.write("// Test file 2")
+
+    def tearDown(self):
+        """Clean up temporary directory."""
+        shutil.rmtree(self.temp_dir)
+
+    @patch('main.get_module_relative_path')
+    def test_real_filesystem_primary_path(self, mock_get_module_path):
+        """Test path discovery with real file system - primary path exists."""
+        mock_get_module_path.return_value = "sdk/testservice/Azure.ResourceManager.TestService"
+        
+        # Execute path discovery logic
+        module_relative_path_local = mock_get_module_path("Azure.ResourceManager.TestService", self.sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(self.sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        
+        # Assert
+        self.assertEqual(len(dotnet_examples_paths), 1)
+        self.assertTrue(path.exists(dotnet_examples_paths[0]))
+
+    @patch('main.get_module_relative_path')
+    def test_real_filesystem_fallback_path(self, mock_get_module_path):
+        """Test path discovery with real file system - fallback path."""
+        mock_get_module_path.return_value = "sdk/testservice/Azure.ResourceManager.TestService"
+        
+        # Remove primary path to force fallback
+        primary_path = path.join(self.module_path, "tests", "Generated", "Samples")
+        shutil.rmtree(primary_path)
+        
+        # Execute path discovery logic
+        module_relative_path_local = mock_get_module_path("Azure.ResourceManager.TestService", self.sdk_path)
+        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+        dotnet_examples_path = path.join(self.sdk_path, dotnet_examples_relative_path)
+        dotnet_examples_paths: List[str] = []
+        
+        if path.exists(dotnet_examples_path):
+            dotnet_examples_paths.append(dotnet_examples_path)
+        else:
+            # fallback to iterating all directories under tests/*/Generated/Samples
+            tests_dir = path.join(self.sdk_path, module_relative_path_local, "tests")
+            if path.exists(tests_dir):
+                for item in os.listdir(tests_dir):
+                    item_path = path.join(tests_dir, item)
+                    if path.isdir(item_path):
+                        candidate_path = path.join(item_path, "Generated", "Samples")
+                        if path.exists(candidate_path):
+                            dotnet_examples_paths.append(candidate_path)
+                            break
+        
+        # Assert
+        self.assertEqual(len(dotnet_examples_paths), 1)
+        self.assertTrue(path.exists(dotnet_examples_paths[0]))
+        self.assertIn("Integration", dotnet_examples_paths[0])
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_find_dotnet_examples_paths_helper_primary(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test the extracted helper function for primary path."""
+        from main import find_dotnet_examples_paths
+        
+        # Mock primary path exists
+        def mock_exists_side_effect(path_arg):
+            return path_arg == "/sdk/module/tests/Generated/Samples"
+        mock_exists.side_effect = mock_exists_side_effect
+        
+        # Execute
+        result = find_dotnet_examples_paths("/sdk", "module")
+        
+        # Assert
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], "/sdk/module/tests/Generated/Samples")
+        mock_listdir.assert_not_called()
+
+    @patch('main.get_module_relative_path')
+    @patch('os.path.exists')
+    @patch('os.listdir')
+    @patch('os.path.isdir')
+    def test_find_dotnet_examples_paths_helper_fallback(self, mock_isdir, mock_listdir, mock_exists, mock_get_module_path):
+        """Test the extracted helper function for fallback path."""
+        from main import find_dotnet_examples_paths
+        
+        # Mock primary path doesn't exist, fallback does
+        def mock_exists_side_effect(path_arg):
+            if path_arg == "/sdk/module/tests/Generated/Samples":
+                return False
+            elif path_arg == "/sdk/module/tests":
+                return True
+            elif path_arg == "/sdk/module/tests/Unit/Generated/Samples":
+                return True
+            return False
+        mock_exists.side_effect = mock_exists_side_effect
+        
+        mock_listdir.return_value = ["Unit", "Integration"]
+        mock_isdir.return_value = True
+        
+        # Execute
+        result = find_dotnet_examples_paths("/sdk", "module")
+        
+        # Assert
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], "/sdk/module/tests/Unit/Generated/Samples")

@@ -247,14 +247,15 @@ def write_code_to_file(
 
 
 def create_dotnet_examples(
-    release: Release, dotnet_module: str, sdk_examples_path: str, dotnet_examples_path: str
-) -> (bool, List[str]):
+    release: Release, dotnet_module: str, sdk_examples_path: str, dotnet_examples_paths: List[str]
+) -> tuple[bool, List[str]]:
     dotnet_paths = []
-    for root, dirs, files in os.walk(dotnet_examples_path):
-        for name in files:
-            filepath = path.join(root, name)
-            if path.splitext(filepath)[1] == ".cs":
-                dotnet_paths.append(filepath)
+    for dotnet_examples_path in dotnet_examples_paths:
+        for root, dirs, files in os.walk(dotnet_examples_path):
+            for name in files:
+                filepath = path.join(root, name)
+                if path.splitext(filepath)[1] == ".cs":
+                    dotnet_paths.append(filepath)
 
     logging.info(f"Processing SDK examples: {release.package}")
     dotnet_examples = []
@@ -289,6 +290,40 @@ def get_module_relative_path(sdk_name: str, sdk_path: str) -> str:
     return module_relative_path
 
 
+def find_dotnet_examples_paths(sdk_path: str, module_relative_path_local: str) -> List[str]:
+    """
+    Find dotnet examples paths in the SDK directory.
+    
+    Args:
+        sdk_path: Path to the SDK root directory
+        module_relative_path_local: Relative path to the module within the SDK
+        
+    Returns:
+        List of paths where dotnet examples are found
+    """
+    dotnet_examples_paths: List[str] = []
+    
+    # Try primary path first: tests/Generated/Samples
+    dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
+    dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+    
+    if path.exists(dotnet_examples_path):
+        dotnet_examples_paths.append(dotnet_examples_path)
+    else:
+        # fallback to iterating all directories under tests/*/Generated/Samples
+        tests_dir = path.join(sdk_path, module_relative_path_local, "tests")
+        if path.exists(tests_dir):
+            for item in os.listdir(tests_dir):
+                item_path = path.join(tests_dir, item)
+                if path.isdir(item_path):
+                    candidate_path = path.join(item_path, "Generated", "Samples")
+                    if path.exists(candidate_path):
+                        dotnet_examples_paths.append(candidate_path)
+                        break
+    
+    return dotnet_examples_paths
+
+
 def main():
     global script_path
     global tmp_path
@@ -314,20 +349,15 @@ def main():
 
     release = Release(config["release"]["tag"], config["release"]["package"], config["release"]["version"])
 
-    # samples/Generated/Samples
+    # tests/Generated/Samples
     module_relative_path_local = get_module_relative_path(release.package, sdk_path)
-    dotnet_examples_relative_path = path.join(module_relative_path_local, "samples", "Generated", "Samples")
-    dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
-    if not path.exists(dotnet_examples_path):
-        # fallback to tests/Generated/Samples
-        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
-        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+    dotnet_examples_paths = find_dotnet_examples_paths(sdk_path, module_relative_path_local)
 
     sdk_package_path = path.join(sdk_path, module_relative_path_local)
 
     dotnet_module = f"{release.package},{release.version}"
 
-    succeeded, files = create_dotnet_examples(release, dotnet_module, sdk_examples_path, dotnet_examples_path)
+    succeeded, files = create_dotnet_examples(release, dotnet_module, sdk_examples_path, dotnet_examples_paths)
 
     with open(output_json_path, "w", encoding="utf-8") as f_out:
         output = {"status": "succeeded" if succeeded else "failed", "name": dotnet_module, "files": files}

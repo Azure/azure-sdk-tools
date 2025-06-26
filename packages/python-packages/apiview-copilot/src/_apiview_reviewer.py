@@ -629,7 +629,7 @@ class ApiViewReview:
 
     def run(self) -> ReviewResult:
         try:
-            self._print_message(f"Generating {self._get_language_pretty_name()} review {self.job_id}")
+            self._print_message(f"Generating {get_language_pretty_name(self.language)} review {self.job_id}")
             self.logger.info(f"Generating review {self.job_id} for language={self.language}")
             overall_start_time = time()
 

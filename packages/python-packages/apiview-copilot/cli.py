@@ -301,6 +301,8 @@ def review_job_start(
         payload["comments"] = comments_obj
 
     APP_NAME = os.getenv("AZURE_APP_NAME")
+    if not APP_NAME:
+        raise ValueError("AZURE_APP_NAME environment variable is not set.")
     api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/start"
 
     resp = requests.post(api_endpoint, json=payload)
@@ -313,6 +315,8 @@ def review_job_start(
 def review_job_get(job_id: str):
     """Get the status/result of an API review job."""
     APP_NAME = os.getenv("AZURE_APP_NAME")
+    if not APP_NAME:
+        raise ValueError("AZURE_APP_NAME environment variable is not set.")
     api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
     resp = requests.get(url)

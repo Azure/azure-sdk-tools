@@ -4,6 +4,13 @@ This implementation is the Azure SDK Engineering System's `everything` server.
 
 It is eventually intended to encapsulate a lot of the manual work in an `azure sdk` package's release process.
 
+## Get Started
+
+1. Open VS Code in the 'azure-sdk-tools' directory.
+2. Within the mcp.json file press the Start button below "servers"
+![Local Image](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/image/MCP-Start.png)
+3. Prompt Copilot to use Azure SDK Tools.
+
 This server is intended to be run in one of two ways:
 
 - As a standalone `MCP` server that can be added directly to a `.vscode/mcp.json` file through `stdio`.

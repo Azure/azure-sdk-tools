@@ -2,7 +2,6 @@ import os
 import uuid
 from typing import Optional
 from semantic_kernel.functions import kernel_function
-import logging
 
 from src._models import Memory
 

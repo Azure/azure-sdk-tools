@@ -33,4 +33,8 @@ export class ReviewNavComponent implements OnChanges {
   handleNavNodeClick(event: TreeNode) {
     this.navTreeNodeIdEmitter.emit(event.data.nodeIdHashed);
   }
+
+  isClientType(node: TreeNode): boolean {
+    return node.label?.toLowerCase().endsWith('client') || false;
+  }
 }

@@ -117,12 +117,13 @@ export async function buildPackage(
     await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8', flush: true });
 }
 
-// no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
+// no exception will be thrown in non-release mode, since we don't want it stop sdk generation. sdk author will need to resolve the failure
+// in release mode, exceptions will be thrown to ensure sample build succeeds
 export async function tryBuildSamples(packageDirectory: string, rushxScript: string, options: ModularClientPackageOptions) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const runOptions = { ...runCommandOptions, cwd };
-    const errorAsWarning = options.runMode === RunMode.Release;
+    const errorAsWarning = options.runMode !== RunMode.Release;
     try {
         if (isRushRepo(options.sdkRepoRoot)) {
             await runCommand(`node`, [rushxScript, 'build:samples'], runOptions, true, 300, errorAsWarning);

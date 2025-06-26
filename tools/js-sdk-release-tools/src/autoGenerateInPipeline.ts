@@ -99,7 +99,7 @@ async function automationGenerateInPipeline(
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
                     runMode: runMode as RunMode,
-                };                
+                };
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;
@@ -107,11 +107,6 @@ async function automationGenerateInPipeline(
             default:
                 break;
         }
-
-        await codeOwnersAndIgnoreLinkGenerator({
-            sdkType: sdkType,
-            packages: outputJson.packages || [],
-        });
     } catch (e) {
         const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);

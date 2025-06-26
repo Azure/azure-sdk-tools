@@ -17,6 +17,8 @@ import { environment } from 'src/environments/environment';
 import { MessageService } from 'primeng/api';
 import { ToastMessageData } from 'src/app/_models/toastMessageModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
 
 @Component({
   selector: 'app-review-page-options',
@@ -116,7 +118,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   constructor(
     private configService: ConfigService, private route: ActivatedRoute, 
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
-    private pullRequestService: PullRequestsService, private messageService: MessageService) { }
+    private pullRequestService: PullRequestsService, private messageService: MessageService, private signalRService: SignalRService) { }
 
   ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
@@ -128,6 +130,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     ).subscribe((searchText: string) => {
       this.codeLineSearchTextEmitter.emit(searchText);
     });
+    this.handleRealTimeAIReviewUpdates();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -373,32 +376,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.generateAIReviewButtonText = 'Generating review...';
     const diffApiRevisionId = this.diffAPIRevision ? this.diffAPIRevision.id : undefined;
 
-    let noOfAICommentsCreated = 0;
-
     this.apiRevisionsService.generateAIReview(this.activeAPIRevision!.reviewId, this.activeAPIRevision!.id, diffApiRevisionId).pipe(take(1)).subscribe({
-      next: (response: number) => {
-        this.aiReviewGenerationState = 'Completed';
-        noOfAICommentsCreated = response;
-        this.generateAIReviewButtonText = `Generated ${response} comments!`;
-      },
       error: (error: any) => {
         this.aiReviewGenerationState = 'Failed';
         this.generateAIReviewButtonText = 'Failed to generate copilot review';
         this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'AI Comments', detail: 'Failed to generate copilot review', key: 'bc', life: 5000, closable: true });
-      },
-      complete: () => {
-        if (noOfAICommentsCreated > 0) {
-          const messgaeData : ToastMessageData = {
-            action: 'RefreshPage',
-          };
-          const messagePart = (noOfAICommentsCreated === 1) ? "comment" : "comments";
-          const messageDetail = `Copilot generated ${noOfAICommentsCreated} ${messagePart}.`;
-          this.messageService.add({ severity: 'success', icon: 'bi bi-check-circle', summary: 'Copilot Comments', detail: messageDetail, data: messgaeData, key: 'bc', life: 60000, closable: true });
-        }
-        setTimeout(() => {
-          this.aiReviewGenerationState = 'Completed';
-          this.generateAIReviewButtonText = 'Regenerate copilot review';
-        }, 3000);
       }
     });
   }
@@ -454,6 +436,38 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   handleReviewApprovalAction() {
     this.reviewApprovalEmitter.emit(true);
+  }
+
+  handleRealTimeAIReviewUpdates() {
+    this.signalRService.onAIReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (aiReviewUpdate: AIReviewJobCompletedDto) => {
+        if (aiReviewUpdate.reviewId === this.review?.id && aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
+          if (aiReviewUpdate.status === 'Success') {
+            this.aiReviewGenerationState = 'Completed';
+            this.generateAIReviewButtonText = `Generated ${aiReviewUpdate.noOfGeneratedComments} comments!`;
+
+            if (aiReviewUpdate.noOfGeneratedComments > 0) {
+              const messageData : ToastMessageData = {
+                action: 'RefreshPage',
+              };
+              const messagePart = (aiReviewUpdate.noOfGeneratedComments === 1) ? "comment" : "comments";
+              const messageDetail = `Copilot generated ${aiReviewUpdate.noOfGeneratedComments} ${messagePart}.`;
+              this.messageService.add({ severity: 'success', icon: 'bi bi-check-circle', summary: 'Copilot Comments', detail: messageDetail, data: messageData, key: 'bc', life: 60000, closable: true });
+            }
+          } else if (aiReviewUpdate.status === 'Error') {
+            this.aiReviewGenerationState = 'Failed';
+            this.generateAIReviewButtonText = 'Failed to generate copilot review';
+            this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'AI Comments', detail: 'Failed to generate copilot review', key: 'bc', life: 5000, closable: true });
+          }
+
+          setTimeout(() => {
+            this.aiReviewGenerationState = 'Completed';
+            this.generateAIReviewButtonText = 'Regenerate copilot review';
+          }, 3000);
+          
+        }
+      }
+    });
   }
 
   toggleAPIRevisionApproval() {

@@ -6,10 +6,10 @@ It is eventually intended to encapsulate a lot of the manual work in an `azure s
 
 ## Get Started
 
-1. Open VS Code in the 'azure-sdk-tools' directory.
+1. Open VS Code in the `azure-sdk-tools` directory.
 2. Within the mcp.json file press the Start button below "servers"
 ![Local Image](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/image/MCP-Start.png)
-3. Prompt Copilot to use Azure SDK Tools.
+3. Prompt Copilot in agent mode to `"Use the hello-world MCP tool to echo back 'Testing the tool'".`
 
 This server is intended to be run in one of two ways:
 

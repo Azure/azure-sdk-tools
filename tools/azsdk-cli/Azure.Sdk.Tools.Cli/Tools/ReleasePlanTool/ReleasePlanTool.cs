@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
             if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
             {
-                throw new Exception($"Release plan already exists for the pull request: {specPullRequestUrl}. Release Plan ID: {existingReleasePlan.ReleasePlanId}");
+                throw new Exception($"Release plan already exists for the pull request: {specPullRequestUrl}. Work item Id: {existingReleasePlan.WorkItemId}");
             }
 
             if (string.IsNullOrEmpty(typeSpecProjectPath))

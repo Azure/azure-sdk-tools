@@ -10,6 +10,7 @@ import threading
 from time import time
 from typing import Optional, List
 import yaml
+import uuid
 
 from ._credential import in_ci, get_credential
 from ._diff import create_diff_with_line_numbers
@@ -67,7 +68,6 @@ class ApiViewReviewMode:
     DIFF = "diff"
 
 
-
 class ApiViewReview:
 
     def __init__(
@@ -81,6 +81,7 @@ class ApiViewReview:
         include_general_guidelines: bool = False,
         debug_log: bool = False,
     ):
+        self.job_id = str(uuid.uuid4())
         self.target = self._unescape(target)
         self.base = self._unescape(base) if base else None
         if self.base == "":
@@ -585,15 +586,16 @@ class ApiViewReview:
 
     def run(self) -> ReviewResult:
         try:
-            print(f"Generating {self._get_language_pretty_name()} review...")
+            print(f"Generating {self._get_language_pretty_name()} review (jobId={self.job_id})...")
+            logger.info(f"Generating review (jobId={self.job_id}) for language={self.language}")
             overall_start_time = time()
 
             # Canary check: try authenticating against Search and CosmosDB before LLM calls
             canary_error = self._canary_check_search_and_cosmos()
             if canary_error:
-            print(f"ERROR: {canary_error}")
-            logger.error(f"Aborting review due to canary check failure: {canary_error}")
-            raise RuntimeError(f"Aborting review: {canary_error}")
+                print(f"ERROR: {canary_error}")
+                logger.error(f"Aborting review due to canary check failure: {canary_error}")
+                raise RuntimeError(f"Aborting review: {canary_error}")
 
             # Track time for _generate_comments
             generate_start_time = time()

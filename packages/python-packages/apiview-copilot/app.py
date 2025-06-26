@@ -133,20 +133,21 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
     # Validate language
     if job_request.language not in supported_languages:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
-    job_id = str(uuid.uuid4())
+
+    reviewer = ApiViewReview(
+        language=job_request.language,
+        target=job_request.target,
+        base=job_request.base,
+        outline=job_request.outline,
+        comments=job_request.comments,
+    )
+    job_id = reviewer.job_id
     now = time.time()
     with job_store_lock:
         job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "created": now}
 
     async def run_review_job():
         try:
-            reviewer = ApiViewReview(
-                language=job_request.language,
-                target=job_request.target,
-                base=job_request.base,
-                outline=job_request.outline,
-                comments=job_request.comments,
-            )
             loop = asyncio.get_running_loop()
             # Run the blocking review in a thread pool executor
             result = await loop.run_in_executor(None, reviewer.run)

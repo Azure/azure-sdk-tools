@@ -94,6 +94,7 @@ namespace APIViewWeb
             });
 
             services.AddHttpClient();
+            services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
             services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
             services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
@@ -257,6 +258,7 @@ namespace APIViewWeb
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
+            services.AddHostedService<CopilotPollingBackgroundHostedService>();
 
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)

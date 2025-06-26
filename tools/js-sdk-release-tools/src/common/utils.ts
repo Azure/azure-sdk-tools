@@ -11,6 +11,7 @@ import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
+import { log } from 'node:console';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -191,8 +192,9 @@ export async function getGeneratedPackageDirectory(
     enableLegacySettingsMapping: boolean = false
 ): Promise<string> {
     const resolvedOptions = await resolveOptions(typeSpecDirectory);
+    logger.info(`Resolved options from tspconfig.yaml: ${JSON.stringify(resolvedOptions, undefined, 2)}`);
     const tspConfig = applyLegacySettingsMapping(resolvedOptions, enableLegacySettingsMapping);
-    
+    logger.info(`Applied legacy settings mapping: ${JSON.stringify(tspConfig, undefined, 2)}`);
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
     const emitterOptions = tspConfig.options?.[emitterName];

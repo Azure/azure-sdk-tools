@@ -11,6 +11,7 @@ from time import time
 from typing import Optional, List
 import yaml
 import uuid
+import sys
 
 from ._credential import in_ci, get_credential
 from ._diff import create_diff_with_line_numbers
@@ -100,6 +101,33 @@ class ApiViewReview:
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
         self.debug_log = debug_log
+        self._isatty = sys.stdout.isatty()
+
+        # Wrap logger to always prepend job_id
+        class JobLogger:
+            def __init__(self, logger, job_id):
+                self._logger = logger
+                self._job_id = job_id
+
+            def debug(self, msg, *args, **kwargs):
+                self._logger.debug(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def info(self, msg, *args, **kwargs):
+                self._logger.info(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def warning(self, msg, *args, **kwargs):
+                self._logger.warning(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def error(self, msg, *args, **kwargs):
+                self._logger.error(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def critical(self, msg, *args, **kwargs):
+                self._logger.critical(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+            def exception(self, msg, *args, **kwargs):
+                self._logger.exception(f"[{self._job_id}] {msg}", *args, **kwargs)
+
+        self.logger = JobLogger(logger, self.job_id)
 
     def __del__(self):
         # Ensure the executor is properly shut down
@@ -108,6 +136,16 @@ class ApiViewReview:
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
+
+    def _print_progress(self, msg: str, overwrite: bool = False):
+        """
+        Print progress messages, using carriage return for terminal, or newlines for non-terminal.
+        Prepend job_id to non-tty output for cloud log traceability.
+        """
+        if self._isatty and overwrite:
+            print(msg, end="\r", flush=True)
+        else:
+            print(f"[{self.job_id}] {msg}", flush=True)
 
     def _ensure_env_vars(self, vars: List[str]):
         """
@@ -155,7 +193,7 @@ class ApiViewReview:
         total = len(status_array)
         completed = sum(1 for s in status_array if s)
         percent = int((completed / total) * 100) if total else 100
-        print(f"\rEvaluating prompts... {percent}% complete", end="", flush=True)
+        self._print_progress(f"Evaluating prompts... {percent}% complete", overwrite=True)
 
         try:
             # Run the prompt
@@ -172,15 +210,15 @@ class ApiViewReview:
             status_array[status_idx] = True
             completed = sum(1 for s in status_array if s)
             percent = int((completed / total) * 100) if total else 100
-            print(f"\rEvaluating prompts... {percent}% complete", end="", flush=True)
+            self._print_progress(f"Evaluating prompts... {percent}% complete", overwrite=True)
             return result
 
         except Exception as e:
             status_array[status_idx] = True  # Mark as done even on error
             completed = sum(1 for s in status_array if s)
             percent = int((completed / total) * 100) if total else 100
-            print(f"\rEvaluating prompts... {percent}% complete", end="", flush=True)
-            logger.error(f"Error executing {task_name}: {str(e)}")
+            self._print_progress(f"Evaluating prompts... {percent}% complete", overwrite=True)
+            self.logger.error(f"Error executing {task_name}: {str(e)}")
             return None
 
     def _generate_comments(self):
@@ -214,7 +252,7 @@ class ApiViewReview:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
         # Set up progress tracking
-        print("Processing sections: ", end="", flush=True)
+        self._print_progress("Processing sections: ", overwrite=True)
 
         total_prompts = 1 + (len(sections_to_process) * 3)  # 1 for summary, 3 for each section
         prompt_status = [False] * total_prompts
@@ -346,7 +384,7 @@ class ApiViewReview:
                                 comment["source"] = section_type
                             section_results[section_idx]["comments"].extend(result["comments"])
                 except Exception as e:
-                    logger.error(f"Error processing {key}: {str(e)}")
+                    self.logger.error(f"Error processing {key}: {str(e)}")
 
             print()  # Add newline after progress indicator
 
@@ -412,14 +450,14 @@ class ApiViewReview:
                 merge_results = json.loads(response)
                 result_comments = merge_results.get("comments", [])
                 if len(result_comments) != 1:
-                    logger.error(f"Error merging comments for line {line_no}: {merge_results}")
+                    self.logger.error(f"Error merging comments for line {line_no}: {merge_results}")
                     continue
                 merged_comment = result_comments[0]
                 merged_comment["source"] = "merged"
                 merged_comment_obj = Comment(**merged_comment)
                 unique_comments.append(merged_comment_obj)
             except Exception as e:
-                logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
+                self.logger.error(f"Error processing deduplication for line {line_no}: {str(e)}")
 
         # Update the comments list with the unique comments
         self.results.comments = unique_comments
@@ -458,10 +496,10 @@ class ApiViewReview:
                 else:
                     discard_comments.append(response_json)
             except Exception as e:
-                logger.error(f"Error filtering comment at index {idx}: {str(e)}")
+                self.logger.error(f"Error filtering comment at index {idx}: {str(e)}")
             # Log % complete
             percent = int(((idx + 1) / total) * 100) if total else 100
-            print(f"Filtering comments... {percent}% complete", end="\r", flush=True)
+            self._print_progress(f"Filtering comments... {percent}% complete", overwrite=True)
         print()  # Ensure the progress bar is visible before the summary
 
         # Update the results with the filtered comments
@@ -478,8 +516,8 @@ class ApiViewReview:
                 json.dump(keep_comments, f, indent=2)
             with open(discard_path, "w", encoding="utf-8") as f:
                 json.dump(discard_comments, f, indent=2)
-            logger.debug(f"Kept comments written to {keep_path}")
-            logger.debug(f"Discarded comments written to {discard_path}")
+            self.logger.debug(f"Kept comments written to {keep_path}")
+            self.logger.debug(f"Discarded comments written to {discard_path}")
 
         self.results.comments = [Comment(**comment) for comment in keep_comments]
 
@@ -519,10 +557,10 @@ class ApiViewReview:
                 elif response_json.get("status") == "DISCARD":
                     comments_to_remove.append(idx)
             except Exception as e:
-                logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
-                logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
+                self.logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
+                self.logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
             percent = int(((i + 1) / total) * 100) if total else 100
-            print(f"Filtering preexisting comments... {percent}% complete", end="\r", flush=True)
+            self._print_progress(f"Filtering preexisting comments... {percent}% complete", overwrite=True)
         print()  # Ensure the progress bar is visible before the summary
 
         # remove comments that were marked for removal
@@ -534,7 +572,7 @@ class ApiViewReview:
         ]
         final_comment_count = len(self.results.comments)
         print(
-            f"Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
+            f"[{self.job_id}] Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
         )
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
@@ -562,13 +600,13 @@ class ApiViewReview:
             return prompty.execute(prompt_path, inputs=inputs, configuration=configuration)
 
         def on_retry(exception, attempt, max_attempts):
-            logger.warning(
+            self.logger.warning(
                 f"Error executing prompt {os.path.basename(prompt_path)}, "
                 f"attempt {attempt+1}/{max_attempts}: {str(exception)}"
             )
 
         def on_failure(exception, attempt):
-            logger.error(
+            self.logger.error(
                 f"Failed to execute prompt {os.path.basename(prompt_path)} "
                 f"after {attempt} attempts: {str(exception)}"
             )
@@ -580,21 +618,21 @@ class ApiViewReview:
             retry_exceptions=(json.JSONDecodeError, Exception),
             on_retry=on_retry,
             on_failure=on_failure,
-            logger=logger,
+            logger=self.logger,
             description=f"prompt {os.path.basename(prompt_path)}",
         )
 
     def run(self) -> ReviewResult:
         try:
-            print(f"Generating {self._get_language_pretty_name()} review (jobId={self.job_id})...")
-            logger.info(f"Generating review (jobId={self.job_id}) for language={self.language}")
+            print(f"Generating {self._get_language_pretty_name()} review {self.job_id}")
+            self.logger.info(f"Generating review {self.job_id} for language={self.language}")
             overall_start_time = time()
 
             # Canary check: try authenticating against Search and CosmosDB before LLM calls
             canary_error = self._canary_check_search_and_cosmos()
             if canary_error:
                 print(f"ERROR: {canary_error}")
-                logger.error(f"Aborting review due to canary check failure: {canary_error}")
+                self.logger.error(f"Aborting review due to canary check failure: {canary_error}")
                 raise RuntimeError(f"Aborting review: {canary_error}")
 
             # Track time for _generate_comments
@@ -631,7 +669,9 @@ class ApiViewReview:
             results = self.results.sorted()
 
             overall_end_time = time()
-            print(f"Review generated in {overall_end_time - overall_start_time:.2f} seconds.")
+            print(
+                f"Review {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
+            )
 
             if self.semantic_search_failed:
                 print(f"WARN: Semantic search failed for some chunks (see error.log).")

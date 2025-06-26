@@ -111,7 +111,6 @@ def local_review(
         f.write(review.model_dump_json(indent=4))
 
     print(f"Review written to {output_file}")
-    print(f"Found {len(review.comments)} comments.")
 
 
 def create_test_case(

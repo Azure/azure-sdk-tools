@@ -46,7 +46,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: to be compatible with current tool, input relative generated package dir
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
-        await tryBuildSamples(packageDirectory, rushxScript, options);
+        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot, options.runMode);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(

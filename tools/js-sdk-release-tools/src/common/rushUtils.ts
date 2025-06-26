@@ -119,16 +119,16 @@ export async function buildPackage(
 
 // no exception will be thrown in non-release mode, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 // in release mode, exceptions will be thrown to ensure sample build succeeds
-export async function tryBuildSamples(packageDirectory: string, rushxScript: string, options: ModularClientPackageOptions) {
+export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string, runMode: RunMode) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
-    const runOptions = { ...runCommandOptions, cwd };
-    const errorAsWarning = options.runMode !== RunMode.Release;
+    const options = { ...runCommandOptions, cwd };
+    const errorAsWarning = runMode !== RunMode.Release;
     try {
-        if (isRushRepo(options.sdkRepoRoot)) {
-            await runCommand(`node`, [rushxScript, 'build:samples'], runOptions, true, 300, errorAsWarning);
+        if (isRushRepo(sdkRepoRoot)) {
+            await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, errorAsWarning);
         } else {
-            await runCommand(`pnpm`, ['run', 'build:samples'], runOptions, true, 300, errorAsWarning);
+            await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, errorAsWarning);
         }
         logger.info(`built samples successfully.`);
     } catch (err) {

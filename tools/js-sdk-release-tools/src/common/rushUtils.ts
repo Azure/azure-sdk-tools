@@ -1,5 +1,5 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { ModularClientPackageOptions, PackageResult } from './types.js';
+import { ModularClientPackageOptions, PackageResult, RunMode } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import pkg from 'fs-extra';
@@ -118,15 +118,16 @@ export async function buildPackage(
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string) {
+export async function tryBuildSamples(packageDirectory: string, rushxScript: string, options: ModularClientPackageOptions) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
-    const options = { ...runCommandOptions, cwd };
+    const runOptions = { ...runCommandOptions, cwd };
+    const errorAsWarning = options.runMode === RunMode.Release;
     try {
-        if (isRushRepo(sdkRepoRoot)) {
-            await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
+        if (isRushRepo(options.sdkRepoRoot)) {
+            await runCommand(`node`, [rushxScript, 'build:samples'], runOptions, true, 300, errorAsWarning);
         } else {
-            await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, true);
+            await runCommand(`pnpm`, ['run', 'build:samples'], runOptions, true, 300, errorAsWarning);
         }
         logger.info(`built samples successfully.`);
     } catch (err) {

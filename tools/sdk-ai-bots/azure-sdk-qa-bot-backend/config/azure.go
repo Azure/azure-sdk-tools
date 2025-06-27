@@ -19,7 +19,9 @@ var API_KEY string
 var PREPROCESS_ENV_LOCAL_KEY string
 
 const (
+	AOAI_CHAT_REASONING_MODEL      = "gpt-4.1-2"
 	AOAI_CHAT_COMPLETIONS_MODEL    = "gpt-4.1"
+	AOAI_CHAT_MAX_TOKENS           = 10000
 	AOAI_CHAT_COMPLETIONS_ENDPOINT = "https://UxAutoTestEast.openai.azure.com"
 	AI_SEARCH_BASE_URL             = "https://typspehelper4search.search.windows.net"
 	AI_SEARCH_INDEX                = "typespec-knowledge"

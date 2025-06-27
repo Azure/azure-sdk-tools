@@ -9,19 +9,19 @@ type TenantConfig struct {
 
 var typespecSources = []model.Source{
 	model.Source_TypeSpecAzure,
-	model.Source_TypeSpec,
 	model.Source_TypeSpecQA,
+	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
 	model.TenantID_PythonChannelQaBot: {
-		Sources:        append(typespecSources, model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki),
+		Sources:        append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki}, typespecSources...),
 		PromptTemplate: "language_channel.md",
 	},
 	model.TenantID_AzureSDKQaBot: {
 		PromptTemplate: "typespec.md",
-		Sources:        typespecSources,
+		Sources:        append(typespecSources, model.Source_AzureResourceManagerRPC, model.Source_AzureAPIGuidelines),
 	},
 }
 

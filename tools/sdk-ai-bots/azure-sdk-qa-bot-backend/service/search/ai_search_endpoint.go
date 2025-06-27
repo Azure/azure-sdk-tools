@@ -94,27 +94,13 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	// Query each source and apply weighted scoring
 	allResults := []model.Index{}
 
-	// First, query all sources to get potential candidates
-	// We'll request more results than needed to account for filtering
-	expandedK := k * 3 // Request more results to ensure we have enough candidates after filtering
-
 	// Store results by source for weighted scoring
 	sourceResults := make(map[model.Source][]model.Index)
-
-	// Calculate weights for each source based on priority (position in sources array)
-	weights := make(map[model.Source]float64)
-	for i, source := range sources {
-		// Weight decreases by 0.1 for each lower priority source, starting from 1.0
-		weights[source] = 1.0 - float64(i)*0.1
-		if weights[source] < 0.3 {
-			weights[source] = 0.3 // Minimum weight threshold
-		}
-	}
 
 	// Query each source separately
 	for _, source := range sources {
 		req := baseReq
-		req.Top = expandedK
+		req.Top = k
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
@@ -127,12 +113,8 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		filteredResults := []model.Index{}
 		for _, doc := range resp.Value {
 			if doc.RerankScore < model.RerankScoreLowRelevanceThreshold {
-				log.Printf("Skipping result with low score: %s/%s, score: %f", doc.ContextID, doc.Title, doc.RerankScore)
 				continue
 			}
-
-			// Apply source weight to the rerank score
-			doc.RerankScore = doc.RerankScore * weights[model.Source(doc.ContextID)]
 
 			filteredResults = append(filteredResults, doc)
 		}

@@ -67,6 +67,10 @@ func GetIndexLink(chunk Index) string {
 	case Source_AzureSDKForPythonWiki:
 		path = TrimFileFormat(path)
 		return "https://github.com/Azure/azure-sdk-for-python/wiki/" + path
+	case Source_AzureAPIGuidelines:
+		return "https://github.com/microsoft/api-guidelines/blob/vNext/" + path
+	case Source_AzureResourceManagerRPC:
+		return "https://github.com/Azure/azure-resource-manager-rpc/blob/master/" + path
 	default:
 		return ""
 	}

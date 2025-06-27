@@ -50,6 +50,14 @@ func main() {
 			path:   "docs/azure-sdk-for-python/doc",
 			folder: "azure_sdk_for_python_docs",
 		},
+		{
+			path:   "docs/api-guidelines",
+			folder: "azure_api_guidelines",
+		},
+		{
+			path:   "docs/azure-resource-manager-rpc",
+			folder: "azure_resource_manager_rpc",
+		},
 	}
 
 	// Process each source directory

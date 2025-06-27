@@ -55,7 +55,41 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
         private readonly Option<int> workItemOptionalIdOpt = new(["--workitem-id"], "Release plan work item id") { IsRequired = false };
 
+        private async Task<GenericResponse> IsReleasePlanReadyToGenerateSDKAsync(int workItemId, string language)
+        {
+            var response = new GenericResponse()
+            {
+                Status = "Failed"
+            };
 
+            try
+            {
+                var releasePlan = await devopsService.GetReleasePlanAsync(workItemId);
+                var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
+
+                if (sdkInfo == null || string.IsNullOrWhiteSpace(sdkInfo.Language))
+                {
+                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a language specified. Update SDK details in the release plan.");
+                    return response;
+                }
+
+                if (string.IsNullOrWhiteSpace(sdkInfo.PackageName))
+                {
+                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a package name specified for {sdkInfo.Language}. Update SDK details in the release plan.");
+                    return response;
+                }
+
+                response.Details.Add($"SDK info for language '{sdkInfo.Language}' and package '{sdkInfo.PackageName}' is set correctly in the release plan.");
+                response.Status = "Success";
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.Status = "Failed";
+                response.Details.Add($"Failed to check if Release Plan is ready for SDK generation. Error: {ex.Message}");
+                return response;
+            }
+        }
         // disabling analyzer warning for MCP001 because the called function is in an entire try/catch block.
 #pragma warning disable MCP001
         [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
@@ -166,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
+        [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration and IsReleasePlanReadyToGenerateSDKAsync make sure Spec and Release Plan is ready to generate SDK.")]
         public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber, int workItemId)
         {
             try
@@ -204,6 +238,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Verify if spec is read to generate SDK
                 var readiness = await IsSpecReadyToGenerateSDKAsync(typespecProjectRoot, pullRequestNumber);
+                if (!readiness.Status.Equals("Success"))
+                {
+                    response.Details.AddRange(readiness.Details);
+                    response.Status = "Failed";
+                }
+
+                // Verify if release plan is ready to generate SDK
+                readiness = await IsReleasePlanReadyToGenerateSDKAsync(workItemId, language);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);

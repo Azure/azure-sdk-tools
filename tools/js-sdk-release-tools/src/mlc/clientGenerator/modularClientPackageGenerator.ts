@@ -2,7 +2,6 @@ import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../.
 import { buildPackage, createArtifact, tryBuildSamples } from '../../common/rushUtils.js';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
 import { posix } from 'node:path';
-
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
@@ -47,7 +46,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: to be compatible with current tool, input relative generated package dir
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
-        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
+        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot, options.runMode);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(
@@ -80,7 +79,6 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         logger.error(`Failed to generate package due to ${(err as Error)?.stack ?? err}`);
         throw err;
     } finally {
-       
         return packageResult;
     }
 }

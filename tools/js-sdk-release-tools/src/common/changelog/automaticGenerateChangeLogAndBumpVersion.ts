@@ -2,8 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
-import { Changelog } from "../../changelog/changelogGenerator.js";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
@@ -24,6 +22,8 @@ import { SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
+import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
+import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -80,7 +80,17 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
-                const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
+                const diffDetector = new DifferenceDetector(
+                    { path: apiMdFileNPM, sdkType: oldSDKType },
+                    { path: apiMdFileLocal, sdkType: newSDKType },
+                );
+                const detectResult = await diffDetector.detect();
+                const detectContext = diffDetector.getDetectContext();
+                const changelogGenerator = new ChangelogGenerator(
+                    detectContext,
+                    detectResult,
+                );
+                const changelog = changelogGenerator.generate();
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
                 const lastStableChangelog: NpmViewParameters = {
                     file: "CHANGELOG.md",
@@ -134,9 +144,10 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     }
                     await makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
-                    await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
+                    // TODO
+                    // await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
+                    await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog.content, originalChangeLogContent, stableVersion);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
                     return changelog;
                 }

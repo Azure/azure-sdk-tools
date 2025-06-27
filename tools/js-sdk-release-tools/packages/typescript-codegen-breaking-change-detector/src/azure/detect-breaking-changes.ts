@@ -17,7 +17,12 @@ import { TSESLint } from '@typescript-eslint/utils';
 import ignoreInlineDeclarationsInOperationGroup from './common/rules/ignore-inline-declarations-in-operation-group';
 import { glob } from 'glob';
 import { logger } from '../logging/logger';
-import { Project, ScriptTarget } from 'ts-morph';
+import { Project, ScriptTarget, SourceFile, Node, SyntaxKind } from 'ts-morph';
+
+export interface ApiViewOptions {
+  apiView?: string;
+  path?: string;
+}
 
 const tsconfig = `
 {
@@ -29,10 +34,10 @@ const tsconfig = `
     "esModuleInterop": true,
     "lib": ["es2015", "es2017", "esnext"],
     "experimentalDecorators": true,
-  "rootDir": "."
+    "rootDir": "."
   },
   "include": [
-    "**/*.ts",
+    "**/*.ts"
   ],
   "exclude": ["**/node_modules/**/*.*"]
 }
@@ -51,26 +56,19 @@ interface ProjectContext {
 async function loadCodeFromApiView(path: string) {
   const content = await readFile(path, { encoding: 'utf-8' });
   const markdown = content.toString();
-  const codeBlocks: string[] = [];
-  const renderer = new Renderer();
-  renderer.code = ({ text }) => {
-    codeBlocks.push(text);
-    return '';
-  };
-  marked(markdown, { renderer });
-  if (codeBlocks.length !== 1) throw new Error(`Expected 1 code block, got ${codeBlocks.length} in "${path}".`);
-
-  return codeBlocks[0];
+  return extractCodeFromApiView(markdown);
 }
 
 async function prepareProject(
-  currentPackageFolder: string,
-  baselinePackageFolder: string,
+  currentOptions: ApiViewOptions,
+  baselineOptions: ApiViewOptions,
   tempFolder: string
 ): Promise<ProjectContext> {
   const [currentCode, baselineCode] = await Promise.all([
-    loadCodeFromApiView(currentPackageFolder),
-    loadCodeFromApiView(baselinePackageFolder),
+    currentOptions.apiView ? extractCodeFromApiView(currentOptions.apiView) : loadCodeFromApiView(currentOptions.path!),
+    baselineOptions.apiView
+      ? extractCodeFromApiView(baselineOptions.apiView)
+      : loadCodeFromApiView(baselineOptions.path!),
   ]);
 
   const relativeCurrentPath = join('current', 'review', 'index.ts');
@@ -152,14 +150,39 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
   }
 }
 
-export async function createAstContext(baselineApiViewPath: string, currentApiViewPath: string, tempFolder: string) {
-  const projectContext = await prepareProject(currentApiViewPath, baselineApiViewPath, tempFolder);
-  const project = new Project({
-    compilerOptions: { target: ScriptTarget.ES2022 },
-  });
-  const baseline = project.createSourceFile('review/baseline/index.ts', projectContext.baseline.code);
-  const current = project.createSourceFile('review/current/index.ts', projectContext.current.code);
-  return { baseline, current };
+export function extractCodeFromApiView(content: string): string {
+  const codeBlocks: string[] = [];
+  const renderer = new Renderer();
+  renderer.code = ({ text }) => {
+    codeBlocks.push(text);
+    return '';
+  };
+  marked(content, { renderer });
+  if (codeBlocks.length !== 1) throw new Error(`Expected 1 code block, got ${codeBlocks.length}.`);
+  return codeBlocks[0];
+}
+
+export async function createAstContext(
+  baselineOptions: ApiViewOptions,
+  currentOptions: ApiViewOptions,
+  tempFolder: string,
+  cleanUpAtTheEnd = false
+) {
+  try {
+    const projectContext = await prepareProject(currentOptions, baselineOptions, tempFolder);
+    const project = new Project({
+      compilerOptions: { target: ScriptTarget.ES2022 },
+    });
+    const baseline = project.createSourceFile('review/baseline/index.ts', projectContext.baseline.code);
+    const current = project.createSourceFile('review/current/index.ts', projectContext.current.code);
+    return { baseline, current };
+  } finally {
+    if (cleanUpAtTheEnd) {
+      if (await exists(tempFolder)) {
+        await remove(tempFolder);
+      }
+    }
+  }
 }
 
 export async function detectBreakingChangesBetweenPackages(
@@ -186,7 +209,11 @@ export async function detectBreakingChangesBetweenPackages(
       const apiViewBasename = basename(relativeApiViewPath);
       const currentApiViewPath = join(currentPackageFolder!, relativeApiViewPath);
       if (!(await exists(currentApiViewPath))) throw new Error(`Failed to find API view: ${currentApiViewPath}`);
-      const projectContext = await prepareProject(currentApiViewPath, baselineApiViewPath, tempFolder!);
+      const projectContext = await prepareProject(
+        { path: currentApiViewPath },
+        { path: baselineApiViewPath },
+        tempFolder!
+      );
       const messages = await detectBreakingChangesCore(projectContext);
       return { name: apiViewBasename, messages };
     });

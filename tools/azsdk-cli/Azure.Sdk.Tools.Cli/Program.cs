@@ -12,7 +12,6 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         ServerApp = CreateAppBuilder(args).Build();
-        
         var rootCommand = CommandFactory.CreateRootCommand(args, ServerApp.Services);
 
         var parsedCommands = new CommandLineBuilder(rootCommand)

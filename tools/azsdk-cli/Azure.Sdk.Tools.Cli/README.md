@@ -3,16 +3,17 @@
 The Azure SDK Engineering System's automation server that is intended to encapsulate manual work in the `azure sdk` package's release process.
 
 ## Prerequisites
-- .NET 8.0
-- Visual Studio Code 
-    - [Copilot Extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
-    - [C# Dev Kit Extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) (optional)
+
+- .NET 8.0 (`winget install Microsoft.DotNet.SDK.8`)
+- Visual Studio Code (`winget install Microsoft.VisualStudioCode`)
+  - [Copilot Extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
+  - [C# Dev Kit Extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) (optional)
 
 ## Quick Start
 
-1. **Open VS Code** in the `azure-sdk-tools/tools/azsdk-cli` directory
+1. **Open VS Code** in the `azure-sdk-tools` directory
 2. **Start the MCP server** (optional - Copilot will auto-start if needed):
-   - In `mcp.json`, click the Start button below "servers"
+   - In `.vscode/mcp.json`, click the Start button below "servers"
    
    ![Local Image](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/image/MCP-Start.png)
 

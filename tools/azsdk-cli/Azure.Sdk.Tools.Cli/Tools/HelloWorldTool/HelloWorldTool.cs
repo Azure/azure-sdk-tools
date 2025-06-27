@@ -41,31 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             ctx.ExitCode = ExitCode;
             output.Output(result);
             await Task.CompletedTask;
-        }
-        
-        [McpServerTool(Name = "get_r_in_strawberry"), Description("Returns the letter 'r' in the word 'strawberry'")]
-        public DefaultCommandResponse GetRInStrawberry()
-        {
-            try
-            {
-                logger.LogInformation("Returning 'r' in 'strawberry'");
-                int count = "strawberry".Count(c => c == 'r');
-                
-                return new()
-                {
-                    Message = $"There are {count} 'r's in the word 'strawberry'.",
-                    Duration = 1
-                };
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while getting 'r' in 'strawberry'");
-                return new()
-                {
-                    ResponseError = $"Error occurred while processing: {ex.Message}"
-                };
-            }
-        }
+        }        
 
         [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
         public DefaultCommandResponse EchoFail(string message)

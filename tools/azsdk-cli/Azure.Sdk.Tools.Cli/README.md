@@ -1,6 +1,6 @@
 # `Azure SDK CLI`
 
-The Azure SDK Engineering System's automation server that is intended to encapsulate manual work in the `azure sdk` package's release process.
+The Azure SDK Engineering System's automation server that is intended to encapsulate manual work in the `azure sdk` release process.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ Commands:
 
 ### 1. MCP Server Mode
 
-Add to `.vscode/mcp.json` file through `stdio`:
+Add to `.vscode/mcp.json` file, ensuring that the type is set to `stdio`:
 
 **Using standalone executable:**
 

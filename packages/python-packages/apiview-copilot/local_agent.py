@@ -1,7 +1,10 @@
-from dotenv import load_dotenv
+import argparse
 import asyncio
-from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin
+from dotenv import load_dotenv
 import logging
+from semantic_kernel.agents import AzureAIAgentThread
+
+from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin
 
 load_dotenv(override=True)
 
@@ -50,46 +53,38 @@ async def call_plugin_function(*, plugin_name: str, function_name: str, function
         return f"Error calling {plugin_name}.{function_name}: {e}"
 
 
-async def chat():
+async def chat(thread_id=None):
     print("Interactive API Review Agent Chat. Type 'exit' to quit.")
-    user_inputs = []
     BLUE = "\033[94m"
     GREEN = "\033[92m"
     RESET = "\033[0m"
     async with get_main_agent() as agent:
-        from semantic_kernel.agents import AzureAIAgentThread
-
-        thread = AzureAIAgentThread(client=agent.client)
-        try:
-            while True:
-                user_input = input(f"{GREEN}You:{RESET} ")
-                if user_input.strip().lower() in {"exit", "quit"}:
-                    print("Exiting chat.")
-                    break
-                user_inputs.append(user_input)
-                async for response in agent.invoke(messages=user_inputs, thread=thread):
-                    # handle each response (likely just one per turn, but this is the correct pattern)
-                    # Check for function call (adjust attribute access as needed)
-                    if hasattr(response, "is_function_call") and response.is_function_call:
-                        function_name = response.function_name
-                        function_args = response.arguments
-                        # Try to extract plugin/tool name from the response
-                        plugin_name = getattr(response, "plugin_name", None) or getattr(response, "tool_name", None)
-                        logging.info(
-                            f"Invoking function: {function_name} from plugin: {plugin_name} with args: {function_args}"
-                        )
-                        # Call the plugin function
-                        function_result = await call_plugin_function(plugin_name, function_name, function_args)
-                        # Append the function result to the conversation
-                        thread.append({"role": "function", "name": function_name, "content": function_result})
-                    else:
-                        # Final answer from the agent
-                        print(f"{BLUE}Agent:{RESET} {response}\n")
-                        thread = response.thread
-                    break  # If you only expect one response, break after the first
-        finally:
-            await thread.delete() if thread else None
+        thread = None
+        while True:
+            user_input = input(f"{GREEN}You:{RESET} ")
+            if user_input.strip().lower() in {"exit", "quit"}:
+                print("Exiting chat.")
+                if thread:
+                    print(f"Supply thread ID {thread.id} to continue the discussion later.")
+                break
+            # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
+            if thread is None:
+                if thread_id and isinstance(thread_id, str) and thread_id.startswith("thread"):
+                    thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
+                else:
+                    thread = AzureAIAgentThread(client=agent.client)
+            try:
+                response = await agent.get_response(thread=thread, messages=user_input)
+                print(f"{BLUE}Agent:{RESET} {response}\n")
+                thread = response.thread
+            except Exception as e:
+                print(f"Error: {e}")
 
 
 if __name__ == "__main__":
-    asyncio.run(chat())
+    parser = argparse.ArgumentParser(description="Interactive API Review Agent Chat")
+    parser.add_argument(
+        "--thread-id", type=str, default=None, help="Optional Azure thread id to continue a previous session"
+    )
+    args = parser.parse_args()
+    asyncio.run(chat(thread_id=args.thread_id))

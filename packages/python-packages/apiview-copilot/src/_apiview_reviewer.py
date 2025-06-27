@@ -16,7 +16,7 @@ import sys
 from ._credential import in_ci, get_credential
 from ._diff import create_diff_with_line_numbers
 from ._models import ReviewResult, Comment, ExistingComment
-from ._search_manager import SearchManager, SearchResult
+from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
 from ._utils import get_language_pretty_name
@@ -90,6 +90,7 @@ class ApiViewReview:
             self.base = None
         self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
+        self.max_chunk_size = 500
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
         language_guideline_ids = [x.id for x in self.search.language_guidelines]
@@ -170,10 +171,13 @@ class ApiViewReview:
             numbered_lines = []
             for i, line in enumerate(self.target.splitlines()):
                 numbered_lines.append(f"{i + 1}: {line}")
-            return SectionedDocument(lines=numbered_lines)
+            return SectionedDocument(lines=numbered_lines, max_chunk_size=self.max_chunk_size)
         elif self.mode == ApiViewReviewMode.DIFF:
             # Create a sectioned document for the diff
-            return SectionedDocument(lines=create_diff_with_line_numbers(old=self.base, new=self.target).splitlines())
+            return SectionedDocument(
+                lines=create_diff_with_line_numbers(old=self.base, new=self.target).splitlines(),
+                max_chunk_size=self.max_chunk_size,
+            )
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
@@ -335,7 +339,7 @@ class ApiViewReview:
             # Context prompt
             context_key = f"{context_tag}_{section_idx}"
             context = self._retrieve_context(str(section))
-            section_contexts[section_idx] = [x.id for x in context]
+            section_contexts[section_idx] = [x.id for x in context] if context else []
             context_string = context.to_markdown() if context else ""
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,

@@ -194,14 +194,6 @@ model CompletionRequest {
   
   @doc("Additional information to provide to the agent, such as links or images")
   additional_infos?: AdditionalInfo[];
-  
-  @doc("Request tracing ID for debugging purposes")
-  @added(Versions.v1_1_0)
-  trace_id?: string;
-  
-  @doc("Maximum response time in seconds")
-  @added(Versions.v1_1_0)
-  max_response_time?: int32;
 }
 
 @doc("Response from chat completion")

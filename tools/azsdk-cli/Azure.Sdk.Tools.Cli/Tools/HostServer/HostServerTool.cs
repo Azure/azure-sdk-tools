@@ -19,8 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
         public override Command GetCommand()
         {
-            Command command = new Command("start");
-
+            Command command = new Command("start", "Starts the web server");
             command.SetHandler(async ctx =>
             {
                 ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());

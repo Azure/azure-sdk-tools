@@ -319,7 +319,6 @@ def find_dotnet_examples_paths(sdk_path: str, module_relative_path_local: str) -
                     candidate_path = path.join(item_path, "Generated", "Samples")
                     if path.exists(candidate_path):
                         dotnet_examples_paths.append(candidate_path)
-                        break
     
     return dotnet_examples_paths
 
@@ -349,7 +348,7 @@ def main():
 
     release = Release(config["release"]["tag"], config["release"]["package"], config["release"]["version"])
 
-    # tests/Generated/Samples
+    # find paths that contain the dotnet examples
     module_relative_path_local = get_module_relative_path(release.package, sdk_path)
     dotnet_examples_paths = find_dotnet_examples_paths(sdk_path, module_relative_path_local)
 

@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            Command command = new("release-plan");
+            Command command = new("release-plan", "Manage release plans in Azure");
             var subCommands = new[]
             {
                 new Command(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},

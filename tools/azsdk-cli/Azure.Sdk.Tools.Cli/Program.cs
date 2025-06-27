@@ -12,6 +12,11 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         ServerApp = CreateAppBuilder(args).Build();
+        if (!IsCLI(args))
+        {
+            ServerApp.MapMcp();
+        }
+        
         var rootCommand = CommandFactory.CreateRootCommand(args, ServerApp.Services);
 
         var parsedCommands = new CommandLineBuilder(rootCommand)
@@ -80,6 +85,7 @@ public class Program
         builder.Services
             .AddMcpServer()
             .WithStdioServerTransport()
+            .WithHttpTransport()
             .WithTools(toolTypes);
 
         return builder;

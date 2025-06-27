@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 
         public override Command GetCommand()
         {
-            Command command = new("hello-world");
+            Command command = new("hello-world", "Tests echoing a message back to the client");
             command.AddArgument(_inputArg);
             command.AddOption(failOpt);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });

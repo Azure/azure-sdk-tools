@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public override Command GetCommand()
         {
             // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-            Command command = new("spec-tool");
+            Command command = new("spec-tool", "TypeSpec project tools for Azure REST API Specs");
             var getModifiedProjectsCommand = new Command(getModifiedProjectsCommandName, "Get list of modified typespec projects") { repoRootOpt, targetBranchOpt };
             getModifiedProjectsCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             command.AddCommand(getModifiedProjectsCommand);

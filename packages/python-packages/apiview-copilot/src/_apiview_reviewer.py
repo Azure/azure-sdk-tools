@@ -90,7 +90,11 @@ class ApiViewReview:
             self.base = None
         self.mode = ApiViewReviewMode.FULL if self.base is None else ApiViewReviewMode.DIFF
         self.language = language
-        self.max_chunk_size = 500
+        # lower threshold for Java because lines are unusually dense
+        if self.language in ["java", "android"]:
+            self.max_chunk_size = 450
+        else:
+            self.max_chunk_size = 500
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
         language_guideline_ids = [x.id for x in self.search.language_guidelines]

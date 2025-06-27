@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
         public override Command GetCommand()
         {
-            Command command = new Command("start", "Starts the web server");
+            Command command = new Command("start", "Starts the MCP server (stdio mode)");
             command.SetHandler(async ctx =>
             {
                 ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());

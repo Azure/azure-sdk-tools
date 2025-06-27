@@ -1,45 +1,62 @@
 # `Azure SDK CLI`
 
-This implementation is the Azure SDK Engineering System's `everything` server.
+The Azure SDK Engineering System's automation server that is intended to encapsulate manual work in the `azure sdk` package's release process.
 
-It is eventually intended to encapsulate a lot of the manual work in an `azure sdk` package's release process.
+## Prerequisites
+- .NET 8.0
+- Visual Studio Code
+    - Copilot Extension
+    - C# Dev Kit Extension (optional)
 
-## Get Started
+## Quick Start
 
-1. Open VS Code in the `azure-sdk-tools` directory.
-2. Within the mcp.json file press the Start button below "servers"
-![Local Image](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/image/MCP-Start.png)
-3. Prompt Copilot in agent mode to `"Use the hello-world MCP tool to echo back 'Testing the tool'".`
+1. **Open VS Code** in the `azure-sdk-tools/tools/azsdk-cli` directory
+2. **Start the MCP server** (optional - Copilot will auto-start if needed):
+   - In `mcp.json`, click the Start button below "servers"
+   
+   ![Local Image](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/image/MCP-Start.png)
 
-This server is intended to be run in one of two ways:
+3. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`):
 
-- As a standalone `MCP` server that can be added directly to a `.vscode/mcp.json` file through `stdio`.
-  - Downloaded standalone exe:
-    - ```jsonc
-      // within mcp.json `servers` member:
-      "Azure SDK Everything": {
-        "type": "stdio",
-        "command": "path/to/Azure.Sdk.Tools.Cli.exe",
-        "args": [
-          "start"
-        ]
-      }
-      ```
-  - Directly as a `dotnet tool install`-ed dotnet tool
-    - ```jsonc
-      "Azure SDK Everything": {
-        "type": "stdio",
-        "command": "azsdk-cli",
-        "args": [
-          "start"
-        ]
-      }
-      ```
-- As a standalone tool encapsulating specific tool usage
-  - ```bash
-    WORKITEMID=12345
-    azsdk-cli get-release-plan $WORKITEMID
-    ```
+   ```text
+   "Use the hello-world MCP tool to echo back 'Testing the tool'"
+   ```
+
+## Usage Modes
+
+### 1. MCP Server Mode
+
+Add to `.vscode/mcp.json` file through `stdio`:
+
+**Using standalone executable:**
+
+```jsonc
+// within mcp.json "servers" section:
+"Azure SDK Everything": {
+  "type": "stdio",
+  "command": "path/to/Azure.Sdk.Tools.Cli.exe",
+  "args": ["start"]
+}
+```
+
+**Using dotnet tool:**
+
+```jsonc
+"Azure SDK Everything": {
+  "type": "stdio", 
+  "command": "azsdk-cli",
+  "args": ["start"]
+}
+```
+
+### 2. Standalone CLI Mode
+
+Run directly as a command-line tool:
+
+```bash
+WORKITEMID=12345
+azsdk-cli get-release-plan $WORKITEMID
+```
 
 In either case, the _same_ code will be invoked to get both results.
 

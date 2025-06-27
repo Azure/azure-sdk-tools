@@ -5,7 +5,6 @@ from semantic_kernel.functions import kernel_function
 import logging
 
 from src._models import Memory
-from src._utils import get_architects_for_language
 
 from azure.cosmos import CosmosClient
 from azure.identity import DefaultAzureCredential

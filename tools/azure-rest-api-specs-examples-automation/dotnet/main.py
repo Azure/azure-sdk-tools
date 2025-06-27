@@ -292,16 +292,16 @@ def get_module_relative_path(sdk_name: str, sdk_path: str) -> str:
 def find_dotnet_examples_paths(sdk_path: str, module_relative_path_local: str) -> List[str]:
     """
     Find dotnet examples paths in the SDK directory.
-    
+
     Args:
         sdk_path: Path to the SDK root directory
         module_relative_path_local: Relative path to the module within the SDK
-        
+
     Returns:
         List of paths where dotnet examples are found
     """
     dotnet_examples_paths: List[str] = []
-    
+
     # Try primary path first: tests/Generated/Samples
     dotnet_examples_relative_path = os.path.join(module_relative_path_local, "tests", "Generated", "Samples")
     dotnet_examples_path = os.path.join(sdk_path, dotnet_examples_relative_path)
@@ -318,7 +318,7 @@ def find_dotnet_examples_paths(sdk_path: str, module_relative_path_local: str) -
                     candidate_path = os.path.join(item_path, "Generated", "Samples")
                     if os.path.exists(candidate_path):
                         dotnet_examples_paths.append(candidate_path)
-    
+
     return dotnet_examples_paths
 
 

@@ -13,24 +13,19 @@ import logging
 import os
 from fastapi import FastAPI
 from src.agent._api import router as agent_router
-from fastapi import APIRouter
 import prompty
 import prompty.azure
 from pydantic import BaseModel
-from azure.ai.agents.models import ThreadMessageOptions
 from semantic_kernel.agents import AzureAIAgentThread
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
-import uuid
 import threading
 import time
-from typing import Dict, Any
 
-
-job_store: Dict[str, Dict[str, Any]] = {}
-job_store_lock = threading.RLock()
+from src._database_manager import get_database_manager
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
+db_manager = get_database_manager()
 
 app = FastAPI()
 app.include_router(agent_router)
@@ -136,8 +131,7 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
         comments=job_request.comments,
     )
     job_id = reviewer.job_id
-    with job_store_lock:
-        job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "finished": None}
+    db_manager.insert_job(job_id, {"status": ApiReviewJobStatus.InProgress, "finished": None})
 
     async def run_review_job():
         try:
@@ -149,13 +143,11 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
             result_json = json.loads(result.model_dump_json())
             comments = result_json.get("comments", [])
 
-            with job_store_lock:
-                now = time.time()
-                job_store[job_id] = {"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now}
+            now = time.time()
+            db_manager.upsert_job(job_id, {"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now})
         except Exception as e:
-            with job_store_lock:
-                now = time.time()
-                job_store[job_id] = {"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now}
+            now = time.time()
+            db_manager.upsert_job(job_id, {"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now})
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
@@ -164,30 +156,17 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(job_id: str):
-    job = job_store.get(job_id)
+    job = db_manager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    # Remove internal 'created' field from response
-    if job and "created" in job:
-        job = dict(job)
-        job.pop("created", None)
     return job
 
 
 def cleanup_job_store():
-    """Cleanup completed jobs from the job store periodically."""
-    global job_store
+    """Cleanup completed jobs from the Cosmos DB periodically."""
     while True:
         time.sleep(60)  # Run every 60 seconds
-        now = time.time()
-        with job_store_lock:
-            to_delete = []
-            for job_id, job in list(job_store.items()):
-                finished = job.get("finished")
-                if finished and now - finished > JOB_RETENTION_SECONDS:
-                    to_delete.append(job_id)
-            for job_id in to_delete:
-                del job_store[job_id]
+        db_manager.cleanup_old_jobs(JOB_RETENTION_SECONDS)
 
 
 class AgentChatRequest(BaseModel):

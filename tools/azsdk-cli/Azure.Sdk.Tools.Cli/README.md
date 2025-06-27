@@ -77,8 +77,9 @@ Add to `.vscode/mcp.json` file through `stdio`:
 ```jsonc
 "Azure SDK Everything": {
   "type": "stdio", 
-  "command": "azsdk-cli",
-  "args": ["start"]
+  "command": "dotnet",
+  "args": ["run", "--", "start"],
+  "cwd": "path/to/AzureSdk.Tools.Cli"
 }
 ```
 

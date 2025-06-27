@@ -512,14 +512,23 @@ describe("getPackageNameFromTspConfig", () => {
 });
 
 describe("applyLegacySettingsMapping", () => {
-    test("should not modify options when mapping is disabled", () => {
-        const originalOptions = {
-            configFile: {
-                parameters: {
-                    "service-dir": { default: "sdk/test" },
-                    "package-dir": { default: "arm-test" }
-                }
-            },
+    let tempDir: string;
+    
+    beforeEach(async () => {
+        // Create a temporary directory for test files
+        tempDir = path.join(__dirname, `temp-${getRandomInt(10000)}`);
+        await ensureDir(tempDir);
+    });
+
+    afterEach(async () => {
+        // Clean up temporary directory
+        if (await pathExists(tempDir)) {
+            await remove(tempDir);
+        }
+    });
+
+    test("should not modify tspconfig when mapping is disabled", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "generateTest": true,
@@ -528,19 +537,21 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, false);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        // Get initial content
+        const initialContent = fs.readFileSync(tspConfigPath, 'utf8');
+
+        await applyLegacySettingsMapping(tempDir, false);
         
-        expect(result).toEqual(originalOptions);
+        // Content should remain unchanged
+        const finalContent = fs.readFileSync(tspConfigPath, 'utf8');
+        expect(finalContent).toBe(initialContent);
     });
 
-    test("should map legacy TypeSpec emitter options when mapping is enabled", () => {
-        const originalOptions = {
-            configFile: {
-                parameters: {
-                    "service-dir": { default: "sdk/test" },
-                    "package-dir": { default: "arm-test" }
-                }
-            },
+    test("should map legacy TypeSpec emitter options when mapping is enabled", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "generateTest": true,
@@ -550,25 +561,30 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // Check that TypeSpec emitter options are mapped
-        expect(result.options["@azure-tools/typespec-ts"]["generate-test"]).toBe(true);
-        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toEqual({ name: "@azure/test" });
-        expect(result.options["@azure-tools/typespec-ts"]["generate-metadata"]).toBe(false);
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["generate-test"]).toBe(true);
+        expect(emitterOptions["package-details"]).toEqual({ name: "@azure/test" });
+        expect(emitterOptions["generate-metadata"]).toBe(false);
         
         // Check that old options are removed
-        expect(result.options["@azure-tools/typespec-ts"]["generateTest"]).toBeUndefined();
-        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
-        expect(result.options["@azure-tools/typespec-ts"]["generateMetadata"]).toBeUndefined();
-
-        // Check that configFile parameters are not affected
-        expect(result.configFile.parameters["service-dir"]).toEqual({ default: "sdk/test" });
-        expect(result.configFile.parameters["package-dir"]).toEqual({ default: "arm-test" });
+        expect(emitterOptions["generateTest"]).toBeUndefined();
+        expect(emitterOptions["packageDetails"]).toBeUndefined();
+        expect(emitterOptions["generateMetadata"]).toBeUndefined();
     });
 
-    test("should not overwrite existing new options", () => {
-        const originalOptions = {
+    test("should not overwrite existing new options", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "generateTest": true,
@@ -577,15 +593,24 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // New option should be preserved, old one should remain unchanged since new one exists
-        expect(result.options["@azure-tools/typespec-ts"]["generate-test"]).toBe(false);
-        expect(result.options["@azure-tools/typespec-ts"]["generateTest"]).toBe(true);
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["generate-test"]).toBe(false);
+        expect(emitterOptions["generateTest"]).toBe(true);
     });
 
-    test("should handle options not in built-in mapping", () => {
-        const originalOptions = {
+    test("should handle options not in built-in mapping", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "customOldKey": "custom-value",
@@ -594,18 +619,27 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // Built-in mapping should work
-        expect(result.options["@azure-tools/typespec-ts"]["generate-test"]).toBe(true);
-        expect(result.options["@azure-tools/typespec-ts"]["generateTest"]).toBeUndefined();
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["generate-test"]).toBe(true);
+        expect(emitterOptions["generateTest"]).toBeUndefined();
         
         // Custom key not in mapping should remain unchanged
-        expect(result.options["@azure-tools/typespec-ts"]["customOldKey"]).toBe("custom-value");
+        expect(emitterOptions["customOldKey"]).toBe("custom-value");
     });
 
-    test("should generate package-dir from packageDetails.name when package-dir doesn't exist", () => {
-        const originalOptions = {
+    test("should generate package-dir from packageDetails.name when package-dir doesn't exist", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "packageDetails": {
@@ -615,17 +649,26 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // packageDetails should be mapped to package-details
-        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
-        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["package-details"]).toBeDefined();
+        expect(emitterOptions["packageDetails"]).toBeUndefined();
         // package-dir should be generated from package-details.name
-        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBe("ai-agents");
+        expect(emitterOptions["package-dir"]).toBe("ai-agents");
     });
 
-    test("should generate package-dir from package-details.name when package-dir doesn't exist", () => {
-        const originalOptions = {
+    test("should generate package-dir from package-details.name when package-dir doesn't exist", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "package-details": {
@@ -635,13 +678,22 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
 
-        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBe("storage-blob");
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
+
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["package-dir"]).toBe("storage-blob");
     });
 
-    test("should not override existing package-dir", () => {
-        const originalOptions = {
+    test("should not override existing package-dir", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "package-dir": "existing-dir",
@@ -652,17 +704,26 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // package-dir should remain unchanged
-        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBe("existing-dir");
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["package-dir"]).toBe("existing-dir");
         // packageDetails should be mapped to package-details
-        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
-        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        expect(emitterOptions["package-details"]).toBeDefined();
+        expect(emitterOptions["packageDetails"]).toBeUndefined();
     });
 
-    test("should handle packageDetails.name without @azure/ prefix", () => {
-        const originalOptions = {
+    test("should handle packageDetails.name without @azure/ prefix", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "packageDetails": {
@@ -672,17 +733,26 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // packageDetails should be mapped to package-details
-        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
-        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["package-details"]).toBeDefined();
+        expect(emitterOptions["packageDetails"]).toBeUndefined();
         // package-dir should not be generated since name doesn't start with @azure/
-        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBeUndefined();
+        expect(emitterOptions["package-dir"]).toBeUndefined();
     });
 
-    test("should handle missing packageDetails.name", () => {
-        const originalOptions = {
+    test("should handle missing packageDetails.name", async () => {
+        const tspConfigContent = {
             options: {
                 "@azure-tools/typespec-ts": {
                     "packageDetails": {}
@@ -690,12 +760,21 @@ describe("applyLegacySettingsMapping", () => {
             }
         };
 
-        const result = applyLegacySettingsMapping(originalOptions, true);
+        const tspConfigPath = path.join(tempDir, "tspconfig.yaml");
+        await writeFile(tspConfigPath, stringify(tspConfigContent));
+
+        await applyLegacySettingsMapping(tempDir, true);
+
+        // Read the updated file and parse as YAML
+        const updatedContent = fs.readFileSync(tspConfigPath, 'utf8');
+        const { parse } = await import('yaml');
+        const updatedConfig = parse(updatedContent);
 
         // packageDetails should be mapped to package-details
-        expect(result.options["@azure-tools/typespec-ts"]["package-details"]).toBeDefined();
-        expect(result.options["@azure-tools/typespec-ts"]["packageDetails"]).toBeUndefined();
+        const emitterOptions = updatedConfig.options["@azure-tools/typespec-ts"];
+        expect(emitterOptions["package-details"]).toBeDefined();
+        expect(emitterOptions["packageDetails"]).toBeUndefined();
         // package-dir should not be generated since name is missing
-        expect(result.options["@azure-tools/typespec-ts"]["package-dir"]).toBeUndefined();
+        expect(emitterOptions["package-dir"]).toBeUndefined();
     });
 });

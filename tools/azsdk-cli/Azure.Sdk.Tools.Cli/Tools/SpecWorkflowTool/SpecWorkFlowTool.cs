@@ -406,7 +406,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("spec-workflow");
+            var command = new Command("spec-workflow", "Contains a set of tools to help with the TypeSpec to SDK generation.");
             var subCommands = new[]
             {
                 new Command(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK") { typeSpecProjectPathOpt, pullRequestNumberOpt },

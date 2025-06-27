@@ -53,10 +53,10 @@ Add to `.vscode/mcp.json` file through `stdio`:
 
 Run directly as a command-line tool:
 
-```bash
-WORKITEMID=12345
-azsdk-cli get-release-plan $WORKITEMID
-```
+  - ```bash
+    $WORKITEMID=12345
+    dotnet run -- release-plan get --work-item-id $WORKITEMID
+    ```
 
 In either case, the _same_ code will be invoked to get both results.
 

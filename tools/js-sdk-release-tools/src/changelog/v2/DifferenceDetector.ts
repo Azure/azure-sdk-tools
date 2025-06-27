@@ -13,7 +13,7 @@ import {
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
-import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
+import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind, Type } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { JsxEmit } from 'typescript';
 

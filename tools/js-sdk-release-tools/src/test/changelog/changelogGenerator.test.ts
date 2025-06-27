@@ -1147,10 +1147,13 @@ export interface DataProduct {
             );
         });
 
-        test("Model Property Required To Optional", async () => {
+        test("Model Property Required To Optional In Output Model", async () => {
             const baselineApiView = `
 \`\`\`ts
 // @public
+export interface XOperations {
+    get: () => DataProduct
+}
 export interface DataProduct {
     readonly id?: string;
     name: string;
@@ -1161,6 +1164,9 @@ export interface DataProduct {
             const currentApiView = `
 \`\`\`ts
 // @public
+export interface XOperations {
+    get: () => DataProduct
+}
 export interface DataProduct {
     readonly id?: string;
     name: string;
@@ -1187,6 +1193,8 @@ export interface DataProduct {
                 "Parameter description of interface DataProduct is now optional",
             );
         });
+
+        //
 
         test("Class Added", async () => {
             const baselineApiView = `

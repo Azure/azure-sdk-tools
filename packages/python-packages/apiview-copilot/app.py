@@ -30,7 +30,7 @@ job_store: Dict[str, Dict[str, Any]] = {}
 job_store_lock = threading.RLock()
 
 # How long to keep completed jobs (seconds)
-JOB_RETENTION_SECONDS = 600  # 10 minutes
+JOB_RETENTION_SECONDS = 1800  # 30 minutes
 
 app = FastAPI()
 app.include_router(agent_router)
@@ -136,9 +136,8 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
         comments=job_request.comments,
     )
     job_id = reviewer.job_id
-    now = time.time()
     with job_store_lock:
-        job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "created": now}
+        job_store[job_id] = {"status": ApiReviewJobStatus.InProgress, "finished": None}
 
     async def run_review_job():
         try:
@@ -151,10 +150,12 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
             comments = result_json.get("comments", [])
 
             with job_store_lock:
-                job_store[job_id] = {"status": ApiReviewJobStatus.Success, "comments": comments, "created": now}
+                now = time.time()
+                job_store[job_id] = {"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now}
         except Exception as e:
             with job_store_lock:
-                job_store[job_id] = {"status": ApiReviewJobStatus.Error, "details": str(e), "created": now}
+                now = time.time()
+                job_store[job_id] = {"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now}
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
@@ -182,10 +183,9 @@ def cleanup_job_store():
         with job_store_lock:
             to_delete = []
             for job_id, job in list(job_store.items()):
-                if job.get("status") in (ApiReviewJobStatus.Success, ApiReviewJobStatus.Error):
-                    created = job.get("created", now)
-                    if now - created > JOB_RETENTION_SECONDS:
-                        to_delete.append(job_id)
+                finished = job.get("finished")
+                if finished and now - finished > JOB_RETENTION_SECONDS:
+                    to_delete.append(job_id)
             for job_id in to_delete:
                 del job_store[job_id]
 

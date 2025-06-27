@@ -28,13 +28,6 @@ extends:
     ToolDirectory: tools/content-validation
     ReleaseBinaries: true
     TestPreSteps:
-      - task: UseDotNet@2
-        displayName: 'Install .NET Core SDK'
-        inputs:
-          packageType: 'sdk'
-          version: '8.0.x'
-          installationPath: $(Agent.ToolsDirectory)/dotnet 
-
       - task: DotNetCoreCLI@2
         displayName: New Manifest for tool
         inputs:
@@ -62,17 +55,4 @@ extends:
           custom: 'tool '
           arguments: run playwright install
 
-      - task: CopyFiles@2
-        displayName: Copy appsettings.json to output directory
-        inputs:
-          SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation/ContentValidation.Test
-          Contents: 'appsettings.json'
-          TargetFolder: $(System.DefaultWorkingDirectory)/artifacts/bin
-
-      - task: CopyFiles@2
-        displayName: Copy ignore.json to output directory
-        inputs:
-          SourceFolder: $(System.DefaultWorkingDirectory)/tools/content-validation
-          Contents: 'ignore.json'
-          TargetFolder: $(System.DefaultWorkingDirectory)/artifacts/bin
         

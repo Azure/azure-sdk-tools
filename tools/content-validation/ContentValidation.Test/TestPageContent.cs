@@ -28,7 +28,7 @@ namespace ContentValidation.Test
         static TestPageContent()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
-            TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../appsettings.json")) ?? new List<string>();
+            TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
 
             //This list is for testing duplicate services.
             DuplicateTestLink = new List<string>

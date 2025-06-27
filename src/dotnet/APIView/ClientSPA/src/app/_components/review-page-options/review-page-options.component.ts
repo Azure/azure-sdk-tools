@@ -19,6 +19,8 @@ import { ToastMessageData } from 'src/app/_models/toastMessageModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SiteNotification } from 'src/app/_models/notificationsModel';
 
 @Component({
   selector: 'app-review-page-options',
@@ -118,7 +120,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   constructor(
     private configService: ConfigService, private route: ActivatedRoute, 
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
-    private pullRequestService: PullRequestsService, private messageService: MessageService, private signalRService: SignalRService) { }
+    private pullRequestService: PullRequestsService, private messageService: MessageService,
+    private signalRService: SignalRService, private notificationsService: NotificationsService) { }
 
   ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
@@ -380,7 +383,19 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       error: (error: any) => {
         this.aiReviewGenerationState = 'Failed';
         this.generateAIReviewButtonText = 'Failed to generate copilot review';
-        this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'AI Comments', detail: 'Failed to generate copilot review', key: 'bc', life: 5000, closable: true });
+        const message = 'Failed to generate copilot review';
+        const severity = 'error';
+        const summary = 'AI Comments';
+        this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'AI Comments', detail: message, key: 'bc', life: 5000, closable: true });
+
+        const notification = new SiteNotification(
+          this.review?.id,
+          this.activeAPIRevision?.id,
+          summary,
+          message,
+          severity
+        );
+        this.notificationsService.addNotification(notification);
       }
     });
   }
@@ -452,17 +467,38 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
               };
               const messagePart = (aiReviewUpdate.noOfGeneratedComments === 1) ? "comment" : "comments";
               const messageDetail = `Copilot generated ${aiReviewUpdate.noOfGeneratedComments} ${messagePart}.`;
-              this.messageService.add({ severity: 'success', icon: 'bi bi-check-circle', summary: 'Copilot Comments', detail: messageDetail, data: messageData, key: 'bc', life: 60000, closable: true });
+              const summary = 'Copilot Comments';
+              const severity = 'success';
+              this.messageService.add({ severity: severity, icon: 'bi bi-check-circle', summary: summary, detail: messageDetail, data: messageData, key: 'bc', life: 60000, closable: true });
+              const notification = new SiteNotification(
+                this.review?.id,
+                this.activeAPIRevision?.id,
+                summary,
+                messageDetail,
+                severity
+              );
+              this.notificationsService.addNotification(notification);
             }
           } else if (aiReviewUpdate.status === 'Error') {
             this.aiReviewGenerationState = 'Failed';
             this.generateAIReviewButtonText = 'Failed to generate copilot review';
-            this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'AI Comments', detail: 'Failed to generate copilot review', key: 'bc', life: 5000, closable: true });
+            const message = 'Failed to generate copilot review';
+            const summary = 'AI Comments';
+            const severity = 'error';
+            this.messageService.add({ severity: severity, icon: 'bi bi-exclamation-triangle', summary: summary, detail: message, key: 'bc', life: 5000, closable: true });
+            const notification = new SiteNotification(
+              this.review?.id,
+              this.activeAPIRevision?.id,
+              summary,
+              message,
+              severity
+            );
+            this.notificationsService.addNotification(notification);
           }
 
           setTimeout(() => {
             this.aiReviewGenerationState = 'Completed';
-            this.generateAIReviewButtonText = 'Regenerate copilot review';
+            this.generateAIReviewButtonText = 'Generate copilot review';
           }, 3000);
           
         }

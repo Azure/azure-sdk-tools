@@ -385,6 +385,7 @@ namespace APIViewWeb.Managers
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                activeApiRevision.CopilotReviewJobId = jobStartedResponse.JobId;
                 activeApiRevision.CopilotReviewInProgress = true;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
                 _pollingJobQueueManager.Enqueue(new AIReviewJobInfoModel()

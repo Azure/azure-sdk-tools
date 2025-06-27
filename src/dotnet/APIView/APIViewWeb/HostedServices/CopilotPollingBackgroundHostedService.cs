@@ -51,12 +51,12 @@ namespace APIViewWeb.HostedServices
                         try
                         {
                             var client = _httpClientFactory.CreateClient();
-                            var poolUrl = $"{_copilotEndpoint}/api-review/{jobInfo.JobId}";
+                            var pollUrl = $"{_copilotEndpoint}/api-review/{jobInfo.JobId}";
                             var poller = new Poller();
                             var result = await poller.PollAsync(
                                 operation: async () =>
                                 {
-                                    var response = await client.GetAsync(poolUrl);
+                                    var response = await client.GetAsync(pollUrl);
                                     response.EnsureSuccessStatusCode();
                                     var pollResponseString = await response.Content.ReadAsStringAsync();
                                     var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);

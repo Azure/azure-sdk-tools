@@ -155,8 +155,8 @@ namespace APIViewWeb.LeanControllers
         {
             try
             {
-                var violations = await _reviewManager.GenerateAIReview(User, reviewId, activeApiRevisionId, diffApiRevisionId);
-                return new LeanJsonResult(violations, StatusCodes.Status200OK);
+                await _reviewManager.GenerateAIReview(User, reviewId, activeApiRevisionId, diffApiRevisionId);
+                return Accepted();
             }
             catch (Exception ex)
             {

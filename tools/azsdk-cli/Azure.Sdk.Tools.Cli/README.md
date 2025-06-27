@@ -4,9 +4,9 @@ The Azure SDK Engineering System's automation server that is intended to encapsu
 
 ## Prerequisites
 - .NET 8.0
-- Visual Studio Code
-    - Copilot Extension
-    - C# Dev Kit Extension (optional)
+- Visual Studio Code 
+    - [Copilot Extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
+    - [C# Dev Kit Extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csdevkit) (optional)
 
 ## Quick Start
 

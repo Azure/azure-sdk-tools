@@ -15,13 +15,15 @@ The Azure SDK Engineering System's automation server that is intended to encapsu
 2. **Start the MCP server** (optional - Copilot will auto-start if needed):
    - In `.vscode/mcp.json`, click the Start button below "servers"
    
-   ![Local Image](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/image/MCP-Start.png)
+   ![Screenshot showing the MCP Start button in VS Code's mcp.json file](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Images/MCP-Start.png)
 
 3. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`):
 
    ```text
    "Use the hello-world MCP tool to echo back 'Testing the tool'"
    ```
+
+    ![Screenshot showing Github Copilot successfully interacting with the MCP server.](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Images/MCP-Success-Output.png)
 
 ## Usage Modes
 
@@ -35,7 +37,7 @@ Add to `.vscode/mcp.json` file through `stdio`:
 // within mcp.json "servers" section:
 "Azure SDK Everything": {
   "type": "stdio",
-  "command": "path/to/Azure.Sdk.Tools.Cli.exe",
+  "command": "azsdk.exe",
   "args": ["start"]
 }
 ```

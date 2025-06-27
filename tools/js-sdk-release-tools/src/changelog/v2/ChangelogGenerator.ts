@@ -108,6 +108,8 @@ export class ChangelogGenerator {
   private modelPropertyRemovedTemplate = 'Interface {interfaceName} no longer has parameter {propertyName}';
   private modelPropertyOptionalToRequiredTemplate =
     'Parameter {propertyName} of interface {interfaceName} is now required';
+  private modelPropertyRequiredToOptionalTemplate =
+    'Parameter {propertyName} of interface {interfaceName} is now optional';
 
   /** class */
   // TODO: add more detection for class changes
@@ -621,6 +623,18 @@ export class ChangelogGenerator {
         propertyName: diffPair.source!.name,
       });
       this.addChangelogItem(ChangelogItemCategory.ModelPropertyOptionalToRequired, message);
+    }
+    // TODO: cannot distinguish input/output model for now, add as breaking change
+    // model's property required to optional
+    if (
+      diffPair.location === DiffLocation.Property &&
+      this.hasReasons(diffPair.reasons, DiffReasons.OptionalToRequired)
+    ) {
+      const message = template(this.modelPropertyRequiredToOptionalTemplate, {
+        interfaceName,
+        propertyName: diffPair.source!.name,
+      });
+      this.addChangelogItem(ChangelogItemCategory.ModelPropertyRequiredToOptional, message);
     }
   }
 

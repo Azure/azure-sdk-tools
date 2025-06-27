@@ -988,6 +988,124 @@ export interface DataProduct {
             );
         });
 
+        test("Model Property Type Changed From TS Record to JS Dictionary Type", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface Prop {
+    p: string
+}
+export interface DataProduct {
+    version: Record<string, Prop>;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface Prop {
+    p: string
+}
+export interface DataProduct {
+    version: {[xxx: string]: Prop};
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyTypeChanged,
+            );
+            expect(items).toHaveLength(0);
+        });
+
+        test("Model Property Type Changed From JS Dictionary Type to TS Record", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface Prop {
+    p: string
+}
+export interface DataProduct {
+    readonly version?: {[xxx: string]: Prop};
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface Prop {
+    p: string
+}
+export interface DataProduct {
+    readonly version?: Record<string, Prop>;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const count = [...changelogItems.breakingChanges.keys()].flatMap(
+                (b) => changelogItems.breakingChanges.get(b) ?? [],
+            ).length;
+            expect(count).toBe(0);
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyTypeChanged,
+            );
+            expect(items).toHaveLength(0);
+        });
+
+        test("Model Ends with 'NextOptionalParams' Property Type Changed Should Be Ignored Due to Not Exposed", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProductNextOptionalParams {
+    version: number;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProductDataProductNextOptionalParams {
+    version: string;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyTypeChanged,
+            );
+            expect(items).toHaveLength(0);
+        });
+
         test("Model Property Optional To Required", async () => {
             const baselineApiView = `
 \`\`\`ts
@@ -1026,6 +1144,47 @@ export interface DataProduct {
             expect(items).toHaveLength(1);
             expect(items[0]).toBe(
                 "Parameter description of interface DataProduct is now required",
+            );
+        });
+
+        test("Model Property Required To Optional", async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    readonly id?: string;
+    name: string;
+    description: string;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    readonly id?: string;
+    name: string;
+    description?: string;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            const items = getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyRequiredToOptional,
+            );
+            expect(items).toHaveLength(1);
+            expect(items[0]).toBe(
+                "Parameter description of interface DataProduct is now optional",
             );
         });
 
@@ -1572,7 +1731,9 @@ export function processData(data: number): number;
                 ChangelogItemCategory.FunctionOverloadAdded,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe(`Added function overload "export function processData(data: number): number;"`);
+            expect(items[0]).toBe(
+                `Added function overload "export function processData(data: number): number;"`,
+            );
         });
 
         test("Function Overload Removed", async () => {
@@ -1604,7 +1765,9 @@ export function processData(data: string): string;
                 ChangelogItemCategory.FunctionOverloadRemoved,
             );
             expect(items).toHaveLength(1);
-            expect(items[0]).toBe(`Removed function overload "export function processData(data: number): number;"`);
+            expect(items[0]).toBe(
+                `Removed function overload "export function processData(data: number): number;"`,
+            );
         });
     });
 

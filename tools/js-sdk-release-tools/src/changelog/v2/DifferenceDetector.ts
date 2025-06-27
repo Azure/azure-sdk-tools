@@ -70,6 +70,9 @@ export class DifferenceDetector {
   }
 
   private postprocess() {
+    this.result?.interfaces.forEach((v, k) => {
+      if (k.endsWith('NextOptionalParams')) this.result?.interfaces.delete(k);
+    });
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
     // use Routes specific detection
     this.result?.interfaces.delete('Routes');

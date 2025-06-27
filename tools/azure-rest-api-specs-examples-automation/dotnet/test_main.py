@@ -4,8 +4,6 @@ from main import break_down_aggregated_dotnet_example, find_dotnet_examples_path
 from typing import List
 from unittest.mock import patch
 import os
-from typing import List
-from main import break_down_aggregated_dotnet_example, format_dotnet, get_dotnet_using_statements
 
 class TestMain(unittest.TestCase):
     @parameterized.parameterized.expand(

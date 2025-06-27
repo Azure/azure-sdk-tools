@@ -1,12 +1,7 @@
 import template from 'string-template';
 import { DetectContext, DetectResult } from './DifferenceDetector.js';
-import {
-  DiffLocation,
-  DiffPair,
-  DiffReasons,
-  isPropertyArrowFunction,
-} from 'typescript-codegen-breaking-change-detector';
-import { InterfaceDeclaration, Node, PropertySignature, SyntaxKind, Type } from 'ts-morph';
+import { DiffLocation, DiffPair, DiffReasons } from 'typescript-codegen-breaking-change-detector';
+import { InterfaceDeclaration, Node, PropertySignature, SyntaxKind } from 'ts-morph';
 import { SDKType } from '../../common/types.js';
 
 // NOTE: enum value matters for the order of output changelog items
@@ -483,7 +478,7 @@ export class ChangelogGenerator {
     }
   }
 
-  private generateForRoutesInterface(diffPair: DiffPair) {
+  private generateForRoutesInterface(diffPair: DiffPair, interfaceName: string) {
     /** routes interface changes */
     // routes interface added
     if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
@@ -560,7 +555,7 @@ export class ChangelogGenerator {
     }
   }
 
-  private generateForModelInterface(diffPair: DiffPair, interfaceName: string, directInputModels: string[]): void {
+  private generateForModelInterface(diffPair: DiffPair, interfaceName: string): void {
     /** model changes */
     // model added
     if (diffPair.location === DiffLocation.Interface && this.hasReasons(diffPair.reasons, DiffReasons.Added)) {
@@ -629,23 +624,11 @@ export class ChangelogGenerator {
       });
       this.addChangelogItem(ChangelogItemCategory.ModelPropertyOptionalToRequired, message);
     }
-
-    // TODO: only used to handle required to optional case. Plan to support more in the future
-    const baselineType = this.detectContext.context.baseline.getInterface(interfaceName)?.getType();
-    const currentType = this.detectContext.context.current.getInterface(interfaceName)?.getType();
-    const isBaselineInputModelInterface = baselineType
-      ? this.typeReferencesTarget(baselineType, directInputModels)
-      : false;
-    const isCurrentInputModelInterface = currentType
-      ? this.typeReferencesTarget(currentType, directInputModels)
-      : false;
-    const isInputModelInterface = isBaselineInputModelInterface || isCurrentInputModelInterface;
-
+    // TODO: cannot distinguish input/output model for now, add as breaking change
     // model's property required to optional
     if (
       diffPair.location === DiffLocation.Property &&
-      this.hasReasons(diffPair.reasons, DiffReasons.OptionalToRequired) &&
-      !isInputModelInterface
+      this.hasReasons(diffPair.reasons, DiffReasons.OptionalToRequired)
     ) {
       const message = template(this.modelPropertyRequiredToOptionalTemplate, {
         interfaceName,
@@ -655,89 +638,26 @@ export class ChangelogGenerator {
     }
   }
 
-  private isOperationGroupInterface = (name: string) => {
-    const source = this.detectContext.context.current.getInterface(name);
-    const target = this.detectContext.context.baseline.getInterface(name);
-    const isOperationGroup =
-      (source && this.isOperationGroupInterfaceCore(source, this.detectContext.sdkTypes.source)) ||
-      (target && this.isOperationGroupInterfaceCore(target, this.detectContext.sdkTypes.target));
-    return isOperationGroup;
-  };
-
   private generateForInterfaces(diffPairs: DiffPair[], interfaceName: string): void {
     // TODO: remove when there's no high level client any more
 
+    const isOperationGroupInterface = () => {
+      const source = this.detectContext.context.current.getInterface(interfaceName);
+      const target = this.detectContext.context.baseline.getInterface(interfaceName);
+      const isOperationGroup =
+        (source && this.isOperationGroupInterfaceCore(source, this.detectContext.sdkTypes.source)) ||
+        (target && this.isOperationGroupInterfaceCore(target, this.detectContext.sdkTypes.target));
+      return isOperationGroup;
+    };
     const isRoutesInterface =
       this.detectContext.sdkTypes.source === SDKType.RestLevelClient && interfaceName === 'Routes';
-    const isOperationGroupInterface = this.isOperationGroupInterface(interfaceName);
+
     /** operation group and operationchanges */
     diffPairs.forEach((p) => {
-      if (isRoutesInterface) {
-        this.generateForRoutesInterface(p);
-      }
+      if (isRoutesInterface) this.generateForRoutesInterface(p, interfaceName);
+      else if (isOperationGroupInterface()) this.generateForOperationGroupInterface(p, interfaceName);
+      else this.generateForModelInterface(p, interfaceName);
     });
-    const currentDirectInputModelNames: string[] = [];
-    diffPairs.forEach((p) => {
-      if (!isRoutesInterface && isOperationGroupInterface) {
-        this.generateForOperationGroupInterface(p, interfaceName);
-        const node = this.detectContext.context.current.getInterface(interfaceName);
-        node?.getMembers().forEach((m) => {
-          const arrowFunction = node.asKind(SyntaxKind.FunctionType);
-          if (!arrowFunction) return;
-
-          // TODO: handle type parameter
-          arrowFunction.getParameters().forEach((p) => {
-            const typeNode = p.getTypeNode();
-            if (Node.isNamed(typeNode)) {
-              currentDirectInputModelNames.push(typeNode.getName());
-            } else {
-              // TODO: handle type literal
-            }
-          });
-        });
-      }
-    });
-    diffPairs.forEach((p) => {
-      if (!isRoutesInterface && !isOperationGroupInterface) {
-        this.generateForModelInterface(p, interfaceName, currentDirectInputModelNames);
-      }
-    });
-  }
-
-  private typeReferencesTarget(type: Type, targetSymbolNames: string[], visited = new Set<Type>()): boolean {
-    if (visited.has(type)) return false;
-    visited.add(type);
-
-    const symbol = type.getSymbol() ?? type.getAliasSymbol();
-    if (!symbol) return false;
-
-    if (targetSymbolNames.includes(symbol.getName())) {
-      return true;
-    }
-
-    // Check base types (e.g., extends, implements)
-    for (const baseType of type.getBaseTypes()) {
-      if (this.typeReferencesTarget(baseType, targetSymbolNames, visited)) {
-        return true;
-      }
-    }
-
-    // Check type arguments (for generics)
-    for (const arg of type.getTypeArguments()) {
-      if (this.typeReferencesTarget(arg, targetSymbolNames, visited)) {
-        return true;
-      }
-    }
-
-    // Check properties (e.g., nested use in object types)
-    for (const prop of type.getProperties()) {
-      const propType = prop.getTypeAtLocation(prop.getDeclarations()[0] ?? type.getSymbol()?.getDeclarations()?.[0]);
-      if (this.typeReferencesTarget(propType, targetSymbolNames, visited)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   // TODO: improve, only support one reason in expectedReasons

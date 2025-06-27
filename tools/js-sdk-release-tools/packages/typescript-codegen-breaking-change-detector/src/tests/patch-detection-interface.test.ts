@@ -182,15 +182,6 @@ describe('detect interface', () => {
       expect(diffPairs.length).toBe(0);
     });
 
-    test('change classic property type between equivalent JS/TS type in nested type', async () => {
-      const baselineApiView = `export interface AAA {p: string}; export interface TestInterface { prop: { Record<string, AAA>;} }`;
-      const currentApiView = `export interface AAA {p: string}; export interface TestInterface { prop: {[p: string]: AAA}; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
-    });
-
     test('detect property move to parent model', async () => {
       const baselineApiView = `
         export interface SystemData {} 

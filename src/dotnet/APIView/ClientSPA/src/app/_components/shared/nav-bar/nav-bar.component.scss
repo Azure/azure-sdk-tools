@@ -12,3 +12,9 @@
     padding-top: 0px;
     padding-bottom: 0px;
 }
+
+:host ::ng-deep {
+    .notifications-sidebar {
+        width: 25dvw;
+    }
+}

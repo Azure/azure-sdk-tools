@@ -2,8 +2,7 @@ import argparse
 import asyncio
 from dotenv import load_dotenv
 import logging
-from semantic_kernel.agents import AzureAIAgentThread
-
+from src.agent._chat import run_agent_chat
 from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin
 
 load_dotenv(override=True)
@@ -59,24 +58,21 @@ async def chat(thread_id=None):
     GREEN = "\033[92m"
     RESET = "\033[0m"
     async with get_main_agent() as agent:
-        thread = None
+        messages = []
+        current_thread_id = thread_id
         while True:
             user_input = input(f"{GREEN}You:{RESET} ")
             if user_input.strip().lower() in {"exit", "quit"}:
                 print("Exiting chat.")
-                if thread:
-                    print(f"Supply thread ID {thread.id} to continue the discussion later.")
+                if current_thread_id:
+                    print(f"Supply thread ID {current_thread_id} to continue the discussion later.")
                 break
-            # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
-            if thread is None:
-                if thread_id and isinstance(thread_id, str) and thread_id.startswith("thread"):
-                    thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
-                else:
-                    thread = AzureAIAgentThread(client=agent.client)
             try:
-                response = await agent.get_response(thread=thread, messages=user_input)
+                response, thread_id_out, messages = await run_agent_chat(
+                    agent, user_input, thread_id=current_thread_id, messages=messages
+                )
                 print(f"{BLUE}Agent:{RESET} {response}\n")
-                thread = response.thread
+                current_thread_id = thread_id_out
             except Exception as e:
                 print(f"Error: {e}")
 

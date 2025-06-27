@@ -1,27 +1,26 @@
-from src.agent._agent import get_main_agent
-from src._apiview_reviewer import _PROMPTS_FOLDER
-from src._diff import create_diff_with_line_numbers
-from src._utils import get_language_pretty_name
+import os
+import json
+import logging
+import threading
+import time
 
 import asyncio
 from enum import Enum
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from src._apiview_reviewer import ApiViewReview
-import json
-import logging
-import os
-from fastapi import FastAPI
-from src.agent._api import router as agent_router
 import prompty
 import prompty.azure
 from pydantic import BaseModel
-from semantic_kernel.agents import AzureAIAgentThread
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
-import threading
-import time
 
+from src._apiview_reviewer import ApiViewReview, _PROMPTS_FOLDER
+from src._diff import create_diff_with_line_numbers
+from src._utils import get_language_pretty_name
+from src.agent._agent import get_main_agent
+from src.agent._api import router as agent_router
+from src.agent._chat import run_agent_chat
 from src._database_manager import get_database_manager
+
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
@@ -183,24 +182,12 @@ class AgentChatResponse(BaseModel):
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat_thread_endpoint(request: AgentChatRequest):
-    user_input = request.user_input
-    thread_id = request.thread_id
-    messages = request.messages or []
-    # Only append user_input if not already the last message
-    if not messages or messages[-1] != user_input:
-        messages.append(user_input)
     try:
         async with get_main_agent() as agent:
-            # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
-            thread = None
-            if thread_id and isinstance(thread_id, str) and thread_id.startswith("thread"):
-                thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
-            else:
-                thread = AzureAIAgentThread(client=agent.client)
-            response = await agent.get_response(messages=messages, thread=thread)
-            # Get the thread id from the thread object if available
-            thread_id_out = getattr(thread, "id", None) or thread_id
-        return AgentChatResponse(response=str(response), thread_id=thread_id_out, messages=messages)
+            response, thread_id_out, messages = await run_agent_chat(
+                agent, request.user_input, thread_id=request.thread_id, messages=request.messages
+            )
+        return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
     except AgentInvokeException as e:
         if "Rate limit is exceeded" in str(e):
             logger.warning(f"Rate limit exceeded: {e}")

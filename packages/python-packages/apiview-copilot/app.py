@@ -18,8 +18,8 @@ import prompty
 import prompty.azure
 from pydantic import BaseModel
 from azure.ai.agents.models import ThreadMessageOptions
-from semantic_kernel.agents import AzureAIAgentThread
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
+from src.agent._chat import run_agent_chat
 import uuid
 import threading
 import time
@@ -204,24 +204,12 @@ class AgentChatResponse(BaseModel):
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat_thread_endpoint(request: AgentChatRequest):
-    user_input = request.user_input
-    thread_id = request.thread_id
-    messages = request.messages or []
-    # Only append user_input if not already the last message
-    if not messages or messages[-1] != user_input:
-        messages.append(user_input)
     try:
         async with get_main_agent() as agent:
-            # Only use thread_id if it is a valid Azure thread id (starts with 'thread')
-            thread = None
-            if thread_id and isinstance(thread_id, str) and thread_id.startswith("thread"):
-                thread = AzureAIAgentThread(client=agent.client, thread_id=thread_id)
-            else:
-                thread = AzureAIAgentThread(client=agent.client)
-            response = await agent.get_response(messages=messages, thread=thread)
-            # Get the thread id from the thread object if available
-            thread_id_out = getattr(thread, "id", None) or thread_id
-        return AgentChatResponse(response=str(response), thread_id=thread_id_out, messages=messages)
+            response, thread_id_out, messages = await run_agent_chat(
+                agent, request.user_input, thread_id=request.thread_id, messages=request.messages
+            )
+        return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
     except AgentInvokeException as e:
         if "Rate limit is exceeded" in str(e):
             logger.warning(f"Rate limit exceeded: {e}")

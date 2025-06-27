@@ -29,6 +29,12 @@ public class GitConnection
 
         private static string GetGitHubAuthToken()
         {
+            var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+            {
+                return token;
+            }
+            // If the GITHUB_TOKEN environment variable is not set, try to get the token using the 'gh' CLI command
             bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             string command = isWindows ? "cmd.exe" : "gh";
             string args = isWindows ? "/C gh auth token" : "auth token";

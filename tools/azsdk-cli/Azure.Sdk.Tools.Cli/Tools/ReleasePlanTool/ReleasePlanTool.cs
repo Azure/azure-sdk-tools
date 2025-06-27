@@ -146,49 +146,66 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        private async Task ValidateCreateReleasePlanInputs(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType)
+        {
+            // Check for existing release plan for the given pull request URL.
+            if (string.IsNullOrEmpty(specPullRequestUrl))
+            {
+                throw new Exception("API spec pull request URL is required to create a release plan.");
+            }
+
+            logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
+            var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
+            if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
+            {
+                throw new Exception($"Release plan already exists for the pull request: {specPullRequestUrl}. Work item Id: {existingReleasePlan.WorkItemId}");
+            }
+
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
+            {
+                throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
+            }
+
+            var supportedReleaseTypes = new[] { "beta", "stable" };
+            if (!supportedReleaseTypes.Contains(sdkReleaseType))
+            {
+                throw new Exception($"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}");
+            }
+
+            var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+
+            // Ensure a release plan is created only if the API specs pull request is in a public repository.
+            if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+            {
+                throw new Exception("""
+                    SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
+                    Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
+                    A release plan cannot be created for SDK generation using a pull request in a private repository.
+                    """);
+            }
+
+            if (!Guid.TryParse(serviceTreeId, out _))
+            {
+                throw new Exception($"Service tree ID '{serviceTreeId}' is not a valid GUID.");
+            }
+
+            if (!Guid.TryParse(productTreeId, out _))
+            {
+                throw new Exception($"Product tree ID '{productTreeId}' is not a valid GUID.");
+            }
+        }
+
         [McpServerTool, Description("Create Release Plan work item.")]
         public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
             {
-                // Check for existing release plan for the given pull request URL.
-                if (string.IsNullOrEmpty(specPullRequestUrl))
-                {
-                    return "API spec pull request URL is required to create a release plan.";
-                }
-                logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
-                var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
-                if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
-                {
-                    return $"Release plan already exists for the pull request: {specPullRequestUrl}. Release Plan ID: {existingReleasePlan.ReleasePlanId}";
-                }
-
-                if (string.IsNullOrEmpty(typeSpecProjectPath))
-                {
-                    throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
-                }
+                sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
+                await ValidateCreateReleasePlanInputs(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-
-                sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                var supportedReleaseTypes = new[] { "beta", "stable" };
-                if (!supportedReleaseTypes.Contains(sdkReleaseType))
-                {
-                    return $"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}";
-                }
-
-                // Ensure a release plan is created only if the API specs pull request is in a public repository.
-                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
-                {
-                    return """
-                        SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
-                        Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
-                        A release plan cannot be created for SDK generation using a pull request in a private repository.
-                        """;
-                }
-
+                
                 if (string.IsNullOrEmpty(userEmail))
                 {
                     logger.LogInformation("User email not provided. Attempting to retrieve current user email.");

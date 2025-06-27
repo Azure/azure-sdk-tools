@@ -8,8 +8,6 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
-import { codeOwnersAndIgnoreLinkGenerator } from './common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
-
 import shell from 'shelljs';
 import fs from 'fs';
 

@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             ctx.ExitCode = ExitCode;
             output.Output(result);
             await Task.CompletedTask;
-        }        
+        }
         
         [McpServerTool(Name = "get_r_in_strawberry"), Description("Returns the letter 'r' in the word 'strawberry'")]
         public DefaultCommandResponse GetRInStrawberry()

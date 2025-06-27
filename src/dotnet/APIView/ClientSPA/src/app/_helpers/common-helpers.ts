@@ -9,6 +9,7 @@ export const PR_ICON = "fa-solid fa-code-pull-request";
 export const AUTOMATIC_ICON = "fa-solid fa-robot";
 export const DIFF_ADDED = "added";
 export const DIFF_REMOVED = "removed";
+export const INDEXED_DB_NAME = "apiview-indexed-db";
 
 export enum CodeLineRowNavigationDirection {
   prev = 0,

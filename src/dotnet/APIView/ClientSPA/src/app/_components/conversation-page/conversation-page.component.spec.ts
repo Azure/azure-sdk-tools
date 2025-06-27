@@ -12,6 +12,7 @@ import { FooterComponent } from '../shared/footer/footer.component';
 import { MenubarModule } from 'primeng/menubar';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { SidebarModule } from 'primeng/sidebar';
 
 describe('ConversationPageComponent', () => {
   let component: ConversationPageComponent;
@@ -32,6 +33,7 @@ describe('ConversationPageComponent', () => {
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenuModule,
+        SidebarModule,
         MenubarModule
       ],
       providers: [

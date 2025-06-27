@@ -50,6 +50,8 @@ namespace APIViewWeb.Models
         public string Status { get; set; }
         [JsonPropertyName("details")]
         public string Details { get; set; }
+        [JsonPropertyName("jobId")]
+        public string JobId { get; set; }
         [JsonPropertyName("noOfGeneratedComments")]
         public int NoOfGeneratedComment { get; set; }
     }

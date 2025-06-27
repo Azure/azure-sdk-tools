@@ -4,4 +4,5 @@ export interface AIReviewJobCompletedDto {
     status: string;
     details: string;
     noOfGeneratedComments : number;
+    jobId: string;
 }

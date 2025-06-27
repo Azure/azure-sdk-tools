@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -16,6 +17,7 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.HostedServices
 {
@@ -27,10 +29,12 @@ namespace APIViewWeb.HostedServices
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly ILogger<CopilotPollingBackgroundHostedService> _logger;
 
         public CopilotPollingBackgroundHostedService(
             IPollingJobQueueManager pollingJobQueueManager, IConfiguration configuration, IHttpClientFactory httpClientFactory,
-            IAPIRevisionsManager apiRevisionsManager, ICosmosCommentsRepository commentsRepository, IHubContext<SignalRHub> signalRHub)
+            IAPIRevisionsManager apiRevisionsManager, ICosmosCommentsRepository commentsRepository, IHubContext<SignalRHub> signalRHub,
+            ILogger<CopilotPollingBackgroundHostedService> logger)
         {
             _pollingJobQueueManager = pollingJobQueueManager;
             _copilotEndpoint = configuration["CopilotServiceEndpoint"];
@@ -38,10 +42,13 @@ namespace APIViewWeb.HostedServices
             _apiRevisionsManager = apiRevisionsManager;
             _commentsRepository = commentsRepository;
             _signalRHubContext = signalRHub;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            var runningTasks = new List<Task>();
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 if (_pollingJobQueueManager.TryDequeue(out AIReviewJobInfoModel jobInfo))
@@ -50,15 +57,17 @@ namespace APIViewWeb.HostedServices
                     {
                         try
                         {
+                            stoppingToken.ThrowIfCancellationRequested();
                             var client = _httpClientFactory.CreateClient();
-                            var poolUrl = $"{_copilotEndpoint}/api-review/{jobInfo.JobId}";
+                            var pollUrl = $"{_copilotEndpoint}/api-review/{jobInfo.JobId}";
                             var poller = new Poller();
                             var result = await poller.PollAsync(
                                 operation: async () =>
                                 {
-                                    var response = await client.GetAsync(poolUrl);
+                                    stoppingToken.ThrowIfCancellationRequested();
+                                    var response = await client.GetAsync(pollUrl, stoppingToken);
                                     response.EnsureSuccessStatusCode();
-                                    var pollResponseString = await response.Content.ReadAsStringAsync();
+                                    var pollResponseString = await response.Content.ReadAsStringAsync(stoppingToken);
                                     var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
                                     return pollResponse;
                                 },
@@ -110,19 +119,32 @@ namespace APIViewWeb.HostedServices
                                 APIRevisionId = jobInfo.APIRevision.Id,
                                 Status = result.Status,
                                 Details = result.Details,
-                                NoOfGeneratedComment = result.Comments.Count
-                            });
+                                NoOfGeneratedComment = result.Comments.Count,
+                                JobId = jobInfo.JobId
+                            }, stoppingToken);
                         }
                         catch (Exception e)
                         {
                             jobInfo.APIRevision.CopilotReviewInProgress = false;
                             await _apiRevisionsManager.UpdateAPIRevisionAsync(jobInfo.APIRevision);
-                            throw new Exception($"Copilot Failed: {e.Message}");
+                            _logger.LogError(e, "Error while polling Copilot job {JobId}", jobInfo.JobId);
+                            throw;
                         }
 
                     }, stoppingToken);
+                    runningTasks.Add(task);
                 }
+                runningTasks.RemoveAll(t => t.IsCompleted);
                 await Task.Delay(1000, stoppingToken);
+            }
+
+            try
+            {
+                await Task.WhenAll(runningTasks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "One or more CopilotPollingBackgroundHostedService background jobs failed.");
             }
         }
     }

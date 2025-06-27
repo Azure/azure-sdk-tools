@@ -141,9 +141,9 @@ export class ReviewPageComponent implements OnInit {
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => { 
-          if (this.getLoadingStatus() === 'completed') {
-            this.conversationSidePanel = !this.conversationSidePanel;
-          }
+            if (this.getLoadingStatus() === 'completed') {
+              this.conversationSidePanel = !this.conversationSidePanel;
+            }
           }
       },
       {

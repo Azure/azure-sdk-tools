@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             ctx.ExitCode = ExitCode;
             output.Output(result);
             await Task.CompletedTask;
-        }        
+        }
 
         [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
         public DefaultCommandResponse EchoFail(string message)

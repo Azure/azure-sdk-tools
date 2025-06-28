@@ -551,7 +551,18 @@ namespace CSharpAPIParser.TreeToken
 
         private bool IsHiddenFromIntellisense(ISymbol member) =>
             member.GetAttributes().Any(d => d.AttributeClass?.Name == "EditorBrowsableAttribute"
-                                            && (EditorBrowsableState)d.ConstructorArguments[0].Value! == EditorBrowsableState.Never);
+                                            && (EditorBrowsableState)d.ConstructorArguments[0].Value! == EditorBrowsableState.Never)
+            || IsExplicitInterfaceImplementation(member);
+
+        private bool IsExplicitInterfaceImplementation(ISymbol symbol)
+        {
+            return symbol switch
+            {
+                IMethodSymbol methodSymbol => methodSymbol.ExplicitInterfaceImplementations.Any(),
+                IPropertySymbol propertySymbol => propertySymbol.ExplicitInterfaceImplementations.Any(),
+                _ => false
+            };
+        }
 
         private bool IsDecoratedWithAttribute(ISymbol member, string attributeName) =>
             member.GetAttributes().Any(d => d.AttributeClass?.Name == attributeName);

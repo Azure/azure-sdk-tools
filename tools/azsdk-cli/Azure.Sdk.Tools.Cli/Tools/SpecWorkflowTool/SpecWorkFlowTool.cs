@@ -254,7 +254,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// </summary>
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <returns></returns>
-        [McpServerTool, Description("Get SDK generation pipeline run details and status for a given pipeline build ID")]
+        [McpServerTool, Description("Get SDK generation or release pipeline run details and status for a given pipeline build ID")]
         public async Task<string> GetPipelineRunStatus(int buildId)
         {
                 

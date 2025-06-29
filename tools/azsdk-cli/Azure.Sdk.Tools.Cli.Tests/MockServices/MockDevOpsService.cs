@@ -13,6 +13,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 {
     internal class MockDevOpsService : IDevOpsService
     {
+        public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main")
+        {
+            return Task.FromResult(new Build
+            {
+                Id = 1,
+                Status = BuildStatus.InProgress,
+                Result = BuildResult.None,
+                Url = "https://dev.azure.com/fake-org/fake-project/_build/results?buildId=1"
+            });
+        }
+
         Task<bool> IDevOpsService.AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl)
         {
             throw new NotImplementedException();
@@ -31,11 +47,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 }
             };
             return Task.FromResult(workItem);
-        }
-
-        Task<PackageResponse> IDevOpsService.GetPackageWorkItemAsync(string packageName, string language, string packageVersion)
-        {
-            throw new NotImplementedException();
         }
 
         Task<Build> IDevOpsService.GetPipelineRunAsync(int buildId)

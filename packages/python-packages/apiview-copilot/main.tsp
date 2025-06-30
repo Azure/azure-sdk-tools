@@ -66,7 +66,7 @@ namespace ApiViewCopilot {
     /** The applicable guideline IDs relevant to this comment */
     ruleIds: string[];
     /** The line number of the comment */
-    lineNo: number;
+    lineNo: int32;
     /** The offending code */
     badCode: string;
     /** Suggested code to improve the bad_code */

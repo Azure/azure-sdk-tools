@@ -507,10 +507,7 @@ class ApiViewReview:
                 else:
                     discard_comments.append(response_json)
             except Exception as e:
-                import traceback
-
-                tb = traceback.format_exc()
-                self.logger.error(f"Error filtering comment at index {idx}: {str(e)}\n{tb}")
+                self.logger.error(f"Error filtering comment at index {idx}: {str(e)}")
             # Log % complete
             percent = int(((idx + 1) / total) * 100) if total else 100
             self._print_message(f"Filtering comments... {percent}% complete", overwrite=True)

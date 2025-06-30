@@ -210,7 +210,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("spec-pr");
+            var command = new Command("spec-pr", "Pull request tools");
             var subCommands = new[] {
                 new Command(checkIfSpecInPublicRepoCommandName, "Check if API spec is in public repo") { typeSpecProjectPathOpt },
                 new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { typeSpecProjectPathOpt },

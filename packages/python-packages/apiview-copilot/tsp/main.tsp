@@ -3,45 +3,49 @@ import "@typespec/rest";
 using TypeSpec.Rest;
 using TypeSpec.Http;
 
-@service(#{
-  title: "APIView Copilot Service",
-})
-
+@service(#{ title: "APIView Copilot Service" })
 namespace ApiViewCopilot {
-
+  /** Requests a synchronous API review */
+  #deprecated "Use /api-review/start instead"
   @route("/{language}")
   @post
-  #deprecated "Use /api-review/start instead"
-  /** Requests a synchronous API review */
-  op legacyApiReview(@path language: string, @body request: ApiReviewRequest): ApiReviewResponse;
+  op legacyApiReview(
+    @path language: string,
+    @body request: ApiReviewRequest,
+  ): ApiReviewResponse;
 
+  /** Starts a new API review job */
   @route("/api-review/start")
   @post
-  /** Starts a new API review job */
-  op startApiReviewJob(@body request: ApiReviewJobRequest): ApiReviewJobStartResponse;
+  op startApiReviewJob(
+    @body request: ApiReviewJobRequest,
+  ): ApiReviewJobStartResponse;
 
+  /** Gets the status of an API review job */
   @route("/api-review/{jobId}")
   @get
-  /** Gets the status of an API review job */
   op getApiReviewJobStatus(@path jobId: string): ApiReviewJobStatusResponse;
 
+  /** Summarizes an API or the diff between two APIs */
   @route("/api-review/summarize")
   @post
-  /** Summarizes an API or the diff between two APIs */
   op summarizeApi(@body request: SummarizeRequest): SummarizeResponse;
 
+  /** Submit a chat message to the agent. */
   @route("/agent/chat")
   @post
-  /** Submit a chat message to the agent. */
   op agentChat(@body request: AgentChatRequest): AgentChatResponse;
 
   model ApiReviewRequest {
     /** The API specification to review */
     target: string;
+
     /** The base API specification to compare against */
     base?: string;
+
     /** The outline of the API to review */
     outline?: string;
+
     /** Any existing comments on the API */
     comments?: ApiViewComment[];
   }
@@ -55,8 +59,10 @@ namespace ApiViewCopilot {
   model ApiViewComment {
     /** The line number of the comment */
     lineNo: int32;
+
     /** The author of the comment */
     author: string;
+
     /** The contents of the comment */
     comment: string;
   }
@@ -65,14 +71,19 @@ namespace ApiViewCopilot {
   model ReviewComment {
     /** The applicable guideline IDs relevant to this comment */
     ruleIds: string[];
+
     /** The line number of the comment */
     lineNo: int32;
+
     /** The offending code */
     badCode: string;
+
     /** Suggested code to improve the bad_code */
     suggestion?: string;
+
     /** The contents of the comment */
     comment: string;
+
     /** Tag that identifies the source of the comment */
     source: string;
   }
@@ -80,6 +91,7 @@ namespace ApiViewCopilot {
   model ApiReviewJobRequest {
     /** The programming language of the APIView */
     language: string;
+
     ...ApiReviewRequest;
   }
 
@@ -91,8 +103,10 @@ namespace ApiViewCopilot {
   model ApiReviewJobStatusResponse {
     /** The current status of the job */
     status: "InProgress" | "Success" | "Error";
+
     /** The review comments, if the status is Success. `null` while InProgress. */
     comments?: ReviewComment[];
+
     /** Error details if the status is Error. `null` while InProgress. */
     details?: string;
   }
@@ -100,8 +114,10 @@ namespace ApiViewCopilot {
   model SummarizeRequest {
     /** The programming language of the involved APIViews. */
     language: string;
+
     /** The target APIView to summarize. */
     target: string;
+
     /** The base APIView to compare against. If provided, the summary will be a summary of the diff between target and base. */
     base?: string;
   }
@@ -114,8 +130,10 @@ namespace ApiViewCopilot {
   model AgentChatRequest {
     /** The user's input message to the agent. */
     userInput: string;
+
     /** The ID of the thread to continue the conversation. If `null` a new thread will be created. */
     threadId?: string;
+
     /** The list of messages in the conversation. */
     messages?: {}[];
   }
@@ -123,8 +141,10 @@ namespace ApiViewCopilot {
   model AgentChatResponse {
     /** The agent's response to the user's message. */
     response: string;
+
     /** The ID of the thread for the conversation. */
     threadId: string;
+
     /** The list of messages in the conversation. */
     messages: {}[];
   }

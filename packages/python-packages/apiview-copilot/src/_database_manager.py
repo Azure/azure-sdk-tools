@@ -1,77 +1,85 @@
-import os
+from azure.identity import DefaultAzureCredential
 from azure.cosmos import CosmosClient
-import logging
-import uuid
+
+from functools import lru_cache
+import os
+from pydantic import BaseModel
 import time
-
-from src._credential import get_credential
-
-COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
-COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
-CREDENTIAL = get_credential()
-
-logger = logging.getLogger("uvicorn")
 
 
 class DatabaseManager:
-    def __init__(self):
-        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
-        self.client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
+    def __init__(self, endpoint: str, db_name: str, credential: DefaultAzureCredential):
+        self.client = CosmosClient(endpoint, credential=credential)
+        self.database = self.client.get_database_client(db_name)
+        self.containers = {}
 
-    def _ensure_env_vars(self, var_names):
-        missing = [var for var in var_names if not os.environ.get(var)]
-        if missing:
-            raise EnvironmentError(f"Missing required environment variables: {', '.join(missing)}")
+    def _get_container(self, name: str, container_cls: type = "BasicContainer"):
+        if name not in self.containers:
+            self.containers[name] = container_cls(self.database, name)
+        return self.containers[name]
 
-    def insert_job(self, job_id, job_data):
-        database = self.client.get_database_client(COSMOS_DB_NAME)
-        container = database.get_container_client("review-jobs")
+    @property
+    def guidelines(self):
+        return self._get_container("guidelines")
 
-        item = {"id": job_id, **job_data}
-        container.create_item(body=item)
+    @property
+    def memories(self):
+        return self._get_container("memories")
 
-    def upsert_job(self, job_id, job_data):
-        database = self.client.get_database_client(COSMOS_DB_NAME)
-        container = database.get_container_client("review-jobs")
+    @property
+    def examples(self):
+        return self._get_container("examples")
 
-        item = {"id": job_id, **job_data}
-        container.upsert_item(body=item)
+    @property
+    def review_jobs(self):
+        return self._get_container("review_jobs", ReviewJobsContainer)
 
-    def get_job(self, job_id):
-        try:
-            database = self.client.get_database_client(COSMOS_DB_NAME)
-            container = database.get_container_client("review-jobs")
-            return container.read_item(item=job_id, partition_key=job_id)
-        except Exception as e:
-            logger.error(f"Error fetching job {job_id}: {e}")
-            return None
 
-    def delete_job(self, job_id):
-        try:
-            database = self.client.get_database_client(COSMOS_DB_NAME)
-            container = database.get_container_client("review-jobs")
-            container.delete_item(item=job_id, partition_key=job_id)
-        except Exception as e:
-            logger.error(f"Error deleting job {job_id}: {e}")
+class BasicContainer:
+    def __init__(self, database: DatabaseManager, container_name: str):
+        self.container = database._get_container(container_name)
 
+    def _to_dict(self, data):
+        # Accepts dict or Pydantic model
+        if BaseModel and isinstance(data, BaseModel):
+            return data.model_dump()
+        return dict(data) if not isinstance(data, dict) else data
+
+    def insert(self, item_id: str, data):
+        data_dict = self._to_dict(data)
+        return self.container.create_item({"id": item_id, **data_dict})
+
+    def upsert(self, item_id: str, data):
+        data_dict = self._to_dict(data)
+        return self.container.upsert_item({"id": item_id, **data_dict})
+
+    def get(self, item_id: str):
+        return self.container.read_item(item=item_id, partition_key=item_id)
+
+    def delete(self, item_id: str):
+        return self.container.delete_item(item=item_id, partition_key=item_id)
+
+
+class ReviewJobsContainer(BasicContainer):
     def cleanup_old_jobs(self, retention_seconds):
-        database = self.client.get_database_client(COSMOS_DB_NAME)
-        container = database.get_container_client("review-jobs")
         now = time.time()
         query = (
             f"SELECT c.id, c.finished FROM c WHERE IS_DEFINED(c.finished) AND c.finished < {now - retention_seconds}"
         )
-        for item in container.query_items(query=query, enable_cross_partition_query=True):
-            self.delete_job(item["id"])
+        for item in self.container.query_items(query=query, enable_cross_partition_query=True):
+            self.delete(item["id"])
 
 
-# Singleton instance
-_db_manager = None
-
-
+@lru_cache()
 def get_database_manager():
-    global _db_manager
-    if _db_manager is None:
-        _db_manager = DatabaseManager()
-    return _db_manager
+    from src._credential import get_credential
+
+    acc_name = os.environ.get("AZURE_COSMOS_ACC_NAME")
+    db_name = os.environ.get("AZURE_COSMOS_DB_NAME")
+    endpoint = f"https://{acc_name}.documents.azure.com:443/"
+    if not acc_name or not db_name:
+        raise ValueError(
+            "Missing Azure Cosmos DB configuration. Set AZURE_COSMOS_ACC_NAME and AZURE_COSMOS_DB_NAME environment variables."
+        )
+    credential = get_credential()
+    return DatabaseManager(endpoint, db_name, credential)

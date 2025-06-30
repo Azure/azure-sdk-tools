@@ -1,20 +1,9 @@
-import os
 import uuid
 from typing import Optional
 from semantic_kernel.functions import kernel_function
 
 from src._models import Memory
-
-from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
-
-COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
-COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
-
-
-def get_database_client() -> CosmosClient:
-    return CosmosClient(COSMOS_ENDPOINT, credential=DefaultAzureCredential())
+from src._database_manager import get_database_manager
 
 
 class DatabasePlugin:
@@ -28,15 +17,11 @@ class DatabasePlugin:
         Args:
             guideline_id (str): The ID of the guideline to retrieve.
         """
-        client = get_database_client()
-        container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
-
+        db = get_database_manager()
         # replace .html# with =html= in guideline_id
         guideline_id = guideline_id.replace(".html#", "=html=")
-
-        guideline = container.read_item(item=guideline_id, partition_key=guideline_id)
+        guideline = db.guidelines.get(guideline_id)
         # TODO: Expand the guideline into a context object with links resolved
-
         return guideline
 
     @kernel_function(description="Add a memory related to a guideline in the ArchAgent Knowledge Base.")
@@ -62,14 +47,10 @@ class DatabasePlugin:
         if not language:
             return {"status": "error", "message": "Language must be specified."}
 
-        client = get_database_client()
-        guideline_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
-        memory_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("memories")
-
+        db = get_database_manager()
         # replace .html# with =html= in guideline_id
         guideline_id = guideline_id.replace(".html#", "=html=")
-
-        guideline = guideline_container.read_item(item=guideline_id, partition_key=guideline_id)
+        guideline = db.guidelines.get(guideline_id)
         memory_id = str(uuid.uuid4())
         memory = Memory(
             id=memory_id,
@@ -84,6 +65,6 @@ class DatabasePlugin:
         related_memories = guideline.get("related_memories", [])
         related_memories.append(memory_id)
         guideline["related_memories"] = related_memories
-        guideline_container.upsert_item(guideline)
-        memory_container.upsert_item(memory.model_dump())
+        db.guidelines.upsert(guideline_id, guideline)
+        db.memories.upsert(memory_id, memory)
         return {"status": "Memory added successfully"}

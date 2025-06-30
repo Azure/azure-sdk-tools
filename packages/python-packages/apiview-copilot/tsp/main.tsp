@@ -36,14 +36,17 @@ namespace ApiViewCopilot {
   @post
   op agentChat(@body request: AgentChatRequest): AgentChatResponse;
 
-  /** Handles an @mention from ApiView. */
+  /** Handles an @mention from ApiView. Requires the bearer token to be set to the GH OAuth2 token. */
   @route("/api-review/mention")
   @post
-  op handleMention(@body request: MentionRequest): string;
+  op handleMention(
+    @body request: MentionRequest,
+    @header("Authorization") authorization: string,
+  ): string;
 
   model MentionRequest {
+    /** The comments in the APIView thread. */
     comments: ApiViewComment[];
-    user: GithubUserAuth;
   }
 
   model ApiReviewRequest {
@@ -69,6 +72,9 @@ namespace ApiViewCopilot {
   model ApiViewComment {
     /** The line number of the comment */
     lineNo: int32;
+
+    /** The offset date and time of the comment */
+    timestamp: offsetDateTime;
 
     /** The author of the comment */
     author: string;

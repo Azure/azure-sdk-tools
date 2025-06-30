@@ -35,7 +35,7 @@ vi.mock('../../src/automation/logging', () => ({
   loggerFileTransport: vi.fn(),
   loggerTestTransport: vi.fn(),
   sdkAutoLogLevels: {
-    levels: { error: 0, warn: 1, info: 2, debug: 3 }
+    levels: { error: 0, warn: 1, info: 2, debug: 3, testLevel: 5 }
   }
 }));
 
@@ -66,11 +66,12 @@ vi.mock('../../src/utils/workflowUtils', () => ({
   })),
 }));
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, test } from 'vitest';
 import * as winston from 'winston';
 import * as fs from 'fs';
 import { SdkAutoOptions } from '../../src/types/Workflow';
 import { getSdkAutoContext } from '../../src/automation/entrypoint';
+import { loggerConsoleTransport, loggerDevOpsTransport, loggerTestTransport } from '../../src/automation/logging';
 
 describe("entrypoint", () => {
   describe('getSdkAutoContext', () => {
@@ -91,23 +92,53 @@ describe("entrypoint", () => {
       vi.mocked(winston.createLogger).mockReturnValue(mockLogger);
       
       mockOptions = {
-        runEnv: 'test',
-        workingFolder: '/test/working/folder',
-        version: '1.0.0',
-        localSpecRepoPath: '/test/spec/path',
-        localSdkRepoPath: '/test/sdk/path',
-        specRepo: {
-          name: 'test-spec-repo'
+        specRepo: {    
+          owner: "azure",
+          name: "azure-rest-api-specs",
         },
-        sdkName: 'azure-sdk-for-test',
+        localSpecRepoPath: '/test/spec/Azure/azure-rest-api-spec',
+        localSdkRepoPath: '/test/sdk/Azure/azure-sdk-for-go',
         tspConfigPath: '/test/tspconfig.yaml',
         readmePath: undefined,
-        branchPrefix: 'test-branch',
-        runMode: 'test',
+        specCommitSha: "61d28a327868244686110792cb0630f3f7acee02",
+        specRepoHttpsUrl: "https://github.com/azure/azure-rest-api-specs",
+        pullNumber: "34819",
+        sdkName: "azure-sdk-for-go",
+        apiVersion: undefined,
+        runMode: 'spec-pull-request',
         sdkReleaseType: 'beta',
-        specCommitSha: 'abc123',
-        specRepoHttpsUrl: 'https://github.com/test/spec-repo'
+        workingFolder: '/test/working/folder',
+        headRepoHttpsUrl: undefined,
+        headBranch: undefined,
+        runEnv: 'test',
+        branchPrefix: 'sdkAuto',
+        version: '1.0.0',  
+        skipSdkGenFromOpenapi: undefined,
       } as SdkAutoOptions;
+    });
+
+    it('should create logger with correct transport for local environment', async () => {
+      mockOptions.runEnv = 'local';
+      
+      await getSdkAutoContext(mockOptions);
+      
+      expect(winston.createLogger).toHaveBeenCalledWith({
+        levels: { error: 0, warn: 1, info: 2, debug: 3, testLevel: 5 },
+      });
+      expect(mockLogger.add).toHaveBeenCalled();
+      expect(loggerConsoleTransport).toHaveBeenCalledOnce();
+    });
+    
+    it('should create logger with correct transport for Azure DevOps environment', async () => {
+      mockOptions.runEnv = 'azureDevOps';
+      
+      await getSdkAutoContext(mockOptions);
+      
+      expect(winston.createLogger).toHaveBeenCalledWith({
+        levels: { error: 0, warn: 1, info: 2, debug: 3, testLevel: 5 },
+      });
+      expect(mockLogger.add).toHaveBeenCalled();
+      expect(loggerDevOpsTransport).toHaveBeenCalledOnce();
     });
 
     it('should create logger with correct transport for test environment', async () => {
@@ -116,32 +147,22 @@ describe("entrypoint", () => {
       const context = await getSdkAutoContext(mockOptions);
       
       expect(winston.createLogger).toHaveBeenCalledWith({
-        levels: { error: 0, warn: 1, info: 2, debug: 3 }
+        levels: { error: 0, warn: 1, info: 2, debug: 3, testLevel: 5 },
       });
-      expect(mockLogger.add).toHaveBeenCalled();
       expect(context.logger).toBe(mockLogger);
-    });
-
-    it('should create logger with correct transport for local environment', async () => {
-      mockOptions.runEnv = 'local';
-      
-      await getSdkAutoContext(mockOptions);
-      
-      expect(winston.createLogger).toHaveBeenCalled();
       expect(mockLogger.add).toHaveBeenCalled();
-    });
-
-    it('should create logger with correct transport for Azure DevOps environment', async () => {
-      mockOptions.runEnv = 'azureDevOps';
-      
-      await getSdkAutoContext(mockOptions);
-      
-      expect(winston.createLogger).toHaveBeenCalled();
-      expect(mockLogger.add).toHaveBeenCalled();
+      expect(loggerTestTransport).toHaveBeenCalledOnce();
     });
 
     it('should create log directories if they don\'t exist', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
+      const mockedExistsSync = vi.mocked(fs.existsSync);
+      mockedExistsSync.mockImplementation((path: fs.PathLike) => {
+        if (typeof path === 'string' && path.includes('out/logs')) {
+          return false;
+        } else {
+          return true;
+        }
+      });
       
       await getSdkAutoContext(mockOptions);
       
@@ -151,12 +172,34 @@ describe("entrypoint", () => {
       );
     });
 
+    it('should generate correct log file names based on file prefix and SDK name', async () => {
+      const context = await getSdkAutoContext(mockOptions);
+      
+      expect(context.fullLogFileName).toContain('test-prefix-full.log');
+      expect(context.filteredLogFileName).toContain('test-prefix-filtered.log');
+      expect(context.vsoLogFileName).toContain('test-prefix-vso.log');
+      expect(context.htmlLogFileName).toContain('test-prefix-go-gen-result.html');
+    });
+
     it('should remove existing log files if they exist', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true);
+      const mockedExistsSync = vi.mocked(fs.existsSync);
+      mockedExistsSync.mockImplementation((path: fs.PathLike) => {
+        if (typeof path === 'string' && path.includes('test-prefix-full.log')) {
+          return true;
+        } else if (typeof path === 'string' && path.includes('test-prefix-filtered.log')) {
+          return true;
+        } else if (typeof path === 'string' && path.includes('test-prefix-vso.log')) {
+          return true;
+        } else if (typeof path === 'string' && path.includes('test-prefix-go-gen-result.html')) {
+          return true;
+        } else {
+          return false;
+        }
+      });
       
       await getSdkAutoContext(mockOptions);
       
-      expect(fs.rmSync).toHaveBeenCalledTimes(4); // full, filtered, html, vso log files
+      expect(fs.rmSync).toHaveBeenCalledTimes(4); // fullLogFileName, filteredLogFileName, htmlLogFileName, vsoLogFileName
     });
 
     it('should not remove log files if they don\'t exist', async () => {
@@ -167,29 +210,12 @@ describe("entrypoint", () => {
       expect(fs.rmSync).not.toHaveBeenCalled();
     });
 
-    it('should generate correct log file names based on file prefix and SDK name', async () => {
-      const context = await getSdkAutoContext(mockOptions);
+    it('should log initialization message with version', async () => {
+      await getSdkAutoContext(mockOptions);
       
-      expect(context.fullLogFileName).toContain('test-prefix-full.log');
-      expect(context.filteredLogFileName).toContain('test-prefix-filtered.log');
-      expect(context.vsoLogFileName).toContain('test-prefix-vso.log');
-      expect(context.htmlLogFileName).toContain('test-prefix-test-gen-result.html');
-    });
-
-    it('should set isPrivateSpecRepo to false for regular spec repos', async () => {
-      mockOptions.specRepo.name = 'test-spec-repo';
-      
-      const context = await getSdkAutoContext(mockOptions);
-      
-      expect(context.isPrivateSpecRepo).toBe(false);
-    });
-
-    it('should set isPrivateSpecRepo to true for PR spec repos', async () => {
-      mockOptions.specRepo.name = 'test-spec-repo-pr';
-      
-      const context = await getSdkAutoContext(mockOptions);
-      
-      expect(context.isPrivateSpecRepo).toBe(true);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('spec-gen-sdk version: 1.0.0')
+      );
     });
 
     it('should return complete SdkAutoContext with all required properties', async () => {
@@ -207,30 +233,20 @@ describe("entrypoint", () => {
       expect(context).toHaveProperty('isPrivateSpecRepo');
     });
 
-    it('should log initialization message with version', async () => {
-      await getSdkAutoContext(mockOptions);
-      
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('spec-gen-sdk version: 1.0.0')
-      );
-    });
-
-    it('should handle tspConfigPath when provided', async () => {
-      mockOptions.tspConfigPath = '/test/tspconfig.yaml';
-      mockOptions.readmePath = undefined;
+    it('should set isPrivateSpecRepo to false for regular spec repos', async () => {
+      mockOptions.specRepo.name = 'test-spec-repo';
       
       const context = await getSdkAutoContext(mockOptions);
       
-      expect(context).toBeDefined();
+      expect(context.isPrivateSpecRepo).toBe(false);
     });
 
-    it('should handle readmePath when provided', async () => {
-      mockOptions.tspConfigPath = undefined;
-      mockOptions.readmePath = '/test/readme.md';
+    it('should set isPrivateSpecRepo to true for PR spec repos', async () => {
+      mockOptions.specRepo.name = 'test-spec-repo-pr';
       
       const context = await getSdkAutoContext(mockOptions);
       
-      expect(context).toBeDefined();
+      expect(context.isPrivateSpecRepo).toBe(true);
     });
   });
 });

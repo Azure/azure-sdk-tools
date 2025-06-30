@@ -36,6 +36,16 @@ namespace ApiViewCopilot {
   @post
   op agentChat(@body request: AgentChatRequest): AgentChatResponse;
 
+  /** Handles an @mention from ApiView. */
+  @route("/api-review/mention")
+  @post
+  op handleMention(@body request: MentionRequest): string;
+
+  model MentionRequest {
+    comments: ApiViewComment[];
+    user: GithubUserAuth;
+  }
+
   model ApiReviewRequest {
     /** The API specification to review */
     target: string;

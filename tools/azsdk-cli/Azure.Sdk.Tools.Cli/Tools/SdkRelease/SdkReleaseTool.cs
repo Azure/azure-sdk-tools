@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
         private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
         private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
         private readonly Option<string> branchOpt = new(["--branch"],() => "main",  "Branch to release the package from") { IsRequired = false };
-        public static readonly string[] ValidLanguages = { ".NET", "Python", "Java", "javaScript", "Go" };
+        public static readonly string[] ValidLanguages = { ".NET", "Go", "Java", "JavaScript", "Python"};
 
         public override Command GetCommand()
         {
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
             output.Output(result);
         }
 
-        [McpServerTool(Name = "ReleasePackage"), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
+        [McpServerTool(Name = "ReleaseSdkPackage"), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
         public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main")
         {
             try
@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
                 if (package == null)
                 {
-                    response.ReleaseStatusDetails = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch";
+                    response.ReleaseStatusDetails = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch in the specific language repo.";
                     response.ReleasePipelineStatus = "Failed";
                     isValidParams = false;
                 }

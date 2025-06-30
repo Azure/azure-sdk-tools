@@ -1,19 +1,20 @@
-vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  rmSync: vi.fn(),
-  readFileSync: vi.fn(() => Buffer.from('mock content')),
-}));
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fs from 'fs';
+import * as runScript from '../../src/utils/runScript';
+import * as fsUtils from '../../src/utils/fsUtils';
 import { workflowCallGenerateScript, workflowDetectChangedPackages, workflowInitGetSdkSuppressionsYml } from '../../src/automation/workflowHelpers';
 import { WorkflowContext } from '../../src/types/Workflow';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
-import * as runScript from '../../src/utils/runScript';
-import * as fsUtils from '../../src/utils/fsUtils';
-import { SDKRepositoryPackageData } from '../../src/types/PackageData';
 
+vi.mock(import('fs'), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    mkdirSync: vi.fn(),
+    existsSync: vi.fn(),
+    copyFileSync: vi.fn(),
+  };
+});
 vi.mock('../../src/utils/runScript');
 vi.mock('../../src/utils/fsUtils');
 
@@ -165,23 +166,20 @@ describe('workflowHelpers', () => {
         ['spec1.json', 'suppressions1.yml']
       ]);
 
-      const mockYamlContent = {
-        suppressions: {
-          'package1': [{
-            'rule': 'test-rule',
-            'reason': 'test reason'
-          }]
-        }
-      };
+      const mockYamlContent = `suppressions:
+  azure-sdk-for-go:
+    - package: test-package
+      breaking-changes:
+        - test-breaking-change`;
 
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(Buffer.from(JSON.stringify(mockYamlContent)));
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(Buffer.from(mockYamlContent));
 
       const result = await workflowInitGetSdkSuppressionsYml(mockContext, filterSuppressionFileMap);
 
-      // expect(result.size).toBe(1);
-      // expect(result.get('spec1.json')).toBeDefined();
-      // expect(result.get('spec1.json')?.content).toBeDefined();
-      // expect(result.get('spec1.json')?.errors).toHaveLength(0);
+      expect(result.size).toBe(1);
+      expect(result.get('spec1.json')).toBeDefined();
+      expect(result.get('spec1.json')?.content).toBeDefined();
+      expect(result.get('spec1.json')?.errors).toHaveLength(0);
     });
 
     it('should handle missing suppression files', async () => {

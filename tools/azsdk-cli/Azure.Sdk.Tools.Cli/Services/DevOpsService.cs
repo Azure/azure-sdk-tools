@@ -510,7 +510,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigType", "TypeSpec"},
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
-                 { "sdkReleaseType", sdkReleaseType },
+                 { "SdkReleaseType", sdkReleaseType },
                  { "SkipPullRequestCreation", "false" }
             };
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
@@ -529,7 +529,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             if (pipelineDefinitionId == 0)
             {
-                throw new Exception($"Invalid pipeline definition ID.");
+                throw new ArgumentException($"Invalid pipeline definition ID.");
             }
 
             var buildClient = connection.GetBuildClient();

@@ -109,19 +109,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);
                         response.PipelineBuildId = releasePipelineRun.Id;
                         response.ReleasePipelineStatus = releasePipelineRun.Status?.ToString() ?? "";
-                        response.ReleaseStatusDetails = $"Release pipeline triggered successfully for package '{packageName}' in language '{language}'. Check the status of the pipeline after some time and approve the SDK release using the link to the pipeline run.";
+                        response.ReleaseStatusDetails = $"Release pipeline triggered successfully for package '{packageName}' in language '{language}'. Check the status of the pipeline after some time and approve the SDK release using the link to the pipeline run. You can find more information about release approval in https://aka.ms/azsdk/publishsdk";
                         logger.LogInformation(response.ReleaseStatusDetails);
                     }
                     else
                     {
-                        response.ReleaseStatusDetails = $"Failed to trigger release pipeline for package '{packageName}' in language '{language}'.";
+                        response.ReleaseStatusDetails = $"Failed to trigger release pipeline for package '{packageName}' in language '{language}'. Please check your access permissions. You can find more information in https://aka.ms/azsdk/access";
                         response.ReleasePipelineStatus = "Failed";
                         logger.LogError(response.ReleaseStatusDetails);                        
                     }
                 }
                 else
                 {
-                    response.ReleaseStatusDetails = $"Failed to trigger release pipeline for package '{packageName}' in language '{language}'. Build definition ID is not available in pipeline URL {package?.PipelineDefinitionUrl}.";
+                    response.ReleaseStatusDetails = $"Failed to trigger release pipeline for package '{packageName}' in language '{language}'. Build definition ID is not available in pipeline URL {package?.PipelineDefinitionUrl}. Please check and make sure that SDK is present in the main branch of SDK repo.";
                     response.ReleasePipelineStatus = "Failed";
                     logger.LogError(response.ReleaseStatusDetails);                    
                 }

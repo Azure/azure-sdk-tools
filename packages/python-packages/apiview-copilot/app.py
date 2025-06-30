@@ -241,6 +241,25 @@ async def summarize_api(request: SummarizeRequest):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+class MentionRequest(BaseModel):
+    comments: list
+
+
+@app.post("/api-review/mention", response_model=str)
+async def handle_mention(request: MentionRequest):
+    authorization = request.headers.get("Authorization")
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Invalid authorization format")
+    token = authorization.split("Bearer ")[-1]
+    # TODO: Validate the token against Github API and known list of architects
+
+    # TODO: If validated, send the comments to a new subagent.
+
+    return "Mention handled successfully"
+
+
 # Start the cleanup thread when the app starts
 cleanup_thread = threading.Thread(target=cleanup_job_store, daemon=True)
 cleanup_thread.start()

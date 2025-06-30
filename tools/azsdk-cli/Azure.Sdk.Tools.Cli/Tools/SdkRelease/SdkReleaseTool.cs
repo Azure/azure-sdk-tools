@@ -19,11 +19,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
         private readonly string commandName = "sdk-release";
         private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
         private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
+        private readonly Option<string> branchOpt = new(["--branch"],() => "main",  "Branch to release the package from") { IsRequired = false };
         public static readonly string[] ValidLanguages = { ".NET", "Python", "Java", "javaScript", "Go" };
 
         public override Command GetCommand()
         {
-            var command = new Command(commandName, "Run the release pipeline for the package") { packageNameOpt, languageOpt };
+            var command = new Command(commandName, "Run the release pipeline for the package") { packageNameOpt, languageOpt, branchOpt };
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -32,12 +33,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
         {
             var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
             var language = ctx.ParseResult.GetValueForOption(languageOpt);
-            var result = await ReleasePackageAsync(packageName, language);
+            var branch = ctx.ParseResult.GetValueForOption(branchOpt);
+            var result = await ReleasePackageAsync(packageName, language, branch);
             output.Output(result);
         }
 
         [McpServerTool(Name = "ReleasePackage"), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. This tool calls CheckPackageReleaseReadiness")]
-        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language)
+        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main")
         {
             try
             {
@@ -101,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.SdkRelease
                 // Trigger the release pipeline
                 if (buildDefinitionId != null)
                 {
-                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), new Dictionary<string, string>());
+                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), new Dictionary<string, string>(), branch);
                     if (releasePipelineRun != null)
                     {
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);

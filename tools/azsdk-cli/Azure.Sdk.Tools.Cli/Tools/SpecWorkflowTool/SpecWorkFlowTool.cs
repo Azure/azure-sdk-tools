@@ -64,8 +64,23 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
+                if (workItemId == 0)
+                {
+                    response.Details.Add("Work item ID is required to check if release plan is ready for SDK generation.");
+                    return response;
+                }
+                
                 var releasePlan = await devopsService.GetReleasePlanAsync(workItemId);
-                var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
+
+                var sdkInfoList = releasePlan?.SDKInfo;
+
+                if (sdkInfoList == null || sdkInfoList.Count == 0)
+                {
+                    response.Details.Add($"SDK details are not present in the release plan.");
+                    return response;
+                }
+
+                var sdkInfo = sdkInfoList.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
 
                 if (sdkInfo == null || string.IsNullOrWhiteSpace(sdkInfo.Language))
                 {
@@ -200,7 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration and IsReleasePlanReadyToGenerateSDKAsync make sure Spec and Release Plan is ready to generate SDK.")]
+        [McpServerTool, Description("This tool runs pipeline to generate SDK for a TypeSpec project. This tool calls IsSpecReadyForSDKGeneration to make sure Spec is ready to generate SDK.")]
         public async Task<string> GenerateSDK(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber, int workItemId)
         {
             try

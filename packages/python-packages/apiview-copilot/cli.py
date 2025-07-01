@@ -1,5 +1,6 @@
 import asyncio
 from collections import OrderedDict
+from colorama import Fore, Style
 import json
 import os
 from pprint import pprint
@@ -7,6 +8,12 @@ import requests
 import sys
 import pathlib
 
+# Add colorama for cross-platform colored output
+import colorama
+
+colorama.init(autoreset=True)
+
+from src.agent._agent import get_main_agent, invoke_agent
 from src._search_manager import SearchManager
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
@@ -377,16 +384,45 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
-def ask_agent():
-    """
-    Start an interactive session with the agent.
-    This function is a placeholder for the actual implementation.
-    """
-    # Here you would implement the logic to interact with the agent
-    # For example, using an AI service or a custom agent implementation
-    # Simulate a response
-    print("Simulating agent response...")
-    return "Agent response"
+def ask_agent(thread_id: Optional[str] = None):
+    """Start an interactive session with the agent using async/await and a single event loop."""
+
+    BLUE = Fore.BLUE
+    GREEN = Fore.GREEN
+    RESET = Style.RESET_ALL
+
+    async def async_input(prompt: str) -> str:
+        # Run input() in a thread to avoid blocking the event loop
+        return await asyncio.to_thread(input, prompt)
+
+    async def chat():
+        print("Interactive API Review Agent Chat. Type 'exit' to quit.")
+        messages = []
+        current_thread_id = thread_id
+        async with get_main_agent() as agent:
+            while True:
+                try:
+                    user_input = await async_input(f"{GREEN}You:{RESET} ")
+                except (EOFError, KeyboardInterrupt):
+                    print("\nExiting chat.")
+                    if current_thread_id:
+                        print(f"Supply thread ID {current_thread_id} to continue the discussion later.")
+                    break
+                if user_input.strip().lower() in {"exit", "quit"}:
+                    print("Exiting chat.")
+                    if current_thread_id:
+                        print(f"Supply thread ID {current_thread_id} to continue the discussion later.")
+                    break
+                try:
+                    response, thread_id_out, messages = await invoke_agent(
+                        agent, user_input, thread_id=current_thread_id, messages=messages
+                    )
+                    print(f"{BLUE}Agent:{RESET} {response}\n")
+                    current_thread_id = thread_id_out
+                except Exception as e:
+                    print(f"Error: {e}")
+
+    asyncio.run(chat())
 
 
 def handle_agent_mention(comments_path: str):
@@ -614,6 +650,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Path to the JSON file containing comments for the agent to process.",
                 options_list=["--comments-path", "-c"],
+            )
+        with ArgumentsContext(self, "agent") as ac:
+            ac.argument(
+                "thread_id",
+                type=str,
+                help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
+                options_list=["--thread-id", "-t"],
             )
 
         super(CliCommandsLoader, self).load_arguments(command)

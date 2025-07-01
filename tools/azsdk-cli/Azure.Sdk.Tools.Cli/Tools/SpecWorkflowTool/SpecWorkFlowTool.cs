@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
         private readonly Option<int> workItemOptionalIdOpt = new(["--workitem-id"], "Release plan work item id") { IsRequired = false };
 
-        private async Task<GenericResponse> IsSdkDetailsPresentInReleasePlan(int workItemId, string language)
+        private async Task<GenericResponse> IsSdkDetailsPresentInReleasePlanAsync(int workItemId, string language)
         {
             var response = new GenericResponse()
             {
@@ -252,7 +252,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Verify if release plan is ready to generate SDK
-                var readiness = await IsSdkDetailsPresentInReleasePlan(workItemId, language);
+                var readiness = await IsSdkDetailsPresentInReleasePlanAsync(workItemId, language);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);

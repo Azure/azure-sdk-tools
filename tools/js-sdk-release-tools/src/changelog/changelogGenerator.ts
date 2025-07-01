@@ -1177,67 +1177,37 @@ export const changelogGenerator = (
     const changLog = new Changelog();
 
     // features
-    // migrated
     changLog.addedOperationGroup = findAddedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
-    // migrated
     changLog.addedOperation = findAddedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
-    // migrated
     changLog.addedInterface = findAddedInterface(metaDataOld, metadataNew);
-    // migrated
     changLog.addedClass = findAddedClass(metaDataOld, metadataNew);
-    // migrated
     changLog.addedTypeAlias = findAddedTypeAlias(metaDataOld, metadataNew);
-    // migrated
     changLog.interfaceAddOptionalParam = findInterfaceAddOptinalParam(metaDataOld, metadataNew);
-    // migrated
     changLog.interfaceParamTypeExtended = findInterfaceParamTypeExtended(metaDataOld, metadataNew);
-    // migrated
     changLog.typeAliasAddInherit = findTypeAliasAddInherit(metaDataOld, metadataNew);
-    // migrated
     changLog.typeAliasAddParam = findTypeAliasAddParam(metaDataOld, metadataNew);
-    // migrated
     changLog.addedEnum = findAddedEnum(metaDataOld, metadataNew);
-    // migrated
     changLog.addedEnumValue = findAddedEnumValue(metaDataOld, metadataNew);
-    // migrated
     changLog.addedFunction = findAddedFunction(metaDataOld, metadataNew);
 
     // breaking changes
-    // migrated
     changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
-    // migrated
     changLog.removedOperation = findRemovedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
-    // migrated
     changLog.operationSignatureChange = findOperationSignatureChange(metaDataOld, metadataNew, oldSdkType, newSdkType);
-    // migrated
     changLog.deletedClass = findDeletedClass(metaDataOld, metadataNew);
-    // migrated
     changLog.classSignatureChange = findClassSignatureChange(metaDataOld, metadataNew);
-    // migrated
     changLog.interfaceParamDelete = findInterfaceParamDelete(metaDataOld, metadataNew);
-    // migrated
     changLog.interfaceParamAddRequired = findInterfaceParamAddRequired(metaDataOld, metadataNew);
-    // migrated
     changLog.interfaceParamChangeRequired = findInterfaceParamChangeRequired(metaDataOld, metadataNew);
-    // migrated
     changLog.interfaceParamTypeChanged = findInterfaceParamTypeChanged(metaDataOld, metadataNew);
-    // migrated
     changLog.classParamDelete = findClassParamDelete(metaDataOld, metadataNew);
-    // migrated
     changLog.classParamChangeRequired = findClassParamChangeRequired(metaDataOld, metadataNew);
-    // migrated
     changLog.typeAliasDeleteInherit = findTypeAliasDeleteInherit(metaDataOld, metadataNew);
-    // migrated
     changLog.typeAliasParamDelete = findTypeAliasDeleteParam(metaDataOld, metadataNew);
-    // migrated
     changLog.typeAliasAddRequiredParam = findTypeAliasAddRequiredParam(metaDataOld, metadataNew);
-    // migrated
     changLog.typeAliasParamChangeRequired = findTypeAliasParamChangeRequired(metaDataOld, metadataNew);
-    // migrated
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
-    // migrated
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
-    // migrated
     changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
 
     // patch RLC

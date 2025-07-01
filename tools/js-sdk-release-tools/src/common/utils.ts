@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
-import { access, readdir, rm, mkdir } from 'node:fs/promises';
+import { access, readdir, rm, mkdir, stat } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
@@ -499,4 +499,54 @@ export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Pr
     }
     
     return undefined;
+}
+/**
+ * Recursively lists all files and directories in a given directory
+ * @param dir - The directory path to list
+ * @param prefix - Prefix for indentation (used for recursive calls)
+ * @returns Promise<string[]> - Array of formatted file/directory paths
+ */
+export async function listDirectoryContents(dir: string, prefix: string = ''): Promise<string[]> {
+    const result: string[] = [];
+    try {
+        if (!fs.existsSync(dir)) {
+            return [`${prefix}Directory does not exist: ${dir}`];
+        }
+
+        const items = await readdir(dir);
+        for (const item of items.sort()) {
+            const itemPath = posix.join(dir, item);
+            const stats = await stat(itemPath);
+            
+            if (stats.isDirectory()) {
+                result.push(`${prefix}📁 ${item}/`);
+                const subItems = await listDirectoryContents(itemPath, prefix + '  ');
+                result.push(...subItems);
+            } else {
+                result.push(`${prefix}📄 ${item} (${stats.size} bytes)`);
+            }
+        }
+    } catch (error) {
+        result.push(`${prefix}Error reading directory: ${error}`);
+    }
+    return result;
+}
+
+/**
+ * Logs the contents of a directory
+ * @param packageDirectory - The directory path to log contents for
+ * @param logTitle - Optional custom title for the log output
+ */
+export async function logDirectoryContents(
+    packageDirectory: string, 
+    logTitle: string = 'Directory contents'
+): Promise<void> {
+    logger.info(`=================${logTitle}:start==========================`);
+    const directoryContents = await listDirectoryContents(packageDirectory);
+    if (directoryContents.length === 0) {
+        logger.info(`  Directory is empty: ${packageDirectory}`);
+    } else {
+        directoryContents.forEach(item => logger.info(`  ${item}`));
+    }
+    logger.info(`=================${logTitle}:end============================`);
 }

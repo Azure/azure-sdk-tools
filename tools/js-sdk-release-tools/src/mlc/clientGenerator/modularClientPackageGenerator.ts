@@ -5,10 +5,11 @@ import { posix } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory, applyLegacySettingsMapping } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory, applyLegacySettingsMapping, logDirectoryContents } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
-import { exists } from 'fs-extra';
+import fs from 'fs-extra';
+const { exists, remove } = fs;
 import unixify from 'unixify';
 import { codeOwnersAndIgnoreLinkGenerator } from '../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
 
@@ -35,11 +36,14 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await cleanUpPackageDirectory(packageDirectory, options.runMode);
+        await logDirectoryContents(packageDirectory, 'Package directory contents after cleanup');
+        
         if (options.apiVersion) {
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
- 
+        await logDirectoryContents(packageDirectory, 'Package directory contents after generateTypeScriptCodeFromTypeSpec');
+
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,
@@ -49,6 +53,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
         await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot, options.runMode);
+        await logDirectoryContents(packageDirectory, 'Package directory contents after tryBuildSamples');
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(

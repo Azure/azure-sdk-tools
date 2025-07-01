@@ -76,6 +76,12 @@ namespace ApiViewCopilot {
     /** The datetime the comment was created */
     createdOn: offsetDateTime;
 
+    /** The count of thumbs up reactions */
+    thumbsUpCount?: int32;
+
+    /** The count of thumbs down reactions */
+    thumbsDownCount?: int32;
+
     /** The author of the comment */
     author: string;
 

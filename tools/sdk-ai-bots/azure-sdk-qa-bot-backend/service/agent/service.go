@@ -91,7 +91,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		} else if message.Role == model.Role_User {
 			messages = append(messages, &azopenai.ChatRequestUserMessage{
 				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
-				Name:    message.Name,
+				Name:    processName(message.Name),
 			})
 		}
 	}
@@ -112,7 +112,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	} else {
 		messages = append(messages, &azopenai.ChatRequestUserMessage{
 			Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content),
-			Name:    req.Message.Name,
+			Name:    processName(req.Message.Name),
 		})
 	}
 
@@ -139,8 +139,8 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		if len(intentResult.Question) > 0 {
 			query = intentResult.Question
 		}
+		log.Printf("category: %v, intension: %v", intentResult.Category, intentResult.Question)
 	}
-	log.Printf("category: %v, intension: %v", intentResult.Category, intentResult.Question)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
 
 	searchStart := time.Now()
@@ -312,4 +312,16 @@ func processChunk(result model.Index) string {
 	chunk += fmt.Sprintf("- chunk_header_3: %s\n", result.Header3)
 	chunk += fmt.Sprintf("- chunk_content: %s\n", result.Chunk)
 	return chunk
+}
+
+func processName(name *string) *string {
+	if name == nil {
+		return nil
+	}
+	// Remove spaces from the name
+	processedName := strings.ReplaceAll(*name, " ", "")
+	if len(processedName) == 0 {
+		return nil
+	}
+	return to.Ptr(processedName)
 }

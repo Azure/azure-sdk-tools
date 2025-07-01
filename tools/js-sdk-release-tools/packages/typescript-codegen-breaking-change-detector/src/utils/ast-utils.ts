@@ -237,7 +237,7 @@ export function isSameCallSignatureLikeDeclaration<T extends CallSignatureDeclar
 
     const leftParaType = leftParameter.getType();
     const rightParaType = rightParameter.getType();
-    if (leftParaType === undefined && rightParaType === undefined) return true;
+    if (!leftParaType && !rightParaType) return true;
     if (!leftParaType || !rightParaType) return false;
     if (!leftParaType.isAssignableTo(rightParaType) || !rightParaType.isAssignableTo(leftParaType)) return false;
     return true;

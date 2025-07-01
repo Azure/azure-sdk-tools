@@ -73,8 +73,8 @@ namespace ApiViewCopilot {
     /** The line number of the comment */
     lineNo: int32;
 
-    /** The offset date and time of the comment */
-    timestamp: offsetDateTime;
+    /** The datetime the comment was created */
+    createdOn: offsetDateTime;
 
     /** The author of the comment */
     author: string;

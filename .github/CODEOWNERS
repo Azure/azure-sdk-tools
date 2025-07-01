@@ -28,7 +28,7 @@
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @maririos
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos 
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @weshaggard
 /tools/fxlister/                        @KrzysztofCwalina

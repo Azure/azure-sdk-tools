@@ -73,6 +73,9 @@ export interface ChangelogItems {
   breakingChanges: Map<ChangelogItemCategory, string[]>;
 }
 
+// first breaking change category, used to distinguish features and breaking changes
+const FirstBreakingChangeCategory = ChangelogItemCategory.OperationGroupRemoved;
+
 // TODO: use consistent upper/lower case
 // TODO: use consistent word: removed/deleted
 // TODO: consider enum get wider or narrower
@@ -220,7 +223,7 @@ export class ChangelogGenerator {
   }
 
   private addChangelogItem(category: ChangelogItemCategory, message: string) {
-    if (category < 1000) {
+    if (category < FirstBreakingChangeCategory) {
       const messages = this.changelogItems.features.get(category) || [];
       if (!messages.includes(message)) messages.push(message);
       this.changelogItems.features.set(category, messages);

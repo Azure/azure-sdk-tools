@@ -1,5 +1,10 @@
 import { DBSchema } from 'idb';
 
+export enum NotificationsFilter {
+  All,
+  Page,
+}
+
 export class SiteNotification {
   constructor(
     reviewId = '',

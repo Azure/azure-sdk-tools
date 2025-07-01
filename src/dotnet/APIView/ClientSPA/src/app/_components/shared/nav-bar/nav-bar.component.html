@@ -34,11 +34,21 @@
 
 <p-sidebar [(visible)]="notificationsSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="notifications-sidebar">
     <ng-template pTemplate="header">
-        <div class="flex align-items-center gap-2">
-            <h4>Notifications</h4>
+        <div class="d-flex align-items-center gap-2 w-100">
+            <h4 class="mb-0">Notifications</h4>
+            <button type="button" class="btn btn-link btn-sm small ms-auto" *ngIf="notifications.length > 0" (click)="clearAllNotification()">Clear all</button>
         </div>
     </ng-template>
-    <div *ngFor="let notification of notifications" class="toast show mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+    <p-selectButton
+        *ngIf="notifications.length > 0 && reviewId"
+        class="notifications-filter-button"
+        [options]="notificationsFilters"
+        [(ngModel)]="notificationsFilter"
+        (onChange)="updateNotificationsFilter($event)"
+        optionLabel="label" 
+        optionValue="value"
+        [style]="{'margin-top':'8px'}" />
+    <div *ngFor="let notification of filteredNotifications()" class="toast show my-3" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header">
             <i *ngIf="notification.level == 'error'; else notError" class="bi bi-exclamation-triangle me-2"></i>
             <ng-template #notError>

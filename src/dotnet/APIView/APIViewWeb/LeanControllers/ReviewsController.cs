@@ -1,18 +1,21 @@
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
-using APIViewWeb.Extensions;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using APIViewWeb.Managers.Interfaces;
-using Microsoft.Extensions.Configuration;
-using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.Hosting;
-using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -34,8 +37,8 @@ namespace APIViewWeb.LeanControllers
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserProfileCache userProfileCache,
             IEnumerable<LanguageService> languageServices,
-            IHubContext<SignalRHub> signalRHub,
-            INotificationManager notificationManager, IWebHostEnvironment env)
+            IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
+            IWebHostEnvironment env)
         {
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;

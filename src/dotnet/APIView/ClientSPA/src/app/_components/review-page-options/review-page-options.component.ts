@@ -474,7 +474,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
                 this.review?.id,
                 this.activeAPIRevision?.id,
                 summary,
-                messageDetail + `</br>Job Id: ${aiReviewUpdate.jobId}, <a href="${pageUrl}" target="_blank">View Review</a>`,
+                messageDetail + `</br>Job Id: ${aiReviewUpdate.jobId}</br><a href="${pageUrl}" target="_blank">View Review</a>`,
                 severity
               );
               this.notificationsService.addNotification(notification);

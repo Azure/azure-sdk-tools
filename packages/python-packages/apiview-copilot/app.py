@@ -16,9 +16,8 @@ from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 from src._apiview_reviewer import ApiViewReview, _PROMPTS_FOLDER
 from src._diff import create_diff_with_line_numbers
 from src._utils import get_language_pretty_name
-from src.agent._agent import get_main_agent
+from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
 from src.agent._api import router as agent_router
-from src.agent._chat import run_agent_chat
 from src._database_manager import get_database_manager
 
 
@@ -184,7 +183,7 @@ class AgentChatResponse(BaseModel):
 async def agent_chat_thread_endpoint(request: AgentChatRequest):
     try:
         async with get_main_agent() as agent:
-            response, thread_id_out, messages = await run_agent_chat(
+            response, thread_id_out, messages = await invoke_agent(
                 agent, request.user_input, thread_id=request.thread_id, messages=request.messages
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
@@ -247,17 +246,21 @@ class MentionRequest(BaseModel):
 
 @app.post("/api-review/mention", response_model=str)
 async def handle_mention(request: MentionRequest):
-    authorization = request.headers.get("Authorization")
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=400, detail="Invalid authorization format")
-    token = authorization.split("Bearer ")[-1]
-    # TODO: Validate the token against Github API and known list of architects
-
-    # TODO: If validated, send the comments to a new subagent.
-
-    return "Mention handled successfully"
+    try:
+        async with get_mention_agent(comments=request.comments, auth=request.headers.get("Authorization")) as agent:
+            response, thread_id_out, messages = await invoke_agent(
+                agent, "Please handle this feedback.", thread_id=request.thread_id
+            )
+        return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
+    except AgentInvokeException as e:
+        if "Rate limit is exceeded" in str(e):
+            logger.warning(f"Rate limit exceeded: {e}")
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.")
+        logger.error(f"AgentInvokeException: {e}")
+        raise HTTPException(status_code=500, detail="Agent error: " + str(e))
+    except Exception as e:
+        logger.error(f"Error in /api-review/mention: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # Start the cleanup thread when the app starts

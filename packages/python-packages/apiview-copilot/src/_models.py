@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field, PrivateAttr
 from typing import List, Optional, Dict, Set
+from datetime import datetime
 
 from ._sectioned_document import Section
 
@@ -12,8 +13,14 @@ class ExistingComment(BaseModel):
     """
 
     line_no: int = Field(description="Line number of the existing comment.")
-    author: str = Field(description="The author of the existing comment.")
-    comment: str = Field(description="The contents of the existing comment.")
+    created_by: str = Field(description="The author of the existing comment.")
+    comment_text: str = Field(description="The contents of the existing comment.")
+    created_on: datetime = Field(
+        description="The datetime the comment was created, in ISO 8601 format (e.g., '2023-10-01T12:00:00Z')."
+    )
+    upvotes: Optional[int] = Field(default=0, description="The count of upvotes for the existing comment.")
+    downvotes: Optional[int] = Field(default=0, description="The count of downvotes for the existing comment.")
+    is_resolved: Optional[bool] = Field(default=False, description="Whether the comment is marked resolved.")
 
 
 class Comment(BaseModel):

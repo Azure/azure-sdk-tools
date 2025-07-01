@@ -2,8 +2,7 @@ import argparse
 import asyncio
 from dotenv import load_dotenv
 import logging
-from src.agent._chat import run_agent_chat
-from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin
+from src.agent._agent import get_main_agent, SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin, invoke_agent
 
 load_dotenv(override=True)
 
@@ -68,7 +67,7 @@ async def chat(thread_id=None):
                     print(f"Supply thread ID {current_thread_id} to continue the discussion later.")
                 break
             try:
-                response, thread_id_out, messages = await run_agent_chat(
+                response, thread_id_out, messages = await invoke_agent(
                     agent, user_input, thread_id=current_thread_id, messages=messages
                 )
                 print(f"{BLUE}Agent:{RESET} {response}\n")

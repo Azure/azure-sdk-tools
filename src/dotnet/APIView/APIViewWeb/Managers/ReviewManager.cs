@@ -240,14 +240,14 @@ namespace APIViewWeb.Managers
                 PackageName = packageName,
                 Language = language,
                 CreatedOn = DateTime.UtcNow,
-                CreatedBy = "azure-sdk",
+                CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,
                 ChangeHistory = new List<ReviewChangeHistoryModel>()
                 {
                     new ReviewChangeHistoryModel()
                     {
                         ChangeAction = ReviewChangeAction.Created,
-                        ChangedBy = "azure-sdk",
+                        ChangedBy = ApiViewConstants.AzureSdkBotName,
                         ChangedOn = DateTime.UtcNow
                     }
                 }
@@ -439,7 +439,7 @@ namespace APIViewWeb.Managers
                     commentText.AppendLine($"See: https://azure.github.io/azure-sdk/{id}");
                 }
                 commentModel.ResolutionLocked = false;
-                commentModel.CreatedBy = "azure-sdk";
+                commentModel.CreatedBy = ApiViewConstants.AzureSdkBotName;
                 commentModel.CommentText = commentText.ToString();
             
                 await _commentsRepository.UpsertCommentAsync(commentModel);

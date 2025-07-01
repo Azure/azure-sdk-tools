@@ -794,11 +794,3 @@ class ApiViewReview:
         """Close resources used by this ApiViewReview instance."""
         if hasattr(self, "executor"):
             self.executor.shutdown(wait=True)
-
-    def _unescape(self, text: str) -> str:
-        return str(bytes(text, "utf-8").decode("unicode_escape"))
-
-    def close(self):
-        """Close resources used by this ApiViewReview instance."""
-        if hasattr(self, "executor"):
-            self.executor.shutdown(wait=True)

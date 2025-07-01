@@ -184,7 +184,7 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
             string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy="azure-sdk")
+            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.BotName)
         {
             var apiRevision = new APIRevisionListItemModel()
             {
@@ -626,7 +626,7 @@ namespace APIViewWeb.Managers
         /// <param name="apiRevision"></param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = "azure-sdk", string notes = "")
+        public async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = ApiViewConstants.BotName, string notes = "")
         {
             if (!apiRevision.IsDeleted)
             {

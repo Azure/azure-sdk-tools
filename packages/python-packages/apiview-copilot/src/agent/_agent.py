@@ -70,3 +70,33 @@ def create_kernel() -> Kernel:
         },
     )
     return kernel
+
+
+@asynccontextmanager
+async def get_mention_agent():
+    ai_agent_settings = AzureAIAgentSettings(
+        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
+        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
+        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+    )
+    ai_instructions = """
+You are MentionAgent. Your job is to process @mention requests in API reviews.
+"""
+    async with DefaultAzureCredential() as credentials:
+        async with AzureAIAgent.create_client(
+            credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version
+        ) as client:
+            agent_definition = await client.agents.create_agent(
+                name="MentionAgent",
+                description="Handles @mention requests from APIView.",
+                model=ai_agent_settings.model_deployment_name,
+                instructions=ai_instructions,
+            )
+            agent = AzureAIAgent(
+                client=client,
+                definition=agent_definition,
+                plugins=[SearchPlugin(), DatabasePlugin()],
+                polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
+                kernel=create_kernel(),
+            )
+            yield agent

@@ -183,6 +183,96 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
     return config;
 }
 
+/**
+ * Applies legacy settings mapping to resolve options for backwards compatibility and saves the updated config.
+ * This function contains hardcoded mappings for TypeSpec emitter options to maintain
+ * backwards compatibility with legacy configuration formats.
+ * @param typeSpecDirectory - The TypeSpec directory containing tspconfig.yaml
+ * @param enableMapping - Whether to apply legacy settings mapping
+ */
+export async function applyLegacySettingsMapping(
+    typeSpecDirectory: string,
+    enableMapping: boolean = false
+): Promise<void> {
+    if (!enableMapping) {
+        return;
+    }
+
+    const resolvedOptions = await resolveOptions(typeSpecDirectory);
+
+    // Internal mapping for legacy TypeSpec emitter options to new kebab-case format
+    const mapping = {
+        'generateTest': 'generate-test',
+        'packageDetails': 'package-details',
+        'generateMetadata': 'generate-metadata'
+    };
+
+    const updatedOptions = JSON.parse(JSON.stringify(resolvedOptions)); // Deep clone
+
+    logger.info('Applying legacy settings mapping...');
+
+    let hasChanges = false;
+
+    // Apply mapping only to "@azure-tools/typespec-ts" emitter options
+    if (updatedOptions.options && updatedOptions.options[emitterName]) {
+        const emitterOptions = updatedOptions.options[emitterName];
+        
+        for (const [oldKey, newKey] of Object.entries(mapping)) {
+            if (oldKey in emitterOptions && !(newKey in emitterOptions)) {
+                logger.info(`Mapping legacy emitter option '${oldKey}' to '${newKey}' for emitter '${emitterName}'`);
+                emitterOptions[newKey] = emitterOptions[oldKey];
+                delete emitterOptions[oldKey];
+                hasChanges = true;
+            }
+        }
+        
+        // Handle package-dir mapping from package-details.name if package-dir doesn't exist
+        // This should be done after the mapping above, so we only need to check package-details
+        if (!emitterOptions['package-dir'] && emitterOptions['package-details']?.name) {
+            const packageName = emitterOptions['package-details'].name;
+            if (typeof packageName === 'string' && packageName.startsWith('@azure/')) {
+                const extractedName = packageName.replace('@azure/', '');
+                emitterOptions['package-dir'] = extractedName;
+                logger.info(`Generated 'package-dir' from package-details.name: '${packageName}' -> '${extractedName}' for emitter '${emitterName}'`);
+                hasChanges = true;
+            }
+        }
+    }
+
+    // Save the updated configuration back to the file if there were changes
+    if (hasChanges) {
+        const tspConfigPath = path.join(typeSpecDirectory, 'tspconfig.yaml');
+        try {
+            // Read the original file to preserve structure and comments
+            const originalContent = await readFile(tspConfigPath, 'utf8');
+            const originalConfig = yamlLoad(originalContent);
+            
+            // Update only the @azure-tools/typespec-ts emitter options, preserving other emitters
+            if (originalConfig && typeof originalConfig === 'object') {
+                if (!(originalConfig as any).options) {
+                    (originalConfig as any).options = {};
+                }
+                // Only update the specific emitter options, preserve all other emitters
+                (originalConfig as any).options[emitterName] = updatedOptions.options[emitterName];
+                
+                // Write back to file
+                const updatedContent = dump(originalConfig, {
+                    indent: 2,
+                    lineWidth: 120,
+                    noRefs: true,
+                    quotingType: '"'
+                });
+                fs.writeFileSync(tspConfigPath, updatedContent, 'utf8');
+                logger.info(`Updated tspconfig.yaml with legacy settings mapping applied.`);
+            }
+        } catch (error) {
+            logger.warn(`Failed to save updated tspconfig.yaml: ${error}`);
+        }
+    }
+
+    logger.info('Legacy settings mapping completed.');
+}
+
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {

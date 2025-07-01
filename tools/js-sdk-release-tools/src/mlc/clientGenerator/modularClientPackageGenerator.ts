@@ -5,7 +5,7 @@ import { posix } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
-import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory, applyLegacySettingsMapping } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
 import { exists } from 'fs-extra';
@@ -25,6 +25,8 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     const rushxScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
 
     try {
+        // Apply legacy settings mapping first if enabled
+        await applyLegacySettingsMapping(options.typeSpecDirectory, options.enableLegacySettingsMapping);
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
         await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory);

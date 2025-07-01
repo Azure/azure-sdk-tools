@@ -63,6 +63,7 @@ export interface ModularClientPackageOptions {
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
     runMode: RunMode;
+    enableLegacySettingsMapping?: boolean;
 }
 
 export interface NpmPackageInfo {

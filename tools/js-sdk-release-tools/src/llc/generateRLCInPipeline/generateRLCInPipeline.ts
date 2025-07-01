@@ -17,7 +17,7 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, applyLegacySettingsMapping } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
@@ -41,12 +41,15 @@ export async function generateRLCInPipeline(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    enableLegacySettingsMapping?: boolean;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
     if (options.typespecProject) {
-        const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
+        const typespecProject = path.join(options.swaggerRepo, options.typespecProject);
+        // Apply legacy settings mapping first if enabled
+        await applyLegacySettingsMapping(typespecProject, options.enableLegacySettingsMapping);
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
         await remove(generatedPackageDir);
 

@@ -16,7 +16,8 @@ async function automationGenerateInPipeline(
     outputJsonPath: string,
     use: string | undefined,
     typespecEmitter: string | undefined,
-    sdkGenerationType: string | undefined
+    sdkGenerationType: string | undefined,
+    enableLegacySettingsMapping?: boolean
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
@@ -37,6 +38,7 @@ async function automationGenerateInPipeline(
     } = await parseInputJson(inputJson);
 
     const local = runMode === RunMode.Local;
+    const legacySettingsMapping = enableLegacySettingsMapping || process.env.ENABLE_LEGACY_SETTINGS_MAPPING === 'true';
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
@@ -76,6 +78,7 @@ async function automationGenerateInPipeline(
                     gitCommitId: gitCommitId,
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
+                    enableLegacySettingsMapping: legacySettingsMapping,
                 });
                 break;
 
@@ -97,7 +100,8 @@ async function automationGenerateInPipeline(
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
                     runMode: runMode as RunMode,
-                };
+                    enableLegacySettingsMapping: legacySettingsMapping,
+                };                
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;
@@ -129,11 +133,13 @@ const optionDefinitions = [
     { name: 'outputJsonPath', type: String },
     // this option should be only used in local run, it will skip backup node modules, etc.
     // do NOT set to true in sdk automation pipeline 
-    { name: 'local', type: Boolean, defaultValue: false }
+    { name: 'local', type: Boolean, defaultValue: false },
+    // enable legacy settings mapping feature
+    { name: 'enableLegacySettingsMapping', type: Boolean, defaultValue: false }
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.enableLegacySettingsMapping).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

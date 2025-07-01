@@ -5,7 +5,7 @@ import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import pkg from 'fs-extra';
 const { ensureDir, readFile, writeFile } = pkg;
 import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
-import { runCommand, runCommandOptions } from './utils.js';
+import { runCommand, runCommandOptions, logDirectoryContents } from './utils.js';
 
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
@@ -102,13 +102,17 @@ export async function buildPackage(
         await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
     }
 
+    await logDirectoryContents(packageDirectory, 'Package directory contents after buildPackage');
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
     logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
+    await logDirectoryContents(packageDirectory, 'Package directory contents after tryTestPackage');
     await formatSdk(packageDirectory);
+    await logDirectoryContents(packageDirectory, 'Package directory contents after formatSdk');
     await updateSnippets(packageDirectory);
+    await logDirectoryContents(packageDirectory, 'Package directory contents after updateSnippets');
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');

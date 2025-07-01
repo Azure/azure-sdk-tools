@@ -1,8 +1,9 @@
 # Release
 
-## UNRELEASED - 0.23.0
+## 2025-06-25 - 0.23.0
 
 - Removed `tsp-client compare` command.
+- Log npm package versions after install.
 
 ## 2025-06-13 - 0.22.0
 

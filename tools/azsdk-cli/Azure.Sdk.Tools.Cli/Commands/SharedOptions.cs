@@ -5,7 +5,6 @@ using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
 using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
-using Azure.Sdk.Tools.Cli.Tools.PromptValidationTool;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -23,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(ReleaseReadinessTool),
-            typeof(PromptValidationTool),
+            typeof(FileValidationTool),
             typeof(DownloadPromptsTool),
             #if DEBUG
             // only add this tool in debug mode

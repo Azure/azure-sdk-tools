@@ -11,7 +11,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Tools.PromptValidationTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     
 

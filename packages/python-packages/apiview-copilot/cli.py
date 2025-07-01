@@ -29,6 +29,13 @@ helps[
 """
 
 helps[
+    "agent"
+] = """
+    type: group
+    short-summary: Commands for interacting with the agent.
+"""
+
+helps[
     "eval"
 ] = """
     type: group
@@ -370,6 +377,34 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
+def ask_agent():
+    """
+    Start an interactive session with the agent.
+    This function is a placeholder for the actual implementation.
+    """
+    # Here you would implement the logic to interact with the agent
+    # For example, using an AI service or a custom agent implementation
+    # Simulate a response
+    print("Simulating agent response...")
+    return "Agent response"
+
+
+def handle_agent_mention(comments_path: str):
+    """
+    Handles @mention requests from the agent.
+    This function is a placeholder for the actual implementation.
+    """
+    # load comments from the comments_path
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            comments = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    print("Handling agent mention...")
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -390,6 +425,9 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("local", "local_review")
             g.command("remote", "generate_review_from_app")
             g.command("summarize", "review_summarize")
+        with CommandGroup(self, "agent", "__main__#{}") as g:
+            g.command("mention", "handle_agent_mention")
+            g.command("ask", "ask_agent")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
@@ -569,6 +607,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
+            )
+        with ArgumentsContext(self, "agent mention") as ac:
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to the JSON file containing comments for the agent to process.",
+                options_list=["--comments-path", "-c"],
             )
 
         super(CliCommandsLoader, self).load_arguments(command)

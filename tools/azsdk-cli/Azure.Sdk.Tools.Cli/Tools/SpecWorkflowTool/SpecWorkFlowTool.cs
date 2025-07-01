@@ -21,13 +21,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
         ITypeSpecHelper typespecHelper,
         IOutputService output) : MCPTool
     {
-        private readonly static string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
-        private readonly static string REPO_OWNER = "Azure";
-        private readonly static string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
-        private readonly static string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
-        private readonly static string DEFAULT_BRANCH = "main";
+        private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
+        private static readonly string REPO_OWNER = "Azure";
+        public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
+        public static readonly string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
+        private static readonly string DEFAULT_BRANCH = "main";
 
-        public readonly static HashSet<string> SUPPORTED_LANGUAGES = new()
+        public static readonly HashSet<string> SUPPORTED_LANGUAGES = new()
         {
             "python",
             ".net",
@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
         private readonly Option<int> workItemOptionalIdOpt = new(["--workitem-id"], "Release plan work item id") { IsRequired = false };
 
-        private async Task<GenericResponse> IsReleasePlanReadyToGenerateSDKAsync(int workItemId, string language)
+        private async Task<GenericResponse> IsSdkDetailsPresentInReleasePlan(int workItemId, string language)
         {
             var response = new GenericResponse()
             {
@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return response;
                 }
                 
-                var releasePlan = await devopsService.GetReleasePlanAsync(workItemId);
+                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
 
@@ -172,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Pull request is not targeted to main branch
-                if (pullRequest.Base?.Ref?.Equals(DEFAULT_BRANCH) == false)
+                if (!string.IsNullOrEmpty(pullRequest.Base?.Ref) && !pullRequest.Base.Ref.Equals(DEFAULT_BRANCH))
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} merges changes to '{pullRequest.Base?.Ref}' branch. SDK can be generated only from a pull request with {DEFAULT_BRANCH} branch as target. Create a pull request for your changes with '{DEFAULT_BRANCH}' branch as target.");
                     return response;
@@ -188,14 +188,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
                 // Check if ARM or API stewardship approval is present if PR is not in merged status
                 // Check ARM approval label is present on the management pull request
-                if (!pullRequest.Merged && isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL)))
+                if (!pullRequest.Merged && isMgmtPlane && (pullRequest.Labels == null || !pullRequest.Labels.Any(l => l.Name.Equals(ARM_SIGN_OFF_LABEL))))
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} does not have ARM approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
                     return response;
                 }
 
                 // Check if API stewardship approval label is present on the data plane pull request
-                if (!pullRequest.Merged && !isMgmtPlane && !pullRequest.Labels.Any(l => l.Name.Equals(API_STEWARDSHIP_APPROVAL)))
+                if (!pullRequest.Merged && !isMgmtPlane && (pullRequest.Labels == null || !pullRequest.Labels.Any(l => l.Name.Equals(API_STEWARDSHIP_APPROVAL))))
                 {
                     response.Details.Add($"Pull request {pullRequest.Number} does not have API stewardship approval. Your API spec changes are not ready to generate SDK. Please check pull request details to get more information on next step for your pull request");
                     return response;
@@ -251,16 +251,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Status = "Failed";
                 }
 
-                // Verify if spec is read to generate SDK
-                var readiness = await IsSpecReadyToGenerateSDKAsync(typespecProjectRoot, pullRequestNumber);
+                // Verify if release plan is ready to generate SDK
+                var readiness = await IsSdkDetailsPresentInReleasePlan(workItemId, language);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);
                     response.Status = "Failed";
                 }
 
-                // Verify if release plan is ready to generate SDK
-                readiness = await IsReleasePlanReadyToGenerateSDKAsync(workItemId, language);
+                // Verify if spec is ready to generate SDK
+                readiness = await IsSpecReadyToGenerateSDKAsync(typespecProjectRoot, pullRequestNumber);
                 if (!readiness.Status.Equals("Success"))
                 {
                     response.Details.AddRange(readiness.Details);
@@ -358,7 +358,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (buildId == 0)
                 {
                     sb.AppendLine("Build Id is not available. Checking for SDK pull request details in release plan work item.");
-                    var releasePlan = await devopsService.GetReleasePlanAsync(workItemId);
+                    var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
                     var sdkInfo = releasePlan?.SDKInfo.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
                     if (sdkInfo != null && !string.IsNullOrEmpty(sdkInfo.SdkPullRequestUrl))
                     {

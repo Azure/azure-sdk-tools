@@ -97,6 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
+        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main");
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -504,29 +505,15 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var buildClient = connection.GetBuildClient();
-            var projectClient = connection.GetProjectClient();
-            // Run pipeline
-            var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
-            var project = await projectClient.GetProject(INTERNAL_PROJECT);
-
-            // Queue SDK generation pipeline
-            logger.LogInformation($"Queueing pipeline [{definition.Name}] to generate SDK for {language}.");
-            var build = await buildClient.QueueBuildAsync(new Build()
+            var templateParams = new Dictionary<string, string>
             {
-                Definition = definition,
-                Project = project,
-                SourceBranch = branchRef,
-                TemplateParameters = new Dictionary<string, string>
-                            {
-                                { "ConfigType", "TypeSpec"},
-                                { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
-                                { "ApiVersion", apiVersion },
-                                { "sdkReleaseType", sdkReleaseType },
-                                { "SkipPullRequestCreation", "false" }
-                            }
-            });
-
+                 { "ConfigType", "TypeSpec"},
+                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
+                 { "ApiVersion", apiVersion },
+                 { "SdkReleaseType", sdkReleaseType },
+                 { "SkipPullRequestCreation", "false" }
+            };
+            var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
             logger.LogInformation($"Started pipeline run {pipelineRunUrl} to generate SDK.");
             if (workItemId != 0)
@@ -537,6 +524,31 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return build;
         }
+
+        public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main")
+        {
+            if (pipelineDefinitionId == 0)
+            {
+                throw new ArgumentException($"Invalid pipeline definition ID.");
+            }
+
+            var buildClient = connection.GetBuildClient();
+            var projectClient = connection.GetProjectClient();
+            var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
+            var project = await projectClient.GetProject(INTERNAL_PROJECT);
+
+            // Queue SDK generation pipeline
+            logger.LogInformation($"Queueing pipeline [{definition.Name}].");
+            var build = await buildClient.QueueBuildAsync(new Build()
+            {
+                Definition = definition,
+                Project = project,
+                SourceBranch = branchRef,
+                TemplateParameters = templateParams
+            });
+            return build;
+        }
+
 
         public async Task<Build> GetPipelineRunAsync(int buildId)
         {

@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            Command command = new("release-plan");
+            Command command = new("release-plan", "Manage release plans in AzureDevops");
             var subCommands = new[]
             {
                 new Command(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},
@@ -146,7 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task ValidateCreateReleasePlanInputs(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType)
         {
             // Check for existing release plan for the given pull request URL.
             if (string.IsNullOrEmpty(specPullRequestUrl))
@@ -201,7 +201,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                await ValidateCreateReleasePlanInputs(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);

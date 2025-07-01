@@ -3,19 +3,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Linq;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using APIViewWeb.LeanModels;
-using APIViewWeb.Helpers;
-using APIViewWeb.Managers.Interfaces;
+using Newtonsoft.Json;
 
 namespace APIViewWeb.Managers
 {
@@ -23,26 +25,33 @@ namespace APIViewWeb.Managers
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IAuthorizationService _authorizationService;
-
         private readonly ICosmosCommentsRepository _commentsRepository;
-
+        private readonly ICosmosReviewRepository _reviewRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly IConfiguration _configuration;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
+
 
         private readonly OrganizationOptions _Options;
 
         public HashSet<GithubUser> TaggableUsers;
 
-        public CommentsManager(
-            IAPIRevisionsManager apiRevisionsManager,
+        public CommentsManager(IAPIRevisionsManager apiRevisionsManager,
             IAuthorizationService authorizationService,
             ICosmosCommentsRepository commentsRepository,
+            ICosmosReviewRepository reviewRepository,
             INotificationManager notificationManager,
+            IBlobCodeFileRepository codeFileRepository,
+            IConfiguration configuration,
             IOptions<OrganizationOptions> options)
         {
             _apiRevisionsManager = apiRevisionsManager;
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
+            _reviewRepository = reviewRepository;
             _notificationManager = notificationManager;
+            _codeFileRepository = codeFileRepository;
+            _configuration = configuration;
             _Options = options.Value;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -76,6 +85,14 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
+
+        private static readonly Regex tagsRegex = new(@"@([^\s]+)", RegexOptions.Compiled);
+        public bool IsApiViewAgentTagged(CommentItemModel comment)
+        {
+            return tagsRegex.Matches(comment.CommentText)
+                .Any(m => string.Equals(m.Groups[1].Value, ApiViewConstants.BotName, StringComparison.Ordinal));
+        }
+        
         public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
         {
             return await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
@@ -146,6 +163,98 @@ namespace APIViewWeb.Managers
             await _notificationManager.NotifyUserOnCommentTag(comment);
             await _notificationManager.NotifySubscribersOnComment(user, comment);
             return comment;
+        }
+
+        public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
+        {
+            string language = await _reviewRepository.GetLanguageReview(comment.ReviewId);
+            var commentResult = new CommentItemModel
+            {
+                ReviewId = comment.ReviewId,
+                APIRevisionId = comment.APIRevisionId,
+                SampleRevisionId = comment.SampleRevisionId,
+                ElementId = comment.ElementId,
+                ResolutionLocked = false,
+                CreatedBy = ApiViewConstants.BotName,
+                CreatedOn = DateTime.UtcNow,
+                CommentType = CommentType.SampleRevision
+            };
+
+            if (!IsUserAllowedToChatWithAgent(user, language))
+            {
+                commentResult.CommentText =
+                    "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature.";
+                await _commentsRepository.UpsertCommentAsync(commentResult);
+                return;
+            }
+
+            string response;
+            try
+            {
+                /*
+                var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
+                var getCommentReplyEndpoint = $"{copilotEndpoint}/agent/chat";
+
+
+                IEnumerable<CommentItemModel> threadComments =
+                    await _commentsRepository.GetCommentsAsync(reviewId: comment.ReviewId, lineId: comment.ElementId);
+
+                var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeRevisionId);
+                var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+                var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
+
+                Dictionary<string, int> lineIdToIndex = activeCodeLines
+                    .Select((line, id) => new { line.lineId, id })
+                    .ToDictionary(x => x.lineId, x => x.id);
+
+                List<CommentModelForCopilot> commentsForAgent = threadComments
+                    .Select(threadComment => new CommentModelForCopilot
+                    {
+                        Author = threadComment.CreatedBy,
+                        CommentText = threadComment.CommentText,
+                        Timestamp = threadComment.CreatedOn,
+                        LineNumber = lineIdToIndex.TryGetValue(threadComment.ElementId, out var id) ? id : -1
+                    })
+                    .ToList();
+
+                var client = _httpClientFactory.CreateClient();
+                var payload = new Dictionary<string, object> { { "comments", commentsForAgent } };
+                response = await client.PostAsync(getCommentReplyEndpoint, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                response.EnsureSuccessStatusCode();
+                */
+
+                response = "Agent integration is not currently available.";
+            }
+            catch
+            {
+                response = "An error occurred while attempting to contact the agent service.";
+            }
+
+            commentResult.CommentText = response;
+            await _commentsRepository.UpsertCommentAsync(commentResult);
+        }
+
+        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal name, string language)
+        {
+            if (name == null || string.IsNullOrEmpty(language))
+            {
+                return false;
+            }
+
+            return IsUserLanguageArchitect(name, language);
+        }
+
+        private bool IsUserLanguageArchitect(ClaimsPrincipal user, string language)
+        {
+            string githubUser = user.GetGitHubLogin();
+
+            if (string.IsNullOrEmpty(githubUser) || string.IsNullOrEmpty(language))
+                return false;
+
+            string architects = _configuration[$"Architects:{language}"] ?? "";
+            HashSet<string> architectsSet = new(architects.Split(','), StringComparer.OrdinalIgnoreCase);
+
+            return architectsSet.Contains(githubUser);
         }
 
         /// <summary>

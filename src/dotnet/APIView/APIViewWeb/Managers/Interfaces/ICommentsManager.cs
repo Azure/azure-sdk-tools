@@ -10,6 +10,7 @@ namespace APIViewWeb.Managers
     public interface ICommentsManager
     {
         public void LoadTaggableUsers();
+        public bool IsApiViewAgentTagged(CommentItemModel comment);
         public Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null);
         public Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId);
         public Task<IEnumerable<CommentItemModel>> GetAPIRevisionCommentsAsync(string apiRevisionId, string createdBy=null);
@@ -24,6 +25,7 @@ namespace APIViewWeb.Managers
         public Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId);
         public Task ToggleUpvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
         public Task ToggleDownvoteAsync(ClaimsPrincipal user, string reviewId, string commentId);
+        public Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId);
 
         public HashSet<GithubUser> GetTaggableUsers();
     }

@@ -356,6 +356,7 @@ namespace APIViewWeb.Managers
                         LineNumber = associatedLine + 1,
                         CommentText = comment.CommentText,
                         Author = comment.CreatedBy,
+                        Timestamp = comment.CreatedOn
                     });
                 }
             }

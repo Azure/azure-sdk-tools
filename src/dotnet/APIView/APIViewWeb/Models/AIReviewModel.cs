@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -47,5 +48,7 @@ namespace APIViewWeb.Models
         public string Author { get; set; }
         [JsonPropertyName("comment")]
         public string CommentText { get; set; }
+        [JsonPropertyName("timestamp")]
+        public DateTimeOffset Timestamp { get; set; }
     }
 }

@@ -68,6 +68,22 @@ namespace APIViewWeb
             return reviews;
         }
 
+        public async Task<string> GetLanguageReview(string reviewId)
+        {
+            var queryStringBuilder = new StringBuilder("SELECT VALUE r.Language FROM Reviews r WHERE r.id = @reviewId");
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@reviewId", reviewId);
+            FeedIterator<string> itemQueryIterator = _reviewsContainer.GetItemQueryIterator<string>(queryDefinition);
+
+            if (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                return result.Resource.FirstOrDefault();
+            }
+
+            return string.Empty;
+        }
+
         public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null)
         {
             var reviewIdsAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(reviewIds);

@@ -18,16 +18,17 @@ namespace APIViewWeb.LeanControllers
         private readonly ILogger<CommentsController> _logger;
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
-        private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ILogger<CommentsController> logger, ICommentsManager commentManager,
-            IReviewManager reviewManager, INotificationManager notificationManager, IAPIRevisionsManager apiRevisionsManager)
+        public CommentsController(
+            ICommentsManager commentManager,
+            IReviewManager reviewManager,
+            INotificationManager notificationManager,
+            ILogger<CommentsController> logger)
         {
             _logger = logger;
             _commentsManager = commentManager;
             _reviewManager = reviewManager;
-            _apiRevisionsManager = apiRevisionsManager;
             _notificationManager = notificationManager;
         }
 
@@ -138,7 +139,13 @@ namespace APIViewWeb.LeanControllers
             {
                 await _notificationManager.SubscribeAsync(review, User);
             }
-             return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
+
+            if (_commentsManager.IsApiViewAgentTagged(comment))
+            {
+               _ = Task.Run(() => _commentsManager.RequestAgentReply(User, comment, apiRevisionId));
+            }
+
+            return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
         }
 
         /// <summary>

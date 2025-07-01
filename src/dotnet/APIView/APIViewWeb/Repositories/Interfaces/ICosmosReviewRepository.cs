@@ -16,5 +16,6 @@ namespace APIViewWeb.Repositories
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false);
         public Task<(IEnumerable<ReviewListItemModel> Reviews, int TotalCount)> GetReviewsAsync(
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, bool? isApproved, int offset, int limit, string orderBy);
+        public Task<string> GetLanguageReview(string reviewId);
     }
 }

@@ -156,7 +156,7 @@ describe.sequential("Verify commands", () => {
         directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         repo: "Azure/azure-rest-api-specs",
-        additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
       };
       await writeTspLocationYaml(
@@ -165,7 +165,8 @@ describe.sequential("Verify commands", () => {
       );
       const args = {
         "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
-        "save-inputs": true,
+        "local-spec-repo":
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
       await updateCommand(args);
     } catch (error) {
@@ -179,7 +180,7 @@ describe.sequential("Verify commands", () => {
         directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         repo: "Azure/azure-rest-api-specs",
-        additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       };
       await writeTspLocationYaml(
@@ -188,7 +189,8 @@ describe.sequential("Verify commands", () => {
       );
       const args = {
         "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
-        "save-inputs": true,
+        "local-spec-repo":
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
       await updateCommand(args);
     } catch (error) {
@@ -196,7 +198,8 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Update example sdk & pass tspconfig.yaml", async () => {
+  // TODO: unskip after updates have been merged to upstream tspconfig.yaml files
+  it.skip("Update example sdk & pass tspconfig.yaml", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -221,7 +224,8 @@ describe.sequential("Verify commands", () => {
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
-        "save-inputs": true,
+        "local-spec-repo":
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
       await updateCommand(args);
     } catch (error) {
@@ -237,7 +241,6 @@ describe.sequential("Verify commands", () => {
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         repo: "foo",
-        "save-inputs": true,
       };
       await updateCommand(args);
       assert.fail("Should have failed");
@@ -307,7 +310,7 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }
-  });
+  }, 300000);
 
   it("Generate config files", async () => {
     try {

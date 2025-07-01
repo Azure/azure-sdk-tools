@@ -15,7 +15,7 @@ namespace APIViewWeb.Filters
     public class ApiKeyAuthorizeAsyncFilter : Attribute, IAsyncAuthorizationFilter
     {
         private static string _apiKeyHeader = "ApiKey";
-        private string _azure_sdk_bot = ApiViewConstants.BotName;
+        private string _azure_sdk_bot = ApiViewConstants.AzureSdkBotName;
         private HashSet<string> _apiKeyValues = new HashSet<string>();
 
         public ApiKeyAuthorizeAsyncFilter(IConfiguration configuration)

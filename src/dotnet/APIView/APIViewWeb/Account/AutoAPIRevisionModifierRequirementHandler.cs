@@ -10,7 +10,7 @@ namespace APIViewWeb
 {
     public class AutoAPIRevisionModifierRequirementHandler : IAuthorizationHandler
     {
-        private static string _autoReviewOwner = ApiViewConstants.BotName;
+        private static string _autoReviewOwner = ApiViewConstants.AzureSdkBotName;
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
             if (context.User != null)

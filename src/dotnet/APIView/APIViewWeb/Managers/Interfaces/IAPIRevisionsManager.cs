@@ -20,7 +20,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(ClaimsPrincipal user, string apiRevisionId);
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId);
         public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType, string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy = ApiViewConstants.BotName);
+            string label = null, int? prNumber = null, string createdBy = ApiViewConstants.AzureSdkBotName);
         public Task<(bool updateReview, APIRevisionListItemModel apiRevision)> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "");
         public Task<APIRevisionListItemModel> AddAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language = "", bool awaitComputeDiff = false);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label);
@@ -28,7 +28,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task RunAPIRevisionGenerationPipeline(List<APIRevisionGenerationPipelineParamModel> reviewGenParams, string language);
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string revisionId);
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel apiRevision);
-        public Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = ApiViewConstants.BotName, string notes = "");
+        public Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = ApiViewConstants.AzureSdkBotName, string notes = "");
         public Task RestoreAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string revisionId);
         public Task UpdateAPIRevisionLabelAsync(ClaimsPrincipal user, string revisionId, string label);
         public Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel apiRevision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false);

@@ -28,7 +28,7 @@ namespace APIViewWeb
                     var approvers = _configuration["Approvers"].Split(',');
                     var loggedInUserName = context.User.GetGitHubLogin();
                     if (creator == loggedInUserName ||
-                        (approvers.Contains(loggedInUserName) && creator == ApiViewConstants.BotName))
+                        (approvers.Contains(loggedInUserName) && creator == ApiViewConstants.AzureSdkBotName))
                     {
                         context.Succeed(requirement);
                     }

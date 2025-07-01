@@ -40,7 +40,7 @@ describe('Auto SDK generation path test', () => {
         }
     });
 
-    test('modular client generation kebab case option', async () => {
+    test('modular client generation', async () => {
         const fakeTspConfig = {
             options: {
                 '@azure-tools/typespec-ts': {
@@ -66,58 +66,6 @@ describe('Auto SDK generation path test', () => {
         }
     });
 
-    test('modular client generation camel case option', async () => {
-        const fakeTspConfig = {
-            options: {
-                '@azure-tools/typespec-ts': {
-                    isModularLibrary: true
-                }
-            }
-        };
-        const tempSpecFolder = path.join(__dirname, `tmp/spec-${getRandomInt(10000)}`);
-        const inputJson = {
-            relatedTypeSpecProjectFolder: ['tsp'],
-            specFolder: tempSpecFolder
-        };
-        try {
-            await ensureDir(path.join(tempSpecFolder, 'tsp'));
-            await writeFile(path.join(tempSpecFolder, 'tsp/tspconfig.yaml'), stringify(fakeTspConfig), {
-                encoding: 'utf8',
-                flush: true
-            });
-            const { sdkType } = await parseInputJson(inputJson);
-            expect(sdkType).toBe(SDKType.ModularClient);
-        } finally {
-            await remove(tempSpecFolder);
-        }
-    });
-
-    test('modular client generation both options', async () => {
-        const fakeTspConfig = {
-            options: {
-                '@azure-tools/typespec-ts': {
-                    'is-modular-library': true,
-                    isModularLibrary: true
-                }
-            }
-        };
-        const tempSpecFolder = path.join(__dirname, `tmp/spec-${getRandomInt(10000)}`);
-        const inputJson = {
-            relatedTypeSpecProjectFolder: ['tsp'],
-            specFolder: tempSpecFolder
-        };
-        try {
-            await ensureDir(path.join(tempSpecFolder, 'tsp'));
-            await writeFile(path.join(tempSpecFolder, 'tsp/tspconfig.yaml'), stringify(fakeTspConfig), {
-                encoding: 'utf8',
-                flush: true
-            });
-            const { sdkType } = await parseInputJson(inputJson);
-            expect(sdkType).toBe(SDKType.ModularClient);
-        } finally {
-            await remove(tempSpecFolder);
-        }
-    });
     test('mgmt client generation', async () => {
         const fakeTspConfig = {
             options: {

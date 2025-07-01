@@ -130,7 +130,7 @@ if __name__ == "__main__":
         description="Download wheels and source distributions (if possible) for a set of targeted specifiers."
     )
 
-    parser.add_argument("target_packages", nargs="?", help=("An array of targeted specifiers, in a json string."))
+    parser.add_argument("target_packages", nargs="?", help=("A string of targeted specifiers. Ex. 'astroid==2.15.8, dill==0.3.9'"))
 
     parser.add_argument(
         "-d",

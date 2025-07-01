@@ -4,13 +4,14 @@ using Microsoft.Extensions.Logging;
 using IssueLabeler.Shared;
 using System.Threading.Tasks;
 using System;
+using System.Collections.Generic;
 
 
 namespace IssueLabelerService
 {
     public class LegacyLabeler : ILabeler
     {
-        private readonly ILogger<Labelers> _logger;
+        private readonly ILogger<LabelerFactory> _logger;
         private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
         private readonly RepositoryConfiguration _config;
@@ -18,7 +19,7 @@ namespace IssueLabelerService
         private ILabelerLite Labeler { get; }
         private string CommonModelRepositoryName { get; }
 
-        public LegacyLabeler(ILogger<Labelers> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler, RepositoryConfiguration config)
+        public LegacyLabeler(ILogger<LabelerFactory> logger, IModelHolderFactoryLite modelHolderFactory, ILabelerLite labeler, RepositoryConfiguration config)
         {
             _logger = logger;
             _modelHolderFactory = modelHolderFactory;
@@ -32,7 +33,7 @@ namespace IssueLabelerService
             _config = config;
         }
 
-        public async Task<string[]> PredictLabels(IssuePayload issue)
+        public async Task<Dictionary<string, string>> PredictLabels(IssuePayload issue)
         {
             var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
 
@@ -84,7 +85,12 @@ namespace IssueLabelerService
                 }
 
                 _logger.LogInformation($"Labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.  Using: [{predictions[0]}, {predictions[1]}].");
-                return [predictions[0], predictions[1]];
+                
+                return new Dictionary<string, string>
+                {
+                    { LabelType.Service, predictions[0] }, 
+                    { LabelType.Category, predictions[1] }
+                };
             }
             catch (Exception ex)
             {

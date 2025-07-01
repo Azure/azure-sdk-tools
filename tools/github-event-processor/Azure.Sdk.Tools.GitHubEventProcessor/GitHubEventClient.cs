@@ -1321,7 +1321,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return rulesConfiguration;
         }
 
-        public virtual async Task<IssueTriageResponse> QueryAIIssueTriageService(IssueEventGitHubPayload issueEventPayload)
+        public virtual async Task<IssueTriageResponse> QueryAIIssueTriageService(IssueEventGitHubPayload issueEventPayload, bool predictLabels, bool predictAnswers)
         {
             // The LABEL_SERVICE_API_KEY is queried from Keyvault as part of the action and added to the
             // environment.
@@ -1340,7 +1340,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 issueEventPayload.Issue.Body,
                 IssueUserLogin = issueEventPayload.Issue.User.Login,
                 RepositoryName = issueEventPayload.Repository.Name,
-                RepositoryOwnerName = issueEventPayload.Repository.Owner.Login
+                RepositoryOwnerName = issueEventPayload.Repository.Owner.Login,
+                DisableAnswers = predictAnswers,
+                DisableLabels = predictLabels
             };
             using var client = new HttpClient();
             IssueTriageResponse output;

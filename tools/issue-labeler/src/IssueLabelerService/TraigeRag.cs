@@ -5,48 +5,67 @@ using Azure.Search.Documents;
 using Microsoft.Extensions.Logging;
 using Azure.Search.Documents.Models;
 using OpenAI.Chat;
-using System.Text.Json;
 using Azure.Search.Documents.Indexes;
-using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using Azure.AI.OpenAI;
 
 namespace IssueLabelerService
 {
     public class TriageRag
     {
-        private static ChatClient s_chatClient;
+        private static AzureOpenAIClient s_openAiClient;
         private static SearchIndexClient s_searchIndexClient;
         private ILogger<TriageRag> _logger;
 
-        public TriageRag(ILogger<TriageRag> logger, ChatClient chatClient, SearchIndexClient searchIndexClient)
+        public TriageRag(ILogger<TriageRag> logger, AzureOpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
-            s_chatClient = chatClient;
+            s_openAiClient = openAiClient;
             _logger = logger;
             s_searchIndexClient = searchIndexClient;
         }
 
-        /// <summary>
-        /// Executes an Azure Search query.
-        /// </summary>
-        /// <typeparam name="T">The type of the search result.</typeparam>
-        /// <param name="searchEndpoint">The search endpoint URI.</param>
-        /// <param name="indexName">The name of the search index.</param>
-        /// <param name="semanticConfigName">The name of the semantic configuration.</param>
-        /// <param name="field">The field to search.</param>
-        /// <param name="credential">The Azure credential.</param>
-        /// <param name="query">The search query.</param>
-        /// <param name="count">The number of results to return.</param>
-        /// <returns>An enumerable of "search results" with their associated scores.</returns>
+        public async Task<List<IndexContent>> IssueTriageContentIndexAsync(
+            string indexName,
+            string semanticConfigName,
+            string field,
+            string query,
+            int count,
+            double scoreThreshold,
+            Dictionary<string, string> labels = null)
+        {
+
+            var searchResults = await AzureSearchQueryAsync<IndexContent>(
+                indexName,
+                semanticConfigName,
+                field,
+                query,
+                count
+            );
+
+            var filteredIssues = new List<IndexContent>();
+
+            foreach (var (issue, score) in searchResults)
+            {
+                if (score >= scoreThreshold)
+                {
+                    issue.Score = score;
+                    filteredIssues.Add(issue);
+                }
+            }
+            
+            return filteredIssues;
+        }
+
         public async Task<List<(T, double)>> AzureSearchQueryAsync<T>(
             string indexName,
             string semanticConfigName,
             string field,
             string query,
-            int count)
+            int count,
+            string filter = null)
         {
-
             SearchClient searchClient = s_searchIndexClient.GetSearchClient(indexName);
 
             _logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
@@ -73,86 +92,64 @@ namespace IssueLabelerService
                 SemanticConfigurationName = semanticConfigName
             };
 
+            options.Filter = filter;
+
             SearchResults<T> response = await searchClient.SearchAsync<T>(
                 query,
                 options);
-
 
             _logger.LogInformation($"{typeof(T).Name}s found.");
 
             List<(T, double)> results = new List<(T, double)>();
             foreach (SearchResult<T> result in response.GetResults())
             {
-                _logger.LogInformation(result.SemanticSearch.RerankerScore.ToString());
                 results.Add((result.Document, result.SemanticSearch.RerankerScore ?? 0.0));
             }
 
             return results;
         }
 
-        /// <summary>
-        /// Sends a message to the OpenAI model for Question and Answer.
-        /// </summary>
-        /// <param name="instructions">The developer instructions for the OpenAI model.</param>
-        /// <param name="message">The message or user query to send.</param>
-        /// <param name="structure">The JSON schema structure for the response.</param>
-        /// <returns>The response from the OpenAI model.</returns>
-        public async Task<string> SendMessageQnaAsync(string instructions, string message, BinaryData structure)
+        public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, string contextBlock = null, BinaryData structure = null)
         {
-
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
+            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
+            
+            ChatCompletionOptions options = new ChatCompletionOptions();
 
-            ChatCompletionOptions options = new ChatCompletionOptions()
+            if (modelName.Contains("gpt"))
             {
-                ReasoningEffortLevel = ChatReasoningEffortLevel.Medium,
-                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+                options.Temperature = 0;
+            }
+
+            if (modelName.Contains("o3-mini"))
+            {
+                options.ReasoningEffortLevel = ChatReasoningEffortLevel.Medium;
+            }
+
+            if (structure != null)
+            {
+                options.ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
                     jsonSchemaFormatName: "IssueOutput",
                     jsonSchema: structure
-                )
+                );
+            }
+
+            var chatMessages = new List<ChatMessage>
+            {
+                new DeveloperChatMessage(instructions),
+                new UserChatMessage(message)
             };
 
-            ChatCompletion answers = await s_chatClient.CompleteChatAsync(
-                [
-                    new DeveloperChatMessage(instructions),
-                    new UserChatMessage(message)
-                ],
-                options
-            );
+            if (contextBlock != null)
+            {
+                chatMessages.Add(new AssistantChatMessage(contextBlock));
+            }
+
+            ChatCompletion result = await chatClient.CompleteChatAsync(chatMessages, options);
 
             _logger.LogInformation($"\n\nFinished loading Open AI response.");
 
-            return answers.Content[0].Text;
-        }
-    }
-
-    
-
-    public class Issue
-    {
-        public string Id { get; set; }
-        public string Title { get; set; }
-        public string chunk { get; set; }
-        public string Service { get; set; }
-        public string Category { get; set; }
-        public string Author { get; set; }
-        public string Repository { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public string Url { get; set; }
-
-        public override string ToString()
-        {
-            return JsonSerializer.Serialize(this);
-        }
-    }
-
-    public class Document
-    {
-        public string chunk { get; set; }
-        public string Url { get; set; }
-
-        public override string ToString()
-        {
-            return JsonSerializer.Serialize(this);
+            return result.Content[0].Text;
         }
     }
 }

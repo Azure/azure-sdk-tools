@@ -6,6 +6,7 @@ import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { removeAnsiEscapeCodes } from './utils';
 import { vsoLogErrors, vsoLogWarnings } from '../automation/entrypoint';
+import { externalError, externalWarning } from './messageUtils';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending' | 'notEnabled'>;
 export type StatusContainer = { status: SDKAutomationState };
@@ -50,7 +51,7 @@ export const runSdkAutoCustomScript = async (
     args.push(...options.argList);
   }
   if (options.statusContext.status === 'failed' && !options.continueOnFailed) {
-    message = `Warning: Skip command for failed context: ${scriptPath} ${args.join(' ')}. Please ensure the script runs successfully to proceed the SDK generation.`;
+    message = externalWarning(`Warning: Skip command for failed context: ${scriptPath} ${args.join(' ')}. Please ensure the script runs successfully to proceed the SDK generation.`);
     context.logger.warn(message);
     if (context.config.runEnv === 'azureDevOps') {
       vsoLogWarningsArray.push(message);
@@ -101,7 +102,7 @@ export const runSdkAutoCustomScript = async (
   } catch (e) {
     cmdRet.code = -1;
     const scriptName = scriptPath.split("/").pop();
-    message = `RuntimeError: exception is thrown while running customized language ${scriptName} script. Stack: ${e.stack}. Please refer to the detail log in pipeline run or local console for more information`;
+    message = externalError(`exception is thrown while running customized language ${scriptName} script. Stack: ${e.stack}. Please refer to the detail log in pipeline run or local console for more information`);
     context.logger.error(message);
     if (context.config.runEnv === 'azureDevOps') {
       vsoLogErrorsArray.push(message);

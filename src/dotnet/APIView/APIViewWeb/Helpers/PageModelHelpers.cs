@@ -22,10 +22,9 @@ namespace APIViewWeb.Helpers
 {
     public static class PageModelHelpers
     {
-
-        public static UserPreferenceModel GetUserPreference(UserPreferenceCache preferenceCache, ClaimsPrincipal User)
+        public static UserPreferenceModel GetUserPreference(UserProfileCache userProfileCache, ClaimsPrincipal User)
         {
-            return preferenceCache.GetUserPreferences(User).Result;
+            return userProfileCache.GetUserProfileAsync(User.GetGitHubLogin()).Result.Preferences;
         }
 
         public static string GetHiddenApiClass(UserPreferenceModel userPreference)
@@ -226,8 +225,7 @@ namespace APIViewWeb.Helpers
         /// </summary>
         /// <param name="configuration"></param>
         /// <param name="reviewManager"></param>
-        /// <param name="preferenceCache"></param>
-        /// <param name="userProfileRepository"></param> 
+        /// <param name="userProfileCache"></param>
         /// <param name="reviewRevisionsManager"></param> 
         /// <param name="commentManager"></param>
         /// <param name="codeFileRepository"></param>
@@ -243,8 +241,8 @@ namespace APIViewWeb.Helpers
         /// <param name="diffContextSeperator"></param>
         /// <returns></returns>
         public static async Task<ReviewContentModel> GetReviewContentAsync(
-            IConfiguration configuration, IReviewManager reviewManager, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IAPIRevisionsManager reviewRevisionsManager, ICommentsManager commentManager,
+            IConfiguration configuration, IReviewManager reviewManager, UserProfileCache userProfileCache,
+            IAPIRevisionsManager reviewRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, IHubContext<SignalRHub> signalRHubContext, ClaimsPrincipal user, ReviewListItemModel review = null, string reviewId = null,
             string revisionId = null, string diffRevisionId = null, bool showDocumentation = false, bool showDiffOnly = false, int diffContextSize = 3,
             string diffContextSeperator = "<br><span>.....</span><br>")
@@ -356,7 +354,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.codeLines = codeLines;
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
 
-            HashSet<string> preferredApprovers = await GetPreferredApprovers(configuration, preferenceCache, userProfileRepository, user, review);
+            HashSet<string> preferredApprovers = GetPreferredApprovers(configuration, userProfileCache, user, review);
 
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
@@ -615,13 +613,12 @@ namespace APIViewWeb.Helpers
         /// GetPreferred Approvers
         /// </summary>
         /// <param name="configuration"></param>
-        /// <param name="preferenceCache"></param>
-        /// <param name="userProfileRepository"></param>
+        /// <param name="userProfileCache"></param>
         /// <param name="user"></param>
         /// <param name="review"></param>
         /// <returns></returns>
-        public static async Task<HashSet<string>> GetPreferredApprovers(IConfiguration configuration, UserPreferenceCache preferenceCache, 
-            ICosmosUserProfileRepository userProfileRepository, ClaimsPrincipal user, ReviewListItemModel review)
+        public static HashSet<string> GetPreferredApprovers(IConfiguration configuration, 
+            UserProfileCache userProfileCache, ClaimsPrincipal user, ReviewListItemModel review)
         {
             HashSet<string> preferredApprovers = new HashSet<string>();
             var approverConfig = configuration["approvers"];
@@ -629,30 +626,17 @@ namespace APIViewWeb.Helpers
             {
                 foreach (var username in approverConfig.Split(","))
                 {
-                    if (username.Equals(user.GetGitHubLogin()))
+                    try
                     {
-                        var userCache = preferenceCache.GetUserPreferences(user).Result;
-                        var langs = userCache.ApprovedLanguages.ToHashSet();
-                        if (!langs.Any())
-                        {
-                            UserProfileModel userProfile = await userProfileRepository.TryGetUserProfileAsync(username);
-                            langs = userProfile.Languages;
-                            userCache.ApprovedLanguages = langs;
-                            preferenceCache.UpdateUserPreference(userCache, user);
-                        }
-                        if (langs.Contains(review.Language) || !langs.Any())
+                        var userProfile = userProfileCache.GetUserProfileAsync(username, createIfNotExist: false).Result;
+                        if (!userProfile.Preferences.ApprovedLanguages.Any() || userProfile.Preferences.ApprovedLanguages.Contains(review.Language))
                         {
                             preferredApprovers.Add(username);
                         }
                     }
-                    else
+                    catch 
                     {
-                        UserProfileModel userProfile = await userProfileRepository.TryGetUserProfileAsync(username);
-                        var langs = userProfile.Languages;
-                        if (langs.Contains(review.Language) || !langs.Any())
-                        {
-                            preferredApprovers.Add(username);
-                        }
+                        preferredApprovers.Add(username);
                     }
                 }
             }

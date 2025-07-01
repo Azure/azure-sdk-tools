@@ -1,0 +1,342 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nAPI Purpose  \nThis service offers a comprehensive interface for managing AI projects through agents. It covers the entire lifecycle of an AI agent, from creation and configuration to execution and update. The API further exposes capabilities for handling associated resources such as messages, threads, deployments, evaluations, datasets, indexes, and varied content types like audio, image, file, and video.\n\nLatest API Version  \nThe default and latest API version is indicated as “2025-05-01-preview” as seen in the default parameters and the enumeration in the client options.\n\nPrimary Client Classes  \nThe service exposes a `AgentsClient` that provides methods including `CreateAgent`, `DeleteAgent`, `GetAgent`, `GetAgents`, `GetRun`, `GetRuns`, `Run`, `Stream`, and `UpdateAgent`. In addition, the `AIProjectClient` serves as a gateway to the various project domains, offering methods such as `GetAgentsClient`, `GetConnectionsClient`, `GetDatasetsClient`, `GetDeploymentsClient`, `GetEvaluationsClient`, `GetIndexesClient`, `GetMessagesClient`, `GetServicePatternsClient`, and `GetThreadsClient`.\n\nSupplementary Classes and Factories  \nBeyond the primary clients, the API is rich in domain-specific models and helper types. It defines numerous representations for agents and their related configurations and tools, including classes like `Agent`, `AgentCreationOptions`, `AgentConfigurationOptions`, `AgentModel`, and `AgentToolDefinition`. Credential types such as `AadCredential`, `ApiKeyCredential`, and `SasCredential` are provided alongside a wide array of content representations like `ChatMessage`, `AgentMessage`, `AudioContent`, `ImageContent`, and `VideoContent`. A dedicated factory class, `AIProjectsOneDPModelFactory`, offers creation methods for various entities involved in connections, datasets, deployments, evaluations, indexes, and messages. Many of these classes implement interfaces such as `IJsonModel<T>` and `IPersistableModel<T>`, enabling consistent serialization and persistence patterns.\n\nIntegration and Extensibility  \nThe API is built on Azure core libraries and incorporates both synchronous and asynchronous operations, with support for streaming. It also includes extension methods in the Microsoft.Extensions.Azure namespace to aid with client construction for dependency injection environments, providing a smooth integration with broader Azure client building ecosystems.\n\n",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 9,
+            "bad_code": "public class AgentsClient {",
+            "suggestion": null,
+            "comment": "The client class combines both synchronous and asynchronous operations. In a Python SDK the sync and async methods should be provided in separate client classes.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 11,
+            "bad_code": "public virtual HttpPipeline Pipeline { get; }",
+            "suggestion": "def pipeline(self) -> HttpPipeline:",
+            "comment": "Rename the PascalCase property to snake_case to conform with Python naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 12,
+            "bad_code": "public virtual Response<Agent> CreateAgent(string displayName, string modelId, string instructions, CancellationToken cancellationToken = default);",
+            "suggestion": "def create_agent(self, *, display_name: str, model_id: str, instructions: str, options: Optional[AgentCreationOptions] = None, content: Optional[RequestContent] = None, request_context: Optional[RequestContext] = None, cancellation_token: Optional[CancellationToken] = None) -> Union[Response[Agent], Response]:",
+            "comment": "Rename the method and its parameters to use snake_case for consistency with Python naming conventions. Also, combine overloaded methods into a single method with keyword-only parameters to provide a more Pythonic and clear interface.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 15,
+            "bad_code": "public virtual Task<Response<Agent>> CreateAgentAsync(string displayName, string modelId, string instructions, CancellationToken cancellationToken = default);",
+            "suggestion": "class AgentsClientAsync(AgentsClient):",
+            "comment": "Separate asynchronous operations into their own async client class, which is more idiomatic in Python.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming",
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 24,
+            "bad_code": "public virtual Response<IReadOnlyList<Agent>> GetAgents(CancellationToken cancellationToken = default);",
+            "suggestion": "def list_agents(self, *, cancellation_token: Optional[CancellationToken] = None) -> Response[List[Agent]]:",
+            "comment": "List operations should be prefixed with 'list_' and use snake_case naming, rather than using a Get prefix.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 59,
+            "bad_code": "AadCredential IJsonModel<AadCredential>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options);",
+            "suggestion": "def from_json(cls, reader: Utf8JsonReader, options: ModelReaderWriterOptions) -> 'AadCredential':",
+            "comment": "Replace explicit interface implementation with a Pythonic classmethod for JSON deserialization.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 68,
+            "bad_code": "public string AgentId { get; }",
+            "suggestion": "agent_id: str",
+            "comment": "Property and attribute names should use snake_case to follow Python naming conventions, instead of PascalCase.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 185,
+            "bad_code": "public virtual AgentsClient GetAgentsClient(string apiVersion = \"2025-05-01-preview\");",
+            "suggestion": "def get_agents_client(self, api_version: str = '2025-05-01-preview') -> AgentsClient:",
+            "comment": "Method and parameter names should use snake_case to follow Python naming conventions, making the API more idiomatic and consistent.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-static-methods"
+            ],
+            "line_no": 204,
+            "bad_code": "public static class AIProjectsOneDPModelFactory {",
+            "suggestion": null,
+            "comment": "Python SDK guidelines discourage the use of static factory classes; instead, module‐level functions should be used to create model instances.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 205,
+            "bad_code": "public static Agent Agent(string agentId = null, string description = null, IDictionary<string, string> metadata = null, AgentCreationOptions creationOptions = null);",
+            "suggestion": "def create_agent(agent_id: Optional[str] = None, description: Optional[str] = None, metadata: Optional[Dict[str, str]] = None, creation_options: Optional[AgentCreationOptions] = None) -> Agent:",
+            "comment": "Rename factory methods using snake_case and clear parameter names to enhance discoverability and consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 430,
+            "bad_code": "public virtual Task<Response<Connection>> GetConnectionAsync(string connectionName, CancellationToken cancellationToken = default);",
+            "suggestion": "Separate asynchronous operations into a dedicated async client class (e.g. in an azure.ai.projects.onedp.aio module)",
+            "comment": "For Python SDKs, sync and async operations must be provided via separate client types rather than mixing async methods (with an Async suffix) into the same class.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 551,
+            "bad_code": "public class Deployments {",
+            "suggestion": "public class DeploymentsClient {",
+            "comment": "Service client types should use a 'Client' suffix.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 552,
+            "bad_code": "protected Deployments();",
+            "suggestion": "def __init__(self):",
+            "comment": "Convert the C# constructor syntax to Python's __init__ and remove access modifiers.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 553,
+            "bad_code": "public virtual HttpPipeline Pipeline { get; }",
+            "suggestion": "@property\ndef pipeline(self) -> HttpPipeline:",
+            "comment": "Replace C# property syntax with a Python @property for read-only access.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 554,
+            "bad_code": "public virtual Response<Deployment> GetDeployment(string name, CancellationToken cancellationToken = default);",
+            "suggestion": "def get_deployment(name: str, cancellation_token: Optional[CancellationToken] = None) -> Response[Deployment]:",
+            "comment": "Method and parameter names should use snake_case to follow Python naming conventions, and type hints should be included for clarity.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 556,
+            "bad_code": "public virtual Task<Response<Deployment>> GetDeploymentAsync(string name, CancellationToken cancellationToken = default);",
+            "suggestion": "async def get_deployment_async(name: str, cancellation_token: Optional[CancellationToken] = None) -> Response[Deployment]:",
+            "comment": "Asynchronous operations should be defined in separate client classes and use 'async def' with snake_case naming and appropriate type annotations.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 558,
+            "bad_code": "public virtual Pageable<Deployment> GetDeployments(string modelPublisher = null, string modelName = null, bool? includeConnectionModels = null, int? maxCount = null, int? skip = null, int? maxpagesize = null, CancellationToken cancellationToken = default);",
+            "suggestion": "def get_deployments(model_publisher: Optional[str] = None, model_name: Optional[str] = None, include_connection_models: Optional[bool] = None, max_count: Optional[int] = None, skip: Optional[int] = None, max_page_size: Optional[int] = None, cancellation_token: Optional[CancellationToken] = None) -> Pageable[Deployment]:",
+            "comment": "Convert parameter names to snake_case and use type hints to align with Python conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 567,
+            "bad_code": "DeveloperMessage IJsonModel<DeveloperMessage>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options);",
+            "suggestion": "def create_from_json(cls, reader: Utf8JsonReader, options: ModelReaderWriterOptions) -> DeveloperMessage:",
+            "comment": "Replace explicit interface implementations with idiomatic Python classmethods for JSON deserialization.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 604,
+            "bad_code": "public class Evaluations {",
+            "suggestion": "public class EvaluationsClient {",
+            "comment": "Service client classes are expected to have a 'Client' suffix.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 609,
+            "bad_code": "public virtual Task<Response<Evaluation>> CreateRunAsync(Evaluation evaluation, CancellationToken cancellationToken = default);",
+            "suggestion": null,
+            "comment": "Async methods belong in a separate client class; sync and async operations should not be mixed.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 743,
+            "bad_code": "public class Indexes {",
+            "suggestion": "public class IndexesClient {",
+            "comment": "Client classes must include the 'Client' suffix to clearly communicate their role.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 748,
+            "bad_code": "public virtual Task<Response<Index>> CreateAsync(string name, Index body, CancellationToken cancellationToken = default);",
+            "suggestion": null,
+            "comment": "Separate synchronous and asynchronous methods into distinct client classes.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 847,
+            "bad_code": "public class Messages {",
+            "suggestion": "public class MessagesClient {",
+            "comment": "Service client types should be suffixed with 'Client' to follow naming conventions.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 851,
+            "bad_code": "public virtual Task<Response> DeleteMessageAsync(string threadId, string messageId, RequestContext context = null);",
+            "suggestion": null,
+            "comment": "Async operations must be implemented in a dedicated async client rather than within the same class as synchronous ones.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 1053,
+            "bad_code": "protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options);",
+            "suggestion": "def _json_model_write_core(self, writer, options):",
+            "comment": "Rename the method to use snake_case in accordance with Python naming conventions, and add a leading underscore to indicate it is a protected member.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1054,
+            "bad_code": "RunOutputsIncompleteDetails IJsonModel<RunOutputsIncompleteDetails>.Create(ref Utf8JsonReader reader, ModelReaderWriterOptions options);",
+            "suggestion": "def from_json(cls, reader, options):",
+            "comment": "Replace explicit interface method with a Pythonic class method for JSON deserialization using snake_case.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1055,
+            "bad_code": "void IJsonModel<RunOutputsIncompleteDetails>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options);",
+            "suggestion": "def to_json(self, writer, options):",
+            "comment": "Rename and convert the serialization method to snake_case with a more descriptive name.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 1063,
+            "bad_code": "public static RunOutputsStatus Cancelled { get; }",
+            "suggestion": "public static RunOutputsStatus CANCELLED { get; }",
+            "comment": "Enum member names should be in uppercase in a Python SDK.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1069,
+            "bad_code": "public static implicit operator RunOutputsStatus(string value);",
+            "suggestion": null,
+            "comment": "Remove implicit type conversion; in Python use explicit conversion or factory methods instead.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 1087,
+            "bad_code": "public class ServicePatterns {",
+            "suggestion": "public class ServicePatternsClient {",
+            "comment": "Service client types should be suffixed with 'Client'.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 1146,
+            "bad_code": "public class Threads {",
+            "suggestion": "public class ThreadsClient {",
+            "comment": "Service client types should have a 'Client' suffix to clarify their purpose, and synchronous and asynchronous operations should be implemented in separate client classes rather than combined.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1252,
+            "bad_code": "public BinaryData Data { get; set;}",
+            "suggestion": "data: BinaryData",
+            "comment": "Rename property to snake_case; Python attributes typically follow lower_case naming conventions. (general comment)",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1271,
+            "bad_code": "public static class AIProjectsOneDPClientBuilderExtensions {",
+            "suggestion": null,
+            "comment": "Eliminate the extension class; in Python, module‐level functions (using snake_case naming) are preferred over static classes.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1272,
+            "bad_code": "public static IAzureClientBuilder<AIProjectClient, AIProjectClientOptions> AddAIProjectClient<TBuilder>(this TBuilder builder, Uri endpoint, AzureKeyCredential credential) where TBuilder : IAzureClientFactoryBuilder;",
+            "suggestion": "def add_ai_project_client(builder, endpoint: str, credential: AzureKeyCredential) -> AzureClientBuilder:",
+            "comment": "Rename the method to snake_case and simplify the signature by removing C# generics and extension method syntax.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1273,
+            "bad_code": "public static IAzureClientBuilder<AIProjectClient, AIProjectClientOptions> AddAIProjectClient<TBuilder>(this TBuilder builder, Uri endpoint) where TBuilder : IAzureClientFactoryBuilderWithCredential;",
+            "suggestion": "def add_ai_project_client(builder, endpoint: str) -> AzureClientBuilder:",
+            "comment": "Adopt Python naming conventions and merge overloads via optional parameters rather than separate methods.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1274,
+            "bad_code": "public static IAzureClientBuilder<AIProjectClient, AIProjectClientOptions> AddAIProjectClient<TBuilder, TConfiguration>(this TBuilder builder, TConfiguration configuration) where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>;",
+            "suggestion": "def add_ai_project_client(builder, configuration: Any) -> AzureClientBuilder:",
+            "comment": "Replace generic constraints with standard Python type annotations and use snake_case for the function name.",
+            "source": "generic"
+        }
+    ]
+}

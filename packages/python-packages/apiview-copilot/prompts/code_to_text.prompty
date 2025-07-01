@@ -8,7 +8,7 @@ model:
   api: chat
   configuration:
     type: azure_openai
-    api_version: 2025-01-01-preview
+    api_version: 2025-03-01-preview
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
     azure_deployment: gpt-4o-mini
   parameters:
@@ -32,5 +32,8 @@ You are an AI assistant whose sole job is to convert a given code snippet into a
 
 - Do not imply or infer the function of any of the code.
 
+- Output should be in the form of a paragraph.
+
 user:
-{{question}}
+Convert the following code snippet into a structural description:
+  {{question}}

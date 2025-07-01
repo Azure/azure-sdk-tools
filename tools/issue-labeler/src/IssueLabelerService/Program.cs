@@ -13,6 +13,7 @@ using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
 using Azure.Core;
 using IssueLabelerService;
+using Azure.Storage.Blobs;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -50,13 +51,18 @@ var host = new HostBuilder()
 
         services.AddSingleton(combinedConfig);
 
-        services.AddSingleton<ChatClient>(sp =>
+        services.AddSingleton<AzureOpenAIClient>(sp =>
         {
             var openAIEndpoint = new Uri(config.OpenAIEndpoint);
             
             var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
-            var modelName = config.OpenAIModelName;
-            return openAIClient.GetChatClient(modelName);
+            return openAIClient;
+        });
+
+        services.AddSingleton<BlobServiceClient>(sp =>
+        {
+            var blobServiceEndpoint = new Uri(config.BlobAccountUri);
+            return new BlobServiceClient(blobServiceEndpoint, credential);
         });
 
         services.AddSingleton<SearchIndexClient>(sp =>
@@ -68,7 +74,8 @@ var host = new HostBuilder()
         services.AddSingleton<TriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
-        services.AddSingleton<Labelers>();
+        services.AddSingleton<LabelerFactory>();
+        services.AddSingleton<AnswerFactory>();
     })
     .Build();
 

@@ -1,0 +1,926 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nPurpose  \nThis API provides a comprehensive real‑time communication service that handles voice and video calling, Teams calling, participant management, captions, diagnostics, screen sharing, and data channel communications. It exposes functionality for call setup, joining and ending calls, controlling audio and video streams, applying video effects, and gathering diagnostic and media statistics—all through both synchronous and asynchronous API patterns.\n\nAPI Version  \nNo explicit API version object is defined in the package. The APIView was parsed with version 0.3.0 of Swift APIView, but a dedicated API version is not provided.\n\nClient Classes  \nThe primary client class is `CallClient`. Its methods include `dealloc`, `dispose`, `createCallAgent`, `createTeamsCallAgent`, `getCXProviderInstance`, `reportIncomingCall`, `getDeviceManager`, and `feature`.\n\nOther Classes and Functionality  \nThe API exposes a rich set of classes that cover options for accepting calls (for both regular and Teams calls), call events and diagnostics, and numerous models for representing call and participant information. There are dedicated types for audio and video streaming—including local streams, outgoing and incoming options, and raw stream handling—and classes for managing data channels, captions, recordings, transcription, and reactions. Call agents, both common and Teams‑specific (for example, `CallAgent` and `TeamsCallAgent`), support initiating and handling calls, while a broad set of event and delegate protocols ensure that updates for call state, participant changes, network diagnostics, media statistics, and video rendering are communicated. Additional classes address device management, such as cameras and video devices, and provide for robust customization and error handling in complex communication scenarios.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 4,
+            "bad_code": "package AzureCommunicationCalling {",
+            "suggestion": null,
+            "comment": "Remove the package declaration; use Swift Package Manager's Package.swift to define the module.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_implementation.html#ios-implementation"
+            ],
+            "line_no": 16,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "The dealloc method should be removed, as memory management is handled automatically by ARC in Swift. For cleanup, use the deinit method and keep such implementation details internal to prevent confusion with public API.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-client-options-types"
+            ],
+            "line_no": 17,
+            "bad_code": "open var alternateCallerId: UnsafeMutablePointer<Int32>",
+            "suggestion": "open var alternateCallerId: Int32?",
+            "comment": "Use a native Swift type, such as an optional Int32, instead of an unsafe pointer to improve type safety and follow Swift best practices.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 22,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc method; rely on Swift’s ARC instead.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 27,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate dealloc; Swift does not require manual cleanup.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 33,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc method as it is unnecessary with ARC.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 54,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove explicit dealloc; Swift uses deinit for cleanup.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 119,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate dealloc method since ARC manages memory automatically.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 157,
+            "bad_code": "open func add(participant: Any) throws -> RemoteParticipant?",
+            "suggestion": "open func add(participant: CommunicationIdentifier) throws -> RemoteParticipant?",
+            "comment": "Replace Any with a specific type to improve type safety for the participant parameter.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 158,
+            "bad_code": "open func add(participant: Any!, options: AddPhoneNumberOptions?) throws -> RemoteParticipant?",
+            "suggestion": "open func add(participant: CommunicationIdentifier, options: AddPhoneNumberOptions?) throws -> RemoteParticipant?",
+            "comment": "Avoid using implicitly unwrapped Any; use a concrete type for participant.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 165,
+            "bad_code": "open func startCall(participants: [Any], completionHandler: @escaping (Call?, Error?) -> Void)",
+            "suggestion": "open func startCall(participants: [CommunicationIdentifier], completionHandler: @escaping (Call?, Error?) -> Void)",
+            "comment": "Use a specific type for participants instead of Any to enhance clarity and safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 167,
+            "bad_code": "open func startCall(participants: [Any], options: StartCallOptions?, completionHandler: @escaping (Call?, Error?) -> Void)",
+            "suggestion": "open func startCall(participants: [CommunicationIdentifier], options: StartCallOptions?, completionHandler: @escaping (Call?, Error?) -> Void)",
+            "comment": "Specify the participant type explicitly instead of using Any for better type safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 177,
+            "bad_code": "optional func callAgent(_: CallAgent, didRecieveIncomingCall: IncomingCall)",
+            "suggestion": "optional func callAgent(_: CallAgent, didReceiveIncomingCall: IncomingCall)",
+            "comment": "Correct the spelling of 'Receive' for consistency in the delegate method name.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 217,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc; use deinit if custom cleanup is needed.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 219,
+            "bad_code": "open func dispose()",
+            "suggestion": null,
+            "comment": "Consider relying on ARC rather than exposing an explicit dispose() method unless absolutely required.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-auth-provide-client-initializer"
+            ],
+            "line_no": 220,
+            "bad_code": "open func createCallAgent(userCredential: Any!, completionHandler: @escaping (CallAgent?, Error?) -> Void)",
+            "suggestion": "open func createCallAgent(credential: Any!, completionHandler: @escaping (CallAgent?, Error?) -> Void)",
+            "comment": "The first parameter for authentication should be named 'credential' rather than 'userCredential' to align with SDK guidelines.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 240,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc method; Swift’s ARC makes it redundant.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 249,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate dealloc from the public API as it is not needed in Swift.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 255,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc method; rely on ARC for deallocation.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 336,
+            "bad_code": "public init(with: CXProviderConfiguration)",
+            "suggestion": "public init(providerConfiguration: CXProviderConfiguration)",
+            "comment": "Adopt a more descriptive external parameter name to clarify the purpose of the initializer.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 349,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc; Swift automatically manages object lifetimes.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 372,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate the dealloc method since manual deallocation is not idiomatic in Swift.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 378,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc; use deinit if needed, as ARC handles cleanup.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 409,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc method; let ARC manage memory.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 422,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate dealloc; explicit deallocation is unnecessary in Swift.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 437,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc; ARC provides automatic memory management.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 443,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate dealloc method; it’s not needed in Swift.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 453,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove explicit dealloc; rely on ARC for object cleanup.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 458,
+            "bad_code": "public struct CallingCommunicationErrors: OptionSet, @unchecked Sendable {",
+            "suggestion": null,
+            "comment": "If the error cases are mutually exclusive, consider using an enum rather than an OptionSet for clearer intent.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_implementation.html#ios-implementation"
+            ],
+            "line_no": 544,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "The dealloc() method should not be part of the public API, as it is an implementation detail. In Swift, memory cleanup is managed by ARC and deinit, so explicit dealloc methods are unnecessary and should be removed or made internal.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 566,
+            "bad_code": "optional func capabilitiesCallFeature(_: CapabilitiesCallFeature, didChangeCapabilities: CapabilitiesChangedEventArgs)",
+            "suggestion": null,
+            "comment": "Use protocol extensions with default implementations instead of optional protocol methods to make the API more Swifty.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 683,
+            "bad_code": "public func feature<TCallFeature>(_: AzureCommunicationCalling.CallFeatureFactory<TCallFeature>) -> TCallFeature where TCallFeature: AzureCommunicationCalling.CallFeature",
+            "suggestion": "public func feature<TCallFeature>(factory: AzureCommunicationCalling.CallFeatureFactory<TCallFeature>) -> TCallFeature where TCallFeature: AzureCommunicationCalling.CallFeature",
+            "comment": "Provide a descriptive parameter label (e.g., 'factory') to improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-network-delegate-method-names"
+            ],
+            "line_no": 756,
+            "bad_code": "optional func ContentSharingCallFeature(_: ContentSharingCallFeature, didChangeContentSharing: PropertyChangedEventArgs)",
+            "suggestion": "optional func contentSharingCallFeature(_: ContentSharingCallFeature, didChangeContentSharing: PropertyChangedEventArgs)",
+            "comment": "Delegate method names should start with a lowercase letter to follow Swift naming conventions.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 820,
+            "bad_code": "open var senderIdentifier: Any { get }",
+            "suggestion": "open var senderIdentifier: RemoteParticipant { get }",
+            "comment": "Specify a concrete type for senderIdentifier instead of Any to better communicate its purpose.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 851,
+            "bad_code": "open func setParticipants(participants: [Any])",
+            "suggestion": "open func setParticipants(participants: [RemoteParticipant])",
+            "comment": "Replace [Any] with a specific type (such as RemoteParticipant) to enhance type safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 922,
+            "bad_code": "open var speakers: [Any] { get }",
+            "suggestion": "open var speakers: [RemoteParticipant] { get }",
+            "comment": "Use a concrete type instead of [Any] for the speakers array for improved type safety and clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 938,
+            "bad_code": "case A = 12",
+            "suggestion": "case a = 12",
+            "comment": "Enum cases should follow lowerCamelCase naming in Swift.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 989,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer to follow idiomatic Swift memory management, as Swift's ARC automatically handles deallocation and explicit dealloc methods are unnecessary.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 995,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1012,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1017,
+            "bad_code": "public var jitterInMs: Swift.Float? { get }",
+            "suggestion": "public var jitterInMs: Float? { get }",
+            "comment": "Eliminate the redundant 'Swift.' prefix for standard types to keep the code clean.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1033,
+            "bad_code": "optional func incomingCall(_: IncomingCall, didEnd: PropertyChangedEventArgs)",
+            "suggestion": "func incomingCall(_ call: IncomingCall, didEnd: PropertyChangedEventArgs)",
+            "comment": "Avoid optional protocol methods; provide a default implementation in an extension instead for clearer, idiomatic Swift.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1038,
+            "bad_code": "open func removeAll()",
+            "suggestion": "open func removeAllHandlers()",
+            "comment": "Rename removeAll() to removeAllHandlers() to more clearly indicate that event handlers are being cleared.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1042,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1068,
+            "bad_code": "open var participantIdentifier: Any { get }",
+            "suggestion": "open var participantIdentifier: String { get }",
+            "comment": "Replace 'Any' with a concrete type (for example, String) to improve type safety and clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1072,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1098,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1106,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1113,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1119,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1212,
+            "bad_code": "open func switchSource(camera: VideoDeviceInfo, completionHandler: @escaping (Error?) -> Void)",
+            "suggestion": "open func switchSource(to newCamera: VideoDeviceInfo, completionHandler: @escaping (Error?) -> Void)",
+            "comment": "Rename the parameter to clarify that a new camera source is being set.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1230,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1239,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1250,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1320,
+            "bad_code": "open func updateReportInterval(inSeconds: Int32) throws",
+            "suggestion": "open func updateReportInterval(to seconds: Int32) throws",
+            "comment": "Adopt a more descriptive parameter label that conveys setting the interval to a new value.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1333,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1340,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1351,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1364,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1413,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1430,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1439,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1449,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1454,
+            "bad_code": "open func dealloc()",
+            "suggestion": "deinit { }",
+            "comment": "Replace the explicit dealloc method with a deinitializer for idiomatic Swift memory management.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1459,
+            "bad_code": "public var bitrateInBps: Swift.Int32? { get }",
+            "suggestion": "public var bitrateInBps: Int32? { get }",
+            "comment": "Omit the redundant 'Swift.' prefix to make the API more idiomatic.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_implementation.html#ios-implementation"
+            ],
+            "line_no": 1469,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Explicit public dealloc methods are not appropriate in Swift, as memory management should be handled using Swift’s automatic deinitialization with deinit. Exposing such methods reveals internal implementation details that should remain internal.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1566,
+            "bad_code": "open func startTest(_: Any!, withCompletionHandler: ((Error?) -> Void)? = nil)",
+            "suggestion": "open func startTest(_ options: PreCallTestOptions, withCompletionHandler: ((Error?) -> Void)? = nil)",
+            "comment": "Replace the ambiguous Any! parameter with a concrete type to enhance clarity and type safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1568,
+            "bad_code": "open func setInitializationOptionsIfNotExists()",
+            "suggestion": "open func initializeOptionsIfNeeded()",
+            "comment": "Rename the method to follow Swift naming conventions and improve readability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1572,
+            "bad_code": "optional func diagnosticsCallClientFeature(_: PreCallDiagnosticsCallClientFeature, didDiagnosticsReady: PreCallDiagnosticsReadyEventArgs)",
+            "suggestion": null,
+            "comment": "Consider using protocol extensions with default implementations instead of optional protocol methods to reduce reliance on Objective-C runtime features.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-request-options-types"
+            ],
+            "line_no": 1617,
+            "bad_code": "open func lowerHands(participants: [Any], completionHandler: @escaping (Error?) -> Void)",
+            "suggestion": "open func lowerHands(participants: [RemoteParticipant], completionHandler: @escaping (Error?) -> Void)",
+            "comment": "The participants parameter should use a specific type such as RemoteParticipant rather than Any to enhance type safety and API clarity.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1618,
+            "bad_code": "open func lowerHands(participants: [Any]) async throws",
+            "suggestion": "open func lowerHands(participants: [RemoteParticipant]) async throws",
+            "comment": "Use a concrete type (e.g. RemoteParticipant) instead of Any for improved type safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1936,
+            "bad_code": "open var identifier: Any { get }",
+            "suggestion": "open var identifier: String { get }",
+            "comment": "Replace Any with a specific type (such as String) for clearer, more type‐safe API design.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1952,
+            "bad_code": "open var onStateChanged: ((PropertyChangedEventArgs) -> Void)?",
+            "suggestion": null,
+            "comment": "Consider using Combine publishers for event handling to offer a more modern, idiomatic Swift API.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 1983,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Explicit dealloc methods are not idiomatic in Swift. Cleanup should be handled using the deinitializer (deinit) instead of a public dealloc function.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1989,
+            "bad_code": "func videoStreamRenderer(didFailToStart: VideoStreamRenderer)",
+            "suggestion": "func videoStreamRendererDidFailToStart(_ renderer: VideoStreamRenderer)",
+            "comment": "Rename the delegate method to follow Swift naming conventions and improve clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2003,
+            "bad_code": "public var SWIFT_TYPEDEFS: Int32 { get",
+            "suggestion": null,
+            "comment": "The property declaration for SWIFT_TYPEDEFS is incomplete. Ensure that the getter is properly closed.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2076,
+            "bad_code": "open var alternateCallerId: UnsafeMutablePointer<Int32>",
+            "suggestion": "open var alternateCallerId: Int32?",
+            "comment": "Avoid using unsafe pointers for simple value types; use an optional primitive instead.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2119,
+            "bad_code": "open func add(participant: Any, options: AddTeamsParticipantOptions) throws -> RemoteParticipant?",
+            "suggestion": "open func add(participant: TeamsParticipant, options: AddTeamsParticipantOptions) throws -> RemoteParticipant?",
+            "comment": "Replace 'Any' with a specific participant type to improve type safety.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-network-delegate-method-names"
+            ],
+            "line_no": 2141,
+            "bad_code": "optional func teamsCallAgent(_: TeamsCallAgent, didRecieveIncomingCall: TeamsIncomingCall)",
+            "suggestion": "optional func teamsCallAgent(_: TeamsCallAgent, didReceiveIncomingCall: TeamsIncomingCall)",
+            "comment": "The delegate method name contains a typo; 'didRecieveIncomingCall' should be corrected to 'didReceiveIncomingCall' to adhere to naming conventions.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2250,
+            "bad_code": "public init(withThreadId: String, organizerId: UUID, tenantId: UUID, messageId: String)",
+            "suggestion": "public init(threadId: String, organizerId: UUID, tenantId: UUID, messageId: String)",
+            "comment": "Use clear, descriptive parameter labels by removing the 'withThreadId' prefix.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2258,
+            "bad_code": "public init(with: String, passcode: String)",
+            "suggestion": "public init(meetingId: String, passcode: String)",
+            "comment": "Use descriptive external parameter names instead of generic labels like 'with:'.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2447,
+            "bad_code": "open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?",
+            "suggestion": "open var stateDidChange: ((VideoStreamStateChangedEventArgs) -> Void)?",
+            "comment": "Rename the event property to remove the 'on' prefix and use a descriptive action phrase.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2448,
+            "bad_code": "open var onFormatChanged: ((VideoStreamFormatChangedEventArgs) -> Void)?",
+            "suggestion": "open var formatDidChange: ((VideoStreamFormatChangedEventArgs) -> Void)?",
+            "comment": "Update the event handler name to a more idiomatic Swift style.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2449,
+            "bad_code": "open func removeAll()",
+            "suggestion": "open func removeAllEventHandlers()",
+            "comment": "Clarify the method’s purpose by explicitly indicating that it removes event handlers.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2452,
+            "bad_code": "public typealias char16_t = uint_least16_t",
+            "suggestion": "public typealias Char16T = UInt16",
+            "comment": "The type alias name should follow Swift’s UpperCamelCase convention, and use Swift’s native types for clarity and idiomatic usage.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2453,
+            "bad_code": "public typealias char32_t = uint_least32_t",
+            "suggestion": "public typealias Char32 = UInt32",
+            "comment": "Convert the alias name to PascalCase and switch to Swift’s built-in type naming.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2454,
+            "bad_code": "public typealias char32_t = uint_least32_t",
+            "suggestion": "public typealias Char32T = UInt32",
+            "comment": "Type alias names should use UpperCamelCase to conform to Swift naming guidelines.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2456,
+            "bad_code": "public typealias swift_double2 = SIMD2<Double>",
+            "suggestion": "public typealias Double2 = SIMD2<Double>",
+            "comment": "Rename the type alias to use PascalCase and remove underscores and the redundant 'swift_' prefix for more idiomatic Swift usage.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2457,
+            "bad_code": "public typealias swift_double3 = SIMD3<Double>",
+            "suggestion": "public typealias Double3 = SIMD3<Double>",
+            "comment": "Simplify the alias by eliminating the redundant prefix and adhering to Swift naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2458,
+            "bad_code": "public typealias swift_double3 = SIMD3<Double>",
+            "suggestion": "public typealias SwiftDouble3 = SIMD3<Double>",
+            "comment": "Type alias names should use UpperCamelCase and avoid the 'swift_' prefix to align with Swift naming conventions and improve idiomatic usage.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2460,
+            "bad_code": "public typealias swift_double4 = SIMD4<Double>",
+            "suggestion": "public typealias SwiftDouble4 = SIMD4<Double>",
+            "comment": "Update the type alias name to UpperCamelCase to match Swift naming standards.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2462,
+            "bad_code": "public typealias swift_float2 = SIMD2<Float>",
+            "suggestion": "public typealias Float2 = SIMD2<Float>",
+            "comment": "The type alias name should use UpperCamelCase (PascalCase) and avoid the 'swift_' prefix to follow Swift idiomatic naming conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2463,
+            "bad_code": "public typealias swift_float3 = SIMD3<Float>",
+            "suggestion": "public typealias Float3 = SIMD3<Float>",
+            "comment": "Update the alias name by eliminating the redundant prefix and capitalizing correctly.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2464,
+            "bad_code": "public typealias swift_float3 = SIMD3<Float>",
+            "suggestion": "public typealias SwiftFloat3 = SIMD3<Float>",
+            "comment": "Rename type aliases to use UpperCamelCase and remove the 'swift_' prefix to follow Swift naming conventions and ensure idiomatic Swift usage.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2466,
+            "bad_code": "public typealias swift_float4 = SIMD4<Float>",
+            "suggestion": "public typealias SwiftFloat4 = SIMD4<Float>",
+            "comment": "Type alias names must use UpperCamelCase to be idiomatic in Swift.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2468,
+            "bad_code": "public typealias swift_int2 = SIMD2<Int32>",
+            "suggestion": "public typealias SwiftInt2 = SIMD2<Int32>",
+            "comment": "Rename the type alias to use UpperCamelCase for idiomatic Swift usage and consider simplifying the name by removing redundant prefixes.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2469,
+            "bad_code": "public typealias swift_int3 = SIMD3<Int32>",
+            "suggestion": "public typealias Int3 = SIMD3<Int32>",
+            "comment": "Rename the alias to adhere to Swift’s naming conventions and remove the 'swift_' prefix.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2470,
+            "bad_code": "public typealias swift_int3 = SIMD3<Int32>",
+            "suggestion": null,
+            "comment": "Type alias names should follow Swift naming conventions, using UpperCamelCase and avoiding redundant prefixes to ensure idiomatic Swift usage.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2472,
+            "bad_code": "public typealias swift_int4 = SIMD4<Int32>",
+            "suggestion": "public typealias SwiftInt4 = SIMD4<Int32>",
+            "comment": "Change the type alias name to UpperCamelCase to match Swift naming conventions.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2474,
+            "bad_code": "public typealias swift_uint2 = SIMD2<UInt32>",
+            "suggestion": "public typealias SwiftUInt2 = SIMD2<UInt32>",
+            "comment": "The type alias name should use UpperCamelCase and remove the 'swift_' prefix to follow idiomatic Swift naming conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2475,
+            "bad_code": "public typealias swift_uint3 = SIMD3<UInt32>",
+            "suggestion": "public typealias UInt3 = SIMD3<UInt32>",
+            "comment": "Remove the redundant prefix and update the naming style to be more Swift-like.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2476,
+            "bad_code": "public typealias swift_uint3 = SIMD3<UInt32>",
+            "suggestion": "public typealias SwiftUInt3 = SIMD3<UInt32>",
+            "comment": "Update type aliases to use UpperCamelCase and remove the 'swift_' prefix for consistency with Swift naming conventions and improved clarity.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 2478,
+            "bad_code": "public typealias swift_uint4 = SIMD4<UInt32>",
+            "suggestion": "public typealias SwiftUInt4 = SIMD4<UInt32>",
+            "comment": "Update the type alias name to UpperCamelCase for better alignment with Swift conventions.",
+            "source": "guideline"
+        }
+    ]
+}

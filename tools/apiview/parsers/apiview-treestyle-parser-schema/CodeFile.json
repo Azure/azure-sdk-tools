@@ -80,7 +80,8 @@
             "description": "Language variant is applicable only for java variants"
         },
         "CrossLanguagePackageId": {
-            "type": "string"
+            "type": "string",
+            "description": "Id to identify Reviews for different languages generated from the same TypeSpec specification."
         },
         "ReviewLines": {
             "type": "array",
@@ -120,7 +121,8 @@
                     "description": "lineId is only required if we need to support commenting on a line that contains this token. \nUsually code line for documentation or just punctuation is not required to have lineId. lineId should be a unique value within \nthe review token file to use it assign to review comments as well as navigation Id within the review page.\nfor e.g Azure.Core.HttpHeader.Common, azure.template.template_main"
                 },
                 "CrossLanguageId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Id to identify related lines across languages based on typespec specification"
                 },
                 "Tokens": {
                     "type": "array",

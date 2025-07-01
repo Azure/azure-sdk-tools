@@ -18,16 +18,14 @@ namespace IssueLabelerService
         public string BlobContainerName => GetItem("BlobContainerName");
         public string CommonModelRepositoryName => GetItem("CommonModelRepositoryName");
         public string ConfidenceThreshold => GetItem("ConfidenceThreshold");
-        public string DocumentIndexName => GetItem("DocumentIndexName");
-        public string DocumentSemanticName => GetItem("DocumentSemanticName");
-        public string EnableAnswers => GetItem("enableAnswers");
-        public string EnableLabels => GetItem("enableLabels");
+        public string EnableAnswers => GetItem("EnableAnswers");
+        public string EnableLabels => GetItem("EnableLabels");
+        public string IndexName => GetItem("IndexName");
+        public string SemanticName => GetItem("SemanticName");
         public string Instructions => GetItem("Instructions");
-        public string IssueIndexName => GetItem("IssueIndexName");
-        public string IssueSemanticName => GetItem("IssueSemanticName");
-        public string LabelPredictor => GetItem("labelPredictor");
+        public string Prompt => GetItem("Prompt");
+        public string LabelPredictor => GetItem("LabelPredictor");
         public string OpenAIEndpoint => GetItem("OpenAIEndpoint");
-        public string OpenAIModelName => GetItem("OpenAIModelName");
         public string RepoNames => GetItem("RepoNames");
         public string RepoOwner => GetItem("RepoOwner");
         public string ReposUsingCommonModel => GetItem("ReposUsingCommonModel");
@@ -44,6 +42,26 @@ namespace IssueLabelerService
         public string IssueModelAzureSdkBlobConfigNames => GetItem("IssueModel.azure_sdk.BlobConfigNames");
         public string IssueModelAzureSdkCategoryLabels => GetItem("IssueModel.azure_sdk.CategoryLabels");
         public string IssueModelAzureSdkServiceLabels => GetItem("IssueModel.azure_sdk.ServiceLabels");
+        public string AnswerService => GetItem("AnswerService");
+        public string IssueIndexFieldName => GetItem("IssueIndexFieldName");
+        public string DocumentIndexFieldName => GetItem("DocumentIndexFieldName");
+        public string SuggestionResponseIntroduction => GetItem("SuggestionResponseIntroduction");
+        public string SuggestionResponseConclusion => GetItem("SuggestionResponseConclusion");
+        public string SolutionResponseIntroduction => GetItem("SolutionResponseIntroduction");
+        public string SolutionResponseConclusion => GetItem("SolutionResponseConclusion");
+        public string AnswerModelName => GetItem("AnswerModelName");
+        public string LabelModelName => GetItem("LabelModelName");
+        public string SolutionInstructions => GetItem("SolutionInstructions");
+        public string SuggestionInstructions => GetItem("SuggestionInstructions");
+        public string SolutionUserPrompt => GetItem("SolutionUserPrompt");
+        public string SuggestionUserPrompt => GetItem("SuggestionUserPrompt");
+        public string LabelPrompt => GetItem("LabelPrompt");
+        public string LabelInstructions => GetItem("LabelInstructions");
+        public string LabelNames => GetItem("LabelNames");
+        public string KnowledgeAgentName => GetItem("KnowledgeAgentName");
+        public string KnowledgeAgentInstruction => GetItem("KnowledgeAgentInstruction");
+        public string KnowledgeAgentMessage => GetItem("KnowledgeAgentMessage");
+        public string KnowledgeAgentModelName => GetItem("KnowledgeAgentModelName");
 
         public string GetItem(string name)
         {

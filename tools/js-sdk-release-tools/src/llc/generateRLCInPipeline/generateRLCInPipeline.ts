@@ -17,11 +17,12 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec } from "../../common/utils.js";
 import { remove } from 'fs-extra';
-import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
-import { migratePackage } from "../../common/migration.js";
+import { isRushRepo } from "../../common/rushUtils.js";
+import { updateSnippets } from "../../common/devToolUtils.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -38,6 +39,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -74,7 +77,10 @@ export async function generateRLCInPipeline(options: {
             } else {
                 logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
+                if (options.apiVersion) {
+                    specifyApiVersionToGenerateSDKByTypeSpec(tspDefDir, options.apiVersion);
+                }
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
@@ -194,6 +200,12 @@ export async function generateRLCInPipeline(options: {
                 cmd += ` --multi-client=true`;
             }
 
+            if(options.apiVersion && options.apiVersion !== '') {
+                // for high level client, we will build a tag for the package
+                logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+                cmd += ` --tag=package-${options.apiVersion}`;
+            }
+
             logger.info(`Start to run command: ${cmd}.`);
             try {
                 execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath), timeout: defaultChildProcessTimeout});
@@ -211,10 +223,10 @@ export async function generateRLCInPipeline(options: {
         const packageName = packageJson.name;
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);
         if (!options.skipGeneration) {
-            await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, false);
-
-            await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
-
+            await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, packageName.includes("arm"));
+            if (isRushRepo(options.sdkRepo)) {
+                await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
+            }
             // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
@@ -231,19 +243,30 @@ export async function generateRLCInPipeline(options: {
                 outputPackageInfo.packageFolder = relativePackagePath;
             }
         }
+        if (isRushRepo(options.sdkRepo)) {
+            logger.info(`Start to update rush.`);
+            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        
+            logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
+            // To build generated codes except test and sample, we need to change tsconfig.json.
+            execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
+            execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
+        } else {
+            logger.info(`Start to update.`);
+            execSync('pnpm install', {stdio: 'inherit'});
+                        
+            logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
+            // To build generated codes except test and sample, we need to change tsconfig.json.
+            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
+            execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
+        }
 
-        logger.info(`Start to update rush.`);
-        execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        await updateSnippets(packagePath);
         
-        await migratePackage(packagePath);
-        
-        logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
-        // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
-        logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
-        execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
-            const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
+            const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
             outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
             outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;

@@ -166,6 +166,24 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticSeverity.Warning,
             true,
             "Suffix is not recommended. Consider to remove or modify it.");
+
+        public static readonly DiagnosticDescriptor AZC0034 = new DiagnosticDescriptor(
+            nameof(AZC0034),
+            "Avoid duplicate type names",
+            "Type name '{0}' conflicts with '{1}'. Consider renaming to avoid confusion.",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Error,
+            true,
+            "Type names should not conflict with other SDK and .NET platform types.");
+
+        public static readonly DiagnosticDescriptor AZC0035 = new DiagnosticDescriptor(
+            nameof(AZC0035),
+            "Output model type should have a corresponding model factory method",
+            "Output model type '{0}' should have a corresponding method in a model factory class. Add a static method that returns '{0}' to a class ending with 'ModelFactory'.",
+            DiagnosticCategory.Usage,
+            DiagnosticSeverity.Warning,
+            true,
+            "Output model types returned from client methods should have corresponding model factory methods for mocking support.");
         #endregion
 
         #region General
@@ -259,6 +277,15 @@ namespace Azure.ClientSdk.Analyzers
             "{0} is defined in assembly {1} and is marked internal without a [Friend] attribute.",
             "Naming",
             DiagnosticSeverity.Warning, true);
-      #endregion
+
+        public static DiagnosticDescriptor AZC0150 = new DiagnosticDescriptor(
+            id: "AZC0150",
+            title: "Use ModelReaderWriter overloads with ModelReaderWriterContext",
+            messageFormat: "Use the overload of ModelReaderWriter.{0} that accepts ModelReaderWriterContext as the last parameter for AOT compatibility",
+            category: DiagnosticCategory.Usage,
+            defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true,
+            description: "For AOT compatibility, all invocations of ModelReaderWriter.Read and ModelReaderWriter.Write should use the overload that accepts a ModelReaderWriterContext parameter.");
+        #endregion
     }
 }

@@ -33,8 +33,10 @@
                     [scrollToNodeId]="scrollToNodeId"
                     [codeLineSearchText]="codeLineSearchText"
                     [codeLineSearchInfo]="codeLineSearchInfo"
+                    [preferredApprovers]="preferredApprovers"
                     (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
-                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"></app-code-panel>
+                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
+                </app-code-panel>
             </div>
         </ng-template>
         <ng-template pTemplate>
@@ -93,6 +95,7 @@
         [review]="review"
         [userProfile]="userProfile"
         [activeApiRevisionId]="activeApiRevisionId"
+        [preferredApprovers]="preferredApprovers"
         (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
         (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)">
     </app-conversations >

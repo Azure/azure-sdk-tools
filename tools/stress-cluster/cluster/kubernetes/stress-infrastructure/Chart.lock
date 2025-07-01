@@ -3,7 +3,7 @@ dependencies:
   repository: https://charts.chaos-mesh.org
   version: 2.6.3
 - name: stress-test-addons
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
+  repository: https://azuresdkartifacts.z5.web.core.windows.net/stress/
   version: 0.3.5
-digest: sha256:711fbb59de71875ef437a50c222f7c17cf5c132033a63b05294f342c9ba183ee
-generated: "2025-02-26T15:38:45.661122298-05:00"
+digest: sha256:190e048020a3e66f44c5f676e04b8b148fd7692d3d973b438f09ac24dd1a2d4c
+generated: "2025-06-04T14:55:12.840254127-04:00"

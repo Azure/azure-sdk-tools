@@ -4,7 +4,7 @@ import { ApiTreeBuilderData } from "../_models/revision";
 import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype } from '../_models/codePanelModels';
 import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
 import { NavigationTreeNode } from '../_models/navigationTreeModels';
-import { DIFF_ADDED, DIFF_REMOVED, FULL_DIFF_STYLE, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
+import { DIFF_ADDED, DIFF_REMOVED, FULL_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -16,7 +16,6 @@ let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
 let visibleNodes: Set<string> = new Set<string>();
-let addPostDiffContext: boolean = false;
 let isNavigationTreeCreated: boolean = false;
 
 addEventListener('message', ({ data }) => {
@@ -69,7 +68,6 @@ addEventListener('message', ({ data }) => {
     diffBuffer = [];
     apiTreeBuilderData = null;
     visibleNodes = new Set<string>();
-    addPostDiffContext = false;
     isNavigationTreeCreated = false;
   }
   else {
@@ -87,8 +85,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     return;
 
   //If current node is related line attribute and then related node is not modified then skip current node in tree and node view
-  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && 
-    (apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle == NODE_DIFF_STYLE))
+  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE)
   {
     let relatedNode = codePanelData?.nodeMetaData[node.relatedNodeIdHash]!;
     if (!relatedNode.isNodeWithDiff && !node.isNodeWithDiffInDescendants && !visibleNodes.has(node.relatedNodeIdHash))
@@ -99,21 +96,16 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   let buildNode = true;
   let buildChildren = true;
-  let addNodeToBuffer = false
  
-  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE) && 
+  if (nodeIdHashed !== "root" && apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE && 
     (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && !node.isNodeWithNoneDocDiffInDescendants))) {
     buildNode = false;
     buildChildren = false;
   }
     
   if (!buildNode && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && 
-    (apiTreeBuilderData?.diffStyle !== NODE_DIFF_STYLE || node.isNodeWithDiff)) {
+    (apiTreeBuilderData?.diffStyle === FULL_DIFF_STYLE || apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE || node.isNodeWithDiff)) {
     buildNode = true;
-  }
-
-  if (isParentNodeWithDiff && !node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
-    addNodeToBuffer = true;
   }
 
   let navigationChildren = navigationTree;
@@ -155,19 +147,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         if (buildNode) {
           codePanelRowData.push(codeLine);
           visibleNodes.add(nodeIdHashed);
-          addPostDiffContext = true;
-        }
-        if (addNodeToBuffer) {
-          // We should add immediate 3 lines as context post a changed line
-          if (addPostDiffContext && diffBuffer.length === 3)
-          {
-            codePanelRowData.push(...diffBuffer);
-            diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
-            diffBuffer = [];
-            addPostDiffContext = false;
-          }
-          diffBuffer.push(codeLine);
-          addJustDiffBuffer();
         }
       }
     });

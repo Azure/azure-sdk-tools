@@ -1,0 +1,162 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nService Purpose:  \nThis API provides a calling user interface composite that enables integration with communication services. It facilitates call lifecycle management, including functions to launch a call, accept or reject an incoming call, place a call on hold, resume a call, and dismiss the call interface. In addition, it offers support for managing push notifications and custom user interface elements such as buttons and headers, along with various options to configure call screen layouts, localization, and diagnostics.\n\nAPI Version Object:  \nThe API exposes a versioning mechanism through the `Versions` struct. This struct includes the property `callingUIVersion`, which reflects the current (latest) version of the calling UI component.\n\nPrimary Client Class:  \nThe primary client interface is provided by the `CallCompositeObjectThingyUICompositeThingamajig` class. Its methods are `dismiss`, `handlePushNotification`, `reportIncomingCall`, `registerPushNotifications`, `unregisterPushNotifications`, `accept`, `reject`, `hold`, `resume`, `launch`, and `set`. (Note that the `launch` method is overloaded to handle different parameter types.) \n\nAdditional Classes and Structures:  \nSupporting types include several models and data structures. UI elements and configuration data are represented by classes such as `ButtonViewData` and `CustomButtonViewData`, and view data types like `CallScreenHeaderViewData`. Configuration and options for calls are encapsulated in structures such as `CallCompositeOptions`, `CallKitOptions`, `CallScreenControlBarOptions`, `CallScreenOptions`, `SetupScreenOptions`, and `LocalOptions`. The API also defines various error and state models including `CallCompositeError`, `CallCompositeDismissed`, `CallCompositeUserReportedIssue`, `CallError`, `CallState`, and enums like `CallCompositeAudioVideoMode`, `PushNotificationEventType`, `JoinLocator`, and `LeaveCallConfirmationMode`. Other supporting types cover aspects such as localization (`LocalizationOptions`, `SupportedLocale`), orientation (`OrientationOptions`), and diagnostics (`DebugInfo`, `CallHistoryRecord`).\n\nIntegration and Extensions:  \nBeyond the core service and configuration types, the API includes multiple extensions for integrating with underlying system frameworks (for example, extensions on AVFoundation types and CallKit-related configurations) as well as a wide array of testing and middleware extensions. These extensions expand the capabilities of the calling UI composite, covering areas such as error handling, media diagnostics, participant management, and accessibility support.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-service-client-name"
+            ],
+            "line_no": 12,
+            "bad_code": "public class CallCompositeObjectThingyUICompositeThingamajig {",
+            "suggestion": "public class CallCompositeClient {",
+            "comment": "The class name should be concise, descriptive, and follow the naming convention for service clients by using the 'Client' suffix for clarity.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-service-client-immutable"
+            ],
+            "line_no": 26,
+            "bad_code": "public var debugInfo: DebugInfo",
+            "suggestion": "public let debugInfo: DebugInfo",
+            "comment": "Service client properties should be immutable upon instantiation; use 'let' instead of 'var'.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-service-client-immutable"
+            ],
+            "line_no": 27,
+            "bad_code": "public var callState: CallState",
+            "suggestion": "public let callState: CallState",
+            "comment": "Service client properties should be immutable upon instantiation; use 'let' instead of 'var'.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 32,
+            "bad_code": "public func handlePushNotification(pushNotification: PushNotification, completionHandler: ((Result<Void, Error>) -> Void)? = nil)",
+            "suggestion": "public func handlePushNotification(_ pushNotification: PushNotification, completionHandler: ((Result<Void, Error>) -> Void)? = nil)",
+            "comment": "Remove the redundant external label for the first parameter for a cleaner API.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 34,
+            "bad_code": "public func registerPushNotifications(deviceRegistrationToken: Data, completionHandler: ((Result<Void, Error>) -> Void)? = nil)",
+            "suggestion": "public func registerForPushNotifications(deviceToken: Data, completionHandler: ((Result<Void, Error>) -> Void)? = nil)",
+            "comment": "Rename the method and parameter to align with common Swift naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 35,
+            "bad_code": "public func unregisterPushNotifications(completionHandler: ((Result<Void, Error>) -> Void)? = nil)",
+            "suggestion": "public func unregisterForPushNotifications(completionHandler: ((Result<Void, Error>) -> Void)? = nil)",
+            "comment": "Rename the method to clearly indicate the action of unregistering.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-service-client-method-parameter-name"
+            ],
+            "line_no": 48,
+            "bad_code": "public func set(remoteParticipantViewData: ParticipantViewData, for: CommunicationIdentifier, completionHandler: ((Result<Void, SetParticipantViewDataError>) -> Void)? = nil)",
+            "suggestion": "public func set(remoteParticipantViewData: ParticipantViewData, forParticipant identifier: CommunicationIdentifier, completionHandler: ((Result<Void, SetParticipantViewDataError>) -> Void)? = nil)",
+            "comment": "The parameter label 'for:' is ambiguous and does not clearly indicate the role of the CommunicationIdentifier. Update the label to be more descriptive, such as 'forParticipant', to clarify intent and improve method readability.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 49,
+            "bad_code": "public var isHidden: Bool { get set (isHidden)}",
+            "suggestion": "public var isHidden: Bool { get set }",
+            "comment": "The property accessor syntax is not idiomatic; remove the extraneous parameter to follow Swift conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-service-client-name"
+            ],
+            "line_no": 52,
+            "bad_code": "extension CallComposite {",
+            "suggestion": "extension CallCompositeClient {",
+            "comment": "The extension targets a type name that doesn't match the service client; ensure consistent naming by extending the correctly named client type.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 93,
+            "bad_code": "public init(theme: ThemeOptions? = nil, localization: LocalizationOptions? = nil, setupScreenOrientation: OrientationOptions? = nil, callingScreenOrientation: OrientationOptions? = nil, enableMultitasking: Bool = false , enableSystemPictureInPictureWhenMultitasking: Bool = false , callScreenOptions: CallScreenOptions? = nil, callKitOptions: CallKitOptions? = nil, displayName: String? = nil, disableInternalPushForIncomingCall: Bool = false , setupScreenOptions: SetupScreenOptions? = nil, capabilitiesChangedNotificationMode: CapabilitiesChangedNotificationMode? = nil, userId: CommunicationIdentifier? = nil)",
+            "suggestion": null,
+            "comment": "This initializer has too many parameters; consider a builder pattern to improve usability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 177,
+            "bad_code": "extension AzureCommunicationCalling.CallState {",
+            "suggestion": null,
+            "comment": "Remove empty extensions to reduce clutter in the API surface.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 247,
+            "bad_code": "public init(participantViewData: ParticipantViewData? = nil, setupScreenViewData: SetupScreenViewData? = nil, cameraOn: Bool? = false , microphoneOn: Bool? = false , skipSetupScreen: Bool? = false , audioVideoMode: CallCompositeAudioVideoMode = .audioAndVideo, captionsOptions: CaptionsOptions? = nil, setupScreenOptions: SetupScreenOptions? = nil, callScreenOptions: CallScreenOptions? = nil)",
+            "suggestion": "public init(participantViewData: ParticipantViewData? = nil, setupScreenViewData: SetupScreenViewData? = nil, cameraOn: Bool = false, microphoneOn: Bool = false, skipSetupScreen: Bool = false, audioVideoMode: CallCompositeAudioVideoMode = .audioAndVideo, captionsOptions: CaptionsOptions? = nil, setupScreenOptions: SetupScreenOptions? = nil, callScreenOptions: CallScreenOptions? = nil)",
+            "comment": "Use non-optional Bool for flag parameters with default values to simplify the initializer.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 287,
+            "bad_code": "extension AzureCommunicationCalling.PushNotificationEventType {",
+            "suggestion": null,
+            "comment": "Remove empty extensions to keep the API surface clean.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 298,
+            "bad_code": "public init(for: JoinLocator, credential: CommunicationTokenCredential, displayName: String? = nil)",
+            "suggestion": "public init(locator: JoinLocator, credential: CommunicationTokenCredential, displayName: String? = nil)",
+            "comment": "Rename the parameter label to be more descriptive.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 368,
+            "bad_code": "public extension ThemeOptions {",
+            "suggestion": null,
+            "comment": "Either provide default implementations or remove the empty extension.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 382,
+            "bad_code": "extension AVAudioSession.RecordPermission {",
+            "suggestion": "extension AVAudioSession.RecordPermission { // Intentionally empty for grouping non-package extensions }",
+            "comment": "Include a clarifying comment in empty extensions to explain their purpose or remove them to reduce clutter.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "ios_design.html#ios-language-swift-idiomatic"
+            ],
+            "line_no": 486,
+            "bad_code": "public func callAgent(_: CallAgent, didRecieveIncomingCall: AzureCommunicationCalling.IncomingCall)",
+            "suggestion": "public func callAgent(_: CallAgent, didReceiveIncomingCall: AzureCommunicationCalling.IncomingCall)",
+            "comment": "The delegate method name contains a spelling error and should use 'didReceiveIncomingCall' to follow Swift idiomatic naming conventions.",
+            "source": "merged"
+        }
+    ]
+}

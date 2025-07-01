@@ -1,0 +1,665 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nPurpose of the API\nThis API provides a comprehensive communication and calling service that enables initiating, joining, managing, and terminating voice and video calls. It supports both standard calls and Teams calls while offering rich media handling through audio and video streams, detailed diagnostics, and an array of advanced call features such as captions, reactions, transcription, screen sharing, and pre-call testing. It also integrates with device management, event reporting, and push notification handling.\n\nAPI Version\nNo dedicated API version object is defined within the provided view.\n\n*Client Classes and Their Methods\nThe primary client class is the `CallClient`. Its methods include:  \n  `dealloc`, `dispose`, `createCallAgent`, `createTeamsCallAgent`, `getCXProviderInstance`, `reportIncomingCall`, `getDeviceManager`, and the extension method `feature`.\n\nOther Classes and Functionality\nThe API defines a wide range of classes that encompass call management (such as `Call`, `CallAgent`, `TeamsCall`, and `TeamsCallAgent`), call configuration (`CallOptions`, `StartCallOptions`, etc.), and event handling (`CallEvents`, `TeamsCallEvents`, along with numerous event argument classes). It covers media stream handling with dedicated objects for incoming and outgoing audio streams, video streams (including local, remote, raw, virtual, and screen share variants), and their related diagnostics. In addition, specialized features are offered through classes for captions, recording, content sharing, data channels, reactions, and real-time text. The API also provides support for device management and low-level media input/output via classes such as `DeviceManager` and `VideoDeviceInfo`, while a variety of option sets and enumerations standardize error states, quality metrics, and configurations across calls.\n\nUse Cases and Structure\nDesigned with an object‐oriented and event‐driven architecture, the API enables asynchronous and synchronous interactions through extensive use of delegates, events, and feature factories. It is structured to support modern communication scenarios through rich media processing, diagnostic feedback, and versatile integration points such as call kits and push notifications. This layered approach facilitates robust call control, dynamic feature enablement, and detailed performance reporting for a variety of telecommunication use cases.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-namespaces-prefix",
+                "python_design.html#python-packaging-name"
+            ],
+            "line_no": 4,
+            "bad_code": "package AzureCommunicationCalling {",
+            "suggestion": null,
+            "comment": "Replace the non-Python package declaration with a standard Python package structure using modules and __init__.py files. The package name should be all lowercase, use dashes to separate words, and be a sub-package of the azure root namespace (e.g., azure-communication-calling). Avoid PascalCase and non-Python syntax for package declarations.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 5,
+            "bad_code": "open class AcceptCallOptions: CallOptions {",
+            "suggestion": "class AcceptCallOptions(CallOptions):",
+            "comment": "Remove the 'open' keyword; in Python, classes are public by default.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 7,
+            "bad_code": "@available(*, deprecated, message: \"Use IncomingVideoOptions and OutgoingVideoOptions instead\") open var videoOptions: VideoOptions?",
+            "suggestion": "video_options: Optional[VideoOptions] = None",
+            "comment": "Convert property names to snake_case and use type hints (Optional) to align with Python naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 16,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove explicit deallocation methods; rely on Python's garbage collection (or use __del__ if cleanup is necessary).",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 17,
+            "bad_code": "open var alternateCallerId: UnsafeMutablePointer<Int32>",
+            "suggestion": "alternate_caller_id: int",
+            "comment": "Replace pointer types with native Python types and convert the property name to snake_case.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 58,
+            "bad_code": "public enum AudioStreamBufferDuration: Int, @unchecked Sendable {",
+            "suggestion": "class AudioStreamBufferDuration(enum.IntEnum):",
+            "comment": "Use Python's enum.IntEnum for integer-based enums and remove non-Python attributes.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 59,
+            "bad_code": "case ms10 = 0",
+            "suggestion": "MS10 = 0",
+            "comment": "Enum member names must be in UPPERCASE, as required by the Python SDK guidelines.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 147,
+            "bad_code": "open func mute(completionHandler: @escaping (Error?) -> Void)",
+            "suggestion": "async def mute(self) -> None:",
+            "comment": "Adopt the async/await pattern instead of providing a callback-based asynchronous method.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 150,
+            "bad_code": "open func mute() async throws",
+            "suggestion": null,
+            "comment": "Synchronous and asynchronous operations are combined in the same class; Python SDKs should provide separate client types for sync and async operations.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 157,
+            "bad_code": "open func add(participant: Any) throws -> RemoteParticipant?",
+            "suggestion": "def add(self, participant: RemoteParticipant) -> Optional[RemoteParticipant]:",
+            "comment": "Replace ambiguous 'Any' type with a specific type to improve type clarity and developer experience.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 169,
+            "bad_code": "open func join(with: JoinMeetingLocator, completionHandler: @escaping (Call?, Error?) -> Void)",
+            "suggestion": "async def join(self, meeting_locator: JoinMeetingLocator) -> Call:",
+            "comment": "Rename the parameter to a descriptive snake_case name and use async/await for a more idiomatic Python API.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 220,
+            "bad_code": "open func createCallAgent(userCredential: Any!, completionHandler: @escaping (CallAgent?, Error?) -> Void)",
+            "suggestion": "def create_call_agent(self, user_credential: Any, *, completion_handler: Callable[[Optional[CallAgent], Optional[Error]], None]) -> None:",
+            "comment": "Method names and their parameter names should be written in snake_case to conform to Python naming conventions.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 458,
+            "bad_code": "public struct CallingCommunicationErrors: OptionSet, @unchecked Sendable {",
+            "suggestion": "class CallingCommunicationErrors(enum.Flag):",
+            "comment": "Replace the OptionSet with Python's enum.Flag and remove non‐Python annotations like @unchecked Sendable.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 544,
+            "bad_code": "open func dealloc()",
+            "suggestion": "def __del__(self):",
+            "comment": "Use Python's __del__ method for object cleanup instead of defining a dealloc() method, as this aligns with Python naming conventions and object lifecycle management.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 549,
+            "bad_code": "public enum CameraFacing: Int, @unchecked Sendable {",
+            "suggestion": "class CameraFacing(enum.Enum):",
+            "comment": "Use Python's enum.Enum for enumerations and consider uppercasing member names to match common Python practices.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 550,
+            "bad_code": "case unknown = 0",
+            "suggestion": "case UNKNOWN = 0",
+            "comment": "Enum member names should be in all uppercase.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 566,
+            "bad_code": "optional func capabilitiesCallFeature(_: CapabilitiesCallFeature, didChangeCapabilities: CapabilitiesChangedEventArgs)",
+            "suggestion": "def capabilities_call_feature(self, feature: CapabilitiesCallFeature, did_change_capabilities: CapabilitiesChangedEventArgs) -> None:",
+            "comment": "Eliminate the 'optional' keyword and convert delegate methods to snake_case; consider using callable attributes or event callbacks.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 601,
+            "bad_code": "open func getCaptions(completionHandler: @escaping (CallCaptions?, Error?) -> Void)",
+            "suggestion": null,
+            "comment": "Synchronous and asynchronous operations should be exposed in separate client classes rather than combining them in a single class.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 645,
+            "bad_code": "open func getServerCallId(completionHandler: @escaping (String?, Error?) -> Void)",
+            "suggestion": "def get_server_call_id(self, callback: Optional[Callable[[Optional[str], Optional[Exception]], None]] = None) -> None:",
+            "comment": "Method names should follow snake_case per Python conventions. Also, use Pythonic asynchronous patterns by adopting callback parameters.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 646,
+            "bad_code": "open func getServerCallId() async throws -> String",
+            "suggestion": "async def get_server_call_id(self) -> str:",
+            "comment": "Define async methods using async def and snake_case to fully embrace Python's async/await style.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 649,
+            "bad_code": "open func stopAudio(stream: CallAudioStream, completionHandler: @escaping (Error?) -> Void)",
+            "suggestion": "def stop_audio(self, stream: CallAudioStream, callback: Optional[Callable[[Optional[Exception]], None]] = None) -> None:",
+            "comment": "Rename methods and parameters to snake_case for consistency with Python conventions and simplify the callback pattern.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 682,
+            "bad_code": "extension AzureCommunicationCalling.CommonCall {",
+            "suggestion": null,
+            "comment": "Remove unsupported extension syntax; in Python, extension behavior is achieved via subclassing or mixins.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming"
+            ],
+            "line_no": 686,
+            "bad_code": "open class CommonCallAgent: NSObject {",
+            "suggestion": "open class CommonCallAgentClient: NSObject {",
+            "comment": "Service client types should be named with a 'Client' suffix.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 698,
+            "bad_code": "open class CommonCallAgentOptions: NSObject {",
+            "suggestion": null,
+            "comment": "Avoid using an options bag object; pass optional parameters as individual keyword‐only arguments in the client constructor.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 977,
+            "bad_code": "open class GroupCallLocator: JoinMeetingLocator {",
+            "suggestion": "class GroupCallLocator(JoinMeetingLocator):",
+            "comment": "Eliminate Swift-specific 'open' keyword; define classes using standard Python class declaration syntax.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 978,
+            "bad_code": "public init(groupId: UUID)",
+            "suggestion": "public init(group_id: UUID)",
+            "comment": "Rename parameters to snake_case to conform to Python naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 989,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Eliminate explicit dealloc methods; Python manages memory via garbage collection.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1016,
+            "bad_code": "extension AzureCommunicationCalling.IncomingAudioStatistics {",
+            "suggestion": null,
+            "comment": "Replace Swift extensions with direct class methods or helper functions to align with Python's module system.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1026,
+            "bad_code": "weak open var delegate: IncomingCallDelegate?",
+            "suggestion": "open var delegate: IncomingCallDelegate?",
+            "comment": "Remove the 'weak' qualifier since Python does not require explicit weak references.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 1028,
+            "bad_code": "open func accept(options: AcceptCallOptions, completionHandler: @escaping (Call?, Error?) -> Void)",
+            "suggestion": null,
+            "comment": "Avoid using an options bag to group optional parameters; instead, expose each option as an individual keyword-only argument.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 1029,
+            "bad_code": "open func accept(options: AcceptCallOptions) async throws -> Call",
+            "suggestion": null,
+            "comment": "Synchronous and asynchronous operations should be provided in separate client classes rather than mixed in a single class.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1038,
+            "bad_code": "open func removeAll()",
+            "suggestion": "open func remove_all()",
+            "comment": "Convert method names to snake_case to adhere to Python style guidelines.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1142,
+            "bad_code": "@available(*, deprecated, message: \"Use IncomingVideoOptions and OutgoingVideoOptions instead\") open var videoOptions: VideoOptions?",
+            "suggestion": "open var video_options: VideoOptions?",
+            "comment": "Rename properties to snake_case and replace Swift deprecation annotations with a Pythonic deprecation mechanism (e.g. using decorators or warnings).",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1209,
+            "bad_code": "@available(*, deprecated, message: \"Use state property instead\") open var isSending: Bool { get }",
+            "suggestion": "open var is_sending: Bool { get }",
+            "comment": "Rename deprecated property to snake_case and handle deprecation using Python's idioms rather than Swift annotations.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 1212,
+            "bad_code": "open func switchSource(camera: VideoDeviceInfo, completionHandler: @escaping (Error?) -> Void)",
+            "suggestion": "open func switch_source(camera: VideoDeviceInfo, completion_handler: @escaping (Error?) -> Void)",
+            "comment": "Method names in a Python SDK should use snake_case rather than camelCase.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 1388,
+            "bad_code": "case off = 0",
+            "suggestion": "case OFF = 0",
+            "comment": "Enum member names should be uppercase in Python.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1458,
+            "bad_code": "extension AzureCommunicationCalling.OutgoingScreenShareStatistics {",
+            "suggestion": "class OutgoingScreenShareStatistics:",
+            "comment": "Remove Swift-specific 'extension' syntax and define the class using standard Python class declarations.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1459,
+            "bad_code": "public var bitrateInBps: Swift.Int32? { get }",
+            "suggestion": "bitrate_in_bps: Optional[int]",
+            "comment": "Use snake_case for property names and Python type hints (e.g. Optional[int]) instead of Swift types.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1469,
+            "bad_code": "open func dealloc()",
+            "suggestion": "def __del__(self):",
+            "comment": "Replace explicit dealloc methods with __del__ if a destructor is needed, or omit it to rely on Python’s garbage collection.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1481,
+            "bad_code": "open var maxFrameRate: Int32",
+            "suggestion": "max_frame_rate: int",
+            "comment": "Convert property names from camelCase to snake_case and use Python’s built-in types.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1517,
+            "bad_code": "case turnVideoOn = 0",
+            "suggestion": "TURN_VIDEO_ON = 0",
+            "comment": "Enum members in Python are typically written in UPPERCASE to improve clarity and consistency.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1566,
+            "bad_code": "open func startTest(_: Any!, withCompletionHandler: ((Error?) -> Void)? = nil)",
+            "suggestion": "async def start_test(self, test_input: Any) -> None:",
+            "comment": "Favor a single async function using async/await and snake_case naming over duplicating callback‐based and async methods.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1577,
+            "bad_code": "open func removeAll()",
+            "suggestion": "def remove_all(self):",
+            "comment": "Rename methods to snake_case to align with Python naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 1952,
+            "bad_code": "open var onStateChanged: ((PropertyChangedEventArgs) -> Void)?",
+            "suggestion": "open var on_state_changed: ((PropertyChangedEventArgs) -> Void)?",
+            "comment": "Rename the public variable to use snake_case for consistency with Python naming conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 1959,
+            "bad_code": "open func removeAll()",
+            "suggestion": "open func remove_all()",
+            "comment": "Method names should use snake_case to follow Python naming conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1968,
+            "bad_code": "weak open var delegate: RemoteVideoStreamDelegate?",
+            "suggestion": "open var delegate: RemoteVideoStreamDelegate?",
+            "comment": "Remove the 'weak' modifier as it is not applicable in Python.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1973,
+            "bad_code": "optional func remoteVideoStream(_: RemoteVideoStream, didChangeState: VideoStreamStateChangedEventArgs)",
+            "suggestion": "def remote_video_stream_did_change_state(self, remote_video_stream: RemoteVideoStream, did_change_state: VideoStreamStateChangedEventArgs) -> None:",
+            "comment": "Refactor delegate method to a Pythonic signature using snake_case and explicit self, and remove the 'optional' keyword.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1983,
+            "bad_code": "open func dealloc()",
+            "suggestion": null,
+            "comment": "Remove dealloc methods; Python uses garbage collection and __del__ if needed.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 1994,
+            "bad_code": "open func dispose()",
+            "suggestion": "def dispose(self) -> None:",
+            "comment": "Consider implementing context management (__enter__/__exit__) instead of an explicit dispose method.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2006,
+            "bad_code": "case crop = 1",
+            "suggestion": "case CROP = 1",
+            "comment": "Capitalize enum members to adhere to Python enum naming conventions.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2010,
+            "bad_code": "public struct ScreenShareIssues: OptionSet, @unchecked Sendable {",
+            "suggestion": "class ScreenShareIssues(enum.IntFlag):",
+            "comment": "Refactor option set structures to use Python’s enum.IntFlag for a more idiomatic design.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 2044,
+            "bad_code": "open func cancelAllSpotlights(completionHandler: @escaping (Error?) -> Void)",
+            "suggestion": "async def cancel_all_spotlights(self) -> None:",
+            "comment": "Async and sync methods should be implemented in separate client classes, and async/await patterns should be used instead of callback-based completion handlers for a more idiomatic Python API.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2073,
+            "bad_code": "public init()",
+            "suggestion": "def __init__(self):",
+            "comment": "Replace 'public init()' with Python's __init__ constructor.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2076,
+            "bad_code": "open var alternateCallerId: UnsafeMutablePointer<Int32>",
+            "suggestion": "open var alternate_caller_id: int",
+            "comment": "Use native Python types and snake_case naming instead of pointer types.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2446,
+            "bad_code": "open class VirtualOutgoingVideoStreamEvents: NSObject {",
+            "suggestion": "class VirtualOutgoingVideoStreamEvents:",
+            "comment": "Use standard Python class definition syntax without non‐Python keywords and braces.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 2447,
+            "bad_code": "open var onStateChanged: ((VideoStreamStateChangedEventArgs) -> Void)?",
+            "suggestion": "on_state_changed: Optional[Callable[[VideoStreamStateChangedEventArgs], None]] = None",
+            "comment": "Rename the property to snake_case in accordance with Python naming conventions, and apply appropriate Python type hints for a callback.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 2448,
+            "bad_code": "open var onFormatChanged: ((VideoStreamFormatChangedEventArgs) -> Void)?",
+            "suggestion": "on_format_changed: Optional[Callable[[VideoStreamFormatChangedEventArgs], None]] = None",
+            "comment": "Rename the property to snake_case to follow Python naming conventions, and update the type annotation to use Python callback type hints.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 2449,
+            "bad_code": "open func removeAll()",
+            "suggestion": "def remove_all(self) -> None:",
+            "comment": "Method names should use snake_case and proper Python syntax with a colon at the end. Replace the current definition with the correct Python function declaration.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2452,
+            "bad_code": "public typealias char16_t = uint_least16_t",
+            "suggestion": "Char16T = uint_least16_t",
+            "comment": "Type alias names should use PascalCase and type aliasing in Python should be done with a simple assignment, omitting 'public typealias.'",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2454,
+            "bad_code": "public typealias char32_t = uint_least32_t",
+            "suggestion": "Char32T = uint_least32_t",
+            "comment": "Use PascalCase for type alias names and replace the non-Python 'public typealias' with a standard assignment.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2456,
+            "bad_code": "public typealias swift_double2 = SIMD2<Double>",
+            "suggestion": "SwiftDouble2 = SIMD2[float]",
+            "comment": "The type alias name should use PascalCase, and the syntax should follow Python conventions by removing 'public typealias' and using square brackets for generics.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2458,
+            "bad_code": "public typealias swift_double3 = SIMD3<Double>",
+            "suggestion": "SwiftDouble3 = SIMD3[float]",
+            "comment": "The type alias name should use PascalCase to follow naming conventions, and the syntax should be updated to use Python's type alias format with correct generic notation.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2460,
+            "bad_code": "public typealias swift_double4 = SIMD4<Double>",
+            "suggestion": "SwiftDouble4 = SIMD4[float]",
+            "comment": "Type alias names should use PascalCase, and use Python's assignment with generic square bracket syntax instead of 'public typealias'.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2462,
+            "bad_code": "public typealias swift_float2 = SIMD2<Float>",
+            "suggestion": "SwiftFloat2 = SIMD2[float]",
+            "comment": "Type alias names should use PascalCase, and non-Python keywords should be removed. Also, convert the generic type to use Python's float.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2464,
+            "bad_code": "public typealias swift_float3 = SIMD3<Float>",
+            "suggestion": "public typealias SwiftFloat3 = SIMD3<Float>",
+            "comment": "The type alias name should use PascalCase to follow naming conventions. Additionally, consider whether a type alias or a plain assignment with Python generic notation is more appropriate based on the intended usage.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2466,
+            "bad_code": "public typealias swift_float4 = SIMD4<Float>",
+            "suggestion": "SwiftFloat4 = SIMD4[float]",
+            "comment": "Update the type alias name to use PascalCase and convert the declaration to use Python's generic syntax with square brackets.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2468,
+            "bad_code": "public typealias swift_int2 = SIMD2<Int32>",
+            "suggestion": "SwiftInt2 = SIMD2[int]",
+            "comment": "Type alias names should use PascalCase to follow naming conventions, and the syntax should use Python's type alias format with int instead of Int32.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2470,
+            "bad_code": "public typealias swift_int3 = SIMD3<Int32>",
+            "suggestion": "public typealias SwiftInt3 = SIMD3<Int32>",
+            "comment": "Type alias names should use PascalCase. Additionally, consider whether using Python's int type is more appropriate than Int32 for consistency with Python conventions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2472,
+            "bad_code": "public typealias swift_int4 = SIMD4<Int32>",
+            "suggestion": "SwiftInt4 = SIMD4[int]",
+            "comment": "Type alias names should use PascalCase, and the alias should use Python syntax by removing non-Python keywords and mapping Int32 to int.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2474,
+            "bad_code": "public typealias swift_uint2 = SIMD2<UInt32>",
+            "suggestion": "SwiftUint2 = SIMD2[UInt32]",
+            "comment": "Use PascalCase for type alias names and follow Python syntax by removing the non-Python declaration and using square brackets for generics.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2476,
+            "bad_code": "public typealias swift_uint3 = SIMD3<UInt32>",
+            "suggestion": "public typealias SwiftUint3 = SIMD3<UInt32>",
+            "comment": "Type alias names should use PascalCase to follow naming conventions. Additionally, consider adopting Python's generic type notation if applicable.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-type-naming"
+            ],
+            "line_no": 2478,
+            "bad_code": "public typealias swift_uint4 = SIMD4<UInt32>",
+            "suggestion": "public typealias SwiftUint4 = SIMD4<UInt32>",
+            "comment": "The type alias name should use PascalCase to follow naming conventions. Also, ensure the syntax matches the language requirements; in Swift, use 'typealias' with angle brackets, while in Python, use assignment with square brackets for generics.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 2479,
+            "bad_code": "}",
+            "suggestion": null,
+            "comment": "Remove the closing brace; Python uses indentation to denote scope.",
+            "source": "generic"
+        }
+    ]
+}

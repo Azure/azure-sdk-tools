@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isTraitAliasItem } from "./utils/typeGuards";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 /**
  * Processes a trait alias item and returns ReviewLine objects.
@@ -15,6 +16,7 @@ export function processTraitAlias(item: Item): ReviewLine[] {
 
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
+  lineIdMap.set(item.id.toString(), `trait_alias_${item.name}`);
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -33,7 +35,7 @@ export function processTraitAlias(item: Item): ReviewLine[] {
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown",
     HasSuffixSpace: false,
-    RenderClasses: ["interface"],
+    RenderClasses: ["type"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

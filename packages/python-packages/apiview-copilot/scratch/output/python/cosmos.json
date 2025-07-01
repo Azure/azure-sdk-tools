@@ -1,0 +1,92 @@
+{
+    "comments": [
+        {
+            "rule_ids": [],
+            "line_no": 1,
+            "bad_code": "",
+            "suggestion": null,
+            "comment": "Here is a summary of the service described by this APIView:\n\nOverview:  \nThe service provides a Cosmos-based database management solution that enables the creation and management of databases, containers, and individual items. It supports operations that span from initializing clients with various credentials or connection strings to performing item-level CRUD, batch transactional processes, and complex query executions. The API is structured around a client-oriented model that separates operations on databases, containers, and items while offering configuration for throughput, indexing, conflict resolution, and partitioning.\n\nAPI Version:  \nThere is no explicit API version object identified in the provided APIView.\n\nPrimary Client Classes:  \nThe primary client classes include the `Client`, `ContainerClient`, and `DatabaseClient`. The `Client` class exposes methods such as `NewClient`, `NewClientFromConnectionString`, `NewClientWithKey`, `CreateDatabase`, `Endpoint`, `NewContainer`, `NewDatabase`, and `NewQueryDatabasesPager`. The `ContainerClient` class provides methods including `CreateItem`, `Delete`, `DeleteItem`, `ExecuteTransactionalBatch`, `ID`, `NewQueryItemsPager`, `NewTransactionalBatch`, `PatchItem`, `Read`, `ReadItem`, `ReadThroughput`, `Replace`, `ReplaceItem`, `ReplaceThroughput`, and `UpsertItem`. The `DatabaseClient` class offers methods like `NewQueryContainersPager`, `CreateContainer`, `Delete`, `ID`, `NewContainer`, `Read`, `ReadThroughput`, and `ReplaceThroughput`.\n\nAdditional Components and Functionality:  \nAdditional classes define configuration options and data models. For instance, `ClientOptions` provides settings such as content response preferences and preferred regions. Models like `ContainerProperties` and `DatabaseProperties` capture resource details with support for JSON unmarshaling and marshaling. Support for partitioning is offered through `PartitionKey` and `PartitionKeyDefinition`, while indexing and conflict resolution policies are encapsulated in `IndexingPolicy` and `ConflictResolutionPolicy` respectively. Throughput management is handled by `ThroughputProperties` and associated options and responses, and item-level operations work in conjunction with `ItemOptions` and `ItemResponse`. Transactional processing is supported via the `TransactionalBatch` family of types, and various constants and helper functions manage values for consistency levels, indexing directives, spatial types, and other domain-specific settings.\n\nUnstable Query Engine:  \nAn additional component under the unstable namespace introduces the `QueryEngine` interface, which allows for the creation of query pipelines using `CreateQueryPipeline` and provides feature details via `SupportedFeatures`. The `QueryPipeline` interface contains methods such as `Close`, `IsComplete`, `ProvideData`, `Query`, and `Run` to facilitate advanced query execution. Supporting types including `PipelineResult`, `QueryRequest`, and `QueryResult` further enable detailed control over query processing and result handling.",
+            "source": "summary"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-sync-async-separate-clients"
+            ],
+            "line_no": 2,
+            "bad_code": "type Client struct",
+            "suggestion": null,
+            "comment": "A separate asynchronous client (in an .aio subpackage) should be provided for async operations.",
+            "source": "guideline"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 3,
+            "bad_code": "func NewClient(endpoint string, cred azcore.TokenCredential, o *ClientOptions) (*Client, error)",
+            "suggestion": "def __init__(self, endpoint: str, cred: azcore.TokenCredential, *, enable_content_response_on_write: bool = False, preferred_regions: Optional[List[str]] = None) -> None:",
+            "comment": "Avoid using an options bag for optional parameters; instead, define each as a separate keyword-only argument in the client initializer and use Pythonic conventions such as type hints and exceptions.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 4,
+            "bad_code": "func NewClientFromConnectionString(connectionString string, o *ClientOptions) (*Client, error)",
+            "suggestion": "def from_connection_string(cls, connection_string: str, options: ClientOptions = None) -> Client:",
+            "comment": "Define an alternative constructor as a class method with snake_case naming to improve discoverability.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 5,
+            "bad_code": "func NewClientWithKey(endpoint string, cred KeyCredential, o *ClientOptions) (*Client, error)",
+            "suggestion": "def with_key(cls, endpoint: str, key: KeyCredential, options: ClientOptions = None) -> Client:",
+            "comment": "Provide an alternative constructor using a class method and snake_case naming for clarity.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_implementation.html#python-codestyle-vars-naming"
+            ],
+            "line_no": 6,
+            "bad_code": "func (*Client) CreateDatabase(ctx context.Context, databaseProperties DatabaseProperties, o *CreateDatabaseOptions) (DatabaseResponse, error)",
+            "suggestion": "def create_database(self, database_properties: DatabaseProperties, *, o: Optional[CreateDatabaseOptions] = None) -> DatabaseResponse:",
+            "comment": "The method name and parameters should use snake_case to comply with Python naming conventions. Also, remove the non-Pythonic context parameter and handle errors using exceptions instead of return values.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 7,
+            "bad_code": "func (*Client) Endpoint() string",
+            "suggestion": "def endpoint(self) -> str:",
+            "comment": "Replace the getter method with a property to provide a more Pythonic API.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 27,
+            "bad_code": "func (*ContainerClient) CreateItem(ctx context.Context, partitionKey PartitionKey, item []byte, o *ItemOptions) (ItemResponse, error)",
+            "suggestion": "def create_item(self, partition_key: PartitionKey, item: bytes, options: ItemOptions = None) -> ItemResponse:",
+            "comment": "Adopt snake_case for method and parameters, remove the explicit context argument, and use exceptions instead of error return values.",
+            "source": "generic"
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 289,
+            "bad_code": "CompositeIndexAscending CompositeIndexOrder = \"ascending\"",
+            "suggestion": "COMPOSITE_INDEX_ASCENDING: CompositeIndexOrder = 'ascending'",
+            "comment": "Enum member names should be in all uppercase to follow Python SDK conventions. Additionally, consider using uppercase for enum values to align with Python constant-naming standards.",
+            "source": "merged"
+        },
+        {
+            "rule_ids": [],
+            "line_no": 296,
+            "bad_code": "ConflictResolutionModeCustom ConflictResolutionMode = \"Custom\"",
+            "suggestion": "CONFLICT_RESOLUTION_MODE_CUSTOM: ConflictResolutionMode = 'CUSTOM'",
+            "comment": "Use uppercase for enum constants and consider leveraging Python’s enum.Enum for a cleaner design.",
+            "source": "generic"
+        }
+    ]
+}

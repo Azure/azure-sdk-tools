@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace IssueLabeler.Shared
 {
@@ -14,5 +11,13 @@ namespace IssueLabeler.Shared
         public string IssueUserLogin { get; set; }
         public string RepositoryName { get; set; }
         public string RepositoryOwnerName { get; set; }
+
+        [DefaultValue(true)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        public bool PredictLabels { get; set; }
+
+        [DefaultValue(true)]
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        public bool PredictAnswers { get; set; }
     }
 }

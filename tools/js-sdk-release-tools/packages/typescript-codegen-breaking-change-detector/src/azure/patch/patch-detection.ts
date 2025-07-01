@@ -1,5 +1,19 @@
-import { FunctionDeclaration, Node, Signature, SourceFile, SyntaxKind } from 'ts-morph';
-import { AstContext, DiffLocation, DiffPair, DiffReasons, AssignDirection } from '../common/types';
+import {
+  CallSignatureDeclaration,
+  ClassDeclaration,
+  FunctionDeclaration,
+  Node,
+  SourceFile,
+  SyntaxKind,
+} from 'ts-morph';
+import {
+  AstContext,
+  DiffLocation,
+  DiffPair,
+  DiffReasons,
+  AssignDirection,
+  FindMappingConstructorLikeDeclaration,
+} from '../common/types';
 import {
   findFunctionBreakingChanges,
   findInterfaceBreakingChanges,
@@ -7,33 +21,32 @@ import {
   checkRemovedDeclaration,
   createDiffPair,
   checkAddedDeclaration,
+  findClassBreakingChanges,
 } from '../diff/declaration-diff';
 import { logger } from '../../logging/logger';
 
-function findMappingCallSignature(
-  target: Signature,
-  signatures: Signature[]
-): { signature: Signature; id: string } | undefined {
+const findMappingCallSignature: FindMappingConstructorLikeDeclaration<CallSignatureDeclaration> = (
+  target: CallSignatureDeclaration,
+  signatures: CallSignatureDeclaration[]
+) => {
   const path = target
     .getParameters()
     .find((p) => p.getName() === 'path')
-    ?.getValueDeclarationOrThrow()
-    .getText();
-  if (!path) throw new Error(`Failed to find path in signature: ${target.getDeclaration().getText()}`);
+    ?.getText();
+  if (!path) throw new Error(`Failed to find path in signature: ${target.getText()}`);
 
   const foundPaths = signatures.filter((p) => {
     const foundPath = p
       .getParameters()
       .find((p) => p.getName() === 'path')
-      ?.getValueDeclarationOrThrow()
-      .getText();
+      ?.getText();
     return foundPath && path === foundPath;
   });
 
   if (foundPaths.length === 0) return undefined;
   if (foundPaths.length > 1) logger.warn(`Found more than one mapping call signature for path '${path}'`);
-  return { signature: foundPaths[0], id: path };
-}
+  return { declaration: foundPaths[0], id: path };
+};
 
 export function patchRoutes(astContext: AstContext): DiffPair[] {
   const baseline = astContext.baseline.getInterface('Routes');
@@ -132,6 +145,20 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     currentFunctions[0]
   );
   return pairs;
+}
+
+export function patchClass(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+  const baseline = astContext.baseline.getClass(name);
+  const current = astContext.current.getClass(name);
+
+  if (!baseline && !current) throw new Error(`Failed to find class '${name}' in baseline and current package`);
+
+  const addPair = checkAddedDeclaration(DiffLocation.Class, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.Class, baseline, current);
+  if (removePair) return [removePair];
+  return patchDeclaration(assignDirection, findClassBreakingChanges, baseline!, current!);
 }
 
 export function patchDeclaration<T extends Node>(

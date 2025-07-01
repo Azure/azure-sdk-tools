@@ -11,21 +11,23 @@ import {
   TypeNode,
   TypeAliasDeclaration,
   CallSignatureDeclaration,
+  ClassDeclaration,
 } from 'ts-morph';
 import {
   DiffLocation,
   DiffPair,
   DiffReasons,
-  FindMappingCallSignature,
+  FindMappingConstructorLikeDeclaration,
   AssignDirection,
   NameNode,
+  ConstructorLikeDeclaration,
 } from '../common/types';
 import {
   getCallableEntityParametersFromSymbol,
   isMethodOrArrowFunction,
   isPropertyArrowFunction,
   isPropertyMethod,
-  isSameSignature,
+  isSameConstructorLikeDeclaration,
 } from '../../utils/ast-utils';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
@@ -75,41 +77,38 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   return breakingReasons;
 }
 
-function findCallSignatureBreakingChanges(
-  sourceSignatures: Signature[],
-  targetSignatures: Signature[],
-  findMappingCallSignature?: FindMappingCallSignature
+const findMappingConstructorLikeDeclaration: FindMappingConstructorLikeDeclaration<ConstructorLikeDeclaration> = (
+  target: ConstructorLikeDeclaration,
+  declarations: ConstructorLikeDeclaration[]
+) => {
+  const declaration = declarations.find((s) => isSameConstructorLikeDeclaration(target, s));
+  if (!declaration) return undefined;
+  const id = declaration.getText();
+  return { id, declaration };
+};
+
+function findConstructorLikeDeclarationBreakingChanges<T extends ConstructorLikeDeclaration>(
+  sourceDeclarations: T[],
+  targetDeclarations: T[],
+  findMappingConstructorLikeDeclaration: FindMappingConstructorLikeDeclaration<T>
 ): DiffPair[] {
-  const pairs = targetSignatures.reduce((result, targetSignature) => {
-    const defaultFindMappingCallSignature: FindMappingCallSignature = (target: Signature, signatures: Signature[]) => {
-      const signature = signatures.find((s) => isSameSignature(target, s));
-      if (!signature) return undefined;
-      const id = signature.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getText();
-      return { id, signature };
-    };
-    const resolvedFindMappingCallSignature = findMappingCallSignature || defaultFindMappingCallSignature;
-    const sourceContext = resolvedFindMappingCallSignature(targetSignature, sourceSignatures);
+  const pairs = targetDeclarations.reduce((result, targetDeclaration) => {
+    const sourceContext = findMappingConstructorLikeDeclaration(targetDeclaration, sourceDeclarations);
     if (sourceContext) {
-      const sourceSignature = sourceContext.signature;
+      const sourceDeclaration = sourceContext.declaration;
       // handle return type
-      const getDeclaration = (s: Signature): CallSignatureDeclaration =>
-        s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
-      const targetDeclaration = getDeclaration(targetSignature)!;
-      const sourceDeclaration = getDeclaration(sourceSignature)!;
       const returnPairs = findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
       if (returnPairs.length > 0) result.push(...returnPairs);
 
       // handle parameters
       const path = sourceContext.id;
-      const getParameters = (s: Signature): ParameterDeclaration[] =>
-        s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
       const parameterPairs = findParameterBreakingChangesCore(
-        getParameters(sourceSignature),
-        getParameters(targetSignature),
+        sourceDeclaration.getParameters(),
+        targetDeclaration.getParameters(),
         path,
         path,
-        sourceSignature.getDeclaration(),
-        targetSignature.getDeclaration()
+        sourceDeclaration,
+        targetDeclaration
       );
       if (parameterPairs.length > 0) result.push(...parameterPairs);
 
@@ -117,8 +116,8 @@ function findCallSignatureBreakingChanges(
     }
 
     // not found
-    const getNameNode = (s: Signature): NameNode => ({ name: s.getDeclaration().getText(), node: s.getDeclaration() });
-    const targetNameNode = getNameNode(targetSignature);
+    const getNameNode = (n: T): NameNode => ({ name: n.getText(), node: n });
+    const targetNameNode = getNameNode(targetDeclaration);
     const pair = createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, targetNameNode);
     result.push(pair);
     return result;
@@ -299,11 +298,20 @@ function findFunctionPropertyBreakingChangeDetails(sourceMethod: Symbol, targetM
 export function findInterfaceBreakingChanges(
   source: InterfaceDeclaration,
   target: InterfaceDeclaration,
-  findMappingCallSignature?: FindMappingCallSignature
+  findMappingCallSignature: FindMappingConstructorLikeDeclaration<CallSignatureDeclaration>
 ): DiffPair[] {
-  const targetSignatures = target.getType().getCallSignatures();
-  const sourceSignatures = source.getType().getCallSignatures();
-  const callSignatureBreakingChanges = findCallSignatureBreakingChanges(
+  const getDeclaration = (s: Signature): CallSignatureDeclaration =>
+    s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
+
+  const targetSignatures = target
+    .getType()
+    .getCallSignatures()
+    .map((c) => getDeclaration(c));
+  const sourceSignatures = source
+    .getType()
+    .getCallSignatures()
+    .map((c) => getDeclaration(c));
+  const callSignatureBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
     sourceSignatures,
     targetSignatures,
     findMappingCallSignature
@@ -314,6 +322,17 @@ export function findInterfaceBreakingChanges(
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
 
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
+}
+
+// TODO: detect property and method
+export function findClassBreakingChanges(source: ClassDeclaration, target: ClassDeclaration) {
+  // find constructor breaking changes
+  const constructorBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
+    source.getConstructors(),
+    target.getConstructors(),
+    findMappingConstructorLikeDeclaration
+  );
+  return constructorBreakingChanges;
 }
 
 function findRemovedFunctionOverloads(

@@ -1,7 +1,7 @@
 parameters:
   - name: PackageSpecifiers
-    type: object
-    default: []
+    type: string
+    default: <package1>==1.0.0,<package2>==1.0.0
   - name: PythonVersionOverride
     type: string
     default: "3.9"
@@ -21,8 +21,8 @@ jobs:
     displayName: Mirror From PyPI
 
     pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml

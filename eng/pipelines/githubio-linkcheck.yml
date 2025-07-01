@@ -2,8 +2,8 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-24.04
 
 variables:
   cachefile: verify-links-cache.txt
@@ -13,6 +13,28 @@ jobs:
   displayName: Check and Cache Links
   timeoutInMinutes: 720
   steps:
+  - pwsh: |
+      $reposToClone = @(
+        "azure-rest-api-specs",
+        "azure-sdk",
+        "azure-sdk-for-android",
+        "azure-sdk-for-c",
+        "azure-sdk-for-cpp",
+        "azure-sdk-for-go",
+        "azure-sdk-for-ios",
+        "azure-sdk-for-java",
+        "azure-sdk-for-js",
+        "azure-sdk-for-net",
+        "azure-sdk-for-python",
+        "azure-sdk-for-rust"
+      )
+      foreach ($repo in $reposToClone) {
+        git clone https://github.com/Azure/${repo}.git --depth 1 --single-branch --branch main
+      }
+
+    workingDirectory: $(Pipeline.Workspace)
+    displayName: 'Clone repos to optimize github link checking'
+
   - task: PowerShell@2
     displayName: 'azure-sdk link check'
     condition: succeededOrFailed()
@@ -24,7 +46,7 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
+        -localGithubClonedRoot "$(Pipeline.Workspace)"
         -requestTimeoutSec 60 # For the nightly link checks increase timeout to handle some of the links that are redirects and can take longer
 
   - task: PowerShell@2
@@ -38,7 +60,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'java link check'
@@ -51,7 +72,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'js link check'
@@ -64,7 +84,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'net link check'
@@ -77,7 +96,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'python link check'
@@ -90,7 +108,6 @@ jobs:
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - task: PowerShell@2
     displayName: 'tools link check'
@@ -100,11 +117,10 @@ jobs:
       filePath: eng/common/scripts/Verify-Links.ps1
       arguments: >
         -urls (Get-ChildItem -Path ./eng/common -Recurse -Include *.md)
-        -rootUrl "file://$(System.DefaultWorkingDirectory)"        
+        -rootUrl "file://$(System.DefaultWorkingDirectory)"
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
-        -devOpsLogging: $true
 
   - publish: $(cachefile)
     artifact: verify-links-cache.txt
@@ -117,9 +133,9 @@ jobs:
     inputs:
       azureSubscription: 'Azure SDK Artifacts'
       ScriptType: 'InlineScript'
-      azurePowerShellVersion: LatestVersion 
+      azurePowerShellVersion: LatestVersion
       pwsh: true
       Inline: |
         azcopy copy '$(cachefile)' 'https://azuresdkartifacts.blob.core.windows.net/verify-links-cache'
-    env: 
+    env:
       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'

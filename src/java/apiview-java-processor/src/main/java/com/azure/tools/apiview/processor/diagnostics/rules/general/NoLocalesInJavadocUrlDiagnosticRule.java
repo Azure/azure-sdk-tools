@@ -34,7 +34,7 @@ public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
             .map(String::toLowerCase)
             .collect(Collectors.joining("|", "/(", ")/"));
 
-        LANGUAGE_PATTERN = Pattern.compile(pattern);
+        LANGUAGE_PATTERN = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
 
     void checkJavaDoc(NodeWithJavadoc<?> n, String id, APIListing listing) {
         n.getJavadocComment().ifPresent(javadoc -> {
-            final String javadocString = javadoc.asString().toLowerCase();
+            final String javadocString = javadoc.getContent();
 
             Matcher matcher = LANGUAGE_PATTERN.matcher(javadocString);
             while (matcher.find()) {

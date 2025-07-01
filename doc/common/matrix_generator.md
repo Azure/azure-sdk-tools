@@ -1,29 +1,30 @@
 # Azure Pipelines Matrix Generator
 
-* [Azure Pipelines Matrix Generator](#azure-pipelines-matrix-generator)
-* [How does the matrix generator work](#how-does-the-matrix-generator-work)
-* [How to use matrix generator from your pipeline](#how-to-use-matrix-generator-from-your-pipeline)
-  * [Matrix generator pipeline usage example](#matrix-generator-pipeline-usage-example)
-  * [Runtime matrix generation customization](#runtime-matrix-generation-customization)
-* [Matrix config file syntax](#matrix-config-file-syntax)
-* [Matrix JSON config fields](#matrix-json-config-fields)
-  * [matrix](#matrix)
-  * [include](#include)
-  * [exclude](#exclude)
-  * [displayNames](#displaynames)
-  * [$IMPORT](#import)
-* [Example matrix generation](#example-matrix-generation)
-* [Matrix Generation behavior](#matrix-generation-behavior)
-  * [all](#all)
-  * [sparse](#sparse)
-  * [include/exclude](#includeexclude)
-  * [Environment Variable References](#environment-variable-references)
-  * [Generated display name](#generated-display-name)
-  * [Filters](#filters)
-  * [Replace/Modify/Append](#replacemodifyappend-values)
-  * [NonSparseParameters](#nonsparseparameters)
-  * [Under the hood](#under-the-hood)
-* [Testing](#testing)
+- [Azure Pipelines Matrix Generator](#azure-pipelines-matrix-generator)
+  - [How does the matrix generator work](#how-does-the-matrix-generator-work)
+  - [How to use matrix generator from your pipeline](#how-to-use-matrix-generator-from-your-pipeline)
+    - [Matrix generator pipeline usage example](#matrix-generator-pipeline-usage-example)
+    - [Runtime matrix generation customization](#runtime-matrix-generation-customization)
+  - [Matrix config file syntax](#matrix-config-file-syntax)
+    - [Matrix syntax](#matrix-syntax)
+  - [Matrix JSON config fields](#matrix-json-config-fields)
+    - [matrix](#matrix)
+    - [include](#include)
+    - [exclude](#exclude)
+    - [displayNames](#displaynames)
+    - [$IMPORT](#import)
+  - [Example matrix generation](#example-matrix-generation)
+  - [Matrix Generation behavior](#matrix-generation-behavior)
+    - [all](#all)
+    - [sparse](#sparse)
+    - [include/exclude](#includeexclude)
+    - [Environment Variable References](#environment-variable-references)
+    - [Generated display name](#generated-display-name)
+    - [Filters](#filters)
+    - [Replace/Modify/Append Values](#replacemodifyappend-values)
+    - [NonSparseParameters](#nonsparseparameters)
+  - [Under the hood](#under-the-hood)
+  - [Testing](#testing)
 
 This directory contains scripts supporting dynamic, cross-product matrix generation for Azure Pipelines jobs.
 
@@ -111,7 +112,7 @@ To address this limitation, we introduce the [stepList](https://learn.microsoft.
 
 `PreGenerationSteps` allows users to update matrix config json however they like prior to actually invoking the matrix generation. Injected steps are run after the repository checkout, but before any matrix generation is invoked.
 
-`MatrixFilters` and `MatrixReplace` allow runtime adjustment of the matrix generation process as can be seen in the source of [GenerateMatrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/job-matrix-functions.ps1#L94-L95).  
+`MatrixFilters` and `MatrixReplace` allow runtime adjustment of the matrix generation process as can be seen in the source of [GenerateMatrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/job-matrix-functions.ps1#L94-L95).
 See also [Filters](#filters) and [Replace/Modify/Append Values](#replacemodifyappend-values).
 
 ## Matrix config file syntax
@@ -467,8 +468,8 @@ and the imported matrix has 3 elements, so the product is a matrix with 6 elemen
 
 ### all
 
-`MatrixConfigs.Selection.all` will output the full matrix, i.e. every possible combination of all parameters given.  
-The total number of combinations will be: `p1.Length * p2.Length * ... * pn.Length`,  
+`MatrixConfigs.Selection.all` will output the full matrix, i.e. every possible combination of all parameters given.
+The total number of combinations will be: `p1.Length * p2.Length * ... * pn.Length`,
 where `px.Length` denotes the number of values of `x`-th parameter.
 
 ### sparse
@@ -566,9 +567,9 @@ The top level keys are used as job names, meaning they get displayed in the azur
 
 The logic for generating display names works like this:
 
-* Join parameter values by `_`  
-    a. If the parameter value exists as a key in [`displayNames`](#displaynames) in the matrix config, replace it with that value.  
-    b. For each name value, strip all non-alphanumeric characters (excluding `_`).  
+* Join parameter values by `_`
+    a. If the parameter value exists as a key in [`displayNames`](#displaynames) in the matrix config, replace it with that value.
+    b. For each name value, strip all non-alphanumeric characters (excluding `_`).
     c. If the name is greater than 100 characters, truncate it.
 
 ### Filters
@@ -582,10 +583,10 @@ Filters support filtering for scenarios in which some parameter values are missi
 2. filter for combinations in which when a given parameter with a given key exists, it needs to have a specific value.
 
 Given the filters are regexs, to make these two scenarios possible a missing parameter is treated
-as a parameter whose key is present but value is an empty string.  
+as a parameter whose key is present but value is an empty string.
 For an example of case 1., if you want to exclude combinations that do not have parameter named `AbsentParam`
 (or, equivalently: you want to include only combinations that do have this parameter), you can create a filter
-with regex `AbsentParam=^$`.  
+with regex `AbsentParam=^$`.
 For an example of case 2., if you want to include only combinations that either have `OptionalEnumParam` set to `foo` or `bar`,
 or don't have it at all, you can include filter of form `OptionalEnumParam=foo|bar|^$`
 
@@ -628,7 +629,7 @@ For example, given a matrix config like below:
 {
   "matrix": {
     "Agent": {
-      "ubuntu-2204": { "OSVmImage": "ubuntu-22.04", "Pool": "azsdk-pool-mms-ubuntu-2204-general" }
+      "ubuntu-2204": { "OSVmImage": "ubuntu-24.04", "Pool": "azsdk-pool" }
     },
     "JavaTestVersion": [ "1.8", "1.11" ]
   }
@@ -642,13 +643,13 @@ The normal matrix output (without replacements), looks like:
 $ ./Create-JobMatrix.ps1 -ConfigPath <test> -Selection all
 {
   "ubuntu2204_18": {
-    "OSVmImage": "ubuntu-22.04",
-    "Pool": "azsdk-pool-mms-ubuntu-2204-general",
+    "OSVmImage": "ubuntu-24.04",
+    "Pool": "azsdk-pool",
     "JavaTestVersion": "1.8"
   },
   "ubuntu2204_111": {
     "OSVmImage": "ubuntu-22.04",
-    "Pool": "azsdk-pool-mms-ubuntu-2204-general",
+    "Pool": "azsdk-pool",
     "JavaTestVersion": "1.11"
   }
 }
@@ -664,13 +665,13 @@ $ $replacements = @('.*Version=1.11/2.0', 'Pool=(.*ubuntu.*)-general/$1-custom')
 $ ../Create-JobMatrix.ps1 -ConfigPath ./test.Json -Selection all -Replace $replacements
 {
   "ubuntu2204_18": {
-    "OSVmImage": "ubuntu-22.04",
-    "Pool": "azsdk-pool-mms-ubuntu-2204-custom",
+    "OSVmImage": "ubuntu-24.04",
+    "Pool": "azsdk-pool",
     "JavaTestVersion": "1.8"
   },
   "ubuntu2204_20": {
-    "OSVmImage": "ubuntu-22.04",
-    "Pool": "azsdk-pool-mms-ubuntu-2204-custom",
+    "OSVmImage": "ubuntu-24.04",
+    "Pool": "azsdk-pool",
     "JavaTestVersion": "2.0"
   }
 }
@@ -679,7 +680,7 @@ $ ../Create-JobMatrix.ps1 -ConfigPath ./test.Json -Selection all -Replace $repla
 ### NonSparseParameters
 
 Sometimes it may be necessary to generate a sparse matrix, but keep the full combination of a few parameters.
-The `MatrixConfigs` `NonSparseParameters` parameter allows for more fine-grained control of matrix generation.  
+The `MatrixConfigs` `NonSparseParameters` parameter allows for more fine-grained control of matrix generation.
 For example:
 
 ``` powershell
@@ -695,8 +696,8 @@ Given a matrix like below with `JavaTestVersion` marked as a non-sparse paramete
 {
   "matrix": {
     "Agent": {
-      "windows-2022": { "OSVmImage": "windows-2022", "Pool": "azsdk-pool-mms-win-2022-general" },
-      "ubuntu-2204": { "OSVmImage": "ubuntu-22.04", "Pool": "azsdk-pool-mms-ubuntu-2204-general" },
+      "windows-2022": { "OSVmImage": "windows-2022", "Pool": "azsdk-pool" },
+      "ubuntu-2204": { "OSVmImage": "ubuntu-24.04", "Pool": "azsdk-pool" },
       "macos-latest": { "OSVmImage": "macos-latest", "Pool": "Azure Pipelines" }
     },
     "JavaTestVersion": [ "1.8", "1.11" ],
@@ -720,7 +721,7 @@ For example, the below config would generate a 2x2x1x1x1 matrix (five-dimensiona
 "matrix": {
   "framework": [ "net461", "net6.0" ],
   "additionalTestArguments": [ "", "/p:SuperTest=true" ]
-  "pool": [ "ubuntu-22.04" ],
+  "pool": [ "ubuntu-24.04" ],
   "container": [ "ubuntu-22.04" ],
   "testMode": [ "Record" ]
 }

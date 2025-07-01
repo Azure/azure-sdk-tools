@@ -3,7 +3,11 @@
   <li>
     <div>
 {{renderStatus status}}{{#if failureType}}{{failureType}}{{else}}{{renderStatusName status}}{{/if}}
- in generating from {{config.specCommitSha}}. spec-gen-sdk {{config.version}} </div>
+ in generating from {{renderCommitLink config.specRepoHttpsUrl config.specCommitSha}}. spec-gen-sdk {{config.version}}
+    {{#if config.pullNumber}}
+      Related Pull Request {{renderPullRequestLink config.specRepoHttpsUrl config.pullNumber}}
+    {{/if}}
+    </div>
     {{#if messages}}
       {{renderMessagesUnifiedPipeline messages status}}
     {{/if}}
@@ -19,9 +23,6 @@
         {{/if}}
         {{#if (shouldRender hasBreakingChange isBetaMgmtSdk)}}
         <b>Breaking Change Detected</b> 
-          {{#if sdkSuppressionFilePath}}
-            [<a href="{{sdkSuppressionFilePath}}">Suppression File</a>]
-          {{/if}}
         {{/if}}
       </span>
     </div>

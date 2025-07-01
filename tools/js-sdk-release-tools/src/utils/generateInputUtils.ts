@@ -1,5 +1,5 @@
 import path from "path";
-import { SDKType } from "../common/types.js";
+import { SDKType, RunMode } from "../common/types.js";
 import { loadTspConfig, isMgmtPackage } from "../common/utils.js";
 import { RunningEnvironment } from "./runningEnvironment.js";
 import { exists } from "fs-extra";
@@ -22,8 +22,7 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
     }
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
     const isMgmtPackageResult = await exists(mainTspFliePath)? await isMgmtPackage(tspFolderFromSpecRoot): false;
-    const isModularLibrary = tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ?? 
-    tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'];
+    const isModularLibrary = tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'];
     if (isMgmtPackageResult) {
         return isModularLibrary?? true;
     }
@@ -53,7 +52,10 @@ export async function parseInputJson(inputJson: any) {
     const typespecProjectFolder: string[] | string | undefined = inputJson['relatedTypeSpecProjectFolder'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
-    const autorestConfig: string | undefined = inputJson['autorestConfig'];
+    const autorestConfig: string | undefined = inputJson['autorestConfig'];    
+    const runMode: string = inputJson['runMode'];
+    let apiVersion: string | undefined;
+    let sdkReleaseType: string |undefined;
     const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
     // TODO: consider remove it, since it's not defined in inputJson schema
     const skipGeneration: boolean | undefined = inputJson['skipGeneration'];
@@ -80,6 +82,16 @@ export async function parseInputJson(inputJson: any) {
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+
+    if (runMode === RunMode.Release || runMode === RunMode.Local) {
+        apiVersion = inputJson['apiVersion'];
+        sdkReleaseType = inputJson['sdkReleaseType'];
+    }
+
+    if (apiVersion && apiVersion.toLowerCase().includes('preview') && sdkReleaseType && sdkReleaseType.toLowerCase() === 'stable') {
+        throw new Error(`SDK release type must be set to 'beta' for the preview API specifications.`);
+    }
+
     return {
         sdkType,
         specFolder,
@@ -91,6 +103,9 @@ export async function parseInputJson(inputJson: any) {
         outputJson,
         skipGeneration,
         runningEnvironment,
-        typespecProject
+        typespecProject,
+        apiVersion,
+        runMode,
+        sdkReleaseType,
     };
 }

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { UserProfileService } from './_services/user-profile/user-profile.service';
 import { ConfigService } from './_services/config/config.service';
+import { ScrollBarSize } from './_models/userPreferenceModel';
 
 @Component({
   selector: 'app-root',
@@ -9,8 +11,10 @@ import { ConfigService } from './_services/config/config.service';
 })
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
+  scrollBarHeight: string = '10px';
+  scrollBarWidth: string = '10px';
 
-  constructor(private userProfileService: UserProfileService, private configService: ConfigService) { }
+  constructor(private userProfileService: UserProfileService, private configService: ConfigService, private titleService: Title) { }
 
   ngOnInit(): void {
     this.setAppTheme();
@@ -20,6 +24,17 @@ export class AppComponent  implements OnInit{
     this.userProfileService.getUserProfile().subscribe(
       (userProfile) => {
         const theme = userProfile.preferences.theme;
+        switch (userProfile.preferences.scrollBarSize) {
+          case ScrollBarSize.Medium:
+            this.scrollBarHeight = this.scrollBarWidth = '15px';
+            break;
+          case ScrollBarSize.Large:
+            this.scrollBarHeight = this.scrollBarWidth = '20px';
+            break;
+          default:
+            this.scrollBarHeight = this.scrollBarWidth = '10px';
+        }
+
         this.configService.setAppTheme(theme);
         
         const body = document.body;
@@ -55,5 +70,9 @@ export class AppComponent  implements OnInit{
     linkElement.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/${theme}.min.css`;
     linkElement.id = 'highlight-theme';
     document.head.appendChild(linkElement);
+  }
+
+  reloadPage(): void {
+    window.location.reload();
   }
 }

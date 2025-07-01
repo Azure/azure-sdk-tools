@@ -305,6 +305,12 @@ export async function generateCommand(argv: any) {
       args.push("--force");
     }
     await npmCommand(srcDir, args);
+
+    // Log all package versions for diagnostics, ignoring errors
+    try {
+      await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
+    } catch (err) {}
+
   }
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,
@@ -330,18 +336,6 @@ export async function generateCommand(argv: any) {
 
   if (!success) {
     Logger.error("Failed to generate client");
-    process.exit(1);
-  }
-}
-
-export async function compareCommand(argv: any, args: string[]) {
-  let outputDir = argv["output-dir"];
-  const openApiDiffPath = await getPathToDependency("@azure-tools/rest-api-diff");
-  const command = [openApiDiffPath, ...args];
-  try {
-    await nodeCommand(outputDir, command);
-  } catch (err) {
-    Logger.error(`Error occurred while attempting to compare: ${err}`);
     process.exit(1);
   }
 }

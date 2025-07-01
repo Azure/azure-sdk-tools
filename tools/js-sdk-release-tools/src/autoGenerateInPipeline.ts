@@ -5,10 +5,9 @@ import { generateMgmt } from './hlc/generateMgmt.js';
 import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules.js';
 import { logger } from './utils/logger.js';
 import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline.js';
-import { ModularClientPackageOptions, SDKType } from './common/types.js';
+import { ModularClientPackageOptions, SDKType, RunMode } from './common/types.js';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
 import { parseInputJson } from './utils/generateInputUtils.js';
-
 import shell from 'shelljs';
 import fs from 'fs';
 
@@ -17,8 +16,7 @@ async function automationGenerateInPipeline(
     outputJsonPath: string,
     use: string | undefined,
     typespecEmitter: string | undefined,
-    sdkGenerationType: string | undefined,
-    local: boolean
+    sdkGenerationType: string | undefined
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
@@ -32,9 +30,13 @@ async function automationGenerateInPipeline(
         skipGeneration,
         runningEnvironment,
         typespecProject,
-        autorestConfig
+        autorestConfig,        
+        apiVersion,
+        runMode,
+        sdkReleaseType,
     } = await parseInputJson(inputJson);
 
+    const local = runMode === RunMode.Local;
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
@@ -51,10 +53,13 @@ async function automationGenerateInPipeline(
                     swaggerRepoUrl: repoHttpsUrl,
                     downloadUrlPrefix: downloadUrlPrefix,
                     skipGeneration: skipGeneration,
-                    runningEnvironment: runningEnvironment
+                    runningEnvironment: runningEnvironment,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
             case SDKType.RestLevelClient:
+                // RLC + swagger is not supported.
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
@@ -68,7 +73,9 @@ async function automationGenerateInPipeline(
                     sdkGenerationType: sdkGenerationType === 'command' ? 'command' : 'script',
                     runningEnvironment: runningEnvironment,
                     swaggerRepoUrl: repoHttpsUrl,
-                    gitCommitId: gitCommitId
+                    gitCommitId: gitCommitId,
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
                 });
                 break;
 
@@ -86,7 +93,10 @@ async function automationGenerateInPipeline(
                     repoUrl,
                     local,
                     // support MPG for now
-                    versionPolicyName: 'management'
+                    versionPolicyName: 'management',
+                    apiVersion: apiVersion,
+                    sdkReleaseType: sdkReleaseType,
+                    runMode: runMode as RunMode,
                 };
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
@@ -123,7 +133,7 @@ const optionDefinitions = [
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local ?? false).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

@@ -49,6 +49,9 @@ coverage.xml
 .pytest_cache/
 testResult*.xml
 
+# Coverage directory used by "vitest"
+coverage
+
 # Translations
 *.mo
 *.pot
@@ -518,3 +521,6 @@ tools/apiview/emitters/typespec-apiview/temp/
 # Issue Labeler Deploy
 tools/issue-labeler/src/IssueLabeler/Properties/*Zip Deploy.json
 tools/issue-labeler/src/IssueLabeler/Properties/ServiceDependencies/
+
+# Go Parser
+apiviewgo.exe

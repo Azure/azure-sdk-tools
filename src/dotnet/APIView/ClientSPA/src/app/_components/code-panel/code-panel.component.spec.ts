@@ -68,7 +68,7 @@ describe('CodePanelComponent', () => {
 
       component.codePanelRowData = [codePanelRowData1, codePanelRowData2];
 
-      component.copyReviewTextToClipBoard();
+      component.copyReviewTextToClipBoard(false);
 
       expect(clipboardSpy).toHaveBeenCalledWith('\ttoken1token2\ntoken3');
     });
@@ -76,7 +76,7 @@ describe('CodePanelComponent', () => {
     it('should handle empty codePanelRowData', () => {
       component.codePanelRowData = [];
 
-      component.copyReviewTextToClipBoard();
+      component.copyReviewTextToClipBoard(false);
 
       expect(clipboardSpy).toHaveBeenCalledWith('');
     });
@@ -90,7 +90,7 @@ describe('CodePanelComponent', () => {
       codePanelRowData2.rowOfTokens = [token1];
       component.codePanelRowData = [codePanelRowData1, codePanelRowData2];
 
-      component.copyReviewTextToClipBoard();
+      component.copyReviewTextToClipBoard(false);
 
       expect(clipboardSpy).toHaveBeenCalledWith('token1');
     });
@@ -111,7 +111,7 @@ describe('CodePanelComponent', () => {
 
       component.codePanelRowData = [codePanelRowData1, codePanelRowData2];
 
-      component.copyReviewTextToClipBoard();
+      component.copyReviewTextToClipBoard(false);
 
       expect(clipboardSpy).toHaveBeenCalledWith('\ttoken1\ntoken2');
     });

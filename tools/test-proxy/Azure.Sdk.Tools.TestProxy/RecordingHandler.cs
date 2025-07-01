@@ -183,22 +183,28 @@ namespace Azure.Sdk.Tools.TestProxy
                 else
                 {
                     // Create directories above file if they don't already exist
-                    var directory = Path.GetDirectoryName(recordingSession.Path);
-                    if (!String.IsNullOrEmpty(directory))
-                    {
-                        Directory.CreateDirectory(directory);
-                    }
-
-                    using var stream = System.IO.File.Create(recordingSession.Path);
-                    var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
-                    var writer = new Utf8JsonWriter(stream, options);
-                    recordingSession.Session.Serialize(writer);
-                    writer.Flush();
-                    stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
+                    WriteToDisk(recordingSession);
                 }
             }
 
             DebugLogger.LogTrace($"RECORD STOP END {id}.");
+        }
+
+        public void WriteToDisk(ModifiableRecordSession recordingSession)
+        {
+            // Create directories above file if they don't already exist
+            var directory = Path.GetDirectoryName(recordingSession.Path);
+            if (!String.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            using var stream = System.IO.File.Create(recordingSession.Path);
+            var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
+            var writer = new Utf8JsonWriter(stream, options);
+            recordingSession.Session.Serialize(writer);
+            writer.Flush();
+            stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
         }
 
         /// <summary>
@@ -295,7 +301,6 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
             }
-
             entry.Response.Body = body.Length == 0 ? null : body;
             entry.StatusCode = (int)upstreamResponse.StatusCode;
 
@@ -590,6 +595,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         outgoingResponse.ContentLength = bodyData.Length;
                     }
                     session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Beginning body write for {recordingId}."));
+
                     await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
                 }
 
@@ -1037,7 +1043,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     foreach (var sanitizer in sanitizers)
                     {
                         session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
-                        await SanitizerRegistry.Register(session, sanitizer, shouldLock: false);
+                        registrations.Add(await SanitizerRegistry.Register(session, sanitizer, shouldLock: false));
                     }
                 }
                 finally

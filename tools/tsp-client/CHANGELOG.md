@@ -1,8 +1,21 @@
 # Release
 
-## 2025-04-21 - 0.21.0
+## 2025-07-03 - 0.24.0
 
 - Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.
+
+## 2025-06-25 - 0.23.0
+
+- Removed `tsp-client compare` command.
+- Log npm package versions after install.
+
+## 2025-06-13 - 0.22.0
+
+- Add support for emitter options of `object` type.
+
+## 2025-05-01 - 0.21.0
+
+- Update `@typespec/compiler` dependency to `"1.0.0-rc.1 || >=1.0.0 <2.0.0"`.
 
 ## 2025-04-10 - 0.20.0
 

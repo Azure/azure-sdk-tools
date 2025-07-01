@@ -66,19 +66,19 @@ extends:
                 inputs:
                   azureSubscription: 'azuresdkpartnerdrops - Storage Partner Drops'
                   ScriptType: 'InlineScript'
-                  azurePowerShellVersion: LatestVersion 
+                  azurePowerShellVersion: LatestVersion
                   pwsh: true
                   Inline: |
                     echo "azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true"
                     azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
                     $copiedFiles = (dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName })
                     echo "Copied files: $copiedFiles"
-                    if (!$copiedFiles) { 
+                    if (!$copiedFiles) {
                       echo "Failed to copy any files from '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' please double check they exist"
                       exit 1
-                    }            
-                env: 
-                  AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'     
+                    }
+                env:
+                  AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
 
               - ${{ if eq(parameters.ShouldSign, true) }}:
                 - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools
@@ -92,7 +92,7 @@ extends:
                     BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
                     PackagesPath: ${{ parameters.ArtifactsPath }}
                     StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
-        
+
           - ${{ if eq(parameters.ShouldPublish, true) }}:
             - deployment: PublishPackage
               displayName: Publish package to Nuget.org and DevOps Feed
@@ -101,9 +101,9 @@ extends:
               dependsOn: SigningAndSymbols
 
               pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
-                os: linux
+                name: azsdk-pool
+                image: windows-2022 # Nuget publish requires .NET framework on windows to handle the auth
+                os: windows
 
               templateContext:
                 type: releaseJob  # Required, this indicates this deployment job is a release job

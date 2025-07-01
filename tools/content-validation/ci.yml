@@ -28,12 +28,12 @@ extends:
     ToolDirectory: tools/content-validation
     ReleaseBinaries: true
     TestPreSteps:
-    #   - task: DotNetCoreCLI@2
-    #     displayName: New Manifest for tool
-    #     inputs:
-    #       command: custom
-    #       custom: 'new '
-    #       arguments: tool-manifest
+      - task: DotNetCoreCLI@2
+        displayName: New Manifest for tool
+        inputs:
+          command: custom
+          custom: 'new '
+          arguments: tool-manifest
 
       - task: DotNetCoreCLI@2
         displayName: Install Playwright CLI

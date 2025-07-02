@@ -154,6 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             string? repo = null,
             bool skipInstall = false,
             string? emitterOptions = null,
+            string? emitterPackageJsonPath = null,
             bool saveInputs = false,
             bool debug = false)
         {
@@ -189,6 +190,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                 AddOptionalArg(args, "--commit", commit);
                 AddOptionalArg(args, "--repo", repo);
                 AddOptionalArg(args, "--emitter-options", emitterOptions);
+                AddOptionalArg(args, "--emitter-package-json-path", emitterPackageJsonPath);
 
                 if (skipSyncAndGenerate) args.Add("--skip-sync-and-generate");
                 if (skipInstall) args.Add("--skip-install");
@@ -355,6 +357,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             string? commit = null,
             string? repo = null,
             string? emitterOptions = null,
+            string? emitterPackageJsonPath = null,
             bool debug = false)
         {
             try
@@ -365,7 +368,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
 
                 // Step 1: Initialize
                 logger.LogInformation("Starting tsp-client full workflow - Step 1: Initialize");
-                var initResult = await InitializeProject(tspConfigPath, outputDir, false, localSpecRepo, commit, repo, false, emitterOptions, false, debug);
+                var initResult = await InitializeProject(tspConfigPath, outputDir, false, localSpecRepo, commit, repo, false, emitterOptions, emitterPackageJsonPath, false, debug);
                 if (!string.IsNullOrEmpty(initResult.ResponseError))
                 {
                     return new DefaultCommandResponse
@@ -434,10 +437,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             var repo = ctx.ParseResult.GetValueForOption(repoOpt);
             var skipInstall = ctx.ParseResult.GetValueForOption(skipInstallOpt);
             var emitterOptions = ctx.ParseResult.GetValueForOption(emitterOptionsOpt);
+            var emitterPackageJsonPath = ctx.ParseResult.GetValueForOption(emitterPackageJsonPathOpt);
             var saveInputs = ctx.ParseResult.GetValueForOption(saveInputsOpt);
             var debug = ctx.ParseResult.GetValueForOption(debugOpt);
 
-            return await InitializeProject(tspConfig!, outputDir, skipSyncAndGenerate, localSpecRepo, commit, repo, skipInstall, emitterOptions, saveInputs, debug);
+            return await InitializeProject(tspConfig!, outputDir, skipSyncAndGenerate, localSpecRepo, commit, repo, skipInstall, emitterOptions, emitterPackageJsonPath, saveInputs, debug);
         }
 
         private async Task<DefaultCommandResponse> ExecuteUpdateCommand(InvocationContext ctx)

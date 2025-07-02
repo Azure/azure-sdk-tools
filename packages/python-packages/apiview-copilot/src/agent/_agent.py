@@ -16,7 +16,7 @@ from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 load_dotenv(override=True)
 
 
-async def invoke_agent(agent, user_input, thread_id=None, messages=None):
+async def invoke_agent(*, agent, user_input, thread_id=None, messages=None):
     messages = messages or []
     # Only append user_input if not already the last message
     if not messages or messages[-1] != user_input:
@@ -91,7 +91,7 @@ def create_kernel() -> Kernel:
 
 
 @asynccontextmanager
-async def get_mention_agent(comments: ExistingComment, auth: str):
+async def get_mention_agent(*, comments: ExistingComment, auth: str):
     # TODO: handle auth properly
 
     ai_agent_settings = AzureAIAgentSettings(

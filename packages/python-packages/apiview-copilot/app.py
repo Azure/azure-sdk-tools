@@ -184,7 +184,7 @@ async def agent_chat_thread_endpoint(request: AgentChatRequest):
     try:
         async with get_main_agent() as agent:
             response, thread_id_out, messages = await invoke_agent(
-                agent, request.user_input, thread_id=request.thread_id, messages=request.messages
+                agent=agent, user_input=request.user_input, thread_id=request.thread_id, messages=request.messages
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
     except AgentInvokeException as e:
@@ -249,7 +249,7 @@ async def handle_mention(request: MentionRequest):
     try:
         async with get_mention_agent(comments=request.comments, auth=request.headers.get("Authorization")) as agent:
             response, thread_id_out, messages = await invoke_agent(
-                agent, "Please handle this feedback.", thread_id=request.thread_id
+                agent=agent, user_input="Please handle this feedback.", thread_id=request.thread_id
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
     except AgentInvokeException as e:

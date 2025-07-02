@@ -16,16 +16,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
 {
     [Description("Tools for generating SDKs using tsp-client from TypeSpec projects")]
     [McpServerToolType]
-    public class TspClientTool : MCPTool
+    public class TspClientTool(ILogger<TspClientTool> logger, IOutputService output, ITypeSpecHelper typeSpecHelper) : MCPTool
     {
-        private readonly ILogger<TspClientTool> logger;
-        private readonly IOutputService output;
-        private readonly ITypeSpecHelper typeSpecHelper;
-
         private const string initCommandName = "init";
         private const string updateCommandName = "update";
         private const string syncCommandName = "sync";
         private const string generateCommandName = "generate";
+
+        public new CommandGroup[] CommandHierarchy { get; set; } = [
+            new CommandGroup("tsp-client", "TypeSpec client library generation using tsp-client")
+        ];
 
         // Common options
         private readonly Option<string> outputDirOpt = new(["--output-dir", "-o"], "Specify an alternate output directory for the generated files") { };
@@ -43,18 +43,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
         private readonly Option<bool> skipInstallOpt = new(["--skip-install"], "Skip installing dependencies") { };
         private readonly Option<string> emitterPackageJsonPathOpt = new(["--emitter-package-json-path"], "Alternate path for emitter-package.json file") { };
         private readonly Option<string[]> traceOpt = new(["--trace"], "Enable tracing during compile") { };
-
-        public TspClientTool(ILogger<TspClientTool> logger, IOutputService output, ITypeSpecHelper typeSpecHelper) : base()
-        {
-            this.logger = logger;
-            this.output = output;
-            this.typeSpecHelper = typeSpecHelper;
-            
-            CommandHierarchy =
-            [
-                new CommandGroup("tsp-client", "TypeSpec client library generation using tsp-client")
-            ];
-        }
 
         public override Command GetCommand()
         {
@@ -307,7 +295,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
         }
 
         [McpServerTool(Name = "validate-typespec-project"), Description("Validate if a path contains a valid TypeSpec project")]
-        public DefaultCommandResponse ValidateTypeSpecProject(string projectPath)
+        public DefaultCommandResponse ValidateTypeSpecProject(string? projectPath)
         {
             try
             {
@@ -517,8 +505,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                 // Check if tsp-client is available
                 if (!await IsTspClientAvailable())
                 {
-                    var earlyDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-                    return (false, "tsp-client is not installed or not available in PATH. Please install it using: npm install -g @azure-tools/typespec-client-generator-cli", earlyDuration);
+                    var commandDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
+                    return (false, "tsp-client is not installed or not available in PATH. Please install it using: npm install -g @azure-tools/typespec-client-generator-cli", commandDuration);
                 }
 
                 using var process = new Process
@@ -592,10 +580,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             }
             catch (Exception ex)
             {
-                var duration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
+                var exceptionDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
                 logger.LogError(ex, "Failed to execute tsp-client command");
                 SetFailure(1);
-                return (false, ex.Message, duration);
+                return (false, ex.Message, exceptionDuration);
             }
         }
 

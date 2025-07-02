@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -94,7 +95,7 @@ namespace APIViewWeb.Managers
         }
 
         private static readonly Regex azureSdkAgentTag =
-            new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.BotName)}\b",
+            new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.AzureSdkBotName)}\b",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public bool IsApiViewAgentTagged(CommentItemModel comment, out string commentTextWithIdentifiedTags)
         {
@@ -102,7 +103,7 @@ namespace APIViewWeb.Managers
 
             commentTextWithIdentifiedTags = azureSdkAgentTag.Replace(
                 comment.CommentText,
-                m => $"{m.Groups[1].Value}**@{ApiViewConstants.BotName}**"
+                m => $"{m.Groups[1].Value}**@{ApiViewConstants.AzureSdkBotName}**"
             );
 
             return isTagged;
@@ -185,20 +186,21 @@ namespace APIViewWeb.Managers
             ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
             if (!IsUserAllowedToChatWithAgent(user, review.Language))
             {
-                 var notification = new NotificationModel
-                 {
-                     Message =
-                         "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature",
-                     Level = NotificatonLevel.Error
-                 };
+                await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveNotification",
+                    new SiteNotificationDto()
+                    {
+                        ReviewId = comment.ReviewId,
+                        RevisionId = comment.APIRevisionId,
+                        Title = "Agent Interaction Restricted",
+                        Summary = "You are not authorized to interact with the agent.",
+                        Message =
+                            "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature",
+                        Status = SiteNotificationStatus.Error
+                    });
 
-                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin())
-                     .SendAsync("RecieveNotification", notification);
-
-                 return;
+                return;
             }
 
-            string response;
             try
             {
                 IEnumerable<CommentItemModel> threadComments =
@@ -206,29 +208,11 @@ namespace APIViewWeb.Managers
 
                 var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeRevisionId);
                 var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
-                var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
+                List<ApiViewComment> commentsForAgent =
+                    AgentHelpers.BuildCommentsForAgent(threadComments, activeCodeFile);
 
-                Dictionary<string, int> elementIdToLineNumber = activeCodeLines
-                    .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
-                    .Where(x => !string.IsNullOrEmpty(x.lineId))
-                    .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
-
-                List<ApiViewComment> commentsForAgent = threadComments
-                    .Select(threadComment => new ApiViewComment
-                    {
-                        LineNumber = elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
-                        CreatedOn = threadComment.CreatedOn,
-                        Upvotes = threadComment.Upvotes.Count,
-                        Downvotes = threadComment.Downvotes.Count,
-                        CreatedBy = threadComment.CreatedBy,
-                        CommentText = threadComment.CommentText,
-                        IsResolved = threadComment.IsResolved
-                    })
-                    .ToList();
-
-                var client = _httpClientFactory.CreateClient();
-                var payload = new Dictionary<string, object> { { "comments", commentsForAgent } };
                 string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
+                var payload = new Dictionary<string, object> { { "comments", commentsForAgent } };
                 var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
                 {
                     Content = new StringContent(
@@ -237,27 +221,35 @@ namespace APIViewWeb.Managers
                         "application/json")
                 };
 
+                //TODO: Set a real token here
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "");
 
-                //var clientResponse = await client.SendAsync(request);
-                //clientResponse.EnsureSuccessStatusCode();
-                
+                //var client = _httpClientFactory.CreateClient();
+                // var clientResponse = await client.SendAsync(request);
+                // clientResponse.EnsureSuccessStatusCode();
 
-                response = "Agent integration is not currently available.";
+                string response = "Agent integration is not currently available";
+                await AddAgentComment(comment, response);
             }
             catch
             {
-                var notification = new NotificationModel
-                {
-                    Message = "An error occurred while attempting to contact the agent service",
-                    Level = NotificatonLevel.Error
-                };
-
                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin())
-                    .SendAsync("RecieveNotification", notification);
-                return;
+                    .SendAsync("ReceiveNotification",
+                        new SiteNotificationDto()
+                        {
+                            ReviewId = comment.ReviewId,
+                            RevisionId = comment.APIRevisionId,
+                            Title = "Agent Service Unavailable",
+                            Summary = "The agent service could not be reached.",
+                            Message =
+                                "We were unable to connect to the agent service at this time. Please try again later.",
+                            Status = SiteNotificationStatus.Error
+                        });
             }
+        }
 
+        private async Task AddAgentComment (CommentItemModel comment, string response)
+        {
             var commentResult = new CommentItemModel
             {
                 ReviewId = comment.ReviewId,
@@ -266,12 +258,24 @@ namespace APIViewWeb.Managers
                 ElementId = comment.ElementId,
                 CommentText = response,
                 ResolutionLocked = false,
-                CreatedBy = ApiViewConstants.BotName,
+                CreatedBy = ApiViewConstants.AzureSdkBotName,
                 CreatedOn = DateTime.UtcNow,
-                CommentType = CommentType.SampleRevision
+                CommentType = CommentType.APIRevision
             };
 
             await _commentsRepository.UpsertCommentAsync(commentResult);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
+                new CommentUpdatesDto()
+                {
+                    CommentThreadUpdateAction = CommentThreadUpdateAction.CommentCreated,
+                    NodeId = commentResult.ElementId,
+                    CommentId = commentResult.Id,
+                    RevisionId = commentResult.APIRevisionId,
+                    ReviewId = commentResult.ReviewId,
+                    CommentText = commentResult.CommentText,
+                    ElementId = commentResult.ElementId,
+                    Comment = commentResult
+                });
         }
 
         private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, string language)

@@ -67,7 +67,7 @@ namespace APIViewWeb.Models
         public int Upvotes { get; set; }
         [JsonPropertyName("downvotes")]
         public int Downvotes { get; set; }
-        [JsonPropertyName("author")]
+        [JsonPropertyName("createdBy")]
         public string CreatedBy { get; set; }
         [JsonPropertyName("comment")]
         public string CommentText { get; set; }

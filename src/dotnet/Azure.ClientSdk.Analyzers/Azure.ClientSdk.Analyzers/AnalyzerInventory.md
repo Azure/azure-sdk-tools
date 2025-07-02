@@ -32,7 +32,7 @@ The following table lists analyzer rules that apply to general client libraries 
 | Rule Code | Analyzer | Scenario | Error Message | Actionability Assessment |
 |-----------|----------|----------|---------------|-------------------------|
 | AZC0008 | ClientOptionsAnalyzer | ServiceVersion enum requirement | "Client type should have a nested enum called ServiceVersion" | **Actionable** - Specific requirement to add ServiceVersion enum |
-| AZC0012 | TypeNameAnalyzer | Single word type names | "Single word class names are too generic and have high chance of collision with BCL types or types from other libraries" | **Relying on Location Context** - Generic message, doesn't specify which specific type name is problematic |
+| AZC0012 | TypeNameAnalyzer | Single word type names | "Type name '{0}' is too generic and has high chance of collision with BCL types or types from other libraries. Consider using a more descriptive multi-word name." | **Actionable** - Identifies specific type name and provides clear guidance |
 | AZC0013 | TaskCompletionSourceAnalyzer | TaskCreationOptions.RunContinuationsAsynchronously | "All the task's continuations are executed synchronously unless TaskCreationOptions.RunContinuationsAsynchronously option is specified. This may cause deadlocks and other threading issues if all \"async\" continuations have to run in the thread that sets the result of a task." | **Actionable** - Explains the problem and provides specific solution |
 | AZC0030 | GeneralSuffixAnalyzer | Model naming suffix issues | "Model name '{0}' ends with '{1}'. Suggest to rename it to {2} or any other appropriate name." | **Actionable** - Identifies the specific model name, problematic suffix, and provides suggested alternatives |
 | AZC0034 | DuplicateTypeNameAnalyzer | Type name conflicts | "Type name '{0}' conflicts with '{1}'. Consider renaming to avoid confusion." | **Actionable** - Identifies the specific conflicting type names |
@@ -84,7 +84,7 @@ Analyzer rules that are specifically restricted to Azure.ResourceManager librari
 - **AZC0032** (DataSuffixAnalyzer): Data suffix validation with ResourceData/TrackedResourceData exceptions  
 - **AZC0033** (OperationSuffixAnalyzer): Operation suffix validation with Azure.Operation exceptions
 
-### Client Analyzer Rules (12 rules)
+### Client Analyzer Rules (13 rules)
 Analyzer rules that apply to general client libraries and provide specific context in their error messages:
 - Client method design patterns (AZC0008, AZC0013, AZC0030 GeneralSuffixAnalyzer)
 - Type naming and conflict resolution (AZC0012, AZC0034)
@@ -92,7 +92,7 @@ Analyzer rules that apply to general client libraries and provide specific conte
 - Async/await best practices (AZC0101, AZC0102, AZC0103, AZC0104, AZC0108)
 - Internal type usage (AZC0112)
 
-### Other Analyzer Rules Relying on Location Context (23 rules)
+### Other Analyzer Rules Relying on Location Context (22 rules)
 Analyzer rules with generic error messages that depend on IDE location highlighting to identify which specific code element needs attention.
 
 ### Key Insight on Actionability
@@ -105,8 +105,8 @@ Rules that rely solely on IDE location highlighting, while useful in development
 
 ### Actionability by Category
 - **Management Rules**: 4/4 (100%) provide specific context
-- **Client Rules**: 12/12 (100%) provide specific context  
-- **Other Rules**: 1/23 (4%) provide specific context (AZC0003 recently improved)
+- **Client Rules**: 13/13 (100%) provide specific context  
+- **Other Rules**: 1/22 (5%) provide specific context (AZC0003 recently improved)
 
 This shows that the specialized Management and Client analyzer rules are well-designed with actionable messages, while the general analyzer rules still need improvement to include specific context.
 
@@ -133,7 +133,7 @@ This shows that the specialized Management and Client analyzer rules are well-de
 
 - **Total Analyzer Rules**: 39
 - **Management Analyzer Rules**: 4 (10%)
-- **Client Analyzer Rules**: 12 (31%)
-- **Other Rules Relying on Location Context**: 23 (59%)
+- **Client Analyzer Rules**: 13 (33%)
+- **Other Rules Relying on Location Context**: 22 (56%)
 - **Total Analyzer Classes**: 19
 - **Coverage Areas**: Client design, async patterns, naming, type safety, AOT compatibility, ResourceManager-specific patterns

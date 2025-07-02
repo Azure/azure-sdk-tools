@@ -25,7 +25,7 @@ namespace Azure.ClientSdk.Analyzers
             {
                 foreach (var location in namedTypeSymbol.Locations)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0012, location, context.Symbol), context.Symbol);
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0012, location, namedTypeSymbol.Name), context.Symbol);
                 }
             }
         }

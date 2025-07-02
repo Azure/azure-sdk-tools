@@ -3951,20 +3951,143 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         return node
 
     def test_bad_logging_exception(self, setup):
-        function_node = setup.body[1].handlers[0].body[0].value
+        function_node = setup.body[4].handlers[0].body[0].value
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-logging-exception",
-                line=6,
+                line=11,
                 node=function_node,
                 col_offset=4,
-                end_line=6,
+                end_line=11,
                 end_col_offset=35,
             )
         ):
             self.checker.visit_call(function_node)
 
     def test_ignores_correct_logging(self, setup):
-        function_node = setup.body[1].handlers[0].body[1].value
+        function_node = setup.body[4].handlers[0].body[3].value
         with self.assertNoMessages():
             self.checker.visit_call(function_node)
+
+    def test_flags_logging_module_exception(self, setup):
+        # Visit assignments first to track logger variables
+        for assign_node in setup.nodes_of_class(astroid.Assign):
+            self.checker.visit_assign(assign_node)
+        
+        # Test logging.exception() call - should be flagged
+        logging_exception_call = None
+        for call_node in setup.nodes_of_class(astroid.Call):
+            if (hasattr(call_node.func, 'attrname') and 
+                call_node.func.attrname == 'exception' and
+                hasattr(call_node.func, 'expr') and
+                hasattr(call_node.func.expr, 'name') and
+                call_node.func.expr.name == 'logging'):
+                logging_exception_call = call_node
+                break
+        
+        assert logging_exception_call is not None, "Could not find logging.exception() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-exception",
+                node=logging_exception_call,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(logging_exception_call)
+
+    def test_flags_logger_variable_exception(self, setup):
+        # Visit assignments first to track logger variables
+        for assign_node in setup.nodes_of_class(astroid.Assign):
+            self.checker.visit_assign(assign_node)
+        
+        # Test logger.exception() call - should be flagged
+        logger_exception_call = None
+        for call_node in setup.nodes_of_class(astroid.Call):
+            if (hasattr(call_node.func, 'attrname') and 
+                call_node.func.attrname == 'exception' and
+                hasattr(call_node.func, 'expr') and
+                hasattr(call_node.func.expr, 'name') and
+                call_node.func.expr.name == 'logger'):
+                logger_exception_call = call_node
+                break
+        
+        assert logger_exception_call is not None, "Could not find logger.exception() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-exception",
+                node=logger_exception_call,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(logger_exception_call)
+
+    def test_flags_my_log_variable_exception(self, setup):
+        # Visit assignments first to track logger variables
+        for assign_node in setup.nodes_of_class(astroid.Assign):
+            self.checker.visit_assign(assign_node)
+        
+        # Test my_log.exception() call - should be flagged (assigned from logging.getLogger)
+        my_log_exception_call = None
+        for call_node in setup.nodes_of_class(astroid.Call):
+            if (hasattr(call_node.func, 'attrname') and 
+                call_node.func.attrname == 'exception' and
+                hasattr(call_node.func, 'expr') and
+                hasattr(call_node.func.expr, 'name') and
+                call_node.func.expr.name == 'my_log'):
+                my_log_exception_call = call_node
+                break
+        
+        assert my_log_exception_call is not None, "Could not find my_log.exception() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-exception",
+                node=my_log_exception_call,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(my_log_exception_call)
+
+    def test_ignores_task_exception(self, setup):
+        # Visit assignments first to track logger variables
+        for assign_node in setup.nodes_of_class(astroid.Assign):
+            self.checker.visit_assign(assign_node)
+        
+        # Test task.exception() call - should NOT be flagged
+        task_exception_call = None
+        for call_node in setup.nodes_of_class(astroid.Call):
+            if (hasattr(call_node.func, 'attrname') and 
+                call_node.func.attrname == 'exception' and
+                hasattr(call_node.func, 'expr') and
+                hasattr(call_node.func.expr, 'name') and
+                call_node.func.expr.name == 'task'):
+                task_exception_call = call_node
+                break
+        
+        assert task_exception_call is not None, "Could not find task.exception() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(task_exception_call)
+
+    def test_ignores_future_exception(self, setup):
+        # Visit assignments first to track logger variables
+        for assign_node in setup.nodes_of_class(astroid.Assign):
+            self.checker.visit_assign(assign_node)
+        
+        # Test future.exception() call - should NOT be flagged
+        future_exception_call = None
+        for call_node in setup.nodes_of_class(astroid.Call):
+            if (hasattr(call_node.func, 'attrname') and 
+                call_node.func.attrname == 'exception' and
+                hasattr(call_node.func, 'expr') and
+                hasattr(call_node.func.expr, 'name') and
+                call_node.func.expr.name == 'future'):
+                future_exception_call = call_node
+                break
+        
+        assert future_exception_call is not None, "Could not find future.exception() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(future_exception_call)

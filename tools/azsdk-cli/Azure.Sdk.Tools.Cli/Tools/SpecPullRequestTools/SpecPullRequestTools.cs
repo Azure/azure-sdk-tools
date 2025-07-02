@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
         private readonly Option<string> titleOpt = new(["--title"], "Title for the pull request") { IsRequired = true };
         private readonly Option<string> descriptionOpt = new(["--description"], "Description for the pull request") { IsRequired = true };
+        private readonly Option<bool> draftOpt = new(["--draft"], () => true, "Create pull request as draft (default: true)");
         private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch for the pull request") { IsRequired = false };
         private readonly Option<int> pullRequestNumberOpt = new(["--pr"], "Pull request number") { IsRequired = true };
         private readonly Option<string> repoOwnerOpt = new(["--repo-owner"], () => "Azure", "GitHub repo owner") { IsRequired = false };
@@ -113,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool, Description("Create pull request for spec changes. Provide title, description and absolute path to TypeSpec project root as params. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main")
+        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main", bool draft = true)
         {
             try
             {
@@ -136,8 +137,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
                     logger.LogInformation($"Creating pull request in {REPO_OWNER}:{REPO_NAME}");
                     //Create pull request
-                    var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
+                    var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description, draft);
                     results.AddRange(createResponseList);
+                    
+                    // Add informational message about draft mode and transitioning to ready
+                    if (draft)
+                    {
+                        results.Add("");
+                        results.Add("📝 Your pull request has been created in draft mode by default.");
+                        results.Add("🚀 After you successfully generate the SDK, you should mark your spec PR as 'Ready for review' to proceed with the review process.");
+                        results.Add("   You can do this by clicking 'Ready for review' button in the GitHub UI or using GitHub CLI:");
+                        results.Add("   gh pr ready <pr-number>");
+                    }
+                    
                     return results;
                 }
                 catch (Exception ex)
@@ -214,7 +226,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var subCommands = new[] {
                 new Command(checkIfSpecInPublicRepoCommandName, "Check if API spec is in public repo") { typeSpecProjectPathOpt },
                 new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { typeSpecProjectPathOpt },
-                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, typeSpecProjectPathOpt, targetBranchOpt },
+                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, typeSpecProjectPathOpt, targetBranchOpt, draftOpt },
                 new Command(getPullRequestCommandName, "Get pull request details") { pullRequestNumberOpt, repoOwnerOpt, repoNameOpt }
             };
 
@@ -245,7 +257,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var description = commandParser.GetValueForOption(descriptionOpt);
                     var typeSpecProject = commandParser.GetValueForOption(typeSpecProjectPathOpt);
                     var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
-                    var createPullRequestResponse = await CreatePullRequest(title, description, typeSpecProject, targetBranch);
+                    var draft = commandParser.GetValueForOption(draftOpt);
+                    var createPullRequestResponse = await CreatePullRequest(title, description, typeSpecProject, targetBranch, draft);
                     logger.LogInformation("Create pull request response: {createPullRequestResponse}", createPullRequestResponse);
                     return 0;
                 case getPullRequestCommandName:

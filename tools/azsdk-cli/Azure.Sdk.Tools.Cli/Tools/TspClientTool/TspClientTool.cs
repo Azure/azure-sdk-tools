@@ -5,6 +5,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -500,67 +501,40 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             
             try
             {
-                logger.LogInformation("Executing tsp-client with args: {Args}", string.Join(" ", args));
+                logger.LogInformation("Executing npx @azure-tools/typespec-client-generator-cli with args: {Args}", string.Join(" ", args));
 
-                // Check if tsp-client is available
+                // Check if npx and the package are available
                 if (!await IsTspClientAvailable())
                 {
                     var commandDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-                    return (false, "tsp-client is not installed or not available in PATH. Please install it using: npm install -g @azure-tools/typespec-client-generator-cli", commandDuration);
+                    return (false, "npx or @azure-tools/typespec-client-generator-cli is not available. Please ensure Node.js and npm are installed.", commandDuration);
                 }
 
-                using var process = new Process
+                var arguments = string.Join(" ", args.Select(arg => arg.Contains(" ") ? $"\"{arg}\"" : arg));
+                
+                string output;
+                var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                if (isWindows)
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "tsp-client",
-                        Arguments = string.Join(" ", args.Select(arg => arg.Contains(" ") ? $"\"{arg}\"" : arg)),
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    }
-                };
-
-                var outputBuilder = new StringBuilder();
-                var errorBuilder = new StringBuilder();
-
-                process.OutputDataReceived += (sender, e) =>
+                    output = RunProcess("cmd.exe", $"/C npx @azure-tools/typespec-client-generator-cli {arguments}", Environment.CurrentDirectory);
+                }
+                else
                 {
-                    if (e.Data != null)
-                    {
-                        outputBuilder.AppendLine(e.Data);
-                        logger.LogInformation("tsp-client output: {Output}", e.Data);
-                    }
-                };
-
-                process.ErrorDataReceived += (sender, e) =>
-                {
-                    if (e.Data != null)
-                    {
-                        errorBuilder.AppendLine(e.Data);
-                        logger.LogWarning("tsp-client error: {Error}", e.Data);
-                    }
-                };
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                await process.WaitForExitAsync();
+                    output = RunProcess("npx", $"@azure-tools/typespec-client-generator-cli {arguments}", Environment.CurrentDirectory);
+                }
 
                 var duration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-                var success = process.ExitCode == 0;
+                var success = !output.Contains("failed") && !output.Contains("error");
 
                 if (!success)
                 {
-                    SetFailure(process.ExitCode);
-                    var errorMessage = errorBuilder.Length > 0 ? errorBuilder.ToString().Trim() : "tsp-client command failed";
+                    SetFailure(1);
+                    var errorMessage = $"tsp-client command failed: {output}";
                     
                     // Add helpful context to common errors
                     if (errorMessage.Contains("MODULE_NOT_FOUND") || errorMessage.Contains("command not found"))
                     {
-                        errorMessage += "\n\nSuggestion: Make sure tsp-client is installed globally: npm install -g @azure-tools/typespec-client-generator-cli";
+                        errorMessage += "\n\nSuggestion: Make sure Node.js and npm are installed, and @azure-tools/typespec-client-generator-cli is available via npx.";
                     }
                     else if (errorMessage.Contains("tspconfig.yaml"))
                     {
@@ -570,43 +544,74 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                     return (false, errorMessage, duration);
                 }
 
-                // Log successful output for debugging
-                if (outputBuilder.Length > 0)
-                {
-                    logger.LogDebug("tsp-client success output: {Output}", outputBuilder.ToString().Trim());
-                }
-
+                logger.LogInformation("npx @azure-tools/typespec-client-generator-cli completed successfully");
                 return (true, null, duration);
             }
             catch (Exception ex)
             {
                 var exceptionDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-                logger.LogError(ex, "Failed to execute tsp-client command");
+                logger.LogError(ex, "Failed to execute npx @azure-tools/typespec-client-generator-cli command");
                 SetFailure(1);
                 return (false, ex.Message, exceptionDuration);
             }
+        }
+
+        private static string RunProcess(string command, string args, string workingDirectory)
+        {
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = args,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDirectory
+            };
+            var output = new StringBuilder();
+            using (var process = new Process())
+            {
+                process.StartInfo = processInfo;
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit(100000);
+                if (process.ExitCode != 0)
+                {
+                    output.Append($"{Environment.NewLine}tsp-client command failed!!!");
+                }
+            }
+            return output.ToString();
         }
 
         private async Task<bool> IsTspClientAvailable()
         {
             try
             {
-                using var process = new Process
+                string output;
+                var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                if (isWindows)
                 {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = "tsp-client",
-                        Arguments = "--version",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    }
-                };
-
-                process.Start();
-                await process.WaitForExitAsync();
-                return process.ExitCode == 0;
+                    output = RunProcess("cmd.exe", "/C npx @azure-tools/typespec-client-generator-cli --version", Environment.CurrentDirectory);
+                }
+                else
+                {
+                    output = RunProcess("npx", "@azure-tools/typespec-client-generator-cli --version", Environment.CurrentDirectory);
+                }
+                
+                return !output.Contains("failed") && !output.Contains("error") && !string.IsNullOrEmpty(output.Trim());
             }
             catch
             {

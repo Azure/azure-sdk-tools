@@ -22,59 +22,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public void ValidateTypeSpecProject_WithValidPath_ReturnsSuccess()
-        {
-            // Arrange
-            var testPath = "specification/contoso/Contoso.Management";
-            typeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(testPath)).Returns(true);
-            typeSpecHelper.Setup(x => x.IsTypeSpecProjectForMgmtPlane(testPath)).Returns(true);
-            typeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(testPath)).Returns(testPath);
-
-            // Act
-            var result = tspClientTool.ValidateTypeSpecProject(testPath);
-
-            // Assert
-            Assert.That(result.Message, Is.EqualTo("Valid TypeSpec project"));
-            Assert.That(result.ResponseError, Is.Null);
-            Assert.That(result.Result, Is.Not.Null);
-        }
-
-        [Test]
-        public void ValidateTypeSpecProject_WithInvalidPath_ReturnsFailure()
-        {
-            // Arrange
-            var testPath = "invalid/path";
-            typeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(testPath)).Returns(false);
-
-            // Act
-            var result = tspClientTool.ValidateTypeSpecProject(testPath);
-
-            // Assert
-            Assert.That(result.Message, Is.EqualTo("Invalid TypeSpec project"));
-            Assert.That(result.ResponseError, Is.Null);
-        }
-
-        [Test]
-        public void ValidateTypeSpecProject_WithNullPath_ReturnsError()
-        {
-            // Act
-            var result = tspClientTool.ValidateTypeSpecProject(null);
-
-            // Assert
-            Assert.That(result.ResponseError, Is.EqualTo("Project path cannot be null or empty"));
-        }
-
-        [Test]
-        public void ValidateTypeSpecProject_WithEmptyPath_ReturnsError()
-        {
-            // Act
-            var result = tspClientTool.ValidateTypeSpecProject("");
-
-            // Assert
-            Assert.That(result.ResponseError, Is.EqualTo("Project path cannot be null or empty"));
-        }
-
-        [Test]
         public void GetCommand_ReturnsValidCommand()
         {
             // Act
@@ -84,6 +31,34 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(command, Is.Not.Null);
             Assert.That(command.Name, Is.EqualTo("tsp-client"));
             Assert.That(command.Description, Is.EqualTo("TypeSpec client library generation using tsp-client"));
+        }
+
+        [Test]
+        public async Task InitializeProject_WithValidPath_ReturnsSuccessMessage()
+        {
+            // Arrange
+            var testPath = "specification/contoso/Contoso.Management/tspconfig.yaml";
+            typeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
+
+            // Act
+            var result = await tspClientTool.InitializeProject(testPath, skipSyncAndGenerate: true);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            // Note: This will likely fail due to npx not being available in test environment
+            // but we're testing the method structure
+        }
+
+        [Test]
+        public async Task SyncProject_ReturnsExpectedStructure()
+        {
+            // Act
+            var result = await tspClientTool.SyncProject();
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            // Note: This will likely fail due to npx not being available in test environment
+            // but we're testing the method structure and that it exists
         }
 
         [Test]

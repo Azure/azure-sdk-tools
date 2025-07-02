@@ -297,132 +297,35 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             }
         }
 
-        [McpServerTool(Name = "validate-typespec-project"), Description("Validate if a path contains a valid TypeSpec project")]
-        public DefaultCommandResponse ValidateTypeSpecProject(string? projectPath)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(projectPath))
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = "Project path cannot be null or empty"
-                    };
-                }
-
-                var isValid = typeSpecHelper.IsValidTypeSpecProjectPath(projectPath);
-                var isManagementPlane = false;
-                var relativePath = string.Empty;
-
-                if (isValid)
-                {
-                    try
-                    {
-                        isManagementPlane = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(projectPath);
-                        relativePath = typeSpecHelper.GetTypeSpecProjectRelativePath(projectPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning("Could not determine additional project details: {Error}", ex.Message);
-                    }
-                }
-
-                return new DefaultCommandResponse
-                {
-                    Message = isValid ? "Valid TypeSpec project" : "Invalid TypeSpec project",
-                    Result = new
-                    {
-                        IsValid = isValid,
-                        IsManagementPlane = isManagementPlane,
-                        RelativePath = relativePath,
-                        ProjectPath = projectPath
-                    }
-                };
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error validating TypeSpec project");
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"Error validating TypeSpec project: {ex.Message}"
-                };
-            }
-        }
-
-        [McpServerTool(Name = "tsp-client-full-workflow"), Description("Complete workflow: init, sync, and generate for a TypeSpec project")]
-        public async Task<DefaultCommandResponse> FullWorkflow(
-            string tspConfigPath,
+        [McpServerTool(Name = "tsp-client-sync"), Description("Sync TypeSpec project specified in tsp-location.yaml")]
+        public async Task<DefaultCommandResponse> SyncProject(
             string? outputDir = null,
             string? localSpecRepo = null,
-            string? commit = null,
-            string? repo = null,
-            string? emitterOptions = null,
-            string? emitterPackageJsonPath = null,
             bool debug = false)
         {
             try
             {
-                var response = new DefaultCommandResponse();
-                var messages = new List<string>();
-                var totalDuration = 0;
+                var args = new List<string> { "sync" };
 
-                // Step 1: Initialize
-                logger.LogInformation("Starting tsp-client full workflow - Step 1: Initialize");
-                var initResult = await InitializeProject(tspConfigPath, outputDir, false, localSpecRepo, commit, repo, false, emitterOptions, emitterPackageJsonPath, false, debug);
-                if (!string.IsNullOrEmpty(initResult.ResponseError))
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Initialization failed: {initResult.ResponseError}"
-                    };
-                }
-                messages.Add("✓ Project initialized successfully");
-                totalDuration += (int)initResult.Duration;
+                AddOptionalArg(args, "--output-dir", outputDir);
+                AddOptionalArg(args, "--local-spec-repo", localSpecRepo);
 
-                // Step 2: Sync (if not skipped in init)
-                logger.LogInformation("Starting tsp-client full workflow - Step 2: Sync");
-                var syncResult = await ExecuteTspClientCommand(new List<string> { "sync" });
-                if (!syncResult.Success)
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Sync failed: {syncResult.ErrorMessage}"
-                    };
-                }
-                messages.Add("✓ Project synced successfully");
-                totalDuration += syncResult.Duration;
+                if (debug) args.Add("--debug");
 
-                // Step 3: Generate
-                logger.LogInformation("Starting tsp-client full workflow - Step 3: Generate");
-                var generateResult = await ExecuteTspClientCommand(new List<string> { "generate" });
-                if (!generateResult.Success)
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Generation failed: {generateResult.ErrorMessage}"
-                    };
-                }
-                messages.Add("✓ Client library generated successfully");
-                totalDuration += generateResult.Duration;
-
+                var result = await ExecuteTspClientCommand(args);
                 return new DefaultCommandResponse
                 {
-                    Message = "Full workflow completed successfully:\n" + string.Join("\n", messages),
-                    Duration = totalDuration,
-                    Result = new
-                    {
-                        Steps = new[] { "init", "sync", "generate" },
-                        AllStepsCompleted = true,
-                        TotalDuration = totalDuration
-                    }
+                    Message = result.Success ? "Project synced successfully" : "Project sync failed",
+                    ResponseError = result.Success ? null : result.ErrorMessage,
+                    Duration = result.Duration
                 };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error in tsp-client full workflow");
+                logger.LogError(ex, "Error syncing project with tsp-client");
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Error in full workflow: {ex.Message}"
+                    ResponseError = $"Error syncing project: {ex.Message}"
                 };
             }
         }

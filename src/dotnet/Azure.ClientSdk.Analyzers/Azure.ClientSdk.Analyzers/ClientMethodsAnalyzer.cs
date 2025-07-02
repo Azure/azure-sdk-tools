@@ -227,7 +227,7 @@ namespace Azure.ClientSdk.Analyzers
 
             if (!member.IsVirtual && !member.IsOverride)
             {
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First()), member);
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0003, member.Locations.First(), member.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)), member);
             }
         }
 

@@ -19,7 +19,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0003 = new DiagnosticDescriptor(
             nameof(AZC0003),
             "DO make service methods virtual.",
-            "DO make service methods virtual.",
+            "DO make service method '{0}' virtual.",
             DiagnosticCategory.Usage, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-virtual"
         );

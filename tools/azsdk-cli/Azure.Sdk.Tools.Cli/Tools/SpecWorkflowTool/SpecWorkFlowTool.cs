@@ -19,7 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IDevOpsService devopsService,
         IGitHelper gitHelper,
         ITypeSpecHelper typespecHelper,
-        IOutputService output) : MCPTool
+        IOutputService output,
+        ILogger<SpecWorkflowTool> logger) : MCPTool
     {
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string REPO_OWNER = "Azure";
@@ -219,8 +220,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool(Name ="GenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
-        public async Task<string> GenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
+        [McpServerTool(Name ="RunGenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        public async Task<string> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
         {
             try
             {
@@ -228,7 +229,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     Status = "Success"
                 };
-
+                logger.LogInformation($"Generating SDK for TypeSpec project: {typespecProjectRoot}, API Version: {apiVersion}, SDK Release Type: {sdkReleaseType}, Language: {language}, Pull Request Number: {pullRequestNumber}, Work Item ID: {workItemId}");
                 // Is language supported for SDK generation
                 if (!DevOpsService.IsSDKGenerationSupported(language))
                 {
@@ -271,6 +272,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
                 {
+                    logger.LogInformation($"SDK generation failed with details: [{string.Join(",", response.Details)}]");
                     return output.Format(response);
                 }
 
@@ -281,6 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber);
                     branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
                 }
+                logger.LogInformation("Running SDK generation pipeline");
                 var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId);
                 response = new GenericResponse()
                 {
@@ -313,7 +316,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var pipeline = await devopsService.GetPipelineRunAsync(buildId);
                 if (pipeline != null)
                 {
-                    response.Status = pipeline.Result?.ToString() ?? "Not available";
+                    response.Status = pipeline.Result?.ToString() ?? pipeline.Status?.ToString() ?? "Not available";
                     response.Details.Add($"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}");
                 }
                 return output.Format(response);
@@ -342,6 +345,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (!IsValidLanguage(language))
                 {
                     return $"Unsupported language to get pull request details. Supported languages: {string.Join(", ", SUPPORTED_LANGUAGES)}";
+                }
+
+                if (buildId == 0 && workItemId == 0)
+                {
+                    return "Either build ID or release plan work item ID is required to get SDK pull request details.";
                 }
 
                 StringBuilder sb = new ();
@@ -484,7 +492,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     output.Output($"Is API spec ready for SDK generation: {isSpecReady}");
                     return;
                 case generateSdkCommandName:
-                    var sdkGenerationResponse = await GenerateSdkAsync(commandParser.GetValueForOption(typeSpecProjectPathOpt),
+                    var sdkGenerationResponse = await RunGenerateSdkAsync(commandParser.GetValueForOption(typeSpecProjectPathOpt),
                         commandParser.GetValueForOption(apiVersionOpt),
                         commandParser.GetValueForOption(sdkReleaseTypeOpt),
                         commandParser.GetValueForOption(languageOpt),

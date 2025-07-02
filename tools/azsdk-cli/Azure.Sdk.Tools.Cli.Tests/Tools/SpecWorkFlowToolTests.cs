@@ -1,8 +1,10 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Azure.Pipelines.WebApi;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 using Octokit;
@@ -17,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IGitHelper> mockGitHelper;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
+        private ILogger<SpecWorkflowTool> logger;
         private SpecWorkflowTool specWorkflowTool;
 
         [SetUp]
@@ -27,6 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockGitHubService = new Mock<IGitHubService>();
             mockGitHelper = new Mock<IGitHelper>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
+            logger = new TestLogger<SpecWorkflowTool>();
 
             mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>()))
                            .Returns((GenericResponse r) => string.Join(", ", r.Details));
@@ -42,7 +46,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 mockDevOpsService.Object,
                 mockGitHelper.Object,
                 mockTypeSpecHelper.Object,
-                mockOutputService.Object
+                mockOutputService.Object,
+                logger
             );
         }
 
@@ -64,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockDevOpsService.Setup(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>()))
                            .ReturnsAsync(releasePlan);
 
-            var result = await specWorkflowTool.GenerateSdkAsync(
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "valid/path",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
@@ -95,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockDevOpsService.Setup(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>()))
                            .ReturnsAsync(releasePlan);
 
-            var result = await specWorkflowTool.GenerateSdkAsync(
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "valid/path",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
@@ -122,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockDevOpsService.Setup(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>()))
                            .ReturnsAsync(releasePlanWithEmptyLanguage);
 
-            var resultEmptyLanguage = await specWorkflowTool.GenerateSdkAsync(
+            var resultEmptyLanguage = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "valid/path",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
@@ -145,7 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockDevOpsService.Setup(x => x.GetReleasePlanForWorkItemAsync(It.IsAny<int>()))
                            .ReturnsAsync(releasePlan);
 
-            var result = await specWorkflowTool.GenerateSdkAsync(
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "valid/path",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
@@ -198,7 +203,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                     Status = BuildStatus.InProgress,
                 });
 
-            var result = await specWorkflowTool.GenerateSdkAsync(
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
@@ -224,7 +229,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                     Status = BuildStatus.InProgress,
                 });
 
-            var result = await specWorkflowTool.GenerateSdkAsync(
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",
@@ -252,7 +257,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
 
 
-            var result = await specWorkflowTool.GenerateSdkAsync(
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
                 apiVersion: "2023-01-01",
                 sdkReleaseType: "beta",

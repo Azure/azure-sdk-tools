@@ -7,14 +7,17 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -30,7 +33,8 @@ namespace APIViewWeb.Managers
         private readonly INotificationManager _notificationManager;
         private readonly IConfiguration _configuration;
         private readonly IBlobCodeFileRepository _codeFileRepository;
-
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         private readonly OrganizationOptions _Options;
 
@@ -42,6 +46,8 @@ namespace APIViewWeb.Managers
             ICosmosReviewRepository reviewRepository,
             INotificationManager notificationManager,
             IBlobCodeFileRepository codeFileRepository,
+            IHubContext<SignalRHub> signalRHubContext,
+            IHttpClientFactory httpClientFactory,
             IConfiguration configuration,
             IOptions<OrganizationOptions> options)
         {
@@ -51,6 +57,8 @@ namespace APIViewWeb.Managers
             _reviewRepository = reviewRepository;
             _notificationManager = notificationManager;
             _codeFileRepository = codeFileRepository;
+            _signalRHubContext = signalRHubContext;
+            _httpClientFactory = httpClientFactory;
             _configuration = configuration;
             _Options = options.Value;
 
@@ -85,12 +93,19 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
-
-        private static readonly Regex tagsRegex = new(@"@([^\s]+)", RegexOptions.Compiled);
-        public bool IsApiViewAgentTagged(CommentItemModel comment)
+        private static readonly Regex azureSdkAgentTag =
+            new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.BotName)}\b",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public bool IsApiViewAgentTagged(CommentItemModel comment, out string commentTextWithIdentifiedTags)
         {
-            return tagsRegex.Matches(comment.CommentText)
-                .Any(m => string.Equals(m.Groups[1].Value, ApiViewConstants.BotName, StringComparison.Ordinal));
+            bool isTagged = azureSdkAgentTag.IsMatch(comment.CommentText);
+
+            commentTextWithIdentifiedTags = azureSdkAgentTag.Replace(
+                comment.CommentText,
+                m => $"{m.Groups[1].Value}**@{ApiViewConstants.BotName}**"
+            );
+
+            return isTagged;
         }
         
         public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
@@ -167,35 +182,25 @@ namespace APIViewWeb.Managers
 
         public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
         {
-            string language = await _reviewRepository.GetLanguageReview(comment.ReviewId);
-            var commentResult = new CommentItemModel
+            ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+            if (!IsUserAllowedToChatWithAgent(user, review.Language))
             {
-                ReviewId = comment.ReviewId,
-                APIRevisionId = comment.APIRevisionId,
-                SampleRevisionId = comment.SampleRevisionId,
-                ElementId = comment.ElementId,
-                ResolutionLocked = false,
-                CreatedBy = ApiViewConstants.BotName,
-                CreatedOn = DateTime.UtcNow,
-                CommentType = CommentType.SampleRevision
-            };
+                 var notification = new NotificationModel
+                 {
+                     Message =
+                         "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature",
+                     Level = NotificatonLevel.Error
+                 };
 
-            if (!IsUserAllowedToChatWithAgent(user, language))
-            {
-                commentResult.CommentText =
-                    "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature.";
-                await _commentsRepository.UpsertCommentAsync(commentResult);
-                return;
+                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin())
+                     .SendAsync("RecieveNotification", notification);
+
+                 return;
             }
 
             string response;
             try
             {
-                /*
-                var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
-                var getCommentReplyEndpoint = $"{copilotEndpoint}/agent/chat";
-
-
                 IEnumerable<CommentItemModel> threadComments =
                     await _commentsRepository.GetCommentsAsync(reviewId: comment.ReviewId, lineId: comment.ElementId);
 
@@ -203,45 +208,80 @@ namespace APIViewWeb.Managers
                 var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
                 var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
 
-                Dictionary<string, int> lineIdToIndex = activeCodeLines
-                    .Select((line, id) => new { line.lineId, id })
-                    .ToDictionary(x => x.lineId, x => x.id);
+                Dictionary<string, int> elementIdToLineNumber = activeCodeLines
+                    .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
+                    .Where(x => !string.IsNullOrEmpty(x.lineId))
+                    .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
 
-                List<CommentModelForCopilot> commentsForAgent = threadComments
-                    .Select(threadComment => new CommentModelForCopilot
+                List<ApiViewComment> commentsForAgent = threadComments
+                    .Select(threadComment => new ApiViewComment
                     {
-                        Author = threadComment.CreatedBy,
+                        LineNumber = elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
+                        CreatedOn = threadComment.CreatedOn,
+                        Upvotes = threadComment.Upvotes.Count,
+                        Downvotes = threadComment.Downvotes.Count,
+                        CreatedBy = threadComment.CreatedBy,
                         CommentText = threadComment.CommentText,
-                        Timestamp = threadComment.CreatedOn,
-                        LineNumber = lineIdToIndex.TryGetValue(threadComment.ElementId, out var id) ? id : -1
+                        IsResolved = threadComment.IsResolved
                     })
                     .ToList();
 
                 var client = _httpClientFactory.CreateClient();
                 var payload = new Dictionary<string, object> { { "comments", commentsForAgent } };
-                response = await client.PostAsync(getCommentReplyEndpoint, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
-                response.EnsureSuccessStatusCode();
-                */
+                string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
+                var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
+                {
+                    Content = new StringContent(
+                        System.Text.Json.JsonSerializer.Serialize(payload),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "");
+
+                //var clientResponse = await client.SendAsync(request);
+                //clientResponse.EnsureSuccessStatusCode();
+                
 
                 response = "Agent integration is not currently available.";
             }
             catch
             {
-                response = "An error occurred while attempting to contact the agent service.";
+                var notification = new NotificationModel
+                {
+                    Message = "An error occurred while attempting to contact the agent service",
+                    Level = NotificatonLevel.Error
+                };
+
+                await _signalRHubContext.Clients.Group(user.GetGitHubLogin())
+                    .SendAsync("RecieveNotification", notification);
+                return;
             }
 
-            commentResult.CommentText = response;
+            var commentResult = new CommentItemModel
+            {
+                ReviewId = comment.ReviewId,
+                APIRevisionId = comment.APIRevisionId,
+                SampleRevisionId = comment.SampleRevisionId,
+                ElementId = comment.ElementId,
+                CommentText = response,
+                ResolutionLocked = false,
+                CreatedBy = ApiViewConstants.BotName,
+                CreatedOn = DateTime.UtcNow,
+                CommentType = CommentType.SampleRevision
+            };
+
             await _commentsRepository.UpsertCommentAsync(commentResult);
         }
 
-        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal name, string language)
+        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, string language)
         {
-            if (name == null || string.IsNullOrEmpty(language))
+            if (user == null || string.IsNullOrEmpty(language))
             {
                 return false;
             }
 
-            return IsUserLanguageArchitect(name, language);
+            return IsUserLanguageArchitect(user, language);
         }
 
         private bool IsUserLanguageArchitect(ClaimsPrincipal user, string language)

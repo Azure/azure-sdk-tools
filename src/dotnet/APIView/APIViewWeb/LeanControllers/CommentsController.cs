@@ -23,7 +23,7 @@ namespace APIViewWeb.LeanControllers
         public CommentsController(
             ICommentsManager commentManager,
             IReviewManager reviewManager,
-            INotificationManager notificationManager,
+            INotificationManager notificationManager, 
             ILogger<CommentsController> logger)
         {
             _logger = logger;
@@ -133,16 +133,19 @@ namespace APIViewWeb.LeanControllers
                 CommentType = commentType
             };
 
+            bool isApiViewAgentTagged = _commentsManager.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
+            comment.CommentText = commentTextWithIdentifiedTags;
             await _commentsManager.AddCommentAsync(User, comment);
+
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
             if (review != null)
             {
                 await _notificationManager.SubscribeAsync(review, User);
             }
 
-            if (_commentsManager.IsApiViewAgentTagged(comment))
+            if (isApiViewAgentTagged)
             {
-               _ = Task.Run(() => _commentsManager.RequestAgentReply(User, comment, apiRevisionId));
+                _ = Task.Run(() => _commentsManager.RequestAgentReply(User, comment, apiRevisionId));
             }
 
             return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));

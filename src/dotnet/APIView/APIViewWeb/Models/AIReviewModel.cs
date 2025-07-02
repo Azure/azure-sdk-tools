@@ -40,15 +40,21 @@ namespace APIViewWeb.Models
         public string JobId { get; set; }
     }
 
-    public class CommentModelForCopilot
+    public class ApiViewComment
     {
         [JsonPropertyName("line_no")]
         public int LineNumber { get; set; }
+        [JsonPropertyName("createdOn")]
+        public DateTimeOffset CreatedOn { get; set; }
+        [JsonPropertyName("upvotes")]
+        public int Upvotes { get; set; }
+        [JsonPropertyName("downvotes")]
+        public int Downvotes { get; set; }
         [JsonPropertyName("author")]
-        public string Author { get; set; }
+        public string CreatedBy { get; set; }
         [JsonPropertyName("comment")]
         public string CommentText { get; set; }
-        [JsonPropertyName("timestamp")]
-        public DateTimeOffset Timestamp { get; set; }
+        [JsonPropertyName("isResolved")]
+        public bool IsResolved { get; set; }
     }
 }

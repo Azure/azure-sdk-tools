@@ -344,19 +344,22 @@ namespace APIViewWeb.Managers
             var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
             var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
             var activeApiOutline = activeCodeFile.CodeFile.GetApiOutlineText();
-            List<CommentModelForCopilot> existingCommentInfo = new List<CommentModelForCopilot>();
+            List<ApiViewComment> existingCommentInfo = new List<ApiViewComment>();
 
             foreach (var comment in reviewComments)
             {
                 if (activeCodeLines.Any(line => line.lineId == comment.ElementId))
                 {
                     var associatedLine = activeCodeLines.FindIndex(line => line.lineId == comment.ElementId);
-                    existingCommentInfo.Add(new CommentModelForCopilot
+                    existingCommentInfo.Add(new ApiViewComment
                     {
                         LineNumber = associatedLine + 1,
+                        CreatedOn = comment.CreatedOn,
+                        Upvotes = comment.Upvotes.Count,
+                        Downvotes = comment.Downvotes.Count,
+                        CreatedBy = comment.CreatedBy,
                         CommentText = comment.CommentText,
-                        Author = comment.CreatedBy,
-                        Timestamp = comment.CreatedOn
+                        IsResolved = comment.IsResolved
                     });
                 }
             }

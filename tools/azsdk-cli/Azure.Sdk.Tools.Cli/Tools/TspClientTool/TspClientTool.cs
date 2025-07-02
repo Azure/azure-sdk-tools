@@ -161,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             try
             {
                 // Validate tspconfig path exists
-                if (!File.Exists(tspConfigPath) && !tspConfigPath.StartsWith("http"))
+                if (!File.Exists(tspConfigPath))
                 {
                     // Check if it's a directory containing tspconfig.yaml
                     var tspConfigInDir = Path.Combine(tspConfigPath, "tspconfig.yaml");

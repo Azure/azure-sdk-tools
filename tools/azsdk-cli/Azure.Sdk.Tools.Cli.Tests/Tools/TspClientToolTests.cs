@@ -1,4 +1,3 @@
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.TspClientTool;
@@ -9,16 +8,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     internal class TspClientToolTests
     {
         private TspClientTool tspClientTool;
-        private Mock<ITypeSpecHelper> typeSpecHelper;
         private Mock<IOutputService> outputService;
 
         [SetUp]
         public void Setup()
         {
             var logger = new TestLogger<TspClientTool>();
-            typeSpecHelper = new Mock<ITypeSpecHelper>();
             outputService = new Mock<IOutputService>();
-            tspClientTool = new TspClientTool(logger, outputService.Object, typeSpecHelper.Object);
+            tspClientTool = new TspClientTool(logger, outputService.Object);
         }
 
         [Test]
@@ -38,7 +35,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var testPath = "specification/contoso/Contoso.Management/tspconfig.yaml";
-            typeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
 
             // Act
             var result = await tspClientTool.InitializeProject(testPath, skipSyncAndGenerate: true);

@@ -1,0 +1,30 @@
+trigger: none
+pr: none
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage:
+        variables:
+          - template: /eng/pipelines/templates/variables/image.yml
+        jobs:
+          - job:
+
+            pool:
+              image: $(LINUXVMIMAGE)
+              name: $(LINUXPOOL)
+              os: linux
+
+
+            displayName: Set up knowledge base
+            steps:
+              - task: GoTool@0
+                inputs:
+                  version: '1.23.2'
+
+              - task: ShellScript@2
+                inputs:
+                  scriptPath: 'tools/sdk-ai-bots/azure-sdk-qa-bot-backend/scripts/daily_sync_knowledge/setup_docs.sh'
+                  cwd: '$(System.DefaultWorkingDirectory)'
+                  args: '$(azuresdk-github-pat)'

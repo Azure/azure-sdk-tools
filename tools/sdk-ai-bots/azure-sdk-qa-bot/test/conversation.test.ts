@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConversationHandler, ConversationMessage, Prompt } from '../src/input/ConversationHandler.js';
-import { RAGReference, RAGReply } from '../src/backend/rag.js';
+import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../src/input/ConversationHandler.js';
+import { CompletionResponsePayload, Reference } from '../src/backend/rag.js';
 
 const testTimestamp = new Date('2023-10-01T12:00:00Z');
 
@@ -12,7 +12,7 @@ const testPrompt: Prompt = {
   timestamp: testTimestamp,
 };
 
-const references: RAGReference[] = [
+const references: Reference[] = [
   {
     title: 'Test Source 1',
     source: 'http://example.com/source1',

@@ -7,7 +7,7 @@ import { Application, ActionPlanner, PromptManager } from '@microsoft/teams-ai';
 import { FakeModel } from '../models/FakeModel.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
-import { FeedbackReaction, RAGOptions, sendFeedback } from '../backend/rag.js';
+import { FeedbackRequestPayload, RAGOptions, sendFeedback } from '../backend/rag.js';
 import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
 
@@ -50,17 +50,35 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   const ragOptions: RAGOptions = {
     endpoint: config.ragEndpoint,
     apiKey: config.ragApiKey,
-    tenantId: ragTanentId,
   };
   const action = context.activity.value?.action;
-  // const conversation = context.activity.value?.conversation;
   switch (action) {
     case 'feedback-like':
-      await sendFeedback(['test good'], FeedbackReaction.good, ragOptions);
+      const goodFeedback: FeedbackRequestPayload = {
+        tenant_id: ragTanentId,
+        messages: [
+          {
+            role: 'user',
+            content: 'test good',
+          },
+        ],
+        reaction: 'good',
+      }
+      await sendFeedback(goodFeedback, ragOptions);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
       break;
     case 'feedback-dislike':
-      await sendFeedback(['test bad'], FeedbackReaction.bad, ragOptions);
+      const badFeedback: FeedbackRequestPayload = {
+        tenant_id: ragTanentId,
+        messages: [
+          {
+            role: 'user',
+            content: 'test bad',
+          },
+        ],
+        reaction: 'bad',
+      }
+      await sendFeedback(badFeedback, ragOptions);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');
       break;
     default:

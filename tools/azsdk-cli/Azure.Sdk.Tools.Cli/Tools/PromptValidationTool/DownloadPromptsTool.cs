@@ -175,6 +175,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             foreach (var filePath in filesToDownload)
             {
                 var fileName = Path.GetFileName(filePath);
+
+                var localFilePath = Path.Combine(destinationPath, fileName);
+                if (File.Exists(localFilePath)) 
+                {
+                    logger.LogInformation("File {fileName} already exists in {destinationPath}, skipping download", fileName, destinationPath);
+                    continue;
+                }
                 
                 // Fetch the file content from GitHub
                 logger.LogInformation("Fetching content for {fileName} from {filePath}", fileName, filePath);

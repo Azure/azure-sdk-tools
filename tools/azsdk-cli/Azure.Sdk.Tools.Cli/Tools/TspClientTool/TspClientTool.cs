@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
 {
     [Description("Tools for generating SDKs using tsp-client from TypeSpec projects")]
     [McpServerToolType]
-    public class TspClientTool(ILogger<TspClientTool> logger, IOutputService output, ITypeSpecHelper typeSpecHelper) : MCPTool
+    public class TspClientTool(ILogger<TspClientTool> logger, IOutputService output) : MCPTool
     {
         private const string initCommandName = "init";
         private const string updateCommandName = "update";
@@ -379,7 +379,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             }
         }
 
-        private async Task<(bool Success, string? ErrorMessage, int Duration)> ExecuteTspClientCommand(List<string> args)
+        private Task<(bool Success, string? ErrorMessage, int Duration)> ExecuteTspClientCommand(List<string> args)
         {
             var startTime = DateTime.UtcNow;
             
@@ -418,18 +418,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                         errorMessage += "\n\nSuggestion: Ensure the tspconfig.yaml file exists and is properly formatted.";
                     }
                     
-                    return (false, errorMessage, duration);
+                    return Task.FromResult((false, errorMessage, duration));
                 }
 
                 logger.LogInformation("npx @azure-tools/typespec-client-generator-cli completed successfully");
-                return (true, null, duration);
+                return Task.FromResult((true, (string?)null, duration));
             }
             catch (Exception ex)
             {
                 var exceptionDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
                 logger.LogError(ex, "Failed to execute npx @azure-tools/typespec-client-generator-cli command");
                 SetFailure(1);
-                return (false, ex.Message, exceptionDuration);
+                return Task.FromResult((false, ex.Message, exceptionDuration));
             }
         }
 

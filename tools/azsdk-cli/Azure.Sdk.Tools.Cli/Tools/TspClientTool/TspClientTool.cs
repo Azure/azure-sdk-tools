@@ -418,7 +418,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                         errorMessage += "\n\nSuggestion: Ensure the tspconfig.yaml file exists and is properly formatted.";
                     }
                     
-                    return Task.FromResult((false, errorMessage, duration));
+                    return Task.FromResult((false, (string?)errorMessage, duration));
                 }
 
                 logger.LogInformation("npx @azure-tools/typespec-client-generator-cli completed successfully");
@@ -429,7 +429,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                 var exceptionDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
                 logger.LogError(ex, "Failed to execute npx @azure-tools/typespec-client-generator-cli command");
                 SetFailure(1);
-                return Task.FromResult((false, ex.Message, exceptionDuration));
+                return Task.FromResult((false, (string?)ex.Message, exceptionDuration));
             }
         }
 

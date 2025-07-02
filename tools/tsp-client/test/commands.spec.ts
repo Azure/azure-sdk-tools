@@ -385,7 +385,7 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
       assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
-      // Since there is no package-lock.json, the version remains unchanged
+      //Check that the manual dependency version remains unchanged
       assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(

@@ -23,7 +23,6 @@ export async function processRequest(host: AutorestExtensionHost): Promise<void>
 
     const codeModel = TestCodeModeler.createInstance(session.model, config);
     codeModel.genMockTests(session);
-    await codeModel.loadTestResources(session);
 
     await Helper.outputToModelerfour(host, session, config.getValue(Config.exportExplicitType), config.getValue(Config.explicitTypes));
     if (config.getValue(Config.exportCodemodel)) {

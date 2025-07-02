@@ -336,6 +336,7 @@ class SearchManager:
         result = self.client.search(
             search_text=query,
             filter=filter,
+            search_fields=["chunk", "title", "tags"],
             semantic_configuration_name="semantic-search-config",
             semantic_error_mode=SemanticErrorMode.FAIL,
             query_type=QueryType.SEMANTIC,

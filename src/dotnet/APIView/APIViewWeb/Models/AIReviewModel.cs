@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Models
 {
@@ -40,6 +41,22 @@ namespace APIViewWeb.Models
         public string JobId { get; set; }
     }
 
+    public class AIReviewJobCompletedModel
+    {
+        [JsonPropertyName("reviewId")]
+        public string ReviewId { get; set; }
+        [JsonPropertyName("apirevisionId")]
+        public string APIRevisionId { get; set; }
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+        [JsonPropertyName("details")]
+        public string Details { get; set; }
+        [JsonPropertyName("jobId")]
+        public string JobId { get; set; }
+        [JsonPropertyName("noOfGeneratedComments")]
+        public int NoOfGeneratedComment { get; set; }
+    }
+
     public class ApiViewComment
     {
         [JsonPropertyName("line_no")]
@@ -56,5 +73,12 @@ namespace APIViewWeb.Models
         public string CommentText { get; set; }
         [JsonPropertyName("isResolved")]
         public bool IsResolved { get; set; }
+    }
+
+    public class AIReviewJobInfoModel
+    {
+        public string JobId { get; set; }
+        public APIRevisionListItemModel APIRevision { get; set; }
+        public List<(string lineText, string lineId)> CodeLines { get; set; }
     }
 }

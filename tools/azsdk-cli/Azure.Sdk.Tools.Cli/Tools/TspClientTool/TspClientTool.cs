@@ -160,29 +160,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
         {
             try
             {
-                // Validate tspconfig path exists
-                if (!File.Exists(tspConfigPath))
-                {
-                    // Check if it's a directory containing tspconfig.yaml
-                    var tspConfigInDir = Path.Combine(tspConfigPath, "tspconfig.yaml");
-                    if (Directory.Exists(tspConfigPath) && File.Exists(tspConfigInDir))
-                    {
-                        tspConfigPath = tspConfigInDir;
-                    }
-                    else if (Directory.Exists(tspConfigPath) && typeSpecHelper.IsValidTypeSpecProjectPath(tspConfigPath))
-                    {
-                        // Use the helper to validate the path
-                        logger.LogInformation("Valid TypeSpec project path detected: {Path}", tspConfigPath);
-                    }
-                    else
-                    {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"TypeSpec config file not found: {tspConfigPath}. Please provide a valid path to tspconfig.yaml or a directory containing it."
-                        };
-                    }
-                }
-
                 var args = new List<string> { "init", "--tsp-config", tspConfigPath };
 
                 AddOptionalArg(args, "--output-dir", outputDir);

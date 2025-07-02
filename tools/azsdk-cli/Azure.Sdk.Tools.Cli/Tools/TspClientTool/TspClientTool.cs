@@ -387,13 +387,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
             {
                 logger.LogInformation("Executing npx @azure-tools/typespec-client-generator-cli with args: {Args}", string.Join(" ", args));
 
-                // Check if npx and the package are available
-                if (!await IsTspClientAvailable())
-                {
-                    var commandDuration = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-                    return (false, "npx or @azure-tools/typespec-client-generator-cli is not available. Please ensure Node.js and npm are installed.", commandDuration);
-                }
-
                 var arguments = string.Join(" ", args.Select(arg => arg.Contains(" ") ? $"\"{arg}\"" : arg));
                 
                 string output;
@@ -478,29 +471,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspClientTool
                 }
             }
             return output.ToString();
-        }
-
-        private async Task<bool> IsTspClientAvailable()
-        {
-            try
-            {
-                string output;
-                var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-                if (isWindows)
-                {
-                    output = RunProcess("cmd.exe", "/C npx @azure-tools/typespec-client-generator-cli --version", Environment.CurrentDirectory);
-                }
-                else
-                {
-                    output = RunProcess("npx", "@azure-tools/typespec-client-generator-cli --version", Environment.CurrentDirectory);
-                }
-                
-                return !output.Contains("failed") && !output.Contains("error") && !string.IsNullOrEmpty(output.Trim());
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }

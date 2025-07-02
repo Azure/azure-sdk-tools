@@ -195,7 +195,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     throw new InvalidOperationException(error);
                 }
 
-                var localFilePath = Path.Combine(destinationPath, fileName);
                 await File.WriteAllTextAsync(localFilePath, fileContent.Content);
                 
                 downloadedFiles.Add(fileName);

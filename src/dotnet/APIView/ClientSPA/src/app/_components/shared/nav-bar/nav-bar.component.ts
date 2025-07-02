@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { NotificationsFilter, SiteNotification } from 'src/app/_models/notificationsModel';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -29,8 +29,7 @@ export class NavBarComponent implements OnInit {
   reviewId: string | null = null;
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService,
-    private notificationsService: NotificationsService, private authService: AuthService,
-    private router: Router, private route: ActivatedRoute
+    private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute
   ) { }
 
   ngOnInit(): void {
@@ -64,8 +63,8 @@ export class NavBarComponent implements OnInit {
     return this.notifications;
   }
 
-  clearNotification(id: string) {
-    this.notificationsService.clearNotification(id);
+  clearNotification(key: string) {
+    this.notificationsService.clearNotification(key);
   }
 
   clearAllNotification() {

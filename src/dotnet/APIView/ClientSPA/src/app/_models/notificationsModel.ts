@@ -20,8 +20,9 @@ export class SiteNotification {
     this.message = message;
     this.level = level;
     this.createdOn = createdOn;
+    this.id = `${reviewId}-${activeAPIrevisionId}-${this.title}-${this.level}-${this.message}-${createdOn.getTime()}`;
   }
-  id : string = crypto.randomUUID();
+  id : string;
   reviewId : string;
   activeAPIrevisionId : string;
   title : string;

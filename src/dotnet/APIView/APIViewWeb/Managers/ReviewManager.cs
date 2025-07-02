@@ -392,7 +392,8 @@ namespace APIViewWeb.Managers
                 {
                     JobId = jobStartedResponse.JobId,
                     APIRevision = activeApiRevision,
-                    CodeLines = activeCodeLines
+                    CodeLines = activeCodeLines,
+                    CreatedBy = user.GetGitHubLogin()
                 });
             }
             catch (Exception e ) {

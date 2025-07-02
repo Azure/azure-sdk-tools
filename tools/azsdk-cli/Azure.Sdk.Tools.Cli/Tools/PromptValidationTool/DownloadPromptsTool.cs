@@ -25,7 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> destinationPathOpt = new(["--destination-path"], () => ".github/prompts", "Local directory path to download files to") { IsRequired = false };
         private readonly Option<string> missingFilesOpt = new(["--missing-files"], "Comma-delimited list of file paths to download (e.g., 'file1.md,file2.md')") { IsRequired = false };
 
-        private const string SOURCE_REPOSITORY = "azure-rest-api-specs";
         public override Command GetCommand()
         {
             Command command = new("download-prompts");

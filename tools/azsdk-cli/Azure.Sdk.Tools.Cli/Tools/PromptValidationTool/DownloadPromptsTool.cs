@@ -25,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> destinationPathOpt = new(["--destination-path"], () => ".github/prompts", "Local directory path to download files to") { IsRequired = false };
         private readonly Option<string> missingFilesOpt = new(["--missing-files"], "Comma-delimited list of file paths to download (e.g., 'file1.md,file2.md')") { IsRequired = false };
 
+        private const string SOURCE_REPOSITORY = "azure-rest-api-specs";
         public override Command GetCommand()
         {
             Command command = new("download-prompts");
@@ -60,6 +61,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
+                // Check if we are already in the source repository
+                var repoRoot = FindGitRepositoryRoot(destinationPath);
+                if (string.Equals(Path.GetFileName(repoRoot), sourceRepoName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return new DownloadResponse
+                    {
+                        Message = $"We are in source repository no need to download files. {sourceRepoName} = {repoRoot}",
+                        Success = false,
+                        DownloadedCount = 0,
+                        TotalFiles = 0
+                    };
+                }
+
                 logger.LogInformation("Starting download from {sourceRepoOwner}/{sourceRepoName}/{sourcePath} to {destinationPath}", 
                     sourceRepoOwner, sourceRepoName, sourcePath, destinationPath);
 
@@ -230,14 +244,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (repoRoot == null)
                 {
                     logger.LogWarning("Not in a git repository, skipping .gitignore update");
-                    return;
-                }
-
-                // Skip .gitignore update if we're in the azure-rest-api-specs repository
-                var repoName = Path.GetFileName(repoRoot);
-                if (string.Equals(repoName, "azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Detected azure-rest-api-specs repository, skipping .gitignore update");
                     return;
                 }
 

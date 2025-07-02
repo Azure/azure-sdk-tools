@@ -1,5 +1,6 @@
 import asyncio
 from collections import OrderedDict
+import colorama
 from colorama import Fore, Style
 import json
 import os
@@ -7,11 +8,7 @@ from pprint import pprint
 import requests
 import sys
 import pathlib
-
-# Add colorama for cross-platform colored output
-import colorama
-
-colorama.init(autoreset=True)
+import requests
 
 from src.agent._agent import get_main_agent, invoke_agent
 from src._search_manager import SearchManager
@@ -20,6 +17,8 @@ from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
 from typing import Optional
+
+colorama.init(autoreset=True)
 
 helps[
     "review"
@@ -384,43 +383,91 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
-def ask_agent(thread_id: Optional[str] = None):
+def ask_agent(thread_id: Optional[str] = None, remote: bool = False):
     """Start an interactive session with the agent using async/await and a single event loop."""
 
     BLUE = Fore.BLUE
     GREEN = Fore.GREEN
     RESET = Style.RESET_ALL
+    BOLD = Style.BRIGHT
+
+    # Bold and color for prompts
+    BOLD_GREEN = BOLD + GREEN
+    BOLD_BLUE = BOLD + BLUE
 
     async def async_input(prompt: str) -> str:
         # Run input() in a thread to avoid blocking the event loop
         return await asyncio.to_thread(input, prompt)
 
     async def chat():
-        print("Interactive API Review Agent Chat. Type 'exit' to quit.")
+        print(f"{BOLD}Interactive API Review Agent Chat. Type 'exit' to quit.\n{RESET}")
         messages = []
         current_thread_id = thread_id
-        async with get_main_agent() as agent:
+        if remote:
+            APP_NAME = os.getenv("AZURE_APP_NAME")
+            if not APP_NAME:
+                print(f"{BOLD}AZURE_APP_NAME environment variable is not set.{RESET}")
+                return
+            api_endpoint = f"https://{APP_NAME}.azurewebsites.net/agent/chat"
+            session = requests.Session()
             while True:
                 try:
-                    user_input = await async_input(f"{GREEN}You:{RESET} ")
+                    user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
                 except (EOFError, KeyboardInterrupt):
-                    print("\nExiting chat.")
+                    print(f"\n{BOLD}Exiting chat.{RESET}")
                     if current_thread_id:
-                        print(f"Supply thread ID {current_thread_id} to continue the discussion later.")
+                        print(f"{BOLD}Supply thread ID {current_thread_id} to continue the discussion later.{RESET}")
                     break
                 if user_input.strip().lower() in {"exit", "quit"}:
-                    print("Exiting chat.")
+                    print(f"\n{BOLD}Exiting chat.{RESET}")
                     if current_thread_id:
-                        print(f"Supply thread ID {current_thread_id} to continue the discussion later.")
+                        print(
+                            f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        )
                     break
                 try:
-                    response, thread_id_out, messages = await invoke_agent(
-                        agent, user_input, thread_id=current_thread_id, messages=messages
-                    )
-                    print(f"{BLUE}Agent:{RESET} {response}\n")
-                    current_thread_id = thread_id_out
+                    payload = {"user_input": user_input}
+                    if current_thread_id:
+                        payload["thread_id"] = current_thread_id
+                    resp = session.post(api_endpoint, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        response = data.get("response", "")
+                        thread_id_out = data.get("thread_id", current_thread_id)
+                        print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
+                        current_thread_id = thread_id_out
+                    else:
+                        print(f"Error: {resp.status_code} - {resp.text}")
                 except Exception as e:
                     print(f"Error: {e}")
+        else:
+            # Local mode: use async agent as before
+            async with get_main_agent() as agent:
+                while True:
+                    try:
+                        user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
+                    except (EOFError, KeyboardInterrupt):
+                        print(f"\n{BOLD}Exiting chat.{RESET}")
+                        if current_thread_id:
+                            print(
+                                f"{BOLD}Supply thread ID {current_thread_id} to continue the discussion later.{RESET}"
+                            )
+                        break
+                    if user_input.strip().lower() in {"exit", "quit"}:
+                        print(f"\n{BOLD}Exiting chat.{RESET}")
+                        if current_thread_id:
+                            print(
+                                f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                            )
+                        break
+                    try:
+                        response, thread_id_out, messages = await invoke_agent(
+                            agent, user_input, thread_id=current_thread_id, messages=messages
+                        )
+                        print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
+                        current_thread_id = thread_id_out
+                    except Exception as e:
+                        print(f"Error: {e}")
 
     asyncio.run(chat())
 
@@ -484,6 +531,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The language of the APIView file",
                 options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API review service instead of local processing.",
             )
 
         with ArgumentsContext(self, "review") as ac:

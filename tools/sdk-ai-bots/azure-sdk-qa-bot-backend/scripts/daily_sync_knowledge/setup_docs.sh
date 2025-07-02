@@ -156,7 +156,7 @@ setup_azure_resource_manager_rpc() {
     else
         mkdir -p "$DOCS_ROOT"
         cd "$DOCS_ROOT"
-        git clone --filter=blob:none --sparse git@github.com:cloud-and-ai-microsoft/resource-provider-contract.git
+        git clone --filter=blob:none --sparse git@github-microsoft:cloud-and-ai-microsoft/resource-provider-contract.git
         cd resource-provider-contract
         git config core.sparseCheckout true
         echo "/v1.0" > .git/info/sparse-checkout
@@ -199,15 +199,32 @@ setup_azure_sdk_eng_docs() {
     log_message "Azure SDK Engineering documentation setup completed."
 }
 
-main() {
-    local auth_token="$1"
+setup_azure_sdk_guidelines() {
+    local repo_dir="$DOCS_ROOT/azure-sdk"
     
-    if [ -z "$auth_token" ]; then
-        log_message "Error: Azure DevOps authentication token is required"
-        log_message "Usage: $0 <azure_devops_token>"
-        exit 1
+    log_message "Setting up Azure SDK Guidelines docs..."
+    
+    if [ -d "$repo_dir" ]; then
+        log_message "Updating existing Azure SDK Guidelines repo..."
+        cd "$repo_dir"
+        git fetch origin main
+        git reset --hard origin/main
+        cd ../..
+    else
+        mkdir -p "$DOCS_ROOT"
+        cd "$DOCS_ROOT"
+        git clone --filter=blob:none --sparse https://github.com/Azure/azure-sdk.git
+        cd azure-sdk
+        git config core.sparseCheckout true
+        echo "/docs" > .git/info/sparse-checkout
+        git checkout main
+        cd ../..
     fi
-    
+
+    log_message "Azure SDK Guidelines documentation setup completed."
+}
+
+main() {
     log_message "Starting documentation update process..."
     
     # Ensure clean state by removing existing docs
@@ -220,21 +237,22 @@ main() {
     mkdir -p "$DOCS_ROOT"
 
     # Setup all repositories
-    # setup_typespec_docs
-    # setup_azure_typespec_docs
-    # setup_azure_rest_api_wiki
-    # setup_azure_python_sdk_docs
-    # setup_microsoft_api_guidelines
-    # setup_azure_resource_manager_rpc
-    setup_azure_sdk_eng_docs "$auth_token"
+    setup_typespec_docs
+    setup_azure_typespec_docs
+    setup_azure_rest_api_wiki
+    setup_azure_python_sdk_docs
+    setup_microsoft_api_guidelines
+    setup_azure_resource_manager_rpc
+    setup_azure_sdk_eng_docs "79i6c9JeKGQ99C3a6cp6r4hWAri64FeU9a2V6sTedoSnf6jGMUwcJQQJ99BGACAAAAAAArohAAASAZDOK8PU"
+    setup_azure_sdk_guidelines
 
     log_message "Documentation setup completed successfully!"
 
-    # go run setup_knowledge.go
-    # if [ $? -ne 0 ]; then
-    #     log_message "Failed to run setup_knowledge.go"
-    #     exit 1
-    # fi
+    go run setup_knowledge.go
+    if [ $? -ne 0 ]; then
+        log_message "Failed to run setup_knowledge.go"
+        exit 1
+    fi
     log_message "Knowledge setup completed successfully!"
 }
 

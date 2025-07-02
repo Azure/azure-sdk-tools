@@ -208,5 +208,58 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             );
             Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
+
+        [Test]
+        public async Task GenerateSdk_Without_pr_and_workitem()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+            
+            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(new Build()
+                {
+                    Id = 100,
+                    Status = BuildStatus.InProgress,
+                });
+
+            var result = await specWorkflowTool.GenerateSDK(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java"
+            );
+            Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+        }
+
+        [Test]
+        public async Task GenerateSdk_With_pr_and_no_workitem()
+        {
+            mockTypeSpecHelper.Setup(x => x.GetTypeSpecProjectRelativePath(It.IsAny<string>()))
+                .Returns("specification/testcontoso/Contoso.Management");
+            mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
+                .Returns(true);
+
+            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(new Build()
+                {
+                    Id = 100,
+                    Status = BuildStatus.InProgress,
+                });
+            mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                .ReturnsAsync(
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
+
+
+            var result = await specWorkflowTool.GenerateSDK(
+                typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java",
+                pullRequestNumber: 123
+            );
+            Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+        }
     }
 }

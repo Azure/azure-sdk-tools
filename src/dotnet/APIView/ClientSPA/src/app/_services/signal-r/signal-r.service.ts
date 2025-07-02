@@ -43,7 +43,7 @@ export class SignalRService {
     })
     this.handleConnectionId();
     this.handleCommentUpdates();
-    this.handleAIreviewUpdates();
+    this.handleAIReviewUpdates();
     this.handleReviewUpdates();
     this.handleAPIRevisionUpdates();
   }
@@ -59,7 +59,7 @@ export class SignalRService {
     });
   }
 
-  handleAIreviewUpdates() {
+  handleAIReviewUpdates() {
     this.connection.on("ReceiveAIReviewUpdates", (aiReviewUpdates: AIReviewJobCompletedDto) => {
       this.aiReviewUpdates.next(aiReviewUpdates);
     });

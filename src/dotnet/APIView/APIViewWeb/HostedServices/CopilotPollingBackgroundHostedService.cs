@@ -119,6 +119,7 @@ namespace APIViewWeb.HostedServices
                                 APIRevisionId = jobInfo.APIRevision.Id,
                                 Status = result.Status,
                                 Details = result.Details,
+                                CreatedBy = jobInfo.CreatedBy,
                                 NoOfGeneratedComment = result.Comments.Count,
                                 JobId = jobInfo.JobId
                             }, stoppingToken);

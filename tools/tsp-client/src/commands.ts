@@ -499,27 +499,6 @@ export async function generateConfigFilesCommand(argv: any) {
       }
     }
 
-    // Attempt to read package-lock.json and find the version of the manually added dependencies
-    const packageLockPath = joinPaths(dirname(packageJsonPath), "package-lock.json");
-    let existingPackageLockJson;
-    try {
-      existingPackageLockJson = JSON.parse(await readFile(packageLockPath, "utf8"));
-    } catch (err) {
-      Logger.debug(
-        `Unable to read package-lock.json. Manual dependencies will remain unchanged. Error: ${packageLockPath}`,
-      );
-    }
-    if (existingPackageLockJson && existingPackageLockJson["packages"]) {
-      for (const key of Object.keys(manualDevDependencies)) {
-        // Check if the package is in the package-lock.json
-        if (existingPackageLockJson["packages"][`node_modules/${key}`]) {
-          // Update pinned version
-          Object.assign(manualDevDependencies, {
-            [key]: existingPackageLockJson["packages"][`node_modules/${key}`]["version"],
-          });
-        }
-      }
-    }
     if (
       Object.keys(manualDevDependencies).length > 0 &&
       emitterPackageJson["devDependencies"] === undefined

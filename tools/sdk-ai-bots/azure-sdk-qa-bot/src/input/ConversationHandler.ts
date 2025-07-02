@@ -2,7 +2,6 @@ import { TableClient, TableServiceClient, TableEntity, odata } from '@azure/data
 import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity';
 import { logger } from '../logging/logger.js';
 import config from '../config/config.js';
-import { RAGReply } from '../backend/rag.js';
 
 export interface Prompt {
   textWithoutMention: string;
@@ -80,6 +79,19 @@ export interface MessageEntity extends TableEntity {
    * ISO timestamp string when the message was created
    */
   timestamp: string;
+}
+
+export interface RAGReference {
+  title: string;
+  source: string;
+  link: string;
+  content: string;
+}
+
+export interface RAGReply {
+  answer: string;
+  has_result: boolean;
+  references: RAGReference[];
 }
 
 /**

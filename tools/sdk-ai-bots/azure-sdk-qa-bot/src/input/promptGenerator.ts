@@ -1,9 +1,21 @@
-import { RAGReply } from '../backend/rag.js';
-import { logger } from '../logging/logger.js';
+import { getUniqueLinks } from '../common/shared.js';
 import { ConversationMessage, Prompt } from './ConversationHandler.js';
 import { ImageTextExtractor } from './ImageContentExtractor.js';
 import { LinkContentExtractor } from './LinkContentExtractor.js';
 import { RemoteContent } from './RemoteContent.js';
+
+export interface MessageWithRemoteContent {
+  user: string;
+  currentQuestion: string;
+  conversations: {
+    question?: string;
+    answer?: string;
+  }[];
+  additionalInfo: {
+    links: RemoteContent[];
+    images: RemoteContent[];
+  };
+}
 
 export class PromptGenerator {
   private meta: object;
@@ -16,93 +28,32 @@ export class PromptGenerator {
     this.linkContentExtractor = new LinkContentExtractor(this.meta);
   }
 
-  public async generatePlainFullPrompt(prompt: Prompt, conversationMessages: ConversationMessage[]): Promise<string> {
-    const [plainCurrentPrompt, plainConversations] = await Promise.all([
-      this.generatePlainPrompt(prompt, 1),
-      this.generatePlainConversations(conversationMessages),
+  public async generateFullPrompt(
+    prompt: Prompt,
+    conversationMessages: ConversationMessage[]
+  ): Promise<MessageWithRemoteContent> {
+    const currentQuestion = prompt.textWithoutMention;
+    const conversations = conversationMessages
+      .filter((m) => m.prompt || m.reply)
+      .map((m) => {
+        const question = m.prompt ? m.prompt.textWithoutMention : undefined;
+        const answer = m.reply && m.reply.has_result ? m.reply.answer : undefined;
+        return { question, answer };
+      });
+    const links = getUniqueLinks([
+      ...(prompt.links || []),
+      ...conversationMessages.flatMap((m) => m.prompt?.links || []),
     ]);
-
-    return `${plainCurrentPrompt}
-
-# Appendix: Previous conversations
-${plainConversations}
-`;
-  }
-
-  private async generatePlainConversations(conversationMessages: ConversationMessage[]): Promise<string> {
-    const conversationPromises = conversationMessages.map((message) => {
-      return Promise.all([
-        message.prompt ? this.generatePlainPrompt(message.prompt) : new Promise((resolve) => resolve('')),
-        message.reply ? this.generatePlainReply(message.reply) : new Promise((resolve) => resolve('')),
-        new Promise((resolve) => resolve(message.timestamp)),
-      ]);
-    });
-    const conversations = await Promise.all(conversationPromises);
-    return conversations
-      .map(([plainPrompt, plainReply, timestamp]) => {
-        return `## Conversation question & answer on date: ${timestamp}
-${plainPrompt}
-${plainReply}`;
-      })
-      .join('\n');
-  }
-
-  private async generatePlainReply(reply: RAGReply): Promise<string> {
-    const plainReferences = reply.references
-      .map((ref) => {
-        return `##### Title
-${ref.title}
-##### Source
-${ref.source}
-##### Link
-${ref.link}
-##### Content
-${ref.content}`;
-      })
-      .join('\n');
-
-    return `### AI Reply
-#### Answer
-${reply.answer}
-#### Has result
-${reply.has_result ? 'Yes' : 'No'}
-#### References
-${plainReferences}`;
-  }
-
-  private async generatePlainPrompt(prompt: Prompt, startHeadingLevel: number = 3): Promise<string> {
-    const imageContents = await this.imageTextExtractor.extract(prompt.images.map((image) => new URL(image)));
-    const linkContents = await this.linkContentExtractor.extract(prompt.links.map((link) => new URL(link)));
-
-    const imagesPrompt = imageContents
-      ? `${this.createHeadingLevel(startHeadingLevel + 1)} Additional information from images\n${imageContents
-          .map((content) => this.createSection(content, startHeadingLevel + 2))
-          .join('\n')}`
-      : ``;
-    const linksPrompt = linkContents
-      ? `${this.createHeadingLevel(startHeadingLevel + 1)} Additional information from links\n${linkContents
-          .map((content) => this.createSection(content, startHeadingLevel + 2))
-          .join('\n')}`
-      : ``;
-
-    const plainPrompt = `${this.createHeadingLevel(startHeadingLevel)} Question from user ${prompt.userName} on date: ${
-      prompt.timestamp
-    }
-${prompt.textWithoutMention}
-${imagesPrompt}
-${linksPrompt}`;
-
-    return plainPrompt;
-  }
-
-  private createHeadingLevel(level: number): string {
-    return `${'#'.repeat(level)}`;
-  }
-
-  private createSection(content: RemoteContent, headingLevel: number): string {
-    if (content.error) {
-      logger.warn(`Skip remote content due to error: ${content.error}`, { meta: this.meta });
-    }
-    return `${this.createHeadingLevel(headingLevel)} Content from ${content.id}: ${content.url}\n${content.text}`;
+    const imagesSet = new Set<string>([
+      ...(prompt.images || []),
+      ...conversationMessages.flatMap((m) => m.prompt?.images || []),
+    ]);
+    const [linkContents, imagesContents] = await Promise.all([
+      await this.linkContentExtractor.extract(links.map((link) => new URL(link))),
+      this.imageTextExtractor.extract(Array.from(imagesSet).map((image) => new URL(image))),
+    ]);
+    const additionalInfo = { links: linkContents, images: imagesContents };
+    const user = prompt.userName || '';
+    return { currentQuestion, conversations, additionalInfo, user };
   }
 }

@@ -1,9 +1,9 @@
 import { feedbackCard } from './feedback.js';
-import { RAGReply } from '../../backend/rag.js';
+import { CompletionResponsePayload } from '../../backend/rag.js';
 import { createReferencesListCard } from './reference-list.js';
 import { supportChannelCard } from './support-channel.js';
 
-export function createReplyCard(reply: RAGReply) {
+export function createReplyCard(reply: CompletionResponsePayload) {
   const referenceDataList = reply.references.map((ref) => ({
     title: ref.title,
     sourceName: ref.link.split('/').pop() || '',

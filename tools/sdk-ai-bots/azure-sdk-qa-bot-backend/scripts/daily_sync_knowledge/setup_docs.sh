@@ -243,7 +243,7 @@ main() {
     setup_azure_python_sdk_docs
     setup_microsoft_api_guidelines
     setup_azure_resource_manager_rpc
-    setup_azure_sdk_eng_docs "79i6c9JeKGQ99C3a6cp6r4hWAri64FeU9a2V6sTedoSnf6jGMUwcJQQJ99BGACAAAAAAArohAAASAZDOK8PU"
+    setup_azure_sdk_eng_docs "YOUR_AUTH_TOKEN"
     setup_azure_sdk_guidelines
 
     log_message "Documentation setup completed successfully!"

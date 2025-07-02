@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -96,6 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
+        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main");
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -248,6 +250,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
+                logger.LogInformation($"Creating release plan with title: {releasePlanTitle}");
                 WorkItem releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;
                 if (releasePlanWorkItemId == 0)
@@ -257,6 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
+                logger.LogInformation($"Creating api spec with title: {apiSpecTitle}");
                 var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan, "API Spec", apiSpecTitle);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
@@ -286,6 +290,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<WorkItem> CreateWorkItemAsync(ReleasePlan releasePlan, string workItemType, string title)
         {
+            logger.LogInformation($"Input work item json: {JsonSerializer.Serialize(releasePlan)}");
             var specDocument = releasePlan.GetPatchDocument();
             specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
             {
@@ -327,6 +332,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             logger.LogInformation($"Creating {workItemType} work item");
+            logger.LogInformation($"Request data to DeVops: {JsonSerializer.Serialize(specDocument)}");
             var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, RELEASE_PROJECT, workItemType);
             if (workItem == null)
             {
@@ -443,9 +449,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 var workItemClient = connection.GetWorkItemClient();
                 var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query });
-                if (result != null && result.WorkItems != null)
+                logger.LogInformation($"{result.ToString()}");
+                if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
-                    return await workItemClient.GetWorkItemsAsync(result.WorkItems.Select(wi => wi.Id), expand: WorkItemExpand.Relations);
+                    var ids = result.WorkItems.Select(wi => wi.Id).ToList();
+                    logger.LogInformation($"Fetching work item details: {string.Join(',', ids)}");
+                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All);
                 }
                 else
                 {
@@ -496,29 +505,15 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to get SDK generation pipeline for {language}.");
             }
 
-            var buildClient = connection.GetBuildClient();
-            var projectClient = connection.GetProjectClient();
-            // Run pipeline
-            var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
-            var project = await projectClient.GetProject(INTERNAL_PROJECT);
-
-            // Queue SDK generation pipeline
-            logger.LogInformation($"Queueing pipeline [{definition.Name}] to generate SDK for {language}.");
-            var build = await buildClient.QueueBuildAsync(new Build()
+            var templateParams = new Dictionary<string, string>
             {
-                Definition = definition,
-                Project = project,
-                SourceBranch = branchRef,
-                TemplateParameters = new Dictionary<string, string>
-                            {
-                                { "ConfigType", "TypeSpec"},
-                                { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
-                                { "ApiVersion", apiVersion },
-                                { "sdkReleaseType", sdkReleaseType },
-                                { "SkipPullRequestCreation", "false" }
-                            }
-            });
-
+                 { "ConfigType", "TypeSpec"},
+                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
+                 { "ApiVersion", apiVersion },
+                 { "SdkReleaseType", sdkReleaseType },
+                 { "SkipPullRequestCreation", "false" }
+            };
+            var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
             logger.LogInformation($"Started pipeline run {pipelineRunUrl} to generate SDK.");
             if (workItemId != 0)
@@ -529,6 +524,31 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return build;
         }
+
+        public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main")
+        {
+            if (pipelineDefinitionId == 0)
+            {
+                throw new ArgumentException($"Invalid pipeline definition ID.");
+            }
+
+            var buildClient = connection.GetBuildClient();
+            var projectClient = connection.GetProjectClient();
+            var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
+            var project = await projectClient.GetProject(INTERNAL_PROJECT);
+
+            // Queue SDK generation pipeline
+            logger.LogInformation($"Queueing pipeline [{definition.Name}].");
+            var build = await buildClient.QueueBuildAsync(new Build()
+            {
+                Definition = definition,
+                Project = project,
+                SourceBranch = branchRef,
+                TemplateParameters = templateParams
+            });
+            return build;
+        }
+
 
         public async Task<Build> GetPipelineRunAsync(int buildId)
         {

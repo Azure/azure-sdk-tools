@@ -1,0 +1,14 @@
+{"query": "How many storage accounts do I have in subscription Azure SDK Developer Playground?", "expected_tool_calls": ["azmcp-storage-account-list"]}
+{"query": "List my Azure storage accounts", "expected_tool_calls": ["azmcp-storage-account-list"]}
+{"query": "Show me all my Cosmos DB databases", "expected_tool_calls": ["azmcp-cosmos-database-list"]}
+{"query": "What indexes do I have in my Azure AI Search service 'mysvc'", "expected_tool_calls": ["azmcp-search-index-list"]}
+{"query": "List my resource groups", "expected_tool_calls": ["azmcp-group-list"]}
+{"query": "Show me the tables in my Storage account", "expected_tool_calls": ["azmcp-storage-table-list"]}
+{"query": "List containers in my Cosmos DB database", "expected_tool_calls": ["azmcp-cosmos-database-container-list"]}
+{"query": "Get details about my Storage container", "expected_tool_calls": ["azmcp-storage-blob-container-details"]}
+{"query": "Get Kusto databases in cluster 'mycluster'", "expected_tool_calls": ["azmcp-kusto-database-list"]}
+{"query": "Sample 10 rows from table 'StormEvents' in Kusto database 'db1'", "expected_tool_calls": ["azmcp-kusto-sample"]}
+{"query": "Let's search this index for 'my search query'", "expected_tool_calls": ["azmcp-search-index-query"]}
+{"query": "List my App Configuration stores", "expected_tool_calls": ["azmcp-appconfig-account-list"]}
+{"query": "Show my key-value pairs in App Config", "expected_tool_calls": ["azmcp-appconfig-kv-list"]}
+{"query": "Help me build an Azure application using Node.js", "expected_tool_calls": ["azmcp-bestpractices-get"]}

@@ -305,6 +305,12 @@ export async function generateCommand(argv: any) {
       args.push("--force");
     }
     await npmCommand(srcDir, args);
+
+    // Log all package versions for diagnostics, ignoring errors
+    try {
+      await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
+    } catch (err) {}
+
   }
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,

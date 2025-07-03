@@ -20,5 +20,6 @@
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="20.257.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Services.InteractiveClient" Version="20.257.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi" Version="20.257.0-preview" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
   </ItemGroup>
 </Project>

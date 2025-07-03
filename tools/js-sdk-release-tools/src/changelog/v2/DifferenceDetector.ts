@@ -149,14 +149,20 @@ export class DifferenceDetector {
     };
     const baselineApiView = generateApiView(highLevelCodeInModularWay);
     const currentApiView = generateApiView(this.context!.current.getFullText()!);
-    this.context = await createAstContext({ apiView: baselineApiView }, { apiView: currentApiView }, this.tempFolder);
+    this.context = await createAstContext(
+      { apiView: baselineApiView },
+      { apiView: currentApiView },
+      this.tempFolder,
+      true
+    );
   }
 
   private async load() {
     this.context = await createAstContext(
       { path: this.baselineApiViewOptions.path, apiView: this.baselineApiViewOptions.apiView },
       { path: this.currentApiViewOptions.path, apiView: this.currentApiViewOptions.apiView },
-      this.tempFolder
+      this.tempFolder,
+      true
     );
   }
 

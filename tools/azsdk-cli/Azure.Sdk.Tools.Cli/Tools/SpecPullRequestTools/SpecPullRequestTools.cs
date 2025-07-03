@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> repoPathOpt = new(["--repo-path"], "Path to repository root") { IsRequired = true };
         private readonly Option<string> titleOpt = new(["--title"], "Title for the pull request") { IsRequired = true };
         private readonly Option<string> descriptionOpt = new(["--description"], "Description for the pull request") { IsRequired = true };
         private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch for the pull request") { IsRequired = false };
@@ -112,15 +113,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Create pull request for spec changes. Provide title, description and absolute path to TypeSpec project root as params. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main")
+        [McpServerTool, Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
+        public async Task<List<string>> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main")
         {
             try
             {
                 List<string> results = [];
                 try
                 {
-                    var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+                    // Discover the repository root from the provided path
+                    var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
                     var headBranchName = gitHelper.GetBranchName(repoRootPath);
                     if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                     {
@@ -214,7 +216,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var subCommands = new[] {
                 new Command(checkIfSpecInPublicRepoCommandName, "Check if API spec is in public repo") { typeSpecProjectPathOpt },
                 new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { typeSpecProjectPathOpt },
-                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, typeSpecProjectPathOpt, targetBranchOpt },
+                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, repoPathOpt, targetBranchOpt },
                 new Command(getPullRequestCommandName, "Get pull request details") { pullRequestNumberOpt, repoOwnerOpt, repoNameOpt }
             };
 
@@ -243,9 +245,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case createPullRequestCommandName:
                     var title = commandParser.GetValueForOption(titleOpt);
                     var description = commandParser.GetValueForOption(descriptionOpt);
-                    var typeSpecProject = commandParser.GetValueForOption(typeSpecProjectPathOpt);
+                    var repoPath = commandParser.GetValueForOption(repoPathOpt);
                     var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
-                    var createPullRequestResponse = await CreatePullRequest(title, description, typeSpecProject, targetBranch);
+                    var createPullRequestResponse = await CreatePullRequest(title, description, repoPath, targetBranch);
                     logger.LogInformation("Create pull request response: {createPullRequestResponse}", createPullRequestResponse);
                     return 0;
                 case getPullRequestCommandName:

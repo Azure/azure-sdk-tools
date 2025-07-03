@@ -79,15 +79,7 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 				})
 			} else if info.Type == model.AdditionalInfoType_Image {
 				messages = append(messages, &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(
-						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
-							&azopenai.ChatCompletionRequestMessageContentPartImage{
-								ImageURL: to.Ptr(azopenai.ChatCompletionRequestMessageContentPartImageURL{
-									URL: to.Ptr(info.Link),
-								}),
-							},
-						},
-					),
+					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Image Link: %s\nImage Content(since there are limit in OCR, it may contains extra spaces, you could ignore them): %s\n", info.Link, info.Content)),
 				})
 			}
 		}

@@ -132,7 +132,7 @@ This {language} code is being discussed for the {package_name} package.
 # INSTRUCTIONS
 - Focus on the comment that mentions @azure-sdk. That person is an Azure SDK architect, and you should assume their feedback is correct.
 - State what actions you should take as an agent with access to the knowledge base, but DO NOT perform any actions.
-- You should specify any guideline IDs that need to be referenced, which are in "See: <link>" format. 
+- You should specify any guideline IDs that need to be referenced, which are in "See: https://azure.github.io/azure-sdk/<GUIDELINE ID>" format. 
 - You should specify any agent plugin calls you want to make.
 - You should specify the JSON of the Memory you want to create. Memory has the following schema:
 ```json
@@ -144,6 +144,9 @@ This {language} code is being discussed for the {package_name} package.
 {json.dumps(Example.model_json_schema())}
 ```
 - Your response should be the precise list of steps you would take, in order.
+- Be specific about which kernel functions you want to call. Mention if there are functions you'd like to call but that don't exist. 
+- If there are examples, the Memory should reference the Example IDs in the `related_examples` field, and the Example(s) should reference the Memory ID in the `related_memory` field.
+- The Memory should reference the guideline ID in the `related_guidelines` field, if applicable.
 - Your response should include the Memory and Example JSON objects you would create.
 """
 

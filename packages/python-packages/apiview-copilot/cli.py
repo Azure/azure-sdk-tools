@@ -22,6 +22,16 @@ from typing import Optional
 
 colorama.init(autoreset=True)
 
+BLUE = Fore.BLUE
+GREEN = Fore.GREEN
+RESET = Style.RESET_ALL
+BOLD = Style.BRIGHT
+
+# Bold and color for prompts
+BOLD_GREEN = BOLD + GREEN
+BOLD_BLUE = BOLD + BLUE
+
+
 helps[
     "review"
 ] = """
@@ -388,15 +398,6 @@ def review_summarize(language: str, target: str, base: str = None):
 def ask_agent(thread_id: Optional[str] = None, remote: bool = False):
     """Start an interactive session with the agent using async/await and a single event loop."""
 
-    BLUE = Fore.BLUE
-    GREEN = Fore.GREEN
-    RESET = Style.RESET_ALL
-    BOLD = Style.BRIGHT
-
-    # Bold and color for prompts
-    BOLD_GREEN = BOLD + GREEN
-    BOLD_BLUE = BOLD + BLUE
-
     async def async_input(prompt: str) -> str:
         # Run input() in a thread to avoid blocking the event loop
         return await asyncio.to_thread(input, prompt)
@@ -520,8 +521,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
                     response, thread_id_out, messages = await invoke_agent(
                         agent=agent, user_input="Please handle this @mention.", thread_id=None, messages=None
                     )
-                    print(f"Agent response: {response}")
-                    print(f"Thread ID: {thread_id_out}")
+                    print(f"{BOLD_BLUE}Agent response:{RESET}\n{response}")
             except Exception as e:
                 print(f"Error handling agent mention: {e}")
 

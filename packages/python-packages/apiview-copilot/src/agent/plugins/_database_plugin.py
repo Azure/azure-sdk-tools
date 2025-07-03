@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 from semantic_kernel.functions import kernel_function
 
-from src._models import Memory
+from src._models import Memory, Example, ExampleType
 
 from azure.cosmos import CosmosClient
 from azure.identity import DefaultAzureCredential
@@ -87,3 +87,49 @@ class DatabasePlugin:
         guideline_container.upsert_item(guideline)
         memory_container.upsert_item(memory.model_dump())
         return {"status": "Memory added successfully"}
+
+    @kernel_function(description="Add an example related to a memory in the ArchAgent Knowledge Base.")
+    async def add_memory_example(
+        self,
+        title: str,
+        content: str,
+        memory_id: str,
+        is_exception: bool,
+        service_name: Optional[str],
+        language: Optional[str],
+    ):
+        """
+        Add an example related to a memory in the ArchAgent Knowledge Base.
+        Args:
+            memory_id (str): The ID of the memory to which the example is related.
+            content (str): The example content to add.
+            title (str): The title of the example.
+            is_exception (bool): Whether the example is an exception to established guidelines.
+            service_name (str): The service related to the memory, if any.
+            language (str): The programming language of the memory, if any.
+        """
+        if not language:
+            return {"status": "error", "message": "Language must be specified."}
+
+        client = get_database_client()
+        example_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("examples")
+        memory_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("memories")
+
+        memory = memory_container.read_item(item=memory_id, partition_key=memory_id)
+        example_id = str(uuid.uuid4())
+        example = Example(
+            id=example_id,
+            related_memories=[memory_id],
+            title=title,
+            content=content,
+            source="agent",
+            is_exception=is_exception,
+            service=service_name,
+            language=language,
+        )
+        related_memories = example.get("related_memories", [])
+        related_memories.append(memory_id)
+        example["related_memories"] = related_memories
+        memory_container.upsert_item(memory)
+        example_container.upsert_item(example.model_dump())
+        return {"status": "Example added successfully"}

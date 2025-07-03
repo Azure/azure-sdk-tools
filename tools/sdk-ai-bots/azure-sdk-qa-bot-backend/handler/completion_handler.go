@@ -17,7 +17,12 @@ func CompletionHandler(c *gin.Context) {
 		})
 		return
 	}
-
+	jsonReq, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Failed to marshal request: %v\n", err)
+	} else {
+		log.Printf("Request: %s\n", jsonReq)
+	}
 	service, err := agent.NewCompletionService()
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
@@ -32,7 +37,6 @@ func CompletionHandler(c *gin.Context) {
 	if err != nil {
 		log.Printf("Failed to marshal response: %v\n", err)
 	} else {
-		log.Printf("Request: %+v\n", req)
 		log.Printf("Response: %s\n", jsonResp)
 	}
 	c.JSON(200, &resp)

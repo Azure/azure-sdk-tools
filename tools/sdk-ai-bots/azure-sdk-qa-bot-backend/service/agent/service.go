@@ -79,7 +79,15 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 				})
 			} else if info.Type == model.AdditionalInfoType_Image {
 				messages = append(messages, &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Image Link: %s\nImage Content: %s", info.Link, info.Content)),
+					Content: azopenai.NewChatRequestUserMessageContent(
+						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
+							&azopenai.ChatCompletionRequestMessageContentPartImage{
+								ImageURL: to.Ptr(azopenai.ChatCompletionRequestMessageContentPartImageURL{
+									URL: to.Ptr(info.Link),
+								}),
+							},
+						},
+					),
 				})
 			}
 		}
@@ -225,13 +233,13 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
 	completionStart := time.Now()
-	var temperature float32 = 0.0001
+	// var temperature float32 = 0.0001
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
 		DeploymentName: &s.model,
-		Temperature:    &temperature,
+		// Temperature:    &temperature,
 	}, nil)
 
 	if err != nil {
@@ -268,13 +276,13 @@ func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestM
 		return nil, error
 	}
 	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
-	var temperature float32 = 0.0001
+	// var temperature float32 = 0.0001
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
-		Temperature:    &temperature,
+		// Temperature:    &temperature,
 	}, nil)
 
 	if err != nil {

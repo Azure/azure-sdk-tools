@@ -70,7 +70,7 @@ func GetIndexLink(chunk Index) string {
 	case Source_AzureAPIGuidelines:
 		return "https://github.com/microsoft/api-guidelines/blob/vNext/" + path
 	case Source_AzureResourceManagerRPC:
-		return "https://github.com/Azure/azure-resource-manager-rpc/blob/master/" + path
+		return "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/" + path
 	default:
 		return ""
 	}

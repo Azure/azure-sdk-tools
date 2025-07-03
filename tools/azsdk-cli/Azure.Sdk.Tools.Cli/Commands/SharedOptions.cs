@@ -23,6 +23,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(ReleaseReadinessTool),
+            typeof(FileValidationTool),
+            typeof(DownloadPromptsTool),
             typeof(SdkReleaseTool),
             #if DEBUG
             // only add this tool in debug mode

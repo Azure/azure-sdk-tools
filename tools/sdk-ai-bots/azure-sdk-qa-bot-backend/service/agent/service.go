@@ -79,6 +79,10 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 	if len(req.AdditionalInfos) > 0 {
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
+				if len(info.Link) > config.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
+					info.Content = info.Content[:config.AOAI_CHAT_MAX_TOKENS]
+				}
 				messages = append(messages, &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
 				})

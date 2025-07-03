@@ -1,8 +1,13 @@
 # Release
 
-## UNRELEASED - 0.23.0
+## 2025-07-03 - 0.24.0
+
+- Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.
+
+## 2025-06-25 - 0.23.0
 
 - Removed `tsp-client compare` command.
+- Log npm package versions after install.
 
 ## 2025-06-13 - 0.22.0
 

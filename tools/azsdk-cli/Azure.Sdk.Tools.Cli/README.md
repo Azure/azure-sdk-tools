@@ -1,6 +1,6 @@
 # `Azure SDK CLI`
 
-The Azure SDK Engineering System's automation server that is intended to encapsulate manual work in the `azure sdk` release process.
+The Azure SDK Engineering System's SDK developer experience MCP server that is intended to encapsulate manual work in the `azure sdk` release process.
 
 ## Prerequisites
 

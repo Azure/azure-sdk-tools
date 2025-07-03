@@ -2,15 +2,15 @@ import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../.
 import { buildPackage, createArtifact, tryBuildSamples } from '../../common/rushUtils.js';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
 import { posix } from 'node:path';
-
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
 import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
 import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
 import { getNpmPackageInfo } from '../../common/npmUtils.js';
 import { logger } from '../../utils/logger.js';
-import { exists, remove } from 'fs-extra';
+import { exists } from 'fs-extra';
 import unixify from 'unixify';
+import { codeOwnersAndIgnoreLinkGenerator } from '../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -26,6 +26,8 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
+        const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
+        await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory);
         const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
@@ -35,8 +37,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
         }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
-        const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
-
+ 
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,
@@ -45,7 +46,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: to be compatible with current tool, input relative generated package dir
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
-        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);
+        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot, options.runMode);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(

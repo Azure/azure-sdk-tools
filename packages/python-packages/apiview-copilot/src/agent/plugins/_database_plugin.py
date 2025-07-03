@@ -2,7 +2,6 @@ import os
 import uuid
 from typing import Optional
 from semantic_kernel.functions import kernel_function
-import logging
 
 from src._models import Memory
 
@@ -58,8 +57,11 @@ class DatabasePlugin:
             title (str): The title of the memory.
             is_exception (bool): Whether the memory is an exception to established guidelines.
             service_name (str): The service related to the memory, if any.
-            language (str): The programming language of the memory.
+            language (str): The programming language of the memory, if any.
         """
+        if not language:
+            return {"status": "error", "message": "Language must be specified."}
+
         client = get_database_client()
         guideline_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
         memory_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("memories")

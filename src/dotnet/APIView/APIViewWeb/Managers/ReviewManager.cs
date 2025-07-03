@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -43,13 +42,14 @@ namespace APIViewWeb.Managers
         private readonly ICodeFileManager _codeFileManager;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IPollingJobQueueManager _pollingJobQueueManager;
 
         public ReviewManager (
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager)
 
         {
             _authorizationService = authorizationService;
@@ -64,6 +64,7 @@ namespace APIViewWeb.Managers
             _codeFileManager = codeFileManager;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _pollingJobQueueManager = pollingJobQueueManager;
         }
 
         /// <summary>
@@ -240,14 +241,14 @@ namespace APIViewWeb.Managers
                 PackageName = packageName,
                 Language = language,
                 CreatedOn = DateTime.UtcNow,
-                CreatedBy = "azure-sdk",
+                CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,
                 ChangeHistory = new List<ReviewChangeHistoryModel>()
                 {
                     new ReviewChangeHistoryModel()
                     {
                         ChangeAction = ReviewChangeAction.Created,
-                        ChangedBy = "azure-sdk",
+                        ChangedBy = ApiViewConstants.AzureSdkBotName,
                         ChangedOn = DateTime.UtcNow
                     }
                 }
@@ -336,7 +337,7 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task<int> GenerateAIReview(ClaimsPrincipal user, string reviewId, string activeApiRevisionId, string diffApiRevisionId)
+        public async Task GenerateAIReview(ClaimsPrincipal user, string reviewId, string activeApiRevisionId, string diffApiRevisionId)
         {
             var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeApiRevisionId);
             var reviewComments = await _commentManager.GetCommentsAsync(reviewId: reviewId, commentType: CommentType.APIRevision);
@@ -379,75 +380,27 @@ namespace APIViewWeb.Managers
                 payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
             }
 
-            var result = new AIReviewJobPolledResponseModel();
             try {
                 var response = await client.PostAsync(startUrl, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                activeApiRevision.CopilotReviewJobId = jobStartedResponse.JobId;
                 activeApiRevision.CopilotReviewInProgress = true;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
-
-                var poolUrl = $"{copilotEndpoint}/api-review/{jobStartedResponse.JobId}";
-                var poller = new Poller();
-                result = await poller.PollAsync<AIReviewJobPolledResponseModel>(
-                    operation: async () => {
-                        var response = await client.GetAsync(poolUrl);
-                        response.EnsureSuccessStatusCode();
-                        var pollResponseString = await response.Content.ReadAsStringAsync();
-                        var pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(pollResponseString);
-                        return pollResponse;
-                    },
-                    isComplete: response => (response.Status != "InProgress"),
-                    initialInterval : 120, // Two minutes
-                    maxInterval: 120
-                );
-                if (result.Status == "Error")
+                _pollingJobQueueManager.Enqueue(new AIReviewJobInfoModel()
                 {
-                    throw new Exception(result.Details);
-                }
+                    JobId = jobStartedResponse.JobId,
+                    APIRevision = activeApiRevision,
+                    CodeLines = activeCodeLines,
+                    CreatedBy = user.GetGitHubLogin()
+                });
             }
             catch (Exception e ) {
                 activeApiRevision.CopilotReviewInProgress = false;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
                 throw new Exception($"Copilot Failed: {e.Message}");
             }
-           
-            // Write back result as comments to APIView
-            foreach (var comment in result.Comments)
-            {
-                var codeLine = activeCodeLines[comment.LineNo - 1];
-                var commentModel = new CommentItemModel();
-                commentModel.CreatedOn = DateTime.UtcNow;
-                commentModel.ReviewId = reviewId;
-                commentModel.APIRevisionId = activeApiRevisionId;
-                commentModel.ElementId = codeLine.lineId;
-                //comment.SectionClass = sectionClass; // This will be needed for swagger
-            
-                var commentText = new StringBuilder();
-                commentText.AppendLine(comment.Comment);
-                commentText.AppendLine();
-                commentText.AppendLine();
-                if (!String.IsNullOrEmpty(comment.Suggestion))
-                {
-                    commentText.AppendLine($"Suggestion : `{comment.Suggestion}`");
-                    commentText.AppendLine();
-                    commentText.AppendLine();
-                }
-                foreach (var id in comment.RuleIds)
-                {
-                    commentText.AppendLine($"See: https://azure.github.io/azure-sdk/{id}");
-                }
-                commentModel.ResolutionLocked = false;
-                commentModel.CreatedBy = "azure-sdk";
-                commentModel.CommentText = commentText.ToString();
-            
-                await _commentsRepository.UpsertCommentAsync(commentModel);
-                activeApiRevision.HasAutoGeneratedComments = true;
-            }
-            activeApiRevision.CopilotReviewInProgress = false;
-            await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
-            return result.Comments.Count;
         }
 
         /// <summary>

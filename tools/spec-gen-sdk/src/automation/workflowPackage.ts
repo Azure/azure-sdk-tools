@@ -6,12 +6,10 @@ import { getInstallInstructionScriptOutput } from '../types/InstallInstructionSc
 import { PackageData } from '../types/PackageData';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import {
-  WorkflowContext
-} from './workflow';
-import { getLanguageByRepoName } from './entrypoint';
 import { CommentCaptureTransport } from './logging';
 import { toolWarning } from '../utils/messageUtils';
+import { getLanguageByRepoName } from '../utils/workflowUtils';
+import { WorkflowContext } from '../types/Workflow';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);

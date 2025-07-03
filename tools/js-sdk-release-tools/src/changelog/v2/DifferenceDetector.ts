@@ -15,7 +15,9 @@ import { SDKType } from '../../common/types.js';
 import { join } from 'path';
 import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
-import { JsxEmit } from 'typescript';
+import ts from 'typescript';
+
+const { JsxEmit } = ts;
 
 export interface ApiViewOptions {
   path?: string;

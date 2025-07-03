@@ -4,10 +4,11 @@ from azure.identity.aio import DefaultAzureCredential
 from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollingOptions, AzureAIAgentThread
 
 from datetime import timedelta
+import json
 import logging
 import os
 
-from src._models import ExistingComment
+from src._models import ExistingComment, Memory, Example
 
 from .plugins import SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin
 from semantic_kernel import Kernel
@@ -91,24 +92,62 @@ def create_kernel() -> Kernel:
 
 
 @asynccontextmanager
-async def get_mention_agent(*, comments: ExistingComment, auth: str):
-    # TODO: handle auth properly
+async def get_mention_agent(*, comments: list, language: str, package_name: str, code: str, auth: str):
+    # Convert dicts to ExistingComment if needed
+    converted_comments = []
+    for c in comments:
+        if isinstance(c, ExistingComment):
+            converted_comments.append(c)
+        elif isinstance(c, dict):
+            try:
+                converted_comments.append(ExistingComment(**c))
+            except Exception as e:
+                # Optionally log or skip invalid dicts
+                continue
+    if not converted_comments:
+        raise ValueError("No valid comments provided to get_mention_agent.")
 
     ai_agent_settings = AzureAIAgentSettings(
         endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
         model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
         api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
     )
-    comments.sort(key=lambda x: x.created_on)  # Sort comments by create_on time
-    comment_lines = [f"{comment.created_by}: {comment.comment_text}" for comment in comments]
+    converted_comments.sort(key=lambda x: x.created_on)  # Sort comments by create_on time
+    comment_lines = [
+        f"{i+1}. **{comment.created_by}**: {comment.comment_text}" for i, comment in enumerate(converted_comments)
+    ]
     ai_instructions = f"""
 You are an agent that processes @mention requests from APIView.
-**CONTEXT**
-{comment_lines.join('\n\n')}
 
-**INSTRUCTIONS**
-Update the knowledge base to incorporate the feedback provided in the @mention request.
+# CONTEXT
+
+## CODE
+This {language} code is being discussed for the {package_name} package.
+```{language}
+{code}
+```
+## COMMENTS
+{ '\n\n'.join(comment_lines) }
+
+# INSTRUCTIONS
+- Focus on the comment that mentions @azure-sdk. That person is an Azure SDK architect, and you should assume their feedback is correct.
+- State what actions you should take as an agent with access to the knowledge base, but DO NOT perform any actions.
+- You should specify any guideline IDs that need to be referenced, which are in "See: <link>" format. 
+- You should specify any agent plugin calls you want to make.
+- You should specify the JSON of the Memory you want to create. Memory has the following schema:
+```json
+{json.dumps(Memory.model_json_schema())}
+```
+- Omit `tags` and `service` from the Memory JSON. `source` must be `agent_mention`.
+- Try to use the `code` and the architect feedback to create an Example that reinforces the Memory. Specify the JSON of the Example. Example has the following schema:
+```json
+{json.dumps(Example.model_json_schema())}
+```
+- Your response should be the precise list of steps you would take, in order.
+- Your response should include the Memory and Example JSON objects you would create.
 """
+
+    # Update the knowledge base to incorporate the feedback provided in the @mention request.
     async with DefaultAzureCredential() as credentials:
         async with AzureAIAgent.create_client(
             credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version

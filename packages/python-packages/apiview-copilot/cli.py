@@ -11,7 +11,9 @@ import pathlib
 import requests
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src._models import ExistingComment
 from src._search_manager import SearchManager
+
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -481,10 +483,14 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
     comments = []
     if os.path.exists(comments_path):
         with open(comments_path, "r", encoding="utf-8") as f:
-            comments = json.load(f)
+            data = json.load(f)
     else:
         print(f"Comments file {comments_path} does not exist.")
         return
+    comments = data.get("comments", [])
+    language = data.get("language", None)
+    package_name = data.get("packageName", None)
+    code = data.get("code", None)
 
     if remote:
         APP_NAME = os.getenv("AZURE_APP_NAME")
@@ -493,7 +499,10 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             return
         api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/mention"
         try:
-            resp = requests.post(api_endpoint, json={"comments": comments})
+            resp = requests.post(
+                api_endpoint,
+                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+            )
             if resp.status_code == 200:
                 print("Remote agent mention handled successfully.")
                 print(json.dumps(resp.json(), indent=2))
@@ -502,15 +511,21 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         except Exception as e:
             print(f"Error: {e}")
     else:
-        with get_mention_agent(comments=comments, auth="") as agent:
+
+        async def run_local_mention():
             try:
-                response, thread_id_out, messages = invoke_agent(
-                    agent=agent, user_input=comments, thread_id=None, messages=None
-                )
-                print(f"Agent response: {response}")
-                print(f"Thread ID: {thread_id_out}")
+                async with get_mention_agent(
+                    comments=comments, language=language, package_name=package_name, code=code, auth=""
+                ) as agent:
+                    response, thread_id_out, messages = await invoke_agent(
+                        agent=agent, user_input="Please handle this @mention.", thread_id=None, messages=None
+                    )
+                    print(f"Agent response: {response}")
+                    print(f"Thread ID: {thread_id_out}")
             except Exception as e:
                 print(f"Error handling agent mention: {e}")
+
+        asyncio.run(run_local_mention())
 
 
 SUPPORTED_LANGUAGES = [

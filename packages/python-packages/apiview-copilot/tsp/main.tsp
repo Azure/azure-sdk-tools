@@ -45,6 +45,15 @@ namespace ApiViewCopilot {
   ): string;
 
   model MentionRequest {
+    /** The programming language of the APIView. */
+    language: string;
+
+    /** The name of the package in question */
+    packageName: string;
+
+    /** The code line being discussed */
+    code: string;
+
     /** The comments in the APIView thread. */
     comments: ApiViewComment[];
   }

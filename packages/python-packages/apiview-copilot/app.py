@@ -242,12 +242,21 @@ async def summarize_api(request: SummarizeRequest):
 
 class MentionRequest(BaseModel):
     comments: list
+    language: str
+    package_name: str
+    code: str
 
 
 @app.post("/api-review/mention", response_model=str)
 async def handle_mention(request: MentionRequest):
     try:
-        async with get_mention_agent(comments=request.comments, auth=request.headers.get("Authorization")) as agent:
+        async with get_mention_agent(
+            comments=request.comments,
+            language=request.language,
+            package_name=request.package_name,
+            code=request.code,
+            auth=request.headers.get("Authorization"),
+        ) as agent:
             response, thread_id_out, messages = await invoke_agent(
                 agent=agent, user_input="Please handle this feedback.", thread_id=request.thread_id
             )

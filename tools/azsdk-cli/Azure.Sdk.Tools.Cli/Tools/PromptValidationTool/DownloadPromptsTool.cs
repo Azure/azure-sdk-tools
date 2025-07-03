@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return new DownloadResponse
                     {
                         Message = $"We are in source repository no need to download files. {sourceRepoName} = {repoRoot}",
-                        Success = false,
+                        Success = true,
                         DownloadedCount = 0,
                         TotalFiles = 0
                     };

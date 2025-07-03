@@ -775,26 +775,16 @@ class ApiViewReview:
 
         # Return defaults if the file doesn't exist
         if not os.path.exists(yaml_file):
-            return {"exceptions": "None", "sample": ""}
+            return {"exceptions": "None"}
 
         # Load the YAML file
         with open(yaml_file, "r") as f:
             yaml_data = yaml.safe_load(f)
 
-        sample_yaml = yaml_data.get("sample", None)
         exceptions_yaml = yaml_data.get("exceptions", None)
         metadata = {
-            "sample": "",
             "exceptions": exceptions_yaml or "None",
         }
-        # format the sample string if there's a value
-        if sample_yaml:
-            metadata[
-                "sample"
-            ] = f"""
-            sample:
-              {sample_yaml}
-            """
         return metadata
 
     def _unescape(self, text: str) -> str:

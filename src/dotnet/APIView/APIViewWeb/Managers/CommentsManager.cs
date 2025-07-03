@@ -8,7 +8,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
@@ -37,6 +36,7 @@ namespace APIViewWeb.Managers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IHttpClientFactory _httpClientFactory;
 
+        public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
 
         public HashSet<GithubUser> TaggableUsers;
@@ -49,6 +49,7 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IHubContext<SignalRHub> signalRHubContext,
             IHttpClientFactory httpClientFactory,
+            UserProfileCache userProfileCache,
             IConfiguration configuration,
             IOptions<OrganizationOptions> options)
         {
@@ -60,6 +61,7 @@ namespace APIViewWeb.Managers
             _codeFileRepository = codeFileRepository;
             _signalRHubContext = signalRHubContext;
             _httpClientFactory = httpClientFactory;
+            _userProfileCache = userProfileCache;
             _configuration = configuration;
             _Options = options.Value;
 
@@ -92,21 +94,6 @@ namespace APIViewWeb.Managers
             }
             // Order users alphabetically
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
-        }
-
-        private static readonly Regex azureSdkAgentTag =
-            new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.AzureSdkBotName)}\b",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public bool IsApiViewAgentTagged(CommentItemModel comment, out string commentTextWithIdentifiedTags)
-        {
-            bool isTagged = azureSdkAgentTag.IsMatch(comment.CommentText);
-
-            commentTextWithIdentifiedTags = azureSdkAgentTag.Replace(
-                comment.CommentText,
-                m => $"{m.Groups[1].Value}**@{ApiViewConstants.AzureSdkBotName}**"
-            );
-
-            return isTagged;
         }
         
         public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
@@ -184,7 +171,7 @@ namespace APIViewWeb.Managers
         public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
         {
             ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            if (!IsUserAllowedToChatWithAgent(user, review.Language))
+            if (!IsUserAllowedToChatWithAgent(user, review))
             {
                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveNotification",
                     new SiteNotificationDto()
@@ -210,13 +197,19 @@ namespace APIViewWeb.Managers
                 var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
                 List<ApiViewComment> commentsForAgent =
                     AgentHelpers.BuildCommentsForAgent(threadComments, activeCodeFile);
+                MentionRequest mentionRequest = new()
+                {
+                    Language = review.Language,
+                    PackageName = activeApiRevision.PackageName,
+                    Code = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    Comments = commentsForAgent
+                };
 
                 string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
-                var payload = new Dictionary<string, object> { { "comments", commentsForAgent } };
                 var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
                 {
                     Content = new StringContent(
-                        System.Text.Json.JsonSerializer.Serialize(payload),
+                        System.Text.Json.JsonSerializer.Serialize(mentionRequest),
                         Encoding.UTF8,
                         "application/json")
                 };
@@ -224,9 +217,9 @@ namespace APIViewWeb.Managers
                 //TODO: Set a real token here
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "");
 
-                //var client = _httpClientFactory.CreateClient();
-                // var clientResponse = await client.SendAsync(request);
-                // clientResponse.EnsureSuccessStatusCode();
+                var client = _httpClientFactory.CreateClient();
+                var clientResponse = await client.SendAsync(request); 
+                clientResponse.EnsureSuccessStatusCode();
 
                 string response = "Agent integration is not currently available";
                 await AddAgentComment(comment, response);
@@ -278,27 +271,19 @@ namespace APIViewWeb.Managers
                 });
         }
 
-        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, string language)
+        private bool IsUserAllowedToChatWithAgent(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            if (user == null || string.IsNullOrEmpty(language))
-            {
-                return false;
-            }
-
-            return IsUserLanguageArchitect(user, language);
+            return IsUserLanguageArchitect(user, review);
         }
 
-        private bool IsUserLanguageArchitect(ClaimsPrincipal user, string language)
+        private bool IsUserLanguageArchitect(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            string githubUser = user.GetGitHubLogin();
-
-            if (string.IsNullOrEmpty(githubUser) || string.IsNullOrEmpty(language))
+            if (user == null || review == null)
                 return false;
 
-            string architects = _configuration[$"Architects:{language}"] ?? "";
-            HashSet<string> architectsSet = new(architects.Split(','), StringComparer.OrdinalIgnoreCase);
-
-            return architectsSet.Contains(githubUser);
+            string githubUser = user.GetGitHubLogin();
+            HashSet<string> approvers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
+            return approvers.Contains(githubUser);
         }
 
         /// <summary>

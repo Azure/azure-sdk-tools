@@ -133,7 +133,7 @@ namespace APIViewWeb.LeanControllers
                 CommentType = commentType
             };
 
-            bool isApiViewAgentTagged = _commentsManager.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
+            bool isApiViewAgentTagged = AgentHelpers.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
             comment.CommentText = commentTextWithIdentifiedTags;
             await _commentsManager.AddCommentAsync(User, comment);
 

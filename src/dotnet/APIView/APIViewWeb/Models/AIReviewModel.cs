@@ -59,7 +59,7 @@ namespace APIViewWeb.Models
 
     public class ApiViewComment
     {
-        [JsonPropertyName("line_no")]
+        [JsonPropertyName("lineNo")]
         public int LineNumber { get; set; }
         [JsonPropertyName("createdOn")]
         public DateTimeOffset CreatedOn { get; set; }
@@ -69,7 +69,7 @@ namespace APIViewWeb.Models
         public int Downvotes { get; set; }
         [JsonPropertyName("createdBy")]
         public string CreatedBy { get; set; }
-        [JsonPropertyName("comment")]
+        [JsonPropertyName("commentText")]
         public string CommentText { get; set; }
         [JsonPropertyName("isResolved")]
         public bool IsResolved { get; set; }

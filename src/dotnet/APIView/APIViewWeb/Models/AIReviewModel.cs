@@ -51,6 +51,8 @@ namespace APIViewWeb.Models
         public string Status { get; set; }
         [JsonPropertyName("details")]
         public string Details { get; set; }
+        [JsonPropertyName("createdBy")]
+        public string CreatedBy { get; set; }
         [JsonPropertyName("jobId")]
         public string JobId { get; set; }
         [JsonPropertyName("noOfGeneratedComments")]
@@ -80,5 +82,6 @@ namespace APIViewWeb.Models
         public string JobId { get; set; }
         public APIRevisionListItemModel APIRevision { get; set; }
         public List<(string lineText, string lineId)> CodeLines { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

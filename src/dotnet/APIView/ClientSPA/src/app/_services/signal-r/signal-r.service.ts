@@ -45,7 +45,7 @@ export class SignalRService {
     })
     this.handleConnectionId();
     this.handleCommentUpdates();
-    this.handleAIreviewUpdates();
+    this.handleAIReviewUpdates();
     this.handleReviewUpdates();
     this.handleAPIRevisionUpdates();
     this.handleSiteNotification();

@@ -139,7 +139,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     //Create pull request
                     var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description, draft);
                     results.AddRange(createResponseList);
-                    
                     return results;
                 }
                 catch (Exception ex)

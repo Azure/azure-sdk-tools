@@ -2,14 +2,19 @@ package agent
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/preprocess"
@@ -78,8 +83,18 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
 				})
 			} else if info.Type == model.AdditionalInfoType_Image {
+				link := getImageDataURI(info.Link)
+				log.Println("Image link:", link)
 				messages = append(messages, &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Image Link: %s\nImage Content(since there are limit in OCR, it may contains extra spaces, you could ignore them): %s\n", info.Link, info.Content)),
+					Content: azopenai.NewChatRequestUserMessageContent(
+						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
+							&azopenai.ChatCompletionRequestMessageContentPartImage{
+								ImageURL: to.Ptr(azopenai.ChatCompletionRequestMessageContentPartImageURL{
+									URL: to.Ptr(link),
+								}),
+							},
+						},
+					),
 				})
 			}
 		}
@@ -324,4 +339,59 @@ func processName(name *string) *string {
 		return nil
 	}
 	return to.Ptr(processedName)
+}
+
+func getImageDataURI(url string) string {
+	if !strings.HasPrefix(url, "https://smba.trafficmanager.net") {
+		log.Printf("URL does not start with expected prefix: %s", url)
+		return url
+	}
+	cred, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(config.GetBotClientID()),
+	})
+	if err != nil {
+		log.Printf("Failed to create managed identity credential: %v", err)
+		return url
+	}
+	token, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
+		TenantID: config.GetBotTenantID(),
+		Scopes:   []string{"https://api.botframework.com/.default"},
+	})
+	if err != nil {
+		log.Printf("Failed to get token: %v", err)
+		return url
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Printf("Failed to create request: %v", err)
+		return url
+	}
+	req.Header.Set("Authorization", "Bearer "+token.Token)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Failed to download attachment: %v", err)
+		return url
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Failed to download attachment, status code: %d", resp.StatusCode)
+		return url
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Failed to read response body: %v", err)
+		return url
+	}
+	base64Encode := base64.StdEncoding.EncodeToString(body)
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "image/png" {
+		return fmt.Sprintf("data:image/png;base64,%s", base64Encode)
+	} else if contentType == "image/jpeg" {
+		return fmt.Sprintf("data:image/jpeg;base64,%s", base64Encode)
+	} else if contentType == "image/gif" {
+		return fmt.Sprintf("data:image/gif;base64,%s", base64Encode)
+	} else {
+		return fmt.Sprintf("data:image/png;base64,%s", base64Encode)
+	}
 }

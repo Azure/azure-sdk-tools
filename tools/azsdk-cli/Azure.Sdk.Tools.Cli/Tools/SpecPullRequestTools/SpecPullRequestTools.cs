@@ -140,16 +140,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description, draft);
                     results.AddRange(createResponseList);
                     
-                    // Add informational message about draft mode and transitioning to ready
-                    if (draft)
-                    {
-                        results.Add("");
-                        results.Add("📝 Your pull request has been created in draft mode by default.");
-                        results.Add("🚀 After you successfully generate the SDK, you should mark your spec PR as 'Ready for review' to proceed with the review process.");
-                        results.Add("   You can do this by clicking 'Ready for review' button in the GitHub UI or using GitHub CLI:");
-                        results.Add("   gh pr ready <pr-number>");
-                    }
-                    
                     return results;
                 }
                 catch (Exception ex)

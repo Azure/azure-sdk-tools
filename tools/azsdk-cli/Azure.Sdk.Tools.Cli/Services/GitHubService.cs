@@ -184,8 +184,16 @@ public class GitConnection
                     responseList.Add($"Failed to create pull request for changes in {headBranch}.");
                     return responseList;
                 }
-                
-                responseList.Add($"Pull request created successfully as {(draft ? "draft " : "")}PR. Pull request URL: {createdPullRequest.HtmlUrl}");
+
+                if (draft)
+                {
+                    responseList.Add($"Pull request created successfully as draft PR. Pull request URL: {createdPullRequest.HtmlUrl}");
+                    responseList.Add("Once you have successfully generated the SDK transition the PR to review ready.");
+                }
+                else
+                {
+                    responseList.Add($"Pull request created successfully as PR. Pull request URL: {createdPullRequest.HtmlUrl}");
+                }
             }
             catch (Exception ex)
             {

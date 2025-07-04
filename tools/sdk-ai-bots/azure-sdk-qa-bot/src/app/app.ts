@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from '@microsoft/teams-ai';
-import { FakeModel } from '../models/FakeModel.js';
+import { RAGModel } from '../models/RAGModel.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackRequestPayload, RAGOptions, sendFeedback } from '../backend/rag.js';
@@ -12,7 +12,7 @@ import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
 
 // Create AI components
-const model = new FakeModel();
+const model = new RAGModel();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,7 +63,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
           },
         ],
         reaction: 'good',
-      }
+      };
       await sendFeedback(goodFeedback, ragOptions);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
       break;
@@ -77,7 +77,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
           },
         ],
         reaction: 'bad',
-      }
+      };
       await sendFeedback(badFeedback, ragOptions);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');
       break;

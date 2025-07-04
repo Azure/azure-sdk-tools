@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
@@ -10,18 +11,22 @@ using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
 using System.Text;
+using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("This type contains the MCP tool to run SDK generation using pipeline, check SDK generation pipeline status and to get generated SDK pull request details.")]
     [McpServerToolType]
-    public class SpecWorkflowTool(IGitHubService githubService,
+    public partial class SpecWorkflowTool(IGitHubService githubService,
         IDevOpsService devopsService,
         IGitHelper gitHelper,
         ITypeSpecHelper typespecHelper,
         IOutputService output,
         ILogger<SpecWorkflowTool> logger) : MCPTool
     {
+        private const string namespaceApprovalRepoName = "azure-sdk";
+        private const string namespaceApprovalRepoOwner = "Azure";
+
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string REPO_OWNER = "Azure";
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
@@ -56,6 +61,136 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<int> releasePlanIdOpt = new(["--release-plan"], "SDK release plan id") { IsRequired = false };
         private readonly Option<int> workItemOptionalIdOpt = new(["--workitem-id"], "Release plan work item id") { IsRequired = false };
 
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
+        private static partial Regex NameSpaceIssueUrlRegex();
+        private async Task<(GenericResponse response, ReleasePlan? releasePlan, SDKInfo? sdkInfo, string packageName)> ValidateReleasePlanAndGetSDKInfoAsync(int workItemId, string language)
+        {
+            var response = new GenericResponse { Status = "Failed" };
+
+            if (workItemId == 0)
+            {
+                response.Details.Add("Work item ID is required to check release plan.");
+                return (response, null, null, string.Empty);
+            }
+
+            var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
+
+            if (releasePlan == null)
+            {
+                response.Details.Add($"Release plan with work item ID {workItemId} not found.");
+                return (response, null, null, string.Empty);
+            }
+
+            var sdkInfoList = releasePlan.SDKInfo;
+            if (sdkInfoList == null || sdkInfoList.Count == 0)
+            {
+                response.Details.Add("SDK details are not present in the release plan. Update the SDK details using the information in tspconfig.yaml.");
+                return (response, releasePlan, null, string.Empty);
+            }
+
+            var sdkInfo = sdkInfoList.FirstOrDefault(s => string.Equals(s.Language, language, StringComparison.OrdinalIgnoreCase));
+            if (sdkInfo == null || string.IsNullOrWhiteSpace(sdkInfo.Language))
+            {
+                response.Details.Add($"Release plan work item with ID {workItemId} does not have a language specified for {language}. Update the SDK details using the information in tspconfig.yaml.");
+                return (response, releasePlan, null, string.Empty);
+            }
+
+            if (string.IsNullOrWhiteSpace(sdkInfo.PackageName))
+            {
+                response.Details.Add($"Release plan work item with ID {workItemId} does not have a package name specified for {sdkInfo.Language}. Update the SDK details using the information in tspconfig.yaml.");
+                return (response, releasePlan, sdkInfo, string.Empty);
+            }
+
+            response.Status = "Success";
+            return (response, releasePlan, sdkInfo, sdkInfo.PackageName);
+        }
+
+        private async Task<GenericResponse> IsNamespaceApprovalRequiredAsync(string typeSpecProjectRoot, int workItemId, string language, string sdkReleaseType)
+        {
+            var response = new GenericResponse()
+            {
+                Status = "Failed"
+            };
+
+            try
+            {
+                var (validationResponse, releasePlan, sdkInfo, packageName) = await ValidateReleasePlanAndGetSDKInfoAsync(workItemId, language);
+                if (validationResponse.Status != "Success")
+                {
+                    return validationResponse;
+                }
+
+                var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
+
+                if (package == null)
+                {
+                    response.Details.Add($"Package with name '{packageName}' for language '{language}' does not exist.");
+                    return response;
+                }
+
+                var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
+
+                var isFirstRelease = package.ReleasedVersions.Count == 0;
+
+                var isBetaRelease = sdkReleaseType?.ToLower() == "beta";
+
+                if (isMgmtPlane && isFirstRelease && isBetaRelease) // if namespace approval is required for sdk generation
+                {
+                    var namespaceApprovalIssueURL = releasePlan?.NamespaceApprovalIssueURL;
+                    if (string.IsNullOrEmpty(namespaceApprovalIssueURL))
+                    {
+                        response.Status = "Failed";
+                        response.Details.Add("Namespace approval issue is required to verify namespace approval status. Provide the namespace approval issue URL and link it to the release plan.");
+                        return response;
+                    }
+                    
+                    var match = NameSpaceIssueUrlRegex().Match(namespaceApprovalIssueURL);
+                    // Check if the namespace approval issue is a valid GitHub issue number
+                    if (!match.Success)
+                    {
+                        response.Status = "Failed";
+                        response.Details.Add($"Invalid namespace approval issue '{namespaceApprovalIssueURL}'. It should be a valid GitHub issue in Azure/azure-sdk repo.");
+                        return response;
+                    }
+
+                     // Get issue number from the match
+                    var issueNumber = int.Parse(match.Groups[1].Value);
+                    var issue = await githubService.GetIssueAsync(namespaceApprovalRepoOwner, namespaceApprovalRepoName, issueNumber);
+                    if(issue == null)
+                    {
+                        response.Status = "Failed";
+                        response.Details.Add($"Failed to verify approval status. Namespace approval issue #{namespaceApprovalIssueURL} not found in {namespaceApprovalRepoOwner}/{namespaceApprovalRepoName}.");
+                        return response;
+                    }
+
+                    // Verify if issue has label 'mgmt-namespace-review'
+                    if (!issue.Labels.Any(label => label.Name.Equals("mgmt-namespace-review", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        response.Status = "Failed";
+                        response.Details.Add($"Namespace approval issue {namespaceApprovalIssueURL} does not have the required 'mgmt-namespace-review' label.");
+                        return response;
+                    }
+
+                    if (issue.State == ItemState.Open)
+                    {
+                        response.Status = "Failed";
+                        response.Details.Add($"Namespace approval is required for first preview release of SDK. Provide the namespace approval issue URL and link it to the release plan");
+                        return response;
+                    }
+
+                }
+                response.Status = "Success";
+                response.Details.Add($"Namespace approval check completed: either approval is not required for this SDK release, or it has already been successfully linked to the release plan.");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.Status = "Failed";
+                response.Details.Add($"Failed to validate namespace approval status for SDK generation. Error: {ex.Message}");
+                return response;
+            }
+        }
+
         private async Task<GenericResponse> IsSdkDetailsPresentInReleasePlanAsync(int workItemId, string language)
         {
             var response = new GenericResponse()
@@ -70,7 +205,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Details.Add("Work item ID is required to check if release plan is ready for SDK generation.");
                     return response;
                 }
-                
+
                 var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
@@ -267,7 +402,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         response.Details.AddRange(readiness.Details);
                         response.Status = "Failed";
                     }
+
+                    var namespaceIsApproved = await IsNamespaceApprovalRequiredAsync(typespecProjectRoot, workItemId, language, sdkReleaseType);
+                    if (!namespaceIsApproved.Status.Equals("Success"))
+                    {
+                        response.Details.AddRange(namespaceIsApproved.Details);
+                        response.Status = "Failed";
+                    }
                 }
+
+
 
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))

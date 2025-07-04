@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
@@ -168,6 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Test 1: Different language than requested
             var releasePlan = new ReleasePlan
             {
+                NamespaceApprovalIssueURL = "https://github.com/Azure/azure-sdk/issues/12345",
                 SDKInfo = new List<SDKInfo>
                 {
                     new SDKInfo
@@ -188,16 +190,63 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
+
+            var package = new PackageResponse
+            {
+                Name = "azure-storage-test",
+                Language = "python",
+                ReleasedVersions = new List<SDKReleaseInfo>(), // First release
+                PackageNameStatus = "Approved" 
+            };
+    
+            mockDevOpsService.Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(package);
+
+            var issueLabels = new List<Octokit.Label>
+            {
+                new Label(1, "", "mgmt-namespace-review", "", "", "", false)
+            };
+            mockGitHubService
+                .Setup(g => g.GetIssueAsync("Azure", "azure-sdk", It.IsAny<int>()))
+                .ReturnsAsync(new Octokit.Issue(
+                    null,
+                    null,
+                    null,
+                    null,
+                    123,
+                    ItemState.Closed,
+                    null,
+                    null,
+                    null,
+                    null,
+                    issueLabels,
+                    null,
+                    null,
+                    null,
+                    123,
+                    null,
+                    null,
+                    DateTimeOffset.Now,
+                    null,
+                    0,
+                    null,
+                    false,
+                    null,
+                    null,
+                    null,
+                    null
+
+                ));
+
             var labels = new List<Octokit.Label>
             {
                new Label(1, "", SpecWorkflowTool.ARM_SIGN_OFF_LABEL, "", "", "", false)
             };
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(
-                new Octokit.PullRequest(123, null, null,null,null,null,null,null,123,ItemState.Open,null,null,DateTimeOffset.Now, DateTimeOffset.Now,DateTimeOffset.Now, null,null, null, null,null,null,false, null,null,null,null,0,1,1,1,1,null,false,null,null,null, labels,null));
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, labels, null));
 
             mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync( new Build()
+                .ReturnsAsync(new Build()
                 {
                     Id = 100,
                     Status = BuildStatus.InProgress,
@@ -221,7 +270,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
-            
+
             mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(new Build()
                 {
@@ -255,7 +304,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(
                 new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null));
-
 
             var result = await specWorkflowTool.RunGenerateSdkAsync(
                 typespecProjectRoot: "TypeSpecTestData/specification/testcontoso/Contoso.Management",

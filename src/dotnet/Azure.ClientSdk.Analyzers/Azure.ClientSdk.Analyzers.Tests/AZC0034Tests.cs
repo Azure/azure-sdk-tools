@@ -40,7 +40,7 @@ namespace Azure.Test
     public class BlobClient { }
 }";
 
-            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 18, 4, 28).WithArguments("BlobClient", "Azure.Storage.Blobs.BlobClient (from Azure.Storage.Blobs)");
+            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 18, 4, 28).WithArguments("BlobClient", "Azure.Storage.Blobs.BlobClient (from Azure.Storage.Blobs)", "Consider renaming to 'TestBlobClient' or 'TestServiceClient' to avoid confusion.");
             await Verifier.VerifyAnalyzerAsync(code, expected);
         }
 
@@ -129,7 +129,7 @@ namespace Azure
 {
     public abstract class Operation<T> { }
 }";
-            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 27, 4, 36).WithArguments("Operation`1", "Azure.Operation`1 (from Azure.Core)");
+            var expected = Verifier.Diagnostic("AZC0034").WithSpan(4, 27, 4, 36).WithArguments("Operation`1", "Azure.Operation`1 (from Azure.Core)", "Consider renaming to 'CustomOperation' or 'CustomProcess' to avoid confusion.");
             await Verifier.VerifyAnalyzerAsync(code, expected);
         }
 

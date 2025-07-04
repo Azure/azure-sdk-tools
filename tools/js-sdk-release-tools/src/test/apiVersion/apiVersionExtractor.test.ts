@@ -3,7 +3,7 @@ import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor.
 import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor.js';
 import { join } from 'path';
 import { ApiVersionType } from '../../common/types.js';
-import { tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils.js';
+import { getApiVersionTypeFromNpm, tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils.js';
 
 describe('Modular client api-version Extractor', () => {
     test('new createClient function', async () => {
@@ -122,3 +122,80 @@ describe('Rest client file fallbacks', () => {
         });
     });
 });
+
+describe('Get ApiVersion Type From Npm', () => {
+    const mockNpmUtils = async (latestVersion?: string, betaVersion?: string, latestVersionDate?: string, betaVersionData?: string) => {
+        const tags: Record<string, string> = {};
+        if (latestVersion) tags.latest = latestVersion;
+        if (betaVersion) tags.beta = betaVersion;
+        const npmView = (!latestVersion && !betaVersion) ? undefined : { 
+            "dist-tags": tags,
+                time: {
+                [latestVersion ?? ""]: latestVersionDate ?? "",
+                [betaVersion ?? ""]: betaVersionData ?? "",
+            }
+        };
+        const npmUtils = await import("../../common/npmUtils.js");
+        const spy = vi
+            .spyOn(npmUtils, "tryGetNpmView")
+            .mockImplementation(async () => npmView);
+        return spy;
+    };
+    interface TestCase {
+        latestVersion?: string;
+        latestVersionDate?: string;
+        betaVersion?: string;
+        betaVersionDate?: string;
+        expectedVersion: ApiVersionType;
+    }
+    const cases: TestCase[] = [
+        // stable version is latest
+        {
+            latestVersion: "1.0.0",
+            latestVersionDate: "2025-06-20T09:13:48.079Z",
+            betaVersion: "1.0.0-beta.1",
+            betaVersionDate: "2025-06-01T07:07:56.529Z",
+            expectedVersion: ApiVersionType.Stable
+        },
+        // stable version is latest
+        {
+            latestVersion: "1.0.0",
+            latestVersionDate: "2025-06-01T09:13:48.079Z",
+            betaVersion: "1.0.0-beta.1",
+            betaVersionDate: "2025-06-21T07:07:56.529Z",
+            expectedVersion: ApiVersionType.Preview
+        },
+        // only has latest tag in beta version (back compatibility)
+        {
+            latestVersion: "1.0.0-beta.1",
+            betaVersion: undefined,
+            expectedVersion: ApiVersionType.Preview
+        },
+        // only has latest tag in stable version
+        {
+            latestVersion: "1.0.0",
+            betaVersion: undefined,
+            expectedVersion: ApiVersionType.Stable
+        },
+        // no stable or beta version, indicate no npm package, fallback to preview
+        {
+            latestVersion: undefined,
+            betaVersion: undefined,
+            expectedVersion: ApiVersionType.Preview
+        }
+    ]
+    test.each(cases)('Stable: $latestVersion on data: $latestVersionDate, Beta: $betaVersion on data $betaVersionDate, Expected:$expectedVersion', async ({latestVersion, betaVersion, expectedVersion, latestVersionDate, betaVersionDate}) => {
+        const spy = await mockNpmUtils(latestVersion, betaVersion, latestVersionDate, betaVersionDate);
+        const npmVersion = await getApiVersionTypeFromNpm("test");
+        expect(npmVersion).toBe(expectedVersion);
+        spy.mockRestore();
+    });
+
+    test('debug', async () => {
+        const mockNpmUtils = await import("../../common/npmUtils.js");
+        const x = await mockNpmUtils.tryGetNpmView("@azure/arm-appservice")
+        // console.log("🚀 ~ test ~ x:", x)
+        console.log("🚀 ~ test ~ versions:", Object.keys(x?.versions as any))
+        // console.log("🚀 ~ test ~ dist-tags:", (x as any)['dist-tags'])
+    })
+})

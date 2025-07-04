@@ -8,6 +8,7 @@ const { exists, readFile } = pkg;
 import { logger } from "../../utils/logger.js";
 import { parse } from "yaml"
 import { iterate, MarkDownEx, parseMarkdown } from "@azure-tools/openapi-tools-common";
+import { getNpmPackageName } from "../../common/utils.js";
 
 function extractAutorestConfig(readme: MarkDownEx) {
     let isInConfigurationSection = false;
@@ -56,7 +57,8 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
 
     const isModelOnlyPackage = await isModelOnly(packageRoot);
     if (isModelOnlyPackage) {
-        return await getApiVersionTypeFromNpm(packageRoot);
+        const packageName = getNpmPackageName(packageRoot);
+        return await getApiVersionTypeFromNpm(packageName);
     }
     
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');

@@ -4,6 +4,7 @@ import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFi
 import { join } from "path";
 import { exists } from "fs-extra";
 import { logger } from "../../utils/logger.js";
+import { getNpmPackageName } from "../../common/utils.js";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
@@ -16,7 +17,8 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     }
     const isModelOnlyPackage = await isModelOnly(packageRoot);
     if (isModelOnlyPackage) {
-        return await getApiVersionTypeFromNpm(packageRoot);
+        const packageName = getNpmPackageName(packageRoot);
+        return await getApiVersionTypeFromNpm(packageName);
     }
     
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');

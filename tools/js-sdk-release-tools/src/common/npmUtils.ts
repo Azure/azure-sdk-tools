@@ -39,7 +39,7 @@ export function getArtifactName(info: NpmPackageInfo) {
     return `${name}-${version}.tgz`;
 }
 
-export async function tryGetNpmView(packageName: string): Promise<{ [id: string]: any } | undefined> {
+export async function tryGetNpmView(packageName: string): Promise<{ [id: string]: unknown } | undefined> {
     try {
         return await fetch.json(`/${packageName}`);
     } catch (err) {

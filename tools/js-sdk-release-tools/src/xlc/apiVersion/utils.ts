@@ -8,7 +8,7 @@ import { glob } from 'glob';
 import { exists } from 'fs-extra';
 import { getNpmPackageName } from "../../common/utils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getVersion, isBetaVersion } from "../../utils/version.js";
+import { getVersion, getversionDate, isBetaVersion } from "../../utils/version.js";
 
 import unixify from 'unixify';
 
@@ -134,11 +134,30 @@ export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVers
     return previewVersions.length > 0 ? ApiVersionType.Preview : ApiVersionType.Stable;
 };
 
-export const getApiVersionTypeFromNpm = async (packageRoot: string): Promise<ApiVersionType> => {
+export const getApiVersionTypeFromNpm = async (packageName: string): Promise<ApiVersionType> => {
     logger.info('Fallback to get api version type from latest version in NPM');
-    const packageName = getNpmPackageName(packageRoot);
     const npmViewResult = await tryGetNpmView(packageName);
+    if (!npmViewResult) return ApiVersionType.Preview;
     const latestVersion = getVersion(npmViewResult, "latest");
-    const isBeta = isBetaVersion(latestVersion);
-    return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+    const betaVersion = getVersion(npmViewResult, "beta");
+    
+    if (!betaVersion && !latestVersion) throw new Error(`Failed to find version tags in NPM for package: ${packageName}`);
+    
+    if (betaVersion && !latestVersion) return ApiVersionType.Preview;
+    
+    if (!betaVersion && latestVersion) {
+        const isBeta = isBetaVersion(latestVersion);
+        return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+    }
+    
+    // both beta and stable versions exist
+    const isBeta = isBetaVersion(latestVersion!);
+    if (isBeta) return ApiVersionType.Preview;
+    // compare which is latest between beta and stable versions
+    const betaVersionDate = getversionDate(npmViewResult, betaVersion!);
+    const latestVersionDate = getversionDate(npmViewResult, latestVersion!);
+    if (!betaVersionDate || !latestVersionDate) {
+        throw new Error(`Failed to get version date for beta: ${betaVersion} or latest: ${latestVersion}`);
+    }
+    return new Date(betaVersionDate) > new Date(latestVersionDate) ? ApiVersionType.Preview : ApiVersionType.Stable;
 };

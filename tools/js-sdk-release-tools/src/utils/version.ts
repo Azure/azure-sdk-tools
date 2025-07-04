@@ -2,14 +2,32 @@ import {logger} from "./logger.js";
 import {inc as semverInc} from "semver";
 import { ApiVersionType } from "../common/types.js"
 
-export function getVersion(npmViewResult: Record<string, any> | undefined, tag: string) {
-    const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
-    return distTags && distTags[tag];
+export const isStringStringRecord = (record: unknown): record is Record<string, string> => {
+    return record !== undefined &&
+        record !== null &&
+        typeof record === 'object' &&
+        !Array.isArray(record) && 
+        Object.entries(record).every(
+            ([k, v]) => typeof k === "string" && typeof v === "string"
+        );
 }
 
-export function getversionDate(npmViewResult: Record<string, any>, version : string){
-    const time: Record<string, any> | undefined = npmViewResult['time'];
-    return time && time[version];
+export function getVersion(npmViewResult: Record<string, unknown> | undefined, tag: string) {
+    const distTags = npmViewResult?.['dist-tags'];
+    if (!isStringStringRecord(distTags)) {
+        logger.error(`Failed to get expected dist-tags record.`);
+        return undefined;
+    }
+    return distTags[tag];
+}
+
+export function getversionDate(npmViewResult: Record<string, unknown>, version : string) {
+    const time = npmViewResult['time'];
+    if (!isStringStringRecord(time)) {
+        logger.error(`Failed to get expected time record.`);
+        return undefined;
+    }
+    return time[version];
 }
 
 export function getLatestStableVersion(npmViewResult: Record<string, any> | undefined) {

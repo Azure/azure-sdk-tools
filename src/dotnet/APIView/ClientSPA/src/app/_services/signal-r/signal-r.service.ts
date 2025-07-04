@@ -6,6 +6,7 @@ import { CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
+import { SiteNotificationDto } from 'src/app/_dtos/siteNotificationDto';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,7 @@ export class SignalRService {
   private aiReviewUpdates: Subject<AIReviewJobCompletedDto> = new Subject<AIReviewJobCompletedDto>();
   private reviewUpdates: Subject<Review> = new Subject<Review>();
   private apiRevisionUpdates: Subject<APIRevision> = new Subject<APIRevision>();
+  private siteNotifications: Subject<SiteNotificationDto> = new Subject<SiteNotificationDto>();
 
   constructor(private configService: ConfigService) {
     this.connection = new signalR.HubConnectionBuilder()
@@ -46,6 +48,7 @@ export class SignalRService {
     this.handleAIReviewUpdates();
     this.handleReviewUpdates();
     this.handleAPIRevisionUpdates();
+    this.handleSiteNotification();
   }
 
   handleConnectionId() {
@@ -56,6 +59,12 @@ export class SignalRService {
   handleCommentUpdates() {
     this.connection.on("ReceiveCommentUpdates", (commentUpdates: CommentUpdatesDto) => {
       this.commentUpdates.next(commentUpdates);
+    });
+  }
+
+  handleSiteNotification() {
+    this.connection.on("ReceiveNotification", (siteNotification: SiteNotificationDto) => {
+      this.siteNotifications.next(siteNotification);
     });
   }
 
@@ -83,6 +92,10 @@ export class SignalRService {
 
   onAIReviewUpdates() : Observable<AIReviewJobCompletedDto> {
     return this.aiReviewUpdates.asObservable();
+  }
+
+  onNotificationUpdates() : Observable<SiteNotificationDto> {
+    return this.siteNotifications.asObservable();
   }
 
   onReviewUpdates() : Observable<Review> {

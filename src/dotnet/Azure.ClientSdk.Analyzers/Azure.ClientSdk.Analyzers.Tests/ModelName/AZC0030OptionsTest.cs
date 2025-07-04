@@ -10,7 +10,7 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class AZC0030OptionsSuffixTests
     {
-        private const string DiagnosticId = "AZC0030";
+        private const string DiagnosticId = "AZC0036";
 
         // This test validates that the analyzer is triggered when the model is in the Azure.ResourceManager namespace
         // and has serialization methods.

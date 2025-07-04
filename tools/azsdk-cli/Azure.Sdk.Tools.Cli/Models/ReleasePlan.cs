@@ -32,6 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string SDKLanguages { get; set; } = string.Empty;
         public bool IsSpecApproved { get; set; } = false;
         public int ApiSpecWorkItemId { get; set; } = 0;
+        public string NamespaceApprovalIssueURL { get; set; } = string.Empty;
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {

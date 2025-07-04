@@ -131,7 +131,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
         }
-
         private async Task<ReleasePlan> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
             var releasePlan = new ReleasePlan()
@@ -151,7 +150,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsCreatedByAgent = workItem.Fields.TryGetValue("Custom.IsCreatedByAgent", out value) && "Copilot".Equals(value?.ToString()),
                 ReleasePlanSubmittedByEmail = workItem.Fields.TryGetValue("Custom.ReleasePlanSubmittedByEmail", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKLanguages = workItem.Fields.TryGetValue("Custom.SDKLanguages", out value) ? value?.ToString() ?? string.Empty : string.Empty,
-                IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString())
+                IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString()),
+                NamespaceApprovalIssueURL = workItem.Fields.TryGetValue("NamespaceApprovalIssue", out value) ? value?.ToString() ?? string.Empty : string.Empty
             };
 
             var languages = new string[] { "Dotnet", "JavaScript", "Python", "Java", "Go" };

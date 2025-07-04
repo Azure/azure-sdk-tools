@@ -33,12 +33,26 @@ public class OutputService : IOutputService
 
     public string Format(object response)
     {
-        if (OutputMode == OutputModes.Plain)
+        if (OutputMode != OutputModes.Plain)
         {
-            return response.ToString();
+            return JsonSerializer.Serialize(response, serializerOptions);
         }
 
-        return JsonSerializer.Serialize(response, serializerOptions);
+        var elementType = response.GetType().IsGenericType ? response.GetType().GetGenericArguments()[0] : null;
+
+        if (response is System.Collections.IEnumerable enumerable && response is not string)
+        {
+            var separator = "--------------------------------------------------------------------------------" + Environment.NewLine;
+            if (elementType == null
+                || elementType.IsPrimitive || elementType == typeof(decimal) || elementType == typeof(string))
+            {
+                separator = "";
+            }
+            var outputs = enumerable.Cast<object>().Select(item => item?.ToString());
+            return string.Join(separator + Environment.NewLine, outputs);
+        }
+
+        return response.ToString();
     }
 
     public string ValidateAndFormat<T>(string response)

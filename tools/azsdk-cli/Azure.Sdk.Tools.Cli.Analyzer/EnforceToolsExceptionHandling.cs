@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             Id,
             "McpServerTool methods must wrap body in try/catch, see the README within the tools directory for examples",
-            "Method '{0}' must have its entire body inside try{{}}catch(Exception)",
+            "Method '{0}' must have its entire body inside 'try {} catch(Exception) {}'",
             "Reliability",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -57,21 +57,27 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 return;
             }
 
-            // check that there is one statement surrounding the body
+            // check that try statements surround the entire body
             var stmts = body.Statements;
-            if (stmts.Count != 1 || !(stmts[0] is TryStatementSyntax tryStmt))
+            foreach (var stmt in stmts)
             {
-                ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
-                return;
+                if (stmt is LocalDeclarationStatementSyntax)
+                {
+                    continue;
+                }
+                if (!(stmt is TryStatementSyntax tryStmt))
+                {
+                    ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                    continue;
+                }
+                // verify there’s a catch(Exception)
+                bool hasExCatch = tryStmt.Catches.Any(c => c.Declaration?.Type.ToString() == "Exception");
+                if (!hasExCatch)
+                {
+                    ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                }
             }
 
-            // verify there’s a catch(Exception)
-            bool hasExCatch = tryStmt.Catches
-                .Any(c => c.Declaration?.Type.ToString() == "Exception");
-            if (!hasExCatch)
-            {
-                ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
-            }
         }
     }
 }

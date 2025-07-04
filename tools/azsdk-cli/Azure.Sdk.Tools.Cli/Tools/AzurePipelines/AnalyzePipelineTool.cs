@@ -5,6 +5,7 @@ using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
@@ -21,13 +22,13 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Fetches data from an Azure Pipelines run.")]
-public class AnalyzePipelinesTool : MCPTool
+public class PipelineAnalysisTool : MCPTool
 {
     private readonly IAzureService azureService;
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory;
     private readonly ILogAnalysisHelper logAnalysisHelper;
     private readonly IOutputService output;
-    private readonly ILogger<AnalyzePipelinesTool> logger;
+    private readonly ILogger<PipelineAnalysisTool> logger;
 
     private const string PUBLIC_PROJECT = "public";
     private const string INTERNAL_PROJECT = "internal";
@@ -64,12 +65,12 @@ public class AnalyzePipelinesTool : MCPTool
     private readonly Option<string> projectEndpointOpt = new(["--ai-endpoint", "-e"], "The ai foundry project endpoint for the Azure AI Agent service");
     private readonly Option<string> aiModelOpt = new(["--ai-model"], "The model to use for the Azure AI Agent");
 
-    public AnalyzePipelinesTool(
+    public PipelineAnalysisTool(
         IAzureService azureService,
         IAzureAgentServiceFactory azureAgentServiceFactory,
         ILogAnalysisHelper logAnalysisHelper,
         IOutputService output,
-        ILogger<AnalyzePipelinesTool> logger
+        ILogger<PipelineAnalysisTool> logger
     ) : base()
     {
         this.azureService = azureService;
@@ -248,89 +249,12 @@ public class AnalyzePipelinesTool : MCPTool
         }
     }
 
-    private async Task<List<FailedTestRunResponse>> getFailedTestResultsHttp(string project, int buildId, CancellationToken ct = default)
-    {
-        var testRunUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/test/Runs?buildIds={buildId}&api-version=7.1";
-        logger.LogDebug("Getting test runs from {url}", testRunUrl);
-        var response = await httpClient.GetAsync(testRunUrl, ct);
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadAsStringAsync(ct);
-        JsonDocument doc;
-        try
-        {
-            doc = JsonDocument.Parse(json);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("BBP error {ex}", ex);
-            logger.LogError("{json}", json);
-            throw;
-        }
-        var runs = doc.RootElement.GetProperty("value").EnumerateArray().ToList();
-        var failedTestRuns = new List<FailedTestRunResponse>();
-
-        foreach (var run in runs)
-        {
-            var runId = run.GetProperty("id").GetInt32();
-            var resultsUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/test/Runs/{runId}/results?outcomes=Failed,Aborted&api-version=7.1";
-            logger.LogDebug("Getting test run run results from {url}", resultsUrl);
-            var resultsResponse = await httpClient.GetAsync(resultsUrl, ct);
-            resultsResponse.EnsureSuccessStatusCode();
-
-            var resultsJson = await resultsResponse.Content.ReadAsStringAsync(ct);
-
-            while (true)
-            {
-                using var resultsDoc = JsonDocument.Parse(resultsJson);
-
-                foreach (var result in resultsDoc.RootElement.GetProperty("value").EnumerateArray())
-                {
-                    if (!result.TryGetProperty("outcome", out var outcomeProp) || outcomeProp.GetString() != "Failed" || outcomeProp.GetString() != "Aborted")
-                    {
-                        continue;
-                    }
-
-                    failedTestRuns.Add(new FailedTestRunResponse
-                    {
-                        RunId = runId,
-                        TestCaseTitle = result.GetProperty("testCaseTitle").GetString() ?? "",
-                        ErrorMessage = result.GetProperty("errorMessage").GetString() ?? "",
-                        StackTrace = result.GetProperty("stackTrace").GetString() ?? "",
-                        Outcome = result.GetProperty("outcome").GetString() ?? "",
-                        Url = result.GetProperty("url").GetString() ?? ""
-                    });
-                }
-
-                var continuationToken = resultsResponse.Headers.TryGetValues("x-ms-continuationtoken", out var values) ? values.FirstOrDefault() : null;
-                if (string.IsNullOrEmpty(continuationToken))
-                {
-                    break;
-                }
-
-                var pagedResultsUrl = $"{resultsUrl}&continuationToken={continuationToken}";
-                resultsResponse = await httpClient.GetAsync(pagedResultsUrl, ct);
-                resultsResponse.EnsureSuccessStatusCode();
-                resultsJson = await resultsResponse.Content.ReadAsStringAsync(ct);
-            }
-        }
-
-        return failedTestRuns;
-    }
-
     public async Task<List<FailedTestRunResponse>> GetPipelineFailedTestResults(string project, int buildId, CancellationToken ct = default)
     {
         try
         {
             logger.LogDebug("Getting pipeline failed test results for {project} {buildId}", project, buildId);
             var results = new List<ShallowTestCaseResult>();
-
-            // Try an unauthenticated request which supports all client scenarios (AI agents, external contributors, etc.)
-            // The devops sdk doesn't seem to support unauthenticated requests
-            if (project == PUBLIC_PROJECT)
-            {
-                return await getFailedTestResultsHttp(project, buildId, ct);
-            }
 
             var testRuns = await testClient.GetTestResultsByPipelineAsync(project, buildId, cancellationToken: ct);
             results.AddRange(testRuns);
@@ -369,7 +293,7 @@ public class AnalyzePipelinesTool : MCPTool
                         ErrorMessage = tc.ErrorMessage,
                         StackTrace = tc.StackTrace,
                         Outcome = tc.Outcome,
-                        Url = tc.Url
+                        Uri = tc.Url
                     });
                 }
             }

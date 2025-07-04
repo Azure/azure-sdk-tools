@@ -45,7 +45,7 @@
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
 /tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
-/tools/cotent-validation/               @xiangyan99 @zedy-wj 
+/tools/content-validation/               @xiangyan99 @zedy-wj 
 
 ###########
 # Stress

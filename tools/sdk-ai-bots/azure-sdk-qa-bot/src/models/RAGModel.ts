@@ -12,7 +12,7 @@ import { createReplyCard } from '../cards/components/reply.js';
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import config from '../config/config.js';
-import { MessageWithRemoteContent, PromptGenerator } from '../input/promptGenerator.js';
+import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenerator.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { getRagTanent as getRagTetant } from '../config/utils.js';

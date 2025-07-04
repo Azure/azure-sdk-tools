@@ -1,6 +1,5 @@
 import { getUniqueLinks } from '../common/shared.js';
 import { ConversationMessage, Prompt } from './ConversationHandler.js';
-import { ImageTextExtractor } from './ImageContentExtractor.js';
 import { LinkContentExtractor } from './LinkContentExtractor.js';
 import { RemoteContent } from './RemoteContent.js';
 
@@ -19,12 +18,10 @@ export interface MessageWithRemoteContent {
 
 export class PromptGenerator {
   private meta: object;
-  private imageTextExtractor: ImageTextExtractor;
   private linkContentExtractor: LinkContentExtractor;
 
   constructor(meta: object = {}) {
     this.meta = meta;
-    this.imageTextExtractor = new ImageTextExtractor(this.meta);
     this.linkContentExtractor = new LinkContentExtractor(this.meta);
   }
 
@@ -48,11 +45,11 @@ export class PromptGenerator {
       ...(prompt.images || []),
       ...conversationMessages.flatMap((m) => m.prompt?.images || []),
     ]);
-    const [linkContents, imagesContents] = await Promise.all([
-      await this.linkContentExtractor.extract(links.map((link) => new URL(link))),
-      this.imageTextExtractor.extract(Array.from(imagesSet).map((image) => new URL(image))),
-    ]);
-    const additionalInfo = { links: linkContents, images: imagesContents };
+    const linkContents = await this.linkContentExtractor.extract(links.map((link) => new URL(link)));
+    const additionalInfo = {
+      links: linkContents,
+      images: Array.from(imagesSet).map((image) => ({ text: '', id: '', url: new URL(image) })),
+    };
     const user = prompt.userName || '';
     return { currentQuestion, conversations, additionalInfo, user };
   }

@@ -15,9 +15,8 @@ export class LinkContentExtractor {
     const contents: RemoteContent[] = [];
 
     for (const [index, url] of urls.entries()) {
-      const id = `link-${index}`;
       if (!this.isGithubPullRequestUrl(url)) {
-        contents.push({ text: '', url, id, error: new URLNotSupportedError(url) });
+        contents.push({ text: '', url, error: new URLNotSupportedError(url) });
         continue;
       }
 
@@ -26,7 +25,7 @@ export class LinkContentExtractor {
       try {
         prDetails = await this.githubClient.getPullRequestDetails(prUrl);
       } catch (error) {
-        contents.push({ text: '', url, id: `link-${index}`, error: error });
+        contents.push({ text: '', url, error: error });
         continue;
       }
 
@@ -35,7 +34,7 @@ export class LinkContentExtractor {
         const detail = JSON.stringify(prDetails[key], null, 2);
         text += `### ${key}\n${detail}\n`;
       }
-      contents.push({ text, url, id });
+      contents.push({ text, url });
     }
 
     return contents;

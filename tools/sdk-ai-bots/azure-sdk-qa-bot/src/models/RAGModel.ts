@@ -19,11 +19,7 @@ import { getRagTanent as getRagTetant } from '../config/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { getUniqueLinks } from '../common/shared.js';
 
-export interface FakeModelOptions {
-  rag: RAGOptions;
-}
-
-export class FakeModel implements PromptCompletionModel {
+export class RAGModel implements PromptCompletionModel {
   private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
   private readonly conversationHandler = new ConversationHandler();
 

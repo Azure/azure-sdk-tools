@@ -62,13 +62,13 @@ export class SignalRService {
     });
   }
 
-   handleSiteNotification() {
+  handleSiteNotification() {
     this.connection.on("ReceiveNotification", (siteNotification: SiteNotificationDto) => {
       this.siteNotifications.next(siteNotification);
     });
   }
 
-  handleAIreviewUpdates() {
+  handleAIReviewUpdates() {
     this.connection.on("ReceiveAIReviewUpdates", (aiReviewUpdates: AIReviewJobCompletedDto) => {
       this.aiReviewUpdates.next(aiReviewUpdates);
     });

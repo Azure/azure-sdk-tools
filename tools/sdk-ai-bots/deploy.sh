@@ -5,7 +5,8 @@ set -e
 RESOURCE_GROUP="typespec_helper"
 ACR_NAME="azuresdkqabot"
 APP_NAME="azuresdkbot"
-APP_SLOT_NAME="azuresdkbot-dev"
+APP_SLOT_DEV_NAME="azuresdkbot-dev"
+APP_SLOT_PREVIEW_NAME="preview"
 IMAGE_NAME="azure-sdk-qa-bot-backend"
 
 # Default deployment settings
@@ -20,6 +21,11 @@ while getopts "t:m:" flag; do
     *) ;;
   esac
 done
+
+APP_SLOT_NAME=${APP_SLOT_DEV_NAME}
+if [[ "$DEPLOY_MODE" == "preview" ]]; then
+    APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
+fi
 
 # Handle production deployment if requested
 if [[ "$DEPLOY_MODE" == "prod" ]]; then
@@ -41,7 +47,7 @@ echo "Using image tag: $IMAGE_TAG"
 echo "Deployment mode: $DEPLOY_MODE"
 
 # Validate deployment mode
-if [[ "$DEPLOY_MODE" != "slot" && "$DEPLOY_MODE" != "prod" ]]; then
+if [[ "$DEPLOY_MODE" != "preview" && "$DEPLOY_MODE" != "slot" && "$DEPLOY_MODE" != "prod" ]]; then
     echo "Error: Invalid deployment mode. Use 'slot' or 'prod'"
     echo "Usage: $0 [-t image_tag] [-m deployment_mode]"
     echo "  -t: Image tag (default: latest)"

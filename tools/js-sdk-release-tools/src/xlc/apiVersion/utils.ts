@@ -137,27 +137,10 @@ export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVers
 export const getApiVersionTypeFromNpm = async (packageName: string): Promise<ApiVersionType> => {
     logger.info('Fallback to get api version type from latest version in NPM');
     const npmViewResult = await tryGetNpmView(packageName);
+    // TODO: How do I know if it's target version type? Stable or preview? Preview is better? Impact version bump
     if (!npmViewResult) return ApiVersionType.Preview;
+    // TODO: back compatibility for beta version can be in latest tag
     const latestVersion = getVersion(npmViewResult, "latest");
-    const betaVersion = getVersion(npmViewResult, "beta");
-    
-    if (!betaVersion && !latestVersion) throw new Error(`Failed to find version tags in NPM for package: ${packageName}`);
-    
-    if (betaVersion && !latestVersion) return ApiVersionType.Preview;
-    
-    if (!betaVersion && latestVersion) {
-        const isBeta = isBetaVersion(latestVersion);
-        return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
-    }
-    
-    // both beta and stable versions exist
-    const isBeta = isBetaVersion(latestVersion!);
-    if (isBeta) return ApiVersionType.Preview;
-    // compare which is latest between beta and stable versions
-    const betaVersionDate = getversionDate(npmViewResult, betaVersion!);
-    const latestVersionDate = getversionDate(npmViewResult, latestVersion!);
-    if (!betaVersionDate || !latestVersionDate) {
-        throw new Error(`Failed to get version date for beta: ${betaVersion} or latest: ${latestVersion}`);
-    }
-    return new Date(betaVersionDate) > new Date(latestVersionDate) ? ApiVersionType.Preview : ApiVersionType.Stable;
+    // latest tag no longer contains beta version
+    return latestVersion ? ApiVersionType.Stable : ApiVersionType.Preview;
 };

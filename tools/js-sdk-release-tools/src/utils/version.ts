@@ -2,7 +2,16 @@ import {logger} from "./logger.js";
 import {inc as semverInc} from "semver";
 import { ApiVersionType } from "../common/types.js"
 
-export const isStringStringRecord = (record: unknown): record is Record<string, string> => {
+function getDistTags(npmViewResult: Record<string, unknown>): Record<string, string> | undefined {
+    const distTags = npmViewResult['dist-tags'];
+    if (!isStringStringRecord(distTags)) {
+        logger.warn(`Failed to get expected dist-tags record.`);
+        return undefined;
+    }
+    return distTags;
+}
+
+function isStringStringRecord(record: unknown): record is Record<string, string> {
     return record !== undefined &&
         record !== null &&
         typeof record === 'object' &&
@@ -12,13 +21,38 @@ export const isStringStringRecord = (record: unknown): record is Record<string, 
         );
 }
 
-export function getVersion(npmViewResult: Record<string, unknown> | undefined, tag: string) {
-    const distTags = npmViewResult?.['dist-tags'];
-    if (!isStringStringRecord(distTags)) {
-        logger.error(`Failed to get expected dist-tags record.`);
+export function getUsedVersions(npmViewResult: Record<string, unknown>): string[] {
+    const versions = npmViewResult['versions'];
+    if (!isStringStringRecord(versions)) return [];
+    return Object.keys(versions);    
+}
+
+// TODO: consider back compatibility
+// NOTE: latest tag will only contains stable version,
+//       so if the package is not GA, we need to get latest version from beta tag for back compatibility.
+export function getLatestVersion(npmViewResult: Record<string, unknown>) {
+    const distTags = getDistTags(npmViewResult);
+    if (!distTags) return undefined;
+    const latestVersion = distTags['latest'];
+    const betaVersion = distTags['beta'];
+    if (latestVersion) {
+        return latestVersion;
+    } else if (betaVersion) {
+        return betaVersion;
+    } else {
+        logger.warn(`Failed to find latest or beta version found in dist-tags.`);
         return undefined;
     }
-    return distTags[tag];
+}
+
+export function getBetaVersion(npmViewResult: Record<string, unknown>) {
+    const distTags = getDistTags(npmViewResult);
+    // TODO
+}
+
+export function getVersion(npmViewResult: Record<string, unknown>, tag: string): string | undefined {
+    const distTags = getDistTags(npmViewResult);
+    return distTags ? distTags[tag] : undefined;
 }
 
 export function getversionDate(npmViewResult: Record<string, unknown>, version : string) {

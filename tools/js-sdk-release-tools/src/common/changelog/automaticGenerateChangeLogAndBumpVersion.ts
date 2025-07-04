@@ -11,7 +11,9 @@ import { logger } from "../../utils/logger.js";
 import {
     bumpPatchVersion,
     bumpPreviewVersion,
+    getLatestVersion,
     getNewVersion,
+    getUsedVersions,
     getVersion,
     isBetaVersion,
     isStableSDKReleaseType,
@@ -34,8 +36,10 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
-    const stableVersion = getVersion(npmViewResult, "latest");
-    const nextVersion = getVersion(npmViewResult, "next");
+    // TODO: latest tag no longer contains beta version, need to update this logic
+    const stableVersion = npmViewResult ? getLatestVersion(npmViewResult) : undefined;
+    // TODO: latest tag no longer contains beta version, need to update this logic
+    const nextVersion = npmViewResult ? getVersion(npmViewResult, "next") : undefined;
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
@@ -47,7 +51,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
             process.exit(1);
         }
         logger.info(`Package ${packageName} has been released before, start to check whether previous release is track2 sdk.`)
-        const usedVersions = Object.keys(isStringStringRecord(npmViewResult['versions']) ? npmViewResult['versions'] : {});
+        const usedVersions = getUsedVersions(npmViewResult);
         // in our rule, we always compare to stableVersion. But here wo should pay attention to the some stableVersion which contains beta, which means the package has not been GA.
         try {
             shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));

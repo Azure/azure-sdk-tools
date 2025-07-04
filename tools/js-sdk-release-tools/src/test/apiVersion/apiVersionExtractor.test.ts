@@ -190,4 +190,11 @@ describe('Get ApiVersion Type From Npm', () => {
         expect(npmVersion).toBe(expectedVersion);
         spy.mockRestore();
     });
+
+    test('debug', async () => {
+        const mockNpmUtils = await import("../../common/npmUtils.js");
+        const x = await mockNpmUtils.tryGetNpmView("@azure/identity")
+        // console.log("🚀 ~ test ~ x:", x)
+        console.log("🚀 ~ test ~ dist-tags:", (x as any)['dist-tags'])
+    })
 })

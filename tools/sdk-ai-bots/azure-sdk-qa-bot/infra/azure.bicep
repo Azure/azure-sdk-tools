@@ -30,7 +30,6 @@ param serverfarmsName string = resourceBaseName
 param webAppName string = resourceBaseName
 param identityName string = resourceBaseName
 param logAnalyticsName string = resourceBaseName
-param cognitiveServiceAccountName string = resourceBaseName
 param location string = resourceGroup().location
 param webAppSKU string
 
@@ -41,28 +40,6 @@ param botDisplayName string
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
   name: identityName
-}
-
-resource cognitiveServiceAccount 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
-  name: cognitiveServiceAccountName
-  location: 'eastus'
-  sku: {
-    name: 'S1'
-  }
-  kind: 'ComputerVision'
-  identity: {
-    type: 'None'
-  }
-  properties: {
-    customSubDomainName: cognitiveServiceAccountName
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
-    allowProjectManagement: false
-    publicNetworkAccess: 'Enabled'
-  }
 }
 
 // Compute resources for your Web App
@@ -137,15 +114,6 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'RAG_TANENT_ID_FOR_PYTHON'
           value: ragTanentIdForPython
-        }
-        // Azure Computer Vision
-        {
-          name: 'AZURE_COMPUTER_VISION_ENDPOINT'
-          value: cognitiveServiceAccount.properties.endpoint
-        }
-        {
-          name: 'AZURE_COMPUTER_VISION_API_KEY'
-          value: cognitiveServiceAccount.listKeys().key1
         }
         // Azure Table
         {

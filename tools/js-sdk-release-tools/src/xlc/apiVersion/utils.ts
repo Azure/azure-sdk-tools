@@ -1,14 +1,12 @@
 import { getTsSourceFile } from '../../common/utils.js';
 import { ApiVersionType } from '../../common/types.js';
 import path, { basename } from 'node:path';
-import shell from 'shelljs';
 import { FunctionDeclaration, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
-import { getNpmPackageName } from "../../common/utils.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getVersion, getversionDate, isBetaVersion } from "../../utils/version.js";
+import { getLatestVersion, isBetaVersion } from "../../utils/version.js";
 
 import unixify from 'unixify';
 
@@ -134,13 +132,14 @@ export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVers
     return previewVersions.length > 0 ? ApiVersionType.Preview : ApiVersionType.Stable;
 };
 
-export const getApiVersionTypeFromNpm = async (packageName: string): Promise<ApiVersionType> => {
-    logger.info('Fallback to get api version type from latest version in NPM');
+export const getApiVersionTypeFromNpm = async (
+    packageName: string,
+): Promise<ApiVersionType> => {
+    logger.info("Fallback to get api version type from latest version in NPM");
     const npmViewResult = await tryGetNpmView(packageName);
-    // TODO: How do I know if it's target version type? Stable or preview? Preview is better? Impact version bump
     if (!npmViewResult) return ApiVersionType.Preview;
-    // TODO: back compatibility for beta version can be in latest tag
-    const latestVersion = getVersion(npmViewResult, "latest");
-    // latest tag no longer contains beta version
-    return latestVersion ? ApiVersionType.Stable : ApiVersionType.Preview;
+    const latestVersion = getLatestVersion(npmViewResult);
+    return latestVersion && !isBetaVersion(latestVersion)
+        ? ApiVersionType.Stable
+        : ApiVersionType.Preview;
 };

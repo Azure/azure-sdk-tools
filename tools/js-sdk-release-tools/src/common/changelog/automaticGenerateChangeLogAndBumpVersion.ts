@@ -17,7 +17,6 @@ import {
     getVersion,
     isBetaVersion,
     isStableSDKReleaseType,
-    isStringStringRecord
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
@@ -36,9 +35,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
-    // TODO: latest tag no longer contains beta version, need to update this logic
     const stableVersion = npmViewResult ? getLatestVersion(npmViewResult) : undefined;
-    // TODO: latest tag no longer contains beta version, need to update this logic
     const nextVersion = npmViewResult ? getVersion(npmViewResult, "next") : undefined;
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {

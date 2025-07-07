@@ -11,14 +11,18 @@ function getDistTags(npmViewResult: Record<string, unknown>): Record<string, str
     return distTags;
 }
 
-function isStringStringRecord(record: unknown): record is Record<string, string> {
-    return record !== undefined &&
+function isStringStringRecord(
+    record: unknown,
+): record is Record<string, string> {
+    return (
+        record !== undefined &&
         record !== null &&
-        typeof record === 'object' &&
-        !Array.isArray(record) && 
+        typeof record === "object" &&
+        !Array.isArray(record) &&
         Object.entries(record).every(
-            ([k, v]) => typeof k === "string" && typeof v === "string"
-        );
+            ([k, v]) => typeof k === "string" && typeof v === "string",
+        )
+    );
 }
 
 export function getUsedVersions(npmViewResult: Record<string, unknown>): string[] {
@@ -27,27 +31,39 @@ export function getUsedVersions(npmViewResult: Record<string, unknown>): string[
     return Object.keys(versions);    
 }
 
-// TODO: consider back compatibility
-// NOTE: latest tag will only contains stable version,
-//       so if the package is not GA, we need to get latest version from beta tag for back compatibility.
-export function getLatestVersion(npmViewResult: Record<string, unknown>) {
+// NOTE: The latest tag used to contains beta version when there's the sdk is not GA.
+//       The latest tag will only contains stable version in the future.
+//       So if the package is not GA, we need to get latest version from beta tag.
+export function getLatestStableOrBetaVersionWhenNoGA(
+    npmViewResult: Record<string, unknown>,
+) {
     const distTags = getDistTags(npmViewResult);
     if (!distTags) return undefined;
-    const latestVersion = distTags['latest'];
-    const betaVersion = distTags['beta'];
-    if (latestVersion) {
-        return latestVersion;
-    } else if (betaVersion) {
-        return betaVersion;
-    } else {
-        logger.warn(`Failed to find latest or beta version found in dist-tags.`);
-        return undefined;
-    }
+    const latestVersion = distTags["latest"];
+    const betaVersion = distTags["beta"];
+    if (latestVersion) return latestVersion;
+    if (betaVersion) return betaVersion;
+    logger.warn(`Failed to find latest or beta version found in dist-tags.`);
+    return undefined;
 }
 
-export function getBetaVersion(npmViewResult: Record<string, unknown>) {
+export function getLatestVersion(
+    npmViewResult: Record<string, unknown>,
+) {
     const distTags = getDistTags(npmViewResult);
-    // TODO
+    if (!distTags) return undefined;
+    const latestVersion = distTags["latest"];
+    const betaVersion = distTags["beta"];
+    const latestVersionDataString = getversionDate(npmViewResult, latestVersion);
+    const betaVersionDataString = getversionDate(npmViewResult, betaVersion);
+    const latestVersionDate = latestVersionDataString ? new Date(latestVersionDataString) : undefined;
+    const betaVersionDate = betaVersionDataString ? new Date(betaVersionDataString) : undefined;
+    if (latestVersionDate && betaVersionDate) 
+        return latestVersionDate.getTime() > betaVersionDate.getTime() ? latestVersion : betaVersion;
+    if (latestVersion) return latestVersion;
+    if (betaVersion) return betaVersion;
+    logger.warn(`Failed to find date of latest or beta version found in dist-tags.`);
+    return undefined;
 }
 
 export function getVersion(npmViewResult: Record<string, unknown>, tag: string): string | undefined {
@@ -64,11 +80,6 @@ export function getversionDate(npmViewResult: Record<string, unknown>, version :
     return time[version];
 }
 
-export function getLatestStableVersion(npmViewResult: Record<string, any> | undefined) {
-    const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
-    const stableVersion = distTags && distTags['latest'];
-    return stableVersion;
-}
 export function isBetaVersion(stableVersion: string) {
     return stableVersion.includes('beta');
 }

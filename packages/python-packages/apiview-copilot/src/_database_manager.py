@@ -18,9 +18,11 @@ class DatabaseManager:
         # Decide which container class to use
         if name not in self.containers:
             if name == "review_jobs":
-                self.containers[name] = ReviewJobsContainer(self.database, name)
+                self.containers[name] = ReviewJobsContainer(self, name)
+            elif name == "guidelines":
+                self.containers[name] = GuidelinesContainer(self, name)
             else:
-                self.containers[name] = BasicContainer(self.database, name)
+                self.containers[name] = BasicContainer(self, name)
         return self.containers[name]
 
     @property
@@ -43,6 +45,7 @@ class DatabaseManager:
 class BasicContainer:
     def __init__(self, manager: DatabaseManager, container_name: str):
         self.client = manager.database.get_container_client(container_name)
+        self.preprocess_id = None  # Optional preprocessing function for item IDs
 
     def _to_dict(self, data):
         if BaseModel and isinstance(data, BaseModel):
@@ -53,6 +56,8 @@ class BasicContainer:
         """
         Create a new item. Raises an error if the item already exists.
         """
+        if self.preprocess_id:
+            item_id = self.preprocess_id(item_id)
         data_dict = self._to_dict(data)
         # Remove None values
         data_dict = {k: v for k, v in data_dict.items() if v is not None}
@@ -73,22 +78,32 @@ class BasicContainer:
         """
         Upsert an item. If it exists, update it; if not, create it.
         """
+        if self.preprocess_id:
+            item_id = self.preprocess_id(item_id)
         data_dict = self._to_dict(data)
         return self.client.upsert_item({"id": item_id, **data_dict})
 
-    def get(self, item_id: str, preprocess_id=None):
+    def get(self, item_id: str):
         """
         Get an item by its ID. If preprocess_id is provided, it will be applied to the item_id before fetching.
         """
-        if preprocess_id:
-            item_id = preprocess_id(item_id)
+        if self.preprocess_id:
+            item_id = self.preprocess_id(item_id)
         return self.client.read_item(item=item_id, partition_key=item_id)
 
     def delete(self, item_id: str):
         """
         Delete an item by its ID. Returns the response from the delete operation.
         """
+        if self.preprocess_id:
+            item_id = self.preprocess_id(item_id)
         return self.client.delete_item(item=item_id, partition_key=item_id)
+
+
+class GuidelinesContainer(BasicContainer):
+    def __init__(self, manager: DatabaseManager, container_name: str):
+        super().__init__(manager, container_name)
+        self.preprocess_id = lambda x: x.replace(".html#", "=html=")
 
 
 class ReviewJobsContainer(BasicContainer):

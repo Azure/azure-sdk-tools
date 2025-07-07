@@ -127,12 +127,8 @@ class DatabasePlugin:
         Args:
             guideline_id (str): The ID of the guideline to retrieve.
         """
-
-        def preprocess(gid):
-            return gid.replace(".html#", "=html=")
-
         db = get_database_manager()
-        return db.guidelines.get(guideline_id, preprocess_id=preprocess)
+        return db.guidelines.get(guideline_id)
 
     @kernel_function(
         description="Link one or more target items to a source item by adding their IDs to a related field in the source item."

@@ -227,7 +227,7 @@ namespace APIViewWeb.Managers
                 string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
                 AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
 
-                string response = "Agent integration is not currently available"; //aggentChatResponse?.Response
+                string response = "Agent integration is not currently available"; //agentChatResponse?.Response
                 await AddAgentComment(comment, response);
             }
             catch (Exception ex)            

@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> repoPathOpt = new(["--repo-path"], "Path to repository root") { IsRequired = true };
         private readonly Option<string> titleOpt = new(["--title"], "Title for the pull request") { IsRequired = true };
         private readonly Option<string> descriptionOpt = new(["--description"], "Description for the pull request") { IsRequired = true };
         private readonly Option<bool> draftOpt = new(["--draft"], () => true, "Create pull request as draft (default: true)");
@@ -121,7 +122,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 List<string> results = [];
                 try
                 {
-                    var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+                    // Discover the repository root from the provided path
+                    var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
                     var headBranchName = gitHelper.GetBranchName(repoRootPath);
                     if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                     {
@@ -244,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case createPullRequestCommandName:
                     var title = commandParser.GetValueForOption(titleOpt);
                     var description = commandParser.GetValueForOption(descriptionOpt);
-                    var typeSpecProject = commandParser.GetValueForOption(typeSpecProjectPathOpt);
+                    var repoPath = commandParser.GetValueForOption(repoPathOpt);
                     var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
                     var draft = commandParser.GetValueForOption(draftOpt);
                     var createPullRequestResponse = await CreatePullRequest(title, description, repoPath, targetBranch, draft);

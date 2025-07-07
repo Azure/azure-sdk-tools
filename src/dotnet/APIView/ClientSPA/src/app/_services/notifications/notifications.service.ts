@@ -17,7 +17,7 @@ export class NotificationsService {
   constructor() {
     this.dbPromise = openDB<NotificationsDb>(INDEXED_DB_NAME, 1, {
       upgrade(db) {
-        db.createObjectStore(NOTIFICATIONS_TABLE_NAME, { keyPath: 'id' });
+        db.createObjectStore(NOTIFICATIONS_TABLE_NAME, { keyPath: 'id' })
       },
     });
     this.loadNotifications();

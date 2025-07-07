@@ -1,5 +1,9 @@
 # Release
 
+## 2025-07-03 - 0.24.0
+
+- Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.
+
 ## 2025-06-25 - 0.23.0
 
 - Removed `tsp-client compare` command.

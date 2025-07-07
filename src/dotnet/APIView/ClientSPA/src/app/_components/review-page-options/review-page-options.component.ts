@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -459,41 +459,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
           if (aiReviewUpdate.status === 'Success') {
             this.aiReviewGenerationState = 'Completed';
             this.generateAIReviewButtonText = `Generated ${aiReviewUpdate.noOfGeneratedComments} comments!`;
-
-            if (aiReviewUpdate.noOfGeneratedComments > 0) {
-              const messageData : ToastMessageData = {
-                action: 'RefreshPage',
-              };
-              const pageUrl = `${window.location.origin}/review/${aiReviewUpdate.reviewId}?activeApiRevisionId=${aiReviewUpdate.apirevisionId}`;
-              const messagePart = (aiReviewUpdate.noOfGeneratedComments === 1) ? "comment" : "comments";
-              const messageDetail = `Copilot generated ${aiReviewUpdate.noOfGeneratedComments} ${messagePart}.`;
-              const summary = 'Copilot Comments';
-              const severity = 'success';
-              this.messageService.add({ severity: severity, icon: 'bi bi-check-circle', summary: summary, detail: messageDetail, data: messageData, key: 'bc', life: 60000, closable: true });
-              const notification = new SiteNotification(
-                this.review?.id,
-                this.activeAPIRevision?.id,
-                summary,
-                messageDetail + `</br>Job Id: ${aiReviewUpdate.jobId}</br><a href="${pageUrl}" target="_blank">View Review</a>`,
-                severity
-              );
-              this.notificationsService.addNotification(notification);
-            }
           } else if (aiReviewUpdate.status === 'Error') {
             this.aiReviewGenerationState = 'Failed';
             this.generateAIReviewButtonText = 'Failed to generate copilot review';
-            const message = 'Failed to generate copilot review';
-            const summary = 'AI Comments';
-            const severity = 'error';
-            this.messageService.add({ severity: severity, icon: 'bi bi-exclamation-triangle', summary: summary, detail: message, key: 'bc', life: 5000, closable: true });
-            const notification = new SiteNotification(
-              this.review?.id,
-              this.activeAPIRevision?.id,
-              summary,
-              message + ` Job Id: ${aiReviewUpdate.jobId}, ${aiReviewUpdate.details}`,
-              severity
-            );
-            this.notificationsService.addNotification(notification);
+          }
+          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
+          if (notificationInfo) {
+            if (aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
+              this.messageService.add(notificationInfo[1]);
+            }
           }
 
           setTimeout(() => {

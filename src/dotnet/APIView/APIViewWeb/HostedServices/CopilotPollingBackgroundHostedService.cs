@@ -100,10 +100,17 @@ namespace APIViewWeb.HostedServices
                                     commentText.AppendLine();
                                     commentText.AppendLine();
                                 }
-                                foreach (var id in comment.RuleIds)
+
+                                if (comment.RuleIds.Count > 0)
                                 {
-                                    commentText.AppendLine($"See: https://azure.github.io/azure-sdk/{id}");
+                                    commentText.AppendLine("**Guidelines**");
+                                    foreach (var ruleId in comment.RuleIds)
+                                    {
+                                        commentText.AppendLine();
+                                        commentText.AppendLine($"https://azure.github.io/azure-sdk/{ruleId}");
+                                    }
                                 }
+
                                 commentModel.ResolutionLocked = false;
                                 commentModel.CreatedBy = "azure-sdk";
                                 commentModel.CommentText = commentText.ToString();
@@ -119,6 +126,7 @@ namespace APIViewWeb.HostedServices
                                 APIRevisionId = jobInfo.APIRevision.Id,
                                 Status = result.Status,
                                 Details = result.Details,
+                                CreatedBy = jobInfo.CreatedBy,
                                 NoOfGeneratedComment = result.Comments.Count,
                                 JobId = jobInfo.JobId
                             }, stoppingToken);

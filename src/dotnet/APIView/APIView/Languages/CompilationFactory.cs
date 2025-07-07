@@ -22,7 +22,14 @@ namespace ApiView
             "System.Memory",
             "System.Runtime.CompilerServices.Unsafe",
             "System.Threading.Tasks.Extensions",
-            "System.ValueTuple"
+            "System.ValueTuple",
+            // Additional System assemblies that may be needed for complex packages
+            "System.ComponentModel.Annotations",
+            "System.Numerics.Vectors",
+            "System.Runtime.Serialization.Primitives",
+            "System.Collections.Immutable",
+            "System.Text.Encoding.Extensions",
+            "System.Diagnostics.DiagnosticSource"
 
         }, StringComparer.InvariantCultureIgnoreCase);
 

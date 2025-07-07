@@ -210,7 +210,7 @@ public static class Program
     /// </summary>
     /// <param name="path">The path to the DLL within the package (e.g., "lib/net8.0/System.Text.Json.dll")</param>
     /// <returns>The target framework moniker or null if not found</returns>
-    static string? ParseTargetFrameworkFromPath(string path)
+    public static string? ParseTargetFrameworkFromPath(string path)
     {
         // Expected format: lib/{tfm}/{assembly}.dll or ref/{tfm}/{assembly}.dll
         var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -227,7 +227,7 @@ public static class Program
     /// </summary>
     /// <param name="availableFrameworks">Available target framework monikers</param>
     /// <returns>The best target framework moniker</returns>
-    static string? SelectBestTargetFramework(IEnumerable<string> availableFrameworks)
+    public static string? SelectBestTargetFramework(IEnumerable<string> availableFrameworks)
     {
         if (!availableFrameworks.Any()) return null;
 
@@ -248,7 +248,7 @@ public static class Program
             { "netstandard1.4", 14 },
             { "netstandard1.5", 15 },
             { "netstandard1.6", 16 },
-            { "netstandard2.0", 20 },
+            { "netstandard2.0", 40 }, // Prefer netstandard2.0 over newer .NET versions for better compatibility
             { "netstandard2.1", 25 },
             { "netcoreapp1.0", 30 },
             { "netcoreapp1.1", 31 },
@@ -257,11 +257,11 @@ public static class Program
             { "netcoreapp2.2", 34 },
             { "netcoreapp3.0", 35 },
             { "netcoreapp3.1", 36 },
-            { "net5.0", 50 },
-            { "net6.0", 60 },
-            { "net7.0", 70 },
-            { "net8.0", 80 },
-            { "net9.0", 90 }
+            { "net5.0", 20 },
+            { "net6.0", 20 },
+            { "net7.0", 20 },
+            { "net8.0", 20 },
+            { "net9.0", 20 }
         };
 
         // Find the framework with the highest preference score

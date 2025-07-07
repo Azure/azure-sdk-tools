@@ -28,7 +28,7 @@ func CompletionHandler(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	resp, err := service.ChatCompletion(&req)
+	resp, err := service.ChatCompletion(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return

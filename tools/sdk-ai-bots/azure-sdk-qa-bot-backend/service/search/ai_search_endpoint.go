@@ -19,6 +19,7 @@ type SearchClient struct {
 	BaseUrl string
 	ApiKey  string
 	Index   string
+	Agent   string
 }
 
 func NewSearchClient() *SearchClient {
@@ -26,6 +27,7 @@ func NewSearchClient() *SearchClient {
 		BaseUrl: config.AI_SEARCH_BASE_URL,
 		ApiKey:  config.AI_SEARCH_APIKEY,
 		Index:   config.AI_SEARCH_INDEX,
+		Agent:   config.AI_SEARCH_AGENT,
 	}
 }
 
@@ -273,4 +275,52 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	chunk.Chunk = strings.Join(contents, "\n\n") // Add extra newline between sections
 
 	return chunk
+}
+
+func (s *SearchClient) AgenticSearch(ctx context.Context, messages []model.KnowledgeAgentMessage, sources []model.Source) (*model.AgenticSearchResponse, error) {
+	if len(messages) == 0 {
+		return nil, fmt.Errorf("no messages provided for agentic search")
+	}
+	filters := make([]string, 0, len(sources))
+	for _, source := range sources {
+		filters = append(filters, fmt.Sprintf("context_id eq '%s'", source))
+	}
+	targetIndexParam := model.KnowledgeAgentIndexParams{
+		IndexName:         s.Index,
+		RerankerThreshold: model.RerankScoreMediumRelevanceThreshold,
+	}
+	if len(filters) > 0 {
+		targetIndexParam.FilterAddOn = strings.Join(filters, " or ")
+	}
+	req := &model.AgenticSearchRequest{}
+	req.Messages = messages
+	req.TargetIndexParams = []model.KnowledgeAgentIndexParams{targetIndexParam}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/agents/%s/%s", s.BaseUrl, s.Agent, "/retrieve?api-version=2025-05-01-preview"), bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Set("api-key", s.ApiKey)
+	resp, err := (&http.Client{}).Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		log.Println(string(b))
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	b, _ := io.ReadAll(resp.Body)
+	httpResp := &model.AgenticSearchResponse{}
+	if err := json.Unmarshal(b, httpResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return httpResp, nil
 }

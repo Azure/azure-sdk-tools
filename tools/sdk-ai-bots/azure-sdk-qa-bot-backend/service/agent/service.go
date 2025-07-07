@@ -56,7 +56,7 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	return nil
 }
 
-func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.CompletionResp, error) {
+func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.CompletionReq) (*model.CompletionResp, error) {
 	startTime := time.Now()
 	requestID := uuid.New().String()
 	log.SetPrefix(fmt.Sprintf("[RequestID: %s] ", requestID))
@@ -64,216 +64,49 @@ func (s *CompletionService) ChatCompletion(req *model.CompletionReq) (*model.Com
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	result := &model.CompletionResp{}
 
-	// avoid token limit error, we need to limit the number of messages in the history
-	if len(req.Message.Content) > config.AOAI_CHAT_MAX_TOKENS {
-		log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-		req.Message.Content = req.Message.Content[:config.AOAI_CHAT_MAX_TOKENS]
-	}
+	// 1. Build messages from the openai request
+	llmMessages, aiSearchMessages := s.buildMessages(req)
 
-	// This is a conversation in progress.
-	// NOTE: all messages, regardless of role, count against token usage for this API.
-	messages := []azopenai.ChatRequestMessageClassification{}
+	// 2. Build query for search
+	query := s.buildQueryForSearch(req, llmMessages)
 
-	if len(req.AdditionalInfos) > 0 {
-		for _, info := range req.AdditionalInfos {
-			if info.Type == model.AdditionalInfoType_Link {
-				if len(info.Link) > config.AOAI_CHAT_MAX_TOKENS {
-					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-					info.Content = info.Content[:config.AOAI_CHAT_MAX_TOKENS]
-				}
-				messages = append(messages, &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
-				})
-			} else if info.Type == model.AdditionalInfoType_Image {
-				link := getImageDataURI(info.Link)
-				log.Println("Image link:", link)
-				messages = append(messages, &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(
-						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
-							&azopenai.ChatCompletionRequestMessageContentPartImage{
-								ImageURL: to.Ptr(azopenai.ChatCompletionRequestMessageContentPartImageURL{
-									URL: to.Ptr(link),
-								}),
-							},
-						},
-					),
-				})
-			}
-		}
-	}
-
-	for _, message := range req.History {
-		if message.Role == model.Role_Assistant {
-			messages = append(messages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
-		} else if message.Role == model.Role_User {
-			messages = append(messages, &azopenai.ChatRequestUserMessage{
-				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
-				Name:    processName(message.Name),
-			})
-		}
-	}
-
-	if req.WithPreprocess != nil && *req.WithPreprocess {
-		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
-		if preProcessedMessage == "" {
-			log.Println("User message is empty after preprocessing, skipping completion.")
-			return result, nil
-		}
-		log.Println("user message with additional info:", preProcessedMessage)
-		// avoid token limit error, we need to limit the number of messages in the history
-		if len(preProcessedMessage) > config.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-			preProcessedMessage = preProcessedMessage[:config.AOAI_CHAT_MAX_TOKENS]
-		}
-		messages = append(messages, &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(preProcessedMessage)})
-	} else {
-		messages = append(messages, &azopenai.ChatRequestUserMessage{
-			Content: azopenai.NewChatRequestUserMessageContent(req.Message.Content),
-			Name:    processName(req.Message.Name),
-		})
-	}
-
-	query := req.Message.Content
-	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
-		query = *req.Message.RawContent
-	}
-	query = preprocess.NewPreprocessService().PreprocessInput(query)
-	log.Printf("User query: %s", query)
-
-	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(messages)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-	} else if intentResult != nil {
-		if len(req.Sources) == 0 {
-			if intentResult.Category == model.QuestionCategory_Unbranded {
-				req.Sources = []model.Source{model.Source_TypeSpec}
-			} else {
-				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecAzure, model.Source_AzureRestAPISpec}
-			}
-			req.Sources = append(req.Sources, model.Source_TypeSpecQA)
-		}
-		if len(intentResult.Question) > 0 {
-			query = intentResult.Question
-		}
-		log.Printf("category: %v, intension: %v", intentResult.Category, intentResult.Question)
-	}
-	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-
-	searchStart := time.Now()
-	searchClient := search.NewSearchClient()
-	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
-	if err != nil {
-		return nil, fmt.Errorf("failed to search for related documents: %w", err)
-	}
-	log.Printf("Search operation took: %v", time.Since(searchStart))
-
-	// filter unrelevant results
-	needCompleteResults := make([]model.Index, 0)
-	normalResult := make([]model.Index, 0)
-	for _, result := range results {
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s, score: %f", result.Title, result.RerankScore)
-			continue
-		}
-		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
-			needCompleteResults = append(needCompleteResults, result)
-			log.Printf("Adding result with high score: %s, score: %f", result.Title, result.RerankScore)
-			continue
-		}
-		log.Printf("Result: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
-		normalResult = append(normalResult, result)
-	}
-	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
-		log.Printf("No results found with high relevance score, supply with normal results")
-		supplyNum := 5
-		if len(normalResult) < supplyNum {
-			supplyNum = len(normalResult)
-		}
-		needCompleteResults = normalResult[:supplyNum]
-		normalResult = normalResult[supplyNum:]
-	}
-
-	chunkProcessStart := time.Now()
-	files := make(map[string]bool)
-	mergedChunks := make([]model.Index, 0)
-	for _, result := range needCompleteResults {
-		if files[result.Title] {
-			continue
-		}
-		files[result.Title] = true
-		mergedChunks = append(mergedChunks, model.Index{
-			Title:     result.Title,
-			ContextID: result.ContextID,
-			Header1:   result.Header1,
-		})
-		log.Printf("Complete chunk: %s/%s", result.ContextID, result.Title)
-	}
-	var wg sync.WaitGroup
-	wg.Add(len(mergedChunks))
-	for i := range mergedChunks {
-		i := i
-		go func() {
-			defer wg.Done()
-			mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
-		}()
-	}
-	wg.Wait()
-
-	chunks := make([]string, 0)
-	for _, result := range mergedChunks {
-		chunk := processDocument(result)
-		chunks = append(chunks, chunk)
-	}
-	for _, result := range normalResult {
-		if files[result.Title] {
-			continue
-		}
-		chunk := processChunk(result)
-		chunks = append(chunks, chunk)
-	}
-	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
-	promptParser := prompt.DefaultPromptParser{}
-	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, *req.PromptTemplate)
+	// 3. Search for related documents
+	chunks, err := s.searchRelatedKnowledge(req, query)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
 
-	completionStart := time.Now()
-	// var temperature float32 = 0.0001
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
-		Messages:       messages,
-		DeploymentName: &s.model,
-		// Temperature:    &temperature,
-	}, nil)
-
+	// 4. Agentic search
+	agenticSearchResult, err := s.agenticSearch(ctx, aiSearchMessages, req)
 	if err != nil {
-		// TODO: Update the following line with your application specific error handling logic
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
+	llmMessages = append(llmMessages, agenticSearchResult...)
 
-	for _, choice := range resp.Choices {
-		answer, err := promptParser.ParseResponse(*choice.Message.Content, *req.PromptTemplate)
-		if err != nil {
-			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
-			return nil, err
-		}
-		result = answer
+	// 5. Build prompt
+	prompt, err := s.buildPrompt(chunks, *req.PromptTemplate)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
 	}
+
+	// 6. Get answer from LLM
+	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
+	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
+
+	// 7. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")
 		result.FullContext = &fullContext
 	}
-	result.Intension = intentResult
 
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
@@ -398,4 +231,288 @@ func getImageDataURI(url string) string {
 	} else {
 		return fmt.Sprintf("data:image/png;base64,%s", base64Encode)
 	}
+}
+
+func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []model.KnowledgeAgentMessage) {
+	// avoid token limit error, we need to limit the number of messages in the history
+	if len(req.Message.Content) > config.AOAI_CHAT_MAX_TOKENS {
+		log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
+		req.Message.Content = req.Message.Content[:config.AOAI_CHAT_MAX_TOKENS]
+	}
+
+	// This is a conversation in progress.
+	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
+	llmMessages := []azopenai.ChatRequestMessageClassification{}
+	aiSearchMessages := []model.KnowledgeAgentMessage{}
+
+	// process additional info(image, link)
+	if len(req.AdditionalInfos) > 0 {
+		for _, info := range req.AdditionalInfos {
+			if info.Type == model.AdditionalInfoType_Link {
+				if len(info.Link) > config.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
+					info.Content = info.Content[:config.AOAI_CHAT_MAX_TOKENS]
+				}
+				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
+					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
+				})
+				aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
+					Content: []model.KnowledgeAgentMessageContent{
+						{
+							Type: "text",
+							Text: fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content),
+						},
+					},
+					Role: model.Role_User,
+				})
+			} else if info.Type == model.AdditionalInfoType_Image {
+				link := getImageDataURI(info.Link)
+				log.Println("Image link:", link)
+				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
+					Content: azopenai.NewChatRequestUserMessageContent(
+						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
+							&azopenai.ChatCompletionRequestMessageContentPartImage{
+								ImageURL: to.Ptr(azopenai.ChatCompletionRequestMessageContentPartImageURL{
+									URL: to.Ptr(link),
+								}),
+							},
+						},
+					),
+				})
+				aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
+					Content: []model.KnowledgeAgentMessageContent{
+						{
+							Type: "image",
+							Text: link,
+						},
+					},
+					Role: model.Role_User,
+				})
+			}
+		}
+	}
+
+	// process history messages
+	for _, message := range req.History {
+		var role model.Role
+		if message.Role == model.Role_Assistant {
+			llmMessages = append(llmMessages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
+			role = model.Role_Assistant
+
+		}
+		if message.Role == model.Role_User {
+			role = model.Role_User
+			llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
+				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
+				Name:    processName(message.Name),
+			})
+		}
+		aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
+			Content: []model.KnowledgeAgentMessageContent{
+				{
+					Type: "text",
+					Text: message.Content,
+				},
+			},
+			Role: role,
+		})
+	}
+
+	// process current user message
+	currentMessage := req.Message.Content
+	if req.WithPreprocess != nil && *req.WithPreprocess {
+		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
+		log.Println("user message with additional info:", preProcessedMessage)
+		// avoid token limit error, we need to limit the number of messages in the history
+		if len(preProcessedMessage) > config.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
+			preProcessedMessage = preProcessedMessage[:config.AOAI_CHAT_MAX_TOKENS]
+		}
+		currentMessage = preProcessedMessage
+	}
+	llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
+		Content: azopenai.NewChatRequestUserMessageContent(currentMessage),
+		Name:    processName(req.Message.Name),
+	})
+	aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
+		Content: []model.KnowledgeAgentMessageContent{
+			{
+				Type: "text",
+				Text: currentMessage,
+			},
+		},
+		Role: model.Role_User,
+	})
+	return llmMessages, aiSearchMessages
+}
+
+func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) string {
+	query := req.Message.Content
+	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
+		query = *req.Message.RawContent
+	}
+	query = preprocess.NewPreprocessService().PreprocessInput(query)
+	log.Printf("User query: %s", query)
+
+	intentStart := time.Now()
+	intentResult, err := s.RecongnizeIntension(messages)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+	} else if intentResult != nil {
+		if len(req.Sources) == 0 {
+			if intentResult.Category == model.QuestionCategory_Unbranded {
+				req.Sources = []model.Source{model.Source_TypeSpec}
+			} else {
+				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecAzure, model.Source_AzureRestAPISpec}
+			}
+			req.Sources = append(req.Sources, model.Source_TypeSpecQA)
+		}
+		if len(intentResult.Question) > 0 {
+			query = intentResult.Question
+		}
+		log.Printf("category: %v, intension: %v", intentResult.Category, intentResult.Question)
+	}
+	log.Printf("Intent recognition took: %v", time.Since(intentStart))
+	return query
+}
+
+func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, query string) ([]string, error) {
+	searchStart := time.Now()
+	searchClient := search.NewSearchClient()
+	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search for related documents: %w", err)
+	}
+	log.Printf("Search operation took: %v", time.Since(searchStart))
+
+	// filter unrelevant results
+	needCompleteResults := make([]model.Index, 0)
+	normalResult := make([]model.Index, 0)
+	for _, result := range results {
+		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s, score: %f", result.Title, result.RerankScore)
+			continue
+		}
+		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
+			needCompleteResults = append(needCompleteResults, result)
+			log.Printf("Adding result with high score: %s, score: %f", result.Title, result.RerankScore)
+			continue
+		}
+		log.Printf("Result: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+		normalResult = append(normalResult, result)
+	}
+	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
+		log.Printf("No results found with high relevance score, supply with normal results")
+		supplyNum := 5
+		if len(normalResult) < supplyNum {
+			supplyNum = len(normalResult)
+		}
+		needCompleteResults = normalResult[:supplyNum]
+		normalResult = normalResult[supplyNum:]
+	}
+
+	chunkProcessStart := time.Now()
+	files := make(map[string]bool)
+	mergedChunks := make([]model.Index, 0)
+	for _, result := range needCompleteResults {
+		if files[result.Title] {
+			continue
+		}
+		files[result.Title] = true
+		mergedChunks = append(mergedChunks, model.Index{
+			Title:     result.Title,
+			ContextID: result.ContextID,
+			Header1:   result.Header1,
+		})
+		log.Printf("Complete chunk: %s/%s", result.ContextID, result.Title)
+	}
+	var wg sync.WaitGroup
+	wg.Add(len(mergedChunks))
+	for i := range mergedChunks {
+		i := i
+		go func() {
+			defer wg.Done()
+			mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
+		}()
+	}
+	wg.Wait()
+
+	chunks := make([]string, 0)
+	for _, result := range mergedChunks {
+		chunk := processDocument(result)
+		chunks = append(chunks, chunk)
+	}
+	for _, result := range normalResult {
+		if files[result.Title] {
+			continue
+		}
+		chunk := processChunk(result)
+		chunks = append(chunks, chunk)
+	}
+	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
+	return chunks, nil
+}
+
+func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) (string, error) {
+	promptParser := prompt.DefaultPromptParser{}
+	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, promptTemplate)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return "", err
+	}
+	return promptStr, nil
+}
+
+func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
+	completionStart := time.Now()
+	// var temperature float32 = 0.0001
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+		// This is a conversation in progress.
+		// NOTE: all messages count against token usage for this API.
+		Messages:       messages,
+		DeploymentName: &s.model,
+		// Temperature:    &temperature,
+	}, nil)
+
+	if err != nil {
+		// TODO: Update the following line with your application specific error handling logic
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
+	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
+	promptParser := prompt.DefaultPromptParser{}
+	for _, choice := range resp.Choices {
+		answer, err := promptParser.ParseResponse(*choice.Message.Content, promptTemplate)
+		if err != nil {
+			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
+			return nil, err
+		}
+		return answer, nil
+	}
+	log.Printf("No choices found in response")
+	return nil, fmt.Errorf("no choices found in response")
+}
+
+func (s *CompletionService) agenticSearch(ctx context.Context, messages []model.KnowledgeAgentMessage, req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, error) {
+	agenticSearchStart := time.Now()
+	var result []azopenai.ChatRequestMessageClassification
+	searchClient := search.NewSearchClient()
+	resp, err := searchClient.AgenticSearch(ctx, messages, req.Sources)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
+	}
+	if resp.Response == nil {
+		return nil, nil
+	}
+	for _, message := range resp.Response {
+		for _, content := range message.Content {
+			systemMessage := &azopenai.ChatRequestSystemMessage{
+				Content: azopenai.NewChatRequestSystemMessageContent(content.Text),
+			}
+			result = append(result, systemMessage)
+		}
+	}
+	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
+	return result, nil
 }

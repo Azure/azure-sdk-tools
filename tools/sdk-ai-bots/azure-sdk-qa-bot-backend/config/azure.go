@@ -25,6 +25,7 @@ const (
 	AOAI_CHAT_COMPLETIONS_ENDPOINT = "https://UxAutoTestEast.openai.azure.com"
 	AI_SEARCH_BASE_URL             = "https://typspehelper4search.search.windows.net"
 	AI_SEARCH_INDEX                = "typespec-knowledge"
+	AI_SEARCH_AGENT                = "azure-sdk-agent"
 	STORAGE_BASE_URL               = "https://typespechelper4storage.blob.core.windows.net"
 	STORAGE_KNOWLEDGE_CONTAINER    = "knowledge"
 	STORAGE_FEEDBACK_CONTAINER     = "feedback"

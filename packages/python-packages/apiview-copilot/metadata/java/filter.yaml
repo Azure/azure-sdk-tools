@@ -1,4 +1,4 @@
 exceptions: |
-  1. Comment on lack of documentation comments
+  1. Do not comment on lack of documentation comments
   2. Do not suggest enforcing consistency in naming conventions for enums.
   3. Do not comment on enum naming conventions.

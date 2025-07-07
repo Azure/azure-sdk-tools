@@ -7,7 +7,7 @@ using TypeSpec.Versioning;
 namespace AzureSDKQABot;
 
 @doc("Available tenant IDs for the QA bot service")
-enum TenantID {
+union TenantID {
   @doc("Default TypeSpec QA bot")
   AzureSDKQaBot: "azure_sdk_qa_bot",
   
@@ -19,7 +19,7 @@ enum TenantID {
 }
 
 @doc("Available data sources for knowledge retrieval")
-enum Source {
+union Source {
   @doc("TypeSpec documentation")
   TypeSpecDocs: "typespec_docs",
   
@@ -46,7 +46,7 @@ enum Source {
 }
 
 @doc("Message roles in the conversation")
-enum Role {
+union Role {
   @doc("User message")
   User: "user",
   
@@ -58,7 +58,7 @@ enum Role {
 }
 
 @doc("Types of additional information")
-enum AdditionalInfoType {
+union AdditionalInfoType {
   @doc("Link to external resource")
   Link: "link",
   
@@ -67,7 +67,7 @@ enum AdditionalInfoType {
 }
 
 @doc("User reaction types for feedback")
-enum Reaction {
+union Reaction {
   @doc("Positive feedback")
   Good: "good",
   
@@ -76,7 +76,7 @@ enum Reaction {
 }
 
 @doc("Question categorization for intent analysis")
-enum QuestionCategory {
+union QuestionCategory {
   @doc("Unknown category")
   Unknown: "unknown",
   

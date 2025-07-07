@@ -262,6 +262,15 @@ public static class Program
         var preferredFrameworks = new[]
         {
             "netstandard2.0", // Most preferred for compatibility
+            "net8.0",
+            "net7.0",
+            "net6.0",
+            "net5.0",
+            "net48",
+            "net472",
+            "net471",
+            "net47",
+            "net462",
             "netcoreapp3.1",
             "netcoreapp3.0",
             "netcoreapp2.2",
@@ -270,22 +279,13 @@ public static class Program
             "netcoreapp1.1",
             "netcoreapp1.0",
             "netstandard2.1",
-            "net8.0",
-            "net7.0",
-            "net6.0",
-            "net5.0",
             "netstandard1.6",
             "netstandard1.5",
             "netstandard1.4",
             "netstandard1.3",
             "netstandard1.2",
             "netstandard1.1",
-            "netstandard1.0",
-            "net48",
-            "net472",
-            "net471",
-            "net47",
-            "net462"
+            "netstandard1.0"
         };
 
         // Create a HashSet for faster lookup

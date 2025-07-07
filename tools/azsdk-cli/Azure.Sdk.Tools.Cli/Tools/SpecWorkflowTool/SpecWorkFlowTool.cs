@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 if (sdkInfoList == null || sdkInfoList.Count == 0)
                 {
-                    response.Details.Add($"SDK details are not present in the release plan.");
+                    response.Details.Add($"SDK details are not present in the release plan. Update the SDK details using the information in tspconfig.yaml");
                     return response;
                 }
 
@@ -85,13 +85,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 if (sdkInfo == null || string.IsNullOrWhiteSpace(sdkInfo.Language))
                 {
-                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a language specified. Update SDK details in the release plan.");
+                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a language specified. Update the SDK details using the information in tspconfig.yaml.");
                     return response;
                 }
 
                 if (string.IsNullOrWhiteSpace(sdkInfo.PackageName))
                 {
-                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a package name specified for {sdkInfo.Language}. Update SDK details in the release plan.");
+                    response.Details.Add($"Release plan work item with ID {workItemId} does not have a package name specified for {sdkInfo.Language}. Update the SDK details using the information in tspconfig.yaml.");
                     return response;
                 }
 

@@ -487,9 +487,25 @@ export async function generateConfigFilesCommand(argv: any) {
       `Couldn't read ${basename(emitterPath)}. If the file exists it will be over-written. Error: ${err}`,
     );
   }
-  // If there's an existing emitter-package.json, we need to check for any manually added devDependencies
+  // If there's an existing emitter-package.json, we need to check for any manually added dependencies and devDependencies
   if (existingEmitterPackageJson) {
-    // Register all manually pinned dependencies and their current values
+    // Register all manually added regular dependencies and their current values
+    const manualDependencies = {};
+    for (const [key, value] of Object.entries(
+      existingEmitterPackageJson["dependencies"] ?? {},
+    )) {
+      if (!Object.keys(emitterPackageJson["dependencies"] ?? {}).includes(key)) {
+        Object.assign(manualDependencies, { [key]: value });
+      }
+    }
+
+    // Preserve manually added regular dependencies
+    emitterPackageJson["dependencies"] = {
+      ...manualDependencies,
+      ...emitterPackageJson["dependencies"],
+    };
+
+    // Register all manually pinned dev dependencies and their current values
     const manualDevDependencies = {};
     for (const [key, value] of Object.entries(
       existingEmitterPackageJson["devDependencies"] ?? {},

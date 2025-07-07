@@ -400,6 +400,38 @@ describe.sequential("Verify commands", () => {
     }
   }, 360000);
 
+  it("Update config files with manually added regular dependencies", async () => {
+    try {
+      const emitterPackageJsonPath = joinPaths(
+        repoRoot,
+        "tools/tsp-client/test/utils/emitter-package-manual-deps.json",
+      );
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        "emitter-package-json-path": emitterPackageJsonPath,
+      };
+      repoRoot = await getRepoRoot(cwd());
+      await generateConfigFilesCommand(args);
+      const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
+      //Check that the manual regular dependency version remains unchanged
+      assert.equal(emitterJson["dependencies"]["lodash"], "4.17.21");
+      //Check that the manual dev dependency version remains unchanged
+      assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.0");
+      assert.isUndefined(emitterJson["overrides"]);
+      assert.isTrue(
+        await doesFileExist(
+          joinPaths(repoRoot, "tools/tsp-client/test/utils/emitter-package-manual-deps-lock.json"),
+        ),
+      );
+      // Clean up the generated files
+      await rm(joinPaths(dirname(emitterPackageJsonPath), "emitter-package-manual-deps-lock.json"));
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  });
+
   it("Generate config files with overrides", async () => {
     try {
       const args = {

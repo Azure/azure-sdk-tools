@@ -74,7 +74,7 @@ class BasicContainer:
             self.client.create_item(body=data_dict)
             return {"status": "created", "id": data_dict["id"]}
 
-    def upsert(self, item_id: str, data):
+    def upsert(self, item_id: str, *, data):
         """
         Upsert an item. If it exists, update it; if not, create it.
         """

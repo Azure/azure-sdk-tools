@@ -143,12 +143,12 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 
             now = time.time()
             db_manager.review_jobs.upsert(
-                job_id, {"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now}
+                job_id, data={"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now}
             )
         except Exception as e:
             now = time.time()
             db_manager.review_jobs.upsert(
-                job_id, {"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now}
+                job_id, data={"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now}
             )
 
     # Schedule the job in the background

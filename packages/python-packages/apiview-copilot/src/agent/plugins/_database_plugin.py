@@ -182,7 +182,7 @@ class DatabasePlugin:
                 results["linked"].append(target_id)
         if results["linked"]:
             source_item[related_field] = related
-            source_c.upsert_item(source_item)
+            source_c.upsert(source_id, data=source_item)
         return {"status": "done", "source_id": source_id, "related_field": related_field, **results}
 
     @kernel_function(
@@ -232,7 +232,7 @@ class DatabasePlugin:
                 not_found.append(target_id)
         if removed:
             source_item[related_field] = related
-            source_c.upsert(source_item)
+            source_c.upsert(source_id, data=source_item)
         return {
             "status": "done",
             "source_id": source_id,

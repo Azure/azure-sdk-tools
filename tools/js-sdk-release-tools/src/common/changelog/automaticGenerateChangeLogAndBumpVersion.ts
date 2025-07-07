@@ -11,7 +11,7 @@ import { logger } from "../../utils/logger.js";
 import {
     bumpPatchVersion,
     bumpPreviewVersion,
-    getLatestVersion,
+    getLatestStableVersion,
     getNewVersion,
     getUsedVersions,
     getVersion,
@@ -35,7 +35,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
-    const stableVersion = npmViewResult ? getLatestVersion(npmViewResult) : undefined;
+    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
     const nextVersion = npmViewResult ? getVersion(npmViewResult, "next") : undefined;
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {

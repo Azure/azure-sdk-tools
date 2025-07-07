@@ -147,7 +147,7 @@ describe('Get ApiVersion Type From Npm', () => {
             latestVersionDate: "2025-06-01T09:13:48.079Z",
             betaVersion: "1.0.0-beta.1",
             betaVersionDate: "2025-06-21T07:07:56.529Z",
-            expectedVersionType: ApiVersionType.Preview
+            expectedVersionType: ApiVersionType.Stable
         },
         // only has latest tag in beta version (back compatibility)
         {

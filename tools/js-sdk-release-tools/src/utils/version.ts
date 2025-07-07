@@ -31,25 +31,6 @@ export function getUsedVersions(npmViewResult: Record<string, unknown>): string[
     return Object.keys(versions);    
 }
 
-export function getLatestVersion(
-    npmViewResult: Record<string, unknown>,
-) {
-    const distTags = getDistTags(npmViewResult);
-    if (!distTags) return undefined;
-    const latestVersion = distTags["latest"];
-    const betaVersion = distTags["beta"];
-    const latestVersionDataString = getversionDate(npmViewResult, latestVersion);
-    const betaVersionDataString = getversionDate(npmViewResult, betaVersion);
-    const latestVersionDate = latestVersionDataString ? new Date(latestVersionDataString) : undefined;
-    const betaVersionDate = betaVersionDataString ? new Date(betaVersionDataString) : undefined;
-    if (latestVersionDate && betaVersionDate) 
-        return latestVersionDate.getTime() > betaVersionDate.getTime() ? latestVersion : betaVersion;
-    if (latestVersion) return latestVersion;
-    if (betaVersion) return betaVersion;
-    logger.warn(`Failed to find date of latest or beta version found in dist-tags.`);
-    return undefined;
-}
-
 export function getVersion(npmViewResult: Record<string, unknown>, tag: string): string | undefined {
     const distTags = getDistTags(npmViewResult);
     return distTags ? distTags[tag] : undefined;

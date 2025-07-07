@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
 import { tryGetNpmView } from "../../common/npmUtils.js";
-import { getLatestVersion, isBetaVersion } from "../../utils/version.js";
+import { getLatestStableVersion, isBetaVersion } from "../../utils/version.js";
 
 import unixify from 'unixify';
 
@@ -138,7 +138,7 @@ export const getApiVersionTypeFromNpm = async (
     logger.info("Fallback to get api version type from latest version in NPM");
     const npmViewResult = await tryGetNpmView(packageName);
     if (!npmViewResult) return ApiVersionType.Preview;
-    const latestVersion = getLatestVersion(npmViewResult);
+    const latestVersion = getLatestStableVersion(npmViewResult);
     return latestVersion && !isBetaVersion(latestVersion)
         ? ApiVersionType.Stable
         : ApiVersionType.Preview;

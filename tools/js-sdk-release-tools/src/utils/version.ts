@@ -31,22 +31,6 @@ export function getUsedVersions(npmViewResult: Record<string, unknown>): string[
     return Object.keys(versions);    
 }
 
-// NOTE: The latest tag used to contains beta version when there's the sdk is not GA.
-//       The latest tag will only contains stable version in the future.
-//       So if the package is not GA, we need to get latest version from beta tag.
-export function getLatestStableOrBetaVersionWhenNoGA(
-    npmViewResult: Record<string, unknown>,
-) {
-    const distTags = getDistTags(npmViewResult);
-    if (!distTags) return undefined;
-    const latestVersion = distTags["latest"];
-    const betaVersion = distTags["beta"];
-    if (latestVersion) return latestVersion;
-    if (betaVersion) return betaVersion;
-    logger.warn(`Failed to find latest or beta version found in dist-tags.`);
-    return undefined;
-}
-
 export function getLatestVersion(
     npmViewResult: Record<string, unknown>,
 ) {
@@ -78,6 +62,22 @@ export function getversionDate(npmViewResult: Record<string, unknown>, version :
         return undefined;
     }
     return time[version];
+}
+
+// NOTE: The latest tag used to contains beta version when there's the sdk is not GA.
+//       The latest tag will only contains stable version in the future.
+//       So if the package is not GA, we need to get latest version from beta tag.
+export function getLatestStableVersion(
+    npmViewResult: Record<string, unknown>,
+) {
+    const distTags = getDistTags(npmViewResult);
+    if (!distTags) return undefined;
+    const latestVersion = distTags["latest"];
+    const betaVersion = distTags["beta"];
+    if (latestVersion) return latestVersion;
+    if (betaVersion) return betaVersion;
+    logger.warn(`Failed to find latest or beta version found in dist-tags.`);
+    return undefined;
 }
 
 export function isBetaVersion(stableVersion: string) {

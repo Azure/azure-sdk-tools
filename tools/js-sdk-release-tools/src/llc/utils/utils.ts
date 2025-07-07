@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import {logger} from "../../utils/logger.js";
-import {getLatestStableOrBetaVersionWhenNoGA} from "../../utils/version.js";
+import {getLatestStableVersion} from "../../utils/version.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
 import readline from 'readline';
 import yaml from "js-yaml"
@@ -56,7 +56,7 @@ export function getPackageFolderName(packageName) {
 
 export async function getLatestCodegen(packagePath) {
     const npmViewResult = await tryGetNpmView('@autorest/typescript');
-    const stableVersion = npmViewResult ? getLatestStableOrBetaVersionWhenNoGA(npmViewResult) : undefined;
+    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
     // TODO: do not hardcode
     if (!stableVersion)
         return '6.0.0-beta.14';

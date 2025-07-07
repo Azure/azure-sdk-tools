@@ -73,9 +73,16 @@ public static class Program
             {
                 zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
                 var nuspecEntry = zipArchive.Entries.Single(entry => IsNuspec(entry.Name));
-                var dllEntries = zipArchive.Entries.Where(entry => IsDll(entry.Name)).ToArray();
+                var dllEntries = new List<ZipArchiveEntry>();
+                foreach (var entry in zipArchive.Entries)
+                {
+                    if (IsDll(entry.Name))
+                    {
+                        dllEntries.Add(entry);
+                    }
+                }
 
-                if (dllEntries.Length == 0)
+                if (dllEntries.Count == 0)
                 {
                     Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no dll. Creating a meta package API review file.");
                     var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any dll to create API review.");
@@ -84,7 +91,7 @@ public static class Program
                     return;
                 }
 
-                var dllEntry = SelectBestDllEntry(dllEntries, Path.GetFileNameWithoutExtension(nuspecEntry.Name));
+                var dllEntry = SelectBestDllEntry(dllEntries.ToArray(), Path.GetFileNameWithoutExtension(nuspecEntry.Name));
                 if (dllEntry == null)
                 {
                     Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no suitable dll. Creating a meta package API review file.");
@@ -102,23 +109,45 @@ public static class Program
                 }
                 using var nuspecStream = nuspecEntry.Open();
                 var document = XDocument.Load(nuspecStream);
-                var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
-                dependencies.AddRange(
-                        dependencyElements.Select(dependency => new DependencyInfo(
-                                dependency.Attribute("id")?.Value,
-                                    SelectSpecificVersion(dependency.Attribute("version")?.Value))));
-                // filter duplicates and sort
-                if (dependencies.Any())
+                var dependencyElements = new List<XElement>();
+                foreach (var element in document.Descendants())
                 {
-                    dependencies = dependencies
-                    .GroupBy(d => d.Name)
-                    .Select(d => d.First())
-                    .OrderBy(d => d.Name).ToList();
+                    if (element.Name.LocalName == "dependency")
+                    {
+                        dependencyElements.Add(element);
+                    }
+                }
+                
+                foreach (var dependency in dependencyElements)
+                {
+                    dependencies.Add(new DependencyInfo(
+                        dependency.Attribute("id")?.Value,
+                        SelectSpecificVersion(dependency.Attribute("version")?.Value)));
+                }
+                
+                // filter duplicates and sort
+                if (dependencies.Count > 0)
+                {
+                    var uniqueDependencies = new Dictionary<string, DependencyInfo>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var dep in dependencies)
+                    {
+                        if (dep.Name != null && !uniqueDependencies.ContainsKey(dep.Name))
+                        {
+                            uniqueDependencies[dep.Name] = dep;
+                        }
+                    }
+                    dependencies.Clear();
+                    foreach (var kvp in uniqueDependencies)
+                    {
+                        dependencies.Add(kvp.Value);
+                    }
+                    // Simple sort by name
+                    dependencies.Sort((x, y) => string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase));
                 }
             }
 
             IEnumerable<string> dependencyFilePaths = new List<string>();
-            if (dependencies != null && dependencies.Any())
+            if (dependencies != null && dependencies.Count > 0)
             {
                 dependencyFilesTempDir = await ExtractNugetDependencies(dependencies).ConfigureAwait(false);
                 if (Directory.Exists(dependencyFilesTempDir))
@@ -223,55 +252,63 @@ public static class Program
 
     /// <summary>
     /// Selects the best target framework from the available options.
-    /// Prefers newer and more specific frameworks.
+    /// Prefers netstandard2.0 for compatibility, then other frameworks.
     /// </summary>
     /// <param name="availableFrameworks">Available target framework monikers</param>
     /// <returns>The best target framework moniker</returns>
     public static string? SelectBestTargetFramework(IEnumerable<string> availableFrameworks)
     {
-        if (!availableFrameworks.Any()) return null;
-
-        var frameworks = availableFrameworks.Distinct().ToList();
-        
-        // Define framework preference order (higher number = better)
-        var frameworkPreferences = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        // Define framework preference order (most preferred first)
+        var preferredFrameworks = new[]
         {
-            { "net462", 1 },
-            { "net47", 2 },
-            { "net471", 3 },
-            { "net472", 4 },
-            { "net48", 5 },
-            { "netstandard1.0", 10 },
-            { "netstandard1.1", 11 },
-            { "netstandard1.2", 12 },
-            { "netstandard1.3", 13 },
-            { "netstandard1.4", 14 },
-            { "netstandard1.5", 15 },
-            { "netstandard1.6", 16 },
-            { "netstandard2.0", 40 }, // Prefer netstandard2.0 over newer .NET versions for better compatibility
-            { "netstandard2.1", 25 },
-            { "netcoreapp1.0", 30 },
-            { "netcoreapp1.1", 31 },
-            { "netcoreapp2.0", 32 },
-            { "netcoreapp2.1", 33 },
-            { "netcoreapp2.2", 34 },
-            { "netcoreapp3.0", 35 },
-            { "netcoreapp3.1", 36 },
-            { "net5.0", 20 },
-            { "net6.0", 20 },
-            { "net7.0", 20 },
-            { "net8.0", 20 },
-            { "net9.0", 20 }
+            "netstandard2.0", // Most preferred for compatibility
+            "netcoreapp3.1",
+            "netcoreapp3.0",
+            "netcoreapp2.2",
+            "netcoreapp2.1",
+            "netcoreapp2.0",
+            "netcoreapp1.1",
+            "netcoreapp1.0",
+            "netstandard2.1",
+            "net8.0",
+            "net7.0",
+            "net6.0",
+            "net5.0",
+            "netstandard1.6",
+            "netstandard1.5",
+            "netstandard1.4",
+            "netstandard1.3",
+            "netstandard1.2",
+            "netstandard1.1",
+            "netstandard1.0",
+            "net48",
+            "net472",
+            "net471",
+            "net47",
+            "net462"
         };
 
-        // Find the framework with the highest preference score
-        var bestFramework = frameworks
-            .Select(tfm => new { Framework = tfm, Score = frameworkPreferences.GetValueOrDefault(tfm, 0) })
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Framework) // For consistent ordering when scores are equal
-            .FirstOrDefault();
+        // Create a HashSet for faster lookup
+        var availableSet = new HashSet<string>(availableFrameworks, StringComparer.OrdinalIgnoreCase);
+        
+        if (availableSet.Count == 0) return null;
 
-        return bestFramework?.Framework;
+        // Find the first preferred framework that exists in available frameworks
+        foreach (var preferred in preferredFrameworks)
+        {
+            if (availableSet.Contains(preferred))
+            {
+                return preferred;
+            }
+        }
+
+        // If no preferred framework found, return the first available one
+        foreach (var available in availableFrameworks)
+        {
+            return available;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -286,24 +323,38 @@ public static class Program
         if (dllEntries.Length == 1) return dllEntries[0];
 
         // Group DLLs by target framework
-        var dllsByFramework = dllEntries
-            .Select(dll => new { Entry = dll, Framework = ParseTargetFrameworkFromPath(dll.FullName) })
-            .Where(x => x.Framework != null)
-            .GroupBy(x => x.Framework)
-            .ToDictionary(g => g.Key!, g => g.ToList());
+        var dllsByFramework = new Dictionary<string, List<ZipArchiveEntry>>(StringComparer.OrdinalIgnoreCase);
+        
+        foreach (var dll in dllEntries)
+        {
+            var framework = ParseTargetFrameworkFromPath(dll.FullName);
+            if (framework != null)
+            {
+                if (!dllsByFramework.ContainsKey(framework))
+                {
+                    dllsByFramework[framework] = new List<ZipArchiveEntry>();
+                }
+                dllsByFramework[framework].Add(dll);
+            }
+        }
 
         if (dllsByFramework.Count == 0)
         {
             // Fallback to original logic if no framework structure found
-            return dllEntries.FirstOrDefault(dll => 
-                Path.GetFileNameWithoutExtension(packageName)
-                    .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) 
-                ?? dllEntries.First();
+            var packageBaseName = Path.GetFileNameWithoutExtension(packageName);
+            foreach (var dll in dllEntries)
+            {
+                if (packageBaseName.Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase))
+                {
+                    return dll;
+                }
+            }
+            return dllEntries[0];
         }
 
         // Select the best target framework
         var bestFramework = SelectBestTargetFramework(dllsByFramework.Keys);
-        if (bestFramework == null) return dllEntries.First();
+        if (bestFramework == null) return dllEntries[0];
 
         // Get DLLs for the best framework
         var bestFrameworkDlls = dllsByFramework[bestFramework];
@@ -311,14 +362,17 @@ public static class Program
         // If multiple DLLs for the same framework, prefer the one matching the package name
         if (bestFrameworkDlls.Count > 1)
         {
-            var matchingDll = bestFrameworkDlls.FirstOrDefault(dll =>
-                Path.GetFileNameWithoutExtension(packageName)
-                    .Equals(Path.GetFileNameWithoutExtension(dll.Entry.Name), StringComparison.OrdinalIgnoreCase));
-            
-            if (matchingDll != null) return matchingDll.Entry;
+            var packageBaseName = Path.GetFileNameWithoutExtension(packageName);
+            foreach (var dll in bestFrameworkDlls)
+            {
+                if (packageBaseName.Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase))
+                {
+                    return dll;
+                }
+            }
         }
 
-        return bestFrameworkDlls.First().Entry;
+        return bestFrameworkDlls[0];
     }
 
     /// <summary>
@@ -348,14 +402,29 @@ public static class Program
                     {
                         using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
                         NuspecReader nuspec = reader.NuspecReader;
-                        var allFiles = reader.GetFiles().Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToArray();
+                        var allFiles = new List<string>();
+                        foreach (var file in reader.GetFiles())
+                        {
+                            if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                            {
+                                allFiles.Add(file);
+                            }
+                        }
                         
                         // Group files by target framework and select the best one
-                        var filesByFramework = allFiles
-                            .Select(file => new { File = file, Framework = ParseTargetFrameworkFromPath(file) })
-                            .Where(x => x.Framework != null)
-                            .GroupBy(x => x.Framework)
-                            .ToDictionary(g => g.Key!, g => g.ToList());
+                        var filesByFramework = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var file in allFiles)
+                        {
+                            var framework = ParseTargetFrameworkFromPath(file);
+                            if (framework != null)
+                            {
+                                if (!filesByFramework.ContainsKey(framework))
+                                {
+                                    filesByFramework[framework] = new List<string>();
+                                }
+                                filesByFramework[framework].Add(file);
+                            }
+                        }
 
                         string? selectedFile = null;
                         if (filesByFramework.Count > 0)
@@ -365,15 +434,31 @@ public static class Program
                             {
                                 var bestFrameworkFiles = filesByFramework[bestFramework];
                                 // Prefer file that matches dependency name
-                                selectedFile = bestFrameworkFiles.FirstOrDefault(f => 
-                                    Path.GetFileNameWithoutExtension(f.File).Equals(dep.Name, StringComparison.OrdinalIgnoreCase))?.File
-                                    ?? bestFrameworkFiles.First().File;
+                                foreach (var file in bestFrameworkFiles)
+                                {
+                                    if (Path.GetFileNameWithoutExtension(file).Equals(dep.Name, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        selectedFile = file;
+                                        break;
+                                    }
+                                }
+                                if (selectedFile == null && bestFrameworkFiles.Count > 0)
+                                {
+                                    selectedFile = bestFrameworkFiles[0];
+                                }
                             }
                         }
                         else
                         {
                             // Fallback to original logic if no framework structure
-                            selectedFile = allFiles.FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
+                            foreach (var file in allFiles)
+                            {
+                                if (file.EndsWith(dep.Name + ".dll"))
+                                {
+                                    selectedFile = file;
+                                    break;
+                                }
+                            }
                         }
 
                         if (selectedFile != null)

@@ -6,7 +6,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace ApiView
 {
@@ -15,21 +14,7 @@ namespace ApiView
         private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
             "Microsoft.Bcl.AsyncInterfaces",
-            "System.ClientModel",
-            "System.Text.Encodings.Web",
-            "System.Text.Json",
-            "System.Buffers",
-            "System.Memory",
-            "System.Runtime.CompilerServices.Unsafe",
-            "System.Threading.Tasks.Extensions",
-            "System.ValueTuple",
-            // Additional System assemblies that may be needed for complex packages
-            "System.ComponentModel.Annotations",
-            "System.Numerics.Vectors",
-            "System.Runtime.Serialization.Primitives",
-            "System.Collections.Immutable",
-            "System.Text.Encoding.Extensions",
-            "System.Diagnostics.DiagnosticSource"
+            "System.ClientModel"
 
         }, StringComparer.InvariantCultureIgnoreCase);
 
@@ -88,8 +73,7 @@ namespace ApiView
                 }
             }
 
-            var assemblySymbol = (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
-            return assemblySymbol;
+            return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
         }
     }
 }

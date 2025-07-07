@@ -19,6 +19,7 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
@@ -35,6 +36,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<CommentsManager> _logger;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -51,7 +53,8 @@ namespace APIViewWeb.Managers
             IHttpClientFactory httpClientFactory,
             UserProfileCache userProfileCache,
             IConfiguration configuration,
-            IOptions<OrganizationOptions> options)
+            IOptions<OrganizationOptions> options,
+            ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
             _authorizationService = authorizationService;
@@ -64,6 +67,7 @@ namespace APIViewWeb.Managers
             _userProfileCache = userProfileCache;
             _configuration = configuration;
             _Options = options.Value;
+            _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
 
@@ -215,16 +219,18 @@ namespace APIViewWeb.Managers
                 };
 
                 //TODO: Set a real token here
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "dummy_token_value");
 
                 var client = _httpClientFactory.CreateClient();
-                var clientResponse = await client.SendAsync(request); 
+                var clientResponse = await client.SendAsync(request);
                 clientResponse.EnsureSuccessStatusCode();
+                string clientResponseContent = await clientResponse.Content.ReadAsStringAsync();
+                AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
 
-                string response = "Agent integration is not currently available";
+                string response = "Agent integration is not currently available"; //aggentChatResponse?.Response
                 await AddAgentComment(comment, response);
             }
-            catch
+            catch (Exception ex)            
             {
                 await _signalRHubContext.Clients.Group(user.GetGitHubLogin())
                     .SendAsync("ReceiveNotification",
@@ -238,6 +244,8 @@ namespace APIViewWeb.Managers
                                 "We were unable to connect to the agent service at this time. Please try again later.",
                             Status = SiteNotificationStatus.Error
                         });
+
+                _logger.LogError(ex, "Error while requesting agent reply for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
             }
         }
 

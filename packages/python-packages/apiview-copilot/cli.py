@@ -419,7 +419,9 @@ def ask_agent(thread_id: Optional[str] = None, remote: bool = False):
                 except (EOFError, KeyboardInterrupt):
                     print(f"\n{BOLD}Exiting chat.{RESET}")
                     if current_thread_id:
-                        print(f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        print(
+                            f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        )
                     break
                 if user_input.strip().lower() in {"exit", "quit"}:
                     print(f"\n{BOLD}Exiting chat.{RESET}")

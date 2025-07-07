@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 import prompty
 import prompty.azure
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 
 from src._apiview_reviewer import ApiViewReview, _PROMPTS_FOLDER
@@ -243,8 +243,11 @@ async def summarize_api(request: SummarizeRequest):
 class MentionRequest(BaseModel):
     comments: list
     language: str
-    package_name: str
+    package_name: str = Field(..., alias="packageName")
     code: str
+
+    class Config:
+        populate_by_name = True
 
 
 @app.post("/api-review/mention", response_model=str)

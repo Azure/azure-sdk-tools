@@ -215,18 +215,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var releasePlan = new ReleasePlan
                 {
-                    SDKReleaseMonth = targetReleaseMonthYear,
-                    ServiceTreeId = serviceTreeId,
-                    ProductTreeId = productTreeId,
-                    SpecAPIVersion = specApiVersion,
-                    SpecType = specType,
-                    IsManagementPlane = isMgmt,
-                    IsDataPlane = !isMgmt,
-                    SpecPullRequests = [specPullRequestUrl],
-                    IsTestReleasePlan = isTestReleasePlan,
-                    SDKReleaseType = sdkReleaseType,
-                    IsCreatedByAgent = true,
-                    ReleasePlanSubmittedByEmail = userEmail
+                    SDKReleaseMonth = targetReleaseMonthYear,//
+                    ServiceTreeId = serviceTreeId,//
+                    ProductTreeId = productTreeId,//
+                    SpecAPIVersion = specApiVersion,//idk
+                    SpecType = specType,//idk
+                    IsManagementPlane = isMgmt,//
+                    IsDataPlane = !isMgmt,//
+                    SpecPullRequests = [specPullRequestUrl],//idk
+                    IsTestReleasePlan = isTestReleasePlan,////
+                    SDKReleaseType = sdkReleaseType,//
+                    IsCreatedByAgent = true,////
+                    ReleasePlanSubmittedByEmail = userEmail//
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan);
                 if (workItem == null)

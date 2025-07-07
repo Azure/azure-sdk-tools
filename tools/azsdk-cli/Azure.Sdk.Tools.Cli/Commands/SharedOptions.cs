@@ -24,6 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecValidationTools),
             typeof(ReleaseReadinessTool),
             typeof(SdkReleaseTool),
+            typeof(ReviewSchedulerTool),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

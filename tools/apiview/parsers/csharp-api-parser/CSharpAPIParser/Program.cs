@@ -10,6 +10,7 @@ using NuGet.Packaging;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
+using NuGet.Frameworks;
 
 
 public static class Program
@@ -83,14 +84,14 @@ public static class Program
                     return;
                 }
 
-                var dllEntry = dllEntries.First();
-                if (dllEntries.Length > 1)
+                var dllEntry = SelectBestDllEntry(dllEntries, Path.GetFileNameWithoutExtension(nuspecEntry.Name));
+                if (dllEntry == null)
                 {
-                    // If there are multiple dlls in the nupkg (e.g. Cosmos), try to find the first that matches the nuspec name, but
-                    // fallback to just using the first one.
-                    dllEntry = dllEntries.FirstOrDefault(
-                        dll => Path.GetFileNameWithoutExtension(nuspecEntry.Name)
-                            .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) ?? dllEntry;
+                    Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no suitable dll. Creating a meta package API review file.");
+                    var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any suitable dll to create API review.");
+                    outputFileName = string.IsNullOrEmpty(outputFileName) ? nuspecEntry.Name : outputFileName;
+                    await CreateOutputFile(OutputDirectory.FullName, outputFileName, codeFile);
+                    return;
                 }
 
                 dllStream = dllEntry.Open();
@@ -127,7 +128,7 @@ public static class Program
             }
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream, dependencyFilePaths);
 
-            if (assemblySymbol == null)
+            if (assemblySymbol == null || string.IsNullOrEmpty(assemblySymbol.Name))
             {
                 Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no Assembly Symbol.");
                 var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any assembly symbol to create API review.");
@@ -205,6 +206,122 @@ public static class Program
     }
 
     /// <summary>
+    /// Parses the target framework from a DLL path within a NuGet package.
+    /// </summary>
+    /// <param name="path">The path to the DLL within the package (e.g., "lib/net8.0/System.Text.Json.dll")</param>
+    /// <returns>The target framework moniker or null if not found</returns>
+    static string? ParseTargetFrameworkFromPath(string path)
+    {
+        // Expected format: lib/{tfm}/{assembly}.dll or ref/{tfm}/{assembly}.dll
+        var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 3 && (parts[0] == "lib" || parts[0] == "ref"))
+        {
+            return parts[1];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Selects the best target framework from the available options.
+    /// Prefers newer and more specific frameworks.
+    /// </summary>
+    /// <param name="availableFrameworks">Available target framework monikers</param>
+    /// <returns>The best target framework moniker</returns>
+    static string? SelectBestTargetFramework(IEnumerable<string> availableFrameworks)
+    {
+        if (!availableFrameworks.Any()) return null;
+
+        var frameworks = availableFrameworks.Distinct().ToList();
+        
+        // Define framework preference order (higher number = better)
+        var frameworkPreferences = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "net462", 1 },
+            { "net47", 2 },
+            { "net471", 3 },
+            { "net472", 4 },
+            { "net48", 5 },
+            { "netstandard1.0", 10 },
+            { "netstandard1.1", 11 },
+            { "netstandard1.2", 12 },
+            { "netstandard1.3", 13 },
+            { "netstandard1.4", 14 },
+            { "netstandard1.5", 15 },
+            { "netstandard1.6", 16 },
+            { "netstandard2.0", 20 },
+            { "netstandard2.1", 25 },
+            { "netcoreapp1.0", 30 },
+            { "netcoreapp1.1", 31 },
+            { "netcoreapp2.0", 32 },
+            { "netcoreapp2.1", 33 },
+            { "netcoreapp2.2", 34 },
+            { "netcoreapp3.0", 35 },
+            { "netcoreapp3.1", 36 },
+            { "net5.0", 50 },
+            { "net6.0", 60 },
+            { "net7.0", 70 },
+            { "net8.0", 80 },
+            { "net9.0", 90 }
+        };
+
+        // Find the framework with the highest preference score
+        var bestFramework = frameworks
+            .Select(tfm => new { Framework = tfm, Score = frameworkPreferences.GetValueOrDefault(tfm, 0) })
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Framework) // For consistent ordering when scores are equal
+            .FirstOrDefault();
+
+        return bestFramework?.Framework;
+    }
+
+    /// <summary>
+    /// Selects the best DLL entry from a NuGet package based on target framework preferences.
+    /// </summary>
+    /// <param name="dllEntries">All DLL entries in the package</param>
+    /// <param name="packageName">The package name for fallback matching</param>
+    /// <returns>The best DLL entry or null if none suitable found</returns>
+    static ZipArchiveEntry? SelectBestDllEntry(ZipArchiveEntry[] dllEntries, string packageName)
+    {
+        if (dllEntries.Length == 0) return null;
+        if (dllEntries.Length == 1) return dllEntries[0];
+
+        // Group DLLs by target framework
+        var dllsByFramework = dllEntries
+            .Select(dll => new { Entry = dll, Framework = ParseTargetFrameworkFromPath(dll.FullName) })
+            .Where(x => x.Framework != null)
+            .GroupBy(x => x.Framework)
+            .ToDictionary(g => g.Key!, g => g.ToList());
+
+        if (dllsByFramework.Count == 0)
+        {
+            // Fallback to original logic if no framework structure found
+            return dllEntries.FirstOrDefault(dll => 
+                Path.GetFileNameWithoutExtension(packageName)
+                    .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) 
+                ?? dllEntries.First();
+        }
+
+        // Select the best target framework
+        var bestFramework = SelectBestTargetFramework(dllsByFramework.Keys);
+        if (bestFramework == null) return dllEntries.First();
+
+        // Get DLLs for the best framework
+        var bestFrameworkDlls = dllsByFramework[bestFramework];
+        
+        // If multiple DLLs for the same framework, prefer the one matching the package name
+        if (bestFrameworkDlls.Count > 1)
+        {
+            var matchingDll = bestFrameworkDlls.FirstOrDefault(dll =>
+                Path.GetFileNameWithoutExtension(packageName)
+                    .Equals(Path.GetFileNameWithoutExtension(dll.Entry.Name), StringComparison.OrdinalIgnoreCase));
+            
+            if (matchingDll != null) return matchingDll.Entry;
+        }
+
+        return bestFrameworkDlls.First().Entry;
+    }
+
+    /// <summary>
     /// Resolves the NuGet package dependencies and extracts them to a temporary folder. It is the responsibility of teh caller to clean up the folder.
     /// </summary>
     /// <param name="dependencyInfos">The dependency infos</param>
@@ -231,12 +348,39 @@ public static class Program
                     {
                         using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
                         NuspecReader nuspec = reader.NuspecReader;
-                        var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
-                        if (file != null)
+                        var allFiles = reader.GetFiles().Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToArray();
+                        
+                        // Group files by target framework and select the best one
+                        var filesByFramework = allFiles
+                            .Select(file => new { File = file, Framework = ParseTargetFrameworkFromPath(file) })
+                            .Where(x => x.Framework != null)
+                            .GroupBy(x => x.Framework)
+                            .ToDictionary(g => g.Key!, g => g.ToList());
+
+                        string? selectedFile = null;
+                        if (filesByFramework.Count > 0)
                         {
-                            var fileInfo = new FileInfo(file);
+                            var bestFramework = SelectBestTargetFramework(filesByFramework.Keys);
+                            if (bestFramework != null)
+                            {
+                                var bestFrameworkFiles = filesByFramework[bestFramework];
+                                // Prefer file that matches dependency name
+                                selectedFile = bestFrameworkFiles.FirstOrDefault(f => 
+                                    Path.GetFileNameWithoutExtension(f.File).Equals(dep.Name, StringComparison.OrdinalIgnoreCase))?.File
+                                    ?? bestFrameworkFiles.First().File;
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to original logic if no framework structure
+                            selectedFile = allFiles.FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
+                        }
+
+                        if (selectedFile != null)
+                        {
+                            var fileInfo = new FileInfo(selectedFile);
                             var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
-                            var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
+                            var tmp = reader.ExtractFile(selectedFile, path, NullLogger.Instance);
                         }
                     }
                 }

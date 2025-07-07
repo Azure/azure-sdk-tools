@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace ApiView
 {
@@ -14,7 +15,14 @@ namespace ApiView
         private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
             "Microsoft.Bcl.AsyncInterfaces",
-            "System.ClientModel"
+            "System.ClientModel",
+            "System.Text.Encodings.Web",
+            "System.Text.Json",
+            "System.Buffers",
+            "System.Memory",
+            "System.Runtime.CompilerServices.Unsafe",
+            "System.Threading.Tasks.Extensions",
+            "System.ValueTuple"
 
         }, StringComparer.InvariantCultureIgnoreCase);
 
@@ -73,7 +81,8 @@ namespace ApiView
                 }
             }
 
-            return (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
+            var assemblySymbol = (IAssemblySymbol)compilation.GetAssemblyOrModuleSymbol(reference);
+            return assemblySymbol;
         }
     }
 }

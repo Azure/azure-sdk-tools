@@ -192,7 +192,7 @@ public class GitConnection
                 }
                 else
                 {
-                    responseList.Add($"Pull request created successfully as PR. Pull request URL: {createdPullRequest.HtmlUrl}");
+                    responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
                 }
             }
             catch (Exception ex)

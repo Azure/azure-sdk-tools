@@ -502,15 +502,15 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             return
         api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/mention"
         try:
-            resp = requests.post(
+            response = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
             )
-            if resp.status_code == 200:
-                print("Remote agent mention handled successfully.")
-                print(json.dumps(resp.json(), indent=2))
+            response_data = response.json()
+            if response.status_code == 200:
+                print(f"{BOLD_BLUE}Agent response:{RESET}\n{response_data.get('response')}")
             else:
-                print(f"Error: {resp.status_code} - {resp.text}")
+                print(f"Error: {response.status_code} - {response_data.get('response')}")
         except Exception as e:
             print(f"Error: {e}")
     else:
@@ -520,7 +520,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
                 async with get_mention_agent(
                     comments=comments, language=language, package_name=package_name, code=code, auth=""
                 ) as agent:
-                    response, thread_id_out, messages = await invoke_agent(
+                    response, _, _ = await invoke_agent(
                         agent=agent, user_input="Please handle this @mention.", thread_id=None, messages=None
                     )
                     print(f"{BOLD_BLUE}Agent response:{RESET}\n{response}")

@@ -30,7 +30,7 @@ class DatabasePlugin:
             "language": language,
         }
         db = get_database_manager()
-        return db.guidelines.create(data)
+        return db.guidelines.create(id, data=data)
 
     @kernel_function(description="Create a new Memory in the database.")
     async def create_memory(
@@ -64,7 +64,7 @@ class DatabasePlugin:
             "source": source,
         }
         db = get_database_manager()
-        return db.memories.create(data)
+        return db.memories.create(id, data=data)
 
     @kernel_function(description="Create a new Example in the database.")
     async def create_example(
@@ -98,7 +98,7 @@ class DatabasePlugin:
             "example_type": example_type,
         }
         db = get_database_manager()
-        return db.examples.create(data)
+        return db.examples.create(id, data=data)
 
     @kernel_function(description="Retrieve a memory from the database by its ID.")
     async def get_memory(self, memory_id: str):

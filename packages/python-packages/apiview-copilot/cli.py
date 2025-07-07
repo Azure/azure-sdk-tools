@@ -539,7 +539,7 @@ CONTAINERS = [
     "guidelines",
     "memories",
     "examples",
-    "review_jobs",
+    "review-jobs",
 ]
 
 

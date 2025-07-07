@@ -129,7 +129,7 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
         comments=job_request.comments,
     )
     job_id = reviewer.job_id
-    db_manager.review_jobs.insert(job_id, {"status": ApiReviewJobStatus.InProgress, "finished": None})
+    db_manager.review_jobs.create(job_id, data={"status": ApiReviewJobStatus.InProgress, "finished": None})
 
     async def run_review_job():
         try:

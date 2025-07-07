@@ -17,7 +17,7 @@ class DatabaseManager:
     def get_container_client(self, name: str) -> "BasicContainer":
         # Decide which container class to use
         if name not in self.containers:
-            if name == "review_jobs":
+            if name == "review-jobs":
                 self.containers[name] = ReviewJobsContainer(self, name)
             elif name == "guidelines":
                 self.containers[name] = GuidelinesContainer(self, name)
@@ -39,7 +39,7 @@ class DatabaseManager:
 
     @property
     def review_jobs(self):
-        return self.get_container_client("review_jobs")
+        return self.get_container_client("review-jobs")
 
 
 class BasicContainer:
@@ -52,7 +52,7 @@ class BasicContainer:
             return data.model_dump()
         return dict(data) if not isinstance(data, dict) else data
 
-    def create(self, item_id: str, data):
+    def create(self, item_id: str, *, data):
         """
         Create a new item. Raises an error if the item already exists.
         """
@@ -115,7 +115,7 @@ class ReviewJobsContainer(BasicContainer):
         query = (
             f"SELECT c.id, c.finished FROM c WHERE IS_DEFINED(c.finished) AND c.finished < {now - retention_seconds}"
         )
-        for item in self.container.query_items(query=query, enable_cross_partition_query=True):
+        for item in self.client.query_items(query=query, enable_cross_partition_query=True):
             self.delete(item["id"])
 
 

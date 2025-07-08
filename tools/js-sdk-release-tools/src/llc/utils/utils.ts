@@ -56,7 +56,8 @@ export function getPackageFolderName(packageName) {
 
 export async function getLatestCodegen(packagePath) {
     const npmViewResult = await tryGetNpmView('@autorest/typescript');
-    const stableVersion = getLatestStableVersion(npmViewResult);
+    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
+    // TODO: do not hardcode
     if (!stableVersion)
         return '6.0.0-beta.14';
     return stableVersion;

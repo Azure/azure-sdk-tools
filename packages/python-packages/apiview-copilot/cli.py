@@ -1,18 +1,36 @@
 import asyncio
 from collections import OrderedDict
+import colorama
+from colorama import Fore, Style
 import json
 import os
 from pprint import pprint
 import requests
 import sys
 import pathlib
+import requests
 
+from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src._models import ExistingComment
 from src._search_manager import SearchManager
+
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
 from typing import Optional
+
+colorama.init(autoreset=True)
+
+BLUE = Fore.BLUE
+GREEN = Fore.GREEN
+RESET = Style.RESET_ALL
+BOLD = Style.BRIGHT
+
+# Bold and color for prompts
+BOLD_GREEN = BOLD + GREEN
+BOLD_BLUE = BOLD + BLUE
+
 
 helps[
     "review"
@@ -26,6 +44,13 @@ helps[
 ] = """
     type: group
     short-summary: Commands for managing API review jobs.
+"""
+
+helps[
+    "agent"
+] = """
+    type: group
+    short-summary: Commands for interacting with the agent.
 """
 
 helps[
@@ -370,6 +395,141 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
+def ask_agent(thread_id: Optional[str] = None, remote: bool = False):
+    """Start an interactive session with the agent using async/await and a single event loop."""
+
+    async def async_input(prompt: str) -> str:
+        # Run input() in a thread to avoid blocking the event loop
+        return await asyncio.to_thread(input, prompt)
+
+    async def chat():
+        print(f"{BOLD}Interactive API Review Agent Chat. Type 'exit' to quit.\n{RESET}")
+        messages = []
+        current_thread_id = thread_id
+        if remote:
+            APP_NAME = os.getenv("AZURE_APP_NAME")
+            if not APP_NAME:
+                print(f"{BOLD}AZURE_APP_NAME environment variable is not set.{RESET}")
+                return
+            api_endpoint = f"https://{APP_NAME}.azurewebsites.net/agent/chat"
+            session = requests.Session()
+            while True:
+                try:
+                    user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
+                except (EOFError, KeyboardInterrupt):
+                    print(f"\n{BOLD}Exiting chat.{RESET}")
+                    if current_thread_id:
+                        print(
+                            f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        )
+                    break
+                if user_input.strip().lower() in {"exit", "quit"}:
+                    print(f"\n{BOLD}Exiting chat.{RESET}")
+                    if current_thread_id:
+                        print(
+                            f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        )
+                    break
+                try:
+                    payload = {"user_input": user_input}
+                    if current_thread_id:
+                        payload["thread_id"] = current_thread_id
+                    resp = session.post(api_endpoint, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        response = data.get("response", "")
+                        thread_id_out = data.get("thread_id", current_thread_id)
+                        print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
+                        current_thread_id = thread_id_out
+                    else:
+                        print(f"Error: {resp.status_code} - {resp.text}")
+                except Exception as e:
+                    print(f"Error: {e}")
+        else:
+            # Local mode: use async agent as before
+            async with get_main_agent() as agent:
+                while True:
+                    try:
+                        user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
+                    except (EOFError, KeyboardInterrupt):
+                        print(f"\n{BOLD}Exiting chat.{RESET}")
+                        if current_thread_id:
+                            print(
+                                f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                            )
+                        break
+                    if user_input.strip().lower() in {"exit", "quit"}:
+                        print(f"\n{BOLD}Exiting chat.{RESET}")
+                        if current_thread_id:
+                            print(
+                                f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                            )
+                        break
+                    try:
+                        response, thread_id_out, messages = await invoke_agent(
+                            agent=agent, user_input=user_input, thread_id=current_thread_id, messages=messages
+                        )
+                        print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
+                        current_thread_id = thread_id_out
+                    except Exception as e:
+                        print(f"Error: {e}")
+
+    asyncio.run(chat())
+
+
+def handle_agent_mention(comments_path: str, remote: bool = False):
+    """
+    Handles @mention requests from the agent.
+    This function is a placeholder for the actual implementation.
+    """
+    # load comments from the comments_path
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    comments = data.get("comments", [])
+    language = data.get("language", None)
+    package_name = data.get("packageName", None)
+    code = data.get("code", None)
+
+    if remote:
+        APP_NAME = os.getenv("AZURE_APP_NAME")
+        if not APP_NAME:
+            print("AZURE_APP_NAME environment variable is not set.")
+            return
+        api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/mention"
+        try:
+            response = requests.post(
+                api_endpoint,
+                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+            )
+            response_data = response.json()
+            if response.status_code == 200:
+                print(f"{BOLD_BLUE}Agent response:{RESET}\n{response_data.get('response')}")
+            else:
+                print(f"Error: {response.status_code} - {response_data.get('response')}")
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+
+        async def run_local_mention():
+            try:
+                async with get_mention_agent(
+                    comments=comments, language=language, package_name=package_name, code=code, auth=""
+                ) as agent:
+                    response, _, _ = await invoke_agent(
+                        agent=agent, user_input="Please handle this @mention.", thread_id=None, messages=None
+                    )
+                    print(f"{BOLD_BLUE}Agent response:{RESET}\n{response}")
+            except Exception as e:
+                print(f"Error handling agent mention: {e}")
+
+        asyncio.run(run_local_mention())
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -390,6 +550,9 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("local", "local_review")
             g.command("remote", "generate_review_from_app")
             g.command("summarize", "review_summarize")
+        with CommandGroup(self, "agent", "__main__#{}") as g:
+            g.command("mention", "handle_agent_mention")
+            g.command("ask", "ask_agent")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
@@ -410,6 +573,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The language of the APIView file",
                 options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API review service instead of local processing.",
             )
 
         with ArgumentsContext(self, "review") as ac:
@@ -569,6 +737,20 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
+            )
+        with ArgumentsContext(self, "agent mention") as ac:
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to the JSON file containing comments for the agent to process.",
+                options_list=["--comments-path", "-c"],
+            )
+        with ArgumentsContext(self, "agent") as ac:
+            ac.argument(
+                "thread_id",
+                type=str,
+                help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
+                options_list=["--thread-id", "-t"],
             )
 
         super(CliCommandsLoader, self).load_arguments(command)

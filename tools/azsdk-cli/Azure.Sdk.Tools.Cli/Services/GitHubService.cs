@@ -74,7 +74,7 @@ public class GitConnection
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName);
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
+        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
@@ -129,7 +129,7 @@ public class GitConnection
             return comparison?.MergeBaseCommit != null;
         }
 
-        public async Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body)
+        public async Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
             var responseList = new List<string>();
             // Check if a pull request already exists for the branch
@@ -175,7 +175,8 @@ public class GitConnection
                 responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
                 var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
                 {
-                    Body = body
+                    Body = body,
+                    Draft = draft
                 };
 
                 createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
@@ -184,7 +185,16 @@ public class GitConnection
                     responseList.Add($"Failed to create pull request for changes in {headBranch}.");
                     return responseList;
                 }
-                responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
+
+                if (draft)
+                {
+                    responseList.Add($"Pull request created successfully as draft PR. Pull request URL: {createdPullRequest.HtmlUrl}");
+                    responseList.Add("Once you have successfully generated the SDK transition the PR to review ready.");
+                }
+                else
+                {
+                    responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
+                }
             }
             catch (Exception ex)
             {

@@ -232,6 +232,7 @@ Follow these steps to deploy to production:
      - Ensure the source is `apiview-staging` and the target is `APIView`.
      - Click `Start swap` to complete the process.
 
----
+5. **Rollback (if needed):**
+   - In case of a regression and when there are no database changes, you can follow step 4 again to swap the deployment. This will restore the previous version.
 
 Your deployment to production is now complete!

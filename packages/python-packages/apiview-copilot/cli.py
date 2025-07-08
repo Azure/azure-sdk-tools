@@ -586,7 +586,8 @@ def get_apiview_comments(revision_id: str):
 
     try:
         result = container.query_items(
-            query=f"SELECT * FROM c WHERE c.ReviewId = '{revision_id}' AND c.IsResolved = false AND c.IsDeleted = false",
+            query="SELECT * FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
+            parameters=[{"name": "@revision_id", "value": revision_id}],
         )
         conversations = {}
         comments = list(result)

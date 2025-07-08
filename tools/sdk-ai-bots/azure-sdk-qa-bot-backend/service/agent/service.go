@@ -66,7 +66,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 1. Build messages from the openai request
-	llmMessages, aiSearchMessages := s.buildMessages(req)
+	llmMessages, _ := s.buildMessages(req)
 
 	// 2. Build query for search
 	query := s.buildQueryForSearch(req, llmMessages)
@@ -79,7 +79,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Agentic search
-	agenticSearchResult, err := s.agenticSearch(ctx, aiSearchMessages, req)
+	agenticSearchResult, err := s.agenticSearch(ctx, query, req)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -493,11 +493,11 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	return nil, fmt.Errorf("no choices found in response")
 }
 
-func (s *CompletionService) agenticSearch(ctx context.Context, messages []model.KnowledgeAgentMessage, req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, error) {
+func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, error) {
 	agenticSearchStart := time.Now()
 	var result []azopenai.ChatRequestMessageClassification
 	searchClient := search.NewSearchClient()
-	resp, err := searchClient.AgenticSearch(ctx, messages, req.Sources)
+	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err

@@ -15,7 +15,10 @@ from azure.ai.evaluation import (
     SimilarityEvaluator,
     QAEvaluator,
     AzureOpenAIModelConfiguration,
+    ResponseCompletenessEvaluator,
 )
+import os
+from openai import AzureOpenAI
 import re
 import json
 import aiohttp
@@ -69,11 +72,11 @@ async def parse_data(file_path: str) -> List[Tuple[str, str]]:
                 continue
             
             # Detect Question and Answer sections
-            if line.startswith('## question') | line.startswith('## Question'):
+            if line.startswith('## question') or line.startswith('## Question'):
                 in_question_section = True
                 in_answer_section = False
                 continue
-            elif line.startswith('## answer') | line.startswith('## Answer'):
+            elif line.startswith('## answer') or line.startswith('## Answer'):
                 in_question_section = False
                 in_answer_section = True
                 continue
@@ -98,7 +101,7 @@ async def parse_data(file_path: str) -> List[Tuple[str, str]]:
         
     return qa_pairs
 
-async def call_completion_api(question: str) -> Dict[str, Any]:
+async def call_bot_api(question: str) -> Dict[str, Any]:
     """Call the completion API endpoint."""
     api_url = "http://localhost:8088/completion"
     headers = {
@@ -120,28 +123,64 @@ async def call_completion_api(question: str) -> Dict[str, Any]:
                 return await resp.json()
             else:
                 raise Exception(f"API request failed with status {resp.status}")
+            
+async def call_llm_api(question: str) -> str:
+    model_endpoint = os.environ["AZURE_ENDPOINT"]
+    model_api_key = os.environ["AZURE_API_KEY"]
+    api_version = os.environ["AZURE_API_VERSION"]
+    model_deployment_name = os.environ["AZURE_COMPLETION_MODEL_NAME"]
 
-async def process_qa_pair(question: str, ground_truth: str) -> Dict[str, Any]:
+    client = AzureOpenAI(
+        api_version=api_version,
+        azure_endpoint=model_endpoint,
+        api_key=model_api_key,
+    )
+
+    response = client.chat.completions.create(
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a TypeSpec expert assistant. You are deeply knowledgeable about TypeSpec syntax, decorators, patterns, and best practices. Your role is to provide accurate and helpful answers to questions based on the provided 'Knowledge'. The provided 'Knowledge' is the retrieve result from knowledge according to user's message.",
+            },
+            {
+                "role": "user",
+                "content": question,
+            }
+        ],
+        model=model_deployment_name
+    )
+
+    return response.choices[0].message.content
+
+async def process_qa_pair(question: str, ground_truth: str, is_bot: bool) -> Dict[str, Any]:
     """Process a single Q&A pair and generate test case."""
     start_time = time.time()
-    
+    answer = ""
+    latency = 0.0
     try:
-        api_response = await call_completion_api(question)
-        latency = time.time() - start_time
+        if is_bot:
+            # Call the bot API for the question
+            api_response = await call_bot_api(question)
+            answer = api_response.get("answer", "")
+            latency = time.time() - start_time
+        else:
+            # Call the LLM API for the question
+            answer = await call_llm_api(question)
+            latency = time.time() - start_time
         
         return {
             "query": question,
             "ground_truth": ground_truth,
-            "response": api_response.get("answer", ""),
+            "response": answer,
             "context": "",
             "latency": latency,
-            "response_length": len(api_response.get("answer", ""))
+            "response_length": len(answer)
         }
     except Exception as e:
         print(f"Error processing question '{question}': {str(e)}")
         return None
 
-async def process_file(input_file: str, output_file: str) -> None:
+async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     """Process a single input file"""
     print(f"Processing file: {input_file}")
     try:
@@ -151,7 +190,7 @@ async def process_file(input_file: str, output_file: str) -> None:
         
         for idx, (question, answer) in enumerate(qa_pairs, 1):
             print(f"Processing Q&A pair {idx}/{total_pairs} ({idx/total_pairs*100:.1f}%)...")
-            result = await process_qa_pair(question, answer)
+            result = await process_qa_pair(question, answer, is_bot)
             if result:
                 with open("output/"+output_file, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(result, ensure_ascii=False) + '\n')
@@ -162,7 +201,7 @@ async def process_file(input_file: str, output_file: str) -> None:
     except Exception as e:
         print(f"Error processing file {input_file}: {str(e)}")
 
-async def prepare_dataset(file_prefix: str = None) -> str:
+async def prepare_dataset(file_prefix: str = None, is_bot: bool = True) -> str:
     """
     Process markdown files in the data directory and generate Q&A pairs.
     
@@ -170,27 +209,41 @@ async def prepare_dataset(file_prefix: str = None) -> str:
         file_prefix: Optional prefix to filter which markdown files to process.
                     If provided, only files starting with this prefix will be processed.
     """
+    print("📁 Preparing dataset...")
     data_dir = Path("data")
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
     
+    print(f"📂 Data directory: {data_dir.absolute()}")
+    print(f"📂 Output directory: {output_dir.absolute()}")
+    
     if not data_dir.exists():
-        return
+        print(f"❌ Data directory {data_dir.absolute()} does not exist!")
+        return None
     
     current_date = datetime.now().strftime("%Y_%m_%d")
     output_file = f"collected_qa_{current_date}.jsonl"
+    print(f"📄 Output file will be: {output_file}")
 
     
     # Process markdown files in the folder, optionally filtered by prefix
     glob_pattern = f"{file_prefix}*.md" if file_prefix else "*.md"
     matching_files = list(data_dir.glob(glob_pattern))
     
+    print(f"🔍 Looking for files matching pattern: {glob_pattern}")
+    print(f"📋 Found {len(matching_files)} matching files")
+    
     if matching_files:
         print(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
         for file_path in matching_files:
-            await process_file(str(file_path), str(output_file))
+            print(f"  - {file_path.name}")
+            await process_file(str(file_path), str(output_file), is_bot)
     elif file_prefix:
         print(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
+        return None
+    else:
+        print(f"No markdown files found in {data_dir}/")
+        return None
         
     print("Processing complete. Results written to output directory.")
     return output_file
@@ -205,7 +258,7 @@ async def create_cloud_evaluation_task(filename: str):
     project_endpoint = os.environ["PROJECT_ENDPOINT"]
     model_endpoint = os.environ["AZURE_ENDPOINT"]
     model_api_key = os.environ["AZURE_API_KEY"]
-    model_deployment_name = os.environ["AZURE_DEPLOYMENT_NAME"]
+    model_deployment_name = os.environ["AZURE_EVALUATION_MODEL_NAME"]
 
     # Optional – reuse an existing dataset
     dataset_name    = filename.strip().rsplit('.', 1)[0]  # Remove file extension
@@ -276,9 +329,22 @@ async def create_local_evaluation_task(filename: str):
     Create an evaluation task for the Azure SDK QA bot.
     This function sets up the evaluation environment, including the dataset and evaluators.
     """
+    print("🔧 Setting up local evaluation task...")
+    
+    # Check required environment variables
+    required_vars = ["PROJECT_ENDPOINT", "AZURE_EVALUATION_MODEL_NAME", "AZURE_ENDPOINT", "AZURE_API_KEY"]
+    missing_vars = [var for var in required_vars if not os.environ.get(var)]
+    
+    if missing_vars:
+        print(f"❌ Missing required environment variables: {', '.join(missing_vars)}")
+        return
+    
+    print("✅ All required environment variables found")
 
     # Required environment variables
     project_endpoint = os.environ["PROJECT_ENDPOINT"]
+    print(f"📋 Using project endpoint: {project_endpoint}")
+    
     # :param type: The type of the model configuration. Should be 'azure_openai' for AzureOpenAIModelConfiguration
     # :type type: NotRequired[Literal["azure_openai"]]
     # :param azure_deployment: Name of Azure OpenAI deployment to make requests to
@@ -289,23 +355,28 @@ async def create_local_evaluation_task(filename: str):
     # :type api_key: str
     # :param api_version: API version to use in request to Azure OpenAI deployment. Optional.
     # :type api_version: NotRequired[str]
+    print("🔧 Creating model configuration...")
     model_config = AzureOpenAIModelConfiguration(
-        azure_deployment=os.environ.get("AZURE_DEPLOYMENT_NAME"),
+        azure_deployment=os.environ.get("AZURE_EVALUATION_MODEL_NAME"),
         azure_endpoint=os.environ.get("AZURE_ENDPOINT"),
         api_key=os.environ.get("AZURE_API_KEY"),
         api_version=os.environ.get("AZURE_API_VERSION"),
     )
-
+    
+    print(f"📊 Starting evaluation with data file: ./output/{filename}")
     result = evaluate(
         data="./output/" + filename, # provide your data here
         evaluators={
-            "qa": QAEvaluator(
-               model_config=model_config
+            "similarity": SimilarityEvaluator(
+               model_config=model_config,
+               is_reasoning_model=True,
+               threshold=4,
+               prompt_file="similarity.prompty",  # Path to your prompty file
             )
         },
         # column mapping
         evaluator_config={
-            "qa": {
+            "similarity": {
                 "column_mapping": {
                     "query": "${data.query}",
                     "response": "${data.response}",
@@ -323,15 +394,33 @@ async def create_local_evaluation_task(filename: str):
 
 
 if __name__ == "__main__":
-    # import argparse
+    import argparse
     
-    # parser = argparse.ArgumentParser(description="Process Q&A pairs from markdown files.")
-    # parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
-    # args = parser.parse_args()
+    print("🚀 Starting evaluation script...")
+    print(f"Working directory: {os.getcwd()}")
+    
+    parser = argparse.ArgumentParser(description="Process Q&A pairs from markdown files.")
+    parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
+    parser.add_argument("--is_bot", type=str, default="True", help="Use bot API for processing Q&A pairs (True/False)")
+    args = parser.parse_args()
+    
+    # Convert string to boolean properly
+    args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
 
-    # output_file = asyncio.run(prepare_dataset(args.prefix))
-    # if output_file:
-    #     asyncio.run(create_evaluation_task(output_file))
-    # else:
-    #     print("No files processed. Exiting.")
-    asyncio.run(create_local_evaluation_task("collected_qa_2025_06_30.jsonl"))
+    print(f"Arguments parsed. Prefix: {args.prefix}, Is Bot: {args.is_bot}")
+
+    try:
+        print("📊 Preparing dataset...")
+        output_file = asyncio.run(prepare_dataset(args.prefix, args.is_bot))
+        print(f"✅ Dataset preparation completed. Output file: {output_file}")
+        
+        if output_file:
+            print("🔍 Starting local evaluation...")
+            asyncio.run(create_local_evaluation_task(output_file))
+            print("✅ Evaluation completed successfully!")
+        else:
+            print("❌ No files processed. Exiting.")
+    except Exception as e:
+        print(f"❌ Error occurred: {str(e)}")
+        import traceback
+        traceback.print_exc()

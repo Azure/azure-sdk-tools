@@ -277,10 +277,27 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	return chunk
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, messages []model.KnowledgeAgentMessage, sources []model.Source) (*model.AgenticSearchResponse, error) {
-	if len(messages) == 0 {
-		return nil, fmt.Errorf("no messages provided for agentic search")
-	}
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source) (*model.AgenticSearchResponse, error) {
+	var messages []model.KnowledgeAgentMessage
+	messages = append(messages, model.KnowledgeAgentMessage{
+		Role: "assistant",
+		Content: []model.KnowledgeAgentMessageContent{
+			{
+				Type: "text",
+				Text: "You are a TypeSpec expert assistant. You are deeply knowledgeable about TypeSpec syntax, decorators, patterns, and best practices. you must extract every single questions of user's query, and answer every question about TypeSpec",
+			},
+		},
+	})
+	messages = append(messages, model.KnowledgeAgentMessage{
+		Role: "user",
+		Content: []model.KnowledgeAgentMessageContent{
+			{
+				Type: "text",
+				Text: query,
+			},
+		},
+	})
+
 	filters := make([]string, 0, len(sources))
 	for _, source := range sources {
 		filters = append(filters, fmt.Sprintf("context_id eq '%s'", source))

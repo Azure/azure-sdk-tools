@@ -50,18 +50,7 @@ func TestGetFullContext(t *testing.T) {
 func TestAgenticSearch(t *testing.T) {
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
-	messages := []model.KnowledgeAgentMessage{
-		{
-			Content: []model.KnowledgeAgentMessageContent{
-				{
-					Type: "text",
-					Text: "how can i install typespec?",
-				},
-			},
-			Role: "user",
-		},
-	}
-	resp, err := searchClient.AgenticSearch(context.Background(), messages, nil)
+	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil)
 	if err != nil {
 		t.Errorf("AgenticSearch() got an error: %v", err)
 	}

@@ -42,7 +42,7 @@ namespace ApiViewCopilot {
   op handleMention(
     @body request: MentionRequest,
     @header("Authorization") authorization: string,
-  ): string;
+  ): AgentChatResponse;
 
   model MentionRequest {
     /** The programming language of the APIView. */

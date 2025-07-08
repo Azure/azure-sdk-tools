@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 import prompty
 import prompty.azure
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 
 from src._apiview_reviewer import ApiViewReview, _PROMPTS_FOLDER
@@ -180,7 +180,7 @@ class AgentChatResponse(BaseModel):
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
-async def agent_chat_thread_endpoint(request: AgentChatRequest):
+async def agent_chat(request: AgentChatRequest):
     try:
         async with get_main_agent() as agent:
             response, thread_id_out, messages = await invoke_agent(
@@ -243,24 +243,32 @@ async def summarize_api(request: SummarizeRequest):
 class MentionRequest(BaseModel):
     comments: list
     language: str
-    package_name: str
+    package_name: str = Field(..., alias="packageName")
+    thread_id: str = Field(None, alias="threadId")
     code: str
 
+    class Config:
+        populate_by_name = True
 
-@app.post("/api-review/mention", response_model=str)
-async def handle_mention(request: MentionRequest):
+
+@app.post("/api-review/mention", response_model=AgentChatResponse)
+async def handle_mention(request: MentionRequest, http_request: Request):
     try:
         async with get_mention_agent(
             comments=request.comments,
             language=request.language,
             package_name=request.package_name,
             code=request.code,
-            auth=request.headers.get("Authorization"),
+            auth=http_request.headers.get("Authorization"),
         ) as agent:
             response, thread_id_out, messages = await invoke_agent(
                 agent=agent, user_input="Please handle this feedback.", thread_id=request.thread_id
             )
-        return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
+        return AgentChatResponse(
+            response=response,
+            thread_id=thread_id_out,
+            messages=messages,
+        )
     except AgentInvokeException as e:
         if "Rate limit is exceeded" in str(e):
             logger.warning(f"Rate limit exceeded: {e}")

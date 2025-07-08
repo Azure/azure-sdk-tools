@@ -71,20 +71,19 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 2. Build query for search
 	query := s.buildQueryForSearch(req, llmMessages)
 
-	// 3. Search for related documents
-	chunks, err := s.searchRelatedKnowledge(req, query)
+	// 3. Agentic search
+	agenticSearchChunks, err := s.agenticSearch(ctx, req.Message.Content, req)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
 
-	// 4. Agentic search
-	agenticSearchResult, err := s.agenticSearch(ctx, query, req)
+	// 4. Search for related documents
+	chunks, err := s.searchRelatedKnowledge(req, query, agenticSearchChunks)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	llmMessages = append(llmMessages, agenticSearchResult...)
 
 	// 5. Build prompt
 	prompt, err := s.buildPrompt(chunks, *req.PromptTemplate)
@@ -376,7 +375,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query
 }
 
-func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, query string) ([]string, error) {
+func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, query string, existingChunks []model.Index) ([]string, error) {
 	searchStart := time.Now()
 	searchClient := search.NewSearchClient()
 	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
@@ -413,6 +412,7 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 
 	chunkProcessStart := time.Now()
 	files := make(map[string]bool)
+	chunks := make(map[string]bool)
 	mergedChunks := make([]model.Index, 0)
 	for _, result := range needCompleteResults {
 		if files[result.Title] {
@@ -437,20 +437,31 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	}
 	wg.Wait()
 
-	chunks := make([]string, 0)
-	for _, result := range mergedChunks {
-		chunk := processDocument(result)
-		chunks = append(chunks, chunk)
+	result := make([]string, 0)
+	for _, mergedChunk := range mergedChunks {
+		chunk := processDocument(mergedChunk)
+		result = append(result, chunk)
 	}
-	for _, result := range normalResult {
-		if files[result.Title] {
+	for _, existingChunk := range existingChunks {
+		if files[existingChunk.Title] {
 			continue
 		}
-		chunk := processChunk(result)
-		chunks = append(chunks, chunk)
+		chunk := processChunk(existingChunk)
+		result = append(result, chunk)
+		chunks[existingChunk.Chunk] = true
+	}
+	for _, normalChunk := range normalResult {
+		if files[normalChunk.Title] {
+			continue
+		}
+		if chunks[normalChunk.Chunk] {
+			continue
+		}
+		chunk := processChunk(normalChunk)
+		result = append(result, chunk)
 	}
 	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
-	return chunks, nil
+	return result, nil
 }
 
 func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) (string, error) {
@@ -493,26 +504,27 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	return nil, fmt.Errorf("no choices found in response")
 }
 
-func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, error) {
+func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {
 	agenticSearchStart := time.Now()
-	var result []azopenai.ChatRequestMessageClassification
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
+	log.Printf("Agentic search result: %+v", resp.Response)
 	if resp.Response == nil {
 		return nil, nil
 	}
-	for _, message := range resp.Response {
-		for _, content := range message.Content {
-			systemMessage := &azopenai.ChatRequestSystemMessage{
-				Content: azopenai.NewChatRequestSystemMessageContent(content.Text),
-			}
-			result = append(result, systemMessage)
-		}
+	var docKeys []string
+	for _, reference := range resp.References {
+		docKeys = append(docKeys, reference.DocKey)
+	}
+	chunks, err := searchClient.BatchGetChunks(ctx, docKeys)
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+		return nil, err
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
-	return result, nil
+	return chunks, nil
 }

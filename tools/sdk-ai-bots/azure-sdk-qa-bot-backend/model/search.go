@@ -141,3 +141,10 @@ func TrimFileFormat(path string) string {
 	path = strings.TrimPrefix(path, "docs/")
 	return path
 }
+
+type AgentSearchReference struct {
+	RefID   string `json:"ref_id"`
+	Title   string `json:"title"`
+	Terms   string `json:"terms"`
+	Content string `json:"content"`
+}

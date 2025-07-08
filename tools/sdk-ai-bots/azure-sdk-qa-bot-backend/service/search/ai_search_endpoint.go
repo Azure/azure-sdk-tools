@@ -63,6 +63,44 @@ func (s *SearchClient) QueryIndex(ctx context.Context, req *model.QueryIndexRequ
 	return httpResp, nil
 }
 
+func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([]model.Index, error) {
+	var filters []string
+	for _, id := range chunkIDs {
+		filters = append(filters, fmt.Sprintf("chunk_id eq '%s'", id))
+	}
+	req := &model.QueryIndexRequest{
+		Filter: strings.Join(filters, " or "),
+	}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/indexes/%s/%s", s.BaseUrl, s.Index, "docs/search?api-version=2025-05-01-preview"), bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Set("api-key", s.ApiKey)
+	resp, err := (&http.Client{}).Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		fmt.Println(string(b))
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	b, _ := io.ReadAll(resp.Body)
+	httpResp := &model.QueryIndexResponse{}
+	if err := json.Unmarshal(b, httpResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return httpResp.Value, nil
+}
+
 func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source) ([]model.Index, error) {
 	// Base request template
 	baseReq := model.QueryIndexRequest{

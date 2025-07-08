@@ -1,5 +1,9 @@
 # Release
 
+## 2025-07-08 - 0.24.1
+
+- Support empty value in `--emitter-options` option.
+
 ## 2025-07-03 - 0.24.0
 
 - Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.

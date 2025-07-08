@@ -154,7 +154,7 @@ class ApiViewReview:
         if "timestamp" in data:
             data["createdOn"] = data.pop("timestamp")
 
-        # TODO: Remove this once the frontend is updated
+        # TODO: Remove once https://github.com/Azure/azure-sdk-tools/pull/11057 is deployed to production
         if "commentText" not in data:
             data["commentText"] = ""
         if "createdOn" not in data:

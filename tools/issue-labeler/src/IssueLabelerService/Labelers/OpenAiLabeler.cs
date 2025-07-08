@@ -182,21 +182,30 @@ namespace IssueLabelerService
 
         private bool ValidateConfidenceScores(Dictionary<string, string> filteredOutput, Dictionary<string, string> output, IssuePayload issue)
         {
+
+            var confidenceThreshold = double.Parse(_config.ConfidenceThreshold);
+
             foreach (var label in filteredOutput)
             {
                 try
                 {
+                    if (!output.ContainsKey($"{label.Key}ConfidenceScore"))
+                    {
+                        _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} did not provide a confidence score for label '{label.Key}'.");
+                        return false;
+                    }
+
                     var confidence = double.Parse(output[$"{label.Key}ConfidenceScore"]);
 
                     if (label.Value == "UNKNOWN")
                     {
-                        _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
+                        _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
                         return false;
                     }
 
-                    if (confidence < double.Parse(_config.ConfidenceThreshold))
+                    if (confidence < confidenceThreshold)
                     {
-                        _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");
+                        _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");
                         return false;
                     }
                 }

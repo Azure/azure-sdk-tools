@@ -218,7 +218,7 @@ namespace APIViewWeb.Managers
                         "application/json")
                 };
 
-                //TODO: Set a real token here
+                //TODO: See: https://github.com/Azure/azure-sdk-tools/issues/11128
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "dummy_token_value");
 
                 var client = _httpClientFactory.CreateClient();

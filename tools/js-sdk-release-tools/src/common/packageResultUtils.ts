@@ -1,6 +1,6 @@
 import { ChangelogResult, NpmPackageInfo, PackageResult } from './types.js';
 
-import { Changelog } from '../changelog/changelogGenerator.js';
+import { ChangelogResult as Changelog } from '../changelog/v2/ChangelogGenerator.js';
 
 export function initPackageResult(): PackageResult {
     const breakingChangeItems = [];
@@ -24,8 +24,8 @@ export function initPackageResult(): PackageResult {
 }
 
 export function updateChangelogResult(packageResult: PackageResult, changelog: Changelog | undefined): void {
-    packageResult.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
-    packageResult.changelog.content = changelog?.displayChangeLog() ?? '';
+    packageResult.changelog.breakingChangeItems = changelog?.breakingChangeItems ?? [];
+    packageResult.changelog.content = changelog?.content ?? '';
     packageResult.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
 }
 

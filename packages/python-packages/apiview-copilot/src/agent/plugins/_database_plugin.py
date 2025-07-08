@@ -1,89 +1,257 @@
-import os
 import uuid
 from typing import Optional
 from semantic_kernel.functions import kernel_function
 
-from src._models import Memory
-
-from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
-
-COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
-COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
-
-
-def get_database_client() -> CosmosClient:
-    return CosmosClient(COSMOS_ENDPOINT, credential=DefaultAzureCredential())
+from src._database_manager import get_database_manager
 
 
 class DatabasePlugin:
 
-    @kernel_function(
-        description="Search for Guidelines in the ArchAgent Knowledge Base by programming language (e.g. python, csharp, etc.)."
-    )
-    async def get_guideline(self, guideline_id: str):
+    @kernel_function(description="Create a new Guideline in the database.")
+    async def create_guideline(
+        self,
+        id: str,
+        content: str,
+        title: str = None,
+        language: Optional[str] = None,
+    ):
         """
-        Retrieve a guideline from the ArchAgent Knowledge Base by its ID.
+        Create a new guideline in the database.
         Args:
-            guideline_id (str): The ID of the guideline to retrieve.
+            id (str): Unique identifier for the guideline.
+            title (str): Short descriptive title of the guideline.
+            content (str): Full text of the guideline.
+            language (str, optional): Language the guideline applies to.
         """
-        client = get_database_client()
-        container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
+        data = {
+            "id": id,
+            "title": title,
+            "content": content,
+            "language": language,
+        }
+        db = get_database_manager()
+        return db.guidelines.create(id, data=data)
 
-        # replace .html# with =html= in guideline_id
-        guideline_id = guideline_id.replace(".html#", "=html=")
+    @kernel_function(description="Create a new Memory in the database.")
+    async def create_memory(
+        self,
+        id: str,
+        title: str,
+        content: str,
+        language: Optional[str] = None,
+        service: Optional[str] = None,
+        is_exception: bool = False,
+        source: str = None,
+    ):
+        """
+        Create a new memory in the database.
+        Args:
+            id (str): Unique identifier for the memory.
+            title (str): Short descriptive title of the memory.
+            content (str): Content of the memory.
+            language (str, optional): Language the memory applies to.
+            service (str, optional): Service the memory applies to.
+            is_exception (bool, optional): If the memory is an exception to guidelines.
+            source (str): The source of the memory.
+        """
+        data = {
+            "id": id,
+            "title": title,
+            "content": content,
+            "language": language,
+            "service": service,
+            "is_exception": is_exception,
+            "source": source,
+        }
+        db = get_database_manager()
+        return db.memories.create(id, data=data)
 
-        guideline = container.read_item(item=guideline_id, partition_key=guideline_id)
-        # TODO: Expand the guideline into a context object with links resolved
-
-        return guideline
-
-    @kernel_function(description="Add a memory related to a guideline in the ArchAgent Knowledge Base.")
-    async def add_guideline_memory(
+    @kernel_function(description="Create a new Example in the database.")
+    async def create_example(
         self,
         title: str,
         content: str,
-        guideline_id: str,
-        is_exception: bool,
-        service_name: Optional[str],
-        language: Optional[str],
+        id: str = None,
+        language: Optional[str] = None,
+        service: Optional[str] = None,
+        is_exception: bool = False,
+        example_type: str = None,
     ):
         """
-        Add a memory related to a guideline in the ArchAgent Knowledge Base.
+        Create a new example in the database.
         Args:
-            guideline_id (str): The ID of the guideline to which the memory is related.
-            content (str): The memory content to add.
-            title (str): The title of the memory.
-            is_exception (bool): Whether the memory is an exception to established guidelines.
-            service_name (str): The service related to the memory, if any.
-            language (str): The programming language of the memory, if any.
+            id (str): Unique identifier for the example.
+            title (str): Short descriptive title of the example.
+            content (str): Code snippet containing the example.
+            language (str, optional): Language the example applies to.
+            service (str, optional): Service the example applies to.
+            is_exception (bool, optional): If the example is an exception to guidelines.
+            example_type (str): Whether this example is 'good' or 'bad'.
         """
-        if not language:
-            return {"status": "error", "message": "Language must be specified."}
+        data = {
+            "id": id,
+            "title": title,
+            "content": content,
+            "language": language,
+            "service": service,
+            "is_exception": is_exception,
+            "example_type": example_type,
+        }
+        db = get_database_manager()
+        return db.examples.create(id, data=data)
 
-        client = get_database_client()
-        guideline_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("guidelines")
-        memory_container = client.get_database_client(COSMOS_DB_NAME).get_container_client("memories")
+    @kernel_function(description="Retrieve a memory from the database by its ID.")
+    async def get_memory(self, memory_id: str):
+        """
+        Retrieve a memory from the database by its ID.
+        Args:
+            memory_id (str): The ID of the memory to retrieve.
+        """
+        db = get_database_manager()
+        return db.memories.get(memory_id)
 
-        # replace .html# with =html= in guideline_id
-        guideline_id = guideline_id.replace(".html#", "=html=")
+    @kernel_function(description="Retrieve an example from the database by its ID.")
+    async def get_example(self, example_id: str):
+        """
+        Retrieve an example from the database by its ID.
+        Args:
+            example_id (str): The ID of the example to retrieve.
+        """
+        db = get_database_manager()
+        return db.examples.get(example_id)
 
-        guideline = guideline_container.read_item(item=guideline_id, partition_key=guideline_id)
-        memory_id = str(uuid.uuid4())
-        memory = Memory(
-            id=memory_id,
-            related_guidelines=[guideline_id],
-            title=title,
-            content=content,
-            source="agent",
-            is_exception=is_exception,
-            service=service_name,
-            language=language,
-        )
-        related_memories = guideline.get("related_memories", [])
-        related_memories.append(memory_id)
-        guideline["related_memories"] = related_memories
-        guideline_container.upsert_item(guideline)
-        memory_container.upsert_item(memory.model_dump())
-        return {"status": "Memory added successfully"}
+    @kernel_function(description="Retrieve a guideline from the database by its ID.")
+    async def get_guideline(self, guideline_id: str):
+        """
+        Retrieve a guideline from the database by its ID.
+        Args:
+            guideline_id (str): The ID of the guideline to retrieve.
+        """
+        db = get_database_manager()
+        return db.guidelines.get(guideline_id)
+
+    @kernel_function(
+        description="Link one or more target items to a source item by adding their IDs to a related field in the source item."
+    )
+    async def link_items(
+        self,
+        source_id: str,
+        source_container: str,
+        target_ids: list[str],
+        target_container: str,
+        related_field: str = None,
+    ):
+        """
+        Link one or more target items to a source item by adding their IDs to a related field in the source item.
+        Args:
+            source_id (str): The ID of the source item.
+            source_container (str): The container name of the source item (examples, memories, guidelines).
+            target_ids (list): The IDs of the target items.
+            target_container (str): The container name of the target items (examples, memories, guidelines).
+            related_field (str, optional): The field in the source item to update (default: 'related_' + target_container).
+        """
+        db = get_database_manager()
+        source_c = db.get_container_client(source_container)
+        target_c = db.get_container_client(target_container)
+
+        # Check source item exists
+        try:
+            source_item = source_c.get(source_id)
+        except Exception as e:
+            return {"status": "error", "message": f"Source item not found: {e}"}
+
+        # Determine the related field name
+        if not related_field:
+            related_field = f"related_{target_container}"
+        # Prepare the related list
+        related = source_item.get(related_field, [])
+        if not isinstance(related, list):
+            related = []
+
+        results = {"linked": [], "already_linked": [], "not_found": []}
+        for target_id in target_ids:
+            try:
+                _ = target_c.get(target_id)
+            except Exception:
+                results["not_found"].append(target_id)
+                continue
+            if target_id in related:
+                results["already_linked"].append(target_id)
+            else:
+                related.append(target_id)
+                results["linked"].append(target_id)
+        if results["linked"]:
+            source_item[related_field] = related
+            source_c.upsert(source_id, data=source_item)
+        return {"status": "done", "source_id": source_id, "related_field": related_field, **results}
+
+    @kernel_function(
+        description="Unlink one or more target items from a source item by removing their IDs from a related field in the source item."
+    )
+    async def unlink_items(
+        self,
+        source_id: str,
+        source_container: str,
+        target_ids: list[str],
+        target_container: str,
+        related_field: str = None,
+    ):
+        """
+        Unlink one or more target items from a source item by removing their IDs from a related field in the source item.
+        Args:
+            source_id (str): The ID of the source item.
+            source_container (str): The container name of the source item (examples, memories, guidelines).
+            target_ids (list): The IDs of the target items to remove.
+            target_container (str): The container name of the target items (examples, memories, guidelines).
+            related_field (str, optional): The field in the source item to update (default: 'related_' + target_container).
+        """
+        db = get_database_manager()
+        source_c = db.get_container_client(source_container)
+
+        # Check source item exists
+        try:
+            source_item = source_c.get(source_id)
+        except Exception as e:
+            return {"status": "error", "message": f"Source item not found: {e}"}
+
+        # Determine the related field name
+        if not related_field:
+            related_field = f"related_{target_container}"
+        # Prepare the related list
+        related = source_item.get(related_field, [])
+        if not isinstance(related, list):
+            related = []
+
+        removed = []
+        not_found = []
+        for target_id in target_ids:
+            if target_id in related:
+                related.remove(target_id)
+                removed.append(target_id)
+            else:
+                not_found.append(target_id)
+        if removed:
+            source_item[related_field] = related
+            source_c.upsert(source_id, data=source_item)
+        return {
+            "status": "done",
+            "source_id": source_id,
+            "related_field": related_field,
+            "removed": removed,
+            "not_found": not_found,
+        }
+
+    @kernel_function(description="Delete a Guideline from the database by its ID.")
+    async def delete_guideline(self, id: str):
+        db = get_database_manager()
+        return db.guidelines.delete(id)
+
+    @kernel_function(description="Delete a Memory from the database by its ID.")
+    async def delete_memory(self, id: str):
+        db = get_database_manager()
+        return db.memories.delete(id)
+
+    @kernel_function(description="Delete an Example from the database by its ID.")
+    async def delete_example(self, id: str):
+        db = get_database_manager()
+        return db.examples.delete(id)

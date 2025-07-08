@@ -211,3 +211,28 @@ Happy coding!!!!
 
  Create a GitHub pull request for the changes to merge it to main branch if code changes are ready and tested thoroughly.
  
+
+## Deployment to Production
+
+Follow these steps to deploy to production:
+
+1. **Run the [APIView Pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=1136):**
+   - No changes to the parameters are needed. Simply run the pipeline with the prefilled values.
+
+2. **Approve the `Prod` Stage:**
+   - Before the `Prod` stage runs (the last step of the pipeline), it will request approval. Approve the `Prod` deployment when prompted.
+
+3. **Wait for Pipeline Completion:**
+   - After the pipeline completes, the code will be deployed to the **staging slot** of the [Azure Web App](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/Microsoft.Web/sites/APIView/appServices).
+
+4. **Swap Deployment Slots:**
+   - The changes are now in the staging slot. To make them live in production:
+     - Go to the [APIView Web App](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/apiview/providers/Microsoft.Web/sites/APIView/appServices).
+     - Click on `Swap`.
+     - Ensure the source is `apiview-staging` and the target is `APIView`.
+     - Click `Start swap` to complete the process.
+
+5. **Rollback (if needed):**
+   - In case of a regression and when there are no database changes, you can follow step 4 again to swap the deployment. This will restore the previous version.
+
+Your deployment to production is now complete!

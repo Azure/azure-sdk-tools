@@ -101,7 +101,9 @@ class ApiViewReview:
         self.results = ReviewResult(allowed_ids=language_guideline_ids, comments=[])
         self.summary = None
         self.outline = outline
-        self.existing_comments = [ExistingComment(**data) for data in comments] if comments else []
+        self.existing_comments = (
+            [ExistingComment(**self._normalize_comment_keys(data)) for data in comments] if comments else []
+        )
         self.executor = concurrent.futures.ThreadPoolExecutor()
         self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
         if include_general_guidelines:
@@ -142,6 +144,24 @@ class ApiViewReview:
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
+
+    def _normalize_comment_keys(self, data):
+        # Map alternative keys to the canonical ones
+        if "author" in data:
+            data["createdBy"] = data.pop("author")
+        if "text" in data:
+            data["commentText"] = data.pop("text")
+        if "timestamp" in data:
+            data["createdOn"] = data.pop("timestamp")
+
+        # TODO: Remove once https://github.com/Azure/azure-sdk-tools/pull/11057 is deployed to production
+        if "commentText" not in data:
+            data["commentText"] = ""
+        if "createdOn" not in data:
+            data["createdOn"] = datetime.datetime.now().isoformat()
+        if "createdBy" not in data:
+            data["createdBy"] = "unknown"
+        return data
 
     def _print_message(self, msg: str = "", overwrite: bool = False):
         """

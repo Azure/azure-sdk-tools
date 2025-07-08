@@ -6,5 +6,3 @@ temp
 tsp-output/
 output/
 test/examples/specification/convert/examples/*
-test/utils/*-lock.json
-test/examples/sdk/

@@ -3,22 +3,20 @@ from collections import OrderedDict
 import colorama
 from colorama import Fore, Style
 import json
+from knack import CLI, ArgumentsContext, CLICommandsLoader
+from knack.commands import CommandGroup
+from knack.help_files import helps
 import os
 from pprint import pprint
 import requests
 import sys
 import pathlib
 import requests
+from typing import Optional
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
-from src._models import ExistingComment
 from src._search_manager import SearchManager
-
-
-from knack import CLI, ArgumentsContext, CLICommandsLoader
-from knack.commands import CommandGroup
-from knack.help_files import helps
-from typing import Optional
+from src._database_manager import get_database_manager
 
 colorama.init(autoreset=True)
 
@@ -72,6 +70,13 @@ helps[
 ] = """
     type: group
     short-summary: Commands for searching the knowledge base.
+"""
+
+helps[
+    "db"
+] = """
+    type: group
+    short-summary: Commands for managing the database.
 """
 
 
@@ -530,6 +535,25 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         asyncio.run(run_local_mention())
 
 
+CONTAINERS = [
+    "guidelines",
+    "memories",
+    "examples",
+    "review-jobs",
+]
+
+
+def db_get(container_name: str, id: str):
+    """Retrieve an item from the database."""
+    db = get_database_manager()
+    container = db.get_container_client(container_name)
+    try:
+        item = container.get(id)
+        print(json.dumps(item, indent=2))
+    except Exception as e:
+        print(f"Error retrieving item: {e}")
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -563,9 +587,25 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "review job", "__main__#{}") as g:
             g.command("start", "review_job_start")
             g.command("get", "review_job_get")
+        with CommandGroup(self, "db", "__main__#{}") as g:
+            g.command("get", "db_get")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
+        with ArgumentsContext(self, "db get") as ac:
+            ac.argument(
+                "container_name",
+                type=str,
+                help="The name of the Cosmos DB container",
+                choices=CONTAINERS,
+                options_list=["--container-name", "-c"],
+            )
+            ac.argument(
+                "id",
+                type=str,
+                help="The id of the item to retrieve.",
+                options_list=["--id", "-i"],
+            )
         with ArgumentsContext(self, "") as ac:
             ac.argument(
                 "language",

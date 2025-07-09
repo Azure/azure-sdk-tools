@@ -106,7 +106,7 @@ go test ./...
 ## Deploy
 
   ```bash
-  ./deploy-to-azure.sh -t [tag] -m [prod|slot(default)]
+  ./deploy.sh -t [tag] -m [prod|slot|preview(default)]
   ```
 
 ## Contributing

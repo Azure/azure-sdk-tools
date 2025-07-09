@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -60,6 +61,14 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	startTime := time.Now()
 	requestID := uuid.New().String()
 	log.SetPrefix(fmt.Sprintf("[RequestID: %s] ", requestID))
+
+	jsonReq, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Failed to marshal request: %v\n", err)
+	} else {
+		log.Printf("Request: %s\n", jsonReq)
+	}
+
 	if err := s.CheckArgs(req); err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -351,8 +360,6 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		query = *req.Message.RawContent
 	}
 	query = preprocess.NewPreprocessService().PreprocessInput(query)
-	log.Printf("User query: %s", query)
-
 	intentStart := time.Now()
 	intentResult, err := s.RecongnizeIntension(messages)
 	if err != nil {
@@ -369,9 +376,10 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		if len(intentResult.Question) > 0 {
 			query = intentResult.Question
 		}
-		log.Printf("category: %v, intension: %v", intentResult.Category, intentResult.Question)
+		log.Printf("Intent Result: category: %v, intension: %v", intentResult.Category, intentResult.Question)
 	}
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
+	log.Printf("Searching query: %s", query)
 	return query
 }
 
@@ -382,22 +390,27 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}
-	log.Printf("Search operation took: %v", time.Since(searchStart))
+	log.Printf("Vector Search took: %v", time.Since(searchStart))
 
 	// filter unrelevant results
 	needCompleteResults := make([]model.Index, 0)
 	normalResult := make([]model.Index, 0)
 	for _, result := range results {
 		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s, score: %f", result.Title, result.RerankScore)
+			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
 			continue
 		}
 		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
 			needCompleteResults = append(needCompleteResults, result)
-			log.Printf("Adding result with high score: %s, score: %f", result.Title, result.RerankScore)
+			log.Printf("Vector searched chunk(high score): %+v", result)
 			continue
 		}
-		log.Printf("Result: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+		if result.ContextID == string(model.Source_TypeSpecQA) || result.ContextID == string(model.Source_TypeSpecMigration) {
+			needCompleteResults = append(needCompleteResults, result)
+			log.Printf("Vector searched chunk(Q&A): %+v", result)
+			continue
+		}
+		log.Printf("Vector searched chunk: %+v", result)
 		normalResult = append(normalResult, result)
 	}
 	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
@@ -522,7 +535,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}
-	log.Printf("Agentic search result: %+v", resp.Response)
+	log.Printf("Agentic search sub queries: %+v", resp.Activity)
 	if resp.Response == nil {
 		return nil, nil
 	}
@@ -534,6 +547,9 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
+	}
+	for _, chunk := range chunks {
+		log.Printf("Agentic searched chunk: %+v", chunk)
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
 	return chunks, nil

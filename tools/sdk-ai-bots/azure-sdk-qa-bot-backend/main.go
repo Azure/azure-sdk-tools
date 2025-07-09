@@ -31,7 +31,7 @@ func main() {
 	config.InitSecrets()
 	config.InitOpenAIClient()
 	log.SetOutput(os.Stdout)
-	log.SetFlags(log.Llongfile | log.Lmicroseconds | log.Ldate)
+	log.SetFlags(log.Ldate)
 	r := setupRouter()
 	r.Run(":8088")
 }

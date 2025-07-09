@@ -243,7 +243,8 @@ main() {
     setup_azure_python_sdk_docs
     setup_microsoft_api_guidelines
     setup_azure_resource_manager_rpc
-    setup_azure_sdk_eng_docs "YOUR_AUTH_TOKEN"
+    echo $AZURE_SDK_ENG_DOCS_TOKEN
+    setup_azure_sdk_eng_docs $AZURE_SDK_ENG_DOCS_TOKEN
     setup_azure_sdk_guidelines
 
     log_message "Documentation setup completed successfully!"

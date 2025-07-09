@@ -25,13 +25,25 @@ done
 APP_SLOT_NAME=${APP_SLOT_DEV_NAME}
 if [[ "$DEPLOY_MODE" == "preview" ]]; then
     APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
+    # Update webapp image tag in the deployment slot
+    echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
+    az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+    # Restart the webapp to apply changes
+    az webapp restart  --name azuresdkbot --slot ${APP_SLOT_NAME} --resource-group typespec_helper
+    echo "Preview deployment completed successfully!"
+    exit 0
 fi
 
 # Handle production deployment if requested
 if [[ "$DEPLOY_MODE" == "prod" ]]; then
-    echo "Performing slot swap to deploy to production..."
-    # Swap the deployment slot with production
-    az webapp deployment slot swap --resource-group ${RESOURCE_GROUP} --name ${APP_NAME} --slot ${APP_SLOT_NAME}
+    APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
+    # Update webapp image tag in the deployment slot
+    echo "Updating image in deployment prod..."
+    az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+    # Restart the webapp to apply changes
+    az webapp restart  --name azuresdkbot --resource-group typespec_helper
     echo "Production deployment completed successfully!"
     exit 0
 fi
@@ -94,5 +106,5 @@ echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
 az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
 
 # Restart the webapp to apply changes
-az webapp restart  --name azuresdkbot --slot azuresdkbot-dev --resource-group typespec_helper
+az webapp restart  --name azuresdkbot --slot ${APP_SLOT_NAME} --resource-group typespec_helper
 echo "Slot deployment completed successfully!"

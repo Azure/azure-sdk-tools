@@ -19,6 +19,7 @@ const (
 	Source_TypeSpecQA              Source = "static_typespec_qa"
 	Source_AzureAPIGuidelines      Source = "azure_api_guidelines"
 	Source_AzureResourceManagerRPC Source = "azure_resource_manager_rpc"
+	Source_TypeSpecMigration       Source = "static_typespec_migration_docs"
 )
 
 type Role string

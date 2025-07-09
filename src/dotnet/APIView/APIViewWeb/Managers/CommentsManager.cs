@@ -199,7 +199,7 @@ namespace APIViewWeb.Managers
 
                 var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeRevisionId);
                 var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
-                List<ApiViewComment> commentsForAgent =
+                List<ApiViewAgentComment> commentsForAgent =
                     AgentHelpers.BuildCommentsForAgent(threadComments, activeCodeFile);
                 MentionRequest mentionRequest = new()
                 {

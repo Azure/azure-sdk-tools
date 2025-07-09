@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace APIViewWeb.Models;
 
-public class ApiViewComment
+public class ApiViewAgentComment
 {
     [JsonPropertyName("lineNo")]
     public int LineNumber { get; set; }
@@ -31,7 +31,7 @@ public class MentionRequest
     [JsonPropertyName("code")]
     public string Code { get; set; }
     [JsonPropertyName("comments")]
-    public List<ApiViewComment> Comments { get; set; }
+    public List<ApiViewAgentComment> Comments { get; set; }
 }
 
 public class AgentChatResponse

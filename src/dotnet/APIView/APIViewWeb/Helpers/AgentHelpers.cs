@@ -12,7 +12,7 @@ public class AgentHelpers
     private static readonly Regex azureSdkAgentTag = new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.AzureSdkBotName)}\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public static List<ApiViewComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
+    public static List<ApiViewAgentComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
         RenderedCodeFile codeFile)
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
@@ -22,8 +22,8 @@ public class AgentHelpers
             .Where(x => !string.IsNullOrEmpty(x.lineId))
             .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
 
-        List<ApiViewComment> commentsForAgent = comments
-            .Select(threadComment => new ApiViewComment
+        List<ApiViewAgentComment> commentsForAgent = comments
+            .Select(threadComment => new ApiViewAgentComment
             {
                 LineNumber = elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
                 CreatedOn = threadComment.CreatedOn,

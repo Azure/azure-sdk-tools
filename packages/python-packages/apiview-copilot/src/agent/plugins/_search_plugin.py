@@ -1,9 +1,5 @@
-import os
 from semantic_kernel.functions import kernel_function
 
-from azure.search.documents.indexes import SearchIndexerClient
-
-from src._credential import get_credential
 from src._search_manager import SearchManager
 from src._database_manager import ContainerNames
 
@@ -66,7 +62,7 @@ class SearchPlugin:
             language (str): The programming language to filter results.
         """
         search = SearchManager(language=language)
-        results = search.search_all(query)
+        results = search.search_all(query=query)
         context = search.build_context(results.results)
         return context.to_markdown()
 

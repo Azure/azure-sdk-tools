@@ -1,6 +1,7 @@
 from enum import Enum
 from functools import lru_cache
 import os
+from typing import Any
 from pydantic import BaseModel
 import time
 
@@ -68,7 +69,7 @@ class BasicContainer:
             return data.model_dump()
         return dict(data) if not isinstance(data, dict) else data
 
-    def create(self, item_id: str, *, data):
+    def create(self, item_id: str, *, data: Any, run_indexer: bool = True):
         """
         Create a new item. Raises an error if the item already exists.
         """
@@ -89,10 +90,11 @@ class BasicContainer:
             # Item does not exist, safe to create
             self.client.create_item(body=data_dict)
             value = {"status": "created", "id": data_dict["id"]}
-            self.run_indexer()
+            if run_indexer:
+                self.run_indexer()
             return value
 
-    def upsert(self, item_id: str, *, data):
+    def upsert(self, item_id: str, *, data: Any, run_indexer: bool = True):
         """
         Upsert an item. If it exists, update it; if not, create it.
         """
@@ -100,7 +102,8 @@ class BasicContainer:
             item_id = self.preprocess_id(item_id)
         data_dict = self._to_dict(data)
         value = self.client.upsert_item({"id": item_id, **data_dict})
-        self.run_indexer()
+        if run_indexer:
+            self.run_indexer()
         return value
 
     def get(self, item_id: str):
@@ -111,7 +114,7 @@ class BasicContainer:
             item_id = self.preprocess_id(item_id)
         return self.client.read_item(item=item_id, partition_key=item_id)
 
-    def delete(self, item_id: str):
+    def delete(self, item_id: str, *, run_indexer: bool = True):
         """
         Soft-delete an item by its ID. Sets 'isDeleted' to True instead of removing the document.
         """
@@ -120,7 +123,9 @@ class BasicContainer:
         item = self.get(item_id)
         item["isDeleted"] = True
         value = self.client.upsert_item(item)
-        self.run_indexer()
+
+        if run_indexer:
+            self.run_indexer()
         return value
 
     def run_indexer(self):

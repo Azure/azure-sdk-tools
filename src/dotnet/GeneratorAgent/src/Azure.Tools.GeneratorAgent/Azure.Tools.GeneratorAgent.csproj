@@ -11,6 +11,19 @@
     <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.14.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+  <Content Include="appsettings.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+  <Content Include="appsettings.*.json">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <DependentUpon>appsettings.json</DependentUpon>
+  </Content>
+</ItemGroup>
 
 </Project>

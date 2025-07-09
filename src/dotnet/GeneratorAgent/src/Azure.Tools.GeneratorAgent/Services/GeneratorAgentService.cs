@@ -10,13 +10,15 @@ namespace Azure.Tools.GeneratorAgent.Services
 {
     public class GeneratorAgentService : IGeneratorAgentService
     {
+        private readonly AppSettings _appSettings;
         private readonly PersistentAgentsClient client;
 
         private PersistentAgent? agent;
 
-        public GeneratorAgentService()
+        public GeneratorAgentService(AppSettings appSettings)
         {
-            client = new PersistentAgentsClient(AppSettings.ProjectEndpoint, new DefaultAzureCredential());
+            _appSettings = appSettings;
+            client = new PersistentAgentsClient(_appSettings.ProjectEndpoint, new DefaultAzureCredential());
             agent = null;
         }
         
@@ -31,9 +33,9 @@ namespace Azure.Tools.GeneratorAgent.Services
 
             Console.WriteLine("Creating AZC Fixer agent...");
             agent = await client.Administration.CreateAgentAsync(
-                model: AppSettings.Model,
-                name: AppSettings.AgentName,
-                instructions: AppSettings.AgentInstructions,
+                model: _appSettings.Model,
+                name: _appSettings.AgentName,
+                instructions: _appSettings.AgentInstructions,
                 tools: new[] { new FileSearchToolDefinition() },
                 cancellationToken: ct);
 

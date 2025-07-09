@@ -44,7 +44,8 @@ Your job is to receive a request from the user, determine their intent, and pass
 appropriate agent or agents for processing. You will then return the response from that agent to the user.
 If there's no agent that can handle the request, you will respond with a message indicating that you cannot
 process the request. You will also handle any errors that occur during the processing of the request and return an appropriate
-error message to the user.
+error message to the user. If the user requests anything that would require you to modify the knowledge base or database,
+you MUST always first check if there is a planner function available to describe how to sequence the operations.
 """
 
     async with DefaultAzureCredential() as credentials:

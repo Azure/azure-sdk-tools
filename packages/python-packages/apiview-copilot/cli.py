@@ -609,7 +609,13 @@ def get_apiview_comments(revision_id: str):
             comments.sort(key=lambda x: x.get("CreatedOn", 0))
         return conversations
     except Exception as e:
-        print(f"Error retrieving comments for revision {revision_id}: {e}")
+        error_message = str(e)
+        if "Authorization" in error_message or "permission" in error_message.lower() or "Forbidden" in error_message:
+            print(
+                f"Error: You do not have permission to access Cosmos DB for revision {revision_id}.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+            )
+        else:
+            print(f"Error retrieving comments for revision {revision_id}: {e}")
 
 
 SUPPORTED_LANGUAGES = [

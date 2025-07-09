@@ -19,7 +19,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
             IConfiguration configuration = serviceProvider.GetRequiredService<IConfiguration>();
             Assert.NotNull(configuration);
 
-            AppSettings appSettings = serviceProvider.GetRequiredService<AppSettings>();
+            IAppSettings appSettings = serviceProvider.GetRequiredService<IAppSettings>();
             Assert.NotNull(appSettings);
 
             IGeneratorAgentService agentService = serviceProvider.GetRequiredService<IGeneratorAgentService>();
@@ -31,7 +31,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
         {
             // Act
             IServiceProvider serviceProvider = DependencyInjection.Configure();
-            AppSettings appSettings = serviceProvider.GetRequiredService<AppSettings>();
+            IAppSettings appSettings = serviceProvider.GetRequiredService<IAppSettings>();
 
             // Assert
             Assert.NotNull(appSettings.Model);
@@ -39,7 +39,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
             Assert.NotNull(appSettings.ProjectEndpoint);
             Assert.NotNull(appSettings.AgentInstructions);
         }
-
+        
         [Fact]
         public void Configure_ShouldCreateNewInstanceForEachScope()
         {

@@ -4,55 +4,56 @@ using System.Threading.Tasks;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Interfaces;
-using Azure.Tools.GeneratorAgent.Configuration;
 
 namespace Azure.Tools.GeneratorAgent.Services
 {
     public class GeneratorAgentService : IGeneratorAgentService
     {
-        private readonly AppSettings _appSettings;
-        private readonly PersistentAgentsClient client;
+        private readonly IAppSettings _appSettings;
+        private readonly ILoggerService _logger;
+        private readonly PersistentAgentsClient _client;
+        private PersistentAgent? _agent;
 
-        private PersistentAgent? agent;
-
-        public GeneratorAgentService(AppSettings appSettings)
+        public GeneratorAgentService(IAppSettings appSettings, ILoggerService logger, PersistentAgentsClient client)
         {
             _appSettings = appSettings;
-            client = new PersistentAgentsClient(_appSettings.ProjectEndpoint, new DefaultAzureCredential());
-            agent = null;
+            _logger = logger;
+            _client = client;
+            _agent = null;
         }
         
        
         public async Task CreateAgentAsync(CancellationToken ct)
         {
-            if (agent != null)
+            if (_agent != null)
             {
-                Console.WriteLine($"Agent already exists: {agent.Name} ({agent.Id})");
+                _logger.LogInformation($"Agent already exists: {_agent.Name} ({_agent.Id})");
                 return;
             }
 
-            Console.WriteLine("Creating AZC Fixer agent...");
-            agent = await client.Administration.CreateAgentAsync(
+            _logger.LogInformation("Creating AZC Fixer agent...");
+            _agent = await _client.Administration.CreateAgentAsync(
                 model: _appSettings.Model,
                 name: _appSettings.AgentName,
                 instructions: _appSettings.AgentInstructions,
                 tools: new[] { new FileSearchToolDefinition() },
                 cancellationToken: ct);
 
-            if (agent == null || string.IsNullOrEmpty(agent.Id))
+            if (_agent == null || string.IsNullOrEmpty(_agent.Id))
             {
                 throw new InvalidOperationException("Failed to create AZC Fixer agent");
             }
 
-            Console.WriteLine($"✅ Agent created successfully: {agent.Name} ({agent.Id})");
+            _logger.LogInformation($"✅ Agent created successfully: {_agent.Name} ({_agent.Id})");
         }
 
         public async Task DeleteAgentsAsync(CancellationToken ct)
         {
             // Delete all agents
-            await foreach (var agent in client.Administration.GetAgentsAsync(cancellationToken: ct))
+            await foreach (var agent in _client.Administration.GetAgentsAsync(cancellationToken: ct))
             {
-                await client.Administration.DeleteAgentAsync(agent.Id, ct);
+                _logger.LogInformation($"Deleting agent: {agent.Name} ({agent.Id})");
+                await _client.Administration.DeleteAgentAsync(agent.Id, ct);
             }
         }
     }

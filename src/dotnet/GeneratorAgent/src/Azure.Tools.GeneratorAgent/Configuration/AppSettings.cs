@@ -1,8 +1,9 @@
+using Azure.Tools.GeneratorAgent.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace Azure.Tools.GeneratorAgent.Configuration
 {
-    public class AppSettings
+    public class AppSettings : IAppSettings
     {
         private readonly IConfiguration _configuration;
 
@@ -14,8 +15,6 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string ProjectEndpoint => _configuration.GetValue<string>("AzureSettings:ProjectEndpoint") ?? "";
         public string Model => _configuration.GetValue<string>("AzureSettings:Model") ?? "gpt-4o";
         public string AgentName => _configuration.GetValue<string>("AzureSettings:AgentName") ?? "AZC Fixer";
-        public string AgentInstructions => _configuration.GetValue<string>("AzureSettings:AgentInstructions");
-
+        public string AgentInstructions => _configuration.GetValue<string>("AzureSettings:AgentInstructions") ?? "";
     }
 }
-

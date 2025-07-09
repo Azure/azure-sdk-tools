@@ -1,8 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Azure.Tools.GeneratorAgent.Interfaces;
 using Azure.Tools.GeneratorAgent.Services;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Microsoft.Extensions.Configuration;
+using Azure.Tools.GeneratorAgent.Logger;
+using Azure.AI.Agents.Persistent;
+using Azure.Identity;
 
 namespace Azure.Tools.GeneratorAgent.Composition
 {
@@ -20,7 +23,15 @@ namespace Azure.Tools.GeneratorAgent.Composition
                 .Build();
 
             serviceCollection.AddSingleton<IConfiguration>(configuration);
-            serviceCollection.AddSingleton<AppSettings>();
+            serviceCollection.AddSingleton<IAppSettings, AppSettings>();
+            serviceCollection.AddSingleton<ILoggerService, ConsoleLoggerService>();
+
+            serviceCollection.AddSingleton<PersistentAgentsClient>(sp =>
+            {
+                var settings = sp.GetRequiredService<IAppSettings>();
+                return new PersistentAgentsClient(settings.ProjectEndpoint, new DefaultAzureCredential());
+            });
+
             serviceCollection.AddScoped<IGeneratorAgentService, GeneratorAgentService>();
             
             return serviceCollection.BuildServiceProvider();

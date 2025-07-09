@@ -87,6 +87,9 @@ extends:
             displayName: Build and Package
 
             templateContext:
+              sdl: 
+                componentgovernance:
+                  enabled: true # Enable CG only on the build job
               outputs:
                 - output: pipelineArtifact
                   displayName: Publish to packages artifact

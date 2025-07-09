@@ -1,5 +1,9 @@
 # Release
 
+## 2025-07-09 - 0.25.0
+
+- Extend dependency retention in `generate-config-files` command to include regular dependencies, not just devDependencies.
+
 ## 2025-07-03 - 0.24.0
 
 - Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.

@@ -15,6 +15,7 @@ import requests
 from typing import Optional
 
 from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.identity import DefaultAzureCredential
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
@@ -580,11 +581,11 @@ def get_apiview_comments(revision_id: str):
 
     cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
 
-    client = CosmosClient(url=cosmos_url, credential=DefaultAzureCredential())
-    database = client.get_database_client(cosmos_db)
-    container = database.get_container_client(container_name)
-
     try:
+        client = CosmosClient(url=cosmos_url, credential=DefaultAzureCredential())
+        database = client.get_database_client(cosmos_db)
+        container = database.get_container_client(container_name)
+
         result = container.query_items(
             query="SELECT * FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
             parameters=[{"name": "@revision_id", "value": revision_id}],
@@ -608,6 +609,13 @@ def get_apiview_comments(revision_id: str):
             # sort comments by created_on time
             comments.sort(key=lambda x: x.get("CreatedOn", 0))
         return conversations
+    except CosmosHttpResponseError as e:
+        if e.status_code == 403:
+            print(
+                f"Error: You do not have permission to access Cosmos DB for revision {revision_id}.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+            )
+        else:
+            print(f"Error retrieving comments for revision {revision_id}: {e}")
     except Exception as e:
         print(f"Error retrieving comments for revision {revision_id}: {e}")
 

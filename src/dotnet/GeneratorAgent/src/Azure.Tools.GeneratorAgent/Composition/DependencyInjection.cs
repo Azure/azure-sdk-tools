@@ -1,3 +1,5 @@
+using System.IO;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Azure.Tools.GeneratorAgent.Interfaces;
@@ -15,8 +17,12 @@ namespace Azure.Tools.GeneratorAgent.Composition
         {
             ServiceCollection serviceCollection = new ServiceCollection();
 
+            // Get the directory where the tool is installed
+            string toolDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) 
+                ?? throw new InvalidOperationException("Unable to determine tool installation directory");
+
             IConfiguration configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(toolDirectory)
                 .AddJsonFile("appsettings.json", optional: false)
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
                 .AddEnvironmentVariables()

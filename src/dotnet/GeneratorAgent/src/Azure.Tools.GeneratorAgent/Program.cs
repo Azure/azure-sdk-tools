@@ -11,8 +11,15 @@ namespace Azure.Tools.GeneratorAgent
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
+                cts.Cancel();
+                eventArgs.Cancel = true;
+            };
+
             IServiceProvider provider = DependencyInjection.Configure();
             ILoggerService logger = provider.GetRequiredService<ILoggerService>();
 
@@ -20,14 +27,23 @@ namespace Azure.Tools.GeneratorAgent
             {
                 await using (var agent = provider.GetRequiredService<GeneratorAgentService>())
                 {
-                    await agent.InitializeAsync(CancellationToken.None);
+                    await agent.InitializeAsync(cts.Token);
+                    
                     // TODO: Add your code analysis and fix logic here
-                    await agent.FixCodeAsync(CancellationToken.None);
+                    await agent.FixCodeAsync(cts.Token);
                 }
+
+                return 0;
+            }
+            catch (OperationCanceledException)
+            {
+                logger.LogInformation("Operation was cancelled. Shutting down gracefully...");
+                return 130;
             }
             catch (Exception ex)
             {
-                logger.LogError("Error occurred while running the Generator Agent: " + ex.Message);;
+                logger.LogError("Error occurred while running the Generator Agent: " + ex.Message);
+                return 1; 
             }
         }
     }

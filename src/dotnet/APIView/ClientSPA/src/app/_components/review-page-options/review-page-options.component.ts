@@ -21,6 +21,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { SiteNotification } from 'src/app/_models/notificationsModel';
+import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
 
 @Component({
   selector: 'app-review-page-options',
@@ -133,6 +134,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.codeLineSearchTextEmitter.emit(searchText);
     });
     this.handleRealTimeAIReviewUpdates();
+    this.handleSiteNotification();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -450,6 +452,25 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   handleReviewApprovalAction() {
     this.reviewApprovalEmitter.emit(true);
+  }
+
+  handleSiteNotification(){
+    this.signalRService.onNotificationUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (siteNotification: SiteNotificationDto) => {
+        if (siteNotification.status === SiteNotificationStatus.Error) {
+          const summary = siteNotification.title;
+          this.messageService.add({ severity: siteNotification.status, icon: 'bi bi-exclamation-triangle', summary: summary, detail: siteNotification.message, key: 'bc', life: 5000, closable: true });
+          const notification = new SiteNotification(
+                this.review?.id,
+                this.activeAPIRevision?.id,
+                siteNotification.summary,
+                siteNotification.message,
+                siteNotification.status
+              );
+          this.notificationsService.addNotification(notification);
+        }
+      }
+    });
   }
 
   handleRealTimeAIReviewUpdates() {

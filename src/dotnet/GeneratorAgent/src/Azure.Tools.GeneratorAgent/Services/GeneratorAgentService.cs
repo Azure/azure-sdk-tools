@@ -4,17 +4,21 @@ using System.Threading.Tasks;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.Services
 {
     public class GeneratorAgentService : IAsyncDisposable
     {
         private readonly IAppSettings _appSettings;
-        private readonly ILoggerService _logger;
+        private readonly ILogger<GeneratorAgentService> _logger;
         private readonly PersistentAgentsClient _client;
         private PersistentAgent? _agent;
 
-        public GeneratorAgentService(IAppSettings appSettings, ILoggerService logger, PersistentAgentsClient client)
+        public GeneratorAgentService(
+            IAppSettings appSettings,
+            ILogger<GeneratorAgentService> logger,
+            PersistentAgentsClient client)
         {
             _appSettings = appSettings;
             _logger = logger;
@@ -42,7 +46,7 @@ namespace Azure.Tools.GeneratorAgent.Services
         {
             if (_agent != null)
             {
-                _logger.LogInformation($"Agent already exists: {_agent.Name} ({_agent.Id})");
+                _logger.LogInformation("Agent already exists: {Name} ({Id})", _agent.Name, _agent.Id);
                 return;
             }
 
@@ -59,7 +63,7 @@ namespace Azure.Tools.GeneratorAgent.Services
                 throw new InvalidOperationException("Failed to create AZC Fixer agent");
             }
 
-            _logger.LogInformation($"✅ Agent created successfully: {_agent.Name} ({_agent.Id})");
+            _logger.LogInformation("✅ Agent created successfully: {Name} ({Id})", _agent.Name, _agent.Id);
         }
 
         private async Task DeleteAgentsAsync(CancellationToken ct)
@@ -67,7 +71,7 @@ namespace Azure.Tools.GeneratorAgent.Services
             // Delete all agents
             await foreach (var agent in _client.Administration.GetAgentsAsync(cancellationToken: ct))
             {
-                _logger.LogInformation($"Deleting agent: {agent.Name} ({agent.Id})");
+                _logger.LogInformation("Deleting agent: {Name} ({Id})", agent.Name, agent.Id);
                 await _client.Administration.DeleteAgentAsync(agent.Id, ct);
             }
         }
@@ -82,7 +86,7 @@ namespace Azure.Tools.GeneratorAgent.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogInformation($"Error deleting agents during disposal: {ex.Message}");
+                    _logger.LogError(ex, "Error deleting agents during disposal");
                 }
             }
         }

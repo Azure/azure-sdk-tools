@@ -2,10 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Tools.GeneratorAgent.Composition;
-using Azure.Tools.GeneratorAgent.Interfaces;
-using Azure.Tools.GeneratorAgent.Logger;
 using Azure.Tools.GeneratorAgent.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -14,6 +13,7 @@ namespace Azure.Tools.GeneratorAgent
         static async Task<int> Main(string[] args)
         {
             using var cts = new CancellationTokenSource();
+
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 cts.Cancel();
@@ -21,15 +21,13 @@ namespace Azure.Tools.GeneratorAgent
             };
 
             IServiceProvider provider = DependencyInjection.Configure();
-            ILoggerService logger = provider.GetRequiredService<ILoggerService>();
+            ILogger<Program> logger = provider.GetRequiredService<ILogger<Program>>();
 
             try
             {
                 await using (var agent = provider.GetRequiredService<GeneratorAgentService>())
                 {
                     await agent.InitializeAsync(cts.Token);
-                    
-                    // TODO: Add your code analysis and fix logic here
                     await agent.FixCodeAsync(cts.Token);
                 }
 
@@ -42,8 +40,8 @@ namespace Azure.Tools.GeneratorAgent
             }
             catch (Exception ex)
             {
-                logger.LogError("Error occurred while running the Generator Agent: " + ex.Message);
-                return 1; 
+                logger.LogError(ex, "Error occurred while running the Generator Agent");
+                return 1;
             }
         }
     }

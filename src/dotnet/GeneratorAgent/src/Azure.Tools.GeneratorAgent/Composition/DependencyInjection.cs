@@ -2,10 +2,10 @@ using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Azure.Tools.GeneratorAgent.Interfaces;
 using Azure.Tools.GeneratorAgent.Services;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Logger;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 
@@ -30,7 +30,14 @@ namespace Azure.Tools.GeneratorAgent.Composition
 
             serviceCollection.AddSingleton<IConfiguration>(configuration);
             serviceCollection.AddSingleton<IAppSettings, AppSettings>();
-            serviceCollection.AddSingleton<ILoggerService, ConsoleLoggerService>();
+            
+            // Add logging with console provider
+            serviceCollection.AddLogging(builder =>
+            {
+                builder.AddConfiguration(configuration.GetSection("Logging"))
+                       .AddConsole()
+                       .SetMinimumLevel(LogLevel.Information);
+            });
 
             serviceCollection.AddSingleton<PersistentAgentsClient>(sp =>
             {
@@ -39,7 +46,7 @@ namespace Azure.Tools.GeneratorAgent.Composition
             });
 
             serviceCollection.AddScoped<GeneratorAgentService>();
-            
+
             return serviceCollection.BuildServiceProvider();
         }
     }

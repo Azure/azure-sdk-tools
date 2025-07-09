@@ -6,4 +6,3 @@ temp
 tsp-output/
 output/
 test/examples/specification/convert/examples/*
-test/examples/sdk/

@@ -1,7 +1,8 @@
 # Release
 
-## 2025-07-08 - 0.24.1
+## 2025-07-09 - 0.25.0
 
+- Extend dependency retention in `generate-config-files` command to include regular dependencies, not just devDependencies.
 - Support empty value in `--emitter-options` option.
 
 ## 2025-07-03 - 0.24.0

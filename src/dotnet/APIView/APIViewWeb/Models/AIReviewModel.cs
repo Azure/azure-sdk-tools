@@ -59,24 +59,6 @@ namespace APIViewWeb.Models
         public int NoOfGeneratedComment { get; set; }
     }
 
-    public class ApiViewComment
-    {
-        [JsonPropertyName("lineNo")]
-        public int LineNumber { get; set; }
-        [JsonPropertyName("createdOn")]
-        public DateTimeOffset CreatedOn { get; set; }
-        [JsonPropertyName("upvotes")]
-        public int Upvotes { get; set; }
-        [JsonPropertyName("downvotes")]
-        public int Downvotes { get; set; }
-        [JsonPropertyName("createdBy")]
-        public string CreatedBy { get; set; }
-        [JsonPropertyName("commentText")]
-        public string CommentText { get; set; }
-        [JsonPropertyName("isResolved")]
-        public bool IsResolved { get; set; }
-    }
-
     public class AIReviewJobInfoModel
     {
         public string JobId { get; set; }

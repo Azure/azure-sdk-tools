@@ -39,7 +39,8 @@ namespace IssueLabelerService
         
             if (string.IsNullOrEmpty(result))
             {
-                throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} had an empty response.");
+                _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} had an empty response.");
+                return new Dictionary<string, string>();
             }
 
             var output = JsonConvert.DeserializeObject<Dictionary<string, string>>(result);
@@ -51,10 +52,15 @@ namespace IssueLabelerService
 
             if (!ValidateLabels(labels, filteredOutput))
             {
-                throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided invalid labels: {string.Join(", ", filteredOutput.Select(kv => $"{kv.Key}: {kv.Value}"))}");
+                _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided invalid labels: {string.Join(", ", filteredOutput.Select(kv => $"{kv.Key}: {kv.Value}"))}");
+                return new Dictionary<string, string>();
             }
 
-            ValidateConfidenceScores(filteredOutput, output, issue);
+            if (!ValidateConfidenceScores(filteredOutput, output, issue))
+            {
+                _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided invalid confidence scores.");
+                return new Dictionary<string, string>();
+            }
 
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber}: {string.Join(", ", filteredOutput.Select(kv => $"{kv.Key}: {kv.Value}"))}");
 
@@ -174,31 +180,42 @@ namespace IssueLabelerService
             return userPrompt;
         }
 
-        private void ValidateConfidenceScores(Dictionary<string, string> filteredOutput, Dictionary<string, string> output, IssuePayload issue)
+        private bool ValidateConfidenceScores(Dictionary<string, string> filteredOutput, Dictionary<string, string> output, IssuePayload issue)
         {
+
+            var confidenceThreshold = double.Parse(_config.ConfidenceThreshold);
+
             foreach (var label in filteredOutput)
             {
-
                 try
                 {
+                    if (!output.ContainsKey($"{label.Key}ConfidenceScore"))
+                    {
+                        _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} did not provide a confidence score for label '{label.Key}'.");
+                        return false;
+                    }
 
                     var confidence = double.Parse(output[$"{label.Key}ConfidenceScore"]);
 
                     if (label.Value == "UNKNOWN")
                     {
-                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
+                        _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an UNKNOWN label.");
+                        return false;
                     }
 
-                    if (confidence < double.Parse(_config.ConfidenceThreshold))
+                    if (confidence < confidenceThreshold)
                     {
-                        throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");
+                        _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} Confidence below threshold: {confidence} < {_config.ConfidenceThreshold}.");
+                        return false;
                     }
                 }
                 catch (FormatException)
                 {
-                    throw new InvalidDataException($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an invalid confidence score or config score threshold not setup: {output[$"{label.Key}ConfidenceScore"]}");
+                    _logger.LogWarning($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} provided an invalid confidence score or config score threshold not setup: {output[$"{label.Key}ConfidenceScore"]}");
+                    return false;
                 }
             }
-         }
+            return true;
+        }
     }
 }

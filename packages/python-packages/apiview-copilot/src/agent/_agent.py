@@ -10,7 +10,7 @@ import os
 
 from src._models import ExistingComment, Memory, Example
 
-from .plugins import SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin
+from .plugins import SearchPlugin, UtilityPlugin, ApiReviewPlugin, DatabasePlugin, PlannerPlugin
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 
@@ -60,7 +60,7 @@ error message to the user.
             agent = AzureAIAgent(
                 client=client,
                 definition=agent_definition,
-                plugins=[SearchPlugin(), UtilityPlugin(), ApiReviewPlugin(), DatabasePlugin()],
+                plugins=[SearchPlugin(), UtilityPlugin(), ApiReviewPlugin(), DatabasePlugin(), PlannerPlugin()],
                 polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
                 kernel=create_kernel(),
             )
@@ -164,7 +164,7 @@ This {language} code is being discussed for the {package_name} package.
             agent = AzureAIAgent(
                 client=client,
                 definition=agent_definition,
-                plugins=[SearchPlugin(), DatabasePlugin()],
+                plugins=[SearchPlugin(), DatabasePlugin(), PlannerPlugin()],
                 polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
                 kernel=create_kernel(),
             )

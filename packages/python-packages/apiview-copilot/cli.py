@@ -3,22 +3,23 @@ from collections import OrderedDict
 import colorama
 from colorama import Fore, Style
 import json
+from knack import CLI, ArgumentsContext, CLICommandsLoader
+from knack.commands import CommandGroup
+from knack.help_files import helps
 import os
 from pprint import pprint
 import requests
 import sys
 import pathlib
 import requests
+from typing import Optional
+
+from azure.cosmos import CosmosClient
+from azure.identity import DefaultAzureCredential
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
-from src._models import ExistingComment
 from src._search_manager import SearchManager
-
-
-from knack import CLI, ArgumentsContext, CLICommandsLoader
-from knack.commands import CommandGroup
-from knack.help_files import helps
-from typing import Optional
+from src._database_manager import get_database_manager
 
 colorama.init(autoreset=True)
 
@@ -54,6 +55,13 @@ helps[
 """
 
 helps[
+    "apiview"
+] = """
+    type: group
+    short-summary: Commands for interacting with APIView.
+"""
+
+helps[
     "eval"
 ] = """
     type: group
@@ -72,6 +80,13 @@ helps[
 ] = """
     type: group
     short-summary: Commands for searching the knowledge base.
+"""
+
+helps[
+    "db"
+] = """
+    type: group
+    short-summary: Commands for managing the database.
 """
 
 
@@ -395,8 +410,10 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
-def ask_agent(thread_id: Optional[str] = None, remote: bool = False):
-    """Start an interactive session with the agent using async/await and a single event loop."""
+def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
+    """
+    Start or continue an interactive chat session with the agent.
+    """
 
     async def async_input(prompt: str) -> str:
         # Run input() in a thread to avoid blocking the event loop
@@ -530,6 +547,71 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         asyncio.run(run_local_mention())
 
 
+CONTAINERS = [
+    "guidelines",
+    "memories",
+    "examples",
+    "review-jobs",
+]
+
+
+def db_get(container_name: str, id: str):
+    """Retrieve an item from the database."""
+    db = get_database_manager()
+    container = db.get_container_client(container_name)
+    try:
+        item = container.get(id)
+        print(json.dumps(item, indent=2))
+    except Exception as e:
+        print(f"Error retrieving item: {e}")
+
+
+def get_apiview_comments(revision_id: str):
+    """
+    Retrieves comments for a specific APIView revision and returns them grouped by element ID and sorted by CreatedOn time.
+    Omits resolved and deleted comments, and removes unnecessary fields.
+    """
+    cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+    cosmos_db = "APIViewV2"
+    container_name = "Comments"
+
+    if not cosmos_acc:
+        raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+
+    cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
+
+    client = CosmosClient(url=cosmos_url, credential=DefaultAzureCredential())
+    database = client.get_database_client(cosmos_db)
+    container = database.get_container_client(container_name)
+
+    try:
+        result = container.query_items(
+            query="SELECT * FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
+            parameters=[{"name": "@revision_id", "value": revision_id}],
+        )
+        conversations = {}
+        comments = list(result)
+        if comments:
+            for comment in comments:
+                keys_to_remove = ["_rid", "_self", "_etag", "_attachments", "_ts", "TaggedUsers", "ChangeHistory"]
+                for key, value in comment.items():
+                    if not value:
+                        keys_to_remove.append(key)
+                for key in keys_to_remove:
+                    comment.pop(key, None)
+                element_id = comment.get("ElementId")
+                if element_id in conversations:
+                    conversations[element_id].append(comment)
+                else:
+                    conversations[element_id] = [comment]
+        for element_id, comments in conversations.items():
+            # sort comments by created_on time
+            comments.sort(key=lambda x: x.get("CreatedOn", 0))
+        return conversations
+    except Exception as e:
+        print(f"Error retrieving comments for revision {revision_id}: {e}")
+
+
 SUPPORTED_LANGUAGES = [
     "android",
     "clang",
@@ -546,13 +628,15 @@ SUPPORTED_LANGUAGES = [
 
 class CliCommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
+        with CommandGroup(self, "apiview", "__main__#{}") as g:
+            g.command("get-comments", "get_apiview_comments")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("local", "local_review")
             g.command("remote", "generate_review_from_app")
             g.command("summarize", "review_summarize")
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
-            g.command("ask", "ask_agent")
+            g.command("chat", "handle_agent_chat")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
@@ -563,6 +647,8 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "review job", "__main__#{}") as g:
             g.command("start", "review_job_start")
             g.command("get", "review_job_get")
+        with CommandGroup(self, "db", "__main__#{}") as g:
+            g.command("get", "db_get")
         return OrderedDict(self.command_table)
 
     def load_arguments(self, command):
@@ -579,7 +665,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Use the remote API review service instead of local processing.",
             )
-
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
@@ -752,7 +837,27 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
             )
-
+        with ArgumentsContext(self, "db get") as ac:
+            ac.argument(
+                "container_name",
+                type=str,
+                help="The name of the Cosmos DB container",
+                choices=CONTAINERS,
+                options_list=["--container-name", "-c"],
+            )
+            ac.argument(
+                "id",
+                type=str,
+                help="The id of the item to retrieve.",
+                options_list=["--id", "-i"],
+            )
+        with ArgumentsContext(self, "apiview") as ac:
+            ac.argument(
+                "revision_id",
+                type=str,
+                help="The revision ID of the APIView to retrieve comments for.",
+                options_list=["--revision-id", "-r"],
+            )
         super(CliCommandsLoader, self).load_arguments(command)
 
 

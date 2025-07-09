@@ -129,7 +129,7 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
         comments=job_request.comments,
     )
     job_id = reviewer.job_id
-    db_manager.insert_job(job_id, {"status": ApiReviewJobStatus.InProgress, "finished": None})
+    db_manager.review_jobs.create(job_id, data={"status": ApiReviewJobStatus.InProgress, "finished": None})
 
     async def run_review_job():
         try:
@@ -142,10 +142,14 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
             comments = result_json.get("comments", [])
 
             now = time.time()
-            db_manager.upsert_job(job_id, {"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now})
+            db_manager.review_jobs.upsert(
+                job_id, data={"status": ApiReviewJobStatus.Success, "comments": comments, "finished": now}
+            )
         except Exception as e:
             now = time.time()
-            db_manager.upsert_job(job_id, {"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now})
+            db_manager.review_jobs.upsert(
+                job_id, data={"status": ApiReviewJobStatus.Error, "details": str(e), "finished": now}
+            )
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
@@ -154,7 +158,7 @@ async def submit_api_review_job(job_request: ApiReviewJobRequest):
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
 async def get_api_review_job_status(job_id: str):
-    job = db_manager.get_job(job_id)
+    job = db_manager.review_jobs.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
@@ -164,7 +168,7 @@ def cleanup_job_store():
     """Cleanup completed jobs from the Cosmos DB periodically."""
     while True:
         time.sleep(60)  # Run every 60 seconds
-        db_manager.cleanup_old_jobs(JOB_RETENTION_SECONDS)
+        db_manager.review_jobs.cleanup_old_jobs(JOB_RETENTION_SECONDS)
 
 
 class AgentChatRequest(BaseModel):

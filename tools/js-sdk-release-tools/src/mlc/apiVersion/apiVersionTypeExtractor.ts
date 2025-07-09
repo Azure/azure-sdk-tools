@@ -4,10 +4,17 @@ import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFi
 import { join } from "path";
 import { exists } from "fs-extra";
 import { logger } from "../../utils/logger.js";
+import { getNpmPackageName } from "../../common/utils.js";
+import { isBetaVersion } from "../../utils/version.js";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
-    packageRoot: string
+    packageRoot: string,
+    apiVersion?: string
 ): Promise<ApiVersionType> => {
+    if (apiVersion) {
+        return isBetaVersion(apiVersion) ? ApiVersionType.Preview : ApiVersionType.Stable;
+    }
+
     // NOTE: when there's customized code, emitter must put generated code in root/generated folder
     const clientPatterns = ["src/api/*Context.ts", "src/rest/*Client.ts"];
     for (const pattern of clientPatterns) {
@@ -16,7 +23,8 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     }
     const isModelOnlyPackage = await isModelOnly(packageRoot);
     if (isModelOnlyPackage) {
-        return await getApiVersionTypeFromNpm(packageRoot);
+        const packageName = getNpmPackageName(packageRoot);
+        return await getApiVersionTypeFromNpm(packageName);
     }
     
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');

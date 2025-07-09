@@ -1,3 +1,4 @@
+import argparse
 from uuid import uuid4
 import requests
 from azure.identity import DefaultAzureCredential
@@ -15,6 +16,10 @@ def get_current_user_object_id():
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Grant or revoke Cosmos DB permissions for the current user.")
+    parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
+    args = parser.parse_args()
+
     user_principal_id = get_current_user_object_id()
     print("Current user object ID:", user_principal_id)
 
@@ -57,6 +62,29 @@ def main():
         )
         print(f"✓ ARM role assigned: {assignment.id}")
 
+    def revoke_arm_role():
+        role_name = "DocumentDB Account Contributor"
+        scope = cosmos_resource_id
+        # Get the role definition ID for the role name
+        role_defs = list(auth_client.role_definitions.list(scope, filter=f"roleName eq '{role_name}'"))
+        if not role_defs:
+            print(f"Role definition '{role_name}' not found.")
+            return
+        role_def_id = role_defs[0].id
+        # Find existing assignments
+        existing = list(
+            auth_client.role_assignments.list_for_scope(scope, filter=f"principalId eq '{user_principal_id}'")
+        )
+        found = False
+        for ra in existing:
+            if ra.role_definition_id == role_def_id:
+                print(f"Revoking ARM role assignment: {ra.id}")
+                auth_client.role_assignments.delete_by_id(ra.id)
+                print("✓ ARM role revoked")
+                found = True
+        if not found:
+            print("ℹ️ No ARM role assignment found to revoke.")
+
     def assign_sql_role():
         sql_role_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DocumentDB/databaseAccounts/{cosmos_account}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
         assignments = list(cosmos_client.sql_resources.list_sql_role_assignments(resource_group, cosmos_account))
@@ -64,16 +92,43 @@ def main():
             print("ℹ️ SQL role already assigned – skipping")
             return
         print("Assigning SQL role (Built-in Data Reader)...")
-        cosmos_client.sql_resources.create_update_sql_role_assignment(
-            resource_group,
-            cosmos_account,
-            str(uuid4()),
-            {"role_definition_id": sql_role_id, "principal_id": user_principal_id, "scope": "/"},
+        poller = cosmos_client.sql_resources.begin_create_update_sql_role_assignment(
+            resource_group_name=resource_group,
+            account_name=cosmos_account,
+            role_assignment_id=str(uuid4()),
+            create_update_sql_role_assignment_parameters={
+                "role_definition_id": sql_role_id,
+                "principal_id": user_principal_id,
+                "scope": cosmos_resource_id,
+            },
         )
+        poller.result()
         print("✓ SQL role assigned")
 
-    assign_arm_role()
-    assign_sql_role()
+    def revoke_sql_role():
+        sql_role_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DocumentDB/databaseAccounts/{cosmos_account}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+        assignments = list(cosmos_client.sql_resources.list_sql_role_assignments(resource_group, cosmos_account))
+        found = False
+        for a in assignments:
+            if a.principal_id == user_principal_id and a.role_definition_id == sql_role_id:
+                print(f"Revoking SQL role assignment: {a.id}")
+                # Extract just the GUID from the full resource ID
+                assignment_guid = a.id.split("/")[-1]
+                poller = cosmos_client.sql_resources.begin_delete_sql_role_assignment(
+                    role_assignment_id=assignment_guid, resource_group_name=resource_group, account_name=cosmos_account
+                )
+                poller.result()
+                print("✓ SQL role revoked")
+                found = True
+        if not found:
+            print("ℹ️ No SQL role assignment found to revoke.")
+
+    if args.revoke:
+        revoke_arm_role()
+        revoke_sql_role()
+    else:
+        assign_arm_role()
+        assign_sql_role()
 
 
 if __name__ == "__main__":

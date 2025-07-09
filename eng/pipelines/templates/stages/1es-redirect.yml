@@ -51,7 +51,7 @@ extends:
           enabled: false
           justificationForDisabling: CodeQL times our pipelines out by running for 2+ hours before being force canceled.
       componentgovernance:
-        enable: false
+        enabled: false
         justificationForDisabling: Manually enabling only on the main build job instead of running it on every job. 
       psscriptanalyzer:
         compiled: true

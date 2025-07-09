@@ -1,6 +1,6 @@
 {
   "language": "python",
-  "packageName": "azure.ai.planetarycomputer",
+  "package_name": "azure.widgets",
   "code": "def list_widgets(): AsyncIterator[Widget]",
   "comments": [
         {
@@ -8,7 +8,7 @@
             "createdBy": "azure-sdk",
             "createdOn": "2025-07-03T09:15:00-07:00",
             "commentText": "Async operations should use the async keyword.\n\nSuggestion: `async def list_widgets(): AsyncIterator[Widget]`\n\nSee: https://azure.github.io/azure-sdk/python_design.html#python-client-async-keywords",
-            "downvotes": 1
+            "downvotes": ["annatisch"]
         },
         {
             "lineNo": 50,

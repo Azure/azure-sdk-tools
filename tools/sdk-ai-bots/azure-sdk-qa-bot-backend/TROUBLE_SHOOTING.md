@@ -14,20 +14,17 @@ The Azure SDK Q&A Bot operates in three environments, each with dedicated resour
 ### Development Environment
 - **Backend Service**: [azuresdkbot-dev](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/slots/azuresdkbot-dev/appServices)
 - **Frontend Bot**: Azure SDK Q&A Bot dev-internal
-- **Resource Group**: typespec_helper
-- **Subscription**: faa080af-c1d8-40ad-9cce-e1a450ca5b57
+- **Channel**: [Azure SDK QA Bot - Demo](https://teams.microsoft.com/l/channel/19%3A3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1%40thread.tacv2/Azure%20SDK%20QA%20Bot%20-%20Demo?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
 ### Preview Environment
 - **Backend Service**: [azuresdkbot-preview](https://ms.portal.azure.com/#resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/slots/preview)
 - **Frontend Bot**: Azure SDK Q&A Bot Dev
-- **Resource Group**: typespec_helper
-- **Subscription**: faa080af-c1d8-40ad-9cce-e1a450ca5b57
+- **Channel**: [Azure SDK QA bot for TypeSpec Testing](https://teams.microsoft.com/l/channel/19%3ArMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1%40thread.tacv2/Azure%20SDK%20QA%20bot%20for%20TypeSpec%20Testing?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
 ### Production Environment
 - **Backend Service**: [azuresdkbot-prod](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/appServices)
 - **Frontend Bot**: Azure SDK Q&A Bot
-- **Resource Group**: typespec_helper
-- **Subscription**: faa080af-c1d8-40ad-9cce-e1a450ca5b57
+- **Channel**: [Azure SDK QA bot for TypeSpec Testing](https://teams.microsoft.com/l/channel/19%3ArMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1%40thread.tacv2/Azure%20SDK%20QA%20bot%20for%20TypeSpec%20Testing?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) | [TypeSpec Disussion](https://teams.microsoft.com/l/channel/19%3A906c1efbbec54dc8949ac736633e6bdf%40thread.skype/TypeSpec%20Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
 ## Log Analysis Workflow
 
@@ -37,7 +34,7 @@ The Azure SDK Q&A Bot operates in three environments, each with dedicated resour
 2. Go to **Log stream** or **Monitoring** > **Logs**
    - Log stream is the realtime logs ![Log stream](images/logstream.png)
    - Logs is the offline logs ![Logs](images/logs.png)
-3. In **Logs**, click 'Select a Table' and select 'AppServiceConsoleLogs'
+3. In **Logs**, click 'Select a Table' and select 'AppServiceConsoleLogs' ![AppServiceConsoleLogs](images/AppServiceConsoleLogs.png)
 
 ### Step 2: Specify Request Timeline
 
@@ -54,6 +51,7 @@ Search using the user's original query to locate the request.
 Look for log entries containing:
 - `Request: {json_request}`
 - The user's original question or query
+![search initial request](images/search_initial_request.png)
 
 #### 2.3 Extract Request ID
 From the initial request log, extract the Request ID:
@@ -61,8 +59,9 @@ From the initial request log, extract the Request ID:
 - Copy the complete UUID for the next step
 
 #### 2.4 Trace Complete Request Flow
-Search using the Request ID to get all related logs
-
+Search using the Request ID to get all related logs, order by time ascending
+![alt text](images/search_in_table.png)
+![alt text](images/search_in_table_result.png)
 ### Step 3: Analyze Key Log Components
 
 #### 3.1 Query Processing Analysis

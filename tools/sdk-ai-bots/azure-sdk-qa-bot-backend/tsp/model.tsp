@@ -4,12 +4,12 @@ import "@typespec/versioning";
 using TypeSpec.Http;
 using TypeSpec.Versioning;
 
-namespace AzureSDKQABot;
+namespace AzureSDK.QAAssistant;
 
 @doc("Available tenant IDs for the QA bot service")
 union TenantID {
   @doc("Default TypeSpec QA bot")
-  AzureSDKQaBot: "azure_sdk_qa_bot",
+  TypespecQABot: "typespec_qa_bot",
   
   @doc("TypeSpec extension bot")
   TypeSpecExtension: "typespec_extension",

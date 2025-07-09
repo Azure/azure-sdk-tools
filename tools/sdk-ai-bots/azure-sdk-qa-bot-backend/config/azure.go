@@ -22,6 +22,7 @@ const (
 	AOAI_CHAT_REASONING_MODEL      = "o3-mini"
 	AOAI_CHAT_COMPLETIONS_MODEL    = "gpt-4.1"
 	AOAI_CHAT_MAX_TOKENS           = 10000
+	AOAI_CHAT_CONTEXT_MAX_TOKENS   = 100000
 	AOAI_CHAT_COMPLETIONS_ENDPOINT = "https://UxAutoTestEast.openai.azure.com"
 	AI_SEARCH_BASE_URL             = "https://typspehelper4search.search.windows.net"
 	AI_SEARCH_INDEX                = "typespec-knowledge"

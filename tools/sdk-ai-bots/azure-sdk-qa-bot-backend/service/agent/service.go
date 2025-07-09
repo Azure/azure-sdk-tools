@@ -465,6 +465,16 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 }
 
 func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) (string, error) {
+	// make sure the tokens of chunks limited in 100000 tokens
+	tokenCnt := 0
+	for i, chunk := range chunks {
+		tokenCnt += len(chunk)
+		if tokenCnt > config.AOAI_CHAT_CONTEXT_MAX_TOKENS {
+			log.Printf("Chunks exceed max token limit, truncating to %d tokens", config.AOAI_CHAT_CONTEXT_MAX_TOKENS)
+			chunks = chunks[:i+1] // truncate the chunks to the current index
+			break
+		}
+	}
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, promptTemplate)
 	if err != nil {

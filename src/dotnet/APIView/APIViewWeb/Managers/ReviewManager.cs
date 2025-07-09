@@ -341,25 +341,10 @@ namespace APIViewWeb.Managers
         {
             var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeApiRevisionId);
             var reviewComments = await _commentManager.GetCommentsAsync(reviewId: reviewId, commentType: CommentType.APIRevision);
-
             var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+            List<ApiViewAgentComment> existingCommentInfo = AgentHelpers.BuildCommentsForAgent(comments: reviewComments, codeFile: activeCodeFile);
             var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
             var activeApiOutline = activeCodeFile.CodeFile.GetApiOutlineText();
-            List<CommentModelForCopilot> existingCommentInfo = new List<CommentModelForCopilot>();
-
-            foreach (var comment in reviewComments)
-            {
-                if (activeCodeLines.Any(line => line.lineId == comment.ElementId))
-                {
-                    var associatedLine = activeCodeLines.FindIndex(line => line.lineId == comment.ElementId);
-                    existingCommentInfo.Add(new CommentModelForCopilot
-                    {
-                        LineNumber = associatedLine + 1,
-                        CommentText = comment.CommentText,
-                        Author = comment.CreatedBy,
-                    });
-                }
-            }
 
             var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
             var startUrl = $"{copilotEndpoint}/api-review/start";

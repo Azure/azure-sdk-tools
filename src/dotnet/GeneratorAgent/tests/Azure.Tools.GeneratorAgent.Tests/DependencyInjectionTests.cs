@@ -1,6 +1,8 @@
 using Azure.Tools.GeneratorAgent.Composition;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Services;
 using Azure.Tools.GeneratorAgent.Interfaces;
+using Azure.Tools.GeneratorAgent.Logger;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -22,7 +24,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
             IAppSettings appSettings = serviceProvider.GetRequiredService<IAppSettings>();
             Assert.NotNull(appSettings);
 
-            IGeneratorAgentService agentService = serviceProvider.GetRequiredService<IGeneratorAgentService>();
+            var agentService = serviceProvider.GetRequiredService<GeneratorAgentService>();
             Assert.NotNull(agentService);
         }
 
@@ -47,17 +49,17 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
             IServiceProvider serviceProvider = DependencyInjection.Configure();
 
             // Act
-            IGeneratorAgentService instance1;
-            IGeneratorAgentService instance2;
+            GeneratorAgentService instance1;
+            GeneratorAgentService instance2;
 
             using (IServiceScope scope1 = serviceProvider.CreateScope())
             {
-                instance1 = scope1.ServiceProvider.GetRequiredService<IGeneratorAgentService>();
+                instance1 = scope1.ServiceProvider.GetRequiredService<GeneratorAgentService>();
             }
 
             using (IServiceScope scope2 = serviceProvider.CreateScope())
             {
-                instance2 = scope2.ServiceProvider.GetRequiredService<IGeneratorAgentService>();
+                instance2 = scope2.ServiceProvider.GetRequiredService<GeneratorAgentService>();
             }
 
             // Assert

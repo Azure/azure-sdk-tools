@@ -32,7 +32,7 @@ namespace Azure.Tools.GeneratorAgent.Composition
                 return new PersistentAgentsClient(settings.ProjectEndpoint, new DefaultAzureCredential());
             });
 
-            serviceCollection.AddScoped<IGeneratorAgentService, GeneratorAgentService>();
+            serviceCollection.AddScoped<GeneratorAgentService>();
             
             return serviceCollection.BuildServiceProvider();
         }

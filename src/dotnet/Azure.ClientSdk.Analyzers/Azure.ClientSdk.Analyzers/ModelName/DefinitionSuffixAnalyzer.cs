@@ -41,8 +41,10 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
             var name = typeSymbol.Name;
+            var suggestedName = NamingSuggestionHelper.GetNamespacedSuggestion(name, typeSymbol, "Template", "Schema");
+            var additionalMessage = $"Suggest to rename it to {suggestedName} or any other appropriate name.";
             return Diagnostic.Create(Descriptors.AZC0031, context.Symbol.Locations[0],
-                new Dictionary<string, string> { { "SuggestedName", name.Substring(0, name.Length - suffix.Length) } }.ToImmutableDictionary(), name, suffix);
+                new Dictionary<string, string> { { "SuggestedName", suggestedName } }.ToImmutableDictionary(), name, suffix, additionalMessage);
         }
     }
 }

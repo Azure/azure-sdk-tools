@@ -1,0 +1,9 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Copilot-inspired icon with modern design -->
+  <rect width="40" height="40" rx="20" fill="#6F42C1"/>
+  <path d="M20 8C23.866 8 27 11.134 27 15V17C27 18.105 27.895 19 29 19C30.105 19 31 18.105 31 17V15C31 8.925 26.075 4 20 4C13.925 4 9 8.925 9 15V17C9 18.105 9.895 19 11 19C12.105 19 13 18.105 13 17V15C13 11.134 16.134 8 20 8Z" fill="white"/>
+  <circle cx="16" cy="18" r="2" fill="white"/>
+  <circle cx="24" cy="18" r="2" fill="white"/>
+  <path d="M14 24C14 25.105 14.895 26 16 26H24C25.105 26 26 25.105 26 24C26 22.895 25.105 22 24 22H16C14.895 22 14 22.895 14 24Z" fill="white"/>
+  <path d="M18 30C18 31.105 18.895 32 20 32C21.105 32 22 31.105 22 30V28H18V30Z" fill="white"/>
+</svg>

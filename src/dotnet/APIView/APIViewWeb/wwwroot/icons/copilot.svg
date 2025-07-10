@@ -1,32 +1,36 @@
 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Colorful ribbon elements in cross pattern -->
-  <!-- Blue ribbon (top-left to bottom-right) -->
-  <path d="M6 8 L12 6 L18 10 L24 8 L30 12 L24 16 L18 14 L12 18 L6 16 Z" 
-        fill="#3B82F6" stroke="#1F2937" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Flowing ribbon bands around robot -->
+  <!-- Blue ribbon (left side) -->
+  <path d="M2 12 Q8 8 12 16 Q8 24 12 28 Q16 24 20 28 Q16 32 12 36 Q8 32 2 28 Z" 
+        fill="#3B82F6" stroke="#1F2937" stroke-width="1.5"/>
   
-  <!-- Green ribbon (bottom-left to top-right) -->
-  <path d="M6 32 L12 34 L18 30 L24 32 L30 28 L24 24 L18 26 L12 22 L6 24 Z" 
-        fill="#10B981" stroke="#1F2937" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Green ribbon (bottom) -->
+  <path d="M12 32 Q16 28 24 32 Q32 28 36 32 Q32 36 24 32 Q16 36 12 32 Z" 
+        fill="#10B981" stroke="#1F2937" stroke-width="1.5"/>
   
-  <!-- Yellow ribbon (vertical) -->
-  <path d="M18 4 L22 4 L24 10 L22 16 L18 16 L16 10 Z" 
-        fill="#F59E0B" stroke="#1F2937" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Yellow/Orange ribbon (right side) -->
+  <path d="M28 12 Q32 8 36 16 Q32 20 36 24 Q32 32 28 28 Q24 24 20 28 Q24 20 28 12 Z" 
+        fill="#F59E0B" stroke="#1F2937" stroke-width="1.5"/>
   
-  <!-- Orange/Red ribbon (horizontal) -->
-  <path d="M4 18 L4 22 L10 24 L16 22 L16 18 L10 16 Z" 
-        fill="#EF4444" stroke="#1F2937" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Red ribbon (top) -->
+  <path d="M12 8 Q16 4 24 8 Q32 4 36 8 Q32 12 24 8 Q16 12 12 8 Z" 
+        fill="#EF4444" stroke="#1F2937" stroke-width="1.5"/>
   
-  <!-- Robot head (main element) -->
-  <circle cx="20" cy="20" r="10" fill="#E5E7EB" stroke="#1F2937" stroke-width="3"/>
+  <!-- Robot head (main element) - larger and more prominent -->
+  <circle cx="20" cy="20" r="12" fill="#F3F4F6" stroke="#1F2937" stroke-width="2.5"/>
   
-  <!-- Robot eyes -->
-  <circle cx="16" cy="17" r="2.5" fill="#FFFFFF" stroke="#1F2937" stroke-width="2"/>
-  <circle cx="24" cy="17" r="2.5" fill="#FFFFFF" stroke="#1F2937" stroke-width="2"/>
+  <!-- Robot eyes - larger and more visible -->
+  <circle cx="16" cy="17" r="3" fill="#FFFFFF" stroke="#1F2937" stroke-width="2"/>
+  <circle cx="24" cy="17" r="3" fill="#FFFFFF" stroke="#1F2937" stroke-width="2"/>
   
-  <!-- Small gray square between eyes (sensor) -->
-  <rect x="19" y="15" width="2" height="2" fill="#9CA3AF"/>
+  <!-- Eye pupils -->
+  <circle cx="16" cy="17" r="1.5" fill="#1F2937"/>
+  <circle cx="24" cy="17" r="1.5" fill="#1F2937"/>
   
-  <!-- Robot mouth -->
-  <rect x="17" y="22" width="6" height="4" rx="1" fill="#1F2937" stroke="#1F2937" stroke-width="1"/>
-  <rect x="18" y="23" width="4" height="2" fill="#FFFFFF"/>
+  <!-- Small sensor between eyes -->
+  <rect x="19" y="15" width="2" height="2" rx="0.5" fill="#6B7280"/>
+  
+  <!-- Robot mouth - more defined -->
+  <rect x="16" y="23" width="8" height="3" rx="1.5" fill="#1F2937"/>
+  <rect x="17" y="24" width="6" height="1" fill="#F3F4F6"/>
 </svg>

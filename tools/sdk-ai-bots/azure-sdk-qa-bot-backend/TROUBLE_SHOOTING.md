@@ -51,6 +51,14 @@ Search using the user's original query to locate the request.
 Look for log entries containing:
 - `Request: {json_request}`
 - The user's original question or query
+
+1. KQL:
+```kql
+AppServiceConsoleLogs 
+| where ResultDescription contains "your question"
+```
+
+2. UI:
 ![search initial request](images/search_initial_request.png)
 
 #### 2.3 Extract Request ID
@@ -60,8 +68,17 @@ From the initial request log, extract the Request ID:
 
 #### 2.4 Trace Complete Request Flow
 Search using the Request ID to get all related logs, order by time ascending
+
+1. KQL:
+```kql
+AppServiceConsoleLogs 
+| where ResultDescription contains "RequestID: xxx"
+```
+
+2. UI:
 ![alt text](images/search_in_table.png)
 ![alt text](images/search_in_table_result.png)
+
 ### Step 3: Analyze Key Log Components
 
 #### 3.1 Query Processing Analysis

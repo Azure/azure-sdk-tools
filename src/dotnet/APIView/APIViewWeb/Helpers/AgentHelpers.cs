@@ -16,7 +16,6 @@ public class AgentHelpers
         RenderedCodeFile codeFile)
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
-
         Dictionary<string, int> elementIdToLineNumber = activeCodeLines
             .Select((line, index) => new { line.lineId, lineNumber = index })
             .Where(x => !string.IsNullOrEmpty(x.lineId))

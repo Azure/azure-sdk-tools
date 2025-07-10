@@ -98,32 +98,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             if (path.Contains("/") && path.EndsWith(".md"))
             {
                 var fileName = System.IO.Path.GetFileName(path);
-                var content = CreateMockRepositoryContent(fileName, path, GetMockContentForFile(fileName));
+                var content = CreateMockRepositoryContent(fileName, path, "test");
                 return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent> { content }.AsReadOnly());
             }
 
             // Default: Return mock directory listing for .github/prompts or similar paths
             var contents = new List<RepositoryContent>
             {
-                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", GetMockContentForFile("README.md")), 
-                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", GetMockContentForFile("prompt1.md")), 
-                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", GetMockContentForFile("prompt2.md"))  
+                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"), 
+                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"), 
+                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")  
             };
 
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
-        }
-
-        private string GetMockContentForFile(string fileName)
-        {
-            return fileName switch
-            {
-                "README.md" => "VGhpcyBpcyBhIFJFQURNRSBmaWxlIGZvciBwcm9tcHRz", // "This is a README file for prompts"
-                "prompt1.md" => "VGhpcyBpcyBwcm9tcHQgMSBjb250ZW50", // "This is prompt 1 content"
-                "prompt2.md" => "VGhpcyBpcyBwcm9tcHQgMiBjb250ZW50", // "This is prompt 2 content"
-                "single-file.md" => "VGhpcyBpcyBhIHNpbmdsZSBmaWxl", // "This is a single file"
-                "custom-file.md" => "VGhpcyBpcyBhIGN1c3RvbSBmaWxl", // "This is a custom file"
-                _ => "VGhpcyBpcyBhIGRlZmF1bHQgZmlsZQ==" // "This is a default file"
-            };
         }
 
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)

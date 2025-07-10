@@ -18,15 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
         public Task<List<string>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner)
         {
-            var checks = new List<string>
-            {
-                $"Name: build, Status: completed, Output: All tests passed, Conclusion: success, Link: https://github.com/{repoOwner}/{repoName}/actions/runs/123456",
-                $"Name: test, Status: completed, Output: Tests completed successfully, Conclusion: success, Link: https://github.com/{repoOwner}/{repoName}/actions/runs/123457",
-                "Total checks found: 2",
-                "Failed checks: 0",
-                "Pending required checks to merge the PR: 0"
-            };
-            return Task.FromResult(checks);
+            throw new NotImplementedException();
         }
 
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber)
@@ -43,20 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
         public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
-            var result = new List<string>
-            {
-                $"No pull request found for branch {headBranch} in repository {repoOwner}/{repoName}. Proceeding to create a new pull request.",
-                $"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...",
-                "Changes are mergeable. Proceeding to create pull request for changes in feature-branch.",
-                $"Pull request created successfully{(draft ? " as draft PR" : "")}. Pull request URL: https://github.com/{repoOwner}/{repoName}/pull/123"
-            };
-            
-            if (draft)
-            {
-                result.Add("Once you have successfully generated the SDK transition the PR to review ready.");
-            }
-
-            return Task.FromResult(result);
+            throw new NotImplementedException();
         }
 
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber)
@@ -71,8 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
-            // Return null to simulate no existing PR for the branch
-            return Task.FromResult<PullRequest?>(null);
+            throw new NotImplementedException();
         }
 
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)

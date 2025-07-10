@@ -22,6 +22,16 @@ while getopts "t:m:" flag; do
   esac
 done
 
+# Login to Azure
+az login
+
+echo "Logging into Azure Container Registry..."
+az acr login --name $ACR_NAME
+
+# Get the login server name for the ACR
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "loginServer" --output tsv)
+echo "ACR Login Server: $ACR_LOGIN_SERVER"
+
 APP_SLOT_NAME=${APP_SLOT_DEV_NAME}
 if [[ "$DEPLOY_MODE" == "preview" ]]; then
     APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
@@ -72,16 +82,6 @@ if ! command -v az &> /dev/null; then
     echo "Azure CLI is not installed. Please install it first."
     exit 1
 fi
-
-# Login to Azure
-az login
-
-echo "Logging into Azure Container Registry..."
-az acr login --name $ACR_NAME
-
-# Get the login server name for the ACR
-ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "loginServer" --output tsv)
-echo "ACR Login Server: $ACR_LOGIN_SERVER"
 
 # Clean up Docker resources to free up space
 echo "Cleaning up Docker resources to free up disk space..."

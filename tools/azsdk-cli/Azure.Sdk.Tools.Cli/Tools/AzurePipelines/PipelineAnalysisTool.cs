@@ -25,8 +25,10 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 public class PipelineAnalysisTool : MCPTool
 {
     private readonly IAzureService azureService;
+    private readonly IDevOpsService devopsService;
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory;
     private readonly ILogAnalysisHelper logAnalysisHelper;
+    private ITestHelper testHelper;
     private readonly IOutputService output;
     private readonly ILogger<PipelineAnalysisTool> logger;
 
@@ -58,7 +60,7 @@ public class PipelineAnalysisTool : MCPTool
     }
 
     // Options
-    private readonly Option<int> buildIdOpt = new(["--build-id", "-b"], "Pipeline/Build ID") { IsRequired = true };
+    private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
     private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log");
     private readonly Option<string> projectOpt = new(["--project", "-p"], "Pipeline project name");
     private readonly Option<bool> analyzeWithAgentOpt = new(["--agent", "-a"], () => false, "Analyze logs with RAG via upstream ai agent");
@@ -67,15 +69,19 @@ public class PipelineAnalysisTool : MCPTool
 
     public PipelineAnalysisTool(
         IAzureService azureService,
+        IDevOpsService devopsService,
         IAzureAgentServiceFactory azureAgentServiceFactory,
         ILogAnalysisHelper logAnalysisHelper,
+        ITestHelper testHelper,
         IOutputService output,
         ILogger<PipelineAnalysisTool> logger
     ) : base()
     {
         this.azureService = azureService;
+        this.devopsService = devopsService;
         this.azureAgentServiceFactory = azureAgentServiceFactory;
         this.logAnalysisHelper = logAnalysisHelper;
+        this.testHelper = testHelper;
         this.output = output;
         this.logger = logger;
 
@@ -88,7 +94,7 @@ public class PipelineAnalysisTool : MCPTool
     public override Command GetCommand()
     {
         var analyzePipelineCommand = new Command("analyze", "Analyze a pipeline run") {
-            buildIdOpt, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt
+            buildIdArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt
         };
         analyzePipelineCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
@@ -97,8 +103,7 @@ public class PipelineAnalysisTool : MCPTool
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
-        var cmd = ctx.ParseResult.CommandResult.Command.Name;
-        var buildId = ctx.ParseResult.GetValueForOption(buildIdOpt);
+        var buildId = ctx.ParseResult.GetValueForArgument(buildIdArg);
         var project = ctx.ParseResult.GetValueForOption(projectOpt);
 
         var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
@@ -430,19 +435,33 @@ public class PipelineAnalysisTool : MCPTool
                 var pipeline = await GetPipelineRun(project, buildId);
                 project = pipeline.Project.Name;
             }
+
             var failureLogIds = await GetPipelineFailureLogIds(project, buildId, ct);
-            // var failedTests = await GetPipelineFailedTestResults(project, buildId, ct);
-            var failedTests = new List<FailedTestRunResponse>();
-
-            var taskAnalysis = new List<LogAnalysisResponse>();
-
             var analysis = await AnalyzePipelineFailureLogs(project, buildId, failureLogIds, analyzeWithAgent, ct);
-            taskAnalysis.Add(analysis);
+
+            List<FailedTestRunResponse> failedTests = [];
+            var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId);
+
+            foreach (var testFiles in failedTestArtifacts)
+            {
+                foreach (var file in testFiles.Value)
+                {
+                    var failed = await testHelper.GetFailedTestCases(file);
+                    failedTests.AddRange(failed);
+                }
+            }
+
+            var failedTestsByUri = failedTests
+                .GroupBy(ft => ft.Uri)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(ft => ft.TestCaseTitle).ToList()
+                );
 
             return new AnalyzePipelineResponse()
             {
-                FailedTasks = taskAnalysis,
-                FailedTests = failedTests
+                FailedTasks = [analysis],
+                FailedTests = failedTestsByUri
             };
         }
         catch (Exception ex)

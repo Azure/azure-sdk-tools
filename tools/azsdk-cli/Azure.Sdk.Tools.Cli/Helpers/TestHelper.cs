@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface ITestHelper
 {
-    Task<List<string>> GetFailedTestCases(string trxFilePath, string filterTitle = "");
+    Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath, string filterTitle = "");
     Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle);
     Task<List<FailedTestRunResponse>> GetFailedTestRunDataFromTrx(string trxFilePath);
 }
@@ -17,13 +17,18 @@ public class TestHelper(IOutputService output, ILogger<TestHelper> logger) : ITe
     private readonly IOutputService output = output;
     private readonly ILogger<TestHelper> logger = logger;
 
-    public async Task<List<string>> GetFailedTestCases(string trxFilePath, string filterTitle = "")
+    public async Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath, string filterTitle = "")
     {
         var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath);
+
         return failedTestRuns
-            .Where(run => string.IsNullOrEmpty(filterTitle) || run.TestCaseTitle.Contains(filterTitle, StringComparison.OrdinalIgnoreCase))
-            .Select(run => run.TestCaseTitle)
-            .ToList();
+                .Where(run => string.IsNullOrEmpty(filterTitle) || run.TestCaseTitle.Contains(filterTitle, StringComparison.OrdinalIgnoreCase))
+                .Select(run => new FailedTestRunResponse
+                {
+                    TestCaseTitle = run.TestCaseTitle,
+                    Uri = run.Uri
+                })
+                .ToList();
     }
 
     public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
@@ -84,7 +89,7 @@ public class TestHelper(IOutputService output, ILogger<TestHelper> logger) : ITe
                 ErrorMessage = errorMessage,
                 StackTrace = stackTrace,
                 Outcome = outcome,
-                Uri = $"file://{trxFilePath}"
+                Uri = trxFilePath
             });
         }
 

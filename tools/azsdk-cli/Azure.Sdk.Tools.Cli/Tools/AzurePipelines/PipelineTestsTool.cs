@@ -3,7 +3,6 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Text.Json;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
@@ -28,6 +27,8 @@ public class PipelineTestsTool : MCPTool
     private ILogger<PipelineTestsTool> logger;
 
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
+
+    private const string PUBLIC_PROJECT = "public";
 
     public PipelineTestsTool(
         IAzureService azureService,
@@ -88,17 +89,7 @@ public class PipelineTestsTool : MCPTool
             var build = await GetPipelineRun(buildId);
             project = build.Project.Name;
             logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", buildId, project);
-
-            Dictionary<string, List<string>> result;
-            if (string.Equals(project, "public", StringComparison.OrdinalIgnoreCase))
-            {
-                result = await devopsService.GetLlmArtifactsUnauthenticated(project, buildId);
-            }
-            else
-            {
-                result = await devopsService.GetLlmArtifactsAuthenticated(project, buildId);
-            }
-
+            var result = await devopsService.GetPipelineLlmArtifacts(project, buildId);
             return new ObjectCommandResponse { Result = result };
         }
         catch (Exception ex)

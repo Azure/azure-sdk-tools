@@ -99,8 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main");
-        public Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId);
-        public Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId);
+        public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -110,6 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public static readonly string INTERNAL_PROJECT = "internal";
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
 
+        private const string PUBLIC_PROJECT = "public";
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
@@ -923,7 +923,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return sdkReleaseInfo;
         }
 
-        public async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId)
+        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId)
         {
             var buildClient = connection.GetBuildClient();
             var result = new Dictionary<string, List<string>>();
@@ -957,7 +957,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return result;
         }
 
-        public async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId)
+        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId)
         {
             var result = new Dictionary<string, List<string>>();
             using var httpClient = new HttpClient();
@@ -1042,6 +1042,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             return result;
+        }
+
+        public async Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId)
+        {
+            if (project == PUBLIC_PROJECT)
+            {
+                return await GetLlmArtifactsUnauthenticated(project, buildId);
+            }
+            return await GetLlmArtifactsAuthenticated(project, buildId);
         }
     }
 }

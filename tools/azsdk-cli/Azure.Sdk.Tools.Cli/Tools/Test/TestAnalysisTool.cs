@@ -59,7 +59,7 @@ public class TestAnalysisTool(ITestHelper testHelper, IOutputService output, ILo
     }
 
     [McpServerTool, Description("Get titles of failed test cases from a TRX file")]
-    public async Task<List<string>> GetFailedTestCases(string trxFilePath)
+    public async Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath)
     {
         try
         {

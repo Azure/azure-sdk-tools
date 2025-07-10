@@ -67,7 +67,7 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task DeleteAgentsAsync(CancellationToken ct)
         {
-            await foreach (var agent in _adminClient.GetAgentsAsync(cancellationToken: ct))
+            await foreach (PersistentAgent agent in _adminClient.GetAgentsAsync(cancellationToken: ct))
             {
                 _logger.LogInformation("Deleting agent: {Name} ({Id})", agent.Name, agent.Id);
                 await _adminClient.DeleteAgentAsync(agent.Id, ct);

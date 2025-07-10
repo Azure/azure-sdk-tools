@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.AI.Agents.Persistent;
+using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Composition;
-using Microsoft.Extensions.DependencyInjection;
+using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 
 namespace Azure.Tools.GeneratorAgent
 {
-    internal class Program
+    public class Program
     {
         static async Task<int> Main(string[] args)
         {
-            using var cts = new CancellationTokenSource();
+            using CancellationTokenSource cts = new CancellationTokenSource();
 
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
@@ -19,12 +24,18 @@ namespace Azure.Tools.GeneratorAgent
                 eventArgs.Cancel = true;
             };
 
-            IServiceProvider provider = DependencyInjection.Configure();
-            ILogger<Program> logger = provider.GetRequiredService<ILogger<Program>>();
+            (IConfiguration configuration, ILoggerFactory loggerFactory) = DependencyInjection.Configure();
+            ILogger<ErrorFixerAgent> agentLogger = loggerFactory.CreateLogger<ErrorFixerAgent>();
+            ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
+            IAppSettings appSettings = new AppSettings(configuration);
+
+            PersistentAgentsAdministrationClient adminClient = new PersistentAgentsAdministrationClient(
+                new Uri(appSettings.ProjectEndpoint),
+                new DefaultAzureCredential());
 
             try
             {
-                await using (var agent = provider.GetRequiredService<ErrorFixerAgent>())
+                await using (ErrorFixerAgent agent = new ErrorFixerAgent(appSettings, agentLogger, adminClient))
                 {
                     await agent.InitializeAsync(cts.Token);
                     await agent.FixCodeAsync(cts.Token);

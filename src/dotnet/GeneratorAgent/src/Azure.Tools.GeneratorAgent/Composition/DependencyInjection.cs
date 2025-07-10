@@ -1,53 +1,55 @@
+using System;
 using System.IO;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
+using Azure.Identity;
+using Azure.AI.Agents.Persistent;
+using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Azure.Tools.GeneratorAgent.Interfaces;
-using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.AI.Agents.Persistent;
-using Azure.Identity;
 
 namespace Azure.Tools.GeneratorAgent.Composition
 {
     public static class DependencyInjection
     {
-        public static IServiceProvider Configure()
+        public static (IConfiguration Configuration, ILoggerFactory LoggerFactory) Configure()
         {
             ServiceCollection serviceCollection = new ServiceCollection();
 
-            // Get the directory where the tool is installed
             string toolDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) 
                 ?? throw new InvalidOperationException("Unable to determine tool installation directory");
 
             IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(toolDirectory)
                 .AddJsonFile("appsettings.json", optional: false)
-                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
-                .AddEnvironmentVariables()
+                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable(EnvironmentVariables.EnvironmentName) ?? "Development"}.json", optional: true)
+                .AddEnvironmentVariables(EnvironmentVariables.Prefix)
                 .Build();
 
-            serviceCollection.AddSingleton<IConfiguration>(configuration);
-            serviceCollection.AddSingleton<IAppSettings, AppSettings>();
-            
-            // Add logging with console provider
-            serviceCollection.AddLogging(builder =>
+
+            ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddConfiguration(configuration.GetSection("Logging"))
-                       .AddConsole()
-                       .SetMinimumLevel(LogLevel.Information);
+                builder
+                    .AddConfiguration(configuration.GetSection("Logging"))
+                    .AddConsole()
+                    .SetMinimumLevel(LogLevel.Information);
             });
 
-            serviceCollection.AddSingleton<PersistentAgentsAdministrationClient>(sp =>
-            {
-                var settings = sp.GetRequiredService<IAppSettings>();
-                var client = new PersistentAgentsClient(settings.ProjectEndpoint, new DefaultAzureCredential());
-                return client.Administration;
-            });
+            // Register configuration
+            serviceCollection.AddSingleton(configuration);
+            serviceCollection.AddSingleton<IAppSettings>(new AppSettings(configuration));
 
-            serviceCollection.AddScoped<ErrorFixerAgent>();
+            // Register logging
+            serviceCollection.AddSingleton(loggerFactory);
+            serviceCollection.AddLogging();
 
-            return serviceCollection.BuildServiceProvider();
+            return (configuration, loggerFactory);
+        }
+
+        private static ILogger<T> CreateLogger<T>(ILoggerFactory loggerFactory)
+        {
+            return loggerFactory.CreateLogger<T>();
         }
     }
 }

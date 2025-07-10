@@ -5,31 +5,39 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.AI.Agents.Persistent;
-using Azure.Core;                                  
-using Microsoft.Extensions.Logging.Abstractions;   
-using Azure.Tools.GeneratorAgent;
+using Azure.Core;
+using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Tools.GeneratorAgent.Interfaces;
 using Moq;
-using Xunit;
-using System.ClientModel.Primitives;             
+using NUnit.Framework;
+using System.ClientModel.Primitives;
 
 namespace Azure.Tools.GeneratorAgent.Tests
 {
+    [TestFixture]
+    [Category("Unit")]
     public class ErrorFixerAgentTests
     {
-        private readonly Mock<PersistentAgentsAdministrationClient> _adminMock;
-        private readonly IAppSettings _settings;
-        private readonly ErrorFixerAgent _agent;
-        private readonly CancellationToken _ct = CancellationToken.None;
+        private const string TestModel = "test-model";
+        private const string TestAgentName = "unit-test-agent";
+        private const string TestAgentInstructions = "just test";
+        private const string TestAgentId = "agent-1";
 
-        public ErrorFixerAgentTests()
+        private Mock<PersistentAgentsAdministrationClient> _adminMock;
+        private IAppSettings _settings;
+        private ErrorFixerAgent _agent;
+        private CancellationToken _ct;
+
+        [SetUp]
+        public void Setup()
         {
             _adminMock = new Mock<PersistentAgentsAdministrationClient>(MockBehavior.Strict);
+            _ct = CancellationToken.None;
 
             var settingsMock = new Mock<IAppSettings>();
-            settingsMock.SetupGet(s => s.Model).Returns("test-model");
-            settingsMock.SetupGet(s => s.AgentName).Returns("unit-test-agent");
-            settingsMock.SetupGet(s => s.AgentInstructions).Returns("just test");
+            settingsMock.SetupGet(s => s.Model).Returns(TestModel);
+            settingsMock.SetupGet(s => s.AgentName).Returns(TestAgentName);
+            settingsMock.SetupGet(s => s.AgentInstructions).Returns(TestAgentInstructions);
             _settings = settingsMock.Object;
 
             _agent = new ErrorFixerAgent(
@@ -43,10 +51,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var json = $@"{{
                 ""id"": ""{id}"",
                 ""createdAt"": ""{DateTimeOffset.UtcNow:O}"",
-                ""name"": ""unit-test-agent"",
-                ""description"": ""just test"",
-                ""model"": ""test-model"",
-                ""instructions"": ""just test"",
+                ""name"": ""{TestAgentName}"",
+                ""description"": ""{TestAgentInstructions}"",
+                ""model"": ""{TestModel}"",
+                ""instructions"": ""{TestAgentInstructions}"",
                 ""tools"": [],
                 ""toolResources"": {{}},
                 ""metadata"": {{}}
@@ -63,8 +71,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             return Response.FromValue(agent, Mock.Of<Response>());
         }
 
-        [Fact]
-        public async Task InitializeAsync_CreatesAgentOnlyOnce()
+        private void SetupSuccessfulAgentCreation()
         {
             _adminMock
                 .Setup(a => a.CreateAgentAsync(
@@ -78,13 +85,38 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<float?>(),
                     It.IsAny<BinaryData>(),
                     It.IsAny<IReadOnlyDictionary<string,string>>(),
-                    _ct
-                ))
-                .ReturnsAsync(CreateAgentResponse("agent-1"));
+                    _ct))
+                .ReturnsAsync(CreateAgentResponse(TestAgentId));
+        }
+
+        private void SetupSuccessfulAgentRetrieval()
+        {
+            var page = Page<PersistentAgent>.FromValues(
+                new[] { CreateAgentResponse(TestAgentId).Value },
+                null,
+                Mock.Of<Response>());
+            var all = AsyncPageable<PersistentAgent>.FromPages(new[] { page });
+            
+            _adminMock
+                .Setup(a => a.GetAgentsAsync(
+                    It.IsAny<int?>(),
+                    It.IsAny<ListSortOrder?>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    _ct))
+                .Returns(all);
+        }
+
+        [Test]
+        [Category("Initialize")]
+        public async Task InitializeAsync_CreatesAgentOnlyOnce()
+        {
+            // Arrange
+            SetupSuccessfulAgentCreation();
 
             // Act
             await _agent.InitializeAsync(_ct);
-            await _agent.InitializeAsync(_ct);  // no second create
+            await _agent.InitializeAsync(_ct);  // Should not create again
 
             // Assert
             _adminMock.Verify(a => a.CreateAgentAsync(
@@ -98,12 +130,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 It.IsAny<float?>(),
                 It.IsAny<BinaryData>(),
                 It.IsAny<IReadOnlyDictionary<string,string>>(),
-                _ct), Times.Once);
+                _ct), Times.Once, "Agent should be created exactly once");
         }
 
-        [Fact]
+        [Test]
+        [Category("Initialize")]
         public async Task InitializeAsync_ThrowsIfCreateFails()
         {
+            // Arrange
             _adminMock
                 .Setup(a => a.CreateAgentAsync(
                     It.IsAny<string>(),
@@ -119,93 +153,65 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException("create failed"));
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _agent.InitializeAsync(_ct));
-
-            Assert.Equal("create failed", ex.Message);
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _agent.InitializeAsync(_ct),
+                "Should throw when agent creation fails");
+            Assert.That(ex.Message, Is.EqualTo("create failed"));
         }
 
-        [Fact]
-        public async Task FixCodeAsync_ThrowsIfNotInitialized()
+        [Test]
+        [Category("Operation")]
+        public void FixCodeAsync_ThrowsIfNotInitialized()
         {
-            await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _agent.FixCodeAsync(_ct));
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _agent.FixCodeAsync(_ct),
+                "Should throw when agent is not initialized");
         }
 
-        [Fact]
+        [Test]
+        [Category("Cleanup")]
         public async Task DisposeAsync_DeletesOnlyCreatedAgent()
         {
-            _adminMock
-                .Setup(a => a.CreateAgentAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<IEnumerable<ToolDefinition>>(),
-                    It.IsAny<ToolResources>(), It.IsAny<float?>(),
-                    It.IsAny<float?>(), It.IsAny<BinaryData>(),
-                    It.IsAny<IReadOnlyDictionary<string,string>>(),
-                    _ct))
-                .ReturnsAsync(CreateAgentResponse("agent-1"));
-
-            var page = Page<PersistentAgent>.FromValues(
-                new[] { CreateAgentResponse("agent-1").Value },
-                null,
-                Mock.Of<Response>());
-            var all = AsyncPageable<PersistentAgent>.FromPages(new[] { page });
-            _adminMock
-                .Setup(a => a.GetAgentsAsync(
-                    It.IsAny<int?>(),
-                    It.IsAny<ListSortOrder?>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    _ct))
-                .Returns(all);
+            // Arrange
+            SetupSuccessfulAgentCreation();
+            SetupSuccessfulAgentRetrieval();
 
             var fakeRaw = Mock.Of<Response>();
             var deleteResponse = Response.FromValue(true, fakeRaw);
             _adminMock
-                .Setup(a => a.DeleteAgentAsync("agent-1", It.IsAny<CancellationToken>()))
+                .Setup(a => a.DeleteAgentAsync(TestAgentId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(deleteResponse);
 
+            // Act
             await _agent.InitializeAsync(_ct);
             await _agent.DisposeAsync();
 
-            _adminMock.Verify(a => a.DeleteAgentAsync("agent-1", It.IsAny<CancellationToken>()), Times.Once);
+            // Assert
+            _adminMock.Verify(
+                a => a.DeleteAgentAsync(TestAgentId, It.IsAny<CancellationToken>()), 
+                Times.Once,
+                "Agent should be deleted exactly once");
         }
 
-        [Fact]
+        [Test]
+        [Category("Cleanup")]
         public async Task DisposeAsync_DoesNotThrowOnDeleteError()
         {
-            _adminMock
-                .Setup(a => a.CreateAgentAsync(
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<IEnumerable<ToolDefinition>>(),
-                    It.IsAny<ToolResources>(), It.IsAny<float?>(),
-                    It.IsAny<float?>(), It.IsAny<BinaryData>(),
-                    It.IsAny<IReadOnlyDictionary<string,string>>(),
-                    _ct))
-                .ReturnsAsync(CreateAgentResponse("agent-1"));
-
-            var page = Page<PersistentAgent>.FromValues(
-                new[] { CreateAgentResponse("agent-1").Value },
-                null,
-                Mock.Of<Response>());
-            var all = AsyncPageable<PersistentAgent>.FromPages(new[] { page });
-            _adminMock
-                .Setup(a => a.GetAgentsAsync(
-                    It.IsAny<int?>(),
-                    It.IsAny<ListSortOrder?>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    _ct))
-                .Returns(all);
+            // Arrange
+            SetupSuccessfulAgentCreation();
+            SetupSuccessfulAgentRetrieval();
 
             _adminMock
-                .Setup(a => a.DeleteAgentAsync("agent-1", It.IsAny<CancellationToken>()))
+                .Setup(a => a.DeleteAgentAsync(TestAgentId, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Exception("delete error"));
 
+            // Act
             await _agent.InitializeAsync(_ct);
-            await _agent.DisposeAsync();
+            
+            // Assert
+            Assert.DoesNotThrowAsync(async () => await _agent.DisposeAsync(),
+                "Should not throw when delete operation fails");
         }
     }
 }

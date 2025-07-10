@@ -3,8 +3,6 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Text;
-using System.Text.Json;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;

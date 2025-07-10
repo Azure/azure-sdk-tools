@@ -186,67 +186,55 @@ public class PipelineAnalysisTool : MCPTool
         }
     }
 
-    public async Task<List<TimelineRecord>?> GetPipelineTaskFailures(string project, int buildId, CancellationToken ct = default)
+    public async Task<List<int>> GetPipelineFailureLogIds(string project, int buildId, CancellationToken ct = default)
     {
-        try
+        logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
+
+        if (project != PUBLIC_PROJECT)
         {
-            List<TimelineRecord> failedTasks;
-
-            logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
-
-            // Try an unauthenticated request which supports all client scenarios (AI agents, external contributors, etc.)
-            // The devops sdk doesn't seem to support unauthenticated requests
-            if (project == PUBLIC_PROJECT)
-            {
-                var timelineUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
-                logger.LogDebug("Getting timeline records from {url}", timelineUrl);
-                var response = await httpClient.GetAsync(timelineUrl, ct);
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync(ct);
-                using var doc = JsonDocument.Parse(json);
-                var debug = doc.RootElement.GetProperty("records")
-                    .EnumerateArray()
-                    .Where(r =>
-                        r.GetProperty("result").GetString() == "failed" &&
-                        r.GetProperty("type").GetString() == "Task" &&
-                        !IsTestStep(r.GetProperty("name").GetString())).ToList();
-
-                var debug_txt = debug[0].GetRawText();
-                debug_txt = Regex.Unescape(debug_txt);
-
-                var debug_tr = JsonSerializer.Deserialize<TimelineRecord>(debug_txt);
-
-                failedTasks = doc.RootElement.GetProperty("records")
-                    .EnumerateArray()
-                    .Where(r =>
-                        r.GetProperty("result").GetString() == "failed" &&
-                        r.GetProperty("type").GetString() == "Task" &&
-                        !IsTestStep(r.GetProperty("name").GetString()))
-                    .Select(r => JsonSerializer.Deserialize<TimelineRecord>(r.GetRawText()))
-                    .Where(r => r != null)
-                    .Cast<TimelineRecord>()
-                    .ToList();
-            }
-            else
-            {
-                var timeline = await buildClient.GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
-                failedTasks = timeline.Records.Where(
-                                        r => r.Result == TaskResult.Failed
-                                        && r.RecordType == "Task"
-                                        && !IsTestStep(r.Name))
-                                    .ToList();
-            }
-
-            logger.LogDebug("Found {count} failed tasks", failedTasks.Count);
-            return failedTasks;
+            var timeline = await buildClient.GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
+            var _failedTasks = timeline.Records.Where(
+                                    r => r.Result == TaskResult.Failed
+                                    && r.RecordType == "Task"
+                                    && !IsTestStep(r.Name))
+                                .ToList();
+            logger.LogDebug("Found {count} failed tasks", _failedTasks.Count);
+            return _failedTasks.Select(t => t.Log?.Id ?? 0).Where(id => id != 0).Distinct().ToList();
         }
-        catch (Exception ex)
+
+        var timelineUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
+        logger.LogDebug("Getting timeline records from {url}", timelineUrl);
+        var response = await httpClient.GetAsync(timelineUrl, ct);
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync(ct);
+        if (string.IsNullOrEmpty(json))
         {
-            logger.LogError("Failed to get pipeline task failures {buildId}: {exception}", buildId, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
-            SetFailure();
-            return null;
+            throw new Exception($"No timeline records found for build {buildId} in project {project}");
         }
+
+        using var doc = JsonDocument.Parse(json);
+        var failedTasks = doc.RootElement.GetProperty("records")
+            .EnumerateArray()
+            .Where(r =>
+                r.GetProperty("result").GetString() == "failed" &&
+                r.GetProperty("type").GetString() == "Task" &&
+                !IsTestStep(r.GetProperty("name").GetString())).ToList();
+
+        List<int> logIds = [];
+        foreach (var task in failedTasks)
+        {
+            if (task.TryGetProperty("log", out var logProp) && logProp.TryGetProperty("id", out var idProp))
+            {
+                var id = idProp.GetInt32();
+                if (id != 0)
+                {
+                    logIds.Add(id);
+                }
+            }
+        }
+
+        logger.LogDebug("Found {count} failed tasks", failedTasks.Count);
+        return logIds;
     }
 
     public async Task<List<FailedTestRunResponse>> GetPipelineFailedTestResults(string project, int buildId, CancellationToken ct = default)
@@ -303,7 +291,8 @@ public class PipelineAnalysisTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError("Failed to get pipeline failed test results {buildId}: {exception}", buildId, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError("Stack Trace:");
+            logger.LogError("{stackTrace}", ex.StackTrace);
             SetFailure();
             return
             [
@@ -313,6 +302,16 @@ public class PipelineAnalysisTool : MCPTool
                 }
             ];
         }
+    }
+
+    public async Task<string> GetBuildLogLinesUnauthenticated(string project, int buildId, int logId, CancellationToken ct = default)
+    {
+        var logUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
+        logger.LogDebug("Fetching log file from {url}", logUrl);
+        var response = await httpClient.GetAsync(logUrl, ct);
+        response.EnsureSuccessStatusCode();
+        var logContent = await response.Content.ReadAsStringAsync(ct);
+        return logContent;
     }
 
     public async Task<LogAnalysisResponse> AnalyzePipelineFailureLogs(string? project, int buildId, List<int> logIds, bool analyzeWithAgent, CancellationToken ct)
@@ -325,10 +324,19 @@ public class PipelineAnalysisTool : MCPTool
 
             foreach (var logId in logIds)
             {
+                string logText;
                 logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
 
-                var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId, cancellationToken: ct);
-                var logText = string.Join("\n", logContent);
+                if (project == PUBLIC_PROJECT)
+                {
+                    logText = await GetBuildLogLinesUnauthenticated(project, buildId, logId, ct);
+                }
+                else
+                {
+                    var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId, cancellationToken: ct);
+                    logText = string.Join("\n", logContent);
+                }
+
                 var tempPath = Path.GetTempFileName() + ".txt";
                 logger.LogDebug("Writing log id {logId} to temporary file {tempPath}", logId, tempPath);
                 await File.WriteAllTextAsync(tempPath, logText, ct);
@@ -383,7 +391,8 @@ public class PipelineAnalysisTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError("Failed to analyze pipeline {buildId}: {error}", buildId, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError("Stack Trace:");
+            logger.LogError("{stackTrace}", ex.StackTrace);
             SetFailure();
             return new LogAnalysisResponse()
             {
@@ -402,7 +411,8 @@ public class PipelineAnalysisTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError("Failed to analyze pipeline {buildId}: {exception}", buildId, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError("Stack Trace:");
+            logger.LogError("{stackTrace}", ex.StackTrace);
             SetFailure();
             return new AnalyzePipelineResponse()
             {
@@ -420,19 +430,13 @@ public class PipelineAnalysisTool : MCPTool
                 var pipeline = await GetPipelineRun(project, buildId);
                 project = pipeline.Project.Name;
             }
-            var failedTasks = await GetPipelineTaskFailures(project, buildId, ct);
+            var failureLogIds = await GetPipelineFailureLogIds(project, buildId, ct);
             // var failedTests = await GetPipelineFailedTestResults(project, buildId, ct);
             var failedTests = new List<FailedTestRunResponse>();
 
             var taskAnalysis = new List<LogAnalysisResponse>();
 
-            List<int> logIds = failedTasks?
-                .Where(t => t.Log != null)
-                .Select(t => t.Log.Id)
-                .Distinct()
-                .ToList() ?? [];
-
-            var analysis = await AnalyzePipelineFailureLogs(project, buildId, logIds, analyzeWithAgent, ct);
+            var analysis = await AnalyzePipelineFailureLogs(project, buildId, failureLogIds, analyzeWithAgent, ct);
             taskAnalysis.Add(analysis);
 
             return new AnalyzePipelineResponse()
@@ -444,7 +448,8 @@ public class PipelineAnalysisTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError("Failed to analyze pipeline {buildId}: {exception}", buildId, ex.Message);
-            logger.LogError("Stack Trace: {stackTrace}", ex.StackTrace);
+            logger.LogError("Stack Trace:");
+            logger.LogError("{stackTrace}", ex.StackTrace);
             SetFailure();
             return new AnalyzePipelineResponse()
             {

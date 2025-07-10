@@ -182,10 +182,14 @@ namespace APIViewWeb.Managers
                     {
                         ReviewId = comment.ReviewId,
                         RevisionId = comment.APIRevisionId,
-                        Title = "Agent Interaction Restricted",
                         Summary = "You are not authorized to interact with the agent.",
                         Message =
                             "Interaction with the agent is restricted. Only designated language architects are authorized to use this feature",
+                        ToastNotification = new ToastNotificationDto
+                        {
+                            Title = "Agent Interaction Restricted",
+                            Message = "You are not authorized to interact with the agent",
+                        },
                         Status = SiteNotificationStatus.Error
                     });
 
@@ -237,10 +241,14 @@ namespace APIViewWeb.Managers
                         {
                             ReviewId = comment.ReviewId,
                             RevisionId = comment.APIRevisionId,
-                            Title = "Agent Service Unavailable",
                             Summary = "The agent service could not be reached.",
                             Message =
                                 "We were unable to connect to the agent service at this time. Please try again later.",
+                            ToastNotification = new ToastNotificationDto
+                            {
+                                Title = "Agent Service Unavailable",
+                                Message = "We were unable to connect to the agent service at this time. Please try again later.",
+                            },
                             Status = SiteNotificationStatus.Error
                         });
 

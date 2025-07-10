@@ -29,7 +29,6 @@ namespace APIViewWeb.LeanModels
         public bool IsResolved { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();
         public List<string> Downvotes { get; set; } = new List<string>();
-
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public CommentType CommentType { get; set; }
         public bool ResolutionLocked { get; set; } = false;

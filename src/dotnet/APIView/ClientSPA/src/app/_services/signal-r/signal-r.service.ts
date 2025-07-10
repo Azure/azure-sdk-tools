@@ -5,7 +5,6 @@ import { Observable, Subject } from 'rxjs';
 import { CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
-import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
 import { SiteNotificationDto } from 'src/app/_dtos/siteNotificationDto';
 
 @Injectable({
@@ -14,7 +13,6 @@ import { SiteNotificationDto } from 'src/app/_dtos/siteNotificationDto';
 export class SignalRService {
   private connection : signalR.HubConnection;
   private commentUpdates: Subject<CommentUpdatesDto> = new Subject<CommentUpdatesDto>();
-  private aiReviewUpdates: Subject<AIReviewJobCompletedDto> = new Subject<AIReviewJobCompletedDto>();
   private reviewUpdates: Subject<Review> = new Subject<Review>();
   private apiRevisionUpdates: Subject<APIRevision> = new Subject<APIRevision>();
   private siteNotifications: Subject<SiteNotificationDto> = new Subject<SiteNotificationDto>();
@@ -45,7 +43,6 @@ export class SignalRService {
     })
     this.handleConnectionId();
     this.handleCommentUpdates();
-    this.handleAIReviewUpdates();
     this.handleReviewUpdates();
     this.handleAPIRevisionUpdates();
     this.handleSiteNotification();
@@ -67,13 +64,7 @@ export class SignalRService {
       this.siteNotifications.next(siteNotification);
     });
   }
-
-  handleAIReviewUpdates() {
-    this.connection.on("ReceiveAIReviewUpdates", (aiReviewUpdates: AIReviewJobCompletedDto) => {
-      this.aiReviewUpdates.next(aiReviewUpdates);
-    });
-  }
-
+  
   handleReviewUpdates() {
     this.connection.on("ReviewUpdated", (updatedReview: Review) => {
       this.reviewUpdates.next(updatedReview);
@@ -88,10 +79,6 @@ export class SignalRService {
 
   onCommentUpdates() : Observable<CommentUpdatesDto> {
     return this.commentUpdates.asObservable();
-  }
-
-  onAIReviewUpdates() : Observable<AIReviewJobCompletedDto> {
-    return this.aiReviewUpdates.asObservable();
   }
 
   onNotificationUpdates() : Observable<SiteNotificationDto> {

@@ -1,44 +1,91 @@
-using System;
-using APIViewWeb.Models;
+using System.Text.Json.Serialization;
 
-namespace APIViewWeb.DTOs;
-
-public class SiteNotificationDto
+namespace APIViewWeb.DTOs
 {
-    public string ReviewId { get; set; }
-    public string RevisionId { get; set; }
-    public string Title { get; set; }
-    public string Summary { get; set; }
-    public string Message { get; set; }
-
-    private string _status;
-    public string Status
+    public class SiteNotificationDto
     {
-        get => _status;
-        set => _status = NormalizeStatus(value);
-    }
+        [JsonPropertyName("reviewId")]
+        public string ReviewId { get; set; }
 
-    private static string NormalizeStatus(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Status cannot be null or empty.");
+        [JsonPropertyName("revisionId")]
+        public string RevisionId { get; set; }
 
-        value = value.Trim().ToLowerInvariant();
-        return value switch
+        [JsonPropertyName("summary")]
+        public string Summary { get; set; }
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+
+        [JsonPropertyName("type")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public SiteNotificationType Type { get; set; }
+
+        [JsonPropertyName("toastNotification")]
+        public ToastNotificationDto ToastNotification { get; set; }
+
+
+        private string _status;
+
+        [JsonPropertyName("status")]
+        public string Status
         {
-            SiteNotificationStatus.Info => SiteNotificationStatus.Info,
-            SiteNotificationStatus.Success => SiteNotificationStatus.Success,
-            SiteNotificationStatus.Error => SiteNotificationStatus.Error,
-            SiteNotificationStatus.Warning => SiteNotificationStatus.Warning,
-            _ => throw new ArgumentException($"Invalid status value: {value}")
-        };
-    }
-}
+            get => _status;
+            set => _status = NormalizeStatus(value);
+        }
 
-public static class SiteNotificationStatus
-{
-    public const string Info = "info";
-    public const string Success = "success";
-    public const string Error = "error";
-    public const string Warning = "warning";
+        private static string NormalizeStatus(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string normalized = value.Trim().ToLowerInvariant();
+
+            // Return known values as constants, allow unknown values to pass through
+            return normalized switch
+            {
+                "success" => SiteNotificationStatus.Success,
+                "info" => SiteNotificationStatus.Info,
+                "error" => SiteNotificationStatus.Error,
+                "warning" => SiteNotificationStatus.Warning,
+                _ => value.Trim() // Keep original casing for unknown values
+            };
+        }
+    }
+
+    public class ToastNotificationDto
+    {
+        [JsonPropertyName("title")]
+        public string Title { get; set; }
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonPropertyName("action")]
+        public SiteNotificationAction Action { get; set; }
+    }
+
+    public static class SiteNotificationStatus
+    {
+        public const string Success = "success";
+        public const string Info = "info";
+        public const string Warning = "warning";
+        public const string Error = "error";
+    }
+
+    public enum SiteNotificationType
+    {
+        [JsonPropertyName("CopilotReviewCompleted")]
+        CopilotReviewCompleted
+    }
+
+    public enum SiteNotificationAction
+    {
+
+        [JsonPropertyName("None")]
+        None,
+
+        [JsonPropertyName("RefreshPage")]
+        RefreshPage
+    }
 }

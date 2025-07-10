@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -18,10 +18,9 @@ import { MessageService } from 'primeng/api';
 import { ToastMessageData } from 'src/app/_models/toastMessageModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
-import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { SiteNotification } from 'src/app/_models/notificationsModel';
-import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
+import { SiteNotificationDto, SiteNotificationStatus, SiteNotificationType, SiteNotificationAction } from 'src/app/_dtos/siteNotificationDto';
 
 @Component({
   selector: 'app-review-page-options',
@@ -29,52 +28,52 @@ import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteN
   styleUrls: ['./review-page-options.component.scss']
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
-  @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
+  @Input() loadingStatus: 'loading' | 'completed' | 'failed' = 'loading';
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
   @Input() contentHasDiff: boolean | undefined = false;
   @Input() diffStyleInput: string | undefined;
-  @Input() review : Review | undefined = undefined;
-  @Input() activeAPIRevision : APIRevision | undefined = undefined;
-  @Input() diffAPIRevision : APIRevision | undefined = undefined;
+  @Input() review: Review | undefined = undefined;
+  @Input() activeAPIRevision: APIRevision | undefined = undefined;
+  @Input() diffAPIRevision: APIRevision | undefined = undefined;
   @Input() preferredApprovers: string[] = [];
-  @Input() hasFatalDiagnostics : boolean = false;
-  @Input() hasActiveConversation : boolean = false;
-  @Input() hasHiddenAPIs : boolean = false;
-  @Input() hasHiddenAPIThatIsDiff : boolean = false;
-  @Input() codeLineSearchInfo : CodeLineSearchInfo | undefined = undefined;
-  
-  @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
-  @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showHiddenAPIEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() disableCodeLinesLazyLoadingEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>(); 
-  @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
-  @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  @Input() hasFatalDiagnostics: boolean = false;
+  @Input() hasActiveConversation: boolean = false;
+  @Input() hasHiddenAPIs: boolean = false;
+  @Input() hasHiddenAPIThatIsDiff: boolean = false;
+  @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
+
+  @Output() diffStyleEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Output() showCommentsEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showSystemCommentsEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showDocumentationEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showHiddenAPIEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() disableCodeLinesLazyLoadingEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() markAsViewedEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() subscribeEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLineNumbersEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() apiRevisionApprovalEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() reviewApprovalEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() commentThreadNavaigationEmitter: EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() diffNavaigationEmitter: EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() copyReviewTextEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() codeLineSearchTextEmitter: EventEmitter<string> = new EventEmitter<string>();
+  @Output() codeLineSearchInfoEmitter: EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
   private destroy$ = new Subject<void>();
-  
-  webAppUrl : string = this.configService.webAppUrl
-  assetsPath : string = environment.assetsPath;
-  
-  showCommentsSwitch : boolean = true;
-  showSystemCommentsSwitch : boolean = true;
-  showDocumentationSwitch : boolean = true;
-  showHiddenAPISwitch : boolean = false;
-  showLeftNavigationSwitch : boolean = true;
-  markedAsViewSwitch : boolean = false;
-  subscribeSwitch : boolean = false;
-  showLineNumbersSwitch : boolean = true;
+
+  webAppUrl: string = this.configService.webAppUrl
+  assetsPath: string = environment.assetsPath;
+
+  showCommentsSwitch: boolean = true;
+  showSystemCommentsSwitch: boolean = true;
+  showDocumentationSwitch: boolean = true;
+  showHiddenAPISwitch: boolean = false;
+  showLeftNavigationSwitch: boolean = true;
+  markedAsViewSwitch: boolean = false;
+  subscribeSwitch: boolean = false;
+  showLineNumbersSwitch: boolean = true;
   disableCodeLinesLazyLoading: boolean = false;
 
   canToggleApproveAPIRevision: boolean = false;
@@ -84,32 +83,32 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   apiRevisionApprovalBtnLabel: string = '';
   showAPIRevisionApprovalModal: boolean = false;
   showDisableCodeLinesLazyLoadingModal: boolean = false;
-  overrideActiveConversationforApproval : boolean = false;
-  overrideFatalDiagnosticsforApproval : boolean = false;
-  
+  overrideActiveConversationforApproval: boolean = false;
+  overrideFatalDiagnosticsforApproval: boolean = false;
+
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
-  copyReviewTextButtonText : string = 'Copy review text';
-  generateAIReviewButtonText : string = 'Generate copilot review';
-  aiReviewGenerationState : 'NotStarted' | 'InProgress' | 'Completed' | 'Failed' = 'NotStarted';
+  copyReviewTextButtonText: string = 'Copy review text';
+  generateAIReviewButtonText: string = 'Generate copilot review';
+  aiReviewGenerationState: 'NotStarted' | 'InProgress' | 'Completed' | 'Failed' = 'NotStarted';
 
   codeLineSearchText: FormControl = new FormControl('');
 
-  associatedPullRequests  : PullRequestModel[] = [];
-  pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
+  associatedPullRequests: PullRequestModel[] = [];
+  pullRequestsOfAssociatedAPIRevisions: PullRequestModel[] = [];
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
   //Approvers Options
   selectedApprovers: string[] = [];
 
-  diffStyleOptions : any[] = [
+  diffStyleOptions: any[] = [
     { label: 'Changed types only', value: TREE_DIFF_STYLE },
     { label: 'Full diff', value: FULL_DIFF_STYLE }
   ];
-  selectedDiffStyle : string = this.diffStyleOptions[0];
+  selectedDiffStyle: string = this.diffStyleOptions[0];
 
-  changeHistoryIcons : any = {
+  changeHistoryIcons: any = {
     'created': 'bi bi-plus-circle-fill created',
     'approved': 'bi bi-check-circle-fill approved',
     'approvalReverted': 'bi bi-arrow-left-circle-fill approval-reverted',
@@ -118,8 +117,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   };
 
   constructor(
-    private configService: ConfigService, private route: ActivatedRoute, 
-    private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
+    private configService: ConfigService, private route: ActivatedRoute,
+    private router: Router, private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService) { }
 
@@ -133,7 +132,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     ).subscribe((searchText: string) => {
       this.codeLineSearchTextEmitter.emit(searchText);
     });
-    this.handleRealTimeAIReviewUpdates();
     this.handleSiteNotification();
   }
 
@@ -166,7 +164,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setAPIRevisionApprovalStates();
     }
 
-    if (changes['review'] && changes['review'].currentValue != undefined) { 
+    if (changes['review'] && changes['review'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
       this.updateDiffStyle();
@@ -195,10 +193,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.showCommentsEmitter.emit(event.checked);
   }
 
-   /**
-  * Callback for systemCommentSwitch Change
-  * @param event the Filter event
-  */
+  /**
+ * Callback for systemCommentSwitch Change
+ * @param event the Filter event
+ */
   onShowSystemCommentsSwitchChange(event: InputSwitchChangeEvent) {
     this.updateRoute();
     this.showSystemCommentsEmitter.emit(event.checked);
@@ -232,7 +230,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.disableCodeLinesLazyLoadingEmitter.emit(event.checked);
     }
   }
-  
+
 
   /**
   * Callback for markedAsViewSwitch Change
@@ -258,10 +256,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.showLineNumbersEmitter.emit(event.checked);
   }
 
-   /**
-   * Callback for showHiddenAPISwitch Change
-   * @param event the Filter event
-   */
+  /**
+  * Callback for showHiddenAPISwitch Change
+  * @param event the Filter event
+  */
   onShowHiddenAPISwitchChange(event: InputSwitchChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
   }
@@ -270,13 +268,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     const existingApprovers = new Set(this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo));
     const currentApprovers = new Set(this.selectedApprovers);
     const isSelectedApproversChanged = existingApprovers.size !== currentApprovers.size ||
-                      [...existingApprovers].some(approver => !currentApprovers.has(approver));
+      [...existingApprovers].some(approver => !currentApprovers.has(approver));
 
     if (isSelectedApproversChanged) {
       this.apiRevisionsService.updateSelectedReviewers(this.activeAPIRevision!.reviewId, this.activeAPIRevision!.id, currentApprovers).pipe(take(1)).subscribe({
         next: (response: APIRevision) => {
           this.activeAPIRevision = response;
-          }
+        }
       });
     }
   }
@@ -332,7 +330,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setPullRequestsInfo() {
-    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') { 
+    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') {
       this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
           this.associatedPullRequests = response;
@@ -350,13 +348,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       });
     }
   }
-  
+
   setSubscribeSwitch() {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
   }
 
   setMarkedAsViewSwitch() {
-    this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile)? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!): this.markedAsViewSwitch;
+    this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile) ? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!) : this.markedAsViewSwitch;
   }
 
   copyReviewText(event: Event) {
@@ -408,7 +406,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   clearAutoGeneratedComments() {
     this.commentsService.clearAutoGeneratedComments(this.activeAPIRevision?.id!).pipe(take(1)).subscribe({
       next: (response) => {
-        const messgaeData : ToastMessageData = {
+        const messgaeData: ToastMessageData = {
           action: 'RefreshPage',
         };
         this.messageService.add({ severity: 'success', icon: 'bi bi-check-circle', summary: 'Comments Cleared', detail: 'All auto-generated comments for this APIRevision has been deleted.', data: messgaeData, key: 'bc', life: 60000 });
@@ -454,51 +452,52 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.reviewApprovalEmitter.emit(true);
   }
 
-  handleSiteNotification(){
+  handleSiteNotification() {
     this.signalRService.onNotificationUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (siteNotification: SiteNotificationDto) => {
+        const notification = new SiteNotification(
+          this.review?.id,
+          this.activeAPIRevision?.id,
+          siteNotification.summary,
+          siteNotification.message,
+          siteNotification.status
+        );
+        this.notificationsService.addNotification(notification);
+
+        const toastNotification = siteNotification.toastNotification;
+        const messageData: ToastMessageData | undefined = toastNotification.action !== SiteNotificationAction.None ?  {
+          action: toastNotification.action,
+        } : undefined;
+
         if (siteNotification.status === SiteNotificationStatus.Error) {
-          const summary = siteNotification.title;
-          this.messageService.add({ severity: siteNotification.status, icon: 'bi bi-exclamation-triangle', summary: summary, detail: siteNotification.message, key: 'bc', life: 5000, closable: true });
-          const notification = new SiteNotification(
-                this.review?.id,
-                this.activeAPIRevision?.id,
-                siteNotification.summary,
-                siteNotification.message,
-                siteNotification.status
-              );
-          this.notificationsService.addNotification(notification);
+          this.messageService.add({ severity: siteNotification.status, icon: 'bi bi-exclamation-triangle', summary: toastNotification.title, detail: toastNotification?.message, data: messageData, key: 'bc', life: 5000, closable: true });
+        }
+        else if (siteNotification.status === SiteNotificationStatus.Success) {
+          this.messageService.add({ severity: siteNotification.status, icon: 'bi bi-check-circle', summary: toastNotification.title, detail: toastNotification?.message, data: messageData, key: 'bc', life: 60000, closable: true });
+        }
+
+        if (siteNotification.type === SiteNotificationType.CopilotReviewCompleted) {
+          this.handleCopilotReviewNotification(siteNotification);
         }
       }
     });
   }
 
-  handleRealTimeAIReviewUpdates() {
-    this.signalRService.onAIReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (aiReviewUpdate: AIReviewJobCompletedDto) => {
-        if (aiReviewUpdate.reviewId === this.review?.id && aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
-          if (aiReviewUpdate.status === 'Success') {
-            this.aiReviewGenerationState = 'Completed';
-            this.generateAIReviewButtonText = `Generated ${aiReviewUpdate.noOfGeneratedComments} comments!`;
-          } else if (aiReviewUpdate.status === 'Error') {
-            this.aiReviewGenerationState = 'Failed';
-            this.generateAIReviewButtonText = 'Failed to generate copilot review';
-          }
-          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
-          if (notificationInfo) {
-            if (aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
-              this.messageService.add(notificationInfo[1]);
-            }
-          }
-
-          setTimeout(() => {
-            this.aiReviewGenerationState = 'Completed';
-            this.generateAIReviewButtonText = 'Generate copilot review';
-          }, 3000);
-          
-        }
+  private handleCopilotReviewNotification(siteNotification: SiteNotificationDto) {
+    if (siteNotification.reviewId === this.review?.id && siteNotification.revisionId === this.activeAPIRevision?.id) {
+      if (siteNotification.status === SiteNotificationStatus.Success) {
+        this.aiReviewGenerationState = 'Completed';
+        this.generateAIReviewButtonText = `Completed copilot review!`;
+      } else if (siteNotification.status === SiteNotificationStatus.Error) {
+        this.aiReviewGenerationState = 'Failed';
+        this.generateAIReviewButtonText = 'Failed to generate copilot review';
       }
-    });
+
+      setTimeout(() => {
+        this.aiReviewGenerationState = 'Completed';
+        this.generateAIReviewButtonText = 'Generate copilot review';
+      }, 3000);
+    }
   }
 
   toggleAPIRevisionApproval() {
@@ -510,10 +509,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
-   /**
-   * This updates the page route without triggering a state update (i.e the code lines are not rebuilt, only the URI is updated)
-   * This is specifically to remove the nId query parameter from the URI
-   */
+  /**
+  * This updates the page route without triggering a state update (i.e the code lines are not rebuilt, only the URI is updated)
+  * This is specifically to remove the nId query parameter from the URI
+  */
   updateRoute() {
     let newQueryParams = getQueryParams(this.route); // this automatically excludes the nId query parameter
     this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });

@@ -41,24 +41,6 @@ namespace APIViewWeb.Models
         public string JobId { get; set; }
     }
 
-    public class AIReviewJobCompletedModel
-    {
-        [JsonPropertyName("reviewId")]
-        public string ReviewId { get; set; }
-        [JsonPropertyName("apirevisionId")]
-        public string APIRevisionId { get; set; }
-        [JsonPropertyName("status")]
-        public string Status { get; set; }
-        [JsonPropertyName("details")]
-        public string Details { get; set; }
-        [JsonPropertyName("createdBy")]
-        public string CreatedBy { get; set; }
-        [JsonPropertyName("jobId")]
-        public string JobId { get; set; }
-        [JsonPropertyName("noOfGeneratedComments")]
-        public int NoOfGeneratedComment { get; set; }
-    }
-
     public class AIReviewJobInfoModel
     {
         public string JobId { get; set; }

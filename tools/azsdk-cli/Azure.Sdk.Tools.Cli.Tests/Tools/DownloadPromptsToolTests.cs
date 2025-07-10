@@ -55,8 +55,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
-            Assert.AreEqual(3, result.TotalFiles);
-            Assert.AreEqual(3, result.DownloadedCount);
+            Assert.That(result.TotalFiles, Is.EqualTo(3));
+            Assert.That(result.DownloadedCount, Is.EqualTo(3));
             Assert.IsTrue(File.Exists(Path.Combine(tempDirectory, "README.md")));
         }
 
@@ -74,8 +74,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
-            Assert.AreEqual(2, result.TotalFiles);
-            Assert.AreEqual(2, result.DownloadedCount);
+            Assert.That(result.TotalFiles, Is.EqualTo(2));
+            Assert.That(result.DownloadedCount, Is.EqualTo(2));
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Success);
-            Assert.AreEqual(0, result.TotalFiles);
+            Assert.That(result.TotalFiles, Is.EqualTo(0));
         }
 
         [Test]
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
-            Assert.AreEqual(0, result.TotalFiles);
+            Assert.That(result.TotalFiles, Is.EqualTo(0));
             Assert.IsTrue(result.Message.Contains("We are in source repository"));
         }
 
@@ -133,8 +133,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Success);
-            Assert.AreEqual(0, result.TotalFiles);
-            Assert.AreEqual(0, result.DownloadedCount);
+            Assert.That(result.TotalFiles, Is.EqualTo(0));
+            Assert.That(result.DownloadedCount, Is.EqualTo(0));
         }
 
         [Test]
@@ -151,8 +151,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
-            Assert.AreEqual(1, result.TotalFiles);
-            Assert.AreEqual(1, result.DownloadedCount);
+            Assert.That(result.TotalFiles, Is.EqualTo(1));
+            Assert.That(result.DownloadedCount, Is.EqualTo(1));
         }
 
         [Test]
@@ -173,12 +173,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
-            Assert.AreEqual(3, result.TotalFiles);
-            Assert.AreEqual(2, result.DownloadedCount); // Should skip README.md
+            Assert.That(result.TotalFiles, Is.EqualTo(3));
+            Assert.That(result.DownloadedCount, Is.EqualTo(2)); // Should skip README.md
             
             // Verify existing file wasn't overwritten
             var fileContent = await File.ReadAllTextAsync(existingFilePath);
-            Assert.AreEqual("existing content", fileContent);
+            Assert.That(fileContent, Is.EqualTo("existing content"));
         }
 
         [Test]
@@ -198,8 +198,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
             Assert.IsTrue(Directory.Exists(nonExistentDirectory));
-            Assert.AreEqual(3, result.TotalFiles);
-            Assert.AreEqual(3, result.DownloadedCount);
+            Assert.That(result.TotalFiles, Is.EqualTo(3));
+            Assert.That(result.DownloadedCount, Is.EqualTo(3));
         }
 
         [Test]
@@ -216,8 +216,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Success);
-            Assert.Greater(result.TotalFiles, 0);
-            Assert.AreEqual(result.TotalFiles, result.DownloadedCount);
+            Assert.IsTrue(result.TotalFiles > 0);
+            Assert.That(result.TotalFiles, Is.EqualTo(result.DownloadedCount));
         }
     }
 }

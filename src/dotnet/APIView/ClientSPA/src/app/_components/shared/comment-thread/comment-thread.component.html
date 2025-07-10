@@ -12,7 +12,7 @@
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
                 <ng-template pTemplate="header">
                     <div class="flex align-items-center gap-2">
-                        <span class="fw-bold">{{ comment.createdBy }}</span>
+                        <span class="fw-bold">{{ comment.createdBy === 'azure-sdk' ? 'API review agent' : comment.createdBy }}</span>
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
                     </div>
                 </ng-template>

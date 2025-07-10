@@ -66,6 +66,36 @@ describe('CommentThreadComponent', () => {
     });
   });
 
+  describe('comment creator name display', () => {
+    it('should display "API review agent" for azure-sdk comments', () => {
+      const azureSdkComment = {
+        id: '1',
+        createdBy: 'azure-sdk',
+        commentText: 'Copilot suggestion'
+      } as CommentItemModel;
+      
+      component.codePanelRowData!.comments = [azureSdkComment];
+      fixture.detectChanges();
+      
+      const creatorName = fixture.nativeElement.querySelector('.fw-bold');
+      expect(creatorName?.textContent?.trim()).toBe('API review agent');
+    });
+
+    it('should display actual username for regular user comments', () => {
+      const regularComment = {
+        id: '1',
+        createdBy: 'regular-user',
+        commentText: 'Regular comment'
+      } as CommentItemModel;
+      
+      component.codePanelRowData!.comments = [regularComment];
+      fixture.detectChanges();
+      
+      const creatorName = fixture.nativeElement.querySelector('.fw-bold');
+      expect(creatorName?.textContent?.trim()).toBe('regular-user');
+    });
+  });
+
   describe('setCommentResolutionState', () => {
     it ('should select latest user to resolve comment thread', () => {
       const comment1 = {

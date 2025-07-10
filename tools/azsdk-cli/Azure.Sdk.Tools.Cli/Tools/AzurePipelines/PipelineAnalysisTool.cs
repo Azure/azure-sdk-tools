@@ -157,38 +157,33 @@ public class PipelineAnalysisTool : MCPTool
         initialized = true;
     }
 
-
-    public async Task<Build> GetPipelineRun(string? project, int buildId)
+    private async Task<string> GetPipelineProject(int buildId, string? project = null)
     {
-        try
+        if (project == PUBLIC_PROJECT || string.IsNullOrEmpty(project))
         {
-            var _project = project ?? PUBLIC_PROJECT;
-            Build? build;
-            logger.LogDebug("Getting pipeline run for {project} {buildId}", _project, buildId);
-            if (project == PUBLIC_PROJECT)
+            var pipelineUrl = $"https://dev.azure.com/azure-sdk/{PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
+            logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
+            var response = await httpClient.GetAsync(pipelineUrl);
+            // If project is not specified, try both public and internal projects
+            if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
             {
-                var pipelineUrl = $"https://dev.azure.com/azure-sdk/{_project}/_apis/build/builds/{buildId}?api-version=7.1";
-                logger.LogDebug("Getting pipeline details from {url}", pipelineUrl);
-                var response = await httpClient.GetAsync(pipelineUrl);
-                response.EnsureSuccessStatusCode();
-                var json = await response.Content.ReadAsStringAsync();
-                build = JsonSerializer.Deserialize<Build>(json);
+                return await GetPipelineProject(buildId, INTERNAL_PROJECT);
             }
-            else
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
+            if (string.IsNullOrEmpty(projectName))
             {
-                build = await buildClient.GetBuildAsync(_project, buildId);
+                throw new Exception($"Failed to parse project name from build details for build {buildId}");
             }
-            return build;
+            return projectName;
         }
-        catch (Exception ex)
-        {
-            if (!string.IsNullOrEmpty(project))
-            {
-                throw new Exception($"Failed to find build {buildId} in project 'public': {ex.Message}");
-            }
-            // If project is not specified, try both azure sdk public and internal devops projects
-            return await GetPipelineRun(INTERNAL_PROJECT, buildId);
-        }
+
+        var _pipelineUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}?api-version=7.1";
+        logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
+        var build = await buildClient.GetBuildAsync(project, buildId);
+        return build.Project.Name;
     }
 
     public async Task<List<int>> GetPipelineFailureLogIds(string project, int buildId, CancellationToken ct = default)
@@ -432,8 +427,7 @@ public class PipelineAnalysisTool : MCPTool
         {
             if (string.IsNullOrEmpty(project))
             {
-                var pipeline = await GetPipelineRun(project, buildId);
-                project = pipeline.Project.Name;
+                project = await GetPipelineProject(buildId, project);
             }
 
             var failureLogIds = await GetPipelineFailureLogIds(project, buildId, ct);

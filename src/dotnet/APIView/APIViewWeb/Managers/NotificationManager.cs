@@ -183,12 +183,17 @@ namespace APIViewWeb.Managers
 
         private string GetHtmlContent(CommentItemModel comment, ReviewListItemModel review)
         {
-            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
             var sb = new StringBuilder();
             sb.Append(GetContentHeading(comment, true));
             sb.Append("<br><br>");
-            sb.Append($"In <a href='{uri.ToString()}'>{comment.ElementId}</a>:");
-            sb.Append("<br><br>");
+
+            if (comment.ElementId != null)
+            {
+                var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
+                sb.Append($"In <a href='{uri.ToString()}'>{comment.ElementId}</a>:");
+                sb.Append("<br><br>");
+            }
+
             sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText));
             return sb.ToString();
         }

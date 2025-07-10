@@ -16,16 +16,16 @@ public class AgentHelpers
         RenderedCodeFile codeFile)
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
-        
+
         Dictionary<string, int> elementIdToLineNumber = activeCodeLines
-            .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
+            .Select((line, index) => new { line.lineId, lineNumber = index })
             .Where(x => !string.IsNullOrEmpty(x.lineId))
             .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
 
         List<ApiViewAgentComment> commentsForAgent = comments
             .Select(threadComment => new ApiViewAgentComment
             {
-                LineNumber = elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
+                LineNumber = threadComment.ElementId is not null && elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
                 CreatedOn = threadComment.CreatedOn,
                 Upvotes = threadComment.Upvotes.Count,
                 Downvotes = threadComment.Downvotes.Count,

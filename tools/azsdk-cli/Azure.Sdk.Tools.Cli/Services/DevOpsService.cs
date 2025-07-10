@@ -9,8 +9,9 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 using Microsoft.VisualStudio.Services.WebApi;
-using System.Text.RegularExpressions;
 using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Text.Json;
@@ -30,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
         private AccessToken? _token;
-        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default"; 
+        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
 
         private void RefreshConnection()
         {
@@ -60,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             catch (Exception ex)
             {
                 throw new Exception($"Failed to refresh DevOps connection. Error: {ex.Message}");
-            }            
+            }
         }
 
         public BuildHttpClient GetBuildClient()
@@ -98,6 +99,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main");
+        public Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId);
+        public Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -840,7 +843,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "")
         {
             language = MapLanguageIdToName(language);
-            if ( packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersion.Contains(' ') || packageVersion.Contains('\'') || packageVersion.Contains('"'))
+            if (packageName.Contains(' ') || packageName.Contains('\'') || packageName.Contains('"') || language.Contains(' ') || language.Contains('\'') || language.Contains('"') || packageVersion.Contains(' ') || packageVersion.Contains('\'') || packageVersion.Contains('"'))
             {
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
@@ -899,16 +902,16 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             if (workItem.Fields.TryGetValue(fieldName, out object? value))
             {
-                return value?.ToString() ?? string.Empty; 
+                return value?.ToString() ?? string.Empty;
             }
             return string.Empty;
         }
 
         private static List<SDKReleaseInfo> ParseHtmlPackageData(string packageData)
-        {            
+        {
             List<SDKReleaseInfo> sdkReleaseInfo = [];
             var matches = SdkReleaseDetailsRegex().Matches(packageData);
-            foreach(Match m in matches)
+            foreach (Match m in matches)
             {
                 sdkReleaseInfo.Add(new SDKReleaseInfo
                 {
@@ -918,6 +921,127 @@ namespace Azure.Sdk.Tools.Cli.Services
                 });
             }
             return sdkReleaseInfo;
+        }
+
+        public async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId)
+        {
+            var buildClient = connection.GetBuildClient();
+            var result = new Dictionary<string, List<string>>();
+            var artifacts = await buildClient.GetArtifactsAsync(project, buildId, cancellationToken: default);
+            foreach (var artifact in artifacts)
+            {
+                if (artifact.Name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase))
+                {
+                    var tempDir = Path.Combine(Path.GetTempPath(), $"{artifact.Name}_{Guid.NewGuid()}");
+                    Directory.CreateDirectory(tempDir);
+
+                    logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", artifact.Name, tempDir);
+
+                    using var stream = await buildClient.GetArtifactContentZipAsync(project, buildId, artifact.Name);
+                    var zipPath = Path.Combine(tempDir, "artifact.zip");
+                    using (var fileStream = File.Create(zipPath))
+                    {
+                        await stream.CopyToAsync(fileStream);
+                    }
+
+                    await Task.Factory.StartNew(() =>
+                    {
+                        System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
+                        File.Delete(zipPath);
+                    });
+
+                    var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
+                    result[artifact.Name] = files;
+                }
+            }
+            return result;
+        }
+
+        public async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId)
+        {
+            var result = new Dictionary<string, List<string>>();
+            using var httpClient = new HttpClient();
+            var artifactsUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
+            var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
+            artifactsResponse.EnsureSuccessStatusCode();
+            var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(artifactsJson);
+            var artifacts = doc.RootElement.GetProperty("value").EnumerateArray();
+
+            var seenFiles = new HashSet<string>();
+            var tempDir = Path.Combine(Path.GetTempPath(), buildId.ToString());
+            if (Directory.Exists(tempDir))
+            {
+                await Task.Factory.StartNew(() =>
+                {
+                    Directory.Delete(tempDir, true);
+                });
+            }
+            Directory.CreateDirectory(tempDir);
+
+            List<JsonElement> mostRecentArtifacts = [];
+            var mostRecentJobAttempt = 1;
+            // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
+            // where '1' == the job attempt number
+            // only find artifacts from the most recent job attempt.
+            foreach (var artifact in artifacts)
+            {
+                var name = artifact.GetProperty("name").GetString();
+                var jobAttempt = name?.Split('-').LastOrDefault()?.Trim();
+                var jobAttemptNumber = int.TryParse(jobAttempt, out var attempt) ? attempt : 0;
+                if (jobAttemptNumber == mostRecentJobAttempt)
+                {
+                    mostRecentArtifacts.Add(artifact);
+                }
+                else if (jobAttemptNumber > mostRecentJobAttempt)
+                {
+                    mostRecentArtifacts.Clear();
+                    mostRecentArtifacts.Add(artifact);
+                }
+            }
+
+            foreach (var artifact in mostRecentArtifacts)
+            {
+                var name = artifact.GetProperty("name").GetString();
+                if (name == null || name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase) == false)
+                {
+                    continue;
+                }
+
+                var downloadUrl = artifact.GetProperty("resource").GetProperty("downloadUrl").GetString();
+                if (string.IsNullOrEmpty(downloadUrl))
+                {
+                    continue;
+                }
+
+                logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", name, tempDir);
+
+                var zipPath = Path.Combine(tempDir, "artifact.zip");
+
+                using (var zipStream = await httpClient.GetStreamAsync(downloadUrl))
+                using (var fileStream = File.Create(zipPath))
+                {
+                    await zipStream.CopyToAsync(fileStream);
+                }
+
+                await Task.Factory.StartNew(() =>
+                {
+                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
+                    File.Delete(zipPath);
+                });
+
+                var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
+                var newFiles = files.Where(f => !seenFiles.Contains(f)).ToList();
+                seenFiles.UnionWith(newFiles);
+
+                // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
+                // create a key/platform name like "Ubuntu2404_NET80_PackageRef_Debug"
+                var parts = name.Split(" - ", StringSplitOptions.RemoveEmptyEntries);
+                var testPlatform = string.Join(" - ", parts[1..^1]);
+                result[testPlatform] = newFiles;
+            }
+
+            return result;
         }
     }
 }

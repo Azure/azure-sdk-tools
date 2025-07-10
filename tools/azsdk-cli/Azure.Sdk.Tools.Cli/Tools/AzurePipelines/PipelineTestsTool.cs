@@ -23,6 +23,7 @@ public class PipelineTestsTool : MCPTool
     private readonly bool initialized = false;
 
     private IAzureService azureService;
+    private IDevOpsService devopsService;
     private IOutputService output;
     private ILogger<PipelineTestsTool> logger;
 
@@ -30,11 +31,13 @@ public class PipelineTestsTool : MCPTool
 
     public PipelineTestsTool(
         IAzureService azureService,
+        IDevOpsService devopsService,
         IOutputService output,
         ILogger<PipelineTestsTool> logger
     ) : base()
     {
         this.azureService = azureService;
+        this.devopsService = devopsService;
         this.output = output;
         this.logger = logger;
 
@@ -76,126 +79,6 @@ public class PipelineTestsTool : MCPTool
         buildClient = connection.GetClient<BuildHttpClient>();
     }
 
-    private async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId)
-    {
-        var result = new Dictionary<string, List<string>>();
-        using var httpClient = new HttpClient();
-        var artifactsUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
-        var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
-        artifactsResponse.EnsureSuccessStatusCode();
-        var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(artifactsJson);
-        var artifacts = doc.RootElement.GetProperty("value").EnumerateArray();
-
-        var seenFiles = new HashSet<string>();
-        var tempDir = Path.Combine(Path.GetTempPath(), buildId.ToString());
-        if (Directory.Exists(tempDir))
-        {
-            await Task.Factory.StartNew(() =>
-            {
-                Directory.Delete(tempDir, true);
-            });
-        }
-        Directory.CreateDirectory(tempDir);
-
-        List<JsonElement> mostRecentArtifacts = [];
-        var mostRecentJobAttempt = 1;
-        // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
-        // where '1' == the job attempt number
-        // only find artifacts from the most recent job attempt.
-        foreach (var artifact in artifacts)
-        {
-            var name = artifact.GetProperty("name").GetString();
-            var jobAttempt = name?.Split('-').LastOrDefault()?.Trim();
-            var jobAttemptNumber = int.TryParse(jobAttempt, out var attempt) ? attempt : 0;
-            if (jobAttemptNumber == mostRecentJobAttempt)
-            {
-                mostRecentArtifacts.Add(artifact);
-            }
-            else if (jobAttemptNumber > mostRecentJobAttempt)
-            {
-                mostRecentArtifacts.Clear();
-                mostRecentArtifacts.Add(artifact);
-            }
-        }
-
-        foreach (var artifact in mostRecentArtifacts)
-        {
-            var name = artifact.GetProperty("name").GetString();
-            if (name == null || name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase) == false)
-            {
-                continue;
-            }
-
-            var downloadUrl = artifact.GetProperty("resource").GetProperty("downloadUrl").GetString();
-            if (string.IsNullOrEmpty(downloadUrl))
-            {
-                continue;
-            }
-
-            logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", name, tempDir);
-
-            var zipPath = Path.Combine(tempDir, "artifact.zip");
-
-            using (var zipStream = await httpClient.GetStreamAsync(downloadUrl))
-            using (var fileStream = File.Create(zipPath))
-            {
-                await zipStream.CopyToAsync(fileStream);
-            }
-
-            await Task.Factory.StartNew(() =>
-            {
-                System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
-                File.Delete(zipPath);
-            });
-
-            var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
-            var newFiles = files.Where(f => !seenFiles.Contains(f)).ToList();
-            seenFiles.UnionWith(newFiles);
-
-            // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
-            // create a key/platform name like "Ubuntu2404_NET80_PackageRef_Debug"
-            var parts = name.Split(" - ", StringSplitOptions.RemoveEmptyEntries);
-            var testPlatform = string.Join(" - ", parts[1..^1]);
-            result[testPlatform] = newFiles;
-        }
-
-        return result;
-    }
-
-    private async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId)
-    {
-        var result = new Dictionary<string, List<string>>();
-        var artifacts = await buildClient.GetArtifactsAsync(project, buildId, cancellationToken: default);
-        foreach (var artifact in artifacts)
-        {
-            if (artifact.Name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase))
-            {
-                var tempDir = Path.Combine(Path.GetTempPath(), $"{artifact.Name}_{Guid.NewGuid()}");
-                Directory.CreateDirectory(tempDir);
-
-                logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", artifact.Name, tempDir);
-
-                using var stream = await buildClient.GetArtifactContentZipAsync(project, buildId, artifact.Name);
-                var zipPath = Path.Combine(tempDir, "artifact.zip");
-                using (var fileStream = File.Create(zipPath))
-                {
-                    await stream.CopyToAsync(fileStream);
-                }
-
-                await Task.Factory.StartNew(() =>
-                {
-                    System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
-                    File.Delete(zipPath);
-                });
-
-                var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
-                result[artifact.Name] = files;
-            }
-        }
-        return result;
-    }
-
     [McpServerTool, Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
     public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId)
     {
@@ -209,11 +92,11 @@ public class PipelineTestsTool : MCPTool
             Dictionary<string, List<string>> result;
             if (string.Equals(project, "public", StringComparison.OrdinalIgnoreCase))
             {
-                result = await GetLlmArtifactsUnauthenticated(project, buildId);
+                result = await devopsService.GetLlmArtifactsUnauthenticated(project, buildId);
             }
             else
             {
-                result = await GetLlmArtifactsAuthenticated(project, buildId);
+                result = await devopsService.GetLlmArtifactsAuthenticated(project, buildId);
             }
 
             return new ObjectCommandResponse { Result = result };

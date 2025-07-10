@@ -38,10 +38,11 @@ namespace Azure.Tools.GeneratorAgent.Composition
                        .SetMinimumLevel(LogLevel.Information);
             });
 
-            serviceCollection.AddSingleton<PersistentAgentsClient>(sp =>
+            serviceCollection.AddSingleton<PersistentAgentsAdministrationClient>(sp =>
             {
                 var settings = sp.GetRequiredService<IAppSettings>();
-                return new PersistentAgentsClient(settings.ProjectEndpoint, new DefaultAzureCredential());
+                var client = new PersistentAgentsClient(settings.ProjectEndpoint, new DefaultAzureCredential());
+                return client.Administration;
             });
 
             serviceCollection.AddScoped<ErrorFixerAgent>();

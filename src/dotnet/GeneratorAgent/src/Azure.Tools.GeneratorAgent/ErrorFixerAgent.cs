@@ -12,17 +12,17 @@ namespace Azure.Tools.GeneratorAgent
     {
         private readonly IAppSettings _appSettings;
         private readonly ILogger<ErrorFixerAgent> _logger;
-        private readonly PersistentAgentsClient _client;
+        private readonly PersistentAgentsAdministrationClient _adminClient;
         private PersistentAgent? _agent;
 
         public ErrorFixerAgent(
             IAppSettings appSettings,
             ILogger<ErrorFixerAgent> logger,
-            PersistentAgentsClient client)
+            PersistentAgentsAdministrationClient adminClient)
         {
             _appSettings = appSettings;
             _logger = logger;
-            _client = client;
+            _adminClient = adminClient;
         }
 
         public async Task InitializeAsync(CancellationToken ct)
@@ -38,7 +38,6 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             // TODO: Implement the code fixing logic here
-            // Adding a placeholder await until the actual implementation is added
             await Task.CompletedTask;
         }
 
@@ -51,7 +50,7 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             _logger.LogInformation("Creating AZC Fixer agent...");
-            _agent = await _client.Administration.CreateAgentAsync(
+            _agent = await _adminClient.CreateAgentAsync(
                 model: _appSettings.Model,
                 name: _appSettings.AgentName,
                 instructions: _appSettings.AgentInstructions,
@@ -68,11 +67,10 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task DeleteAgentsAsync(CancellationToken ct)
         {
-            // Delete all agents
-            await foreach (var agent in _client.Administration.GetAgentsAsync(cancellationToken: ct))
+            await foreach (var agent in _adminClient.GetAgentsAsync(cancellationToken: ct))
             {
                 _logger.LogInformation("Deleting agent: {Name} ({Id})", agent.Name, agent.Id);
-                await _client.Administration.DeleteAgentAsync(agent.Id, ct);
+                await _adminClient.DeleteAgentAsync(agent.Id, ct);
             }
         }
 

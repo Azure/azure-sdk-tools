@@ -98,7 +98,28 @@ public class PipelineTestsTool : MCPTool
         }
         Directory.CreateDirectory(tempDir);
 
+        List<JsonElement> mostRecentArtifacts = [];
+        var mostRecentJobAttempt = 1;
+        // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
+        // where '1' == the job attempt number
+        // only find artifacts from the most recent job attempt.
         foreach (var artifact in artifacts)
+        {
+            var name = artifact.GetProperty("name").GetString();
+            var jobAttempt = name?.Split('-').LastOrDefault()?.Trim();
+            var jobAttemptNumber = int.TryParse(jobAttempt, out var attempt) ? attempt : 0;
+            if (jobAttemptNumber == mostRecentJobAttempt)
+            {
+                mostRecentArtifacts.Add(artifact);
+            }
+            else if (jobAttemptNumber > mostRecentJobAttempt)
+            {
+                mostRecentArtifacts.Clear();
+                mostRecentArtifacts.Add(artifact);
+            }
+        }
+
+        foreach (var artifact in mostRecentArtifacts)
         {
             var name = artifact.GetProperty("name").GetString();
             if (name == null || name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase) == false)
@@ -132,7 +153,10 @@ public class PipelineTestsTool : MCPTool
             var newFiles = files.Where(f => !seenFiles.Contains(f)).ToList();
             seenFiles.UnionWith(newFiles);
 
-            var testPlatform = name["LLM Artifacts - ".Length..];
+            // Given an artifact name like "LLM Artifacts - Ubuntu2404_NET80_PackageRef_Debug - 1"
+            // create a key/platform name like "Ubuntu2404_NET80_PackageRef_Debug"
+            var parts = name.Split(" - ", StringSplitOptions.RemoveEmptyEntries);
+            var testPlatform = string.Join(" - ", parts[1..^1]);
             result[testPlatform] = newFiles;
         }
 

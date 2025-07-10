@@ -34,6 +34,38 @@ describe('CommentThreadComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('avatar rendering', () => {
+    it('should show Copilot icon for azure-sdk comments', () => {
+      const azureSdkComment = {
+        id: '1',
+        createdBy: 'azure-sdk',
+        commentText: 'Copilot suggestion'
+      } as CommentItemModel;
+      
+      component.codePanelRowData!.comments = [azureSdkComment];
+      fixture.detectChanges();
+      
+      const copilotIcon = fixture.nativeElement.querySelector('img[src="/icons/copilot.svg"]');
+      expect(copilotIcon).toBeTruthy();
+      expect(copilotIcon?.alt).toBe('Azure SDK Copilot');
+    });
+
+    it('should show GitHub avatar for regular user comments', () => {
+      const regularComment = {
+        id: '1',
+        createdBy: 'regular-user',
+        commentText: 'Regular comment'
+      } as CommentItemModel;
+      
+      component.codePanelRowData!.comments = [regularComment];
+      fixture.detectChanges();
+      
+      const githubAvatar = fixture.nativeElement.querySelector('img[src^="https://github.com/regular-user.png"]');
+      expect(githubAvatar).toBeTruthy();
+      expect(githubAvatar?.alt).toBe('regular-user');
+    });
+  });
+
   describe('setCommentResolutionState', () => {
     it ('should select latest user to resolve comment thread', () => {
       const comment1 = {

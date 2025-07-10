@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Azure.Tools.GeneratorAgent.Interfaces;
-using Azure.Tools.GeneratorAgent.Services;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.AI.Agents.Persistent;
 using Azure.Identity;
@@ -45,7 +44,7 @@ namespace Azure.Tools.GeneratorAgent.Composition
                 return new PersistentAgentsClient(settings.ProjectEndpoint, new DefaultAzureCredential());
             });
 
-            serviceCollection.AddScoped<GeneratorAgentService>();
+            serviceCollection.AddScoped<ErrorFixerAgent>();
 
             return serviceCollection.BuildServiceProvider();
         }

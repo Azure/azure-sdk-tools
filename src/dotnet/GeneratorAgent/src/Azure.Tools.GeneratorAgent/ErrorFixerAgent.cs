@@ -6,18 +6,18 @@ using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Azure.Tools.GeneratorAgent.Services
+namespace Azure.Tools.GeneratorAgent
 {
-    public class GeneratorAgentService : IAsyncDisposable
+    public class ErrorFixerAgent : IAsyncDisposable
     {
         private readonly IAppSettings _appSettings;
-        private readonly ILogger<GeneratorAgentService> _logger;
+        private readonly ILogger<ErrorFixerAgent> _logger;
         private readonly PersistentAgentsClient _client;
         private PersistentAgent? _agent;
 
-        public GeneratorAgentService(
+        public ErrorFixerAgent(
             IAppSettings appSettings,
-            ILogger<GeneratorAgentService> logger,
+            ILogger<ErrorFixerAgent> logger,
             PersistentAgentsClient client)
         {
             _appSettings = appSettings;

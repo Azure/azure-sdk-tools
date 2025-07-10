@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Tools.GeneratorAgent.Composition;
-using Azure.Tools.GeneratorAgent.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -25,7 +24,7 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                await using (var agent = provider.GetRequiredService<GeneratorAgentService>())
+                await using (var agent = provider.GetRequiredService<ErrorFixerAgent>())
                 {
                     await agent.InitializeAsync(cts.Token);
                     await agent.FixCodeAsync(cts.Token);

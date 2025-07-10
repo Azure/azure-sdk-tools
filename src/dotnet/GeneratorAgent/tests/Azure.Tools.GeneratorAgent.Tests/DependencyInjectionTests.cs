@@ -1,8 +1,6 @@
 using Azure.Tools.GeneratorAgent.Composition;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Services;
 using Azure.Tools.GeneratorAgent.Interfaces;
-using Azure.Tools.GeneratorAgent.Logger;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -24,10 +22,9 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
             IAppSettings appSettings = serviceProvider.GetRequiredService<IAppSettings>();
             Assert.NotNull(appSettings);
 
-            var agentService = serviceProvider.GetRequiredService<GeneratorAgentService>();
-            Assert.NotNull(agentService);
+            var agent = serviceProvider.GetRequiredService<ErrorFixerAgent>();
+            Assert.NotNull(agent);
         }
-
         [Fact]
         public void Configure_ShouldLoadConfiguration()
         {
@@ -43,23 +40,23 @@ namespace Azure.Tools.GeneratorAgent.Tests.Composition
         }
         
         [Fact]
-        public void Configure_ShouldCreateNewInstanceForEachScope()
+        public async Task Configure_ShouldCreateNewInstanceForEachScope()
         {
             // Arrange
             IServiceProvider serviceProvider = DependencyInjection.Configure();
 
             // Act
-            GeneratorAgentService instance1;
-            GeneratorAgentService instance2;
+            ErrorFixerAgent instance1;
+            ErrorFixerAgent instance2;
 
-            using (IServiceScope scope1 = serviceProvider.CreateScope())
+            await using (AsyncServiceScope scope1 = serviceProvider.CreateAsyncScope())
             {
-                instance1 = scope1.ServiceProvider.GetRequiredService<GeneratorAgentService>();
+                instance1 = scope1.ServiceProvider.GetRequiredService<ErrorFixerAgent>();
             }
 
-            using (IServiceScope scope2 = serviceProvider.CreateScope())
+            await using (AsyncServiceScope scope2 = serviceProvider.CreateAsyncScope())
             {
-                instance2 = scope2.ServiceProvider.GetRequiredService<GeneratorAgentService>();
+                instance2 = scope2.ServiceProvider.GetRequiredService<ErrorFixerAgent>();
             }
 
             // Assert

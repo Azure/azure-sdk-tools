@@ -73,6 +73,18 @@ func main() {
 			path:   "docs/azure-sdk",
 			folder: "azure-sdk-guidelines",
 		},
+		{
+			path:				"docs/typespec/packages/http-specs/specs/generated",
+			folder:				"typespec_http_specs",
+			name:				"TypeSpec HTTP Spector Cases",
+			fileNameLowerCase:	true,
+		},
+		{
+			path:   			"docs/typespec-azure/packages/azure-http-specs/specs/generated",
+			folder: 			"typespec_azure_http_specs",
+			name:				"TypeSpec Azure HTTP Spector Cases",
+			fileNameLowerCase:	true,
+		},
 	}
 
 	// Process each source directory
@@ -163,6 +175,7 @@ func main() {
 			return
 		}
 	}
+	
 	// Delete expired blobs
 	err = deleteExpiredBlobs(currentFiles)
 	if err != nil {

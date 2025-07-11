@@ -123,37 +123,17 @@ class Context:
     ):
         self.items = []
         scores = scores or {}
-        # Propagate scores from examples to guidelines/memories if needed
-        # First, collect example scores
-        example_scores = {ex_id: scores.get(ex_id) for ex_id in (examples or {})}
 
-        # For guidelines, use their own score, or the max score of their related examples
         for guideline in guidelines.values():
             score = scores.get(getattr(guideline, "id", None))
-            related_exs = getattr(guideline, "related_examples", [])
-            related_scores = [
-                example_scores.get(ex_id) for ex_id in related_exs if example_scores.get(ex_id) is not None
-            ]
-            if related_scores:
-                max_related = max(related_scores)
-                if score is None or (max_related is not None and max_related > score):
-                    score = max_related
             item = ContextItem(guideline, examples=examples, score=score)
             self.items.append(item)
 
-        # For memories, use their own score, or the max score of their related examples
         for memory in memories.values():
             score = scores.get(getattr(memory, "id", None))
-            related_exs = getattr(memory, "related_examples", [])
-            related_scores = [
-                example_scores.get(ex_id) for ex_id in related_exs if example_scores.get(ex_id) is not None
-            ]
-            if related_scores:
-                max_related = max(related_scores)
-                if score is None or (max_related is not None and max_related > score):
-                    score = max_related
             item = ContextItem(memory, examples=examples, score=score)
             self.items.append(item)
+
         self._normalize_scores()
         # Only sort items with a valid normalized_score, put None scores at the end
         self.items.sort(
@@ -221,7 +201,7 @@ class ContextItem:
         self.service = getattr(item, "service", None)
         self.is_exception = getattr(item, "is_exception", None)
         self.examples = []
-        self.score = score
+        self.score = score or 50
         for ex_id in getattr(item, "related_examples", []):
             example = copy.deepcopy(examples.get(ex_id)) if examples else None
             if example is not None:

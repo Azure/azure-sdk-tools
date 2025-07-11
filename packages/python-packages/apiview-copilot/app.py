@@ -272,9 +272,6 @@ async def handle_mention(request: MentionRequest, http_request: Request):
             response, thread_id_out, messages = await invoke_agent(
                 agent=agent, user_input="Please handle this feedback.", thread_id=request.thread_id
             )
-        logger.info(
-            f"/api-review/mention completed: thread_id={thread_id_out}, response_length={len(response) if response else 0}"
-        )
         return AgentChatResponse(
             response=response,
             thread_id=thread_id_out,

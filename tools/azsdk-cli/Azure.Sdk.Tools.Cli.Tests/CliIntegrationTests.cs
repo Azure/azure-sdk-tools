@@ -44,8 +44,7 @@ internal class CliIntegrationTests
         var exitCode = await cmd.InvokeAsync(["hello-world", "HI. MY NAME IS", "--fail"]);
         Assert.That(exitCode, Is.EqualTo(1));
 
-        var expectedExitCode = new Random().Next(2);
-        var expected = $"[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: {expectedExitCode}";
+        var expected = "[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1";
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
@@ -75,7 +74,7 @@ internal class CliIntegrationTests
 
         var expected = @"
 Message: RESPONDING TO 'HI. MY NAME IS' with SUCCESS: 0
-Result: nul
+Result: null
 Duration: 1ms".TrimStart();
 
         outputServiceMock

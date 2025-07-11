@@ -190,7 +190,7 @@ namespace APIViewWeb.Managers
             if (comment.ElementId != null)
             {
                 var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
-                sb.Append($"In <a href='{uri.ToString()}'>{comment.ElementId}</a>:");
+                sb.Append($"In <a href='{uri.ToString()}'>{WebUtility.HtmlEncode(comment.ElementId)}</a>:");
                 sb.Append("<br><br>");
             }
 

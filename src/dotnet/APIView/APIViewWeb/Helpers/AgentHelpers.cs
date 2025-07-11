@@ -17,24 +17,21 @@ public class AgentHelpers
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
         Dictionary<string, int> elementIdToLineNumber = activeCodeLines
-            .Select((line, index) => new { line.lineId, lineNumber = index })
+            .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
             .Where(x => !string.IsNullOrEmpty(x.lineId))
             .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
 
-        List<ApiViewAgentComment> commentsForAgent = comments
-            .Select(threadComment => new ApiViewAgentComment
+        return (from comment in comments
+            where comment.ElementId != null
+            select new ApiViewAgentComment
             {
-                LineNumber = threadComment.ElementId is not null && elementIdToLineNumber.TryGetValue(threadComment.ElementId, out int id) ? id : -1,
-                CreatedOn = threadComment.CreatedOn,
-                Upvotes = threadComment.Upvotes.Count,
-                Downvotes = threadComment.Downvotes.Count,
-                CreatedBy = threadComment.CreatedBy,
-                CommentText = threadComment.CommentText,
-                IsResolved = threadComment.IsResolved
-            })
-            .ToList();
-
-        return commentsForAgent;
+                LineNumber = elementIdToLineNumber.TryGetValue(comment.ElementId, out int id) ? id : -1,
+                CreatedOn = comment.CreatedOn,
+                Upvotes = comment.Upvotes.Count,
+                Downvotes = comment.Downvotes.Count,
+                CreatedBy = comment.CreatedBy,
+                CommentText = comment.CommentText,
+            }).ToList();
     }
 
     public static string GetCodeLineForElement(RenderedCodeFile codeFile, string elementId)

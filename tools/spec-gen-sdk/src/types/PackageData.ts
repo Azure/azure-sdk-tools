@@ -1,10 +1,10 @@
 import * as path from 'path';
 import { PackageResult } from './GenerateOutput';
+import { WorkflowContext } from './Workflow';
 import { repoKeyToString } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { parseSemverVersionString } from '../utils/parseSemverVersionString';
 import { getSuppressionLines, SDKSuppressionContentList } from '../utils/handleSuppressionLines';
-import { WorkflowContext } from './Workflow';
 
 /**
  * The data that describes an SDK repository package.

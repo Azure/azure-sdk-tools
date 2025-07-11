@@ -1,7 +1,15 @@
-import { existsSync, mkdirSync, rmSync } from 'fs';
+import {existsSync, mkdirSync, rmSync} from 'fs';
 import * as winston from 'winston';
 import { workflowInit, workflowMain } from './workflow';
-import { loggerConsoleTransport, loggerDevOpsTransport, loggerFileTransport, loggerTestTransport, loggerWaitToFinish, sdkAutoLogLevels, vsoLogError } from './logging';
+import {
+  loggerConsoleTransport,
+  loggerDevOpsTransport,
+  loggerFileTransport,
+  loggerTestTransport,
+  loggerWaitToFinish,
+  sdkAutoLogLevels,
+  vsoLogError
+} from './logging';
 import path from 'path';
 import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog, saveVsoLog } from './reportStatus';
 import { getSpecConfig, specConfigPath } from '../types/SpecConfig';
@@ -12,7 +20,7 @@ import { getSdkRepoConfig, loadConfigContent, setFailureType } from '../utils/wo
 
 export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAutoContext> => {
   const logger = winston.createLogger({
-    levels: sdkAutoLogLevels.levels,
+    levels: sdkAutoLogLevels.levels
   });
 
   if (options.runEnv === 'local') {
@@ -24,7 +32,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   }
 
   // Extract relevant parts from tspConfigPath or readmePath
-  const fileNamePrefix = extractPathFromSpecConfig(options.tspConfigPath, options.readmePath);
+  const fileNamePrefix = extractPathFromSpecConfig(options.tspConfigPath, options.readmePath)
   const logFolder = path.join(options.workingFolder, 'out/logs');
   if (!existsSync(logFolder)) {
     mkdirSync(logFolder, { recursive: true });
@@ -32,7 +40,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const fullLogFileName = path.join(logFolder, `${fileNamePrefix}-full.log`);
   const filteredLogFileName = path.join(logFolder, `${fileNamePrefix}-filtered.log`);
   const vsoLogFileName = path.join(logFolder, `${fileNamePrefix}-vso.log`);
-  const htmlLogFileName = path.join(logFolder, `${fileNamePrefix}-${options.sdkName.substring('azure-sdk-for-'.length)}-gen-result.html`);
+  const htmlLogFileName = path.join(logFolder, `${fileNamePrefix}-${options.sdkName.substring("azure-sdk-for-".length)}-gen-result.html`);
   if (existsSync(fullLogFileName)) {
     rmSync(fullLogFileName);
   }
@@ -48,7 +56,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}, spec-gen-sdk version: ${options.version}`);
   const localSpecConfigPath = path.join(options.localSpecRepoPath, specConfigPath);
-  const specConfigContent = loadConfigContent(localSpecConfigPath, logger);
+  const specConfigContent = loadConfigContent(localSpecConfigPath, logger)
   const specRepoConfig = getSpecConfig(specConfigContent, options.specRepo);
 
   const sdkRepoConfig = await getSdkRepoConfig(options, specRepoConfig);
@@ -66,7 +74,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     specRepoConfig,
     sdkRepoConfig,
     swaggerToSdkConfig,
-    isPrivateSpecRepo: options.specRepo.name.endsWith('-pr'),
+    isPrivateSpecRepo: options.specRepo.name.endsWith('-pr')
   };
 };
 
@@ -79,7 +87,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     await workflowMain(workflowContext);
   } catch (e) {
     if (workflowContext) {
-      const message = 'Refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.';
+      const message = "Refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.";
       sdkContext.logger.error(message);
       workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
       setFailureType(workflowContext, FailureType.SpecGenSdkFailed);

@@ -21,6 +21,7 @@ from azure.identity import DefaultAzureCredential
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
 from src._search_manager import SearchManager
 from src._database_manager import get_database_manager, ContainerNames
+from src._search_manager import SearchManager
 
 colorama.init(autoreset=True)
 
@@ -394,6 +395,14 @@ def search_knowledge_base(
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
 
 
+def reindex_search(containers: Optional[list[str]] = None):
+    """
+    Trigger a reindex of the Azure Search index for the ArchAgent Knowledge Base.
+    If no container is specified, reindex all containers.
+    """
+    return SearchManager.run_indexers(container_names=containers)
+
+
 def review_summarize(language: str, target: str, base: str = None):
     """
     Summarize an API or a diff of two APIs using the deployed API review service.
@@ -644,6 +653,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
+            g.command("reindex", "reindex_search")
         with CommandGroup(self, "review job", "__main__#{}") as g:
             g.command("start", "review_job_start")
             g.command("get", "review_job_get")
@@ -763,6 +773,15 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+        with ArgumentsContext(self, "search reindex") as ac:
+            ac.argument(
+                "containers",
+                type=str,
+                nargs="*",
+                help="The names of the containers to reindex. If not provided, all containers will be reindexed.",
+                options_list=["--containers", "-c"],
+                choices=[c.value for c in ContainerNames if c != "review-jobs"],
             )
         with ArgumentsContext(self, "review job start") as ac:
             ac.argument(

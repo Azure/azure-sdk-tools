@@ -13,6 +13,7 @@ from azure.search.documents.models import (
     QueryCaptionType,
     SemanticErrorMode,
 )
+from azure.search.documents.indexes import SearchIndexerClient
 
 from src._credential import get_credential
 from src._models import Guideline, Example, Memory
@@ -507,3 +508,29 @@ class SearchManager:
 
         context = Context(guidelines=guidelines, examples=examples, memories=memories, scores=scores)
         return context
+
+    @classmethod
+    def run_indexers(cls, container_names: Optional[List[str]] = None):
+        """
+        Reindex one or more Azure Search indexers. If container_names is None, reindex all known indexers.
+        """
+        INDEXED_CONTAINERS = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
+        if not container_names:
+            indexers_to_run = [f"{name}-indexer" for name in INDEXED_CONTAINERS]
+        else:
+            # Map container names to indexer names (simple mapping: container_name + '-indexer')
+            indexers_to_run = [f"{name}-indexer" for name in container_names]
+
+        client = SearchIndexerClient(endpoint=SEARCH_ENDPOINT, credential=CREDENTIAL)
+        results = {}
+        for indexer_name in indexers_to_run:
+            try:
+                status = client.get_indexer_status(indexer_name)
+                if status.status == "inProgress":
+                    results[indexer_name] = {"status": "inProgress", "message": "Indexer is already running."}
+                else:
+                    client.run_indexer(indexer_name)
+                    results[indexer_name] = {"status": "success", "message": "Indexer started successfully."}
+            except Exception as e:
+                results[indexer_name] = {"status": "error", "message": str(e)}
+        return results

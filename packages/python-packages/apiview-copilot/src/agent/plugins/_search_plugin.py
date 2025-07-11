@@ -81,32 +81,11 @@ class SearchPlugin:
         """
         if container_name not in [c.value for c in ContainerNames] or container_name == "review-jobs":
             return
-        indexer_name = f"{container_name}-indexer"
-        search_service = os.environ.get("AZURE_SEARCH_NAME")
-        if not search_service:
-            raise RuntimeError("AZURE_SEARCH_NAME not set in environment.")
-        endpoint = f"https://{search_service}.search.windows.net"
-        client = SearchIndexerClient(endpoint=endpoint, credential=get_credential())
-        status = client.get_indexer_status(indexer_name)
-        if status.status in ["inProgress"]:
-            return {
-                "status": "inProgress",
-                "message": f"Indexer '{indexer_name}' is already running. Skipping invocation.",
-            }
-        client.run_indexer(indexer_name)
-        return {
-            "status": "inProgress",
-            "message": f"Indexer '{indexer_name}' is now running.",
-        }
+        return SearchManager.run_indexers(container_names=[container_name])
 
     @kernel_function(description="Trigger a reindex of all Azure Search indexers for the ArchAgent Knowledge Base.")
     async def run_all_indexers(self):
         """
         Trigger a reindex of all Azure Search indexers for the ArchAgent Knowledge Base.
         """
-        results = {}
-        for container_name in [c.value for c in ContainerNames]:
-            if container_name == "review-jobs":
-                continue
-            results[container_name] = await self.run_indexer(container_name)
-        return results
+        return SearchManager.run_indexers()

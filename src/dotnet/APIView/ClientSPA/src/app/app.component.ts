@@ -3,11 +3,9 @@ import { UserProfileService } from './_services/user-profile/user-profile.servic
 import { ConfigService } from './_services/config/config.service';
 import { ScrollBarSize } from './_models/userPreferenceModel';
 import { Subject, takeUntil } from 'rxjs';
-import { AIReviewJobCompletedDto } from './_dtos/aiReviewJobCompletedDto';
 import { UserProfile } from './_models/userProfile';
 import { SiteNotification } from './_models/notificationsModel';
 import { SignalRService } from './_services/signal-r/signal-r.service';
-import { getAIReviewNotifiationInfo } from './_helpers/common-helpers';
 import { NotificationsService } from './_services/notifications/notifications.service';
 
 @Component({
@@ -28,7 +26,6 @@ export class AppComponent  implements OnInit{
 
   ngOnInit(): void {
     this.setAppTheme();
-    this.handleRealTimeAIReviewUpdates();
   }
 
   setAppTheme() {
@@ -86,18 +83,5 @@ export class AppComponent  implements OnInit{
 
   reloadPage(): void {
     window.location.reload();
-  }
-
-  handleRealTimeAIReviewUpdates() {
-    this.signalRService.onAIReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (aiReviewUpdate: AIReviewJobCompletedDto) => {
-        if (aiReviewUpdate.createdBy == this.userProfile?.userName) {
-          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
-          if (notificationInfo) {
-            this.notificationsService.addNotification(notificationInfo[0]);
-          }
-        }
-      }
-    });
   }
 }

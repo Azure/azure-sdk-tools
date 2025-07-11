@@ -136,7 +136,7 @@ export function getApiReviewPath(packageRoot: string): string {
     }
 
     // If standard doesn't exist, return the node.api.md path without checking if it exists
-    const nodePath = `${apiReviewPath}-node.api.md`;
+    const nodePath = `${apiReviewPath}${NODE_API_MD_SUFFIX}`;
     logger.info(`Using node API review file: ${nodePath}`);
     return nodePath;
 }

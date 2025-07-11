@@ -167,6 +167,14 @@ extends:
                 name: ${{ test.Pool }}
                 os: ${{ test.Os }}
 
+              templateContext:
+                outputs:
+                  - output: pipelineArtifact
+                    targetPath: '$(Build.ArtifactStagingDirectory)/llm-artifacts'
+                    artifactName: "LLM Artifacts - ${{ test.name }} - $(System.JobAttempt)"
+                    condition: eq(variables['uploadLlmArtifacts'], 'true')
+                    sbomEnabled: false
+
               steps:
                 - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
@@ -189,6 +197,8 @@ extends:
                     testRunTitle: $(System.JobDisplayName)
                     testResultsFormat: 'VSTest'
                     mergeTestResults: true
+
+                - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml

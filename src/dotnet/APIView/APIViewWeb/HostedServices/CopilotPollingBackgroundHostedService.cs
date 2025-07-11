@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -80,10 +81,15 @@ namespace APIViewWeb.HostedServices
                                 throw new Exception(result.Details);
                             }
 
+                            List<AIReviewComment> validComments = result.Comments?
+                                .Where(comment => jobInfo.CodeLines[comment.LineNo - 1].lineId != null)
+                                .ToList() ?? new List<AIReviewComment>();
+
                             // Write back result as comments to APIView
-                            foreach (var comment in result.Comments)
+                            foreach (var comment in validComments)
                             {
                                 var codeLine = jobInfo.CodeLines[comment.LineNo - 1];
+
                                 var commentModel = new CommentItemModel();
                                 commentModel.CreatedOn = DateTime.UtcNow;
                                 commentModel.ReviewId = jobInfo.APIRevision.ReviewId;
@@ -112,7 +118,7 @@ namespace APIViewWeb.HostedServices
                                 }
 
                                 commentModel.ResolutionLocked = false;
-                                commentModel.CreatedBy = "azure-sdk";
+                                commentModel.CreatedBy = ApiViewConstants.AzureSdkBotName;
                                 commentModel.CommentText = commentText.ToString();
 
                                 await _commentsRepository.UpsertCommentAsync(commentModel);
@@ -127,7 +133,7 @@ namespace APIViewWeb.HostedServices
                                 Status = result.Status,
                                 Details = result.Details,
                                 CreatedBy = jobInfo.CreatedBy,
-                                NoOfGeneratedComment = result.Comments.Count,
+                                NoOfGeneratedComment = validComments.Count,
                                 JobId = jobInfo.JobId
                             }, stoppingToken);
                         }

@@ -121,5 +121,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
         {
             return Task.FromResult(true);
         }
+
+        Task<Dictionary<string, List<string>>> IDevOpsService.GetPipelineLlmArtifacts(string project, int buildId)
+        {
+            return Task.FromResult(new Dictionary<string, List<string>>());
+        }
     }
 }

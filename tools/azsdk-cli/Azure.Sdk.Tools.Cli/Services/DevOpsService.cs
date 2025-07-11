@@ -14,7 +14,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {

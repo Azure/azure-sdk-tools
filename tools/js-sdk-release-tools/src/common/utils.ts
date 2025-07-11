@@ -114,18 +114,31 @@ export function getNpmPackageName(packageRoot: string): string {
 export function getApiReviewPath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
+    let apiReviewPath: string;
     switch (sdkType) {
         case SDKType.ModularClient:
             const modularPackageName = npmPackageName.substring('@azure/'.length);
-            const apiViewFileName = `${modularPackageName}.api.md`;
-            return path.join(packageRoot, 'review', apiViewFileName);
+            const apiViewFileName = `${modularPackageName}`;
+            apiReviewPath = path.join(packageRoot, 'review', apiViewFileName);
+            break;  // Added missing break statement
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
             const packageName = npmPackageName.split('/')[1];
-            return path.join(packageRoot, 'review', `${packageName}.api.md`);
+            apiReviewPath = path.join(packageRoot, 'review', `${packageName}`);
     }
+
+    // First check if standard .api.md exists
+    const standardPath = `${apiReviewPath}.api.md`;
+    if (fs.existsSync(standardPath)) {
+        return standardPath;
+    }
+
+    // If standard doesn't exist, return the node.api.md path without checking if it exists
+    const nodePath = `${apiReviewPath}-node.api.md`;
+    logger.info(`Using node API review file: ${nodePath}`);
+    return nodePath;
 }
 
 export function getTsSourceFile(filePath: string): SourceFile | undefined {

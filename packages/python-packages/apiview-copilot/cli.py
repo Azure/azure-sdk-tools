@@ -16,9 +16,9 @@ from typing import Optional
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
-from azure.identity import DefaultAzureCredential
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src._credential import get_credential
 from src._search_manager import SearchManager
 from src._database_manager import get_database_manager, ContainerNames
 from src._search_manager import SearchManager
@@ -583,7 +583,7 @@ def get_apiview_comments(revision_id: str):
     cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
 
     try:
-        client = CosmosClient(url=cosmos_url, credential=DefaultAzureCredential())
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
         database = client.get_database_client(cosmos_db)
         container = database.get_container_client(container_name)
 

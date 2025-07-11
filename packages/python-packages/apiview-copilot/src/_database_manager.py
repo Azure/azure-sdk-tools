@@ -4,10 +4,12 @@ import os
 from pydantic import BaseModel
 import time
 
-from azure.identity import DefaultAzureCredential
+from azure.identity import ChainedTokenCredential
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from azure.search.documents.indexes import SearchIndexerClient
+
+from src._credential import get_credential
 
 
 class ContainerNames(Enum):
@@ -22,7 +24,7 @@ class ContainerNames(Enum):
 
 
 class DatabaseManager:
-    def __init__(self, endpoint: str, db_name: str, credential: DefaultAzureCredential):
+    def __init__(self, endpoint: str, db_name: str, credential: ChainedTokenCredential):
         self.client = CosmosClient(endpoint, credential=credential)
         self.database = self.client.get_database_client(db_name)
         self.containers = {}
@@ -130,7 +132,7 @@ class BasicContainer:
         if not search_service:
             raise RuntimeError("AZURE_SEARCH_NAME not set in environment.")
         endpoint = f"https://{search_service}.search.windows.net"
-        client = SearchIndexerClient(endpoint=endpoint, credential=DefaultAzureCredential())
+        client = SearchIndexerClient(endpoint=endpoint, credential=get_credential())
         status = client.get_indexer_status(indexer_name)
         if status.status in ["inProgress"]:
             return

@@ -98,7 +98,7 @@ You must ensure you adhere to the following guidelines.
 
 ## Guidelines
 
-The Guideline schema is:
+The Guideline schema you must adhere to is:
 {guideline_schema}
 
 For specific fields:
@@ -109,7 +109,7 @@ For specific fields:
 
 ## Examples
 
-The Example schema is:
+The Example schema you must adhere to is:
 {example_schema}
 
 For specific fields:
@@ -123,7 +123,7 @@ For specific fields:
 
 ## Memories
 
-The Memory schema is:
+The Memory schema you must adhere to is:
 {memory_schema}
 
 For specific fields:
@@ -450,6 +450,13 @@ class DatabaseRetrievePlugin:
         db = get_database_manager()
         return db.memories.get(memory_id)
 
+    @kernel_function(description="Retrieve the Memory schema.")
+    async def get_memory_schema(self):
+        """
+        Retrieve the Memory schema.
+        """
+        return Memory.model_json_schema(indent=2)
+
     @kernel_function(description="Retrieve an example from the database by its ID.")
     async def get_example(self, example_id: str):
         """
@@ -460,6 +467,13 @@ class DatabaseRetrievePlugin:
         db = get_database_manager()
         return db.examples.get(example_id)
 
+    @kernel_function(description="Retrieve the Example schema.")
+    async def get_example_schema(self):
+        """
+        Retrieve the Example schema.
+        """
+        return Example.model_json_schema(indent=2)
+
     @kernel_function(description="Retrieve a guideline from the database by its ID.")
     async def get_guideline(self, guideline_id: str):
         """
@@ -469,6 +483,13 @@ class DatabaseRetrievePlugin:
         """
         db = get_database_manager()
         return db.guidelines.get(guideline_id)
+
+    @kernel_function(description="Retrieve the Guideline schema.")
+    async def get_guideline_schema(self):
+        """
+        Retrieve the Guideline schema.
+        """
+        return Guideline.model_json_schema(indent=2)
 
 
 class DatabaseLinkUnlinkPlugin:

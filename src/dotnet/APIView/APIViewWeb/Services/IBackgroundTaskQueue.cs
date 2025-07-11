@@ -5,11 +5,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace APIViewWeb.Services
+namespace APIViewWeb.Services;
+
+public interface IBackgroundTaskQueue
 {
-    public interface IBackgroundTaskQueue
-    {
-        void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem);
-        Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken);
-    }
+    void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem);
+    Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken);
 }

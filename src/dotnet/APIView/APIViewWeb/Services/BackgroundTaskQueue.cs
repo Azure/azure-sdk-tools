@@ -7,37 +7,35 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace APIViewWeb.Services
+namespace APIViewWeb.Services;
+
+public class BackgroundTaskQueue : IBackgroundTaskQueue
 {
-    public class BackgroundTaskQueue : IBackgroundTaskQueue
+    private readonly ILogger<BackgroundTaskQueue> _logger;
+    private readonly SemaphoreSlim _signal = new(0);
+    private readonly ConcurrentQueue<Func<CancellationToken, Task>> _workItems = new();
+
+    public BackgroundTaskQueue(ILogger<BackgroundTaskQueue> logger)
     {
-        private readonly ILogger<BackgroundTaskQueue> _logger;
-        private readonly ConcurrentQueue<Func<CancellationToken, Task>> _workItems = new();
-        private readonly SemaphoreSlim _signal = new(0);
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-        public BackgroundTaskQueue(ILogger<BackgroundTaskQueue> logger)
+    public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
+    {
+        if (workItem == null)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
+            throw new ArgumentNullException(nameof(workItem));
+        } 
 
-        public void QueueBackgroundWorkItem(Func<CancellationToken, Task> workItem)
-        {
-            if (workItem == null)
-            {
-                throw new ArgumentNullException(nameof(workItem));
-            }
+        _workItems.Enqueue(workItem); 
+        _signal.Release(); 
+    }
 
-            _workItems.Enqueue(workItem);
-            _signal.Release();
-            _logger.LogDebug("Background work item queued. Queue count: {Count}", _workItems.Count);
-        }
+    public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
+    {
+        await _signal.WaitAsync(cancellationToken);
+        _workItems.TryDequeue(out Func<CancellationToken, Task> workItem);
 
-        public async Task<Func<CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken)
-        {
-            await _signal.WaitAsync(cancellationToken);
-            _workItems.TryDequeue(out var workItem);
-
-            return workItem;
-        }
+        return workItem;
     }
 }

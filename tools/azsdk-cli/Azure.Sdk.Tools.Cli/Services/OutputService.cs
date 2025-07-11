@@ -40,8 +40,11 @@ public class OutputService : IOutputService
 
         var elementType = response.GetType().IsGenericType ? response.GetType().GetGenericArguments()[0] : null;
 
+        // Add special handling for enumerables to print each element on a new line
+        // This won't necesarily work for lists of lists
         if (response is System.Collections.IEnumerable enumerable && response is not string)
         {
+            // Use a separator object types for better readability
             var separator = "--------------------------------------------------------------------------------" + Environment.NewLine;
             if (elementType == null
                 || elementType.IsPrimitive || elementType == typeof(decimal) || elementType == typeof(string))

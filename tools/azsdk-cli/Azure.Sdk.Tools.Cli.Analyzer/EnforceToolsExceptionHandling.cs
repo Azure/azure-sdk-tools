@@ -57,7 +57,8 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 return;
             }
 
-            // check that try statements surround the entire body
+            // Enforce the rule that try statements must surround the entire method body
+            // with an exception for variable declarations (this way vars can be declared that are used in both try and catch blocks).
             var stmts = body.Statements;
             foreach (var stmt in stmts)
             {

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -143,6 +144,11 @@ namespace APIViewWeb.LeanControllers
             catch (AuthorizationFailedException)
             {
                 return new LeanJsonResult(responseContent, StatusCodes.Status401Unauthorized);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating API revision if API has changes.");
+                return new LeanJsonResult(responseContent, StatusCodes.Status500InternalServerError);
             }
         }
 

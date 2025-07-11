@@ -20,7 +20,7 @@ from azure.identity import DefaultAzureCredential
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
 from src._search_manager import SearchManager
-from src._database_manager import get_database_manager
+from src._database_manager import get_database_manager, ContainerNames
 
 colorama.init(autoreset=True)
 
@@ -386,7 +386,7 @@ def search_knowledge_base(
         with open(path, "r") as f:
             query = f.read()
     results = search.search_all(query=query)
-    context = search.build_context(results)
+    context = search.build_context(results.results)
     if markdown:
         md = context.to_markdown()
         print(md)
@@ -546,14 +546,6 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
                 print(f"Error handling agent mention: {e}")
 
         asyncio.run(run_local_mention())
-
-
-CONTAINERS = [
-    "guidelines",
-    "memories",
-    "examples",
-    "review-jobs",
-]
 
 
 def db_get(container_name: str, id: str):
@@ -850,7 +842,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "container_name",
                 type=str,
                 help="The name of the Cosmos DB container",
-                choices=CONTAINERS,
+                choices=[c.value for c in ContainerNames],
                 options_list=["--container-name", "-c"],
             )
             ac.argument(

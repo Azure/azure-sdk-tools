@@ -411,11 +411,11 @@ class SearchManager:
         memories_container = database.get_container_client("memories")
 
         # Partition input items by kind using SearchItem attributes
-        guidelines = {item.id: item for item in items.results if item.kind == "guidelines"}
-        examples = {item.id: item for item in items.results if item.kind == "examples"}
-        memories = {item.id: item for item in items.results if item.kind == "memories"}
+        guidelines = {item.id: item for item in items if item.kind == "guidelines"}
+        examples = {item.id: item for item in items if item.kind == "examples"}
+        memories = {item.id: item for item in items if item.kind == "memories"}
         # Save scores for each id
-        scores = {item.id: item.score for item in items.results if hasattr(item, "score")}
+        scores = {item.id: item.score for item in items if hasattr(item, "score")}
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set()

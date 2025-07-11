@@ -145,7 +145,7 @@ namespace APIViewWeb.LeanControllers
 
             if (isApiViewAgentTagged)
             {
-                _ = Task.Run(() => _commentsManager.RequestAgentReply(User, comment, apiRevisionId));
+                await _commentsManager.RequestAgentReply(User, comment, apiRevisionId);
             }
 
             return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));

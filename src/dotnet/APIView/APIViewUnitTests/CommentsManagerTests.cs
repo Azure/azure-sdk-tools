@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -13,6 +14,7 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
@@ -79,6 +81,13 @@ public class CommentsManagerTests
                 StatusCode = HttpStatusCode.OK, Content = new StringContent("{}")
             });
 
+        Mock<IBackgroundTaskQueue> backgroundTaskQueueMock = new();
+        backgroundTaskQueueMock.Setup(q => q.QueueBackgroundWorkItem(It.IsAny<Func<CancellationToken, Task>>()))
+            .Callback<Func<CancellationToken, Task>>(workItem =>
+            {
+                _ = workItem.Invoke(CancellationToken.None);
+            });
+
         HttpClient httpClient = new(handlerMock.Object);
         httpClientFactoryMock
             .Setup(f => f.CreateClient(It.IsAny<string>()))
@@ -96,6 +105,7 @@ public class CommentsManagerTests
             userProfileCache,
             configMock.Object,
             orgOptionsMock.Object,
+            backgroundTaskQueueMock.Object,
             logger.Object
         );
     }

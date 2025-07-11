@@ -65,7 +65,6 @@ namespace Azure.Tools.GeneratorAgent
             _logger.LogInformation("✅ Agent created successfully: {Name} ({Id})", _agent.Name, _agent.Id);
         }
 
-
         private async Task DeleteAgentsAsync(CancellationToken ct)
         {
             var agents = new List<PersistentAgent>();
@@ -87,7 +86,7 @@ namespace Azure.Tools.GeneratorAgent
                     _logger.LogError(ex, "Failed to delete agent {Name} ({Id})", agent.Name, agent.Id);
                 }
             });
-            
+
             await Task.WhenAll(deleteTasks);
         }
 

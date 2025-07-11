@@ -5,6 +5,7 @@ using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -27,8 +28,6 @@ public class PipelineTestsTool : MCPTool
     private ILogger<PipelineTestsTool> logger;
 
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
-
-    private const string PUBLIC_PROJECT = "public";
 
     public PipelineTestsTool(
         IAzureService azureService,
@@ -73,10 +72,10 @@ public class PipelineTestsTool : MCPTool
         {
             return;
         }
-        var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
+        var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };  // Azure DevOps scope
         var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
         var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
-        var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
+        var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
         buildClient = connection.GetClient<BuildHttpClient>();
     }
 
@@ -111,11 +110,11 @@ public class PipelineTestsTool : MCPTool
         }
         try
         {
-            return await buildClient.GetBuildAsync("public", buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, buildId);
         }
         catch (Exception)
         {
-            return await buildClient.GetBuildAsync("internal", buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId);
         }
     }
 }

@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 
@@ -30,7 +31,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         private WorkItemTrackingHttpClient _workItemClient;
         private ProjectHttpClient _projectClient;
         private AccessToken? _token;
-        private static readonly string DEVOPS_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
 
         private void RefreshConnection()
         {
@@ -39,11 +39,11 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             try
             {
-                _token = (new DefaultAzureCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
+                _token = (new DefaultAzureCredential()).GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]));
             }
             catch
             {
-                _token = (new InteractiveBrowserCredential()).GetToken(new TokenRequestContext([DEVOPS_SCOPE]));
+                _token = (new InteractiveBrowserCredential()).GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]));
             }
 
             if (_token == null)
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             try
             {
-                var connection = new VssConnection(new Uri(DevOpsService.DEVOPS_URL), new VssOAuthAccessTokenCredential(_token?.Token));
+                var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
                 _buildClient = connection.GetClient<BuildHttpClient>();
                 _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
                 _projectClient = connection.GetClient<ProjectHttpClient>();
@@ -103,12 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
-        public static readonly string DEVOPS_URL = "https://dev.azure.com/azure-sdk";
-        public static readonly string RELEASE_PROJECT = "release";
-        public static readonly string INTERNAL_PROJECT = "internal";
         private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
-
-        private const string PUBLIC_PROJECT = "public";
 
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
@@ -128,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<ReleasePlan> GetReleasePlanAsync(int releasePlanId)
         {
             // First find the API spec work item
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
             var releasePlanWorkItems = await FetchWorkItemsAsync(query);
             if (releasePlanWorkItems.Count == 0)
             {
@@ -209,7 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // First find the API spec work item
             try
             {
-                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.RESTAPIReviews] CONTAINS WORDS '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.RESTAPIReviews] CONTAINS WORDS '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
                 var apiSpecWorkItems = await FetchWorkItemsAsync(query);
                 if (apiSpecWorkItems.Count == 0)
                 {
@@ -335,7 +330,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             logger.LogInformation($"Creating {workItemType} work item");
             logger.LogInformation($"Request data to DeVops: {JsonSerializer.Serialize(specDocument)}");
-            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, RELEASE_PROJECT, workItemType);
+            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType);
             if (workItem == null)
             {
                 throw new Exception("Failed to create Work Item");
@@ -536,8 +531,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var buildClient = connection.GetBuildClient();
             var projectClient = connection.GetProjectClient();
-            var definition = await buildClient.GetDefinitionAsync(INTERNAL_PROJECT, pipelineDefinitionId);
-            var project = await projectClient.GetProject(INTERNAL_PROJECT);
+            var definition = await buildClient.GetDefinitionAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, pipelineDefinitionId);
+            var project = await projectClient.GetProject(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT);
 
             // Queue SDK generation pipeline
             logger.LogInformation($"Queueing pipeline [{definition.Name}].");
@@ -555,13 +550,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<Build> GetPipelineRunAsync(int buildId)
         {
             var buildClient = connection.GetBuildClient();
-            return await buildClient.GetBuildAsync(INTERNAL_PROJECT, buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId);
         }
 
         public async Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId)
         {
             var buildClient = connection.GetBuildClient();
-            var timeLine = await buildClient.GetBuildTimelineAsync(INTERNAL_PROJECT, buildId);
+            var timeLine = await buildClient.GetBuildTimelineAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId);
             var createPrJob = timeLine.Records.FirstOrDefault(r => r.Name == "Create pull request") ?? null;
             if (createPrJob == null)
             {
@@ -571,7 +566,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Get SDK pull request from create pull request job attachment
             if (createPrJob.Result == TaskResult.Succeeded)
             {
-                var contentStream = await buildClient.GetAttachmentAsync(INTERNAL_PROJECT, buildId, timeLine.Id, createPrJob.Id, "Distributedtask.Core.Summary", "Pull Request Created");
+                var contentStream = await buildClient.GetAttachmentAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, timeLine.Id, createPrJob.Id, "Distributedtask.Core.Summary", "Pull Request Created");
                 if (contentStream != null)
                 {
                     var content = new StreamReader(contentStream);
@@ -599,7 +594,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public static string GetPipelineUrl(int buildId)
         {
-            return $"https://dev.azure.com/azure-sdk/internal/_build/results?buildId={buildId}";
+            return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/internal/_build/results?buildId={buildId}";
         }
 
         public static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
@@ -847,7 +842,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
 
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
             if (!string.IsNullOrEmpty(packageVersion))
             {
                 query += $" AND [Custom.PackageVersion] = '{packageVersion}'";
@@ -960,7 +955,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             var result = new Dictionary<string, List<string>>();
             using var httpClient = new HttpClient();
-            var artifactsUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
+            var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
             var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
             artifactsResponse.EnsureSuccessStatusCode();
             var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
@@ -1045,7 +1040,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId)
         {
-            if (project == PUBLIC_PROJECT)
+            if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
             {
                 return await GetLlmArtifactsUnauthenticated(project, buildId);
             }

@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -31,12 +32,6 @@ public class PipelineAnalysisTool : MCPTool
     private ITestHelper testHelper;
     private readonly IOutputService output;
     private readonly ILogger<PipelineAnalysisTool> logger;
-
-    private const string AZURE_DEVOPS_TOKEN_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
-    private const string MICROSOFT_CORP_TENANT = "72f988bf-86f1-41af-91ab-2d7cd011db47";
-    private const string AZURE_DEVOPS_BASE_URL = "https://dev.azure.com/azure-sdk";
-    private const string PUBLIC_PROJECT = "public";
-    private const string INTERNAL_PROJECT = "internal";
 
     private IAzureAgentService azureAgentService;
     private TokenUsageHelper usage;
@@ -142,17 +137,16 @@ public class PipelineAnalysisTool : MCPTool
 
         if (auth)
         {
-            var tokenScope = new[] { AZURE_DEVOPS_TOKEN_SCOPE };
-            var msftCorpTenant = MICROSOFT_CORP_TENANT;
-            var token = azureService.GetCredential(msftCorpTenant).GetToken(new TokenRequestContext(tokenScope));
+            var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope));
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
-            var connection = new VssConnection(new Uri(AZURE_DEVOPS_BASE_URL), tokenCredential);
+            var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
             _buildClient = connection.GetClient<BuildHttpClient>();
             _testClient = connection.GetClient<TestResultsHttpClient>();
         }
         else
         {
-            var connection = new VssConnection(new Uri(AZURE_DEVOPS_BASE_URL), null);
+            var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), null);
             _buildClient = connection.GetClient<BuildHttpClient>();
             _testClient = connection.GetClient<TestResultsHttpClient>();
         }
@@ -162,15 +156,15 @@ public class PipelineAnalysisTool : MCPTool
 
     private async Task<string> GetPipelineProject(int buildId, string? project = null)
     {
-        if (project == PUBLIC_PROJECT || string.IsNullOrEmpty(project))
+        if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || string.IsNullOrEmpty(project))
         {
-            var pipelineUrl = $"{AZURE_DEVOPS_BASE_URL}/{PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
+            var pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
             logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
             var response = await httpClient.GetAsync(pipelineUrl);
             // If project is not specified, try both public and internal projects
             if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
             {
-                return await GetPipelineProject(buildId, INTERNAL_PROJECT);
+                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT);
             }
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
@@ -183,7 +177,7 @@ public class PipelineAnalysisTool : MCPTool
             return projectName;
         }
 
-        var _pipelineUrl = $"{AZURE_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
+        var _pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
         logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
         var build = await buildClient.GetBuildAsync(project, buildId);
         return build.Project.Name;
@@ -193,7 +187,7 @@ public class PipelineAnalysisTool : MCPTool
     {
         logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
 
-        if (project != PUBLIC_PROJECT)
+        if (project != Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
         {
             var timeline = await buildClient.GetBuildTimelineAsync(project, buildId, cancellationToken: ct);
             var _failedTasks = timeline.Records.Where(
@@ -205,7 +199,7 @@ public class PipelineAnalysisTool : MCPTool
             return _failedTasks.Select(t => t.Log?.Id ?? 0).Where(id => id != 0).Distinct().ToList();
         }
 
-        var timelineUrl = $"{AZURE_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
+        var timelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
         logger.LogDebug("Getting timeline records from {url}", timelineUrl);
         var response = await httpClient.GetAsync(timelineUrl, ct);
         response.EnsureSuccessStatusCode();
@@ -309,7 +303,7 @@ public class PipelineAnalysisTool : MCPTool
 
     public async Task<string> GetBuildLogLinesUnauthenticated(string project, int buildId, int logId, CancellationToken ct = default)
     {
-        var logUrl = $"{AZURE_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
+        var logUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
         logger.LogDebug("Fetching log file from {url}", logUrl);
         var response = await httpClient.GetAsync(logUrl, ct);
         response.EnsureSuccessStatusCode();
@@ -321,7 +315,7 @@ public class PipelineAnalysisTool : MCPTool
     {
         try
         {
-            project ??= PUBLIC_PROJECT;
+            project ??= Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT;
             var session = $"{project}-{buildId}";
             List<string> logs = [];
 
@@ -330,7 +324,7 @@ public class PipelineAnalysisTool : MCPTool
                 string logText;
                 logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
 
-                if (project == PUBLIC_PROJECT)
+                if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
                 {
                     logText = await GetBuildLogLinesUnauthenticated(project, buildId, logId, ct);
                 }

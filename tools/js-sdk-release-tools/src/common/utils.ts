@@ -122,7 +122,7 @@ export function getApiReviewPath(packageRoot: string): string {
             const modularPackageName = npmPackageName.substring('@azure/'.length);
             const apiViewFileName = `${modularPackageName}`;
             apiReviewPath = path.join(packageRoot, 'review', apiViewFileName);
-            break;  // Added missing break statement
+            break;
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:

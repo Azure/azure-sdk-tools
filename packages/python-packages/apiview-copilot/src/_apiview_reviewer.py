@@ -744,7 +744,8 @@ class ApiViewReview:
         try:
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             results = self.search.search_all(query=query)
-            context = self.search.build_context(results.results)            return context
+            context = self.search.build_context(results.results)
+            return context
         except Exception as e:
             logger.error(f"Error retrieving context: {type(e).__name__}: {e}", exc_info=True)
             return None

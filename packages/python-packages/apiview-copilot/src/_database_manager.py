@@ -1,11 +1,24 @@
-from azure.identity import DefaultAzureCredential
-from azure.cosmos import CosmosClient
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
-
+from enum import Enum
 from functools import lru_cache
 import os
 from pydantic import BaseModel
 import time
+
+from azure.identity import DefaultAzureCredential
+from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.search.documents.indexes import SearchIndexerClient
+
+
+class ContainerNames(Enum):
+    GUIDELINES = "guidelines"
+    MEMORIES = "memories"
+    EXAMPLES = "examples"
+    REVIEW_JOBS = "review-jobs"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return [name.value for name in cls]
 
 
 class DatabaseManager:
@@ -17,9 +30,9 @@ class DatabaseManager:
     def get_container_client(self, name: str) -> "BasicContainer":
         # Decide which container class to use
         if name not in self.containers:
-            if name == "review-jobs":
+            if name == ContainerNames.REVIEW_JOBS.value:
                 self.containers[name] = ReviewJobsContainer(self, name)
-            elif name == "guidelines":
+            elif name == ContainerNames.GUIDELINES.value:
                 self.containers[name] = GuidelinesContainer(self, name)
             else:
                 self.containers[name] = BasicContainer(self, name)
@@ -27,25 +40,26 @@ class DatabaseManager:
 
     @property
     def guidelines(self):
-        return self.get_container_client("guidelines")
+        return self.get_container_client(ContainerNames.GUIDELINES.value)
 
     @property
     def memories(self):
-        return self.get_container_client("memories")
+        return self.get_container_client(ContainerNames.MEMORIES.value)
 
     @property
     def examples(self):
-        return self.get_container_client("examples")
+        return self.get_container_client(ContainerNames.EXAMPLES.value)
 
     @property
     def review_jobs(self):
-        return self.get_container_client("review-jobs")
+        return self.get_container_client(ContainerNames.REVIEW_JOBS.value)
 
 
 class BasicContainer:
     def __init__(self, manager: DatabaseManager, container_name: str):
         self.client = manager.database.get_container_client(container_name)
-        self.preprocess_id = None  # Optional preprocessing function for item IDs
+        self.preprocess_id = None
+        self.container_name = container_name
 
     def _to_dict(self, data):
         if BaseModel and isinstance(data, BaseModel):
@@ -72,7 +86,9 @@ class BasicContainer:
         except CosmosResourceNotFoundError:
             # Item does not exist, safe to create
             self.client.create_item(body=data_dict)
-            return {"status": "created", "id": data_dict["id"]}
+            value = {"status": "created", "id": data_dict["id"]}
+            self.run_indexer()
+            return value
 
     def upsert(self, item_id: str, *, data):
         """
@@ -81,7 +97,9 @@ class BasicContainer:
         if self.preprocess_id:
             item_id = self.preprocess_id(item_id)
         data_dict = self._to_dict(data)
-        return self.client.upsert_item({"id": item_id, **data_dict})
+        value = self.client.upsert_item({"id": item_id, **data_dict})
+        self.run_indexer()
+        return value
 
     def get(self, item_id: str):
         """
@@ -93,11 +111,30 @@ class BasicContainer:
 
     def delete(self, item_id: str):
         """
-        Delete an item by its ID. Returns the response from the delete operation.
+        Soft-delete an item by its ID. Sets 'isDeleted' to True instead of removing the document.
         """
         if self.preprocess_id:
             item_id = self.preprocess_id(item_id)
-        return self.client.delete_item(item=item_id, partition_key=item_id)
+        item = self.get(item_id)
+        item["isDeleted"] = True
+        value = self.client.upsert_item(item)
+        self.run_indexer()
+        return value
+
+    def run_indexer(self):
+        """
+        Trigger the Azure Search indexer for this container (examples, guidelines, or memories).
+        """
+        indexer_name = f"{self.container_name}-indexer"
+        search_service = os.environ.get("AZURE_SEARCH_NAME")
+        if not search_service:
+            raise RuntimeError("AZURE_SEARCH_NAME not set in environment.")
+        endpoint = f"https://{search_service}.search.windows.net"
+        client = SearchIndexerClient(endpoint=endpoint, credential=DefaultAzureCredential())
+        status = client.get_indexer_status(indexer_name)
+        if status.status in ["inProgress"]:
+            return
+        client.run_indexer(indexer_name)
 
 
 class GuidelinesContainer(BasicContainer):
@@ -117,6 +154,10 @@ class ReviewJobsContainer(BasicContainer):
         )
         for item in self.client.query_items(query=query, enable_cross_partition_query=True):
             self.delete(item["id"])
+
+    def run_indexer(self):
+        # reviews_jobs container does not have an indexer
+        pass
 
 
 @lru_cache()

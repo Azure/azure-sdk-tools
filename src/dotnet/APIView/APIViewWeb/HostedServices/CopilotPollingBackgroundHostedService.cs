@@ -89,7 +89,6 @@ namespace APIViewWeb.HostedServices
                             foreach (var comment in validComments)
                             {
                                 var codeLine = jobInfo.CodeLines[comment.LineNo - 1];
-
                                 var commentModel = new CommentItemModel();
                                 commentModel.CreatedOn = DateTime.UtcNow;
                                 commentModel.ReviewId = jobInfo.APIRevision.ReviewId;

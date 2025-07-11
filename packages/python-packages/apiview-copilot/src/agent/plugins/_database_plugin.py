@@ -39,7 +39,7 @@ class DatabasePlugin:
         title: str,
         content: str,
         language: Optional[str] = None,
-        service: Optional[str] = None,
+        service_name: Optional[str] = None,
         is_exception: bool = False,
         source: str = None,
     ):
@@ -50,7 +50,7 @@ class DatabasePlugin:
             title (str): Short descriptive title of the memory.
             content (str): Content of the memory.
             language (str, optional): Language the memory applies to.
-            service (str, optional): Service the memory applies to.
+            service_name (str, optional): The Azure service the memory applies to.
             is_exception (bool, optional): If the memory is an exception to guidelines.
             source (str): The source of the memory.
         """
@@ -59,7 +59,7 @@ class DatabasePlugin:
             "title": title,
             "content": content,
             "language": language,
-            "service": service,
+            "service": service_name,
             "is_exception": is_exception,
             "source": source,
         }
@@ -73,7 +73,7 @@ class DatabasePlugin:
         content: str,
         id: str = None,
         language: Optional[str] = None,
-        service: Optional[str] = None,
+        service_name: Optional[str] = None,
         is_exception: bool = False,
         example_type: str = None,
     ):
@@ -84,7 +84,7 @@ class DatabasePlugin:
             title (str): Short descriptive title of the example.
             content (str): Code snippet containing the example.
             language (str, optional): Language the example applies to.
-            service (str, optional): Service the example applies to.
+            service_name (str, optional): The Azure service the example applies to.
             is_exception (bool, optional): If the example is an exception to guidelines.
             example_type (str): Whether this example is 'good' or 'bad'.
         """
@@ -93,7 +93,7 @@ class DatabasePlugin:
             "title": title,
             "content": content,
             "language": language,
-            "service": service,
+            "service": service_name,
             "is_exception": is_exception,
             "example_type": example_type,
         }

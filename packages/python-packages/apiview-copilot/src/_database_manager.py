@@ -3,6 +3,7 @@ from functools import lru_cache
 import os
 from pydantic import BaseModel
 import time
+import requests
 
 from azure.identity import ChainedTokenCredential
 from azure.cosmos import CosmosClient
@@ -58,7 +59,7 @@ class DatabaseManager:
 
 
 class BasicContainer:
-    def __init__(self, manager: DatabaseManager, container_name: str):
+    def __init__(self, manager: "DatabaseManager", container_name: str):
         self.client = manager.database.get_container_client(container_name)
         self.preprocess_id = None
         self.container_name = container_name

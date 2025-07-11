@@ -8,6 +8,7 @@ from typing import Optional
 from azure.identity import DefaultAzureCredential
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
+from src._models import Guideline, Example, Memory
 from src._database_manager import get_database_manager, ContainerNames
 
 
@@ -48,7 +49,6 @@ You must ensure you adhere to the following guidelines.
                 credential=credentials, endpoint=ai_agent_settings.endpoint, api_version=ai_agent_settings.api_version
             )
         )
-        link_unlink_agent = await stack.enter_async_context(get_link_agent())
         agent_definition = await client.agents.create_agent(
             name="DeleteAgent",
             description="Handles database delete requests.",
@@ -58,7 +58,7 @@ You must ensure you adhere to the following guidelines.
         agent = AzureAIAgent(
             client=client,
             definition=agent_definition,
-            plugins=[DatabaseDeletePlugin(), link_unlink_agent],
+            plugins=[DatabaseDeletePlugin()],
             polling_options=RunPollingOptions(run_polling_interval=timedelta(seconds=1)),
             kernel=create_kernel(),
         )
@@ -74,6 +74,9 @@ async def get_create_agent():
         model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
         api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
     )
+    guideline_schema = Guideline.model_json_schema(indent=2)
+    example_schema = Example.model_json_schema(indent=2)
+    memory_schema = Memory.model_json_schema(indent=2)
     ai_instructions = f"""
 You are an agent that processes database create requests for guidelines, examples, memories or review jobs.
 
@@ -95,6 +98,9 @@ You must ensure you adhere to the following guidelines.
 
 ## Guidelines
 
+The Guideline schema is:
+{guideline_schema}
+
 For specific fields:
 - content: you must be provided this. If you are not, ask for it.
 - title: you can be provided this. If you are not, you can infer it from the content, or, as a last resort, ask for it.
@@ -102,6 +108,9 @@ For specific fields:
 - language: this identifies whether the guideline is specific to a particular programming language or applies to all languages. If it is not clear from context, you should ask the user.
 
 ## Examples
+
+The Example schema is:
+{example_schema}
 
 For specific fields:
 - content: this must be a code snippet. If not provided by the user, you can try to infer it from the conversation or ask the user.
@@ -113,6 +122,9 @@ For specific fields:
 - example_type: this specifies if this is a code example representing something GOOD (what they SHOULD do) or BAD (what they SHOULD NOT do). If it is not clear from the conversation, you should ALWAYS clarify with the user.
 
 ## Memories
+
+The Memory schema is:
+{memory_schema}
 
 For specific fields:
 - content: you must be provided this. If not provided by the user, you can try to infer it from the conversation or ask the user.
@@ -164,14 +176,7 @@ async def get_retrieve_agent():
         api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
     )
     ai_instructions = f"""
-You are an agent that processes database get or retrieval requests for guidelines, examples, memories or review jobs.
-
-You must ensure you adhere to the following guidelines.
-
-# INSTRUCTIONS
-
-- Unless otherwise specified, you should expand all references to related items (e.g., guidelines, examples, memories) recursively.
-- Unless otherwise specified, you should return the item in JSON format.
+You are an agent that processes database get or retrieval requests for guidelines, examples, memories, or review jobs.
 """
     credentials = DefaultAzureCredential()
     async with AzureAIAgent.create_client(
@@ -204,8 +209,6 @@ async def get_create_agent():
     )
     ai_instructions = f"""
 You are an agent that processes database create requests for guidelines, examples, memories or review jobs.
-
-You must ensure you adhere to the following guidelines.
 
 # INSTRUCTIONS
 

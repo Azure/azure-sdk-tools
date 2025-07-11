@@ -1,9 +1,5 @@
-import os
 from semantic_kernel.functions import kernel_function
 
-from azure.search.documents.indexes import SearchIndexerClient
-
-from src._credential import get_credential
 from src._search_manager import SearchManager
 from src._database_manager import ContainerNames
 

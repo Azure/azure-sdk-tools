@@ -724,7 +724,6 @@ class ApiViewReview:
         Returns an error string if authentication fails, otherwise None.
         """
         try:
-            # Canary: minimal search query
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             try:
                 # Use a real search result, even if empty
@@ -758,7 +757,7 @@ class ApiViewReview:
             guidelines = self.search.language_guidelines
             if not guidelines:
                 return None
-            context = self.search.build_context(self.search.language_guidelines)
+            context = self.search.build_context(self.search.language_guidelines.results)
             return context
         except Exception as e:
             logger.error(f"Error retrieving guidelines: {type(e).__name__}: {e}", exc_info=True)

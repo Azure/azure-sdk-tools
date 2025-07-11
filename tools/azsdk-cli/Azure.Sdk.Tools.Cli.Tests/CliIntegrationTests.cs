@@ -32,6 +32,35 @@ internal class CliIntegrationTests
     }
 
     [Test]
+    public async Task TestWindows()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Ignore("This test is only applicable on Windows.");
+        }
+
+        var (cmd, logger) = GetTestInstanceWithLogger<HelloWorldTool>();
+
+        var output = "";
+        outputServiceMock
+            .Setup(s => s.Output(It.IsAny<string>()))
+            .Callback<string>(s => output = s);
+
+        var exitCode = await cmd.InvokeAsync(["hello-world", "HI. MY NAME IS"]);
+        Assert.That(exitCode, Is.EqualTo(0));
+
+        var expected = @"
+Message: RESPONDING TO 'HI. MY NAME IS' with SUCCESS: 0
+Result: nul
+Duration: 1ms".TrimStart();
+
+        outputServiceMock
+            .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
+
+        Assert.That(output, Is.EqualTo(expected));
+    }
+
+    [Test]
     public async Task TestHelloWorldCLIOptions()
     {
         var (cmd, logger) = GetTestInstanceWithLogger<HelloWorldTool>();

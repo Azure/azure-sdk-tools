@@ -112,6 +112,8 @@ export function getNpmPackageName(packageRoot: string): string {
 }
 
 export function getApiReviewPath(packageRoot: string): string {
+    const NODE_API_MD_SUFFIX = '-node.api.md';
+    const API_REVIEW_SUFFIX = '.api.md';
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
     let apiReviewPath: string;
@@ -130,7 +132,7 @@ export function getApiReviewPath(packageRoot: string): string {
     }
 
     // First check if standard .api.md exists
-    const standardPath = `${apiReviewPath}.api.md`;
+    const standardPath = `${apiReviewPath}${API_REVIEW_SUFFIX}`;
     if (fs.existsSync(standardPath)) {
         return standardPath;
     }

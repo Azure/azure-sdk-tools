@@ -1,6 +1,5 @@
 using Azure.Tools.GeneratorAgent.Composition;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -26,7 +25,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Act
             (IConfiguration configuration, _) = DependencyInjection.Configure();
-            IAppSettings appSettings = new AppSettings(configuration);
+            AppSettings appSettings = new AppSettings(configuration);
 
             // Assert
             Assert.That(appSettings.Model, Is.Not.Null);

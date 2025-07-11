@@ -5,7 +5,6 @@ using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Composition;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -27,7 +26,7 @@ namespace Azure.Tools.GeneratorAgent
             (IConfiguration configuration, ILoggerFactory loggerFactory) = DependencyInjection.Configure();
             ILogger<ErrorFixerAgent> agentLogger = loggerFactory.CreateLogger<ErrorFixerAgent>();
             ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
-            IAppSettings appSettings = new AppSettings(configuration);
+            AppSettings appSettings = new AppSettings(configuration);
 
             PersistentAgentsAdministrationClient adminClient = new PersistentAgentsAdministrationClient(
                 new Uri(appSettings.ProjectEndpoint),
@@ -46,7 +45,7 @@ namespace Azure.Tools.GeneratorAgent
             catch (OperationCanceledException)
             {
                 logger.LogInformation("Operation was cancelled. Shutting down gracefully...");
-                return 130;
+                return 0;
             }
             catch (Exception ex)
             {

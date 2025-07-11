@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure;
 using Azure.AI.Agents.Persistent;
-using Azure.Core;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Azure.Tools.GeneratorAgent.Interfaces;
+using Azure.Tools.GeneratorAgent.Configuration;
 using Moq;
 using NUnit.Framework;
 using System.ClientModel.Primitives;
@@ -24,7 +19,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private const string TestAgentId = "agent-1";
 
         private Mock<PersistentAgentsAdministrationClient> _adminMock;
-        private IAppSettings _settings;
+        private AppSettings _settings;
         private ErrorFixerAgent _agent;
         private CancellationToken _ct;
 
@@ -34,11 +29,25 @@ namespace Azure.Tools.GeneratorAgent.Tests
             _adminMock = new Mock<PersistentAgentsAdministrationClient>(MockBehavior.Strict);
             _ct = CancellationToken.None;
 
-            var settingsMock = new Mock<IAppSettings>();
-            settingsMock.SetupGet(s => s.Model).Returns(TestModel);
-            settingsMock.SetupGet(s => s.AgentName).Returns(TestAgentName);
-            settingsMock.SetupGet(s => s.AgentInstructions).Returns(TestAgentInstructions);
-            _settings = settingsMock.Object;
+            var configMock = new Mock<IConfiguration>();
+            var configSection = new Mock<IConfigurationSection>();
+
+            configSection.Setup(s => s.Value).Returns(TestModel);
+            configMock.Setup(c => c.GetSection("AzureSettings:Model")).Returns(configSection.Object);
+
+            var nameSection = new Mock<IConfigurationSection>();
+            nameSection.Setup(s => s.Value).Returns(TestAgentName);
+            configMock.Setup(c => c.GetSection("AzureSettings:AgentName")).Returns(nameSection.Object);
+
+            var instructionsSection = new Mock<IConfigurationSection>();
+            instructionsSection.Setup(s => s.Value).Returns(TestAgentInstructions);
+            configMock.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(instructionsSection.Object);
+
+            var endpointSection = new Mock<IConfigurationSection>();
+            endpointSection.Setup(s => s.Value).Returns(string.Empty);
+            configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(endpointSection.Object);
+
+            _settings = new AppSettings(configMock.Object);
 
             _agent = new ErrorFixerAgent(
                 _settings,

@@ -7,7 +7,6 @@ using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Azure.Tools.GeneratorAgent.Interfaces;
 
 namespace Azure.Tools.GeneratorAgent.Composition
 {
@@ -27,24 +26,22 @@ namespace Azure.Tools.GeneratorAgent.Composition
                 .AddEnvironmentVariables(EnvironmentVariables.Prefix)
                 .Build();
 
+            serviceCollection.AddSingleton(configuration);
+            serviceCollection.AddSingleton(new AppSettings(configuration));
 
-            ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
-            {
+            serviceCollection.AddLogging(builder =>
                 builder
                     .AddConfiguration(configuration.GetSection("Logging"))
                     .AddConsole()
-                    .SetMinimumLevel(LogLevel.Information);
-            });
+                    .SetMinimumLevel(LogLevel.Information));
 
-            // Register configuration
-            serviceCollection.AddSingleton(configuration);
-            serviceCollection.AddSingleton<IAppSettings>(new AppSettings(configuration));
+            // Build the service provider
+            var serviceProvider = serviceCollection.BuildServiceProvider();
 
-            // Register logging
-            serviceCollection.AddSingleton(loggerFactory);
-            serviceCollection.AddLogging();
-
-            return (configuration, loggerFactory);
+            return (
+                serviceProvider.GetRequiredService<IConfiguration>(),
+                serviceProvider.GetRequiredService<ILoggerFactory>()
+            );
         }
 
         private static ILogger<T> CreateLogger<T>(ILoggerFactory loggerFactory)

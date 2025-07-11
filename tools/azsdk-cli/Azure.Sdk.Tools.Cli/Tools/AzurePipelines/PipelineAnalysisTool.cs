@@ -32,6 +32,9 @@ public class PipelineAnalysisTool : MCPTool
     private readonly IOutputService output;
     private readonly ILogger<PipelineAnalysisTool> logger;
 
+    private const string AZURE_DEVOPS_TOKEN_SCOPE = "499b84ac-1321-427f-aa17-267ca6975798/.default";
+    private const string MICROSOFT_CORP_TENANT = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+    private const string AZURE_DEVOPS_BASE_URL = "https://dev.azure.com/azure-sdk";
     private const string PUBLIC_PROJECT = "public";
     private const string INTERNAL_PROJECT = "internal";
 
@@ -139,17 +142,17 @@ public class PipelineAnalysisTool : MCPTool
 
         if (auth)
         {
-            var tokenScope = new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" };  // Azure DevOps scope
-            var msftCorpTenant = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+            var tokenScope = new[] { AZURE_DEVOPS_TOKEN_SCOPE };
+            var msftCorpTenant = MICROSOFT_CORP_TENANT;
             var token = azureService.GetCredential(msftCorpTenant).GetToken(new TokenRequestContext(tokenScope));
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
-            var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), tokenCredential);
+            var connection = new VssConnection(new Uri(AZURE_DEVOPS_BASE_URL), tokenCredential);
             _buildClient = connection.GetClient<BuildHttpClient>();
             _testClient = connection.GetClient<TestResultsHttpClient>();
         }
         else
         {
-            var connection = new VssConnection(new Uri($"https://dev.azure.com/azure-sdk"), null);
+            var connection = new VssConnection(new Uri(AZURE_DEVOPS_BASE_URL), null);
             _buildClient = connection.GetClient<BuildHttpClient>();
             _testClient = connection.GetClient<TestResultsHttpClient>();
         }
@@ -161,7 +164,7 @@ public class PipelineAnalysisTool : MCPTool
     {
         if (project == PUBLIC_PROJECT || string.IsNullOrEmpty(project))
         {
-            var pipelineUrl = $"https://dev.azure.com/azure-sdk/{PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
+            var pipelineUrl = $"{AZURE_DEVOPS_BASE_URL}/{PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
             logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
             var response = await httpClient.GetAsync(pipelineUrl);
             // If project is not specified, try both public and internal projects
@@ -180,7 +183,7 @@ public class PipelineAnalysisTool : MCPTool
             return projectName;
         }
 
-        var _pipelineUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}?api-version=7.1";
+        var _pipelineUrl = $"{AZURE_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
         logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
         var build = await buildClient.GetBuildAsync(project, buildId);
         return build.Project.Name;
@@ -202,7 +205,7 @@ public class PipelineAnalysisTool : MCPTool
             return _failedTasks.Select(t => t.Log?.Id ?? 0).Where(id => id != 0).Distinct().ToList();
         }
 
-        var timelineUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
+        var timelineUrl = $"{AZURE_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
         logger.LogDebug("Getting timeline records from {url}", timelineUrl);
         var response = await httpClient.GetAsync(timelineUrl, ct);
         response.EnsureSuccessStatusCode();
@@ -306,7 +309,7 @@ public class PipelineAnalysisTool : MCPTool
 
     public async Task<string> GetBuildLogLinesUnauthenticated(string project, int buildId, int logId, CancellationToken ct = default)
     {
-        var logUrl = $"https://dev.azure.com/azure-sdk/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
+        var logUrl = $"{AZURE_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
         logger.LogDebug("Fetching log file from {url}", logUrl);
         var response = await httpClient.GetAsync(logUrl, ct);
         response.EnsureSuccessStatusCode();

@@ -16,6 +16,8 @@ var typespecSources = []model.Source{
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
 	model.Source_TypeSpecMigration,
+	model.Source_TypeSpecAzureHttpSpecs,
+	model.Source_TypeSpecHttpSpecs,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{

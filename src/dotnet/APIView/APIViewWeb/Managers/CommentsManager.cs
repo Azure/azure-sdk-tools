@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
@@ -16,6 +17,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -37,6 +39,7 @@ namespace APIViewWeb.Managers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CommentsManager> _logger;
+        private readonly IBackgroundTaskQueue _backgroundTaskQueue;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -54,6 +57,7 @@ namespace APIViewWeb.Managers
             UserProfileCache userProfileCache,
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
+            IBackgroundTaskQueue backgroundTaskQueue,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -67,6 +71,7 @@ namespace APIViewWeb.Managers
             _userProfileCache = userProfileCache;
             _configuration = configuration;
             _Options = options.Value;
+            _backgroundTaskQueue = backgroundTaskQueue;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -192,8 +197,17 @@ namespace APIViewWeb.Managers
                 return;
             }
 
+            _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
+            {
+                await ProcessAgentReplyRequest(user, comment, activeRevisionId, cancellationToken);
+            });
+        }
+
+        private async Task ProcessAgentReplyRequest(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId, CancellationToken cancellationToken)
+        {
             try
             {
+                ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
                 IEnumerable<CommentItemModel> threadComments =
                     await _commentsRepository.GetCommentsAsync(reviewId: comment.ReviewId, lineId: comment.ElementId);
 
@@ -228,6 +242,8 @@ namespace APIViewWeb.Managers
                 AgentChatResponse agentChatResponse = JsonConvert.DeserializeObject<AgentChatResponse>(clientResponseContent);
 
                 await AddAgentComment(comment, agentChatResponse?.Response);
+                
+                _logger.LogInformation("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
             }
             catch (Exception ex)            
             {

@@ -21,10 +21,10 @@ import { getUniqueLinks } from '../common/shared.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
-  private readonly conversationHandler = new ConversationHandler();
+  private readonly conversationHandler;
 
-  constructor() {
-    this.conversationHandler.initialize();
+  constructor(conversationHandler: ConversationHandler) {
+    this.conversationHandler = conversationHandler;
   }
 
   public async completePrompt(
@@ -111,7 +111,7 @@ export class RAGModel implements PromptCompletionModel {
     conversationId: string,
     meta: object
   ): Promise<MessageWithRemoteContent> {
-    const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId);
+    const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
     logger.info(`Retrieved conversation messages for conversation ID: ${conversationId}`, {
       meta,
       messages: conversationMessages,
@@ -122,7 +122,7 @@ export class RAGModel implements PromptCompletionModel {
   }
 
   private async replyToUser(context: TurnContext, ragReply: CompletionResponsePayload) {
-    const card = createReplyCard(ragReply);
+    const card = createReplyCard(ragReply, context.activity.conversation.id, context.activity.id);
     const attachment = CardFactory.adaptiveCard(card);
     const replyCard = MessageFactory.attachment(attachment);
     await context.sendActivities([MessageFactory.text(ragReply.answer), replyCard]);
@@ -174,7 +174,7 @@ export class RAGModel implements PromptCompletionModel {
       timestamp: prompt.timestamp,
     };
     try {
-      await this.conversationHandler.saveMessage(currentMessage);
+      await this.conversationHandler.saveMessage(currentMessage, meta);
     } catch (error) {
       logger.error('Failed to save current prompt', { error, meta });
     }

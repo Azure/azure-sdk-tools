@@ -122,7 +122,7 @@ describe('ConversationHandler', () => {
   let handler: ConversationHandler;
 
   beforeEach(() => {
-    handler = new ConversationHandler({ testContext: true });
+    handler = new ConversationHandler();
   });
 
   it('should initialize correctly', async () => {

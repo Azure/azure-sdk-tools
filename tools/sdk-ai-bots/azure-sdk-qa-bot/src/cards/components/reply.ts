@@ -1,9 +1,9 @@
-import { feedbackCard } from './feedback.js';
+import { createFeedbackCard } from './feedback.js';
 import { CompletionResponsePayload } from '../../backend/rag.js';
 import { createReferencesListCard } from './reference-list.js';
 import { supportChannelCard } from './support-channel.js';
 
-export function createReplyCard(reply: CompletionResponsePayload) {
+export function createReplyCard(reply: CompletionResponsePayload, conversationId: string, activity: string) {
   const referenceDataList = reply.references.map((ref) => ({
     title: ref.title,
     sourceName: ref.link.split('/').pop() || '',
@@ -16,6 +16,7 @@ export function createReplyCard(reply: CompletionResponsePayload) {
     title: '📑References📑',
     card: referenceListCard,
   };
+  const feedbackCard = createFeedbackCard(conversationId, activity);
   const feedbackAction = {
     type: 'Action.ShowCard',
     title: '👍Feedback👎',

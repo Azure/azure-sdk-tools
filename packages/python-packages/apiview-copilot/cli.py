@@ -651,14 +651,30 @@ def _calculate_ai_vs_manual_comment_ratio(comments: list[APIViewComment]) -> flo
     """
     Calculates the ratio of AI-generated comments to manual comments.
     """
-    return 0.0
+    ai_count = 0
+    manual_count = 0
+    for comment in comments:
+        if comment.created_by == "azure-sdk":
+            ai_count += 1
+        else:
+            manual_count += 1
+    return ai_count / manual_count if manual_count > 0 else float("inf") if ai_count > 0 else 0.0
 
 
 def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> float:
     """
     Calculates the ratio of AI-generated comments with a thumbs-up compared to comments with a thumbs-down.
     """
-    return 0.0
+    good_count = 0
+    neutral_count = 0
+    bad_count = 0
+    ai_comments = [c for c in comments if c.created_by == "azure-sdk"]
+    for comment in ai_comments:
+        good_count += len(comment.upvotes)
+        bad_count += len(comment.downvotes)
+        if not comment.upvotes and not comment.downvotes:
+            neutral_count += 1
+    return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
 
 
 def report_metrics(start_date: str, end_date: str):

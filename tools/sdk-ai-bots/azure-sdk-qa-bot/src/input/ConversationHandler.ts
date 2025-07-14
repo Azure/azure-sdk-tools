@@ -25,6 +25,7 @@ export interface ConversationMessage {
    */
   activityId: string;
 
+  // DEPRECATED: Use `reply` instead
   /**
    * Text content of the message
    */
@@ -99,17 +100,11 @@ export interface RAGReply {
  */
 export class ConversationHandler {
   private tableClient: TableClient | undefined;
-  private readonly logMeta: object;
   private readonly botId: string;
   private readonly tableStorageUrl: string;
   private readonly tableName: string;
 
-  /**
-   * Creates a new instance of the ConversationHandler class
-   * @param logMeta Logging metadata
-   */
-  constructor(logMeta: object = {}) {
-    this.logMeta = logMeta;
+  constructor() {
     this.botId = config.MicrosoftAppId;
 
     // Get Azure Table Storage configuration from config
@@ -119,7 +114,6 @@ export class ConversationHandler {
     logger.info('ConversationHandler initialized', {
       url: this.tableStorageUrl,
       table: this.tableName,
-      meta: this.logMeta,
     });
   }
 
@@ -129,7 +123,7 @@ export class ConversationHandler {
   public async initialize(): Promise<void> {
     try {
       if (!this.tableStorageUrl) {
-        logger.warn('Azure Table Storage URL not configured. Message persistence is disabled.', { meta: this.logMeta });
+        logger.warn('Azure Table Storage URL not configured. Message persistence is disabled.');
         return;
       }
 
@@ -147,18 +141,18 @@ export class ConversationHandler {
         // Create table client for this table
         this.tableClient = new TableClient(this.tableStorageUrl, this.tableName, credential);
 
-        logger.info('Azure Table Storage connection initialized successfully', { meta: this.logMeta });
+        logger.info('Azure Table Storage connection initialized successfully');
       } catch (tableError: any) {
         // If the table already exists, we can ignore that specific error
         if (tableError.statusCode === 409 && tableError.errorCode === 'TableAlreadyExists') {
           this.tableClient = new TableClient(this.tableStorageUrl, this.tableName, credential);
-          logger.info('Connected to existing Azure Table Storage table', { meta: this.logMeta });
+          logger.info('Connected to existing Azure Table Storage table');
         } else {
           throw tableError;
         }
       }
     } catch (error) {
-      logger.error('Failed to initialize Azure Table Storage connection', { error, meta: this.logMeta });
+      logger.error('Failed to initialize Azure Table Storage connection', { error });
       throw error;
     }
   }
@@ -168,9 +162,9 @@ export class ConversationHandler {
    * @param message The message to save
    * @returns The saved message with any server-generated properties
    */
-  public async saveMessage(message: ConversationMessage): Promise<MessageEntity | undefined> {
+  public async saveMessage(message: ConversationMessage, logMeta = {}): Promise<MessageEntity | undefined> {
     if (!this.tableClient) {
-      logger.warn('Table client not initialized. Call initialize() before saving messages.', { meta: this.logMeta });
+      logger.warn('Table client not initialized. Call initialize() before saving messages.', { meta: logMeta });
       return;
     }
 
@@ -184,7 +178,7 @@ export class ConversationHandler {
       logger.info('Message saved to Azure Table Storage', {
         conversationId: message.conversationId,
         messageId: message.activityId,
-        meta: this.logMeta,
+        meta: logMeta,
         entity: JSON.stringify(entity),
       });
 
@@ -194,7 +188,7 @@ export class ConversationHandler {
         error,
         conversationId: message.conversationId,
         messageId: message.activityId,
-        meta: this.logMeta,
+        meta: logMeta,
       });
       return;
     }
@@ -205,10 +199,10 @@ export class ConversationHandler {
    * @param conversationId The ID of the conversation
    * @returns Array of conversation messages
    */
-  public async getConversationMessages(conversationId: string): Promise<ConversationMessage[]> {
+  public async getConversationMessages(conversationId: string, logMeta = {}): Promise<ConversationMessage[]> {
     if (!this.tableClient) {
       logger.warn('Table client not initialized. Call initialize() before retrieving messages.', {
-        meta: this.logMeta,
+        meta: logMeta,
       });
       return [];
     }
@@ -237,7 +231,7 @@ export class ConversationHandler {
       logger.error('Failed to retrieve conversation messages', {
         error,
         conversationId,
-        meta: this.logMeta,
+        meta: logMeta,
       });
       return [];
     }

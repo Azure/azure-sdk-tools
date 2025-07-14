@@ -7,12 +7,16 @@ import { Application, ActionPlanner, PromptManager } from '@microsoft/teams-ai';
 import { RAGModel } from '../models/RAGModel.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
-import { FeedbackRequestPayload, RAGOptions, sendFeedback } from '../backend/rag.js';
+import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
 import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
+import { ConversationHandler } from '../input/ConversationHandler.js';
+
+const conversationHandler = new ConversationHandler();
+await conversationHandler.initialize();
 
 // Create AI components
-const model = new RAGModel();
+const model = new RAGModel(conversationHandler);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,20 +56,25 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     apiKey: config.ragApiKey,
   };
   const action = context.activity.value?.action;
-
   const feedbackComment = context.activity.value?.feedbackComment;
-  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, getTurnContextLogMeta(context));
+  const logMeta = getTurnContextLogMeta(context);
+  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, { meta: logMeta });
+
+  const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, logMeta);
+  const messages: Message[] = [];
+  conversations.map((msg) => {
+    const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
+    if (question) messages.push(question);
+    const answer: Message =
+      msg.reply && msg.reply.has_result ? { role: 'assistant', content: msg.reply.answer } : undefined;
+    if (answer) messages.push(answer);
+  });
 
   switch (action) {
     case 'feedback-like':
       const goodFeedback: FeedbackRequestPayload = {
         tenant_id: ragTanentId,
-        messages: [
-          {
-            role: 'user',
-            content: 'test good',
-          },
-        ],
+        messages,
         reaction: 'good',
         comment: feedbackComment,
       };
@@ -75,12 +84,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     case 'feedback-dislike':
       const badFeedback: FeedbackRequestPayload = {
         tenant_id: ragTanentId,
-        messages: [
-          {
-            role: 'user',
-            content: 'test bad',
-          },
-        ],
+        messages,
         reaction: 'bad',
         comment: feedbackComment,
       };

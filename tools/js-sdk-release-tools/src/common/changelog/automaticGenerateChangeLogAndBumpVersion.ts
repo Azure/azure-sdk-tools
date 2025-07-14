@@ -4,7 +4,7 @@ import shell from 'shelljs';
 
 import {
     makeChangesForFirstRelease,
-    makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
+    makeChangesForMigrateTrack1ToTrack2,
     makeChangesForReleasingTrack2
 } from "./modifyChangelogFileAndBumpVersion.js";
 import { logger } from "../../utils/logger.js";
@@ -134,25 +134,24 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     originalChangeLogContent = originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart", "https://aka.ms/azsdk/js/mgmt/quickstart");
                 }
                 originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
+                let newVersion = '';
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.warn('Failed to generate changelog because the codes of local and npm may be the same.');
                     logger.info('Start to bump a fix version.');
                     const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, { encoding: 'utf-8' });
                     const oriVersion = JSON.parse(oriPackageJson).version;
                     const oriVersionReleased = !usedVersions ? false : usedVersions.includes(oriVersion);
-                    let newVersion = oriVersion;
+                    newVersion = oriVersion;
                     if (oriVersionReleased) {
                         newVersion = isBetaVersion(oriVersion) ? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
                     }
-                    await makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
-                    // TODO
-                    // await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
-                    const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog.content, originalChangeLogContent, stableVersion);
+                    newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
-                    return changelog;
                 }
+                const changelogContent = changelog.content.length === 0 ? `### Features Added\n` : changelog.content; 
+                await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelogContent, originalChangeLogContent, stableVersion);
+                return changelog;
             } else {
                 logger.info(`Package ${packageName} released before is track1 sdk.`);
                 logger.info('Start to generate changelog of migrating track1 to track2 sdk.');

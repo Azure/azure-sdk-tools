@@ -4,21 +4,28 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
-
 	"strings"
+	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/sourcegraph/conc/pool"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/azure"
 )
 
-var MAX_CONCURRENT_COUNT = 10
+var MAX_CONCURRENT_COUNT = 5
 var IGNORED_SPECS = []string{"special-words"}
+
+// Retry configuration for OpenAI API calls
+const (
+	MAX_RETRIES = 5
+	BASE_DELAY  = 2 * time.Second
+	MAX_DELAY   = 60 * time.Second
+)
 
 type ConvertResult struct {
 	count int
@@ -26,6 +33,8 @@ type ConvertResult struct {
 }
 
 func main() {
+	config.InitSecrets()
+	config.InitOpenAIClient()
 	p := pool.NewWithResults[ConvertResult]()
 	p.Go(func() ConvertResult {
 		return convertSpectorCasesToMarkdown("docs/typespec/packages/http-specs/specs", "docs/typespec/packages/http-specs/specs/generated")
@@ -158,79 +167,68 @@ func createMarkdownDoc(scenarios []string, spec string) (string, error) {
 	return doc, nil
 }
 
-// Default API version to use for Azure OpenAI
-const DefaultAPIVersion = "2024-08-01-preview"
-
-// CreateOpenAIClientWithToken creates an OpenAI client with Azure AD token authentication
-func CreateOpenAIClientWithToken(endpoint string, apiVersion string) (*openai.Client, error) {
-	if apiVersion == "" {
-		apiVersion = DefaultAPIVersion
-	}
-
-	tokenCredential, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create default Azure credential: %w", err)
-	}
-
-	client := openai.NewClient(
-		azure.WithEndpoint(endpoint, apiVersion),
-		azure.WithTokenCredential(tokenCredential),
-	)
-
-	return &client, nil
-}
-
 func getChatCompletions(question string) (string, error) {
-	model := os.Getenv("AOAI_CHAT_COMPLETIONS_MODEL")
-	endpoint := os.Getenv("AOAI_CHAT_COMPLETIONS_ENDPOINT")
-
-	client, err := CreateOpenAIClientWithToken(endpoint, "")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-		return "", err
-	}
-
-	resp, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
-		Model: openai.ChatModel(model),
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			// You set the tone and rules of the conversation with a prompt as the system role.
-			{
-				OfSystem: &openai.ChatCompletionSystemMessageParam{
-					Content: openai.ChatCompletionSystemMessageParamContentUnion{
-						OfString: openai.String("You are a helpful assistant. And you are a great TypeSpec expert."),
-					},
-				},
-			},
-			// The user asks a question
-			{
-				OfUser: &openai.ChatCompletionUserMessageParam{
-					Content: openai.ChatCompletionUserMessageParamContentUnion{
-						OfString: openai.String(question),
-					},
-				},
-			},
-		},
+	var messages []azopenai.ChatRequestMessageClassification
+	messages = append(messages, &azopenai.ChatRequestSystemMessage{
+		Content: azopenai.NewChatRequestSystemMessageContent("You are a helpful assistant. And you are a great TypeSpec expert."),
+	})
+	messages = append(messages, &azopenai.ChatRequestUserMessage{
+		Content: azopenai.NewChatRequestUserMessageContent(question),
 	})
 
-	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
-		return "", nil
-	}
+	// Implement retry logic with exponential backoff
+	for attempt := 0; attempt <= MAX_RETRIES; attempt++ {
+		resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+			// This is a conversation in progress.
+			// NOTE: all messages count against token usage for this API.
+			Messages:       messages,
+			DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
+			// Temperature:    &temperature,
+		}, nil)
 
-	gotReply := false
+		if err != nil {
+			// Check if this is a rate limit error (429)
+			if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
+				if attempt < MAX_RETRIES {
+					// Calculate delay with exponential backoff and jitter
+					delay := time.Duration(float64(BASE_DELAY) * math.Pow(2, float64(attempt)))
+					if delay > MAX_DELAY {
+						delay = MAX_DELAY
+					}
 
-	for _, choice := range resp.Choices {
-		gotReply = true
+					fmt.Printf("Rate limit hit (attempt %d/%d), retrying after %v...\n", attempt+1, MAX_RETRIES+1, delay)
+					time.Sleep(delay)
+					continue
+				}
+			}
 
-		if choice.Message.Content != "" {
-			return choice.Message.Content, nil
+			// For non-429 errors or after max retries, return the error
+			fmt.Printf("ERROR after %d attempts: %s\n", attempt+1, err)
+			return "", err
 		}
+
+		// Success - process the response
+		gotReply := false
+		for _, choice := range resp.Choices {
+			gotReply = true
+
+			if choice.Message.Content != nil && len(*choice.Message.Content) > 0 {
+				if attempt > 0 {
+					fmt.Printf("Successfully completed request after %d retries\n", attempt)
+				}
+				return *choice.Message.Content, nil
+			}
+		}
+
+		if gotReply {
+			fmt.Fprintf(os.Stderr, "Got chat completions reply\n")
+		}
+
+		// If we got a response but no content, don't retry
+		break
 	}
 
-	if gotReply {
-		fmt.Fprintf(os.Stderr, "Got chat completions reply\n")
-	}
-	return "", err
+	return "", fmt.Errorf("failed to get valid response after %d attempts", MAX_RETRIES+1)
 }
 
 func getHeading(scenario string) (string, error) {
@@ -297,7 +295,7 @@ func getSpecs(root string) ([]string, []string, error) {
 	var paths []string
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			fmt.Printf("Error accessing path %s: %w\n", path, err)
+			fmt.Printf("Error accessing path %s: %v\n", path, err)
 			return err
 		}
 		if filepath.Ext(path) != ".tsp" {
@@ -315,7 +313,7 @@ func getSpecs(root string) ([]string, []string, error) {
 		paths = append(paths, path)
 		content, err := os.ReadFile(path)
 		if err != nil {
-			fmt.Printf("Failed to read file %s: %w\n", path, err)
+			fmt.Printf("Failed to read file %s: %v\n", path, err)
 			return err
 		}
 		spec := string(content)

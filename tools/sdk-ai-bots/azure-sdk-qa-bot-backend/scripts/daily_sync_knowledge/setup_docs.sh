@@ -26,7 +26,7 @@ setup_typespec_docs() {
         cd typespec
         git config core.sparseCheckout true
         echo "website/src/content/docs/docs" > .git/info/sparse-checkout
-        echo "packages/http-specs/specs" > .git/info/sparse-checkout
+        echo "packages/http-specs/specs" >> .git/info/sparse-checkout
         git checkout main
         cd ../..
     fi
@@ -49,7 +49,7 @@ setup_azure_typespec_docs() {
         cd typespec-azure
         git config core.sparseCheckout true
         echo "website/src/content/docs/docs" > .git/info/sparse-checkout
-        echo "packages/azure-http-specs/specs" > .git/info/sparse-checkout
+        echo "packages/azure-http-specs/specs" >> .git/info/sparse-checkout
         git checkout main
         cd ../..
     fi

@@ -1,5 +1,6 @@
 import { Memory, PromptCompletionModel, PromptFunctions, PromptTemplate, Tokenizer } from '@microsoft/teams-ai';
 import { CardFactory, MessageFactory, TurnContext } from 'botbuilder';
+// TODO: decouple with backend?
 import {
   AdditionalInfo,
   CompletionRequestPayload,
@@ -59,11 +60,8 @@ export class RAGModel implements PromptCompletionModel {
     }
     // TODO: try merge cancelTimer and stop into one method
     thinkingHandler.cancelTimer();
-
     await this.saveCurrentConversationMessage(context, currentPrompt, ragReply, meta);
-    await this.replyToUser(context, ragReply);
-
-    await thinkingHandler.stop();
+    await thinkingHandler.stop(ragReply.answer);
 
     return { status: 'success' };
   }

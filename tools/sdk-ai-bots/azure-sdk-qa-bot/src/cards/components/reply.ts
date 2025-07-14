@@ -2,6 +2,7 @@ import { createFeedbackCard } from './feedback.js';
 import { CompletionResponsePayload } from '../../backend/rag.js';
 import { createReferencesListCard } from './reference-list.js';
 import { supportChannelCard } from './support-channel.js';
+import { RAGReference } from '../../input/ConversationHandler.js';
 
 export function createReplyCard(reply: CompletionResponsePayload, conversationId: string, activity: string) {
   const referenceDataList = reply.references.map((ref) => ({

@@ -9,7 +9,7 @@ export class ThinkingHandler {
   private thinkingMessage = this.defaultThinkingMessage;
   private isThinking = true;
   private timerHandler: NodeJS.Timeout | undefined = undefined;
-  private messageId: string | undefined = undefined;
+  private resourceId: string | undefined = undefined;
   private logMeta: object;
   constructor(context: TurnContext) {
     this.context = context;
@@ -29,7 +29,8 @@ export class ThinkingHandler {
         await context.updateActivity(updated);
       }
     }, 1000);
-    this.messageId = resource.id;
+    console.log('🚀 ~ ThinkingHandler ~ this.timerHandler=setInterval ~ resource.id:', resource.id);
+    this.resourceId = resource.id;
   }
 
   // cancel timer as soon as possible when get reply
@@ -39,11 +40,11 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop() {
+  public async stop(answer: string) {
     const updated: Partial<TurnContext> = {
       type: 'message',
-      id: this.messageId,
-      text: '✅Thinking complete',
+      id: this.resourceId,
+      text: answer,
       conversation: this.context.activity.conversation,
     } as any;
     await this.context.updateActivity(updated);

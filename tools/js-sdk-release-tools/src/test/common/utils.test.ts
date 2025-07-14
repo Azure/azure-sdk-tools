@@ -4,6 +4,7 @@ import {
     specifyApiVersionToGenerateSDKByTypeSpec,
     cleanUpPackageDirectory,
     getPackageNameFromTspConfig,
+    getApiReviewPath,
 } from "../../common/utils.js";
 import path from "path";
 import { deepStrictEqual, strictEqual } from "assert";
@@ -507,5 +508,89 @@ describe("getPackageNameFromTspConfig", () => {
         } finally {
             await remove(tempSpecFolder);
         }
+    });
+});
+
+describe("getApiReviewPath - File Priority Tests", () => {
+    let tempDir: string;
+    
+    beforeEach(async () => {
+        tempDir = path.join(__dirname, "temp-getApiReviewPath-test-" + Date.now());
+        await ensureDir(tempDir);
+    });
+
+    afterEach(async () => {
+        await remove(tempDir);
+    });
+
+    // Helper function to create a basic package structure
+    async function createPackage(packageName: string, isHighLevelClient = false) {
+        const packageDir = path.join(tempDir, packageName);
+        const reviewDir = path.join(packageDir, "review");
+        await ensureDir(reviewDir);
+        
+        await writeFile(
+            path.join(packageDir, "package.json"),
+            JSON.stringify({ name: packageName })
+        );
+        
+        // Create parameters.ts for HighLevelClient identification
+        if (isHighLevelClient) {
+            await ensureDir(path.join(packageDir, "src", "models"));
+            await writeFile(
+                path.join(packageDir, "src", "models", "parameters.ts"),
+                "// parameters file"
+            );
+        }
+        
+        return { packageDir, reviewDir };
+    }
+
+    test("should prioritize -node.api.md when both files exist", async () => {
+        const { packageDir, reviewDir } = await createPackage("@azure/test-package", true);
+        
+        // Create both API review files
+        const standardApiFile = path.join(reviewDir, "test-package.api.md");
+        const nodeApiFile = path.join(reviewDir, "test-package-node.api.md");
+        
+        await writeFile(standardApiFile, "// Standard API content");
+        await writeFile(nodeApiFile, "// Node API content");
+        
+        const result = getApiReviewPath(packageDir);
+        
+        expect(result).toBe(nodeApiFile);
+        expect(result.endsWith("-node.api.md")).toBe(true);
+    });
+
+    test("should fallback to standard .api.md when -node.api.md doesn't exist", async () => {
+        const { packageDir, reviewDir } = await createPackage("@azure/test-package", true);
+        
+        // Create only standard API review file
+        const standardApiFile = path.join(reviewDir, "test-package.api.md");
+        await writeFile(standardApiFile, "// Standard API content");
+        
+        const result = getApiReviewPath(packageDir);
+        
+        expect(result).toBe(standardApiFile);
+        expect(result.endsWith(".api.md")).toBe(true);
+        expect(result.endsWith("-node.api.md")).toBe(false);
+    });
+
+    test("should work with different package types (Modular, Rest, HLC)", async () => {
+        // Test with ModularClient package (no parameters.ts)
+        const { packageDir: modularDir, reviewDir: modularReview } = await createPackage("@azure/modular-package");
+        const nodeApiFile = path.join(modularReview, "modular-package-node.api.md");
+        await writeFile(nodeApiFile, "// Modular Node API content");
+        
+        const modularResult = getApiReviewPath(modularDir);
+        expect(modularResult).toBe(nodeApiFile);
+        
+        // Test with RestLevelClient package
+        const { packageDir: restDir, reviewDir: restReview } = await createPackage("@azure-rest/rest-package");
+        const standardApiFile = path.join(restReview, "rest-package.api.md");
+        await writeFile(standardApiFile, "// Rest API content");
+        
+        const restResult = getApiReviewPath(restDir);
+        expect(restResult).toBe(standardApiFile);
     });
 });

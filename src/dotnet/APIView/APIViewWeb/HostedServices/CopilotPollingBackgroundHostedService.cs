@@ -82,7 +82,8 @@ namespace APIViewWeb.HostedServices
                             }
 
                             List<AIReviewComment> validComments = result.Comments?
-                                .Where(comment => jobInfo.CodeLines[comment.LineNo - 1].lineId != null)
+                                .Where(comment =>
+                                    jobInfo.CodeLines[comment.LineNo - 1].lineId != null || comment.Source == "summary")
                                 .ToList() ?? new List<AIReviewComment>();
 
                             // Write back result as comments to APIView

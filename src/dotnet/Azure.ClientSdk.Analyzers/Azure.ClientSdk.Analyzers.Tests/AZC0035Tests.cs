@@ -419,7 +419,8 @@ namespace Azure.Test
         {
             return null;
         }
-    }";
+    }
+}";
 
             await Verifier.CreateAnalyzer(code).RunAsync();
         }

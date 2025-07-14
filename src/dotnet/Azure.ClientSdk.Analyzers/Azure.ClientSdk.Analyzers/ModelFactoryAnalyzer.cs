@@ -174,8 +174,9 @@ namespace Azure.ClientSdk.Analyzers
             // Filter out System types, unless defined in System.ClientModel
             var containingNamespace = typeSymbol.ContainingNamespace?.ToString() ?? string.Empty;
 
-            if (containingNamespace.StartsWith(SystemNamespace) &&
-                (!containingNamespace.StartsWith(SystemClientModelNamespace)))
+            if (containingNamespace == SystemNamespace || containingNamespace.StartsWith($"{SystemNamespace}.")
+                && containingNamespace != SystemClientModelNamespace
+                && (!containingNamespace.StartsWith($"{SystemClientModelNamespace}.")))
             {
                 return false;
             }

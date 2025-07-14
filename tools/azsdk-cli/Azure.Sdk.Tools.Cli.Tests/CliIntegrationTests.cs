@@ -45,12 +45,12 @@ internal class CliIntegrationTests
         Assert.That(exitCode, Is.EqualTo(1));
 
         var expectedExitCode = new Random().Next(2);
-        var expected = $"[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: {expectedExitCode}";
+        var expected = "[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1";
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
 
-        var input = output.Replace("\r", "");
+        output = output.Replace("\r", "");
 
         Assert.That(output, Is.EqualTo(expected));
     }
@@ -75,11 +75,13 @@ internal class CliIntegrationTests
 
         var expected = @"
 Message: RESPONDING TO 'HI. MY NAME IS' with SUCCESS: 0
-Result: nul
+Result: null
 Duration: 1ms".TrimStart();
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
+        
+        output = output.Replace("\r", "");
 
         Assert.That(output, Is.EqualTo(expected));
     }
@@ -105,7 +107,7 @@ Duration: 1ms".TrimStart();
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
 
-        var input = output.Replace("\r", "");
+        output = output.Replace("\r", "");
 
         Assert.That(output, Is.EqualTo(expected));
     }
@@ -128,7 +130,7 @@ Duration: 1ms".TrimStart();
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
 
-        var input = output.Replace("\r", "");
+        output = output.Replace("\r", "");
 
         Assert.That(output, Is.EqualTo(expected));
     }

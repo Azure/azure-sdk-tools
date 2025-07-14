@@ -30,7 +30,7 @@ describe('ConversationHandler E2E', () => {
     testActivityId = `test-message-${Date.now()}`;
 
     // Create handler instance and initialize
-    handler = new ConversationHandler({ test: 'e2e' });
+    handler = new ConversationHandler();
     await handler.initialize();
   }, 30000); // Set 30 seconds timeout as initialization may take time
 

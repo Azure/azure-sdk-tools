@@ -35,6 +35,7 @@ export class RAGModel implements PromptCompletionModel {
     tokenizer: Tokenizer,
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
+    console.log("🚀 ~ RAGModel ~ conversation:", context.activity.conversation)
     const meta = getTurnContextLogMeta(context);
     const channelId = context.activity.conversation.id.split(';')[0];
     logger.info(`Processing request for channel: ${channelId}`, { meta });
@@ -119,6 +120,7 @@ export class RAGModel implements PromptCompletionModel {
     return fullPrompt;
   }
 
+  // TODO: remove
   private async replyToUser(context: TurnContext, ragReply: CompletionResponsePayload) {
     const card = createReplyCard(ragReply, context.activity.conversation.id, context.activity.id);
     const attachment = CardFactory.adaptiveCard(card);

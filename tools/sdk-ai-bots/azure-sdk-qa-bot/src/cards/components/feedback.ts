@@ -2,7 +2,14 @@ export const feedbackCard = {
   type: 'AdaptiveCard',
   $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
   version: '1.6',
-  body: [],
+  body: [
+    {
+      type: 'Input.Text',
+      id: 'feedbackComment',
+      placeholder: 'Please provide your feedback here...',
+      isMultiline: true,
+    },
+  ],
   actions: [
     {
       type: 'Action.Submit',

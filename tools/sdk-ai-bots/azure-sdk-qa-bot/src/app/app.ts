@@ -52,6 +52,10 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     apiKey: config.ragApiKey,
   };
   const action = context.activity.value?.action;
+
+  const feedbackComment = context.activity.value?.feedbackComment;
+  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, getTurnContextLogMeta(context));
+
   switch (action) {
     case 'feedback-like':
       const goodFeedback: FeedbackRequestPayload = {
@@ -63,6 +67,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
           },
         ],
         reaction: 'good',
+        comment: feedbackComment,
       };
       await sendFeedback(goodFeedback, ragOptions);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
@@ -77,6 +82,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
           },
         ],
         reaction: 'bad',
+        comment: feedbackComment,
       };
       await sendFeedback(badFeedback, ragOptions);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');

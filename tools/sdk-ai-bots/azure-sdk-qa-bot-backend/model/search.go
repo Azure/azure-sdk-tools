@@ -139,6 +139,17 @@ func GetIndexLink(chunk Index) string {
 		return "https://eng.ms/docs/products/azure-developer-experience/" + path
 	case Source_AzureSDKGuidelines:
 		return "https://azure.github.io/azure-sdk/" + path
+	case Source_TypeSpecAzureHttpSpecs:
+		// change the suffix to .tsp
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/" + path + ".tsp"
+	case Source_TypeSpecHttpSpecs:
+		// change the suffix to .tsp
+		path = TrimFileFormat(path)
+		return "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/" + path + ".tsp"
+	case Source_TypeSpecMigration:
+		// link to the migration loop
+		return "https://microsoft.sharepoint.com/:fl:/g/contentstorage/CSP_bedaa9e1-03aa-4737-868d-2b78d646ba64/EfGbxeojp1VIjL-YDJc88REBx6bOG5VEnp16QSImbm3MXw?e=fGdnEH&nav=cz0lMkZjb250ZW50c3RvcmFnZSUyRkNTUF9iZWRhYTllMS0wM2FhLTQ3MzctODY4ZC0yYjc4ZDY0NmJhNjQmZD1iJTIxNGFuYXZxb0ROMGVHalN0NDFrYTZaRkZsMVVqejNiaEtpY3ZkUE04QWo2a1pyRS1mMFd1aFRZVXVuTlE1bW0yTCZmPTAxRFE3TDNKSFJUUEM2VUk1SEtWRUlaUDRZQlNMVFo0SVImYz0lMkYmYT1Mb29wQXBwJnA9JTQwZmx1aWR4JTJGbG9vcC1wYWdlLWNvbnRhaW5lciZ4PSU3QiUyMnclMjIlM0ElMjJUMFJUVUh4dGFXTnliM052Wm5RdWMyaGhjbVZ3YjJsdWRDNWpiMjE4WWlFMFlXNWhkbkZ2UkU0d1pVZHFVM1EwTVd0aE5scEdSbXd4VldwNk0ySm9TMmxqZG1SUVRUaEJhalpyV25KRkxXWXdWM1ZvVkZsVmRXNU9VVFZ0YlRKTWZEQXhSRkUzVEROS1JVSlhOMWhGTXpkTVVGazFRa3BTVjBrelZVSkVRVmszUjBvJTNEJTIyJTJDJTIyaSUyMiUzQSUyMjA2NDFmMzk1LTY4MjctNGFjYi04OTM5LTliODBkYTEyYzk3MiUyMiU3RA%3D%3D"
 	default:
 		return ""
 	}

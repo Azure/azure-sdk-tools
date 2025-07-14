@@ -37,7 +37,7 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 			return err
 		}
 		// Write headers
-		_, err = f.WriteString("Timestamp,TenantID,Messages,Reaction\n")
+		_, err = f.WriteString("Timestamp,TenantID,Messages,Reaction,Comment\n")
 		if err != nil {
 			f.Close()
 			return err

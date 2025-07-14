@@ -50,7 +50,8 @@ internal class CliIntegrationTests
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
 
-        output = output.Replace("\r", "");
+        expected = expected.Replace("\r\n", "\n").Replace("\r", "\n");
+        output = output.Replace("\r\n", "\n").Replace("\r", "\n");
 
         Assert.That(output, Is.EqualTo(expected));
     }
@@ -81,7 +82,8 @@ Duration: 1ms".TrimStart();
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
         
-        output = output.Replace("\r", "");
+        expected = expected.Replace("\r\n", "\n").Replace("\r", "\n");
+        output = output.Replace("\r\n", "\n").Replace("\r", "\n");
 
         Assert.That(output, Is.EqualTo(expected));
     }
@@ -107,7 +109,8 @@ Duration: 1ms".TrimStart();
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
 
-        output = output.Replace("\r", "");
+        expected = expected.Replace("\r\n", "\n").Replace("\r", "\n");
+        output = output.Replace("\r\n", "\n").Replace("\r", "\n");
 
         Assert.That(output, Is.EqualTo(expected));
     }
@@ -129,8 +132,9 @@ Duration: 1ms".TrimStart();
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
-
-        output = output.Replace("\r", "");
+        
+        expected = expected.Replace("\r\n", "\n").Replace("\r", "\n");
+        output = output.Replace("\r\n", "\n").Replace("\r", "\n");
 
         Assert.That(output, Is.EqualTo(expected));
     }

@@ -46,5 +46,5 @@ dotnet test
 To create a self contained binary:
 
 ```sh
-dotnet publish -f net8.0 -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained --output ./artifacts/linux-x64 ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+dotnet publish -f net8.0 -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained --output ./artifacts/linux-x64 ./Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
 ```

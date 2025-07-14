@@ -22,7 +22,6 @@ from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
 from src._credential import get_credential
 from src._search_manager import SearchManager
 from src._database_manager import get_database_manager, ContainerNames
-from src._search_manager import SearchManager
 from src._models import APIViewComment
 
 colorama.init(autoreset=True)

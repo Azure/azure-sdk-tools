@@ -362,15 +362,15 @@ async def create_local_evaluation_task(filename: str):
         api_key=os.environ.get("AZURE_API_KEY"),
         api_version=os.environ.get("AZURE_API_VERSION"),
     )
-    
+    date = datetime.now().strftime("%Y_%m_%d")
     print(f"📊 Starting evaluation with data file: ./output/{filename}")
     result = evaluate(
+        evaluation_name=f"evaluation_channel_collected_qa_{date}_total",
         data="./output/" + filename, # provide your data here
         evaluators={
             "similarity": SimilarityEvaluator(
                model_config=model_config,
                is_reasoning_model=True,
-               threshold=4,
                prompt_file="similarity.prompty",  # Path to your prompty file
             )
         },

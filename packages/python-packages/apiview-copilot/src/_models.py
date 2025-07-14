@@ -29,6 +29,57 @@ class ExistingComment(BaseModel):
         populate_by_name = True
 
 
+class APIViewComment(BaseModel):
+    """
+    Represents a comment in the APIView.
+    """
+
+    id: Optional[str] = Field(description="Unique identifier for the comment.")
+    review_id: Optional[str] = Field(
+        description="Unique identifier for the review this comment belongs to.", alias="ReviewId"
+    )
+    api_revision_id: Optional[str] = Field(
+        description="Unique identifier for the API revision this comment belongs to.", alias="APIRevisionId"
+    )
+    element_id: Optional[str] = Field(
+        description="Unique identifier for the element this comment belongs to, such as a function or class.",
+        alias="ElementId",
+    )
+    comment_text: Optional[str] = Field(description="The contents of the comment.", alias="CommentText")
+    created_by: Optional[str] = Field(description="The author of the comment.", alias="CreatedBy")
+    created_on: Optional[datetime] = Field(
+        description="The datetime the comment was created, in ISO 8601 format (e.g., '2023-10-01T12:00:00Z').",
+        alias="CreatedOn",
+    )
+    is_resolved: Optional[bool] = Field(
+        default=False, description="Whether the comment is marked resolved.", alias="IsResolved"
+    )
+    upvotes: Optional[list[str]] = Field(
+        default_factory=list,
+        description="List of user IDs who have upvoted the comment.",
+        alias="Upvotes",
+    )
+    downvotes: Optional[list[str]] = Field(
+        default_factory=list,
+        description="List of user IDs who have downvoted the comment.",
+        alias="Downvotes",
+    )
+    comment_type: Optional[str] = Field(
+        description="The type of comment",
+        alias="CommentType",
+    )
+    resolution_locked: Optional[bool] = Field(
+        default=False,
+        description="Whether the comment resolution is locked and cannot be changed.",
+        alias="ResolutionLocked",
+    )
+    is_deleted: Optional[bool] = Field(
+        default=False,
+        description="Whether the comment is deleted.",
+        alias="IsDeleted",
+    )
+
+
 class Comment(BaseModel):
     """
     Represents a comment in the review result.

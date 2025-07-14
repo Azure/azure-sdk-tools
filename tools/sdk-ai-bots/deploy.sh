@@ -47,7 +47,6 @@ fi
 
 # Handle production deployment if requested
 if [[ "$DEPLOY_MODE" == "prod" ]]; then
-    APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
     # Update webapp image tag in the deployment slot
     echo "Updating image in deployment prod..."
     az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}

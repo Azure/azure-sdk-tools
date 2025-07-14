@@ -26,6 +26,7 @@ setup_typespec_docs() {
         cd typespec
         git config core.sparseCheckout true
         echo "website/src/content/docs/docs" > .git/info/sparse-checkout
+        echo "packages/http-specs/specs" > .git/info/sparse-checkout
         git checkout main
         cd ../..
     fi
@@ -48,9 +49,16 @@ setup_azure_typespec_docs() {
         cd typespec-azure
         git config core.sparseCheckout true
         echo "website/src/content/docs/docs" > .git/info/sparse-checkout
+        echo "packages/azure-http-specs/specs" > .git/info/sparse-checkout
         git checkout main
         cd ../..
     fi
+}
+
+preprocess_spector_cases() {
+    echo "Preprocessing Spector cases..."
+    go run preprocess/spector_case_processor.go "$DOCS_ROOT/typespec/packages/http-specs/specs"
+    go run preprocess/spector_case_processor.go "$DOCS_ROOT/typespec-azure/packages/azure-http-specs/specs"
 }
 
 setup_azure_rest_api_wiki() {
@@ -246,6 +254,8 @@ main() {
     echo $AZURE_SDK_ENG_DOCS_TOKEN
     setup_azure_sdk_eng_docs $AZURE_SDK_ENG_DOCS_TOKEN
     setup_azure_sdk_guidelines
+    
+    preprocess_spector_cases
 
     log_message "Documentation setup completed successfully!"
 

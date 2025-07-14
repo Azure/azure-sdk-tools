@@ -185,6 +185,7 @@ class AgentChatResponse(BaseModel):
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat(request: AgentChatRequest):
+    logger.info(f"Received /agent/chat request: user_input={request.user_input}, thread_id={request.thread_id}")
     try:
         async with get_main_agent() as agent:
             response, thread_id_out, messages = await invoke_agent(
@@ -257,6 +258,9 @@ class MentionRequest(BaseModel):
 
 @app.post("/api-review/mention", response_model=AgentChatResponse)
 async def handle_mention(request: MentionRequest, http_request: Request):
+    logger.info(
+        f"Received /api-review/mention request: language={request.language}, package_name={request.package_name}, thread_id={request.thread_id}, comments_count={len(request.comments) if request.comments else 0}"
+    )
     try:
         async with get_mention_agent(
             comments=request.comments,

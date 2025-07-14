@@ -69,12 +69,12 @@ public class TokenUsageHelper
         Console.WriteLine("--------------------------------------------------------------------------------");
     }
 
-    public static TokenUsageHelper operator +(TokenUsageHelper a, TokenUsageHelper b) => new()
+    public static TokenUsageHelper operator +(TokenUsageHelper a, TokenUsageHelper? b) => new()
     {
-        Models = a.Models.Union(b.Models).ToList(),
-        PromptTokens = a.PromptTokens + b.PromptTokens,
-        CompletionTokens = a.CompletionTokens + b.CompletionTokens,
-        InputCost = a.InputCost + b.InputCost,
-        OutputCost = a.OutputCost + b.OutputCost,
+        Models = a.Models.Union(b?.Models ?? []).ToList(),
+        PromptTokens = a.PromptTokens + (b?.PromptTokens ?? 0),
+        CompletionTokens = a.CompletionTokens + (b?.CompletionTokens ?? 0),
+        InputCost = a.InputCost + (b?.InputCost ?? 0),
+        OutputCost = a.OutputCost + (b?.OutputCost ?? 0),
     };
 }

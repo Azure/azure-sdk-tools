@@ -198,7 +198,7 @@ namespace APIViewWeb.LeanControllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error generating AI review" + ex.Message);
+                _logger.LogError("Error generating AI review " + ex.Message);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

@@ -16,11 +16,12 @@ from typing import Optional
 
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
-from azure.identity import DefaultAzureCredential
 
 from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src._credential import get_credential
 from src._search_manager import SearchManager
-from src._database_manager import get_database_manager
+from src._database_manager import get_database_manager, ContainerNames
+from src._search_manager import SearchManager
 
 colorama.init(autoreset=True)
 
@@ -386,12 +387,20 @@ def search_knowledge_base(
         with open(path, "r") as f:
             query = f.read()
     results = search.search_all(query=query)
-    context = search.build_context(results)
+    context = search.build_context(results.results)
     if markdown:
         md = context.to_markdown()
         print(md)
     else:
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
+def reindex_search(containers: Optional[list[str]] = None):
+    """
+    Trigger a reindex of the Azure Search index for the ArchAgent Knowledge Base.
+    If no container is specified, reindex all containers.
+    """
+    return SearchManager.run_indexers(container_names=containers)
 
 
 def review_summarize(language: str, target: str, base: str = None):
@@ -548,14 +557,6 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         asyncio.run(run_local_mention())
 
 
-CONTAINERS = [
-    "guidelines",
-    "memories",
-    "examples",
-    "review-jobs",
-]
-
-
 def db_get(container_name: str, id: str):
     """Retrieve an item from the database."""
     db = get_database_manager()
@@ -582,7 +583,7 @@ def get_apiview_comments(revision_id: str):
     cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
 
     try:
-        client = CosmosClient(url=cosmos_url, credential=DefaultAzureCredential())
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
         database = client.get_database_client(cosmos_db)
         container = database.get_container_client(container_name)
 
@@ -652,6 +653,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
+            g.command("reindex", "reindex_search")
         with CommandGroup(self, "review job", "__main__#{}") as g:
             g.command("start", "review_job_start")
             g.command("get", "review_job_get")
@@ -772,6 +774,15 @@ class CliCommandsLoader(CLICommandsLoader):
                 "markdown",
                 help="Render output as markdown instead of JSON.",
             )
+        with ArgumentsContext(self, "search reindex") as ac:
+            ac.argument(
+                "containers",
+                type=str,
+                nargs="*",
+                help="The names of the containers to reindex. If not provided, all containers will be reindexed.",
+                options_list=["--containers", "-c"],
+                choices=[c.value for c in ContainerNames if c != "review-jobs"],
+            )
         with ArgumentsContext(self, "review job start") as ac:
             ac.argument(
                 "language",
@@ -850,7 +861,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "container_name",
                 type=str,
                 help="The name of the Cosmos DB container",
-                choices=CONTAINERS,
+                choices=[c.value for c in ContainerNames],
                 options_list=["--container-name", "-c"],
             )
             ac.argument(

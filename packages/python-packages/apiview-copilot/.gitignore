@@ -1,4 +1,6 @@
 scratch/prompts
+scratch/output
+scratch/logs
 raw_requests
 build
 *.log

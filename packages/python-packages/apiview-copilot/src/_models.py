@@ -117,15 +117,6 @@ class Example(BaseModel):
         default_factory=list, description="List of guideline IDs to which this example applies."
     )
     memory_ids: List[str] = Field(default_factory=list, description="List of memory IDs to which this example applies.")
-    related_guidelines: List[str] = Field(
-        default_factory=list, description="List of guideline IDs that are related to this example."
-    )
-    related_examples: List[str] = Field(
-        default_factory=list, description="List of example IDs that are related to this example."
-    )
-    related_memories: List[str] = Field(
-        default_factory=list, description="List of memory IDs that are related to this example."
-    )
 
 
 class Memory(BaseModel):

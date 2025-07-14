@@ -13,9 +13,11 @@ from azure.search.documents.models import (
     QueryCaptionType,
     SemanticErrorMode,
 )
+from azure.search.documents.indexes import SearchIndexerClient
 
 from src._credential import get_credential
 from src._models import Guideline, Example, Memory
+from src._database_manager import get_database_manager, ContainerNames
 
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
@@ -34,9 +36,6 @@ AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
 SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
 
 CREDENTIAL = get_credential()
-
-_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 
 class SearchItem:
@@ -376,19 +375,17 @@ class SearchManager:
         Retrieves the guidelines for the given IDs from CosmosDB.
         """
         ids = list(ids)  # Ensure ids is subscriptable
-        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
-        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
-        database = client.get_database_client(COSMOS_DB_NAME)
-        guidelines_container = database.get_container_client("guidelines")
+        database = get_database_manager()
         batch_size = 50
         results = []
         for i in range(0, len(ids), batch_size):
             batch = ids[i : i + batch_size]
             placeholders = ",".join([f"@id{j}" for j in range(len(batch))])
+            # TODO: Omit `isDeleted` from query?
             query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
             parameters = [{"name": f"@id{j}", "value": value} for j, value in enumerate(batch)]
             items = list(
-                guidelines_container.query_items(
+                database.guidelines.client.query_items(
                     query=query,
                     parameters=parameters,
                     enable_cross_partition_query=True,
@@ -403,19 +400,14 @@ class SearchManager:
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
         breadth-first traversal. Ensures the final context contains all linked guidelines, examples, and memories.
         """
-        self._ensure_env_vars(["AZURE_COSMOS_ACC_NAME", "AZURE_COSMOS_DB_NAME"])
-        client = CosmosClient(COSMOS_ENDPOINT, credential=CREDENTIAL)
-        database = client.get_database_client(COSMOS_DB_NAME)
-        guidelines_container = database.get_container_client("guidelines")
-        examples_container = database.get_container_client("examples")
-        memories_container = database.get_container_client("memories")
+        database = get_database_manager()
 
         # Partition input items by kind using SearchItem attributes
-        guidelines = {item.id: item for item in items.results if item.kind == "guidelines"}
-        examples = {item.id: item for item in items.results if item.kind == "examples"}
-        memories = {item.id: item for item in items.results if item.kind == "memories"}
+        guidelines = {item.id: item for item in items if item.kind == "guidelines"}
+        examples = {item.id: item for item in items if item.kind == "examples"}
+        memories = {item.id: item for item in items if item.kind == "memories"}
         # Save scores for each id
-        scores = {item.id: item.score for item in items.results if hasattr(item, "score")}
+        scores = {item.id: item.score for item in items if hasattr(item, "score")}
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set()
@@ -460,7 +452,7 @@ class SearchManager:
             # Process guidelines
             if guideline_queue:
                 batch_ids = [guideline_queue.popleft() for _ in range(min(batch_size, len(guideline_queue)))]
-                new_guidelines = batch_query(guidelines_container, batch_ids)
+                new_guidelines = batch_query(database.guidelines.client, batch_ids)
                 for guideline in new_guidelines:
                     gid = guideline.id
                     if gid in seen_guideline_ids:
@@ -479,7 +471,7 @@ class SearchManager:
             # Process examples
             if example_queue:
                 batch_ids = [example_queue.popleft() for _ in range(min(batch_size, len(example_queue)))]
-                new_examples = batch_query(examples_container, batch_ids)
+                new_examples = batch_query(database.examples.client, batch_ids)
                 for example in new_examples:
                     ex_id = example.id
                     if ex_id in seen_example_ids:
@@ -498,7 +490,7 @@ class SearchManager:
             # Process memories
             if memory_queue:
                 batch_ids = [memory_queue.popleft() for _ in range(min(batch_size, len(memory_queue)))]
-                new_memories = batch_query(memories_container, batch_ids)
+                new_memories = batch_query(database.memories.client, batch_ids)
                 for memory in new_memories:
                     mem_id = memory.id
                     if mem_id in seen_memory_ids:
@@ -516,3 +508,29 @@ class SearchManager:
 
         context = Context(guidelines=guidelines, examples=examples, memories=memories, scores=scores)
         return context
+
+    @classmethod
+    def run_indexers(cls, container_names: Optional[List[str]] = None):
+        """
+        Reindex one or more Azure Search indexers. If container_names is None, reindex all known indexers.
+        """
+        INDEXED_CONTAINERS = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
+        if not container_names:
+            indexers_to_run = [f"{name}-indexer" for name in INDEXED_CONTAINERS]
+        else:
+            # Map container names to indexer names (simple mapping: container_name + '-indexer')
+            indexers_to_run = [f"{name}-indexer" for name in container_names]
+
+        client = SearchIndexerClient(endpoint=SEARCH_ENDPOINT, credential=CREDENTIAL)
+        results = {}
+        for indexer_name in indexers_to_run:
+            try:
+                status = client.get_indexer_status(indexer_name)
+                if status.status == "inProgress":
+                    results[indexer_name] = {"status": "inProgress", "message": "Indexer is already running."}
+                else:
+                    client.run_indexer(indexer_name)
+                    results[indexer_name] = {"status": "success", "message": "Indexer started successfully."}
+            except Exception as e:
+                results[indexer_name] = {"status": "error", "message": str(e)}
+        return results

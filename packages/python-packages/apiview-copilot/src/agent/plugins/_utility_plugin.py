@@ -78,6 +78,8 @@ class UtilityPlugin:
                 return json.dumps(json_content, indent=2)
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding JSON from file {file_path}: {e}")
+        except Exception as e:
+            raise ValueError(f"Error reading JSON file {file_path}: {e}")
 
     @kernel_function(description="Load a text file from the specified path or URL.")
     async def load_text_file(self, file_path: str):

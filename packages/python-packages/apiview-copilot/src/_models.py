@@ -234,13 +234,14 @@ class ReviewResult(BaseModel):
         )
         self._process_comments(comments)
 
-    def _process_comments(self, comments: List[Dict]):
+    def _process_comments(self, comments: List[Dict], section: Optional[Section] = None):
         """
         Process comment dictionaries, handling various line_no formats:
         - single number (e.g., "10"): Use as is, cast to int
         - range (e.g., "10-20"): Take the first number
         - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the comment for each line
         - invalid (e.g., "abc"): Use a fallback value of 0
+        If section is provided, validate each comment before adding.
         """
         result_comments = []
         default_line_no = 0
@@ -265,7 +266,9 @@ class ReviewResult(BaseModel):
                     except ValueError:
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
-                    result_comments.append(Comment(**comment_copy))
+                    new_comment = Comment(**comment_copy)
+                    if section is None or self._validate(item=new_comment, section=section):
+                        result_comments.append(new_comment)
                 else:
                     try:
                         # Handle single number format (e.g., "10")
@@ -273,7 +276,9 @@ class ReviewResult(BaseModel):
                     except ValueError:
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
-                    result_comments.append(Comment(**comment_copy))
+                    new_comment = Comment(**comment_copy)
+                    if section is None or self._validate(item=new_comment, section=section):
+                        result_comments.append(new_comment)
         self.comments.extend(result_comments)
 
     def merge(

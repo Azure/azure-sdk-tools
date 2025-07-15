@@ -79,20 +79,14 @@ export async function makeChangesForReleasingTrack2(packageFolderPath: string, p
         pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
     }
     const modifiedChangelogContent = `# Release History
-    
+
 ${pacakgeVersionDetail}
-    
+
 ${changeLog}
-    
 ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
 
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), modifiedChangelogContent, {encoding: 'utf-8'});
 
-    changePackageJSON(packageFolderPath, packageVersion);
-    await updateUserAgent(packageFolderPath, packageVersion);
-}
-
-export async function makeChangesForPatchReleasingTrack2(packageFolderPath: string, packageVersion: string) {
     changePackageJSON(packageFolderPath, packageVersion);
     await updateUserAgent(packageFolderPath, packageVersion);
 }

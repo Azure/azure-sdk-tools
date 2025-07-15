@@ -2,6 +2,7 @@ import asyncio
 from collections import OrderedDict
 import colorama
 from colorama import Fore, Style
+from datetime import datetime
 import json
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
@@ -21,7 +22,7 @@ from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
 from src._credential import get_credential
 from src._search_manager import SearchManager
 from src._database_manager import get_database_manager, ContainerNames
-from src._search_manager import SearchManager
+from src._models import APIViewComment
 
 colorama.init(autoreset=True)
 
@@ -90,6 +91,15 @@ helps[
     type: group
     short-summary: Commands for managing the database.
 """
+
+helps[
+    "metrics"
+] = """
+    type: group
+    short-summary: Commands for reporting metrics.
+"""
+
+# COMMANDS
 
 
 def local_review(
@@ -568,39 +578,61 @@ def db_get(container_name: str, id: str):
         print(f"Error retrieving item: {e}")
 
 
+def _get_apiview_cosmos_client():
+    """
+    Returns the Cosmos DB container client for APIView comments.
+    """
+    try:
+        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+        cosmos_db = "APIViewV2"
+        container_name = "Comments"
+        if not cosmos_acc:
+            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
+        database = client.get_database_client(cosmos_db)
+        container = database.get_container_client(container_name)
+        return container
+    except CosmosHttpResponseError as e:
+        if e.status_code == 403:
+            print(
+                f"Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+            )
+        sys.exit(1)
+
+
+_APIVIEW_COMMENT_SELECT_FIELDS = [
+    "id",
+    "CreatedOn",
+    "CreatedBy",
+    "CommentText",
+    "IsResolved",
+    "IsDeleted",
+    "ElementId",
+    "ReviewId",
+    "APIRevisionId",
+    "Upvotes",
+    "Downvotes",
+    "CommentType",
+]
+APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
+
+
 def get_apiview_comments(revision_id: str):
     """
     Retrieves comments for a specific APIView revision and returns them grouped by element ID and sorted by CreatedOn time.
     Omits resolved and deleted comments, and removes unnecessary fields.
     """
-    cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
-    cosmos_db = "APIViewV2"
-    container_name = "Comments"
-
-    if not cosmos_acc:
-        raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
-
-    cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
-
     try:
-        client = CosmosClient(url=cosmos_url, credential=get_credential())
-        database = client.get_database_client(cosmos_db)
-        container = database.get_container_client(container_name)
-
+        container = _get_apiview_cosmos_client()
         result = container.query_items(
-            query="SELECT * FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
+            query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
             parameters=[{"name": "@revision_id", "value": revision_id}],
         )
         conversations = {}
         comments = list(result)
         if comments:
             for comment in comments:
-                keys_to_remove = ["_rid", "_self", "_etag", "_attachments", "_ts", "TaggedUsers", "ChangeHistory"]
-                for key, value in comment.items():
-                    if not value:
-                        keys_to_remove.append(key)
-                for key in keys_to_remove:
-                    comment.pop(key, None)
                 element_id = comment.get("ElementId")
                 if element_id in conversations:
                     conversations[element_id].append(comment)
@@ -610,15 +642,83 @@ def get_apiview_comments(revision_id: str):
             # sort comments by created_on time
             comments.sort(key=lambda x: x.get("CreatedOn", 0))
         return conversations
-    except CosmosHttpResponseError as e:
-        if e.status_code == 403:
-            print(
-                f"Error: You do not have permission to access Cosmos DB for revision {revision_id}.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
-            )
-        else:
-            print(f"Error retrieving comments for revision {revision_id}: {e}")
     except Exception as e:
         print(f"Error retrieving comments for revision {revision_id}: {e}")
+
+
+def _calculate_ai_vs_manual_comment_ratio(comments: list[APIViewComment]) -> float:
+    """
+    Calculates the ratio of AI-generated comments to manual comments.
+    """
+    ai_count = 0
+    manual_count = 0
+    for comment in comments:
+        if comment.created_by == "azure-sdk":
+            ai_count += 1
+        else:
+            manual_count += 1
+    return ai_count / manual_count if manual_count > 0 else float("inf") if ai_count > 0 else 0.0
+
+
+def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> float:
+    """
+    Calculates the ratio of AI-generated comments with a thumbs-up compared to comments with a thumbs-down.
+    """
+    good_count = 0
+    neutral_count = 0
+    bad_count = 0
+    ai_comments = [c for c in comments if c.created_by == "azure-sdk"]
+    for comment in ai_comments:
+        good_count += len(comment.upvotes)
+        bad_count += len(comment.downvotes)
+        if not comment.upvotes and not comment.downvotes:
+            neutral_count += 1
+    return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
+
+
+def report_metrics(start_date: str, end_date: str):
+    # validate that start_date and end_date are in YYYY-MM-DD format
+    bad_dates = []
+    iso_start = None
+    iso_end = None
+    for date_str, label in zip([start_date, end_date], ["start_date", "end_date"]):
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            if label == "start_date":
+                # Start of day
+                iso_start = dt.strftime("%Y-%m-%dT00:00:00Z")
+            else:
+                # End of day (max time)
+                iso_end = dt.strftime("%Y-%m-%dT23:59:59.999999Z")
+        except ValueError:
+            bad_dates.append(date_str)
+    if bad_dates:
+        print(f"ValueError: Dates must be in YYYY-MM-DD format. Invalid date(s) found: {', '.join(bad_dates)}")
+        return
+
+    client = _get_apiview_cosmos_client()
+    query = f"""
+    SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c
+    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+    """
+    # retrieve comments created between start_date and end_date (ISO 8601)
+    raw_comments = list(
+        client.query_items(
+            query=query,
+            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+            enable_cross_partition_query=True,
+        )
+    )
+    comments = [APIViewComment(**d) for d in raw_comments]
+    report = {
+        "start_date": start_date,
+        "end_date": end_date,
+        "metrics": {
+            "ai_vs_manual_comment_ratio": _calculate_ai_vs_manual_comment_ratio(comments),
+            "good_vs_bad_comment_ratio": _calculate_good_vs_bad_comment_ratio(comments),
+        },
+    }
+    return report
 
 
 SUPPORTED_LANGUAGES = [
@@ -636,6 +736,9 @@ SUPPORTED_LANGUAGES = [
 
 
 class CliCommandsLoader(CLICommandsLoader):
+
+    # COMMAND REGISTRATION
+
     def load_command_table(self, args):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
@@ -659,7 +762,11 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get", "review_job_get")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
+        with CommandGroup(self, "metrics", "__main__#{}") as g:
+            g.command("report", "report_metrics")
         return OrderedDict(self.command_table)
+
+    # ARGUMENT REGISTRATION
 
     def load_arguments(self, command):
         with ArgumentsContext(self, "") as ac:
@@ -876,6 +983,19 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The revision ID of the APIView to retrieve comments for.",
                 options_list=["--revision-id", "-r"],
+            )
+        with ArgumentsContext(self, "metrics report") as ac:
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date for the metrics report (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date for the metrics report (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

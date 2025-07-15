@@ -1,4 +1,3 @@
-
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -26,14 +25,11 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 string loadCommandWin = $"$sw = [Diagnostics.Stopwatch]::StartNew(); while ($sw.Elapsed.TotalSeconds -lt {timeInSeconds}) {{ 1..10000 | ForEach-Object {{ [Math]::Sqrt($_) }} }}";
                 return ("powershell", loadCommandWin);
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            else
             {
-                string loadCommandMac = $"-e 'use Time::HiRes qw(time); $end = time + {timeInSeconds}; $x++ while time < $end' &";
-                return ("perl", loadCommandMac);
+                string loadCommandUnix = $"{timeInSeconds} yes > /dev/null";
+                return ("timeout", loadCommandUnix);
             }
-
-            string loadCommandLinux = $"{timeInSeconds} bash -c 'while :; do :; done'";
-            return ("timeout", loadCommandLinux);
         }
 
 

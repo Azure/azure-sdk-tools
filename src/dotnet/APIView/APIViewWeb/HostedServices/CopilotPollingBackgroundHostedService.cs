@@ -97,7 +97,7 @@ namespace APIViewWeb.HostedServices
                                     CreatedOn = DateTime.UtcNow,
                                     ReviewId = jobInfo.APIRevision.ReviewId,
                                     APIRevisionId = jobInfo.APIRevision.Id,
-                                    ElementId = comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : codeLine.lineId,
+                                    ElementId = codeLine.lineId ?? (comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : null),
                                 };
 
                                 var commentText = new StringBuilder();

@@ -1,4 +1,7 @@
 # Release
+## 2025-07-01 - 0.9.0
+
+- Restructure code directory and add unit test in test/ folder
 
 ## 2025-06-03 - 0.8.1
 

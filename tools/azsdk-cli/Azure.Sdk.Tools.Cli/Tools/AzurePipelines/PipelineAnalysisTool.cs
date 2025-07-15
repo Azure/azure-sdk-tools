@@ -22,7 +22,7 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Fetches data from an Azure Pipelines run.")]
-public partial class PipelineAnalysisTool : MCPTool
+public class PipelineAnalysisTool : MCPTool
 {
     private readonly IAzureService azureService;
     private readonly IDevOpsService devopsService;
@@ -131,20 +131,23 @@ public partial class PipelineAnalysisTool : MCPTool
     private static (int, string?) getBuildIdFromPipelineIdentifier(string pipelineIdentifier)
     {
         // pipelineIdentifier could be a pipeline link like
-        // https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5094469&view=results
-        // or just an id like 5094469
+        // https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5094469&view=results (buildId 5094469, project internal)
+        // or just an id like 5094469 (project will be auto-discovered)
         if (int.TryParse(pipelineIdentifier, out int buildId))
         {
             return (buildId, null);
         }
 
         string? project = null;
-        var uri = new Uri(pipelineIdentifier, UriKind.Absolute);
-        var segments = uri.Segments.Select(s => s.Trim('/')).ToArray();
-        if (segments.Length > 2)
+        if (!Uri.TryCreate(pipelineIdentifier, UriKind.Absolute, out var uri))
         {
-            // Example: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5094469&view=results
-            // segments[2] is "internal"
+            throw new ArgumentException($"Invalid pipeline identifier: {pipelineIdentifier}. Expected a valid absolute URI or an integer.");
+        }
+
+        // Extract devops project from URI segments
+        var segments = uri.Segments.Select(s => s.Trim('/')).ToList();
+        if (segments.Count >= 3)
+        {
             project = segments[2];
         }
 
@@ -168,7 +171,7 @@ public partial class PipelineAnalysisTool : MCPTool
         if (auth)
         {
             var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope));
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
             _buildClient = connection.GetClient<BuildHttpClient>();

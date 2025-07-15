@@ -75,7 +75,7 @@ public class PipelineDetailsTool : MCPTool
             return;
         }
         var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope));
+        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
         var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
         var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
         buildClient = connection.GetClient<BuildHttpClient>();

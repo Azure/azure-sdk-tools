@@ -50,7 +50,7 @@ namespace Azure.ClientSdk.Analyzers
             // Only process types defined in the current source tree (not dependencies)
             foreach (var namedType in GetAllTypes(context.Compilation.GlobalNamespace))
             {
-                if (!IsDefinedInCurrentSource(namedType))
+                if (!SymbolEqualityComparer.Default.Equals(namedType.ContainingAssembly, context.Compilation.Assembly))
                 {
                     continue;
                 }
@@ -82,13 +82,6 @@ namespace Azure.ClientSdk.Analyzers
                     }
                 }
             }
-        }
-
-        private static bool IsDefinedInCurrentSource(INamedTypeSymbol typeSymbol)
-        {
-            // Check if the type has any syntax references (meaning it's defined in source code of current compilation)
-            // Types from dependencies (package references, project references) won't have syntax references
-            return typeSymbol.DeclaringSyntaxReferences.Any();
         }
 
         private static bool IsClientType(INamedTypeSymbol namedType)

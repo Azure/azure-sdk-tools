@@ -121,7 +121,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
-
                 if (package == null)
                 {
                     response.Details.Add($"Package with name '{packageName}' for language '{language}' does not exist.");
@@ -129,11 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
-
                 var isFirstRelease = package.ReleasedVersions.Count == 0;
-
                 var isBetaRelease = sdkReleaseType?.ToLower() == "beta";
-
                 if (isMgmtPlane && isFirstRelease && isBetaRelease) // if namespace approval is required for sdk generation
                 {
                     var namespaceApprovalIssueURL = releasePlan?.NamespaceApprovalIssueURL;

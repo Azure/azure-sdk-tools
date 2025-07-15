@@ -257,7 +257,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	if len(req.AdditionalInfos) > 0 {
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
-				if len(info.Link) > config.AOAI_CHAT_MAX_TOKENS {
+				if len(info.Content) > config.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
 					info.Content = info.Content[:config.AOAI_CHAT_MAX_TOKENS]
 				}

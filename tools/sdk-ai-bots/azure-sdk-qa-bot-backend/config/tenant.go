@@ -24,6 +24,10 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		PromptTemplate: "typespec.md",
 		Sources:        append(typespecSources, model.Source_AzureResourceManagerRPC, model.Source_AzureAPIGuidelines),
 	},
+	model.TenantID_AzureSDKOnboarding: {
+		PromptTemplate: "azure_sdk_onboarding.md",
+		Sources:        append([]model.Source{model.Source_AzureSDKDocsEng, model.Source_AzureSDKGuidelines}, typespecSources...),
+	},
 }
 
 func GetTenantConfig(tenantID model.TenantID) (TenantConfig, bool) {

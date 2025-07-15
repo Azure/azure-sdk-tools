@@ -25,13 +25,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 string loadCommandWin = $"$sw = [Diagnostics.Stopwatch]::StartNew(); while ($sw.Elapsed.TotalSeconds -lt {timeInSeconds}) {{ 1..10000 | ForEach-Object {{ [Math]::Sqrt($_) }} }}";
                 return ("powershell", loadCommandWin);
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                string loadCommandMac = $"-c 'dd if=/dev/zero bs=1M count={timeInSeconds * 200} | md5'";
-                return ("sh", loadCommandMac);
-            }
-            string loadCommandLinux = $"-c 'dd if=/dev/zero bs=1M count={timeInSeconds * 200} | md5sum'";
-            return ("sh", loadCommandLinux);
+            string loadCommandUnix = $"-c 'dd if=/dev/zero of=/dev/null bs=1M count={timeInSeconds * 200} 2>/dev/null'";
+            return ("sh", loadCommandUnix);
         }
 
 

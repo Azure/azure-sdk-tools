@@ -139,7 +139,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var namespaceApprovalIssueURL = releasePlan?.NamespaceApprovalIssueURL;
                     if (string.IsNullOrEmpty(namespaceApprovalIssueURL))
                     {
-                        response.Status = "Failed";
                         response.Details.Add("Namespace approval issue is required to verify namespace approval status. Provide the namespace approval issue URL and link it to the release plan.");
                         return response;
                     }
@@ -148,7 +147,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     // Check if the namespace approval issue is a valid GitHub issue number
                     if (!match.Success)
                     {
-                        response.Status = "Failed";
                         response.Details.Add($"Invalid namespace approval issue '{namespaceApprovalIssueURL}'. It should be a valid GitHub issue in Azure/azure-sdk repo.");
                         return response;
                     }
@@ -158,7 +156,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var issue = await githubService.GetIssueAsync(namespaceApprovalRepoOwner, namespaceApprovalRepoName, issueNumber);
                     if(issue == null)
                     {
-                        response.Status = "Failed";
                         response.Details.Add($"Failed to verify approval status. Namespace approval issue #{namespaceApprovalIssueURL} not found in {namespaceApprovalRepoOwner}/{namespaceApprovalRepoName}.");
                         return response;
                     }
@@ -166,14 +163,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     // Verify if issue has label 'mgmt-namespace-review'
                     if (!issue.Labels.Any(label => label.Name.Equals("mgmt-namespace-review", StringComparison.OrdinalIgnoreCase)))
                     {
-                        response.Status = "Failed";
                         response.Details.Add($"Namespace approval issue {namespaceApprovalIssueURL} does not have the required 'mgmt-namespace-review' label.");
                         return response;
                     }
 
                     if (issue.State == ItemState.Open)
                     {
-                        response.Status = "Failed";
                         response.Details.Add($"Namespace approval is required for first preview release of SDK. Provide the namespace approval issue URL and link it to the release plan");
                         return response;
                     }

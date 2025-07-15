@@ -4,6 +4,7 @@ import { ConversationHandler, ConversationMessage } from '../input/ConversationH
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
 import { CompletionResponsePayload } from '../backend/rag.js';
+import { logger } from '../logging/logger.js';
 
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
@@ -80,7 +81,14 @@ export class ThinkingHandler {
     const referencesMap = new Map<string, Map<string, string>>();
     ragReply.references?.forEach((ref) => {
       const map = referencesMap.get(ref.source) ?? new Map<string, string>();
-      map.set(new URL(ref.link).href, ref.title);
+      let url = undefined;
+      try {
+        url = new URL(ref.link);
+      } catch (e) {
+        logger.warn(`Invalid URL in reference: ${ref.link}`, { meta: this.meta });
+        return;
+      }
+      map.set(url.href, ref.title);
       referencesMap.set(ref.source, map);
     });
 

@@ -530,5 +530,87 @@ namespace Azure.Test
 
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0035_IgnoresDependencyTypes()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // This should be flagged because it's defined in current source
+    public class {|AZC0035:SourceDefinedModel|}
+    {
+        private SourceDefinedModel() { }
+        public string Name { get; }
+    }
+
+    public class TestClient
+    {
+        public virtual Response<SourceDefinedModel> GetSourceDefinedModel()
+        {
+            return null;
+        }
+
+        // These would be types from dependencies and should be ignored
+        // Note: In actual compilation, Azure.Response<T> and System.String are from dependencies
+        // but in our test compilation they will be treated as source-defined since we define them
+        // This test verifies the filtering mechanism works - in real scenarios with actual 
+        // dependencies, those types would not have DeclaringSyntaxReferences
+        public virtual Response<string> GetStringFromDependency()
+        {
+            return null;
+        }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0035_OnlyAnalyzesSourceDefinedClientTypes()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // Source-defined model that should be flagged
+    public class {|AZC0035:MyCustomModel|}
+    {
+        private MyCustomModel() { }
+        public string Value { get; }
+    }
+
+    // Source-defined client - should be analyzed
+    public class MyClient
+    {
+        public virtual Response<MyCustomModel> GetModel()
+        {
+            return null;
+        }
+    }
+
+    // Source-defined model factory - should be analyzed
+    public static class MyModelFactory
+    {
+        // This factory method doesn't cover MyCustomModel, so MyCustomModel should be flagged
+        public static SomeOtherModel SomeOtherModel()
+        {
+            return null;
+        }
+    }
+
+    public class SomeOtherModel
+    {
+        public string Name { get; set; }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
     }
 }

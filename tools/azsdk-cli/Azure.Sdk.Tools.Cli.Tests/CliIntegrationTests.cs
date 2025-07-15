@@ -52,7 +52,7 @@ Duration: 1ms".TrimStart();
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);
 
-        var input = output.Replace("\r", "");
+        output = output.Replace("\r", "");
 
         Assert.That(output, Is.EqualTo(expected));
     }

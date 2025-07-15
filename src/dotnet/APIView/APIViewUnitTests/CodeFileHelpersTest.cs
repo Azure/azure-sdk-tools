@@ -340,5 +340,68 @@ namespace APIViewUnitTests
             Assert.Equal(2159, result.NodeMetaData.Count);
         }
 
+        [Fact]
+        public void CollectUserCommentsForRow_WithFirstRowComment_IncludesFirstRowComment()
+        {
+            var firstRowComment = new CommentItemModel
+            {
+                ElementId = "FIRST_ROW", CommentText = "This is a FIRST_ROW comment", CreatedBy = "test-user"
+            };
+
+            var codePanelRawData = new CodePanelRawData
+            {
+                Comments = new List<CommentItemModel> { firstRowComment }, IsFirstCodeLineAdded = false
+            };
+
+            var codePanelRowData = new CodePanelRowData { RowClassesObj = new HashSet<string>() };
+
+            var method = typeof(CodeFileHelpers).GetMethod("CollectUserCommentsForRow",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CodePanelRowData)method.Invoke(null, new object[]
+            {
+                codePanelRawData, null, // nodeId is null (simulating removed row scenario)
+                "test-node-hash", codePanelRowData
+            });
+
+            Assert.NotNull(result);
+
+            CommentItemModel firstRowCommentResult = result.CommentsObj.FirstOrDefault(r => r.ElementId == "FIRST_ROW");
+
+            Assert.NotNull(firstRowCommentResult);
+            Assert.Equal("FIRST_ROW", firstRowCommentResult.ElementId);
+            Assert.Equal("This is a FIRST_ROW comment", firstRowCommentResult.CommentText);
+        }
+
+        [Fact]
+        public void CollectUserCommentsRegularComment_IncludesRegularRowComment()
+        {
+            var regularComment = new CommentItemModel
+            {
+                ElementId = "regular-element", CommentText = "This is a regular comment", CreatedBy = "test-user"
+            };
+
+            var codePanelRawData = new CodePanelRawData
+            {
+                Comments = new List<CommentItemModel> { regularComment }, IsFirstCodeLineAdded = false
+            };
+
+            var codePanelRowData = new CodePanelRowData { RowClassesObj = new HashSet<string>() };
+
+            var method = typeof(CodeFileHelpers).GetMethod("CollectUserCommentsForRow",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CodePanelRowData)method.Invoke(null, new object[]
+            {
+                codePanelRawData, "regular-element", // This should match the regular comment's ElementId
+                "test-node-hash", codePanelRowData
+            });
+
+            Assert.NotNull(result);
+
+            CommentItemModel regularCommentResult = result.CommentsObj.FirstOrDefault(r => r.ElementId == "regular-element");
+            Assert.NotNull(regularCommentResult);
+        }
+
     }
 }

@@ -104,29 +104,42 @@ namespace APIViewUnitTests
         }
 
         [Theory]
-        [InlineData("any")]
-        [InlineData("summary")]
-        public async Task ExecuteAsync_CommentTypes_FormatsCorrectly(string commentType)
+        [InlineData("summary", 1, "FIRST_ROW")]
+        [InlineData("summary", 2, "line-2")]
+        [InlineData("any", 2, "line-2")]
+        public async Task ExecuteAsync_CommentTypes_FormatsCorrectly(string commentType, int lineNo, string expectedElementId)
         {
-            var comment = commentType == "any"
-                ? CreateCommentWithSuggestions()
-                : CreateSummaryComment();
-
-            CommentItemModel capturedComment = await ProcessCommentAndGetText(comment);
-
-            switch (commentType)
+            List<(string lineText, string lineId)> codeLinesList = new()
             {
-                case "any":
-                    Assert.NotEqual(CodeFileHelpers.FirstRowElementId, capturedComment.ElementId ?? "");
-                    Assert.Contains("Test suggestion", capturedComment.CommentText);
-                    Assert.Contains("https://azure.github.io/azure-sdk/", capturedComment.CommentText);
-                    Assert.Equal(ApiViewConstants.AzureSdkBotName, capturedComment.CreatedBy);
-                    Assert.False(capturedComment.ResolutionLocked);
-                    break;
-                case "summary":
-                    Assert.Equal(CodeFileHelpers.FirstRowElementId, capturedComment.ElementId);
-                    break;
-            }
+                (string.Empty, null),
+                ("public class TestClass", "line-2"),
+                ("public void TestMethod()", "line-3"),
+            };
+
+            var comment = commentType == "summary"
+                ? CreateSummaryComment(lineNo)
+                : CreateCommentWithSuggestions(lineNo);
+
+            CommentItemModel capturedComment = await ProcessCommentAndGetText(comment, CreateTestJobInfo(codeLinesList));
+            Assert.Equal(expectedElementId, capturedComment.ElementId);
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_CommentTypes_NotSummary_NotElementId_Skipped()
+        {
+            List<(string lineText, string lineId)> codeLinesList =
+            [
+                (string.Empty, null),
+                ("public class TestClass", "line-2"),
+                ("public void TestMethod()", "line-3"),
+            ];
+
+            var comment = CreateCommentWithSuggestions(1);
+
+            // This times out because no comment is returned; the comment is discarded due to the implementation. This behavior is expected for this test.
+            await Assert.ThrowsAsync<TimeoutException>(() =>
+                ProcessCommentAndGetText(comment, CreateTestJobInfo(codeLinesList))
+            );
         }
 
         [Theory]
@@ -157,7 +170,7 @@ namespace APIViewUnitTests
             Assert.Contains("Suggestion : `Test suggestion`", commentText);
         }
 
-        private AIReviewJobInfoModel CreateTestJobInfo()
+        private AIReviewJobInfoModel CreateTestJobInfo(List<(string lineText, string lineId)> codeLinesList = null)
         {
             return new AIReviewJobInfoModel
             {
@@ -168,11 +181,10 @@ namespace APIViewUnitTests
                     {
                         Id = "revision-123", ReviewId = "review-456", CopilotReviewInProgress = true
                     },
-                CodeLines =
+                CodeLines = codeLinesList ??
                 [
                     ("public class TestClass", "line-1"),
                     ("public void TestMethod()", "line-2"),
-                    ("// Summary comment", null)
                 ]
             };
         }
@@ -290,9 +302,9 @@ namespace APIViewUnitTests
             };
         }
 
-        private async Task<CommentItemModel> ProcessCommentAndGetText(AIReviewComment comment)
+        private async Task<CommentItemModel> ProcessCommentAndGetText(AIReviewComment comment, AIReviewJobInfoModel reviewJobInfo = null)
         {
-            var jobInfo = CreateTestJobInfo();
+            var jobInfo = reviewJobInfo ??CreateTestJobInfo();
             var pollResponse = new AIReviewJobPolledResponseModel
             {
                 Status = "Success",
@@ -326,11 +338,11 @@ namespace APIViewUnitTests
             return capturedComment;
         }
 
-        private AIReviewComment CreateCommentWithSuggestions()
+        private AIReviewComment CreateCommentWithSuggestions(int lineNo = 1)
         {
             return new AIReviewComment
             {
-                LineNo = 1,
+                LineNo = lineNo,
                 Comment = "Consider improving this method",
                 Source = "analysis",
                 RuleIds = new List<string> { "design-rule-1", "naming-rule-2" },
@@ -339,11 +351,11 @@ namespace APIViewUnitTests
             };
         }
 
-        private AIReviewComment CreateSummaryComment()
+        private AIReviewComment CreateSummaryComment(int lineNo =3)
         {
             return new AIReviewComment
             {
-                LineNo = 3,
+                LineNo = lineNo,
                 Comment = "Overall summary of the review",
                 Source = "summary",
                 RuleIds = new List<string>(),

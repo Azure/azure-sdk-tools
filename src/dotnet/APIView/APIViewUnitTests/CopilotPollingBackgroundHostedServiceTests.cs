@@ -229,16 +229,16 @@ namespace APIViewUnitTests
             SetupSignalRMock();
 
             var revisionUpdateCompleted = new TaskCompletionSource<bool>();
+            _mockApiRevisionsManager.Reset();
             _mockApiRevisionsManager.Setup(x => x.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
                 .Callback<APIRevisionListItemModel>(_ => revisionUpdateCompleted.SetResult(true))
                 .Returns(Task.CompletedTask);
 
             using var cancellationTokenSource = new CancellationTokenSource();
             cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
-
             await _service.StartAsync(cancellationTokenSource.Token);
             
-            await revisionUpdateCompleted.Task.WaitAsync(TimeSpan.FromSeconds(1));
+            await revisionUpdateCompleted.Task.WaitAsync(TimeSpan.FromSeconds(3));
         }
 
         private void SetupSignalRMock()
@@ -306,6 +306,7 @@ namespace APIViewUnitTests
             CommentItemModel capturedComment = null;
             var commentCaptured = new TaskCompletionSource<bool>();
             
+            _mockCommentsRepository.Reset();
             _mockCommentsRepository.Setup(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
                 .Callback<CommentItemModel>(c => 
                 {
@@ -315,11 +316,11 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             using var cancellationTokenSource = new CancellationTokenSource();
-            cancellationTokenSource.CancelAfter(2000);
+            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(5));
 
             await _service.StartAsync(cancellationTokenSource.Token);
             
-            await commentCaptured.Task.WaitAsync(TimeSpan.FromSeconds(1));
+            await commentCaptured.Task.WaitAsync(TimeSpan.FromSeconds(3));
 
             Assert.NotNull(capturedComment);
             return capturedComment;

@@ -536,6 +536,7 @@ namespace Azure.Test
         {
             const string code = @"
 using Azure;
+using System;
 using System.Threading.Tasks;
 
 namespace Azure.Test
@@ -554,12 +555,15 @@ namespace Azure.Test
             return null;
         }
 
-        // These would be types from dependencies and should be ignored
-        // Note: In actual compilation, Azure.Response<T> and System.String are from dependencies
-        // but in our test compilation they will be treated as source-defined since we define them
-        // This test verifies the filtering mechanism works - in real scenarios with actual 
-        // dependencies, those types would not have DeclaringSyntaxReferences
-        public virtual Response<string> GetStringFromDependency()
+        // System types like String should be ignored as they come from framework dependencies
+        // This tests that the filtering mechanism works for built-in framework types
+        public virtual Response<string> GetString()
+        {
+            return null;
+        }
+
+        // DateTime is another framework type that should be ignored
+        public virtual Response<DateTime> GetDateTime()
         {
             return null;
         }

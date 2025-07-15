@@ -57,10 +57,10 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   };
   const action = context.activity.value?.action;
   const feedbackComment = context.activity.value?.feedbackComment;
-  const logMeta = getTurnContextLogMeta(context);
-  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, { meta: logMeta });
+  const meta = getTurnContextLogMeta(context);
+  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, { meta });
 
-  const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, logMeta);
+  const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, meta);
   const messages: Message[] = [];
   conversations.map((msg) => {
     const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
@@ -78,7 +78,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         reaction: 'good',
         comment: feedbackComment,
       };
-      await sendFeedback(goodFeedback, ragOptions);
+      await sendFeedback(goodFeedback, ragOptions, meta);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
       break;
     case 'feedback-dislike':
@@ -88,7 +88,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         reaction: 'bad',
         comment: feedbackComment,
       };
-      await sendFeedback(badFeedback, ragOptions);
+      await sendFeedback(badFeedback, ragOptions, meta);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');
       break;
     default:

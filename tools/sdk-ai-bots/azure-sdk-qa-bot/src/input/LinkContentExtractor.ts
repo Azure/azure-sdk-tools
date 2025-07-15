@@ -4,14 +4,12 @@ import { URLNotSupportedError } from '../error/inputErrors.js';
 
 export class LinkContentExtractor {
   private readonly githubClient = new GithubClient();
-  private logMeta: object;
 
-  constructor(logMeta: object = {}) {
-    this.logMeta = logMeta;
-    this.githubClient = new GithubClient(undefined, logMeta);
+  constructor() {
+    this.githubClient = new GithubClient(undefined);
   }
 
-  public async extract(urls: URL[]): Promise<RemoteContent[]> {
+  public async extract(urls: URL[], meta: object): Promise<RemoteContent[]> {
     const contents: RemoteContent[] = [];
 
     for (const [index, url] of urls.entries()) {
@@ -23,7 +21,7 @@ export class LinkContentExtractor {
       const prUrl = url.href;
       let prDetails: PRDetails;
       try {
-        prDetails = await this.githubClient.getPullRequestDetails(prUrl);
+        prDetails = await this.githubClient.getPullRequestDetails(prUrl, meta);
       } catch (error) {
         contents.push({ text: '', url, error: error });
         continue;

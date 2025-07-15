@@ -11,6 +11,11 @@ export interface Prompt {
   timestamp: Date;
 }
 
+export interface ContactCard {
+  version: string;
+  resourceId: string;
+}
+
 /**
  * Interface representing a message in a conversation
  */
@@ -42,6 +47,11 @@ export interface ConversationMessage {
   prompt?: Prompt;
 
   /**
+   * Raw prompt information
+   */
+  contactCard?: ContactCard;
+
+  /**
    * Timestamp when the message was created
    */
   timestamp: Date;
@@ -61,6 +71,7 @@ export interface MessageEntity extends TableEntity {
    */
   rowKey: string;
 
+  // DEPRECATED: Use `reply` instead
   /**
    * Text content of the message
    */
@@ -75,6 +86,11 @@ export interface MessageEntity extends TableEntity {
    * JSON string of RAG reply
    */
   reply?: string;
+
+  /**
+   * JSON string of contact card
+   */
+  contactCard?: string;
 
   /**
    * ISO timestamp string when the message was created
@@ -162,7 +178,7 @@ export class ConversationHandler {
    * @param message The message to save
    * @returns The saved message with any server-generated properties
    */
-  public async saveMessage(message: ConversationMessage, logMeta = {}): Promise<MessageEntity | undefined> {
+  public async saveMessage(message: ConversationMessage, logMeta: object): Promise<MessageEntity | undefined> {
     if (!this.tableClient) {
       logger.warn('Table client not initialized. Call initialize() before saving messages.', { meta: logMeta });
       return;
@@ -199,11 +215,9 @@ export class ConversationHandler {
    * @param conversationId The ID of the conversation
    * @returns Array of conversation messages
    */
-  public async getConversationMessages(conversationId: string, logMeta = {}): Promise<ConversationMessage[]> {
+  public async getConversationMessages(conversationId: string, meta: object): Promise<ConversationMessage[]> {
     if (!this.tableClient) {
-      logger.warn('Table client not initialized. Call initialize() before retrieving messages.', {
-        meta: logMeta,
-      });
+      logger.warn('Table client not initialized. Call initialize() before retrieving messages.', { meta });
       return [];
     }
 
@@ -228,11 +242,7 @@ export class ConversationHandler {
 
       return sortedMessages;
     } catch (error) {
-      logger.error('Failed to retrieve conversation messages', {
-        error,
-        conversationId,
-        meta: logMeta,
-      });
+      logger.error('Failed to retrieve conversation messages', { error, conversationId, meta });
       return [];
     }
   }
@@ -260,6 +270,7 @@ export class ConversationHandler {
       timestamp: timestamp.toISOString(),
       prompt: promptToStore ? JSON.stringify(promptToStore) : undefined,
       reply: message.reply ? JSON.stringify(message.reply) : undefined,
+      contactCard: message.contactCard ? JSON.stringify(message.contactCard) : undefined,
     };
   }
 
@@ -271,6 +282,7 @@ export class ConversationHandler {
   private entityToMessage(entity: MessageEntity): ConversationMessage {
     let prompt: Prompt | undefined;
     let reply: RAGReply | undefined;
+    let contactCard: ContactCard | undefined;
 
     // Parse prompt and handle Date conversion
     if (entity.prompt) {
@@ -291,6 +303,14 @@ export class ConversationHandler {
       }
     }
 
+    // Parse contact card
+    if (entity.contactCard) {
+      const parsedContactCard = JSON.parse(entity.contactCard);
+      if (parsedContactCard && Object.keys(parsedContactCard).length > 0) {
+        contactCard = parsedContactCard as ContactCard;
+      }
+    }
+
     return {
       conversationId: entity.partitionKey,
       activityId: entity.rowKey,
@@ -298,6 +318,7 @@ export class ConversationHandler {
       timestamp: new Date(entity.timestamp),
       prompt: prompt,
       reply: reply,
+      contactCard: contactCard,
     };
   }
 }

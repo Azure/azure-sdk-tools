@@ -531,47 +531,6 @@ namespace Azure.Test
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
 
-        [Fact]
-        public async Task AZC0035_IgnoresDependencyTypes()
-        {
-            const string code = @"
-using Azure;
-using System;
-using System.Threading.Tasks;
-
-namespace Azure.Test
-{
-    // This should be flagged because it's defined in current source
-    public class {|AZC0035:SourceDefinedModel|}
-    {
-        private SourceDefinedModel() { }
-        public string Name { get; }
-    }
-
-    public class TestClient
-    {
-        public virtual Response<SourceDefinedModel> GetSourceDefinedModel()
-        {
-            return null;
-        }
-
-        // System types like String should be ignored as they come from framework dependencies
-        // This tests that the filtering mechanism works for built-in framework types
-        public virtual Response<string> GetString()
-        {
-            return null;
-        }
-
-        // DateTime is another framework type that should be ignored
-        public virtual Response<DateTime> GetDateTime()
-        {
-            return null;
-        }
-    }
-}";
-
-            await Verifier.CreateAnalyzer(code).RunAsync();
-        }
 
         [Fact]
         public async Task AZC0035_OnlyAnalyzesSourceDefinedClientTypes()

@@ -146,7 +146,7 @@ namespace Microsoft.Crank.Agent
             List<double> cpuSamples = [];
             List<long> memorySamples = [];
 
-            while (true)
+            while (!processLifetimeTask.Task.IsCompleted)
             {
                 var delayTask = Task.Delay(1000);
                 var completedTask = await Task.WhenAny(processLifetimeTask.Task, cancelledTcs.Task, timeoutTask, delayTask);
@@ -180,10 +180,12 @@ namespace Microsoft.Crank.Agent
                     break;
                 }
 
-                if (trackStatistics)
+                if (trackStatistics && !process.HasExited)
                 {
                     try
                     {
+                        process.Refresh();
+
                         // CPU usage
                         TimeSpan currentCpuTime = process.TotalProcessorTime;
                         double cpuUsage = (currentCpuTime - lastCpuTime).TotalMilliseconds / (1000.0 * Environment.ProcessorCount) * 100;
@@ -191,20 +193,20 @@ namespace Microsoft.Crank.Agent
                         cpuSamples.Add(cpuUsage);
 
                         // Memory usage
-                        process.Refresh(); // Refresh to get updated memory info
                         long memoryUsage = process.WorkingSet64;
                         memorySamples.Add(memoryUsage);
                     }
-                    catch (InvalidOperationException)
+                    catch (InvalidOperationException e)
                     {
                         // Process may have exited while checking stats, ignore
+                        Log.WriteLine($"Exception when reading process statistics: {e.Message}");
                     }
                 }
             }
 
             var processResult = await processLifetimeTask.Task;
-            processResult.AverageCpu = cpuSamples.Count > 0 ? cpuSamples.Average() : 0;
-            processResult.AverageMemory = memorySamples.Count > 0 ? (long)memorySamples.Average() : 0;
+            processResult.AverageCpu = cpuSamples.Count > 0 ? cpuSamples.Average() : -1;
+            processResult.AverageMemory = memorySamples.Count > 0 ? (long)memorySamples.Average() : -1;
 
             onStop?.Invoke(processResult.ExitCode);
             return processResult;

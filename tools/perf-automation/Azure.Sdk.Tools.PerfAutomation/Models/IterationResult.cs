@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public string StandardOutput { get; set; }
         public string StandardError { get; set; }
         public string Exception { get; set; }
-        public double AverageCpu { get; set; } = 0;
-        public long AverageMemory { get; set; } = 0;
+        public double AverageCpu { get; set; } = -1;
+        public long AverageMemory { get; set; } = -1;
     }
 }

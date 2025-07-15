@@ -3,8 +3,8 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -34,14 +34,20 @@ func NewStorageService() (*StorageService, error) {
 	return &StorageService{credential: credential, blobClient: blobClient}, nil
 }
 
-func (s *StorageService) DownloadBlobToFile(container, path string, file *os.File) error {
+func (s *StorageService) DownloadBlob(container, path string) ([]byte, error) {
 	// Download the blob
-	_, err := s.blobClient.DownloadFile(context.Background(), container, path, file, nil)
+	resp, err := s.blobClient.DownloadStream(context.Background(), container, path, nil)
 	if err != nil {
-		return fmt.Errorf("failed to download blob: %v", err)
+		return nil, fmt.Errorf("failed to download blob: %v", err)
 	}
-	log.Printf("Blob %s/%s downloaded successfully", container, path)
-	return nil
+	// Read the blob content
+	body := resp.Body
+	defer body.Close()
+	content, err := io.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blob content: %v", err)
+	}
+	return content, nil
 }
 
 func (s *StorageService) PutBlob(container, path string, content []byte) error {

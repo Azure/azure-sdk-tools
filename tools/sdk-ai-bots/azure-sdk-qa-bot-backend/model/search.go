@@ -130,6 +130,15 @@ func GetIndexLink(chunk Index) string {
 		return "https://github.com/microsoft/api-guidelines/blob/vNext/" + path
 	case Source_AzureResourceManagerRPC:
 		return "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/" + path
+	case Source_AzureSDKDocsEng:
+		path = strings.TrimPrefix(path, "docs/")
+		path = TrimFileFormat(path)
+		if path == "index" {
+			return "https://eng.ms/docs/products/azure-developer-experience"
+		}
+		return "https://eng.ms/docs/products/azure-developer-experience/" + path
+	case Source_AzureSDKGuidelines:
+		return "https://azure.github.io/azure-sdk/" + path
 	default:
 		return ""
 	}

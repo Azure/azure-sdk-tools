@@ -19,9 +19,9 @@ func NewFeedbackService() *FeedbackService {
 }
 
 func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
-
 	timestamp := time.Now()
 	filename := fmt.Sprintf("feedback_%s.csv", timestamp.Format("2006-01-02"))
+	header := "Timestamp,TenantID,Messages,Reaction,Comment\n"
 	// Read file from storage
 	storageService, err := storage.NewStorageService()
 	if err != nil {
@@ -36,23 +36,27 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		if err != nil {
 			return err
 		}
-		// Write headers
-		_, err = f.WriteString("Timestamp,TenantID,Messages,Reaction,Comment\n")
-		if err != nil {
-			f.Close()
-			return err
-		}
 	} else {
-		// Open existing file in append mode
-		f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+		// Open existing file in write mode and truncate it to overwrite content
+		f, err = os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
 			return err
 		}
 	}
 	// Sync the feedback file from storage
-	err = storageService.DownloadBlobToFile(config.STORAGE_FEEDBACK_CONTAINER, filename, f)
+	content, err := storageService.DownloadBlob(config.STORAGE_FEEDBACK_CONTAINER, filename)
 	if err != nil {
 		log.Printf("Failed to download feedback file: %v", err)
+	}
+	if len(content) > 0 {
+		_, err = f.Write(content)
+	} else {
+		// Write header if file is new
+		_, err = f.WriteString(header)
+	}
+	if err != nil {
+		f.Close()
+		log.Printf("Failed to write feedback record: %v", err)
 	}
 	messageStr, _ := json.Marshal(feedback.Messages)
 	// Format and write the new record
@@ -71,7 +75,6 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	f.Close()
 
 	go updateFeedbackFile(filename)
-
 	return err
 }
 

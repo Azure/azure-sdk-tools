@@ -2,21 +2,65 @@ import {logger} from "./logger.js";
 import {inc as semverInc} from "semver";
 import { ApiVersionType } from "../common/types.js"
 
-export function getVersion(npmViewResult: Record<string, any> | undefined, tag: string) {
-    const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
-    return distTags && distTags[tag];
+function getDistTags(npmViewResult: Record<string, unknown>): Record<string, string> | undefined {
+    const distTags = npmViewResult['dist-tags'];
+    if (!isStringStringRecord(distTags)) {
+        logger.warn(`Failed to get expected dist-tags record.`);
+        return undefined;
+    }
+    return distTags;
 }
 
-export function getversionDate(npmViewResult: Record<string, any>, version : string){
-    const time: Record<string, any> | undefined = npmViewResult['time'];
-    return time && time[version];
+function isStringStringRecord(
+    record: unknown,
+): record is Record<string, string> {
+    return (
+        record !== undefined &&
+        record !== null &&
+        typeof record === "object" &&
+        !Array.isArray(record) &&
+        Object.entries(record).every(
+            ([k, v]) => typeof k === "string" && typeof v === "string",
+        )
+    );
 }
 
-export function getLatestStableVersion(npmViewResult: Record<string, any> | undefined) {
-    const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];
-    const stableVersion = distTags && distTags['latest'];
-    return stableVersion;
+export function getUsedVersions(npmViewResult: Record<string, unknown>): string[] {
+    const versions = npmViewResult['versions'];
+    if (!isStringStringRecord(versions)) return [];
+    return Object.keys(versions);    
 }
+
+export function getVersion(npmViewResult: Record<string, unknown>, tag: string): string | undefined {
+    const distTags = getDistTags(npmViewResult);
+    return distTags ? distTags[tag] : undefined;
+}
+
+export function getversionDate(npmViewResult: Record<string, unknown>, version : string) {
+    const time = npmViewResult['time'];
+    if (!isStringStringRecord(time)) {
+        logger.error(`Failed to get expected time record.`);
+        return undefined;
+    }
+    return time[version];
+}
+
+// NOTE: The latest tag used to contains beta version when there's the sdk is not GA.
+//       The latest tag will only contains stable version in the future.
+//       So if the package is not GA, we need to get latest version from beta tag.
+export function getLatestStableVersion(
+    npmViewResult: Record<string, unknown>,
+) {
+    const distTags = getDistTags(npmViewResult);
+    if (!distTags) return undefined;
+    const latestVersion = distTags["latest"];
+    const betaVersion = distTags["beta"];
+    if (latestVersion) return latestVersion;
+    if (betaVersion) return betaVersion;
+    logger.warn(`Failed to find latest or beta version found in dist-tags.`);
+    return undefined;
+}
+
 export function isBetaVersion(stableVersion: string) {
     return stableVersion.includes('beta');
 }

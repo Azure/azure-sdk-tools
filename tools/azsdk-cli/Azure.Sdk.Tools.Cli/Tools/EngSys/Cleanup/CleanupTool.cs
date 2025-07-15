@@ -6,28 +6,40 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Cleans up various engsys resources")]
-public class CleanupTool(IAzureAgentServiceFactory agentServiceFactory, ILogger<CleanupTool> logger) : MCPTool
+public class CleanupTool: MCPTool
 {
     public const string CleanupAgentsCommandName = "agents";
+    private readonly IAzureAgentServiceFactory agentServiceFactory;
+    private readonly ILogger<CleanupTool> logger;
 
     public Option<string> projectEndpointOpt = new(["--project-endpoint", "-e"], "The AI foundry project to clean up") { IsRequired = false };
 
+    public CleanupTool(
+        IAzureAgentServiceFactory agentServiceFactory,
+        ILogger<CleanupTool> logger
+    ) : base()
+    {
+        this.agentServiceFactory = agentServiceFactory;
+        this.logger = logger;
+
+        CommandHierarchy =
+        [
+            SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup  // azsdk eng cleanup
+        ];
+    }
+
     public override Command GetCommand()
     {
-        Command engsysCommand = new("eng", "Internal azsdk engineering system commands");
-        Command cleanupCommand = new("cleanup", "Cleanup commands");
         Command cleanupAgentsCommand = new (CleanupAgentsCommandName, "Cleanup ai agents") { projectEndpointOpt };
 
         cleanupAgentsCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
-        engsysCommand.AddCommand(cleanupCommand);
-        cleanupCommand.AddCommand(cleanupAgentsCommand);
-
-        return engsysCommand;
+        return cleanupAgentsCommand;
     }
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)

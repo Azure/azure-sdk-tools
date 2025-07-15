@@ -179,8 +179,9 @@ extends:
           - job: 'Test'
 
             pool:
-              name: azsdk-pool-mms-win-2022-general
-              vmImage: windows-2022
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
 
             steps:
               - script: |
@@ -241,7 +242,7 @@ extends:
                 inputs:
                  version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
-              
+
               - script: |
                  go test ./... -v
                 workingDirectory: $(GoParserPackagePath)
@@ -335,8 +336,8 @@ extends:
                   targetPath: '$(Pipeline.Workspace)/APIView'
               displayName: Publish to Staging
               pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
+                name: azsdk-pool
+                image: ubuntu-24.04
                 os: linux
 
               steps:
@@ -364,7 +365,7 @@ extends:
                     echo Installing JavaScript parser
                     call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                     echo Installing Rust parser
-                    call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                    call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
@@ -393,8 +394,8 @@ extends:
                   artifactName: APIView
                   targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
+                name: azsdk-pool
+                image: ubuntu-24.04
                 os: linux
 
               strategy:
@@ -423,7 +424,7 @@ extends:
                           echo Installing JavaScript parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                           echo Installing Rust parser
-                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
@@ -451,8 +452,8 @@ extends:
                   artifactName: APIView
                   targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
+                name: azsdk-pool
+                image: ubuntu-24.04
                 os: linux
 
               strategy:
@@ -486,6 +487,6 @@ extends:
                           echo Installing JavaScript parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                           echo Installing Rust parser
-                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

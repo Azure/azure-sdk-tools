@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     if (process.ExitCode != 0)
                     {
                         SetFailure(process.ExitCode);
-                        List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {process.StandardError.ReadToEnd()}"];
+                        List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure PowerShell Core is installed. Error {process.StandardError.ReadToEnd()}"];
                         return output.Format(_err);
                     }
                     var stdout = process.StandardOutput.ReadToEnd();
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 catch (Exception ex)
                 {
                     SetFailure();
-                    return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {ex.Message}";
+                    return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure PowerShell Core is installed. Error {ex.Message}";
                 }
             }
             catch (Exception ex)
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public override Command GetCommand()
         {
             // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-            Command command = new("spec-tool");
+            Command command = new("spec-tool", "TypeSpec project tools for Azure REST API Specs");
             var getModifiedProjectsCommand = new Command(getModifiedProjectsCommandName, "Get list of modified typespec projects") { repoRootOpt, targetBranchOpt };
             getModifiedProjectsCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             command.AddCommand(getModifiedProjectsCommand);

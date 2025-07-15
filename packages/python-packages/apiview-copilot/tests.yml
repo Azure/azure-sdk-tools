@@ -16,8 +16,8 @@ extends:
           - job: 'Build'
 
             pool:
-              name: $(LINUXNEXTPOOL)
-              image: $(LINUXNEXTVMIMAGE)
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
               os: linux
 
             steps:
@@ -45,12 +45,12 @@ extends:
                   inlineScript: |
                     # Login using service principal (handled automatically by Azure DevOps)
                     az account set --subscription "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
-                    
+
                     # Verify the context
                     az account show --query '{subscription:name,tenant:tenantId}'
-                    
+
                     python packages/python-packages/apiview-copilot/evals/run.py
-                    
+
                     exit $?
                 env:
                   AZURE_OPENAI_ENDPOINT: $(python-openai-endpoint)

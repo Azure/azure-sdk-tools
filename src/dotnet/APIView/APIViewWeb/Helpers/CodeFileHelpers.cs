@@ -218,14 +218,14 @@ namespace APIViewWeb.Helpers
                     }
                     docRow.NodeId = codePanelRow.NodeId;
                     docRow.NodeIdHashed = codePanelRow.NodeIdHashed;
-                    InsertCodePanelRowData(codePanelData: codePanelData, rowData: docRow, nodeIdHashed: nodeIdHashed);
+                    InsertCodePanelRowData(codePanelData: codePanelData, rowData: docRow, nodeIdHashed: nodeIdHashed, codePanelRawData: codePanelRawData);
                 }
             }
 
             // Get comment for current row
             var commentsForRow = CollectUserCommentsForRow(codePanelRawData, reviewLine.LineId, nodeIdHashed, codePanelRow);
             //Add code line and comment to code panel data
-            InsertCodePanelRowData(codePanelData: codePanelData, rowData: codePanelRow, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
+            InsertCodePanelRowData(codePanelData: codePanelData, rowData: codePanelRow, nodeIdHashed: nodeIdHashed, codePanelRawData: codePanelRawData, commentsForRow: commentsForRow);
 
             // Add diagnostic row
             AddDiagnosticRow(codePanelData: codePanelData, codeFile: codePanelRawData.activeRevisionCodeFile, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed);
@@ -300,30 +300,35 @@ namespace APIViewWeb.Helpers
         private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, CodePanelRowData codePanelRowData)
         {
             var commentRowData = new CodePanelRowData();
+            var commentsForRow = new List<CommentItemModel>();
             if (!string.IsNullOrEmpty(nodeId) && !codePanelRowData.RowClassesObj.Contains("removed"))
             {
                 codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text can-show";
-                var commentsForRow = codePanelRawData.Comments.Where(c => nodeId == c.ElementId);
-                if (commentsForRow.Any())
-                {
-                    commentRowData.Type = CodePanelRowDatatype.CommentThread;
-                    commentRowData.NodeIdHashed = nodeIdHashed;
-                    commentRowData.NodeId = nodeId;
-                    commentRowData.RowClassesObj.Add("user-comment-thread");
-                    commentRowData.CommentsObj = commentsForRow.ToList();
-                    codePanelRowData.ToggleCommentsClasses = codePanelRowData.ToggleCommentsClasses.Replace("can-show", "show");
-                    commentRowData.IsResolvedCommentThread = commentsForRow.Any(c => c.IsResolved);
-                    commentRowData.IsHiddenAPI = codePanelRowData.IsHiddenAPI;
-                }
+                commentsForRow = codePanelRawData.Comments.Where(c => nodeId == c.ElementId).ToList();
             }
             else
             {
+                if (!codePanelRawData.IsFirstCodeLineAdded && codePanelRawData.Comments.Any(c => c.ElementId == "FIRST_ROW"))
+                {
+                    commentsForRow.Add(codePanelRawData.Comments.First(c => c.ElementId == "FIRST_ROW"));
+                }
                 codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text hide";
+            }
+            if (commentsForRow.Any())
+            {
+                commentRowData.Type = CodePanelRowDatatype.CommentThread;
+                commentRowData.NodeIdHashed = nodeIdHashed;
+                commentRowData.NodeId = nodeId;
+                commentRowData.RowClassesObj.Add("user-comment-thread");
+                commentRowData.CommentsObj = commentsForRow.ToList();
+                codePanelRowData.ToggleCommentsClasses = codePanelRowData.ToggleCommentsClasses.Replace("can-show", "show");
+                commentRowData.IsResolvedCommentThread = commentsForRow.Any(c => c.IsResolved);
+                commentRowData.IsHiddenAPI = codePanelRowData.IsHiddenAPI;
             }
             return commentRowData;
         }
 
-        private static void InsertCodePanelRowData(CodePanelData codePanelData, CodePanelRowData rowData, string nodeIdHashed, CodePanelRowData commentsForRow = null)
+        private static void InsertCodePanelRowData(CodePanelData codePanelData, CodePanelRowData rowData, string nodeIdHashed, CodePanelRawData codePanelRawData, CodePanelRowData commentsForRow = null)
         {
             if (!codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 codePanelData.NodeMetaDataObj[nodeIdHashed] = new CodePanelNodeMetaData();
@@ -337,6 +342,11 @@ namespace APIViewWeb.Helpers
             if (rowData.Type == CodePanelRowDatatype.CodeLine)
             {
                 rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
+                if (!codePanelRawData.IsFirstCodeLineAdded && String.IsNullOrEmpty(rowData.NodeId))
+                {
+                    rowData.NodeId = "FIRST_ROW"; // Used to ensure the first codeline has an id regardless of what is occurring in the parser
+                    codePanelRawData.IsFirstCodeLineAdded = true;
+                }
                 codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
                 if (rowData.DiffKind == DiffKind.Added || rowData.DiffKind == DiffKind.Removed)
                 {
@@ -646,13 +656,13 @@ namespace APIViewWeb.Helpers
                 Data = new NavigationTreeNodeData()
             };
 
-            if(navItem.Tags != null)
+            if(navItem.Tags != null && navItem.Tags.Any())
             {
                 node.Data.Kind = navItem.Tags["TypeKind"];
                 node.Data.Icon = node.Data.Kind;
             }
 
-            if (nodeIdMap.ContainsKey(navItem.NavigationId))
+            if (navItem.NavigationId != null && nodeIdMap.ContainsKey(navItem.NavigationId))
                 node.Data.NodeIdHashed = nodeIdMap[navItem.NavigationId];
 
             foreach (var childItem in navItem.ChildItems)

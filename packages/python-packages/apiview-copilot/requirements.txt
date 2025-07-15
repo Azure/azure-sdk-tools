@@ -1,4 +1,4 @@
-aiohttp==3.9.5
+aiohttp==3.11.0b0
 azure-cosmos==4.9.0
 azure-identity==1.21.0
 azure-search-documents==11.5.2
@@ -11,4 +11,5 @@ python-dotenv==1.0.1
 pydantic==2.10.6
 pyyaml==6.0.2
 pytest==7.4.2
+semantic-kernel==1.32.2
 uvicorn[standard]==0.29.0

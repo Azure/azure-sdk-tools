@@ -2,21 +2,21 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
-import { Changelog } from "../../changelog/changelogGenerator.js";
 import {
     makeChangesForFirstRelease,
-    makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
+    makeChangesForMigrateTrack1ToTrack2,
     makeChangesForReleasingTrack2
 } from "./modifyChangelogFileAndBumpVersion.js";
 import { logger } from "../../utils/logger.js";
 import {
     bumpPatchVersion,
     bumpPreviewVersion,
+    getLatestStableVersion,
     getNewVersion,
+    getUsedVersions,
     getVersion,
     isBetaVersion,
-    isStableSDKReleaseType
+    isStableSDKReleaseType,
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
@@ -24,6 +24,8 @@ import { SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
+import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
+import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string,  options: { apiVersion: string | undefined, sdkReleaseType: string | undefined }) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
@@ -33,12 +35,12 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
-    const stableVersion = getVersion(npmViewResult, "latest");
-    const nextVersion = getVersion(npmViewResult, "next");
+    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
+    const nextVersion = npmViewResult ? getVersion(npmViewResult, "next") : undefined;
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
-        makeChangesForFirstRelease(packageFolderPath, isStableRelease);
+        await makeChangesForFirstRelease(packageFolderPath, isStableRelease);
         logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ' : ' stable'} release successfully`);
     } else {
         if (!stableVersion) {
@@ -46,7 +48,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
             process.exit(1);
         }
         logger.info(`Package ${packageName} has been released before, start to check whether previous release is track2 sdk.`)
-        const usedVersions = Object.keys(npmViewResult['versions']);
+        const usedVersions = getUsedVersions(npmViewResult);
         // in our rule, we always compare to stableVersion. But here wo should pay attention to the some stableVersion which contains beta, which means the package has not been GA.
         try {
             shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
@@ -80,7 +82,17 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 }
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
-                const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
+                const diffDetector = new DifferenceDetector(
+                    { path: apiMdFileNPM, sdkType: oldSDKType },
+                    { path: apiMdFileLocal, sdkType: newSDKType },
+                );
+                const detectResult = await diffDetector.detect();
+                const detectContext = diffDetector.getDetectContext();
+                const changelogGenerator = new ChangelogGenerator(
+                    detectContext,
+                    detectResult,
+                );
+                const changelog = changelogGenerator.generate();
                 const changelogPath = path.join(npmPackageRoot, 'CHANGELOG.md');
                 const lastStableChangelog: NpmViewParameters = {
                     file: "CHANGELOG.md",
@@ -122,29 +134,29 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     originalChangeLogContent = originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart", "https://aka.ms/azsdk/js/mgmt/quickstart");
                 }
                 originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
+                let newVersion = '';
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.warn('Failed to generate changelog because the codes of local and npm may be the same.');
                     logger.info('Start to bump a fix version.');
                     const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, { encoding: 'utf-8' });
                     const oriVersion = JSON.parse(oriPackageJson).version;
                     const oriVersionReleased = !usedVersions ? false : usedVersions.includes(oriVersion);
-                    let newVersion = oriVersion;
+                    newVersion = oriVersion;
                     if (oriVersionReleased) {
                         newVersion = isBetaVersion(oriVersion) ? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
                     }
-                    makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
-                    await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
-                    const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent, stableVersion);
+                    newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
                     logger.info('Generated changelogs and set version for track2 release successfully.');
-                    return changelog;
                 }
+                const changelogContent = changelog.content.length === 0 ? `### Features Added\n` : changelog.content; 
+                await makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelogContent, originalChangeLogContent, stableVersion);
+                return changelog;
             } else {
                 logger.info(`Package ${packageName} released before is track1 sdk.`);
                 logger.info('Start to generate changelog of migrating track1 to track2 sdk.');
                 const newVersion = getNewVersion(stableVersion, usedVersions, true, isStableRelease);
-                makeChangesForMigrateTrack1ToTrack2(packageFolderPath, newVersion);
+                await makeChangesForMigrateTrack1ToTrack2(packageFolderPath, newVersion);
                 logger.info('Generated changelogs and setting version for migrating track1 to track2 successfully.');
             }
         } finally {

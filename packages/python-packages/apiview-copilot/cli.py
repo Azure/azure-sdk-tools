@@ -1,24 +1,67 @@
 import asyncio
 from collections import OrderedDict
+import colorama
+from colorama import Fore, Style
+from datetime import datetime
 import json
-import os
-from pprint import pprint
-import sys
-import pathlib
-
-from src._search_manager import SearchManager
-from src._apiview_reviewer import ApiViewContextMode, DEFAULT_CONTEXT_MODE
-
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+import os
+from pprint import pprint
+import requests
+import sys
+import pathlib
+import requests
 from typing import Optional
+
+from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosHttpResponseError
+
+from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src._credential import get_credential
+from src._search_manager import SearchManager
+from src._database_manager import get_database_manager, ContainerNames
+from src._models import APIViewComment
+
+colorama.init(autoreset=True)
+
+BLUE = Fore.BLUE
+GREEN = Fore.GREEN
+RESET = Style.RESET_ALL
+BOLD = Style.BRIGHT
+
+# Bold and color for prompts
+BOLD_GREEN = BOLD + GREEN
+BOLD_BLUE = BOLD + BLUE
+
 
 helps[
     "review"
 ] = """
     type: group
     short-summary: Commands for creating APIView reviews.
+"""
+
+helps[
+    "review job"
+] = """
+    type: group
+    short-summary: Commands for managing API review jobs.
+"""
+
+helps[
+    "agent"
+] = """
+    type: group
+    short-summary: Commands for interacting with the agent.
+"""
+
+helps[
+    "apiview"
+] = """
+    type: group
+    short-summary: Commands for interacting with APIView.
 """
 
 helps[
@@ -42,6 +85,22 @@ helps[
     short-summary: Commands for searching the knowledge base.
 """
 
+helps[
+    "db"
+] = """
+    type: group
+    short-summary: Commands for managing the database.
+"""
+
+helps[
+    "metrics"
+] = """
+    type: group
+    short-summary: Commands for reporting metrics.
+"""
+
+# COMMANDS
+
 
 def local_review(
     language: str,
@@ -49,6 +108,7 @@ def local_review(
     base: str = None,
     outline: str = None,
     existing_comments: str = None,
+    debug_log: bool = False,
 ):
     """
     Generates a review using the locally installed code.
@@ -89,9 +149,9 @@ def local_review(
         target=target_apiview,
         base=base_apiview,
         language=language,
-        mode=DEFAULT_CONTEXT_MODE,
         outline=outline_text,
         comments=comments_obj,
+        debug_log=debug_log,
     )
     review = reviewer.run()
     reviewer.close()
@@ -103,7 +163,6 @@ def local_review(
         f.write(review.model_dump_json(indent=4))
 
     print(f"Review written to {output_file}")
-    print(f"Found {len(review.comments)} comments.")
 
 
 def create_test_case(
@@ -255,6 +314,70 @@ def generate_review_from_app(
         print(response)
 
 
+def review_job_start(
+    language: str,
+    target: str,
+    base: Optional[str] = None,
+    outline: Optional[str] = None,
+    existing_comments: Optional[str] = None,
+):
+    """Start an API review job."""
+
+    with open(target, "r", encoding="utf-8") as f:
+        target_content = f.read()
+    if base:
+        with open(base, "r", encoding="utf-8") as f:
+            base_content = f.read()
+    else:
+        base_content = None
+
+    outline_text = None
+    if outline:
+        with open(outline, "r", encoding="utf-8") as f:
+            outline_text = f.read()
+
+    comments_obj = None
+    if existing_comments:
+        with open(existing_comments, "r", encoding="utf-8") as f:
+            comments_obj = json.load(f)
+
+    payload = {
+        "language": language,
+        "target": target_content,
+    }
+    if base_content is not None:
+        payload["base"] = base_content
+    if outline_text is not None:
+        payload["outline"] = outline_text
+    if comments_obj is not None:
+        payload["comments"] = comments_obj
+
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    if not APP_NAME:
+        raise ValueError("AZURE_APP_NAME environment variable is not set.")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/start"
+
+    resp = requests.post(api_endpoint, json=payload)
+    if resp.status_code == 202:
+        pprint(resp.json(), indent=2)
+    else:
+        print(f"Error: {resp.status_code} {resp.text}")
+
+
+def review_job_get(job_id: str):
+    """Get the status/result of an API review job."""
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    if not APP_NAME:
+        raise ValueError("AZURE_APP_NAME environment variable is not set.")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review"
+    url = f"{api_endpoint.rstrip('/')}/{job_id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        pprint(resp.json(), indent=2)
+    else:
+        print(f"Error: {resp.status_code} {resp.text}")
+
+
 def search_knowledge_base(
     language: str,
     text: Optional[str] = None,
@@ -274,12 +397,328 @@ def search_knowledge_base(
         with open(path, "r") as f:
             query = f.read()
     results = search.search_all(query=query)
-    context = search.build_context(results)
+    context = search.build_context(results.results)
     if markdown:
         md = context.to_markdown()
         print(md)
     else:
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
+def reindex_search(containers: Optional[list[str]] = None):
+    """
+    Trigger a reindex of the Azure Search index for the ArchAgent Knowledge Base.
+    If no container is specified, reindex all containers.
+    """
+    return SearchManager.run_indexers(container_names=containers)
+
+
+def review_summarize(language: str, target: str, base: str = None):
+    """
+    Summarize an API or a diff of two APIs using the deployed API review service.
+    """
+    payload = {"language": language, "target": target}
+    if base:
+        payload["base"] = base
+    APP_NAME = os.getenv("AZURE_APP_NAME")
+    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/summarize"
+    response = requests.post(api_endpoint, json=payload)
+    if response.status_code == 200:
+        summary = response.json().get("summary")
+        print(summary)
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
+
+
+def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
+    """
+    Start or continue an interactive chat session with the agent.
+    """
+
+    async def async_input(prompt: str) -> str:
+        # Run input() in a thread to avoid blocking the event loop
+        return await asyncio.to_thread(input, prompt)
+
+    async def chat():
+        print(f"{BOLD}Interactive API Review Agent Chat. Type 'exit' to quit.\n{RESET}")
+        messages = []
+        current_thread_id = thread_id
+        if remote:
+            APP_NAME = os.getenv("AZURE_APP_NAME")
+            if not APP_NAME:
+                print(f"{BOLD}AZURE_APP_NAME environment variable is not set.{RESET}")
+                return
+            api_endpoint = f"https://{APP_NAME}.azurewebsites.net/agent/chat"
+            session = requests.Session()
+            while True:
+                try:
+                    user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
+                except (EOFError, KeyboardInterrupt):
+                    print(f"\n{BOLD}Exiting chat.{RESET}")
+                    if current_thread_id:
+                        print(
+                            f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        )
+                    break
+                if user_input.strip().lower() in {"exit", "quit"}:
+                    print(f"\n{BOLD}Exiting chat.{RESET}")
+                    if current_thread_id:
+                        print(
+                            f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                        )
+                    break
+                try:
+                    payload = {"user_input": user_input}
+                    if current_thread_id:
+                        payload["thread_id"] = current_thread_id
+                    resp = session.post(api_endpoint, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        response = data.get("response", "")
+                        thread_id_out = data.get("thread_id", current_thread_id)
+                        print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
+                        current_thread_id = thread_id_out
+                    else:
+                        print(f"Error: {resp.status_code} - {resp.text}")
+                except Exception as e:
+                    print(f"Error: {e}")
+        else:
+            # Local mode: use async agent as before
+            async with get_main_agent() as agent:
+                while True:
+                    try:
+                        user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
+                    except (EOFError, KeyboardInterrupt):
+                        print(f"\n{BOLD}Exiting chat.{RESET}")
+                        if current_thread_id:
+                            print(
+                                f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                            )
+                        break
+                    if user_input.strip().lower() in {"exit", "quit"}:
+                        print(f"\n{BOLD}Exiting chat.{RESET}")
+                        if current_thread_id:
+                            print(
+                                f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
+                            )
+                        break
+                    try:
+                        response, thread_id_out, messages = await invoke_agent(
+                            agent=agent, user_input=user_input, thread_id=current_thread_id, messages=messages
+                        )
+                        print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
+                        current_thread_id = thread_id_out
+                    except Exception as e:
+                        print(f"Error: {e}")
+
+    asyncio.run(chat())
+
+
+def handle_agent_mention(comments_path: str, remote: bool = False):
+    """
+    Handles @mention requests from the agent.
+    This function is a placeholder for the actual implementation.
+    """
+    # load comments from the comments_path
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    comments = data.get("comments", [])
+    language = data.get("language", None)
+    package_name = data.get("packageName", None)
+    code = data.get("code", None)
+
+    if remote:
+        APP_NAME = os.getenv("AZURE_APP_NAME")
+        if not APP_NAME:
+            print("AZURE_APP_NAME environment variable is not set.")
+            return
+        api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/mention"
+        try:
+            response = requests.post(
+                api_endpoint,
+                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+            )
+            response_data = response.json()
+            if response.status_code == 200:
+                print(f"{BOLD_BLUE}Agent response:{RESET}\n{response_data.get('response')}")
+            else:
+                print(f"Error: {response.status_code} - {response_data.get('response')}")
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+
+        async def run_local_mention():
+            try:
+                async with get_mention_agent(
+                    comments=comments, language=language, package_name=package_name, code=code, auth=""
+                ) as agent:
+                    response, _, _ = await invoke_agent(
+                        agent=agent, user_input="Please handle this @mention.", thread_id=None, messages=None
+                    )
+                    print(f"{BOLD_BLUE}Agent response:{RESET}\n{response}")
+            except Exception as e:
+                print(f"Error handling agent mention: {e}")
+
+        asyncio.run(run_local_mention())
+
+
+def db_get(container_name: str, id: str):
+    """Retrieve an item from the database."""
+    db = get_database_manager()
+    container = db.get_container_client(container_name)
+    try:
+        item = container.get(id)
+        print(json.dumps(item, indent=2))
+    except Exception as e:
+        print(f"Error retrieving item: {e}")
+
+
+def _get_apiview_cosmos_client():
+    """
+    Returns the Cosmos DB container client for APIView comments.
+    """
+    try:
+        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+        cosmos_db = "APIViewV2"
+        container_name = "Comments"
+        if not cosmos_acc:
+            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
+        database = client.get_database_client(cosmos_db)
+        container = database.get_container_client(container_name)
+        return container
+    except CosmosHttpResponseError as e:
+        if e.status_code == 403:
+            print(
+                f"Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+            )
+        sys.exit(1)
+
+
+_APIVIEW_COMMENT_SELECT_FIELDS = [
+    "id",
+    "CreatedOn",
+    "CreatedBy",
+    "CommentText",
+    "IsResolved",
+    "IsDeleted",
+    "ElementId",
+    "ReviewId",
+    "APIRevisionId",
+    "Upvotes",
+    "Downvotes",
+    "CommentType",
+]
+APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
+
+
+def get_apiview_comments(revision_id: str):
+    """
+    Retrieves comments for a specific APIView revision and returns them grouped by element ID and sorted by CreatedOn time.
+    Omits resolved and deleted comments, and removes unnecessary fields.
+    """
+    try:
+        container = _get_apiview_cosmos_client()
+        result = container.query_items(
+            query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
+            parameters=[{"name": "@revision_id", "value": revision_id}],
+        )
+        conversations = {}
+        comments = list(result)
+        if comments:
+            for comment in comments:
+                element_id = comment.get("ElementId")
+                if element_id in conversations:
+                    conversations[element_id].append(comment)
+                else:
+                    conversations[element_id] = [comment]
+        for element_id, comments in conversations.items():
+            # sort comments by created_on time
+            comments.sort(key=lambda x: x.get("CreatedOn", 0))
+        return conversations
+    except Exception as e:
+        print(f"Error retrieving comments for revision {revision_id}: {e}")
+
+
+def _calculate_ai_vs_manual_comment_ratio(comments: list[APIViewComment]) -> float:
+    """
+    Calculates the ratio of AI-generated comments to manual comments.
+    """
+    ai_count = 0
+    manual_count = 0
+    for comment in comments:
+        if comment.created_by == "azure-sdk":
+            ai_count += 1
+        else:
+            manual_count += 1
+    return ai_count / manual_count if manual_count > 0 else float("inf") if ai_count > 0 else 0.0
+
+
+def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> float:
+    """
+    Calculates the ratio of AI-generated comments with a thumbs-up compared to comments with a thumbs-down.
+    """
+    good_count = 0
+    neutral_count = 0
+    bad_count = 0
+    ai_comments = [c for c in comments if c.created_by == "azure-sdk"]
+    for comment in ai_comments:
+        good_count += len(comment.upvotes)
+        bad_count += len(comment.downvotes)
+        if not comment.upvotes and not comment.downvotes:
+            neutral_count += 1
+    return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
+
+
+def report_metrics(start_date: str, end_date: str):
+    # validate that start_date and end_date are in YYYY-MM-DD format
+    bad_dates = []
+    iso_start = None
+    iso_end = None
+    for date_str, label in zip([start_date, end_date], ["start_date", "end_date"]):
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            if label == "start_date":
+                # Start of day
+                iso_start = dt.strftime("%Y-%m-%dT00:00:00Z")
+            else:
+                # End of day (max time)
+                iso_end = dt.strftime("%Y-%m-%dT23:59:59.999999Z")
+        except ValueError:
+            bad_dates.append(date_str)
+    if bad_dates:
+        print(f"ValueError: Dates must be in YYYY-MM-DD format. Invalid date(s) found: {', '.join(bad_dates)}")
+        return
+
+    client = _get_apiview_cosmos_client()
+    query = f"""
+    SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c
+    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+    """
+    # retrieve comments created between start_date and end_date (ISO 8601)
+    raw_comments = list(
+        client.query_items(
+            query=query,
+            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+            enable_cross_partition_query=True,
+        )
+    )
+    comments = [APIViewComment(**d) for d in raw_comments]
+    report = {
+        "start_date": start_date,
+        "end_date": end_date,
+        "metrics": {
+            "ai_vs_manual_comment_ratio": _calculate_ai_vs_manual_comment_ratio(comments),
+            "good_vs_bad_comment_ratio": _calculate_good_vs_bad_comment_ratio(comments),
+        },
+    }
+    return report
 
 
 SUPPORTED_LANGUAGES = [
@@ -297,10 +736,19 @@ SUPPORTED_LANGUAGES = [
 
 
 class CliCommandsLoader(CLICommandsLoader):
+
+    # COMMAND REGISTRATION
+
     def load_command_table(self, args):
+        with CommandGroup(self, "apiview", "__main__#{}") as g:
+            g.command("get-comments", "get_apiview_comments")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("local", "local_review")
             g.command("remote", "generate_review_from_app")
+            g.command("summarize", "review_summarize")
+        with CommandGroup(self, "agent", "__main__#{}") as g:
+            g.command("mention", "handle_agent_mention")
+            g.command("chat", "handle_agent_chat")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
@@ -308,7 +756,17 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
+            g.command("reindex", "reindex_search")
+        with CommandGroup(self, "review job", "__main__#{}") as g:
+            g.command("start", "review_job_start")
+            g.command("get", "review_job_get")
+        with CommandGroup(self, "db", "__main__#{}") as g:
+            g.command("get", "db_get")
+        with CommandGroup(self, "metrics", "__main__#{}") as g:
+            g.command("report", "report_metrics")
         return OrderedDict(self.command_table)
+
+    # ARGUMENT REGISTRATION
 
     def load_arguments(self, command):
         with ArgumentsContext(self, "") as ac:
@@ -319,8 +777,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=("--language", "-l"),
                 choices=SUPPORTED_LANGUAGES,
             )
-
-        mode_choices = [v for k, v in vars(ApiViewContextMode).items() if isinstance(v, str) and not k.startswith("_")]
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API review service instead of local processing.",
+            )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument(
@@ -346,8 +807,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 "existing_comments",
                 type=str,
                 help="Path to a JSON file containing existing comments.",
-                options_list=["--existing-comments"],
                 default=None,
+            )
+            ac.argument(
+                "debug_log",
+                options_list=["--debug-log"],
+                action="store_true",
+                help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
@@ -415,7 +881,122 @@ class CliCommandsLoader(CLICommandsLoader):
                 "markdown",
                 help="Render output as markdown instead of JSON.",
             )
+        with ArgumentsContext(self, "search reindex") as ac:
+            ac.argument(
+                "containers",
+                type=str,
+                nargs="*",
+                help="The names of the containers to reindex. If not provided, all containers will be reindexed.",
+                options_list=["--containers", "-c"],
+                choices=[c.value for c in ContainerNames if c != "review-jobs"],
+            )
+        with ArgumentsContext(self, "review job start") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the APIView file",
+                options_list=("--language", "-l"),
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "target",
+                type=str,
+                help="The path to the APIView file to review.",
+                options_list=("--target", "-t"),
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file to compare against.",
+                options_list=("--base", "-b"),
+                default=None,
+            )
+            ac.argument(
+                "outline",
+                type=str,
+                help="Path to a plain text file containing the outline text.",
+                options_list=["--outline"],
+                default=None,
+            )
+            ac.argument(
+                "existing_comments",
+                type=str,
+                help="Path to a JSON file containing existing comments.",
+                default=None,
+            )
 
+        with ArgumentsContext(self, "review job get") as ac:
+            ac.argument(
+                "job_id",
+                type=str,
+                help="The job ID to poll.",
+                options_list=["--job-id"],
+            )
+        with ArgumentsContext(self, "review summarize") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the APIView file",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "target", type=str, help="The path to the APIView file to summarize.", options_list=["--target", "-t"]
+            )
+            ac.argument(
+                "base",
+                type=str,
+                help="The path to the base APIView file for diff summarization.",
+                options_list=["--base", "-b"],
+            )
+        with ArgumentsContext(self, "agent mention") as ac:
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to the JSON file containing comments for the agent to process.",
+                options_list=["--comments-path", "-c"],
+            )
+        with ArgumentsContext(self, "agent") as ac:
+            ac.argument(
+                "thread_id",
+                type=str,
+                help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
+                options_list=["--thread-id", "-t"],
+            )
+        with ArgumentsContext(self, "db get") as ac:
+            ac.argument(
+                "container_name",
+                type=str,
+                help="The name of the Cosmos DB container",
+                choices=[c.value for c in ContainerNames],
+                options_list=["--container-name", "-c"],
+            )
+            ac.argument(
+                "id",
+                type=str,
+                help="The id of the item to retrieve.",
+                options_list=["--id", "-i"],
+            )
+        with ArgumentsContext(self, "apiview") as ac:
+            ac.argument(
+                "revision_id",
+                type=str,
+                help="The revision ID of the APIView to retrieve comments for.",
+                options_list=["--revision-id", "-r"],
+            )
+        with ArgumentsContext(self, "metrics report") as ac:
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date for the metrics report (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date for the metrics report (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
+            )
         super(CliCommandsLoader, self).load_arguments(command)
 
 

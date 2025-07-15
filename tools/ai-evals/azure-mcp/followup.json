@@ -1,0 +1,16 @@
+{
+    "subscription": "Azure SDK Developer Playground",
+    "resource_group": "my-resource-group",
+    "storage account": "aifoundrystorageshared",
+    "cosmos resource": "archagent-cosmos",
+    "database": "guidelines",
+    "appconfig": "appconfig",
+    "search resource": "mysearch",
+    "index": "mysvc",
+    "kusto cluster": "mycluster",
+    "kusto db name": "db1",
+    "storage container": "bloby",
+    "cluster uri": "https://mycluster.kusto.windows.net",
+    "account-name": "my-cosmos-account",
+    "sub id": "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
+}

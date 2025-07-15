@@ -9,7 +9,9 @@ from typing import Optional
 load_dotenv(override=True)
 
 
-async def generate_remote_review(*, target: str, base: Optional[str], language: str) -> str:
+async def generate_remote_review(
+    *, target: str, base: Optional[str], language: str, outline: str, existing_comments: str
+) -> str:
     """
     Sends the query to the API endpoint with the language as a path parameter and awaits the response.
     """

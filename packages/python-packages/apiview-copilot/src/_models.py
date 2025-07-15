@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field, PrivateAttr
 from typing import List, Optional, Dict, Set
+from datetime import datetime
 
 from ._sectioned_document import Section
 
@@ -11,9 +12,72 @@ class ExistingComment(BaseModel):
     This is used to prevent copilot from generating the same comment again.
     """
 
-    line_no: int = Field(description="Line number of the existing comment.")
-    author: str = Field(description="The author of the existing comment.")
-    comment: str = Field(description="The contents of the existing comment.")
+    line_no: int = Field(description="Line number of the existing comment.", alias="lineNo")
+    created_by: str = Field(description="The author of the existing comment.", alias="createdBy")
+    comment_text: str = Field(description="The contents of the existing comment.", alias="commentText")
+    created_on: datetime = Field(
+        description="The datetime the comment was created, in ISO 8601 format (e.g., '2023-10-01T12:00:00Z').",
+        alias="createdOn",
+    )
+    upvotes: Optional[int] = Field(default=0, description="The count of upvotes for the existing comment.")
+    downvotes: Optional[int] = Field(default=0, description="The count of downvotes for the existing comment.")
+    is_resolved: Optional[bool] = Field(
+        default=False, description="Whether the comment is marked resolved.", alias="isResolved"
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class APIViewComment(BaseModel):
+    """
+    Represents a comment in the APIView.
+    """
+
+    id: Optional[str] = Field(description="Unique identifier for the comment.")
+    review_id: Optional[str] = Field(
+        description="Unique identifier for the review this comment belongs to.", alias="ReviewId"
+    )
+    api_revision_id: Optional[str] = Field(
+        description="Unique identifier for the API revision this comment belongs to.", alias="APIRevisionId"
+    )
+    element_id: Optional[str] = Field(
+        description="Unique identifier for the element this comment belongs to, such as a function or class.",
+        alias="ElementId",
+    )
+    comment_text: Optional[str] = Field(description="The contents of the comment.", alias="CommentText")
+    created_by: Optional[str] = Field(description="The author of the comment.", alias="CreatedBy")
+    created_on: Optional[datetime] = Field(
+        description="The datetime the comment was created, in ISO 8601 format (e.g., '2023-10-01T12:00:00Z').",
+        alias="CreatedOn",
+    )
+    is_resolved: Optional[bool] = Field(
+        default=False, description="Whether the comment is marked resolved.", alias="IsResolved"
+    )
+    upvotes: Optional[list[str]] = Field(
+        default_factory=list,
+        description="List of user IDs who have upvoted the comment.",
+        alias="Upvotes",
+    )
+    downvotes: Optional[list[str]] = Field(
+        default_factory=list,
+        description="List of user IDs who have downvoted the comment.",
+        alias="Downvotes",
+    )
+    comment_type: Optional[str] = Field(
+        description="The type of comment",
+        alias="CommentType",
+    )
+    resolution_locked: Optional[bool] = Field(
+        default=False,
+        description="Whether the comment resolution is locked and cannot be changed.",
+        alias="ResolutionLocked",
+    )
+    is_deleted: Optional[bool] = Field(
+        default=False,
+        description="Whether the comment is deleted.",
+        alias="IsDeleted",
+    )
 
 
 class Comment(BaseModel):
@@ -104,15 +168,6 @@ class Example(BaseModel):
         default_factory=list, description="List of guideline IDs to which this example applies."
     )
     memory_ids: List[str] = Field(default_factory=list, description="List of memory IDs to which this example applies.")
-    related_guidelines: List[str] = Field(
-        default_factory=list, description="List of guideline IDs that are related to this example."
-    )
-    related_examples: List[str] = Field(
-        default_factory=list, description="List of example IDs that are related to this example."
-    )
-    related_memories: List[str] = Field(
-        default_factory=list, description="List of memory IDs that are related to this example."
-    )
 
 
 class Memory(BaseModel):
@@ -156,22 +211,26 @@ class ReviewResult(BaseModel):
     comments: List[Comment] = Field(description="List of comments, if any")
 
     # truly private, never part of Pydantic’s schema or serialization
-    _guideline_ids: Set[str] = PrivateAttr(default_factory=set)
+    _allowed_ids: Set[str] = PrivateAttr(default_factory=set)
 
     def __init__(
         self,
         *,
-        guideline_ids: Optional[List[str]] = None,
+        allowed_ids: Optional[List[str]] = None,
         **data,
     ):
         comments = data.pop("comments", [])
         data["comments"] = []
         super().__init__(**data)
+
+        # sanitize allowed_ids to convert the search IDs to the proper format
+        allowed_ids = [x.replace("=html=", ".html#") for x in allowed_ids] if allowed_ids else None
+
         # initialize private attr outside of Pydantic’s field system
         object.__setattr__(
             self,
-            "_guideline_ids",
-            set(guideline_ids) if guideline_ids else set(),
+            "_allowed_ids",
+            set(allowed_ids) if allowed_ids else set(),
         )
         self._process_comments(comments)
 
@@ -217,11 +276,16 @@ class ReviewResult(BaseModel):
                     result_comments.append(Comment(**comment_copy))
         self.comments.extend(result_comments)
 
-    def merge(self, other: "ReviewResult", *, section: Section):
+    def merge(
+        self,
+        other: "ReviewResult",
+        *,
+        section: Section,
+    ):
         """
         Merge two ReviewResult objects.
         """
-        self._guideline_ids.update(other._guideline_ids)
+        self._allowed_ids.update(other._allowed_ids)
         filtered_comments = [x for x in other.comments if self._validate(item=x, section=section)]
         self.comments.extend(filtered_comments)
 
@@ -271,10 +335,9 @@ class ReviewResult(BaseModel):
             resolved_rule_id = self._resolve_rule_id(rule_id)
             if resolved_rule_id:
                 resolved_rule_ids.add(resolved_rule_id)
-        if not resolved_rule_ids:
-            return False
-        else:
-            item.rule_ids = list(resolved_rule_ids)
+        # rule IDs only apply to *guidelines* so the IDs associated with memories
+        # and examples aren't relevant here anyways.
+        item.rule_ids = list(resolved_rule_ids)
         return True
 
     def _resolve_rule_id(self, rid: str) -> str | None:
@@ -283,15 +346,14 @@ class ReviewResult(BaseModel):
         This ensures that the links that appear in APIView should never be broken (404).
         Allows for specific partial matches.
         """
-        if rid in self._guideline_ids:
+        if rid in self._allowed_ids:
             return rid
 
         # check if the part of the guideline_id after the # matches the rule_id
-        for gid in self._guideline_ids:
+        for gid in self._allowed_ids:
             gid_end = gid.split("#")[-1]
             if rid == gid_end:
                 return gid
-        print(f"WARNING: Rule ID {rid} not found. Possible hallucination.")
         return None
 
     def _find_line_number(self, chunk: Section, comment: Comment) -> Optional[int]:

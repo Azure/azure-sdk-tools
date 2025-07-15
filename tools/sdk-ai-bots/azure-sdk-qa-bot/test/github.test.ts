@@ -95,7 +95,7 @@ describe('GitHub PR Details Fetcher', () => {
     const prUrl = 'https://github.com/Azure/azure-rest-api-specs/pull/34286';
 
     const githubClient = new GithubClient();
-    const details = await githubClient.getPullRequestDetails(prUrl);
+    const details = await githubClient.getPullRequestDetails(prUrl, {});
 
     // Verify Octokit was called with correct parameters
     expect(Octokit).toHaveBeenCalledWith({ auth: undefined });
@@ -128,7 +128,7 @@ describe('GitHub PR Details Fetcher', () => {
     const invalidUrl = 'https://github.com/invalid/url';
 
     const githubClient = new GithubClient();
-    const res = await githubClient.getPullRequestDetails(invalidUrl);
+    const res = await githubClient.getPullRequestDetails(invalidUrl, {});
     expect(res).toEqual({
       comments: { review: [], issue: [] },
       reviews: [],

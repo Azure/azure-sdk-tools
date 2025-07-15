@@ -26,4 +26,6 @@ export const ragApiPaths = {
   feedback: '/feedback',
 };
 
+export const contactCardVersion = `1.0.0`;
+
 export default config;

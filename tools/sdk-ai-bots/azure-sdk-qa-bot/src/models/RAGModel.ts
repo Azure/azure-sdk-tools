@@ -1,5 +1,5 @@
 import { Memory, PromptCompletionModel, PromptFunctions, PromptTemplate, Tokenizer } from '@microsoft/teams-ai';
-import { CardFactory, MessageFactory, TurnContext } from 'botbuilder';
+import { TurnContext } from 'botbuilder';
 import {
   AdditionalInfo,
   CompletionRequestPayload,
@@ -8,7 +8,6 @@ import {
   Message,
   RAGOptions,
 } from '../backend/rag.js';
-import { createReplyCard } from '../cards/components/reply.js';
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import config from '../config/config.js';
@@ -17,14 +16,14 @@ import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { getRagTanent as getRagTetant } from '../config/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
-import { getUniqueLinks } from '../common/shared.js';
 
 export class RAGModel implements PromptCompletionModel {
-  private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
-  private readonly conversationHandler;
+  private readonly conversationHandler: ConversationHandler;
+  private readonly promptGenerator: PromptGenerator;
 
   constructor(conversationHandler: ConversationHandler) {
     this.conversationHandler = conversationHandler;
+    this.promptGenerator = new PromptGenerator();
   }
 
   public async completePrompt(
@@ -44,12 +43,15 @@ export class RAGModel implements PromptCompletionModel {
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
 
-    const thinkingHandler = new ThinkingHandler(context);
-    await thinkingHandler.start(context);
+    const thinkingHandler = new ThinkingHandler(context, this.conversationHandler);
 
-    const currentPrompt = this.generateCurrentPrompt(context, meta);
     const conversationId = context.activity.conversation.id;
-    const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationId, meta);
+    const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
+
+    await thinkingHandler.start(context, conversationMessages);
+
+    const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
+    const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
     const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTanentId);
 
     logger.info('prompt to RAG', { prompt: fullPrompt, meta });
@@ -59,11 +61,8 @@ export class RAGModel implements PromptCompletionModel {
     }
     // TODO: try merge cancelTimer and stop into one method
     thinkingHandler.cancelTimer();
-
     await this.saveCurrentConversationMessage(context, currentPrompt, ragReply, meta);
-    await this.replyToUser(context, ragReply);
-
-    await thinkingHandler.stop();
+    await thinkingHandler.stop(ragReply);
 
     return { status: 'success' };
   }
@@ -108,51 +107,12 @@ export class RAGModel implements PromptCompletionModel {
 
   private async generateFullPrompt(
     prompt: Prompt,
-    conversationId: string,
+    messages: ConversationMessage[],
     meta: object
   ): Promise<MessageWithRemoteContent> {
-    const conversationMessages = await this.conversationHandler.getConversationMessages(conversationId, meta);
-    logger.info(`Retrieved conversation messages for conversation ID: ${conversationId}`, {
-      meta,
-      messages: conversationMessages,
-    });
-    const promptGenerator = new PromptGenerator(meta);
-    const fullPrompt = await promptGenerator.generateFullPrompt(prompt, conversationMessages);
+    logger.info(`Add conversation messages to prompt`, { meta, messages: messages });
+    const fullPrompt = await this.promptGenerator.generateFullPrompt(prompt, messages, meta);
     return fullPrompt;
-  }
-
-  private async replyToUser(context: TurnContext, ragReply: CompletionResponsePayload) {
-    const card = createReplyCard(ragReply, context.activity.conversation.id, context.activity.id);
-    const attachment = CardFactory.adaptiveCard(card);
-    const replyCard = MessageFactory.attachment(attachment);
-    await context.sendActivities([MessageFactory.text(ragReply.answer), replyCard]);
-  }
-
-  private generateCurrentPrompt(context: TurnContext, meta: object): Prompt {
-    const removedMentionText = TurnContext.removeRecipientMention(context.activity);
-    const text = context.activity.text;
-    const inlineLinkUrls = text.match(this.urlRegex) || [];
-    const attachmentUrls = (context.activity.attachments || [])
-      .filter((attachment) => attachment.contentType === 'text/html' && attachment.content)
-      .map((attachment) => attachment.content.match(this.urlRegex) || []);
-    const uniqueLinks = getUniqueLinks([...inlineLinkUrls, ...attachmentUrls.flat()]);
-    logger.info(`Extracted links from activity`, { meta, uniqueLinks });
-
-    const inlineImageUrls =
-      context.activity.attachments
-        ?.filter((attachment) => {
-          return attachment.contentType && attachment.contentType.startsWith('image/');
-        })
-        .map((attachment) => attachment.contentUrl) ?? [];
-    const rawPrompt: Prompt = {
-      textWithoutMention: removedMentionText,
-      links: uniqueLinks,
-      images: inlineImageUrls,
-      userName: context.activity.from.name,
-      timestamp: context.activity.timestamp || new Date(),
-    };
-    logger.info(`Raw prompt generated: ${JSON.stringify(rawPrompt)}`, { meta });
-    return rawPrompt;
   }
 
   private async saveCurrentConversationMessage(

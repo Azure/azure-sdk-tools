@@ -93,7 +93,7 @@ export interface FeedbackRequestPayload {
 export async function getRAGReply(
   payload: CompletionRequestPayload,
   options: RAGOptions,
-  meta: object = {}
+  meta: object
 ): Promise<CompletionResponsePayload | undefined> {
   logger.info(
     `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.completion} with tenant ${
@@ -121,7 +121,7 @@ export async function getRAGReply(
   }
 }
 
-export async function sendFeedback(payload: FeedbackRequestPayload, options: RAGOptions, meta: object = {}) {
+export async function sendFeedback(payload: FeedbackRequestPayload, options: RAGOptions, meta: object) {
   logger.info(
     `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${
       payload.tenant_id

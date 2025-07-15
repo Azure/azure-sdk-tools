@@ -66,7 +66,7 @@ describe('PromptGenerator', () => {
   let promptGenerator: PromptGenerator;
 
   beforeEach(() => {
-    promptGenerator = new PromptGenerator({ test: 'meta' });
+    promptGenerator = new PromptGenerator();
   });
 
   it('should generate prompt with additional contents', async () => {
@@ -124,7 +124,7 @@ describe('PromptGenerator', () => {
       },
     ];
 
-    const result = await promptGenerator.generateFullPrompt(prompt, conversationMessages);
+    const result = await promptGenerator.generateFullPrompt(prompt, conversationMessages, {});
 
     // Since generateFullPrompt returns MessageWithRemoteContent, we need to check the currentQuestion property
     expect(result.currentQuestion).toContain(userQuery);

@@ -13,7 +13,13 @@ const expressApp = express();
 expressApp.use(express.json());
 
 const server = expressApp.listen(process.env.port || process.env.PORT || 3978, () => {
-  logger.info(`\nBot Started, ${expressApp.name} listening to ${server.address()}`);
+  const address = server.address();
+  if (!address) {
+    logger.error('Server address is not defined');
+    return;
+  }
+  const port = typeof address === 'string' ? address : address.port;
+  logger.info(`\nBot Started, ${expressApp.name} listening to ${port}`);
 });
 
 // Listen for incoming requests.

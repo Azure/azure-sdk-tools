@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../src/input/ConversationHandler.js';
-import { CompletionResponsePayload, Reference } from '../src/backend/rag.js';
+import {
+  ConversationHandler,
+  ConversationMessage,
+  Prompt,
+  RAGReply,
+  ContactCard,
+} from '../src/input/ConversationHandler.js';
+import { Reference } from '../src/backend/rag.js';
 
 const testTimestamp = new Date('2023-10-01T12:00:00Z');
 
@@ -33,6 +39,11 @@ const testReply: RAGReply = {
   has_result: true,
 };
 
+const testContactCard: ContactCard = {
+  version: '1.0',
+  resourceId: 'test-resource-123',
+};
+
 const testMessage: ConversationMessage = {
   conversationId: 'test-conversation',
   activityId: 'test-message',
@@ -40,6 +51,14 @@ const testMessage: ConversationMessage = {
   timestamp: testTimestamp,
   prompt: testPrompt,
   reply: testReply,
+};
+
+const testMessageWithContactCard: ConversationMessage = {
+  conversationId: 'test-conversation-card',
+  activityId: 'test-message-card',
+  text: 'Contact card message',
+  timestamp: testTimestamp,
+  contactCard: testContactCard,
 };
 
 // Mock Azure Table Storage client and related classes
@@ -53,6 +72,7 @@ vi.mock('@azure/data-tables', () => {
           text: 'Hello, world!',
           prompt: JSON.stringify(testPrompt),
           reply: JSON.stringify(testReply),
+          contactCard: undefined,
           timestamp: testTimestamp,
         }),
         getEntity: vi.fn().mockResolvedValue({
@@ -61,6 +81,7 @@ vi.mock('@azure/data-tables', () => {
           text: 'Hello, world!',
           prompt: JSON.stringify(testPrompt),
           reply: JSON.stringify(testReply),
+          contactCard: undefined,
           timestamp: testTimestamp,
         }),
         listEntities: vi.fn().mockReturnValue({
@@ -71,6 +92,16 @@ vi.mock('@azure/data-tables', () => {
               text: 'Hello, world!',
               prompt: JSON.stringify(testPrompt),
               reply: JSON.stringify(testReply),
+              contactCard: undefined,
+              timestamp: testTimestamp,
+            };
+            yield {
+              partitionKey: 'test-conversation-card',
+              rowKey: 'test-message-card',
+              text: 'Contact card message',
+              prompt: undefined,
+              reply: undefined,
+              contactCard: JSON.stringify(testContactCard),
               timestamp: testTimestamp,
             };
           },
@@ -132,24 +163,92 @@ describe('ConversationHandler', () => {
 
   it('should save a message', async () => {
     await handler.initialize();
-    const result = await handler.saveMessage(testMessage);
+    const result = await handler.saveMessage(testMessage, {});
     expect(result).toBeDefined();
     expect(result.partitionKey).toBe('test-conversation');
     expect(result.rowKey).toBe('test-message');
     expect(result.text).toBe('Hello, world!');
     expect(result.prompt).toEqual(JSON.stringify(testPrompt));
     expect(result.reply).toEqual(JSON.stringify(testReply));
+    expect(result.contactCard).toBeUndefined();
+  });
+
+  it('should save a message with contact card', async () => {
+    await handler.initialize();
+    const result = await handler.saveMessage(testMessageWithContactCard, {});
+    expect(result).toBeDefined();
+    expect(result.partitionKey).toBe('test-conversation-card');
+    expect(result.rowKey).toBe('test-message-card');
+    expect(result.text).toBe('Contact card message');
+    expect(result.prompt).toBeUndefined();
+    expect(result.reply).toBeUndefined();
+    expect(result.contactCard).toEqual(JSON.stringify(testContactCard));
   });
 
   it('should retrieve conversation messages', async () => {
     await handler.initialize();
 
-    const messages = await handler.getConversationMessages('test-conversation');
-    expect(messages).toHaveLength(1);
-    expect(messages[0].conversationId).toBe('test-conversation');
-    expect(messages[0].activityId).toBe('test-message');
-    expect(messages[0].text).toBe('Hello, world!');
-    expect(JSON.stringify(messages[0].prompt)).toEqual(JSON.stringify(testPrompt));
-    expect(JSON.stringify(messages[0].reply)).toEqual(JSON.stringify(testReply));
+    const messages = await handler.getConversationMessages('test-conversation', {});
+    expect(messages).toHaveLength(2);
+
+    // First message with prompt and reply
+    const messageWithPrompt = messages.find((m) => m.activityId === 'test-message');
+    expect(messageWithPrompt.conversationId).toBe('test-conversation');
+    expect(messageWithPrompt.activityId).toBe('test-message');
+    expect(messageWithPrompt.text).toBe('Hello, world!');
+    expect(JSON.stringify(messageWithPrompt.prompt)).toEqual(JSON.stringify(testPrompt));
+    expect(JSON.stringify(messageWithPrompt.reply)).toEqual(JSON.stringify(testReply));
+    expect(messageWithPrompt.contactCard).toBeUndefined();
+
+    // Second message with contact card
+    const messageWithContactCard = messages.find((m) => m.activityId === 'test-message-card');
+    expect(messageWithContactCard.conversationId).toBe('test-conversation-card');
+    expect(messageWithContactCard.activityId).toBe('test-message-card');
+    expect(messageWithContactCard.text).toBe('Contact card message');
+    expect(messageWithContactCard.prompt).toBeUndefined();
+    expect(messageWithContactCard.reply).toBeUndefined();
+    expect(JSON.stringify(messageWithContactCard.contactCard)).toEqual(JSON.stringify(testContactCard));
+  });
+
+  it('should handle message serialization/deserialization with all fields', async () => {
+    await handler.initialize();
+
+    // Create a message with all possible fields
+    const fullMessage: ConversationMessage = {
+      conversationId: 'full-conversation',
+      activityId: 'full-message',
+      text: 'Full message with all fields',
+      timestamp: testTimestamp,
+      prompt: testPrompt,
+      reply: testReply,
+      contactCard: testContactCard,
+    };
+
+    // Save and verify the entity was created correctly
+    const savedEntity = await handler.saveMessage(fullMessage, {});
+    expect(savedEntity).toBeDefined();
+    expect(savedEntity.prompt).toEqual(
+      JSON.stringify({
+        ...testPrompt,
+        timestamp: testPrompt.timestamp.toISOString(),
+      })
+    );
+    expect(savedEntity.reply).toEqual(JSON.stringify(testReply));
+    expect(savedEntity.contactCard).toEqual(JSON.stringify(testContactCard));
+  });
+
+  it('should handle empty/undefined contact card correctly', async () => {
+    await handler.initialize();
+
+    const messageWithoutContactCard: ConversationMessage = {
+      conversationId: 'no-card-conversation',
+      activityId: 'no-card-message',
+      text: 'Message without contact card',
+      timestamp: testTimestamp,
+    };
+
+    const savedEntity = await handler.saveMessage(messageWithoutContactCard, {});
+    expect(savedEntity).toBeDefined();
+    expect(savedEntity.contactCard).toBeUndefined();
   });
 });

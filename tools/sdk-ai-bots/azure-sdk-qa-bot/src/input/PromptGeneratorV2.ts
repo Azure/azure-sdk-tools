@@ -1,7 +1,9 @@
+import { TurnContext } from 'botbuilder';
 import { getUniqueLinks } from '../common/shared.js';
 import { ConversationMessage, Prompt } from './ConversationHandler.js';
 import { LinkContentExtractor } from './LinkContentExtractor.js';
 import { RemoteContent } from './RemoteContent.js';
+import { logger } from '../logging/logger.js';
 
 export interface MessageWithRemoteContent {
   user: string;
@@ -17,17 +19,17 @@ export interface MessageWithRemoteContent {
 }
 
 export class PromptGenerator {
-  private meta: object;
+  private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
   private linkContentExtractor: LinkContentExtractor;
 
-  constructor(meta: object = {}) {
-    this.meta = meta;
-    this.linkContentExtractor = new LinkContentExtractor(this.meta);
+  constructor() {
+    this.linkContentExtractor = new LinkContentExtractor();
   }
 
   public async generateFullPrompt(
     prompt: Prompt,
-    conversationMessages: ConversationMessage[]
+    conversationMessages: ConversationMessage[],
+    meta: object
   ): Promise<MessageWithRemoteContent> {
     const currentQuestion = prompt.textWithoutMention;
     const conversations = conversationMessages
@@ -45,12 +47,42 @@ export class PromptGenerator {
       ...(prompt.images || []),
       ...conversationMessages.flatMap((m) => m.prompt?.images || []),
     ]);
-    const linkContents = await this.linkContentExtractor.extract(links.map((link) => new URL(link)));
+    const linkContents = await this.linkContentExtractor.extract(
+      links.map((link) => new URL(link)),
+      meta
+    );
     const additionalInfo = {
       links: linkContents,
       images: Array.from(imagesSet).map((image) => ({ text: '', id: '', url: new URL(image) })),
     };
     const user = prompt.userName || '';
     return { currentQuestion, conversations, additionalInfo, user };
+  }
+
+  public generateCurrentPrompt(context: TurnContext, meta: object): Prompt {
+    const removedMentionText = TurnContext.removeRecipientMention(context.activity);
+    const text = context.activity.text;
+    const inlineLinkUrls = text.match(this.urlRegex) || [];
+    const attachmentUrls = (context.activity.attachments || [])
+      .filter((attachment) => attachment.contentType === 'text/html' && attachment.content)
+      .map((attachment) => attachment.content.match(this.urlRegex) || []);
+    const uniqueLinks = getUniqueLinks([...inlineLinkUrls, ...attachmentUrls.flat()]);
+    logger.info(`Extracted links from activity`, { meta, uniqueLinks });
+
+    const inlineImageUrls =
+      context.activity.attachments
+        ?.filter((attachment) => {
+          return attachment.contentType && attachment.contentType.startsWith('image/');
+        })
+        .map((attachment) => attachment.contentUrl) ?? [];
+    const rawPrompt: Prompt = {
+      textWithoutMention: removedMentionText,
+      links: uniqueLinks,
+      images: inlineImageUrls,
+      userName: context.activity.from.name,
+      timestamp: context.activity.timestamp || new Date(),
+    };
+    logger.info(`Raw prompt generated: ${JSON.stringify(rawPrompt)}`, { meta });
+    return rawPrompt;
   }
 }

@@ -33,7 +33,6 @@ namespace APIViewWeb.HostedServices
         private readonly ILogger<CopilotPollingBackgroundHostedService> _logger;
 
         private const string SummarySource = "summary";
-        private const string FirstRowElementId = "FIRST_ROW";
 
         public CopilotPollingBackgroundHostedService(
             IPollingJobQueueManager pollingJobQueueManager, IConfiguration configuration, IHttpClientFactory httpClientFactory,
@@ -98,7 +97,7 @@ namespace APIViewWeb.HostedServices
                                     CreatedOn = DateTime.UtcNow,
                                     ReviewId = jobInfo.APIRevision.ReviewId,
                                     APIRevisionId = jobInfo.APIRevision.Id,
-                                    ElementId = codeLine.lineId ?? (comment.Source == SummarySource ? FirstRowElementId : null),
+                                    ElementId = comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : codeLine.lineId,
                                 };
 
                                 var commentText = new StringBuilder();

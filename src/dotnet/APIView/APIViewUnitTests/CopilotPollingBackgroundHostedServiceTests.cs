@@ -117,14 +117,14 @@ namespace APIViewUnitTests
             switch (commentType)
             {
                 case "any":
-                    Assert.NotEqual("FIRST_ROW", capturedComment.ElementId ?? "");
+                    Assert.NotEqual(CodeFileHelpers.FirstRowElementId, capturedComment.ElementId ?? "");
                     Assert.Contains("Test suggestion", capturedComment.CommentText);
                     Assert.Contains("https://azure.github.io/azure-sdk/", capturedComment.CommentText);
                     Assert.Equal(ApiViewConstants.AzureSdkBotName, capturedComment.CreatedBy);
                     Assert.False(capturedComment.ResolutionLocked);
                     break;
                 case "summary":
-                    Assert.Equal("FIRST_ROW", capturedComment.ElementId);
+                    Assert.Equal(CodeFileHelpers.FirstRowElementId, capturedComment.ElementId);
                     break;
             }
         }

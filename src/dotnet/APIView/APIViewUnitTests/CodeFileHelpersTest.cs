@@ -345,7 +345,9 @@ namespace APIViewUnitTests
         {
             var firstRowComment = new CommentItemModel
             {
-                ElementId = "FIRST_ROW", CommentText = "This is a FIRST_ROW comment", CreatedBy = "test-user"
+                ElementId = CodeFileHelpers.FirstRowElementId,
+                CommentText = "This is a FIRST_ROW comment",
+                CreatedBy = "test-user"
             };
 
             var codePanelRawData = new CodePanelRawData
@@ -366,10 +368,10 @@ namespace APIViewUnitTests
 
             Assert.NotNull(result);
 
-            CommentItemModel firstRowCommentResult = result.CommentsObj.FirstOrDefault(r => r.ElementId == "FIRST_ROW");
+            CommentItemModel firstRowCommentResult = result.CommentsObj.FirstOrDefault(r => r.ElementId == CodeFileHelpers.FirstRowElementId);
 
             Assert.NotNull(firstRowCommentResult);
-            Assert.Equal("FIRST_ROW", firstRowCommentResult.ElementId);
+            Assert.Equal(CodeFileHelpers.FirstRowElementId, firstRowCommentResult.ElementId);
             Assert.Equal("This is a FIRST_ROW comment", firstRowCommentResult.CommentText);
         }
 

@@ -15,18 +15,18 @@ class TestMetrics:
     def test_calculate_language_adoption_basic(self, mock_comments_client, mock_revisions_client):
         """Test basic language adoption calculation."""
 
-        # Mock revisions data
+        # Mock revisions data (now includes ReviewId)
         mock_revisions = [
-            {"id": "rev1", "Language": "Python"},
-            {"id": "rev2", "Language": "Python"},
-            {"id": "rev3", "Language": "C#"},
-            {"id": "rev4", "Language": "Java"},
+            {"ReviewId": "review1", "Language": "Python"},
+            {"ReviewId": "review2", "Language": "Python"},
+            {"ReviewId": "review3", "Language": "C#"},
+            {"ReviewId": "review4", "Language": "Java"},
         ]
 
-        # Mock AI comments data
+        # Mock AI comments data (now uses ReviewId)
         mock_ai_comments = [
-            {"APIRevisionId": "rev1"},  # Python revision with AI comment
-            {"APIRevisionId": "rev3"},  # C# revision with AI comment
+            {"ReviewId": "review1"},  # Python review with AI comment
+            {"ReviewId": "review3"},  # C# review with AI comment
         ]
 
         # Setup mock clients
@@ -38,9 +38,9 @@ class TestMetrics:
 
         # Verify results
         expected = {
-            "python": "0.50",  # 1/2 Python revisions have AI comments
-            "c#": "1.00",  # 1/1 C# revision has AI comments
-            "java": "0.00",  # 0/1 Java revision has AI comments
+            "python": "0.50",  # 1/2 Python reviews have AI comments
+            "c#": "1.00",  # 1/1 C# review has AI comments
+            "java": "0.00",  # 0/1 Java review has AI comments
         }
         assert result == expected
 
@@ -64,10 +64,10 @@ class TestMetrics:
     def test_calculate_language_adoption_no_ai_comments(self, mock_comments_client, mock_revisions_client):
         """Test language adoption with revisions but no AI comments."""
 
-        # Mock revisions but no AI comments
+        # Mock revisions but no AI comments (now includes ReviewId)
         mock_revisions = [
-            {"id": "rev1", "Language": "Python"},
-            {"id": "rev2", "Language": "Python"},
+            {"ReviewId": "review1", "Language": "Python"},
+            {"ReviewId": "review2", "Language": "Python"},
         ]
 
         mock_revisions_client.return_value.query_items.return_value = mock_revisions
@@ -78,6 +78,40 @@ class TestMetrics:
 
         # Verify 0% adoption
         expected = {"python": "0.00"}
+        assert result == expected
+
+    @patch("cli._get_apiview_revisions_client")
+    @patch("cli._get_apiview_cosmos_client")
+    def test_calculate_language_adoption_multiple_revisions_per_review(self, mock_comments_client, mock_revisions_client):
+        """Test language adoption with multiple revisions per review."""
+
+        # Mock revisions data where the same ReviewId appears multiple times (multiple revisions)
+        mock_revisions = [
+            {"ReviewId": "review1", "Language": "Python"},  # First revision of review1
+            {"ReviewId": "review1", "Language": "Python"},  # Second revision of review1
+            {"ReviewId": "review2", "Language": "Python"},  # Only revision of review2
+            {"ReviewId": "review3", "Language": "Java"},    # First revision of review3
+            {"ReviewId": "review3", "Language": "Java"},    # Second revision of review3
+        ]
+
+        # Mock AI comments - only review1 and review3 have AI comments
+        mock_ai_comments = [
+            {"ReviewId": "review1"},  # Python review with AI comment
+            {"ReviewId": "review3"},  # Java review with AI comment
+        ]
+
+        # Setup mock clients
+        mock_revisions_client.return_value.query_items.return_value = mock_revisions
+        mock_comments_client.return_value.query_items.return_value = mock_ai_comments
+
+        # Call the function
+        result = cli._calculate_language_adoption("2024-01-01", "2024-01-31")
+
+        # Verify results - should count distinct ReviewIds, not individual revisions
+        expected = {
+            "python": "0.50",  # 1/2 Python reviews have AI comments (review1 yes, review2 no)
+            "java": "1.00",    # 1/1 Java review has AI comments (review3 yes)
+        }
         assert result == expected
 
     def test_datetime_parsing_in_language_adoption(self):

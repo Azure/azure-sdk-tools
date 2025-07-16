@@ -702,6 +702,8 @@ def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> floa
 def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
     """
     Calculates the adoption rate of AI review comments by language.
+    Looks at distinct ReviewIds that had new revisions created during the time period
+    and calculates what percentage of those ReviewIds have AI comments.
     Returns a dictionary with languages as keys and adoption percentages as values.
     """
     # Get revisions container client
@@ -710,9 +712,9 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
     # Get comments container client
     comments_client = _get_apiview_cosmos_client()
 
-    # Query revisions created in the date range
+    # Query revisions created in the date range to get active ReviewIds
     revisions_query = """
-    SELECT c.id, c.Language FROM c 
+    SELECT c.ReviewId, c.Language FROM c 
     WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
     """
 
@@ -727,18 +729,19 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
         )
     )
 
-    # Group revisions by language
-    language_revisions = {}
+    # Group active ReviewIds by language (a ReviewId may appear multiple times if it has multiple revisions)
+    language_reviews = {}
     for revision in raw_revisions:
+        review_id = revision.get("ReviewId")
         language = revision.get("Language", "").lower()
-        if language:
-            if language not in language_revisions:
-                language_revisions[language] = []
-            language_revisions[language].append(revision["id"])
+        if language and review_id:
+            if language not in language_reviews:
+                language_reviews[language] = set()
+            language_reviews[language].add(review_id)
 
-    # Query AI comments for revisions in this period
+    # Query AI comments to get distinct ReviewIds that have AI comments
     ai_comments_query = """
-    SELECT DISTINCT c.APIRevisionId FROM c 
+    SELECT DISTINCT c.ReviewId FROM c 
     WHERE c.CreatedBy = "azure-sdk" AND c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
     """
 
@@ -750,15 +753,15 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
         )
     )
 
-    # Get set of revision IDs that have AI comments
-    revisions_with_ai = {comment["APIRevisionId"] for comment in raw_ai_comments if comment.get("APIRevisionId")}
+    # Get set of ReviewIds that have AI comments
+    reviews_with_ai = {comment["ReviewId"] for comment in raw_ai_comments if comment.get("ReviewId")}
 
     # Calculate adoption rate per language
     adoption_rates = {}
-    for language, revision_ids in language_revisions.items():
-        total_revisions = len(revision_ids)
-        revisions_with_ai_comments = sum(1 for rev_id in revision_ids if rev_id in revisions_with_ai)
-        adoption_rate = revisions_with_ai_comments / total_revisions if total_revisions > 0 else 0.0
+    for language, review_ids in language_reviews.items():
+        total_reviews = len(review_ids)
+        reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in reviews_with_ai)
+        adoption_rate = reviews_with_ai_comments / total_reviews if total_reviews > 0 else 0.0
         adoption_rates[language] = f"{adoption_rate:.2f}"
 
     return adoption_rates

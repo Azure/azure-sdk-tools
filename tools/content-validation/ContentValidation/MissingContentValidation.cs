@@ -11,6 +11,9 @@ public class MissingContentValidation : IValidation
         _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
     }
 
+    public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("CommonValidation", "contains");
+    public List<IgnoreItem> ignoreListOfErrorClass = IgnoreData.GetIgnoreList("MissingContentValidation", "subsetOfErrorClass");
+
     public async Task<TResult> Validate(string testLink)
     {
         var res = new TResult();
@@ -21,108 +24,33 @@ public class MissingContentValidation : IValidation
         var page = await browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
-        // Fetch all th and td tags in the test page.
-        var cellElements = await page.Locator("td,th").AllAsync();
+        // Get all td and th elements
+        var cellElements = await page.Locator("th,td").ElementHandlesAsync();
+        var cellElements2 = await page.Locator("td[colspan='2']").ElementHandlesAsync();
 
-        // Flag for ignore method clear, copy, items, keys, values
-        bool skipFlag = false;
-        List<string> ignoreList = new List<string>(){"clear", "copy", "items", "keys", "values"};
-
-        // Check if the cell is empty. If it is, retrieve the href attribute of the anchor tag above it for positioning.
+        // Process all cells
         foreach (var cell in cellElements)
         {
-            if(skipFlag == true){
-                skipFlag = false;
-                continue;
-            }
-            
-            var cellText = (await cell.InnerTextAsync()).Trim();
-            if(ignoreList.Contains(cellText)){
-                skipFlag = true;
-            }
-            // Console.WriteLine($"Cell Text: {cellText}");
+            await ProcessCellAsync(cell, page, testLink, errorList, ignoreList, ignoreListOfErrorClass, isColspan2: false);
+        }
 
-            // Usage: Check if it is an empty cell and get the href attribute of the nearest <a> tag with a specific class name before it. Finally, group and format these errors by position and number of occurrences.
-            // Example: The Description column of the Parameter table is Empty.
-            // Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.aio.asyncanalyzeactionslropoller?view=azure-python
-            if (string.IsNullOrEmpty(cellText))
+        if (!testLink.Contains("/java/", StringComparison.OrdinalIgnoreCase))
+        {
+            // Skip processing colspan=2 cells for Java errors
+            foreach (var cell in cellElements2)
             {
-                // Console.WriteLine($"Cell Text: {cellText}");
-                string anchorLink = "No anchor link found, need to manually search for empty cells on the page.";
-                var nearestHTagText = await cell.EvaluateAsync<string?>(@"element => {
-                    function findNearestHeading(startNode) {
-                        let currentNode = startNode;
-                        
-                        while (currentNode && currentNode.tagName !== 'BODY' && currentNode.tagName !== 'HTML') {
-                            // Check the sibling nodes and child nodes of the current node
-                            let sibling = currentNode.previousElementSibling;
-                            while (sibling) {
-                                // Check if the sibling node itself is an <h2> or <h3>
-                                if (['H2', 'H3'].includes(sibling.tagName)) {
-                                    return sibling.textContent || '';
-                                }
-                                
-                                // Recursively check the children of sibling nodes
-                                let childHeading = findNearestHeadingInChildren(sibling);
-                                if (childHeading) {
-                                    return childHeading;
-                                }
-                                
-                                sibling = sibling.previousElementSibling;
-                            }
-                            
-                            // If not found in the sibling node, continue traversing upwards
-                            currentNode = currentNode.parentElement;
-                        }
-                        
-                        return null; // If no matching <h> tags are found
-                    }
-                    
-                    function findNearestHeadingInChildren(node) {
-                        // Traverse the child nodes and recursively search for <h2> or <h3>
-                        for (let child of node.children) {
-                            if (['H2', 'H3'].includes(child.tagName)) {
-                                return child.textContent || '';
-                            }
-                            let grandChildHeading = findNearestHeadingInChildren(child);
-                            if (grandChildHeading) {
-                                return grandChildHeading;
-                            }
-                        }
-                        return null;
-                    }
-                    
-                    return findNearestHeading(element);
-                }");
-
-                if (nearestHTagText != null) {
-                    nearestHTagText = nearestHTagText.Replace("\n", "").Replace("\t", "");
-                    var aLocators = page.Locator("#side-doc-outline a");
-                    var aElements = await aLocators.ElementHandlesAsync();
-
-                    foreach (var elementHandle in aElements)
-                    {
-                        if(await elementHandle.InnerTextAsync() == nearestHTagText)
-                        {
-                            var href = await elementHandle.GetAttributeAsync("href");
-                            if (href != null){
-                                anchorLink = testLink + href;
-                            }
-                        }
-                    }
-                }
-                if(!anchorLink.Contains("#packages") && !anchorLink.Contains("#modules"))
-                {
-                    errorList.Add(anchorLink);
-                }
+                await ProcessCellAsync(cell, page, testLink, errorList, ignoreList, ignoreListOfErrorClass, isColspan2: true);
             }
         }
 
+
+        // Format the error list
         var formattedList = errorList
             .GroupBy(item => item)
-            .Select((group, Index) => $"{Index + 1}. Appears {group.Count()} times , location : {group.Key}")
+            .Select((group, index) => $"{index + 1}. Appears {group.Count()} times , location : {group.Key}")
             .ToList();
 
+        // Populate result object
         if (errorList.Count > 0)
         {
             res.Result = false;
@@ -133,7 +61,144 @@ public class MissingContentValidation : IValidation
         }
 
         await browser.CloseAsync();
-
         return res;
+    }
+
+    public bool isIgnore = false;
+    private async Task ProcessCellAsync(
+        IElementHandle cell,
+        IPage page,
+        string testLink,
+        List<string> errorList,
+        List<IgnoreItem> ignoreList,
+        List<IgnoreItem> ignoreListOfErrorClass,
+        bool isColspan2 = false
+        )
+    {
+        var innerHtml = await cell.EvaluateAsync<string>("el => el.innerHTML");
+
+        if (innerHtml.IndexOf("<img", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return;
+        }
+
+        var rawText = await cell.EvaluateAsync<string>("el => el.textContent");
+        var cellText = rawText?.Trim() ?? "";
+
+        // Skip ignored text
+        if (ignoreList.Any(item => cellText.Equals(item.IgnoreText, StringComparison.OrdinalIgnoreCase)))
+        {
+            isIgnore = true;
+            return;
+        }
+
+        if (testLink.Contains("javascript", StringComparison.OrdinalIgnoreCase) && testLink.Contains("errors", StringComparison.OrdinalIgnoreCase))
+        {
+            if (ignoreListOfErrorClass.Any(item => cellText.Equals(item.IgnoreText, StringComparison.OrdinalIgnoreCase)))
+            {
+                isIgnore = true;
+                return;
+            }
+        }
+
+        if (!isColspan2)
+        {
+            if (!string.IsNullOrEmpty(cellText))
+            {
+                isIgnore = false;
+                return;
+            }
+            else
+            {
+                if (isIgnore)
+                {
+                    isIgnore = false;
+                    return; // Skip if the cell is ignored
+                }
+            }
+        }
+
+        var anchorLink = await GetAnchorLinkForCellAsync(cell, page, testLink);
+
+        if (anchorLink == "This is an ignore cell, please ignore it.")
+        {
+            return; // Skip if the anchor link is the ignore text
+        }
+
+        if (!anchorLink.Contains("#packages", StringComparison.OrdinalIgnoreCase) &&
+            !anchorLink.Contains("#modules", StringComparison.OrdinalIgnoreCase))
+        {
+            errorList.Add(anchorLink);
+        }
+    }
+
+    private async Task<string> GetAnchorLinkForCellAsync(IElementHandle cell, IPage page, string testLink)
+    {
+        string anchorLink = "No anchor link found, need to manually search for empty cells on the page.";
+        string ignoreText = "This is an ignore cell, please ignore it.";
+
+        var nearestHTagText = await cell.EvaluateAsync<string?>(@"element => {
+            function findNearestHeading(startNode) {
+                let currentNode = startNode;
+                while (currentNode && currentNode.tagName !== 'BODY' && currentNode.tagName !== 'HTML') {
+                    let sibling = currentNode.previousElementSibling;
+                    while (sibling) {
+                        if (['H2', 'H3'].includes(sibling.tagName)) {
+                            return sibling.textContent?.trim() || '';
+                        }
+                        let childHeading = findNearestHeadingInChildren(sibling);
+                        if (childHeading) {
+                            return childHeading;
+                        }
+                        sibling = sibling.previousElementSibling;
+                    }
+                    currentNode = currentNode.parentElement;
+                }
+                return null;
+            }
+
+            function findNearestHeadingInChildren(node) {
+                for (let child of node.children) {
+                    if (['H2', 'H3'].includes(child.tagName)) {
+                        return child.textContent?.trim() || '';
+                    }
+                    let grandChildHeading = findNearestHeadingInChildren(child);
+                    if (grandChildHeading) {
+                        return grandChildHeading;
+                    }
+                }
+                return null;
+            }
+            
+            return findNearestHeading(element);
+        }");
+
+        if (!string.IsNullOrEmpty(nearestHTagText))
+        {
+            nearestHTagText = nearestHTagText.Replace("\n", "").Replace("\t", "");
+
+            // Skip heading if it's in the ignore list
+            if (ignoreList.Any(item => nearestHTagText.Equals(item.IgnoreText, StringComparison.OrdinalIgnoreCase)))
+                return ignoreText;
+
+            var aLocators = page.Locator("#side-doc-outline a");
+            var aElements = await aLocators.ElementHandlesAsync();
+
+            foreach (var elementHandle in aElements)
+            {
+                var linkText = await elementHandle.EvaluateAsync<string>("el => el.textContent?.trim()");
+                if (linkText == nearestHTagText)
+                {
+                    var href = await elementHandle.GetAttributeAsync("href");
+                    if (!string.IsNullOrEmpty(href))
+                    {
+                        anchorLink = testLink + href;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return anchorLink;
     }
 }

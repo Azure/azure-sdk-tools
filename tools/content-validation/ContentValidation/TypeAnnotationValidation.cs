@@ -12,27 +12,90 @@ public class TypeAnnotationValidation : IValidation
         _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
     }
 
+    public List<IgnoreItem> equalList = IgnoreData.GetIgnoreList("TypeAnnotationValidation", "equal");
+    public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("CommonValidation", "contains");
+
+    public class ParamError
+    {
+        public string ErrorMessage { get; set; } = "";
+        public IElementHandle Element { get; set; } = null!;
+    }
+
     public async Task<TResult> Validate(string testLink)
     {
         var res = new TResult();
         List<string> errorList = new List<string>();
-
-        // Create a browser instance.
+        // Launch browser and new page
         var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         var page = await browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
-        // Get all the class and method parameters in the test page.
-        Dictionary<string, List<string>>? pyClassParamMap = null;
-        Dictionary<string, List<string>>? pyMethodParamMap = null;
-        pyClassParamMap = await GetParamMap(page, true);
-        pyMethodParamMap = await GetParamMap(page, false);
+        // Get parameter maps with elements
+        var pyClassParamMap = await GetParamMap(page, true);
+        var pyMethodParamMap = await GetParamMap(page, false);
 
-        // Check each class and method parameter for correct type annotations and record any missing or incorrect ones.
-        var list1 = ValidParamMap(pyClassParamMap!, true);
-        var list2 = ValidParamMap(pyMethodParamMap!, false);
-        errorList.AddRange(list1);
-        errorList.AddRange(list2);
+        // Validate parameters and collect errors with element references
+        var classErrors = ValidParamMap(pyClassParamMap, true);
+        var methodErrors = ValidParamMap(pyMethodParamMap, false);
+
+        var allErrors = classErrors.Concat(methodErrors).ToList();
+
+        foreach (var error in allErrors)
+        {
+            var elem = error.Element;
+
+            // Execute JS to find nearest H2/H3 heading from error element
+            var nearestHTagText = await elem.EvaluateAsync<string?>(@"element => {
+                function findNearestHeading(startNode) {
+                    let currentNode = startNode;
+
+                    while (currentNode && currentNode.tagName !== 'BODY' && currentNode.tagName !== 'HTML') {
+                        let sibling = currentNode.previousElementSibling;
+                        while (sibling) {
+                            if (['H2', 'H3'].includes(sibling.tagName)) {
+                                return sibling.textContent?.trim() || '';
+                            }
+
+                            let childHeading = findNearestHeadingInChildren(sibling);
+                            if (childHeading) {
+                                return childHeading;
+                            }
+
+                            sibling = sibling.previousElementSibling;
+                        }
+                        currentNode = currentNode.parentElement;
+                    }
+                    return null;
+                }
+
+                function findNearestHeadingInChildren(node) {
+                    for (let child of node.children) {
+                        if (['H2', 'H3'].includes(child.tagName)) {
+                            return child.textContent?.trim() || '';
+                        }
+                        let grandChildHeading = findNearestHeadingInChildren(child);
+                        if (grandChildHeading) {
+                            return grandChildHeading;
+                        }
+                    }
+                    return null;
+                }
+
+                return findNearestHeading(element);
+            }");
+
+            if (!string.IsNullOrEmpty(nearestHTagText))
+            {
+                nearestHTagText = nearestHTagText.Replace("\n", "").Replace("\t", "");
+
+                if (ignoreList.Any(item => nearestHTagText.Equals(item.IgnoreText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue; // Skip if the nearest heading text is in the ignore list
+                }
+
+                errorList.Add($"{error.ErrorMessage}");
+            }
+        }
 
         for (int i = 0; i < errorList.Count; i++)
         {
@@ -47,6 +110,10 @@ public class TypeAnnotationValidation : IValidation
             res.NumberOfOccurrences = errorList.Count;
             res.LocationsOfErrors = errorList;
         }
+        else
+        {
+            res.Result = true;
+        }
 
         await browser.CloseAsync();
 
@@ -54,88 +121,74 @@ public class TypeAnnotationValidation : IValidation
     }
 
 
-    // If the parameter is "*" ,"/","**kwargs","*args","**kw", it indicates that no type annotation is required.
-    // If the parameter follows the format a=b (e.g., param1=null), it means a default value has been assigned to the parameter.
-    // If the parameter follows the format a:b (e.g., param1:int), it means a type annotation has been provided for the parameter.
+    // Determine whether the parameter correctly contains type annotation
     bool IsCorrectTypeAnnotation(string text)
     {
-        if (text == "*" || text == "/" || text == "**kwargs" || text == "*args" || text == "**kw")
+        if (equalList.Any(item => text.Equals(item.IgnoreText)))
         {
             return true;
         }
-        if (Regex.IsMatch(text, @"^[^=]+=[^=]+$"))
-        {
-            return true;
-        }
-        if (text.Contains(":"))
+
+        if (Regex.IsMatch(text, @"^[^=]+=[^=]+$"))  // pattern like a=b
         {
             return true;
         }
         return false;
     }
 
-    async Task<Dictionary<string, List<string>>> GetParamMap(IPage page, bool isClass)
+    // Get parameter mappings and their corresponding element handles
+    async Task<List<(string key, List<string> paramList, IElementHandle element)>> GetParamMap(IPage page, bool isClass)
     {
-        Dictionary<string, List<string>> paramMap = new Dictionary<string, List<string>>();
+        var result = new List<(string, List<string>, IElementHandle)>();
 
-        IReadOnlyList<ILocator>? HTMLElementList = null;
+        IReadOnlyList<IElementHandle>? elementHandles = null;
 
         if (isClass)
         {
-            // Check if the h1 text contains 'Enum'.
+            // Skip Enum type classes
             var h1Locator = page.Locator(".content h1:first-of-type");
-            var h1Text = "";
-
+            string h1Text = "";
             try
             {
                 h1Text = await h1Locator.InnerTextAsync();
             }
-            catch 
+            catch
             {
-                h1Locator = page.Locator(".content h1:first-child");
-                h1Text = await h1Locator.InnerTextAsync();
+                var h1Alt = page.Locator(".content h1:first-child");
+                h1Text = await h1Alt.InnerTextAsync();
             }
-            
             if (h1Text.Contains("Enum", StringComparison.OrdinalIgnoreCase))
             {
-                return paramMap;
+                return result;
             }
 
-            HTMLElementList = await page.Locator(".content > .wrap.has-inner-focus").AllAsync();
+            elementHandles = await page.Locator(".content > .wrap.has-inner-focus").ElementHandlesAsync();
         }
         else
         {
-            HTMLElementList = await page.Locator(".memberInfo > .wrap.has-inner-focus").AllAsync();
+            elementHandles = await page.Locator(".memberInfo > .wrap.has-inner-focus").ElementHandlesAsync();
         }
 
-        for (int i = 0; i < HTMLElementList.Count; i++)
+        foreach (var elem in elementHandles)
         {
-            var HTMLElement = HTMLElementList[i];
-            var codeText = await HTMLElement.InnerTextAsync();
+            var codeText = await elem.InnerTextAsync();
 
-            // Usage: This regex is used to extract a key and its parameters from strings in the format "key(params)". Example: For the codeText - "fn(param1: int, param2: str)", it extracts "fn" as the key and "param1: int, param2: str" as the parameters.
             var regex = new Regex(@"(?<key>.+?)\((?<params>.+?)\)");
             var match = regex.Match(codeText);
 
-            string key = "";
-            string paramsText = "";
-
             if (match.Success)
             {
-                key = match.Groups["key"].Value.Trim();
-                paramsText = match.Groups["params"].Value.Trim();
+                var key = match.Groups["key"].Value.Trim();
+                var paramsText = match.Groups["params"].Value.Trim();
+                var paramList = SplitParameters(paramsText);
+                result.Add((key, paramList, elem));
             }
-
-            var paramList = SplitParameters(paramsText);
-
-            paramMap[key] = paramList;
         }
 
-        return paramMap;
+        return result;
     }
 
-
-
+    // Split parameters by comma, considering brackets that may contain commas
     List<string> SplitParameters(string paramsText)
     {
         var paramList = new List<string>();
@@ -172,34 +225,33 @@ public class TypeAnnotationValidation : IValidation
         return paramList;
     }
 
-    List<string> ValidParamMap(Dictionary<string, List<string>> paramMap, bool isClass)
+    // Validate whether parameters all have type annotations, returning error info and corresponding element
+    List<ParamError> ValidParamMap(List<(string key, List<string> paramList, IElementHandle element)> paramMap, bool isClass)
     {
+        var errorList = new List<ParamError>();
 
-        List<string> errorList = new List<string>();
-
-        // Extract parameter maps for classes and methods.
-        foreach (var item in paramMap)
+        foreach (var (key, paramList, element) in paramMap)
         {
-            string key = item.Key;
-            var paramList = item.Value;
+            if (ignoreList.Any(item => key.Contains(item.IgnoreText)))
+                continue;
 
-            // If a parameter is found to be missing a type annotation, add it to the errorList.
-            string errorMessage = isClass ? "Class name:  " : "Method name: ";
-            string errorParam = "";
+            string errorParams = "";
 
-            for (int i = 0; i < paramList.Count; i++)
+            foreach (var param in paramList)
             {
-                var text = paramList[i];
-
-                if (!IsCorrectTypeAnnotation(text))
+                if (!IsCorrectTypeAnnotation(param))
                 {
-                    errorParam += text + " ;    ";
+                    errorParams += param + " ; ";
                 }
             }
 
-            if (errorParam.Length > 0)
+            if (!string.IsNullOrEmpty(errorParams))
             {
-                errorList.Add(errorMessage + key + ",    arguments:  " + errorParam);
+                errorList.Add(new ParamError
+                {
+                    ErrorMessage = (isClass ? "Class name:  " : "Method name: ") + key + ", arguments: " + errorParams,
+                    Element = element
+                });
             }
         }
 

@@ -39,7 +39,26 @@ namespace ReportHelper
 
             if (allPackagePath != null && File.Exists(allPackagePath))
             {
-                allPackageList = JsonSerializer.Deserialize<List<TPackage4Json>>(File.ReadAllText(allPackagePath)) ?? new List<TPackage4Json>();
+                string fileContent = File.ReadAllText(allPackagePath);
+                if (string.IsNullOrWhiteSpace(fileContent))
+                {
+                    // Handle the case where the file is empty
+                    allPackageList = new List<TPackage4Json>();
+                }
+                else
+                {
+                    try
+                    {
+                        allPackageList = JsonSerializer.Deserialize<List<TPackage4Json>>(fileContent) ?? new List<TPackage4Json>();
+                    }
+                    catch (JsonException ex)
+                    {
+                        // Handle JSON parsing error
+                        Console.WriteLine($"Error parsing JSON: {ex.Message}");
+                        allPackageList = new List<TPackage4Json>();
+                    }
+                }
+
                 // Finding the target package
                 foreach (var package in allPackageList)
                 {
@@ -68,12 +87,14 @@ namespace ReportHelper
 
                 // Update github issues
                 await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
-            }else if (newDataList.Count != 0)
+            }
+            else if (newDataList.Count != 0)
             {
                 // Create github issues
                 await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
 
-            }else
+            }
+            else
             {
                 Console.WriteLine($"There are no content validation issue with {HostPackageName} in {language}.");
             }

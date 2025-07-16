@@ -1,0 +1,20 @@
+[
+  {
+    "version": "view=azure-java-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/confidential-ledger?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/security-confidentialledger-readme?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.confidentialledgerasyncclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.confidentialledgerclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.confidentialledgerclientbuilder?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.confidentialledgerserviceversion?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.certificate?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.certificate.confidentialledgercertificateasyncclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.certificate.confidentialledgercertificateclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.certificate.confidentialledgercertificateclientbuilder?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.security.confidentialledger.certificate.confidentialledgercertificateserviceversion?view=azure-java-preview\u0026branch=main"
+    ]
+  }
+]

@@ -23,6 +23,8 @@ namespace ContentValidation.Test
 
         public static ConcurrentQueue<TResult> TestErrorDisplayResults = new ConcurrentQueue<TResult>();
 
+        public static ConcurrentQueue<TResult> TestEmptyTagsResults = new ConcurrentQueue<TResult>();
+
         public static IPlaywright playwright;
 
         static TestPageContent()
@@ -50,11 +52,13 @@ namespace ContentValidation.Test
             ExcelHelper4Test.AddTestResult(TestDuplicateServiceResults, excelFilePath, sheetName);
             ExcelHelper4Test.AddTestResult(TestInconsistentTextFormatResults, excelFilePath, sheetName);
             ExcelHelper4Test.AddTestResult(TestErrorDisplayResults, excelFilePath, sheetName);
+            ExcelHelper4Test.AddTestResult(TestEmptyTagsResults, excelFilePath, sheetName);
             JsonHelper4Test.AddTestResult(TestTableMissingContentResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestGarbledTextResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestDuplicateServiceResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestInconsistentTextFormatResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestErrorDisplayResults, jsonFilePath);
+            JsonHelper4Test.AddTestResult(TestEmptyTagsResults, jsonFilePath);
         }
 
 
@@ -62,11 +66,10 @@ namespace ContentValidation.Test
         [Category("PythonTest")]
         [Category("JavaTest")]
         [Category("JsTest")]
+        [Category("DotNetTest")]
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestTableMissingContent(string testLink)
         {
-
-
             IValidation Validation = new MissingContentValidation(playwright);
 
             var res = new TResult();
@@ -87,8 +90,6 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
 
         [Test]
@@ -98,7 +99,6 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestGarbledText(string testLink)
         {
-
             IValidation Validation = new GarbledTextValidation(playwright);
 
             var res = new TResult();
@@ -119,8 +119,6 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
 
 
@@ -130,7 +128,6 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestInconsistentTextFormat(string testLink)
         {
-
             IValidation Validation = new InconsistentTextFormatValidation(playwright);
 
             var res = new TResult();
@@ -151,17 +148,14 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
+
 
         [Test]
         [Category("JsTest")]
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestErrorDisplay(string testLink)
         {
-
-
             IValidation Validation = new ErrorDisplayValidation(playwright);
 
             var res = new TResult();
@@ -182,17 +176,42 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
+
+
+        [Test]
+        [Category("DotNetTest")]
+        [TestCaseSource(nameof(TestLinks))]
+        public async Task TestEmptyTags(string testLink)
+        {
+            IValidation Validation = new EmptyTagsValidation(playwright);
+
+            var res = new TResult();
+            try
+            {
+                res = await Validation.Validate(testLink);
+                res.TestCase = "TestEmptyTags";
+                if (!res.Result)
+                {
+                    TestEmptyTagsResults.Enqueue(res);
+                }
+                pipelineStatusHelper.SavePipelineFailedStatus("EmptyTagsValidation", "succeed");
+            }
+            catch
+            {
+                pipelineStatusHelper.SavePipelineFailedStatus("EmptyTagsValidation", "failed");
+                throw;
+            }
+
+            Assert.That(res.Result, res.FormatErrorMessage());
+        }
+
 
         [Test]
         [Category("SpecialTest")]
         [TestCaseSource(nameof(DuplicateTestLink))]
         public async Task TestDuplicateService(string testLink)
         {
-
-
             IValidation Validation = new DuplicateServiceValidation(playwright);
 
             var res = new TResult();
@@ -213,8 +232,6 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
     }
 }

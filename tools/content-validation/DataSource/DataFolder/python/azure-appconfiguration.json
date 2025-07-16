@@ -1,0 +1,26 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/app-configuration?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/appconfiguration-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.aio.azureappconfigurationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.azureappconfigurationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.configurationsetting?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.configurationsettinglabel?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.configurationsettingsfilter?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.configurationsnapshot?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.featureflagconfigurationsetting?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.resourcereadonlyerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.secretreferenceconfigurationsetting?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.configurationsettingfields?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.labelfields?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.snapshotcomposition?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.snapshotfields?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.snapshotstatus?view=azure-python\u0026branch=main"
+    ]
+  }
+]

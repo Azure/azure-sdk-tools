@@ -51,7 +51,7 @@ namespace IssuerHelper
 
             UploadCurrentPipelineDiffIssuesArtifact(allPackages, packageADiffSearchPattern, updatedDiffJsonPath);
             GenerateAllPackageExcelFile(updatedDiffJsonPath);
-            
+
             GenerateMarkDownFile(allPackages, pipelineRunLink, githubToken, language, owner, repo);
 
         }
@@ -89,11 +89,11 @@ namespace IssuerHelper
                 }
 
                 FileInfo fileInfo = new FileInfo(matchingFiles[0]);
-                if(fileInfo.Length < 5)
+                if (fileInfo.Length < 5)
                 {
                     return string.Empty;
                 }
-                
+
                 return File.ReadAllText(matchingFiles[0]);
             }
             else
@@ -341,6 +341,12 @@ namespace IssuerHelper
                 Console.WriteLine($"Occurrence error when creating md file: {ex.Message}");
             }
         }
+
+        public static string GetMappedValue(Dictionary<string, string> mappings, string key)
+        {
+            return mappings.ContainsKey(key) ? mappings[key] : key;
+        }
+
         // Need to confirm with Yuchao:
         // static JToken? GetIssueInfo(string package, string githubToken, string language, string owner, string repo)
         static string? GetIssueInfo(string package, string githubToken, string language, string owner, string repo)
@@ -350,13 +356,14 @@ namespace IssuerHelper
             string packageFilePath = $"../Artifacts/{package}";
             string ruleStatusFilePath = Path.Combine(packageFilePath, "RuleStatus.json");
 
-            if (File.Exists(ruleStatusFilePath)){
+            if (File.Exists(ruleStatusFilePath))
+            {
                 string ruleStatusJsonContent = File.ReadAllText(ruleStatusFilePath);
                 try
                 {
                     // Parse JSON Array
                     var jsonArray = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(ruleStatusJsonContent);
-        
+
                     if (jsonArray != null)
                     {
                         foreach (var item in jsonArray)
@@ -377,13 +384,37 @@ namespace IssuerHelper
                 }
             }
 
-            if(succeedRules.Count == 0){
+            if (succeedRules.Count == 0)
+            {
                 Console.WriteLine("No succeed rules found.");
                 return issueLinks;
             }
 
             string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/issues";
             JArray allIssues = new JArray();
+
+            Dictionary<string, string> ruleMappings = new Dictionary<string, string>
+            {
+                { "TypeAnnotationValidation", " Missing Type Annotation" },
+                { "MissingContentValidation", " Missing Content" },
+                { "GarbledTextValidation", " Garbled Text" },
+                { "InconsistentTextFormatValidation", " Inconsistent Text Format" },
+                { "DuplicateServiceValidation", " Duplicate Service" },
+                { "ExtraLabelValidation", " Extra Label" },
+                { "UnnecessarySymbolsValidation", " Unnecessary Symbols" },
+                { "InvalidTagsValidation", " Invalid Tags" },
+                { "CodeFormatValidation", " Code Format" },
+                { "EmptyTagsValidation", " Empty Tags"},
+                { "ErrorDisplayValidation", " Error Display" }
+            };
+
+            Dictionary<string, string> languageMappings = new Dictionary<string, string>
+            {
+                { "javascript", "JS SDK" },
+                { "python", "Python SDK" },
+                { "java", "Java SDK" },
+                { "dotnet", ".NET SDK" }
+            };
 
             try
             {
@@ -393,7 +424,7 @@ namespace IssuerHelper
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", githubToken);
                     string? linkHeader = null;
 
-                    while(true)
+                    while (true)
                     {
                         HttpResponseMessage response = client.GetAsync(apiUrl).Result;
                         response.EnsureSuccessStatusCode();
@@ -422,8 +453,11 @@ namespace IssuerHelper
                         }
                     }
 
-                    foreach (var rule in succeedRules){
-                        string issueTitle = $"{package} content validation issues about {rule} for {language} sdk.";
+                    foreach (var rule in succeedRules)
+                    {
+                        string mappedRule = GetMappedValue(ruleMappings, rule);
+                        string mappedLanguage = GetMappedValue(languageMappings, language.ToLower());
+                        string issueTitle = $"[{mappedLanguage}][{package}]{mappedRule}";
 
                         var matchingIssue = allIssues.FirstOrDefault(i => (string?)i["title"] == issueTitle);
 
@@ -454,7 +488,7 @@ namespace IssuerHelper
         static void GenerateAllPackageExcelFile(string inputJsonPath)
         {
             List<TPackage4Json> allPackageList = JsonConvert.DeserializeObject<List<TPackage4Json>>(File.ReadAllText(inputJsonPath)) ?? new List<TPackage4Json>();
-            string outputExcelPath =  Path.ChangeExtension(inputJsonPath, ".xlsx");
+            string outputExcelPath = Path.ChangeExtension(inputJsonPath, ".xlsx");
 
             for (int i = 0; i < allPackageList.Count; i++)
             {

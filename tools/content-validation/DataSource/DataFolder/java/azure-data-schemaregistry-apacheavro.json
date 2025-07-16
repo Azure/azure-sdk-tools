@@ -1,0 +1,14 @@
+[
+  {
+    "version": "view=azure-java-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/schema-registry?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/data-schemaregistry-apacheavro-readme?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.apacheavro?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.apacheavro.schemaregistryapacheavroexception?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.apacheavro.schemaregistryapacheavroserializer?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.apacheavro.schemaregistryapacheavroserializerbuilder?view=azure-java-preview\u0026branch=main"
+    ]
+  }
+]

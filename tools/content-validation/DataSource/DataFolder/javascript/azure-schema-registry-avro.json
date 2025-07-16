@@ -1,0 +1,14 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/schema-registry-avro-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-avro/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-avro/avroserializer?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-avro/avroserializeroptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-avro/deserializeoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-avro/messageadapter?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/schema-registry-avro/messagecontent?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

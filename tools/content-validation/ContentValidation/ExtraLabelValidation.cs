@@ -55,14 +55,6 @@ public class ExtraLabelValidation : IValidation
             int count = 0;
             while ((index = htmlText.IndexOf(label, index)) != -1)
             {
-                // Check if the label is followed by /> (self-closing tag)
-                // if (index + label.Length < htmlText.Length && htmlText[index + label.Length] == '/' && htmlText[index + label.Length + 1] == '>')
-                // {
-                //     // This is a self-closing tag, skip it
-                //     index += label.Length + 2;
-                //     continue;
-                // }
-
                 // Check if the label is followed by a self-closing tag pattern
                 string selfClosingPattern = $@"{label}\s(.*)?\/>";
                 if (Regex.IsMatch(htmlText.Substring(index), selfClosingPattern))

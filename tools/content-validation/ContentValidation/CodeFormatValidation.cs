@@ -36,11 +36,18 @@ public class CodeFormatValidation : IValidation
             string[] lines = codeText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var line in lines)
             {
-                if(line.Trim().Length == 0)
+                if (line.Trim().Length == 0)
                 {
                     continue; // Skip empty lines
                 }
+
+                if (line.StartsWith(" *"))
+                {
+                    continue; // Skip lines that do not start with whitespace
+                }
+
                 var match = Regex.Match(line, @"^(\s*)");
+
                 if (match.Success)
                 {
                     int spaceCount = match.Groups[1].Value.Length;

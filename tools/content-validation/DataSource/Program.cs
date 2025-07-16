@@ -19,6 +19,7 @@ namespace DataSource
         private static readonly string PYTHON_DATA_SDK_RELEASES_LATEST_CSV_URL = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/python-packages.csv";
         private static readonly string JAVA_DATA_SDK_RELEASES_LATEST_CSV_URL = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/java-packages.csv";
         private static readonly string JAVASCRIPT_DATA_SDK_RELEASES_LATEST_CSV_URL = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/js-packages.csv";
+        private static readonly string DOTNET_DATA_SDK_RELEASES_LATEST_CSV_URL = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/dotnet-packages.csv";
         static async Task Main(string[] args)
         {
             // Default Configuration
@@ -29,28 +30,43 @@ namespace DataSource
             string? readme = config["ReadmeName"];
             string? language = config["Language"];
             string branch = config["Branch"]!;
-            string? package = language?.ToLower() != "javascript" ? config["PackageName"] : config["CsvPackageName"];
+            string? package = language?.ToLower() != "javascript" && language?.ToLower() != "dotnet" ? config["PackageName"] : config["CsvPackageName"];
             string? cookieName = config["CookieName"];
             string? cookieValue = config["CookieValue"];
 
+            bool isRest = false;
+
             string? versionSuffix = ChooseGAOrPreview(language, package);
+
             if (versionSuffix == null)
             {
                 throw new ArgumentNullException(nameof(versionSuffix), "VersionSuffix cannot be null.");
             }
 
-            string? pageLink = GetPackagePageOverview(language, readme, versionSuffix, branch);
+            if (!isRest)
+            {
+                var existingUrls = TestLinkData.GetUrls(language ?? string.Empty, package ?? string.Empty, versionSuffix);
 
-            Console.WriteLine($"Page link: {pageLink}");
+                if (existingUrls.Count > 0)
+                {
+                    Console.WriteLine($"The package {package} with version {versionSuffix} already exists in the test link data.");
+                    ExportData(existingUrls);
+                    return;
+                }
+            }
+
+            string? pageLink = GetPackagePageOverview(language, readme, versionSuffix, branch);
 
             List<string> allPages = new List<string>();
 
-            if (string.IsNullOrEmpty(language) || string.IsNullOrEmpty(versionSuffix) || string.IsNullOrEmpty(pageLink))
-            {
-                throw new ArgumentException("Language, VersionSuffix, and PageLink cannot be null or empty.");
-            }
-
             await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName ?? string.Empty, cookieValue ?? string.Empty, branch);
+
+            if (allPages.Count > 0)
+            {
+                Console.WriteLine($"Saving {allPages.Count} URLs to TestLink data...");
+                TestLinkData.AddUrls(language ?? string.Empty, package ?? string.Empty, versionSuffix, allPages);
+                Console.WriteLine("Data saved successfully.");
+            }
 
             ExportData(allPages);
         }
@@ -63,7 +79,7 @@ namespace DataSource
             }
 
             language = language?.ToLower();
-            
+
             if (branch != "main")
             {
                 return $"{SDK_API_REVIEW_URL_BASIC}{language}/api/overview/azure/{readme}?{versionSuffix}&branch={branch}";
@@ -91,6 +107,11 @@ namespace DataSource
                 url = JAVASCRIPT_DATA_SDK_RELEASES_LATEST_CSV_URL;
                 return CompareGAAndPreview(url, package, language).Result == "GA" ? "view=azure-node-latest" : "view=azure-node-preview";
             }
+            else if (language == "dotnet")
+            {
+                url = DOTNET_DATA_SDK_RELEASES_LATEST_CSV_URL;
+                return CompareGAAndPreview(url, package, language).Result == "GA" ? "view=azure-node" : "view=azure-dotnet-preview";
+            }
             else
             {
                 throw new ArgumentException("Unsupported language specified.");
@@ -100,7 +121,7 @@ namespace DataSource
         static async Task<string?> CompareGAAndPreview(string url, string? package, string language)
         {
             var searchPackage = package;
-            
+
             using (var httpClient = new HttpClient())
             {
                 try
@@ -113,29 +134,29 @@ namespace DataSource
                     }))
                     {
                         csvReader.Context.RegisterClassMap<PythonPackageMap>();
-    
+
                         var records = new List<PackageCSV>();
                         while (await csvReader.ReadAsync())
                         {
                             var record = csvReader.GetRecord<PackageCSV>();
                             records.Add(record);
                         }
-    
+
                         var res = records.FirstOrDefault(p => p.Package.Equals(searchPackage, StringComparison.OrdinalIgnoreCase));
 
-                        if(res != null)
+                        if (res != null)
                         {
                             string versionGA = res.VersionGA;
                             string versionPreview = res.VersionPreview;
-                            if(String.IsNullOrEmpty(versionGA) && !String.IsNullOrEmpty(versionPreview))
+                            if (String.IsNullOrEmpty(versionGA) && !String.IsNullOrEmpty(versionPreview))
                             {
                                 return "Preview";
                             }
-                            else if(!String.IsNullOrEmpty(versionGA) && String.IsNullOrEmpty(versionPreview))
+                            else if (!String.IsNullOrEmpty(versionGA) && String.IsNullOrEmpty(versionPreview))
                             {
                                 return "GA";
                             }
-                            else if(!String.IsNullOrEmpty(versionGA) && !String.IsNullOrEmpty(versionPreview))
+                            else if (!String.IsNullOrEmpty(versionGA) && !String.IsNullOrEmpty(versionPreview))
                             {
                                 var versionRes = CompareVersions(versionGA, versionPreview);
                                 return versionRes < 0 ? "Preview" : "GA";
@@ -143,12 +164,13 @@ namespace DataSource
                             else
                             {
                                 Console.WriteLine($"Package {package} has not both GA and Preview version in the table.");
-                                return null;
+                                return "GA";
                             }
                         }
-                        else{
+                        else
+                        {
                             Console.WriteLine($"Package {package} not found in the CSV.");
-                            return null;
+                            return "GA";
                         }
                     }
                 }
@@ -164,31 +186,31 @@ namespace DataSource
         {
             var (version1Parts, _) = ParseVersion(v1);
             var (version2Parts, _) = ParseVersion(v2);
-    
+
             int length = Math.Max(version1Parts.Length, version2Parts.Length);
             for (int i = 0; i < length; i++)
             {
                 int part1 = i < version1Parts.Length ? version1Parts[i] : 0;
                 int part2 = i < version2Parts.Length ? version2Parts[i] : 0;
-    
+
                 if (part1 < part2) return -1;
                 if (part1 > part2) return 1;
             }
-    
+
             return 0;
         }
-    
+
         static (int[], string) ParseVersion(string version)
         {
             var match = Regex.Match(version, @"^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?<pre>[-.\w]*)?$");
             if (!match.Success)
                 throw new ArgumentException("Invalid version format");
-    
+
             int major = int.Parse(match.Groups["major"].Value);
             int minor = int.Parse(match.Groups["minor"].Value);
             int patch = int.Parse(match.Groups["patch"].Value);
             string preRelease = match.Groups["pre"].Value;
-    
+
             return (new[] { major, minor, patch }, preRelease);
         }
 
@@ -198,7 +220,7 @@ namespace DataSource
             // If the current page meets the IsTrue condition, call GetAllPages directly.
             if (IsTrue(pagelink, cookieName, cookieVal))
             {
-                
+
                 int lastSlashIndex = pagelink.LastIndexOf('/');
                 string baseUri = pagelink.Substring(0, lastSlashIndex + 1);
                 allPages.Add(pagelink);
@@ -236,12 +258,13 @@ namespace DataSource
                         Timeout = 60000 // Timeout 60000ms
                     });
                     Console.WriteLine("Page loaded successfully");
+                    Console.WriteLine($"Current page: {pagelink}");
                 }
                 catch (TimeoutException)
                 {
                     Console.WriteLine("Page load timeout");
                 }
-                
+
                 // Get all child pages
                 links = await page.Locator("li.tree-item.is-expanded ul.tree-group a").AllAsync();
 
@@ -319,7 +342,7 @@ namespace DataSource
                         }
 
                         href = $"{baseUri}{href}&branch=" + branch;
-                        
+
                         if (!links.Contains(href))
                         {
                             links.Add(href);
@@ -346,7 +369,11 @@ namespace DataSource
                 new { XPath = "//h2[@id='functions']", Content = "Functions" },
                 new { XPath = "//h2[@id='enums']", Content = "Enums" },
                 new { XPath = "//h2[@id='modules']", Content = "Modules" },
-                new { XPath = "//h2[@id='packages']", Content = "Packages" }
+                new { XPath = "//h2[@id='packages']", Content = "Packages" },
+                new { XPath = "//h2[@id='constructors']", Content = "Constructors" },
+                new { XPath = "//h2[@id='properties']", Content = "Properties" },
+                new { XPath = "//h2[@id='methods']", Content = "Methods" },
+                new { XPath = "//h2[@id='operators']", Content = "Operators" }
             };
 
             return checks.Any(check =>
@@ -498,12 +525,14 @@ namespace DataSource
         {
             string? link = null;
             language = language?.ToLower();
-            if(language == "python"){
+            if (language == "python")
+            {
                 foreach (var page in childPage)
                 {
                     string packageName = page.Replace(".", "-").ToLower();
-                    if(packageName.Contains("fileshare") || packageName.Contains("filedatalake")){
-                        packageName = packageName.Replace("file","file-").ToLower();
+                    if (packageName.Contains("fileshare") || packageName.Contains("filedatalake"))
+                    {
+                        packageName = packageName.Replace("file", "file-").ToLower();
                     }
                     if (branch != "main")
                     {

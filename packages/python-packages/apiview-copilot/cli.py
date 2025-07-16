@@ -811,7 +811,6 @@ def report_metrics(start_date: str, end_date: str):
             "language_adoption": language_adoption,
         },
     }
-    print(json.dumps(report, indent=2))
     return report
 
 

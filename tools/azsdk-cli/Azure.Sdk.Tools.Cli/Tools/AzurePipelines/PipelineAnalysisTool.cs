@@ -199,6 +199,11 @@ public class PipelineAnalysisTool : MCPTool
             {
                 return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT);
             }
+            // Devops will return a sign-in html page if the user is not authorized
+            if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+            {
+                throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
+            }
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
@@ -235,6 +240,11 @@ public class PipelineAnalysisTool : MCPTool
         var timelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
         logger.LogDebug("Getting timeline records from {url}", timelineUrl);
         var response = await httpClient.GetAsync(timelineUrl, ct);
+        // Devops will return a sign-in html page if the user is not authorized
+        if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+        {
+            throw new Exception($"Not authorized to get timeline records from {timelineUrl}");
+        }
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(ct);
         if (string.IsNullOrEmpty(json))
@@ -339,6 +349,11 @@ public class PipelineAnalysisTool : MCPTool
         var logUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
         logger.LogDebug("Fetching log file from {url}", logUrl);
         var response = await httpClient.GetAsync(logUrl, ct);
+        // Devops will return a sign-in html page if the user is not authorized
+        if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+        {
+            throw new Exception($"Not authorized to get log file from {logUrl}");
+        }
         response.EnsureSuccessStatusCode();
         var logContent = await response.Content.ReadAsStringAsync(ct);
         return logContent;

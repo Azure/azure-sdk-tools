@@ -958,6 +958,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             using var httpClient = new HttpClient();
             var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
             var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
+            // Devops will return a sign-in html page if the user is not authorized
+            if (artifactsResponse.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+            {
+                throw new Exception($"Not authorized to get artifacts from {artifactsUrl}");
+            }
             artifactsResponse.EnsureSuccessStatusCode();
             var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(artifactsJson);

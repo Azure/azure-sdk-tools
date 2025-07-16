@@ -681,54 +681,60 @@ def _calculate_language_adoption(comments: list[APIViewComment], iso_start: str,
     Calculates the adoption rate of AI comments per language.
     For each language, returns the percentage of revisions that have at least one AI comment.
     """
-    # Get APIRevisions container client to query revisions by language
-    cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
-    if not cosmos_acc:
-        raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
-    cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
-    client = CosmosClient(url=cosmos_url, credential=get_credential())
-    database = client.get_database_client("APIViewV2")
-    revisions_container = database.get_container_client("APIRevisions")
-    
-    # Query all revisions created within the date range
-    revisions_query = """
-    SELECT c.id, c.Language FROM c
-    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date AND c.IsDeleted = false
-    """
-    
-    revisions = list(
-        revisions_container.query_items(
-            query=revisions_query,
-            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-            enable_cross_partition_query=True,
+    try:
+        # Get APIRevisions container client to query revisions by language
+        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+        if not cosmos_acc:
+            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
+        database = client.get_database_client("APIViewV2")
+        revisions_container = database.get_container_client("APIRevisions")
+        
+        # Query all revisions created within the date range
+        revisions_query = """
+        SELECT c.id, c.Language FROM c
+        WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date AND c.IsDeleted = false
+        """
+        
+        revisions = list(
+            revisions_container.query_items(
+                query=revisions_query,
+                parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+                enable_cross_partition_query=True,
+            )
         )
-    )
+        
+        # Group revisions by language
+        revisions_by_language = {}
+        for revision in revisions:
+            language = revision.get("Language", "unknown").lower()
+            if language not in revisions_by_language:
+                revisions_by_language[language] = set()
+            revisions_by_language[language].add(revision["id"])
+        
+        # Find revisions that have AI comments
+        ai_comments = [c for c in comments if c.created_by == "azure-sdk"]
+        revisions_with_ai_comments = set()
+        for comment in ai_comments:
+            if comment.api_revision_id:
+                revisions_with_ai_comments.add(comment.api_revision_id)
+        
+        # Calculate adoption rate per language
+        language_adoption = {}
+        for language, revision_ids in revisions_by_language.items():
+            total_revisions = len(revision_ids)
+            revisions_with_ai = len(revision_ids.intersection(revisions_with_ai_comments))
+            adoption_rate = revisions_with_ai / total_revisions if total_revisions > 0 else 0.0
+            # Format as string with 2 decimal places
+            language_adoption[language] = f"{adoption_rate:.2f}"
+        
+        return language_adoption
     
-    # Group revisions by language
-    revisions_by_language = {}
-    for revision in revisions:
-        language = revision.get("Language", "unknown").lower()
-        if language not in revisions_by_language:
-            revisions_by_language[language] = set()
-        revisions_by_language[language].add(revision["id"])
-    
-    # Find revisions that have AI comments
-    ai_comments = [c for c in comments if c.created_by == "azure-sdk"]
-    revisions_with_ai_comments = set()
-    for comment in ai_comments:
-        if comment.api_revision_id:
-            revisions_with_ai_comments.add(comment.api_revision_id)
-    
-    # Calculate adoption rate per language
-    language_adoption = {}
-    for language, revision_ids in revisions_by_language.items():
-        total_revisions = len(revision_ids)
-        revisions_with_ai = len(revision_ids.intersection(revisions_with_ai_comments))
-        adoption_rate = revisions_with_ai / total_revisions if total_revisions > 0 else 0.0
-        # Format as string with 2 decimal places
-        language_adoption[language] = f"{adoption_rate:.2f}"
-    
-    return language_adoption
+    except Exception as e:
+        print(f"Error calculating language adoption: {e}")
+        # Return empty dict on error to prevent breaking the entire metrics report
+        return {}
 
 
 def report_metrics(start_date: str, end_date: str):

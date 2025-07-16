@@ -100,7 +100,9 @@ class TestMetrics:
 
     @patch("cli._get_apiview_revisions_client")
     @patch("cli._get_apiview_cosmos_client")
-    def test_calculate_language_adoption_multiple_revisions_per_review(self, mock_comments_client, mock_revisions_client):
+    def test_calculate_language_adoption_multiple_revisions_per_review(
+        self, mock_comments_client, mock_revisions_client
+    ):
         """Test language adoption with multiple revisions per review."""
 
         # Mock revisions data where the same ReviewId appears multiple times (multiple revisions)
@@ -108,8 +110,8 @@ class TestMetrics:
             {"ReviewId": "review1", "Language": "Python"},  # First revision of review1
             {"ReviewId": "review1", "Language": "Python"},  # Second revision of review1
             {"ReviewId": "review2", "Language": "Python"},  # Only revision of review2
-            {"ReviewId": "review3", "Language": "Java"},    # First revision of review3
-            {"ReviewId": "review3", "Language": "Java"},    # Second revision of review3
+            {"ReviewId": "review3", "Language": "Java"},  # First revision of review3
+            {"ReviewId": "review3", "Language": "Java"},  # Second revision of review3
         ]
 
         # Mock AI comments - only review1 and review3 have AI comments
@@ -133,7 +135,7 @@ class TestMetrics:
                 "active_copilot_reviews": 1,
             },
             "java": {
-                "adoption_rate": "1.00",    # 1/1 Java review has AI comments (review3 yes)
+                "adoption_rate": "1.00",  # 1/1 Java review has AI comments (review3 yes)
                 "active_reviews": 1,
                 "active_copilot_reviews": 1,
             },

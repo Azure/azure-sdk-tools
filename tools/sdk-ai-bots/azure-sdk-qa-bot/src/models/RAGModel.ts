@@ -35,8 +35,8 @@ export class RAGModel implements PromptCompletionModel {
   ): Promise<PromptResponse<string>> {
     const meta = getTurnContextLogMeta(context);
     const channelId = context.activity.conversation.id.split(';')[0];
-    logger.info(`Processing request for channel: ${channelId}`, { meta });
     const ragTanentId = getRagTetant(channelId);
+    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTanentId}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: config.ragEndpoint,
       apiKey: config.ragApiKey,

@@ -16,9 +16,12 @@ const config = {
 };
 
 export const channelToRagTanent = {
-  [process.env.CHANNEL_ID_FOR_PYTHON]: process.env.RAG_TANENT_ID_FOR_PYTHON,
   default: process.env.RAG_TANENT_ID,
+  // python
+  [process.env.CHANNEL_ID_FOR_PYTHON]: process.env.RAG_TANENT_ID_FOR_PYTHON,
   [process.env.CHANNEL_ID_FOR_PYTHON_DEV_INTERNAL]: process.env.RAG_TANENT_ID_FOR_PYTHON,
+  // sdk onboarding
+  [process.env.CHANNEL_ID_FOR_SDK_ONBOARDING_DEV_INTERNAL]: process.env.RAG_TANENT_ID_FOR_SDK_ONBOARDING,
 };
 
 export const ragApiPaths = {

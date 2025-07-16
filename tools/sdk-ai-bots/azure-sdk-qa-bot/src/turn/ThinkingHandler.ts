@@ -5,16 +5,19 @@ import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
 import { CompletionResponsePayload } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
+import { setTimeout } from 'node:timers/promises';
 
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
   private readonly defaultThinkingMessage = '⏳Thinking';
-
+  private readonly maxRetryTimesForFinish = 5;
+  private readonly maxRetryTimesForThinking = 1800;
+  private readonly defaultInterval = 1000; // unit in milliseconds
   private readonly context: TurnContext;
   private readonly conversationHandler: ConversationHandler;
   private thinkingMessage = this.defaultThinkingMessage;
-  private isThinking = true;
-  private timerHandler: NodeJS.Timeout | undefined = undefined;
+  private shouldStop = false;
+  private isRunning = false;
   private resourceId: string | undefined = undefined;
   private meta: object;
 
@@ -26,26 +29,23 @@ export class ThinkingHandler {
 
   public async start(context: TurnContext, conversationMessages: ConversationMessage[]): Promise<void> {
     await this.trySendContactCard(context, conversationMessages);
-
     const resource = await context.sendActivity(this.thinkingMessage);
-    this.timerHandler = setInterval(async () => {
-      const updated: Partial<TurnContext> = {
-        type: 'message',
-        id: resource.id,
-        text: this.updateThinkingMessage(),
-        conversation: context.activity.conversation,
-      } as any;
-      if (this.isThinking) {
-        await context.updateActivity(updated);
-      }
-    }, 1000);
     this.resourceId = resource.id;
+    this.startCore(context, resource.id);
   }
 
   // cancel timer as soon as possible when get reply
-  public cancelTimer() {
-    this.isThinking = false;
-    if (this.timerHandler) clearInterval(this.timerHandler);
+  public async safeCancelTimer() {
+    this.shouldStop = true;
+    if (!this.isRunning) return;
+    let retryCount = 0;
+    for (; retryCount < this.maxRetryTimesForFinish; retryCount++) {
+      if (!this.isRunning) break;
+      await setTimeout(this.defaultInterval);
+    }
+    if (retryCount === this.maxRetryTimesForFinish) {
+      throw new Error('Failed to stop thinking timer');
+    }
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
@@ -58,6 +58,30 @@ export class ThinkingHandler {
       conversation: this.context.activity.conversation,
     } as any;
     await this.context.updateActivity(updated);
+  }
+
+  private async startCore(context: TurnContext, resourceId: string) {
+    let count = 0;
+    for (; count < this.maxRetryTimesForThinking; count++) {
+      if (this.shouldStop || this.isRunning) break;
+      const updated: Partial<TurnContext> = {
+        type: 'message',
+        id: resourceId,
+        text: this.updateThinkingMessage(),
+        conversation: context.activity.conversation,
+      } as any;
+      try {
+        this.isRunning = true;
+        await context.updateActivity(updated);
+      } finally {
+        this.isRunning = false;
+      }
+      await setTimeout(this.defaultInterval);
+    }
+    if (count === this.maxRetryTimesForThinking) {
+      logger.warn('Thinking timer reached max retry times', { meta: this.meta });
+      await context.sendActivity('Thinking is taking too long, please try again later.');
+    }
   }
 
   private updateThinkingMessage() {

@@ -60,7 +60,7 @@ export class RAGModel implements PromptCompletionModel {
       ragReply = { id: 'N/A', answer: 'AI service is not available', has_result: false, references: [] };
     }
     // TODO: try merge cancelTimer and stop into one method
-    thinkingHandler.cancelTimer();
+    await thinkingHandler.safeCancelTimer();
     await this.saveCurrentConversationMessage(context, currentPrompt, ragReply, meta);
     await thinkingHandler.stop(ragReply);
 

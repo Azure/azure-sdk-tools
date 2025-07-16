@@ -424,7 +424,8 @@ class ApiViewReview:
                 if section_result and section_result["comments"]:
                     section = sections_to_process[section_idx][1]
                     section_result = ReviewResult(allowed_ids=section_contexts[section_idx], **section_result)
-                    self.results.merge(section_result, section=section)
+                    section_result._process_comments(comments=section_result.comments, section=section)
+                    self.results.comments.extend(section_result.comments)
         except KeyboardInterrupt:
             self._print_message("\n\nCancellation requested! Terminating process...")
             cancel_event.set()

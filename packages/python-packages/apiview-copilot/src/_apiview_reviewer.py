@@ -97,8 +97,8 @@ class ApiViewReview:
             self.max_chunk_size = 500
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
-        language_guideline_ids = [x.id for x in self.search.language_guidelines]
-        self.results = ReviewResult(allowed_ids=language_guideline_ids)
+        self.allowed_ids = [x.id for x in self.search.language_guidelines]
+        self.results = ReviewResult()
         self.summary = None
         self.outline = outline
         self.existing_comments = (
@@ -363,7 +363,6 @@ class ApiViewReview:
             # Context prompt
             context_key = f"{context_tag}_{section_idx}"
             context = self._retrieve_context(str(section))
-            section_contexts[section_idx] = [x.id for x in context] if context else []
             context_string = context.to_markdown() if context else ""
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
@@ -424,9 +423,7 @@ class ApiViewReview:
                 if section_result and section_result["comments"]:
                     comments = section_result["comments"]
                     section = sections_to_process[section_idx][1]
-                    section_result = ReviewResult(
-                        comments=comments, allowed_ids=section_contexts[section_idx], section=section
-                    )
+                    section_result = ReviewResult(comments=comments, allowed_ids=self.allowed_ids, section=section)
                     self.results.comments.extend(section_result.comments)
         except KeyboardInterrupt:
             self._print_message("\n\nCancellation requested! Terminating process...")

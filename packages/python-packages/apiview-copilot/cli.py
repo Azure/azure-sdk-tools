@@ -601,6 +601,29 @@ def _get_apiview_cosmos_client():
         sys.exit(1)
 
 
+def _get_apiview_revisions_client():
+    """
+    Returns the Cosmos DB container client for APIView revisions.
+    """
+    try:
+        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+        cosmos_db = "APIViewV2"
+        container_name = "APIRevisions"
+        if not cosmos_acc:
+            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
+        database = client.get_database_client(cosmos_db)
+        container = database.get_container_client(container_name)
+        return container
+    except CosmosHttpResponseError as e:
+        if e.status_code == 403:
+            print(
+                f"Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+            )
+        sys.exit(1)
+
+
 _APIVIEW_COMMENT_SELECT_FIELDS = [
     "id",
     "CreatedOn",
@@ -676,6 +699,71 @@ def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> floa
     return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
 
 
+def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
+    """
+    Calculates the adoption rate of AI review comments by language.
+    Returns a dictionary with languages as keys and adoption percentages as values.
+    """
+    # Get revisions container client
+    revisions_client = _get_apiview_revisions_client()
+
+    # Get comments container client
+    comments_client = _get_apiview_cosmos_client()
+
+    # Query revisions created in the date range
+    revisions_query = """
+    SELECT c.id, c.Language FROM c 
+    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+    """
+
+    iso_start = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
+    iso_end = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59.999999Z")
+
+    raw_revisions = list(
+        revisions_client.query_items(
+            query=revisions_query,
+            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    # Group revisions by language
+    language_revisions = {}
+    for revision in raw_revisions:
+        language = revision.get("Language", "").lower()
+        if language:
+            if language not in language_revisions:
+                language_revisions[language] = []
+            language_revisions[language].append(revision["id"])
+
+    # Query AI comments for revisions in this period
+    ai_comments_query = """
+    SELECT DISTINCT c.APIRevisionId FROM c 
+    WHERE c.CreatedBy = "azure-sdk" AND c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+    """
+
+    raw_ai_comments = list(
+        comments_client.query_items(
+            query=ai_comments_query,
+            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    # Get set of revision IDs that have AI comments
+    revisions_with_ai = {comment["APIRevisionId"] for comment in raw_ai_comments if comment.get("APIRevisionId")}
+
+    # Calculate adoption rate per language
+    adoption_rates = {}
+    for language, revision_ids in language_revisions.items():
+        total_revisions = len(revision_ids)
+        revisions_with_ai_comments = sum(1 for rev_id in revision_ids if rev_id in revisions_with_ai)
+        adoption_rate = revisions_with_ai_comments / total_revisions if total_revisions > 0 else 0.0
+        adoption_rates[language] = f"{adoption_rate:.2f}"
+
+    return adoption_rates
+
+
 def report_metrics(start_date: str, end_date: str):
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
@@ -710,14 +798,20 @@ def report_metrics(start_date: str, end_date: str):
         )
     )
     comments = [APIViewComment(**d) for d in raw_comments]
+
+    # Calculate language adoption
+    language_adoption = _calculate_language_adoption(start_date, end_date)
+
     report = {
         "start_date": start_date,
         "end_date": end_date,
         "metrics": {
             "ai_vs_manual_comment_ratio": _calculate_ai_vs_manual_comment_ratio(comments),
             "good_vs_bad_comment_ratio": _calculate_good_vs_bad_comment_ratio(comments),
+            "language_adoption": language_adoption,
         },
     }
+    print(json.dumps(report, indent=2))
     return report
 
 

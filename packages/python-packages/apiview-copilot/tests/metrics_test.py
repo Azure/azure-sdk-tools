@@ -38,9 +38,21 @@ class TestMetrics:
 
         # Verify results
         expected = {
-            "python": "0.50",  # 1/2 Python reviews have AI comments
-            "c#": "1.00",  # 1/1 C# review has AI comments
-            "java": "0.00",  # 0/1 Java review has AI comments
+            "python": {
+                "adoption_rate": "0.50",  # 1/2 Python reviews have AI comments
+                "active_reviews": 2,
+                "active_copilot_reviews": 1,
+            },
+            "c#": {
+                "adoption_rate": "1.00",  # 1/1 C# review has AI comments
+                "active_reviews": 1,
+                "active_copilot_reviews": 1,
+            },
+            "java": {
+                "adoption_rate": "0.00",  # 0/1 Java review has AI comments
+                "active_reviews": 1,
+                "active_copilot_reviews": 0,
+            },
         }
         assert result == expected
 
@@ -77,7 +89,13 @@ class TestMetrics:
         result = cli._calculate_language_adoption("2024-01-01", "2024-01-31")
 
         # Verify 0% adoption
-        expected = {"python": "0.00"}
+        expected = {
+            "python": {
+                "adoption_rate": "0.00",
+                "active_reviews": 2,
+                "active_copilot_reviews": 0,
+            }
+        }
         assert result == expected
 
     @patch("cli._get_apiview_revisions_client")
@@ -109,8 +127,16 @@ class TestMetrics:
 
         # Verify results - should count distinct ReviewIds, not individual revisions
         expected = {
-            "python": "0.50",  # 1/2 Python reviews have AI comments (review1 yes, review2 no)
-            "java": "1.00",    # 1/1 Java review has AI comments (review3 yes)
+            "python": {
+                "adoption_rate": "0.50",  # 1/2 Python reviews have AI comments (review1 yes, review2 no)
+                "active_reviews": 2,
+                "active_copilot_reviews": 1,
+            },
+            "java": {
+                "adoption_rate": "1.00",    # 1/1 Java review has AI comments (review3 yes)
+                "active_reviews": 1,
+                "active_copilot_reviews": 1,
+            },
         }
         assert result == expected
 
@@ -134,18 +160,34 @@ class TestMetrics:
 
         # Mock existing functions
         mock_comments_client.return_value.query_items.return_value = []
-        mock_language_adoption.return_value = {"python": "0.25", "java": "0.50"}
+        mock_language_adoption.return_value = {
+            "python": {
+                "adoption_rate": "0.25",
+                "active_reviews": 4,
+                "active_copilot_reviews": 1,
+            },
+            "java": {
+                "adoption_rate": "0.50",
+                "active_reviews": 2,
+                "active_copilot_reviews": 1,
+            },
+        }
 
         # Call report_metrics and capture the return value
-        with patch("builtins.print") as mock_print:
-            result = cli.report_metrics("2024-01-01", "2024-01-31")
+        result = cli.report_metrics("2024-01-01", "2024-01-31")
 
-            # Verify language_adoption is in the metrics
-            assert "language_adoption" in result["metrics"]
-            assert result["metrics"]["language_adoption"] == {"python": "0.25", "java": "0.50"}
-
-            # Verify print was called with JSON output
-            mock_print.assert_called_once()
-            printed_output = mock_print.call_args[0][0]
-            parsed_output = json.loads(printed_output)
-            assert "language_adoption" in parsed_output["metrics"]
+        # Verify language_adoption is in the metrics
+        assert "language_adoption" in result["metrics"]
+        expected_language_adoption = {
+            "python": {
+                "adoption_rate": "0.25",
+                "active_reviews": 4,
+                "active_copilot_reviews": 1,
+            },
+            "java": {
+                "adoption_rate": "0.50",
+                "active_reviews": 2,
+                "active_copilot_reviews": 1,
+            },
+        }
+        assert result["metrics"]["language_adoption"] == expected_language_adoption

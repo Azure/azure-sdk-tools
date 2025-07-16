@@ -7,6 +7,7 @@ import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { MessageService } from 'primeng/api';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
@@ -18,7 +19,8 @@ describe('CommentThreadComponent', () => {
       imports: [
         HttpClientTestingModule,
         ReviewPageModule,
-        SharedAppModule
+        SharedAppModule,
+        NoopAnimationsModule
       ],
       providers: [
         MessageService
@@ -36,11 +38,11 @@ describe('CommentThreadComponent', () => {
 
   describe('avatar rendering', () => {
     it('should show Copilot icon for azure-sdk comments', () => {
-      const azureSdkComment = {
-        id: '1',
-        createdBy: 'azure-sdk',
-        commentText: 'Copilot suggestion'
-      } as CommentItemModel;
+      const azureSdkComment = new CommentItemModel();
+      azureSdkComment.id = '1';
+      azureSdkComment.createdBy = 'azure-sdk';
+      azureSdkComment.createdOn = new Date().toISOString();
+      azureSdkComment.commentText = 'Copilot suggestion';
       
       component.codePanelRowData!.comments = [azureSdkComment];
       fixture.detectChanges();
@@ -51,11 +53,11 @@ describe('CommentThreadComponent', () => {
     });
 
     it('should show GitHub avatar for regular user comments', () => {
-      const regularComment = {
-        id: '1',
-        createdBy: 'regular-user',
-        commentText: 'Regular comment'
-      } as CommentItemModel;
+      const regularComment = new CommentItemModel();
+      regularComment.id = '1';
+      regularComment.createdBy = 'regular-user';
+      regularComment.createdOn = new Date().toISOString();
+      regularComment.commentText = 'Regular comment';
       
       component.codePanelRowData!.comments = [regularComment];
       fixture.detectChanges();
@@ -68,11 +70,11 @@ describe('CommentThreadComponent', () => {
 
   describe('comment creator name display', () => {
     it('should display "azure-sdk" for azure-sdk comments', () => {
-      const azureSdkComment = {
-        id: '1',
-        createdBy: 'azure-sdk',
-        commentText: 'Copilot suggestion'
-      } as CommentItemModel;
+      const azureSdkComment = new CommentItemModel();
+      azureSdkComment.id = '1';
+      azureSdkComment.createdBy = 'azure-sdk';
+      azureSdkComment.createdOn = new Date().toISOString();
+      azureSdkComment.commentText = 'Copilot suggestion';
       
       component.codePanelRowData!.comments = [azureSdkComment];
       fixture.detectChanges();
@@ -82,11 +84,11 @@ describe('CommentThreadComponent', () => {
     });
 
     it('should display actual username for regular user comments', () => {
-      const regularComment = {
-        id: '1',
-        createdBy: 'regular-user',
-        commentText: 'Regular comment'
-      } as CommentItemModel;
+      const regularComment = new CommentItemModel();
+      regularComment.id = '1';
+      regularComment.createdBy = 'regular-user';
+      regularComment.createdOn = new Date().toISOString();
+      regularComment.commentText = 'Regular comment';
       
       component.codePanelRowData!.comments = [regularComment];
       fixture.detectChanges();

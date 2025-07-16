@@ -32,6 +32,8 @@ namespace APIViewWeb.HostedServices
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly ILogger<CopilotPollingBackgroundHostedService> _logger;
 
+        private const string SummarySource = "summary";
+
         public CopilotPollingBackgroundHostedService(
             IPollingJobQueueManager pollingJobQueueManager, IConfiguration configuration, IHttpClientFactory httpClientFactory,
             IAPIRevisionsManager apiRevisionsManager, ICosmosCommentsRepository commentsRepository, IHubContext<SignalRHub> signalRHub,
@@ -83,18 +85,20 @@ namespace APIViewWeb.HostedServices
 
                             List<AIReviewComment> validComments = result.Comments?
                                 .Where(comment =>
-                                    jobInfo.CodeLines[comment.LineNo - 1].lineId != null || comment.Source == "summary")
+                                    jobInfo.CodeLines[comment.LineNo - 1].lineId != null || comment.Source == SummarySource)
                                 .ToList() ?? new List<AIReviewComment>();
 
                             // Write back result as comments to APIView
                             foreach (var comment in validComments)
                             {
                                 var codeLine = jobInfo.CodeLines[comment.LineNo - 1];
-                                var commentModel = new CommentItemModel();
-                                commentModel.CreatedOn = DateTime.UtcNow;
-                                commentModel.ReviewId = jobInfo.APIRevision.ReviewId;
-                                commentModel.APIRevisionId = jobInfo.APIRevision.Id;
-                                commentModel.ElementId = codeLine.lineId;
+                                var commentModel = new CommentItemModel
+                                {
+                                    CreatedOn = DateTime.UtcNow,
+                                    ReviewId = jobInfo.APIRevision.ReviewId,
+                                    APIRevisionId = jobInfo.APIRevision.Id,
+                                    ElementId = codeLine.lineId ?? (comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : null),
+                                };
 
                                 var commentText = new StringBuilder();
                                 commentText.AppendLine(comment.Comment);
@@ -126,7 +130,7 @@ namespace APIViewWeb.HostedServices
                             }
                             jobInfo.APIRevision.CopilotReviewInProgress = false;
                             await _apiRevisionsManager.UpdateAPIRevisionAsync(jobInfo.APIRevision);
-                            await _signalRHubContext.Clients.All.SendAsync("ReceiveAIReviewUpdates", new AIReviewJobCompletedModel() 
+                            await _signalRHubContext.Clients.All.SendAsync("ReceiveAIReviewUpdates", new AIReviewJobCompletedModel()
                             {
                                 ReviewId = jobInfo.APIRevision.ReviewId,
                                 APIRevisionId = jobInfo.APIRevision.Id,

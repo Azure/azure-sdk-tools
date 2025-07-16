@@ -44,7 +44,9 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             if (_token == null)
             {
-                throw new Exception("Failed to get DevOps access token. Please make sure you have access to Azure DevOps and you are logged in using az login.");
+                throw new Exception("Failed to get devops access token. " +
+                                    "Ensure you have access to the azure-sdk devops project (http://aka.ms/azsdk/access)" +
+                                    "and are logged in via az cli, az powershell, vs/vscode or interactive browser sign-in.");
             }
 
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));

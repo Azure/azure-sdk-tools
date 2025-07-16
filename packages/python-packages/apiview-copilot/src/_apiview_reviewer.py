@@ -98,7 +98,7 @@ class ApiViewReview:
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
         language_guideline_ids = [x.id for x in self.search.language_guidelines]
-        self.results = ReviewResult(allowed_ids=language_guideline_ids, comments=[])
+        self.results = ReviewResult(allowed_ids=language_guideline_ids)
         self.summary = None
         self.outline = outline
         self.existing_comments = (
@@ -422,9 +422,11 @@ class ApiViewReview:
             # Merge results from all sections
             for section_idx, section_result in section_results.items():
                 if section_result and section_result["comments"]:
+                    comments = section_result["comments"]
                     section = sections_to_process[section_idx][1]
-                    section_result = ReviewResult(allowed_ids=section_contexts[section_idx], **section_result)
-                    section_result._process_comments(comments=section_result.comments, section=section)
+                    section_result = ReviewResult(
+                        comments=comments, allowed_ids=section_contexts[section_idx], section=section
+                    )
                     self.results.comments.extend(section_result.comments)
         except KeyboardInterrupt:
             self._print_message("\n\nCancellation requested! Terminating process...")

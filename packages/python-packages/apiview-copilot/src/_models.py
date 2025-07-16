@@ -217,12 +217,13 @@ class ReviewResult(BaseModel):
     def __init__(
         self,
         *,
+        comments: List[Dict] = None,
         allowed_ids: Optional[List[str]] = None,
-        **data,
+        section: Optional[Section] = None,
     ):
-        comments = data.pop("comments", [])
-        data["comments"] = []
-        super().__init__(**data)
+        comments = comments or []
+        # initialize with no comments since we are going to process them
+        super().__init__(comments=[])
 
         # sanitize allowed_ids to convert the search IDs to the proper format
         allowed_ids = [x.replace("=html=", ".html#") for x in allowed_ids] if allowed_ids else None
@@ -233,9 +234,9 @@ class ReviewResult(BaseModel):
             "_allowed_ids",
             set(allowed_ids) if allowed_ids else set(),
         )
-        self._process_comments(comments)
+        self._process_comments(comments=comments, section=section)
 
-    def _process_comments(self, comments: List[Dict], section: Optional[Section] = None):
+    def _process_comments(self, *, comments: List[Dict], section: Optional[Section] = None):
         """
         Process comment dictionaries, handling various line_no formats:
         - single number (e.g., "10"): Use as is, cast to int

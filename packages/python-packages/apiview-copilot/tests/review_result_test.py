@@ -47,8 +47,7 @@ def test_process_comments_with_validation():
             "source": "test",
         },
     ]
-    rr = ReviewResult(allowed_ids=allowed_ids)
-    rr._process_comments(comments, section=section)
+    rr = ReviewResult(comments=comments, allowed_ids=allowed_ids, section=section)
     # All comments should be present, but only valid rule_ids retained
     expected_comments = [
         {"bad_code": "bad_code1", "rule_ids": ["guideline-1"]},
@@ -100,8 +99,7 @@ def test_find_line_number_correction():
             "source": "test",
         },
     ]
-    rr = ReviewResult(allowed_ids=allowed_ids)
-    rr._process_comments(comments, section=section)
+    rr = ReviewResult(comments=comments, allowed_ids=allowed_ids, section=section)
     expected_comments = [
         {"bad_code": "    y = 2", "line_no": 3},
         {"bad_code": "    return x + y", "line_no": 4},
@@ -165,10 +163,8 @@ def test_blank_review_result_and_extend():
         },
     ]
     rr_blank = ReviewResult()
-    rr1 = ReviewResult(allowed_ids=allowed_ids1)
-    rr1._process_comments(comments1, section=section1)
-    rr2 = ReviewResult(allowed_ids=allowed_ids2)
-    rr2._process_comments(comments2, section=section2)
+    rr1 = ReviewResult(comments=comments1, allowed_ids=allowed_ids1, section=section1)
+    rr2 = ReviewResult(comments=comments2, allowed_ids=allowed_ids2, section=section2)
     rr_blank.comments.extend(rr1.comments)
     rr_blank.comments.extend(rr2.comments)
 

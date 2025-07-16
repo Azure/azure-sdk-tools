@@ -1,0 +1,63 @@
+---
+name: Just Generic APIView Review Comments
+description: A prompt that judged generic API review comments to ensure they are not contradicting internal guidance.
+authors:
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0
+    top_p: 1
+    stop: []
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_tokens: 16384
+    response_format: ${file:filtered_result_schema.json}
+sample:
+  language: Python
+  content: |
+    {
+      "line_no": 4,
+      "bad_code": "def foo(self, a: str, b: str, *, c: ..., d: ..., e: ...) -> Foo:",
+      "suggestion": "def foo(self, a: str, b: str, *, options: FooOptions) -> Foo:",
+      "comment": "You have many optional keyword-only arguments. Consider organizing them into a configuration object.",
+      "source": "generic"
+    }
+  context: |
+    # python_design=html=python-client-options-naming
+
+    DO NOT use an \"options bag\" object to group optional parameters. Instead, pass as individual keyword-only arguments. 
+---
+system:
+  You are a helpful AI that reviews {{language}} API design comments from another AI. Your role is to flag any comment that runs contrary to the guidance provided in context. You will receive:
+  1. A proposed comment to review
+  2. The most relevant guidance based on that comment.
+
+  # OUTPUT REQUIREMENTS
+  
+  - You must output the following schema:
+  ```json
+  {
+    "is_valid": boolean,
+    "rationale": string
+  }
+  ```
+  - `is_valid` should be `true` if the comment is consistent with the context, or `false` if it contradicts the context.
+  - `rationale` should explain why the comment is valid or invalid, referencing relevant parts of the context
+
+user:
+  Please judge the following {{language}} comment:
+  # PROPOSED COMMENT
+  ```json
+  {{content}}
+  ```
+
+  Check if it aligns or contradicts the provided context:
+  # CONTEXT
+  {{context}}

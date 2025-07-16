@@ -432,6 +432,49 @@ class ApiViewReview:
             if is_main_thread:
                 signal.signal(signal.SIGINT, original_handler)
 
+    def _judge_generic_comments(self):
+        """
+        Judge generic comments by running the judge prompt on each comment.
+        """
+        judge_prompt_file = "generic_comment_judge.prompty"
+        judge_prompt_path = get_prompt_path(folder="api_review", filename=judge_prompt_file)
+
+        # Submit each comment to the executor for parallel processing
+        futures = {}
+        idx_to_remove = []
+        for idx, comment in enumerate(self.results.comments):
+            if comment.source != "generic":
+                continue
+            futures[idx] = self.executor.submit(
+                self._run_prompt,
+                judge_prompt_path,
+                inputs={
+                    "content": comment.model_dump(),
+                    "language": get_language_pretty_name(self.language),
+                    "context": self.search.search_all(query=comment.comment),
+                },
+            )
+
+        # Collect results as they complete, with % complete logging
+        total = len(futures)
+        for idx, future in futures.items():
+            try:
+                response = future.result()
+                response_json = json.loads(response)
+                if response_json.get("status") == "KEEP":
+                    continue  # Keep the comment
+                else:
+                    idx_to_remove.append(idx)
+            except Exception as e:
+                self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
+            # Log % complete
+            percent = int(((idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Judging generic comments... {percent}% complete", overwrite=True)
+
+        # Remove judged comments
+        if idx_to_remove:
+            self.results.comments = [c for i, c in enumerate(self.results.comments) if i not in idx_to_remove]
+
     def _deduplicate_comments(self):
         """
         Deduplicate comments based on line number and rule IDs.
@@ -671,6 +714,12 @@ class ApiViewReview:
             self._generate_comments()
             generate_end_time = time()
             self._print_message(f"  Generated comments in {generate_end_time - generate_start_time:.2f} seconds.")
+
+            # Run generic comments through a judge prompt
+            judge_start_time = time()
+            self._judge_generic_comments()
+            judge_end_time = time()
+            self._print_message(f"  Generic comments judged in {judge_end_time - judge_start_time:.2f} seconds.")
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()

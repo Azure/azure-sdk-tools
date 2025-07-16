@@ -67,7 +67,7 @@ describe('CommentThreadComponent', () => {
   });
 
   describe('comment creator name display', () => {
-    it('should display "API review agent" for azure-sdk comments', () => {
+    it('should display "azure-sdk" for azure-sdk comments', () => {
       const azureSdkComment = {
         id: '1',
         createdBy: 'azure-sdk',
@@ -78,7 +78,7 @@ describe('CommentThreadComponent', () => {
       fixture.detectChanges();
       
       const creatorName = fixture.nativeElement.querySelector('.fw-bold');
-      expect(creatorName?.textContent?.trim()).toBe('API review agent');
+      expect(creatorName?.textContent?.trim()).toBe('azure-sdk');
     });
 
     it('should display actual username for regular user comments', () => {

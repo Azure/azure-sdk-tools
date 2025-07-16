@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
                 string loadCommandWin = $"$sw = [Diagnostics.Stopwatch]::StartNew(); while ($sw.Elapsed.TotalSeconds -lt {timeInSeconds}) {{ 1..10000 | ForEach-Object {{ [Math]::Sqrt($_) }} }}";
                 return ("powershell", loadCommandWin);
             }
-            string loadCommandUnix = $"-c 'dd if=/dev/zero of=/dev/null bs=1M count={timeInSeconds * 200} 2>/dev/null'";
+            string loadCommandUnix = $"-c 'dd if=/dev/zero of=/dev/null bs=1M count={timeInSeconds * 100} 2>/dev/null'";
             return ("sh", loadCommandUnix);
         }
 
@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         [Test]
         public async Task RunAsync_Stats()
         {
-            (string filename, string arguments) = GetLoadCommand(2);
+            (string filename, string arguments) = GetSleepCommand(3);
             ProcessResult result = await ProcessUtil.RunAsync(filename, arguments, trackStatistics: true);
             Assert.That(result.AverageCpu, Is.GreaterThan(0));
             Assert.That(result.AverageMemory, Is.GreaterThan(0));

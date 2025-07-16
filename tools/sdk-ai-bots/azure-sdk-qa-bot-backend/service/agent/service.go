@@ -220,8 +220,7 @@ func getImageDataURI(url string) (string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Failed to download attachment, status code: %d", resp.StatusCode)
-		return "", err
+		return "", fmt.Errorf("failed to download attachment, status code: %d", resp.StatusCode)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

@@ -756,15 +756,19 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
     # Get set of ReviewIds that have AI comments
     reviews_with_ai = {comment["ReviewId"] for comment in raw_ai_comments if comment.get("ReviewId")}
 
-    # Calculate adoption rate per language
-    adoption_rates = {}
+    # Calculate adoption rate and counts per language
+    adoption_stats = {}
     for language, review_ids in language_reviews.items():
         total_reviews = len(review_ids)
         reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in reviews_with_ai)
         adoption_rate = reviews_with_ai_comments / total_reviews if total_reviews > 0 else 0.0
-        adoption_rates[language] = f"{adoption_rate:.2f}"
+        adoption_stats[language] = {
+            "adoption_rate": f"{adoption_rate:.2f}",
+            "active_reviews": total_reviews,
+            "active_copilot_reviews": reviews_with_ai_comments,
+        }
 
-    return adoption_rates
+    return adoption_stats
 
 
 def report_metrics(start_date: str, end_date: str):

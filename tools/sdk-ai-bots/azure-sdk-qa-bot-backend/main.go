@@ -1,13 +1,12 @@
 package main
 
 import (
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/handler"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/auth"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,8 +29,10 @@ func main() {
 	// init resources
 	config.InitSecrets()
 	config.InitOpenAIClient()
-	log.SetOutput(os.Stdout)
-	log.SetFlags(log.Ldate)
+
+	// Configure logging for Azure App Service to prevent log splitting
+	utils.ConfigureAzureCompatibleLogging()
+
 	r := setupRouter()
 	r.Run(":8088")
 }

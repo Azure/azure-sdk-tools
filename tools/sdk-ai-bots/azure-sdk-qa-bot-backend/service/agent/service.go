@@ -66,7 +66,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("Failed to marshal request: %v\n", err)
 	} else {
-		log.Printf("Request: %s\n", jsonReq)
+		log.Printf("Request: %s", jsonReq)
 	}
 
 	if err := s.CheckArgs(req); err != nil {

@@ -23,6 +23,13 @@ type Source struct {
 	fileNameLowerCase bool
 }
 
+// Defines the structure for processed markdown content
+type ProcessedMarkdown struct {
+	Title    string
+	Filename string
+	Content  string
+}
+
 func main() {
 	// Process both repositories
 	sources := []Source{
@@ -55,8 +62,28 @@ func main() {
 			folder: "azure_api_guidelines",
 		},
 		{
-			path:   "docs/azure-resource-manager-rpc",
+			path:   "docs/resource-provider-contract",
 			folder: "azure_resource_manager_rpc",
+		},
+		{
+			path:   "docs/azure-sdk-docs-eng.ms",
+			folder: "azure-sdk-docs-eng",
+		},
+		{
+			path:   "docs/azure-sdk",
+			folder: "azure-sdk-guidelines",
+		},
+		{
+			path:				"docs/typespec/packages/http-specs/specs/generated",
+			folder:				"typespec_http_specs",
+			name:				"TypeSpec HTTP Spector Cases",
+			fileNameLowerCase:	true,
+		},
+		{
+			path:   			"docs/typespec-azure/packages/azure-http-specs/specs/generated",
+			folder: 			"typespec_azure_http_specs",
+			name:				"TypeSpec Azure HTTP Spector Cases",
+			fileNameLowerCase:	true,
 		},
 	}
 
@@ -159,6 +186,11 @@ func main() {
 		fmt.Printf("Error removing temp_docs directory: %v\n", err)
 		return
 	}
+	// Remove the docs directory
+	if err := os.RemoveAll("docs"); err != nil {
+		fmt.Printf("Error removing temp_docs directory: %v\n", err)
+		return
+	}
 	fmt.Println("Processing completed successfully.")
 }
 
@@ -177,25 +209,41 @@ func processMarkdownFile(filePath string, source Source, targetDir string) error
 	}
 	// Replace path separators with underscores to create unique filename
 	newFileName := strings.ReplaceAll(relPath, string(os.PathSeparator), "#")
-	targetPath := filepath.Join(targetDir, newFileName)
 
-	// Create target file
+	// Process file content
+	processed, err := convertMarkdown(file)
+	if err != nil {
+		return fmt.Errorf("error processing markdown: %w", err)
+	}
+	if processed.Filename == "" {
+		// If no filename was found in frontmatter, use the newFileName
+		processed.Filename = newFileName
+		if source.folder == "azure-sdk-guidelines" {
+			return nil // Skip processing empty filename case for azure-sdk-guidelines
+		}
+	}
+
+	// Create target file and write processed content
+	targetPath := filepath.Join(targetDir, processed.Filename)
 	outFile, err := os.Create(targetPath)
 	if err != nil {
 		return fmt.Errorf("error creating target file: %w", err)
 	}
 	defer outFile.Close()
 
-	// Process file content
-	return convertMarkdown(file, outFile)
+	if _, err := outFile.WriteString(processed.Content); err != nil {
+		return fmt.Errorf("error writing processed content: %w", err)
+	}
+
+	return nil
 }
 
-func convertMarkdown(r io.Reader, w io.Writer) error {
+func convertMarkdown(r io.Reader) (*ProcessedMarkdown, error) {
 	scanner := bufio.NewScanner(r)
-	writer := bufio.NewWriter(w)
-	defer writer.Flush()
+	var contentBuilder strings.Builder
 
 	var title string
+	var fileName string
 	inFrontmatter := false
 	foundTitle := false
 	firstContentLine := true
@@ -221,32 +269,37 @@ func convertMarkdown(r io.Reader, w io.Writer) error {
 				title = strings.Trim(title, "\"'")
 				foundTitle = true
 			}
+			if strings.HasPrefix(line, "permalink:") {
+				fileName = strings.TrimSpace(strings.TrimPrefix(line, "permalink:"))
+				// Remove possible quotes
+				fileName = strings.Trim(fileName, "\"'")
+			}
 			continue
 		}
 
 		// Add title at the beginning of file content
 		if !inFrontmatter && firstContentLine {
 			if foundTitle {
-				if _, err := writer.WriteString(fmt.Sprintf("# %s\n\n", title)); err != nil {
-					return fmt.Errorf("error writing title: %w", err)
-				}
+				contentBuilder.WriteString(fmt.Sprintf("# %s\n\n", title))
 			}
 			firstContentLine = false
 		}
 
 		// Write non-empty lines
 		if !inFrontmatter {
-			if _, err := writer.WriteString(line + "\n"); err != nil {
-				return fmt.Errorf("error writing line: %w", err)
-			}
+			contentBuilder.WriteString(line + "\n")
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error scanning file: %w", err)
+		return nil, fmt.Errorf("error scanning file: %w", err)
 	}
 
-	return nil
+	return &ProcessedMarkdown{
+		Title:    title,
+		Filename: fileName,
+		Content:  contentBuilder.String(),
+	}, nil
 }
 
 func deleteExpiredBlobs(currentFiles []string) error {

@@ -6,6 +6,7 @@ const (
 	TenantID_AzureSDKQaBot      TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
 	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
 	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
+	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
 )
 
 type Source string
@@ -19,6 +20,9 @@ const (
 	Source_TypeSpecQA              Source = "static_typespec_qa"
 	Source_AzureAPIGuidelines      Source = "azure_api_guidelines"
 	Source_AzureResourceManagerRPC Source = "azure_resource_manager_rpc"
+	Source_TypeSpecMigration       Source = "static_typespec_migration_docs"
+	Source_AzureSDKDocsEng         Source = "azure-sdk-docs-eng"
+	Source_AzureSDKGuidelines      Source = "azure-sdk-guidelines"
 )
 
 type Role string

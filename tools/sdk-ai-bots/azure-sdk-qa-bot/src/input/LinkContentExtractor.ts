@@ -4,29 +4,26 @@ import { URLNotSupportedError } from '../error/inputErrors.js';
 
 export class LinkContentExtractor {
   private readonly githubClient = new GithubClient();
-  private logMeta: object;
 
-  constructor(logMeta: object = {}) {
-    this.logMeta = logMeta;
-    this.githubClient = new GithubClient(undefined, logMeta);
+  constructor() {
+    this.githubClient = new GithubClient(undefined);
   }
 
-  public async extract(urls: URL[]): Promise<RemoteContent[]> {
+  public async extract(urls: URL[], meta: object): Promise<RemoteContent[]> {
     const contents: RemoteContent[] = [];
 
     for (const [index, url] of urls.entries()) {
-      const id = `link-${index}`;
       if (!this.isGithubPullRequestUrl(url)) {
-        contents.push({ text: '', url, id, error: new URLNotSupportedError(url) });
+        contents.push({ text: '', url, error: new URLNotSupportedError(url) });
         continue;
       }
 
       const prUrl = url.href;
       let prDetails: PRDetails;
       try {
-        prDetails = await this.githubClient.getPullRequestDetails(prUrl);
+        prDetails = await this.githubClient.getPullRequestDetails(prUrl, meta);
       } catch (error) {
-        contents.push({ text: '', url, id: `link-${index}`, error: error });
+        contents.push({ text: '', url, error: error });
         continue;
       }
 
@@ -35,7 +32,7 @@ export class LinkContentExtractor {
         const detail = JSON.stringify(prDetails[key], null, 2);
         text += `### ${key}\n${detail}\n`;
       }
-      contents.push({ text, url, id });
+      contents.push({ text, url });
     }
 
     return contents;

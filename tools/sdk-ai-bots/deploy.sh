@@ -5,7 +5,8 @@ set -e
 RESOURCE_GROUP="typespec_helper"
 ACR_NAME="azuresdkqabot"
 APP_NAME="azuresdkbot"
-APP_SLOT_NAME="azuresdkbot-dev"
+APP_SLOT_DEV_NAME="azuresdkbot-dev"
+APP_SLOT_PREVIEW_NAME="preview"
 IMAGE_NAME="azure-sdk-qa-bot-backend"
 
 # Default deployment settings
@@ -21,11 +22,37 @@ while getopts "t:m:" flag; do
   esac
 done
 
+# Login to Azure
+az login
+
+echo "Logging into Azure Container Registry..."
+az acr login --name $ACR_NAME
+
+# Get the login server name for the ACR
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "loginServer" --output tsv)
+echo "ACR Login Server: $ACR_LOGIN_SERVER"
+
+APP_SLOT_NAME=${APP_SLOT_DEV_NAME}
+if [[ "$DEPLOY_MODE" == "preview" ]]; then
+    APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
+    # Update webapp image tag in the deployment slot
+    echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
+    az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+    # Restart the webapp to apply changes
+    az webapp restart  --name azuresdkbot --slot ${APP_SLOT_NAME} --resource-group typespec_helper
+    echo "Preview deployment completed successfully!"
+    exit 0
+fi
+
 # Handle production deployment if requested
 if [[ "$DEPLOY_MODE" == "prod" ]]; then
-    echo "Performing slot swap to deploy to production..."
-    # Swap the deployment slot with production
-    az webapp deployment slot swap --resource-group ${RESOURCE_GROUP} --name ${APP_NAME} --slot ${APP_SLOT_NAME}
+    # Update webapp image tag in the deployment slot
+    echo "Updating image in deployment prod..."
+    az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+    # Restart the webapp to apply changes
+    az webapp restart  --name azuresdkbot --resource-group typespec_helper
     echo "Production deployment completed successfully!"
     exit 0
 fi
@@ -41,7 +68,7 @@ echo "Using image tag: $IMAGE_TAG"
 echo "Deployment mode: $DEPLOY_MODE"
 
 # Validate deployment mode
-if [[ "$DEPLOY_MODE" != "slot" && "$DEPLOY_MODE" != "prod" ]]; then
+if [[ "$DEPLOY_MODE" != "preview" && "$DEPLOY_MODE" != "slot" && "$DEPLOY_MODE" != "prod" ]]; then
     echo "Error: Invalid deployment mode. Use 'slot' or 'prod'"
     echo "Usage: $0 [-t image_tag] [-m deployment_mode]"
     echo "  -t: Image tag (default: latest)"
@@ -54,16 +81,6 @@ if ! command -v az &> /dev/null; then
     echo "Azure CLI is not installed. Please install it first."
     exit 1
 fi
-
-# Login to Azure
-az login
-
-echo "Logging into Azure Container Registry..."
-az acr login --name $ACR_NAME
-
-# Get the login server name for the ACR
-ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "loginServer" --output tsv)
-echo "ACR Login Server: $ACR_LOGIN_SERVER"
 
 # Clean up Docker resources to free up space
 echo "Cleaning up Docker resources to free up disk space..."
@@ -88,5 +105,5 @@ echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
 az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
 
 # Restart the webapp to apply changes
-az webapp restart  --name azuresdkbot --slot azuresdkbot-dev --resource-group typespec_helper
+az webapp restart  --name azuresdkbot --slot ${APP_SLOT_NAME} --resource-group typespec_helper
 echo "Slot deployment completed successfully!"

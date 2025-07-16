@@ -31,19 +31,17 @@ export class GithubClient {
   private readonly authToken?: string;
   private readonly perPage = 100;
   private readonly octokit: Octokit;
-  private logMeta: object;
 
-  constructor(authToken?: string, logMeta: object = {}) {
-    this.logMeta = logMeta;
+  constructor(authToken?: string) {
     this.authToken = authToken;
     this.octokit = new Octokit({ auth: this.authToken });
   }
 
-  public async getPullRequestDetails(prUrl: string): Promise<PRDetails> {
+  public async getPullRequestDetails(prUrl: string, meta: object): Promise<PRDetails> {
     // 1. Parse owner, repo, pull_number from URL
     const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
     if (!match) {
-      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta: this.logMeta });
+      logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta });
       return { comments: { review: [], issue: [] }, reviews: [], basic: { labels: [], title: '' }, diff: '' };
     }
 

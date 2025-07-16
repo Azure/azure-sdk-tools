@@ -26,6 +26,7 @@ setup_typespec_docs() {
         cd typespec
         git config core.sparseCheckout true
         echo "website/src/content/docs/docs" > .git/info/sparse-checkout
+        echo "packages/http-specs/specs" >> .git/info/sparse-checkout
         git checkout main
         cd ../..
     fi
@@ -48,9 +49,16 @@ setup_azure_typespec_docs() {
         cd typespec-azure
         git config core.sparseCheckout true
         echo "website/src/content/docs/docs" > .git/info/sparse-checkout
+        echo "packages/azure-http-specs/specs" >> .git/info/sparse-checkout
         git checkout main
         cd ../..
     fi
+}
+
+preprocess_spector_cases() {
+    echo "Preprocessing Spector cases..."
+    go run preprocess/spector_case_processor.go "$DOCS_ROOT/typespec/packages/http-specs/specs"
+    go run preprocess/spector_case_processor.go "$DOCS_ROOT/typespec-azure/packages/azure-http-specs/specs"
 }
 
 setup_azure_rest_api_wiki() {
@@ -143,7 +151,7 @@ setup_microsoft_api_guidelines() {
 }
 
 setup_azure_resource_manager_rpc() {
-    local repo_dir="$DOCS_ROOT/azure-resource-manager-rpc"
+    local repo_dir="$DOCS_ROOT/resource-provider-contract"
     
     log_message "Setting up Azure Resource Manager RPC docs..."
     
@@ -156,8 +164,8 @@ setup_azure_resource_manager_rpc() {
     else
         mkdir -p "$DOCS_ROOT"
         cd "$DOCS_ROOT"
-        git clone --filter=blob:none --sparse https://github.com/Azure/azure-resource-manager-rpc.git
-        cd azure-resource-manager-rpc
+        git clone --filter=blob:none --sparse git@github-microsoft:cloud-and-ai-microsoft/resource-provider-contract.git
+        cd resource-provider-contract
         git config core.sparseCheckout true
         echo "/v1.0" > .git/info/sparse-checkout
         git checkout master
@@ -165,6 +173,63 @@ setup_azure_resource_manager_rpc() {
     fi
     
     log_message "Azure Resource Manager RPC documentation setup completed."
+}
+
+setup_azure_sdk_eng_docs() {
+    local auth_token="$1"
+    local repo_dir="$DOCS_ROOT/azure-sdk-docs-eng.ms"  # Match actual repo name
+    
+    if [ -z "$auth_token" ]; then
+        log_message "Error: Authentication token required for Azure DevOps access"
+        return 1
+    fi
+
+    log_message "Setting up Azure SDK Engineering docs..."
+    
+    if [ -d "$repo_dir" ]; then
+        log_message "Updating existing Azure SDK Engineering repo..."
+        cd "$repo_dir"
+        git fetch origin main
+        git reset --hard origin/main
+        cd ../..
+    else
+        mkdir -p "$DOCS_ROOT"
+        cd "$DOCS_ROOT"
+        echo "https://$auth_token@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms"
+        git clone --filter=blob:none --sparse https://$auth_token@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms
+        cd azure-sdk-docs-eng.ms
+        git config core.sparseCheckout true
+        echo "/docs" > .git/info/sparse-checkout
+        git checkout main
+        cd ../..
+    fi
+
+    log_message "Azure SDK Engineering documentation setup completed."
+}
+
+setup_azure_sdk_guidelines() {
+    local repo_dir="$DOCS_ROOT/azure-sdk"
+    
+    log_message "Setting up Azure SDK Guidelines docs..."
+    
+    if [ -d "$repo_dir" ]; then
+        log_message "Updating existing Azure SDK Guidelines repo..."
+        cd "$repo_dir"
+        git fetch origin main
+        git reset --hard origin/main
+        cd ../..
+    else
+        mkdir -p "$DOCS_ROOT"
+        cd "$DOCS_ROOT"
+        git clone --filter=blob:none --sparse https://github.com/Azure/azure-sdk.git
+        cd azure-sdk
+        git config core.sparseCheckout true
+        echo "/docs" > .git/info/sparse-checkout
+        git checkout main
+        cd ../..
+    fi
+
+    log_message "Azure SDK Guidelines documentation setup completed."
 }
 
 main() {
@@ -186,6 +251,11 @@ main() {
     setup_azure_python_sdk_docs
     setup_microsoft_api_guidelines
     setup_azure_resource_manager_rpc
+    echo $AZURE_SDK_ENG_DOCS_TOKEN
+    setup_azure_sdk_eng_docs $AZURE_SDK_ENG_DOCS_TOKEN
+    setup_azure_sdk_guidelines
+    
+    preprocess_spector_cases
 
     log_message "Documentation setup completed successfully!"
 
@@ -197,4 +267,4 @@ main() {
     log_message "Knowledge setup completed successfully!"
 }
 
-main
+main "$@"

@@ -12,5 +12,6 @@ var KeywordReplaceMap = map[string]string{
 }
 
 const RerankScoreLowRelevanceThreshold = 1.5
+const RerankScoreMediumRelevanceThreshold = 2
 const RerankScoreRelevanceThreshold = 3
 const RerankScoreHighRelevanceThreshold = 4

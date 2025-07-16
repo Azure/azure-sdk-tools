@@ -17,13 +17,12 @@ func CompletionHandler(c *gin.Context) {
 		})
 		return
 	}
-
 	service, err := agent.NewCompletionService()
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	resp, err := service.ChatCompletion(&req)
+	resp, err := service.ChatCompletion(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -32,7 +31,6 @@ func CompletionHandler(c *gin.Context) {
 	if err != nil {
 		log.Printf("Failed to marshal response: %v\n", err)
 	} else {
-		log.Printf("Request: %+v\n", req)
 		log.Printf("Response: %s\n", jsonResp)
 	}
 	c.JSON(200, &resp)

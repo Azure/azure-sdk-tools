@@ -30,7 +30,7 @@ describe('ConversationHandler E2E', () => {
     testActivityId = `test-message-${Date.now()}`;
 
     // Create handler instance and initialize
-    handler = new ConversationHandler({ test: 'e2e' });
+    handler = new ConversationHandler();
     await handler.initialize();
   }, 30000); // Set 30 seconds timeout as initialization may take time
 
@@ -53,7 +53,7 @@ describe('ConversationHandler E2E', () => {
       timestamp: new Date(),
     };
 
-    const savedMessage = await handler.saveMessage(testMessage);
+    const savedMessage = await handler.saveMessage(testMessage, {});
 
     // Verify the message was saved
     expect(savedMessage).toBeDefined();
@@ -77,10 +77,10 @@ describe('ConversationHandler E2E', () => {
     };
 
     // Save the second message
-    await handler.saveMessage(secondMessage);
+    await handler.saveMessage(secondMessage, {});
 
     // Retrieve all messages in the conversation
-    const messages = await handler.getConversationMessages(testConversationId);
+    const messages = await handler.getConversationMessages(testConversationId, {});
 
     // Verify the conversation has at least two messages
     expect(messages.length).toBeGreaterThanOrEqual(2);

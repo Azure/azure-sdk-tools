@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"strings"
 
@@ -31,6 +32,22 @@ func NewStorageService() (*StorageService, error) {
 		return nil, fmt.Errorf("failed to create blob client: %v", err)
 	}
 	return &StorageService{credential: credential, blobClient: blobClient}, nil
+}
+
+func (s *StorageService) DownloadBlob(container, path string) ([]byte, error) {
+	// Download the blob
+	resp, err := s.blobClient.DownloadStream(context.Background(), container, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download blob: %v", err)
+	}
+	// Read the blob content
+	body := resp.Body
+	defer body.Close()
+	content, err := io.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blob content: %v", err)
+	}
+	return content, nil
 }
 
 func (s *StorageService) PutBlob(container, path string, content []byte) error {

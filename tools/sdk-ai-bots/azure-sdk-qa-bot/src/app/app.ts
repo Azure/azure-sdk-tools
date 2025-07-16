@@ -4,15 +4,19 @@ import { fileURLToPath } from 'url';
 
 // See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from '@microsoft/teams-ai';
-import { FakeModel } from '../models/FakeModel.js';
+import { RAGModel } from '../models/RAGModel.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
-import { FeedbackReaction, RAGOptions, sendFeedback } from '../backend/rag.js';
+import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
 import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
+import { ConversationHandler } from '../input/ConversationHandler.js';
+
+const conversationHandler = new ConversationHandler();
+await conversationHandler.initialize();
 
 // Create AI components
-const model = new FakeModel();
+const model = new RAGModel(conversationHandler);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,17 +54,41 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   const ragOptions: RAGOptions = {
     endpoint: config.ragEndpoint,
     apiKey: config.ragApiKey,
-    tenantId: ragTanentId,
   };
   const action = context.activity.value?.action;
-  // const conversation = context.activity.value?.conversation;
+  const feedbackComment = context.activity.value?.feedbackComment;
+  const meta = getTurnContextLogMeta(context);
+  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, { meta });
+
+  const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, meta);
+  const messages: Message[] = [];
+  conversations.map((msg) => {
+    const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
+    if (question) messages.push(question);
+    const answer: Message =
+      msg.reply && msg.reply.has_result ? { role: 'assistant', content: msg.reply.answer } : undefined;
+    if (answer) messages.push(answer);
+  });
+
   switch (action) {
     case 'feedback-like':
-      await sendFeedback(['test good'], FeedbackReaction.good, ragOptions);
+      const goodFeedback: FeedbackRequestPayload = {
+        tenant_id: ragTanentId,
+        messages,
+        reaction: 'good',
+        comment: feedbackComment,
+      };
+      await sendFeedback(goodFeedback, ragOptions, meta);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
       break;
     case 'feedback-dislike':
-      await sendFeedback(['test bad'], FeedbackReaction.bad, ragOptions);
+      const badFeedback: FeedbackRequestPayload = {
+        tenant_id: ragTanentId,
+        messages,
+        reaction: 'bad',
+        comment: feedbackComment,
+      };
+      await sendFeedback(badFeedback, ragOptions, meta);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');
       break;
     default:

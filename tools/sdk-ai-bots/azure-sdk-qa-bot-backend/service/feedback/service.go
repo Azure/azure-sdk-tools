@@ -3,6 +3,7 @@ package feedback
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -20,10 +21,14 @@ func NewFeedbackService() *FeedbackService {
 func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	timestamp := time.Now()
 	filename := fmt.Sprintf("feedback_%s.csv", timestamp.Format("2006-01-02"))
-
+	header := "Timestamp,TenantID,Messages,Reaction,Comment\n"
+	// Read file from storage
+	storageService, err := storage.NewStorageService()
+	if err != nil {
+		return fmt.Errorf("failed to create storage service: %w", err)
+	}
 	// Create or open CSV file
 	var f *os.File
-	var err error
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		// Create new file with headers
@@ -31,20 +36,28 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		if err != nil {
 			return err
 		}
-		// Write headers
-		_, err = f.WriteString("Timestamp,TenantID,Messages,Reaction\n")
-		if err != nil {
-			f.Close()
-			return err
-		}
 	} else {
-		// Open existing file in append mode
-		f, err = os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
+		// Open existing file in write mode and truncate it to overwrite content
+		f, err = os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
 			return err
 		}
 	}
-	defer f.Close()
+	// Sync the feedback file from storage
+	content, err := storageService.DownloadBlob(config.STORAGE_FEEDBACK_CONTAINER, filename)
+	if err != nil {
+		log.Printf("Failed to download feedback file: %v", err)
+	}
+	if len(content) > 0 {
+		_, err = f.Write(content)
+	} else {
+		// Write header if file is new
+		_, err = f.WriteString(header)
+	}
+	if err != nil {
+		f.Close()
+		log.Printf("Failed to write feedback record: %v", err)
+	}
 	messageStr, _ := json.Marshal(feedback.Messages)
 	// Format and write the new record
 	record := fmt.Sprintf("%s,%s,%s,%s,%s\n",
@@ -54,11 +67,14 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		feedback.Reaction,
 		feedback.Comment,
 	)
-
 	_, err = f.WriteString(record)
+	if err != nil {
+		f.Close()
+		log.Printf("Failed to write feedback record: %v", err)
+	}
+	f.Close()
 
 	go updateFeedbackFile(filename)
-
 	return err
 }
 

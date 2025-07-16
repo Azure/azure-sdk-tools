@@ -32,7 +32,7 @@ func TestQueryIndex(t *testing.T) {
 	if err != nil {
 		t.Errorf("QueryIndex() got an error: %v", err)
 	}
-	print(resp)
+	t.Logf("QueryIndex response: %+v", resp)
 }
 
 func TestGetFullContext(t *testing.T) {
@@ -44,5 +44,15 @@ func TestGetFullContext(t *testing.T) {
 		t.Errorf("QueryIndex() got an error: %v", err)
 	}
 	v, _ := json.Marshal(resp)
-	print(string(v))
+	t.Logf("GetFullContext response: %s", v)
+}
+
+func TestAgenticSearch(t *testing.T) {
+	config.InitSecrets()
+	searchClient := search.NewSearchClient()
+	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil)
+	if err != nil {
+		t.Errorf("AgenticSearch() got an error: %v", err)
+	}
+	t.Logf("AgenticSearch response: %+v", resp)
 }

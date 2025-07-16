@@ -4,8 +4,67 @@ import (
 	"strings"
 )
 
+type AgenticSearchRequest struct {
+	Messages          []KnowledgeAgentMessage     `json:"messages"`
+	TargetIndexParams []KnowledgeAgentIndexParams `json:"targetIndexParams,omitempty"`
+}
+
+type KnowledgeAgentIndexParams struct {
+	FilterAddOn                string  `json:"filterAddOn"`
+	IncludeReferenceSourceData *bool   `json:"includeReferenceSourceData,omitempty"`
+	IndexName                  string  `json:"indexName"`
+	MaxDocsForReranker         *int    `json:"maxDocsForReranker,omitempty"`
+	RerankerThreshold          float64 `json:"rerankerThreshold"`
+}
+
+type AgenticSearchResponse struct {
+	Activity   []KnowledgeAgentActivityRecord `json:"activity"`
+	References []KnowledgeAgentReference      `json:"references"`
+	Response   []KnowledgeAgentMessage        `json:"response"`
+}
+
+type KnowledgeAgentActivityRecord struct {
+	ElapsedMs    int64                             `json:"elapsedMs"`
+	ID           int64                             `json:"id"`
+	InputTokens  int64                             `json:"inputTokens"`
+	OutputTokens int64                             `json:"outputTokens"`
+	Type         string                            `json:"type"`
+	Count        int                               `json:"count,omitempty"`
+	Query        KnowledgeAgentActivityRecordQuery `json:"query,omitempty"`
+	QueryTime    string                            `json:"queryTime,omitempty"`
+	TargetIndex  string                            `json:"targetIndex,omitempty"`
+}
+
+type KnowledgeAgentActivityRecordQuery struct {
+	Filter string `json:"filter,omitempty"`
+	Search string `json:"search,omitempty"`
+}
+
+type KnowledgeAgentReference struct {
+	ActivitySource int         `json:"activitySource"`
+	DocKey         string      `json:"docKey"`
+	ID             string      `json:"id"`
+	SourceData     interface{} `json:"sourceData"`
+	Type           string      `json:"type"`
+}
+
+type KnowledgeAgentMessage struct {
+	Content []KnowledgeAgentMessageContent `json:"content"`
+	Role    Role                           `json:"role"`
+}
+
+type KnowledgeAgentMessageContent struct {
+	Type  string                             `json:"type"`
+	Text  string                             `json:"text,omitempty"`
+	Image *KnowledgeAgentMessageImageContent `json:"image,omitempty"`
+}
+
+type KnowledgeAgentMessageImageContent struct {
+	URL string `json:"url"`
+}
+
 type QueryIndexRequest struct {
-	Count                 bool          `json:"count,omitempty";`
+	Count                 bool          `json:"count,omitempty"`
 	Search                string        `json:"search,omitempty"`
 	Select                string        `json:"select,omitempty"`
 	Top                   int           `json:"top,omitempty"`
@@ -70,7 +129,16 @@ func GetIndexLink(chunk Index) string {
 	case Source_AzureAPIGuidelines:
 		return "https://github.com/microsoft/api-guidelines/blob/vNext/" + path
 	case Source_AzureResourceManagerRPC:
-		return "https://github.com/Azure/azure-resource-manager-rpc/blob/master/" + path
+		return "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/" + path
+	case Source_AzureSDKDocsEng:
+		path = strings.TrimPrefix(path, "docs/")
+		path = TrimFileFormat(path)
+		if path == "index" {
+			return "https://eng.ms/docs/products/azure-developer-experience"
+		}
+		return "https://eng.ms/docs/products/azure-developer-experience/" + path
+	case Source_AzureSDKGuidelines:
+		return "https://azure.github.io/azure-sdk/" + path
 	default:
 		return ""
 	}
@@ -81,4 +149,11 @@ func TrimFileFormat(path string) string {
 	path = strings.TrimSuffix(path, ".mdx")
 	path = strings.TrimPrefix(path, "docs/")
 	return path
+}
+
+type AgentSearchReference struct {
+	RefID   string `json:"ref_id"`
+	Title   string `json:"title"`
+	Terms   string `json:"terms"`
+	Content string `json:"content"`
 }

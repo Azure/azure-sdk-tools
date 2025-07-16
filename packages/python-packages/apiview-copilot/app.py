@@ -13,9 +13,9 @@ import prompty.azure
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 
-from src._apiview_reviewer import ApiViewReview, _PROMPTS_FOLDER
+from src._apiview_reviewer import ApiViewReview
 from src._diff import create_diff_with_line_numbers
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 from src.agent._api import router as agent_router
 from src._database_manager import get_database_manager
@@ -228,7 +228,7 @@ async def summarize_api(request: SummarizeRequest):
 
         pretty_language = get_language_pretty_name(request.language)
 
-        prompt_path = os.path.join(_PROMPTS_FOLDER, summary_prompt_file)
+        prompt_path = get_prompt_path(folder="summarize", filename=summary_prompt_file)
         inputs = {"language": pretty_language, "content": summary_content}
 
         # Run prompty in a thread pool to avoid blocking

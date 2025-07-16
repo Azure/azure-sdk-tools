@@ -6,10 +6,10 @@ import uuid
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from src._apiview_reviewer import _PROMPTS_FOLDER
 from src._database_manager import get_database_manager
 from src._search_manager import SearchManager
 from src._models import Memory, Example, Guideline
+from src._utils import get_prompt_path
 
 
 def handle_mention_request(*, comments: list[str], language: str, package_name: str, code: str) -> str:
@@ -48,10 +48,7 @@ def _parse_conversation_action(
     *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
 ):
     prompty_file = "parse_conversation_action.prompty"
-    prompt_path = os.path.join(_PROMPTS_FOLDER, prompty_file)
-    if not os.path.exists(prompt_path):
-        print(f"Prompt file {prompt_path} does not exist.")
-        return
+    prompt_path = get_prompt_path(folder="mention", filename=prompty_file)
     inputs = {
         "language": language,
         "code": code,
@@ -71,7 +68,7 @@ def _parse_conversation_plan(
     *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
 ):
     prompty_file = "parse_conversation_to_memory.prompty"
-    prompt_path = os.path.join(_PROMPTS_FOLDER, prompty_file)
+    prompt_path = get_prompt_path(folder="mention", filename=prompty_file)
     if not os.path.exists(prompt_path):
         print(f"Prompt file {prompt_path} does not exist.")
         return
@@ -159,7 +156,7 @@ def _summarize_results(results: dict):
     Summarizes the results of the plan execution.
     """
     prompt_file = "summarize_parse_conversation_to_memory.prompty"
-    prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
+    prompt_path = get_prompt_path(folder="summarize", filename=prompt_file)
     if not os.path.exists(prompt_path):
         print(f"Prompt file {prompt_path} does not exist.")
         return "No prompt file found."

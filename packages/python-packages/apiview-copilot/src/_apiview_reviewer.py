@@ -19,12 +19,10 @@ from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
-from ._utils import get_language_pretty_name
+from ._utils import get_language_pretty_name, get_prompt_path
 
-
-# Set up paths
+# Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
 # Configure logger to write to project root error.log and info.log
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
@@ -313,7 +311,7 @@ class ApiViewReview:
         # 1. Summary task
         all_futures[summary_tag] = self.executor.submit(
             self._execute_prompt_task,
-            prompt_path=os.path.join(_PROMPTS_FOLDER, summary_prompt_file),
+            prompt_path=get_prompt_path(folder="summarize", filename=summary_prompt_file),
             inputs={
                 "language": get_language_pretty_name(self.language),
                 "content": summary_content,
@@ -333,7 +331,7 @@ class ApiViewReview:
             guideline_key = f"{guideline_tag}_{section_idx}"
             all_futures[guideline_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=guideline_prompt_file),
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "context": guideline_context_string,
@@ -349,7 +347,7 @@ class ApiViewReview:
             generic_key = f"{generic_tag}_{section_idx}"
             all_futures[generic_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=generic_prompt_file),
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "custom_rules": generic_metadata["custom_rules"],
@@ -366,7 +364,7 @@ class ApiViewReview:
             context_string = context.to_markdown() if context else ""
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, context_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=context_prompt_file),
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "context": context_string,
@@ -452,7 +450,7 @@ class ApiViewReview:
                 continue
             batches[line_id] = matches
 
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "merge_comments.prompty")
+        prompt_path = get_prompt_path(folder="api_review", filename="merge_comments.prompty")
 
         self._print_message("Deduplicating comments...")
 
@@ -498,7 +496,7 @@ class ApiViewReview:
         Run the filter prompt on the comments, processing each comment in parallel.
         """
         filter_prompt_file = "comment_filter.prompty"
-        filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
+        filter_prompt_path = get_prompt_path(folder="api_review", filename=filter_prompt_file)
 
         # Submit each comment to the executor for parallel processing
         futures = {}
@@ -572,7 +570,7 @@ class ApiViewReview:
                 "existing": [e.model_dump() for e in existing_comments],
                 "language": get_language_pretty_name(self.language),
             }
-            prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
+            prompt_path = get_prompt_path(folder="api_review", filename="existing_comment_filter.prompty")
             tasks.append((idx, comment, prompt_path, inputs))
             indices.append(idx)
 

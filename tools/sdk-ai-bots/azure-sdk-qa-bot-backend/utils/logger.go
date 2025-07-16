@@ -56,7 +56,4 @@ func ConfigureAzureCompatibleLogging() {
 
 	// Set the log output to use our custom writer
 	log.SetOutput(singleLineWriter)
-
-	// Use standard flags but they won't cause issues now since newlines are handled
-	log.SetFlags(log.LstdFlags)
 }

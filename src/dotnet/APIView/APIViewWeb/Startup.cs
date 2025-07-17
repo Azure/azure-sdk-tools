@@ -43,6 +43,7 @@ namespace APIViewWeb
     public class Startup
     {
         public static string RequireOrganizationPolicy = "RequireOrganization";
+        public static string RequireOrganizationOrManagedIdentityPolicy = "RequireOrganizationOrManagedIdentity";
 
         public static string VersionHash { get; set; }
 
@@ -152,6 +153,26 @@ namespace APIViewWeb
                     options.LoginPath = "/Login";
                     options.AccessDeniedPath = "/Unauthorized";
                 })
+                .AddJwtBearer("Bearer", options =>
+                {
+                    var tenantId = Configuration["AzureAd:TenantId"];
+                    var clientId = Configuration["AzureAd:ClientId"];
+
+                    if (!string.IsNullOrEmpty(tenantId) && !string.IsNullOrEmpty(clientId))
+                    {
+                        options.Authority = $"https://login.microsoftonline.com/{tenantId}";
+                        options.Audience = clientId;
+                        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ClockSkew = TimeSpan.FromMinutes(5),
+                            ValidAudiences = [clientId, $"api://{clientId}"]
+                        };
+                    }
+                })
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration["Github:ClientId"];
@@ -238,6 +259,7 @@ namespace APIViewWeb
                 });
             });
             services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationOrManagedIdentityPolicy>();
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
@@ -259,7 +281,7 @@ namespace APIViewWeb
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddHostedService<CopilotPollingBackgroundHostedService>();
-            
+
             services.AddSingleton<Services.IBackgroundTaskQueue, Services.BackgroundTaskQueue>();
             services.AddHostedService<QueuedHostedService>();
 

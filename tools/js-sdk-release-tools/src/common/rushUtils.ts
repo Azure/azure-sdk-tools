@@ -55,8 +55,14 @@ async function addApiViewInfo(
     packageName: string,
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
-    // Extract the actual package name part from scoped package name (e.g., @azure/arm-oracledatabase -> arm-oracledatabase)
-    const actualPackageName = packageName.startsWith('@azure/') ? packageName.substring('@azure/'.length) : packageName;
+    // Extract the actual package name part from scoped package name 
+    // (e.g., @azure/arm-oracledatabase -> arm-oracledatabase, @azure-rest/ai-language-conversations -> ai-language-conversations)
+    let actualPackageName = packageName;
+    if (packageName.startsWith('@azure/')) {
+        actualPackageName = packageName.substring('@azure/'.length);
+    } else if (packageName.startsWith('@azure-rest/')) {
+        actualPackageName = packageName.substring('@azure-rest/'.length);
+    }
     const expectedApiViewFileName = `${actualPackageName}-node.api.json`;
     const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**', expectedApiViewFileName);
     const apiViews = await glob(apiViewPathPattern);

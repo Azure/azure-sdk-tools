@@ -381,7 +381,11 @@ class StubGenerator:
             os.rmdir(internal_folder)
 
     def _get_package_name_from_metadata_files(self, path):
-        """Extract package name from pyproject.toml or setup.py"""
+        """Extract the package name from metadata files in the given directory.
+
+        This function first attempts to extract the package name from a `pyproject.toml` file.
+        If that fails, it falls back to parsing a `setup.py` file for a `PACKAGE_NAME` variable.
+        """
         pkg_name = None
 
         # try pyproject.toml
@@ -406,8 +410,8 @@ class StubGenerator:
                     match = re.search(r'PACKAGE_NAME\s*=\s*["\']([^"\']+)["\']', content)
                     if match:
                         pkg_name = match.group(1)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logging.warning(f"Failed to read setup.py or parse PACKAGE_NAME: {exc}")
 
         return pkg_name
 

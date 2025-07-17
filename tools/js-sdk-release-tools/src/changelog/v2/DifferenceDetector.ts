@@ -10,6 +10,7 @@ import {
   patchEnum,
   isPropertyMethod,
   patchRoutes,
+  DiffReasons,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
@@ -72,14 +73,66 @@ export class DifferenceDetector {
   }
 
   private postprocess() {
-    this.result?.interfaces.forEach((v, k) => {
-      if (k.endsWith('NextOptionalParams')) this.result?.interfaces.delete(k);
+    this.result?.functions.forEach((v, k) => {
+      if (this.shouldIgnoreFunctionBreakingChange(v, k)) this.result?.functions.delete(k);      
     });
+
+    this.result?.typeAliases.forEach((v, k) => {
+      if(this.shouldIgnoreTypeAliasBreakingChange(v, k)) this.result?.typeAliases.delete(k);
+    });
+
+    this.result?.interfaces.forEach((v, k) => {
+      if(this.shouldIgnoreInterfaceBreakingChange(v, k)) this.result?.interfaces.delete(k);
+    });
+
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
     // use Routes specific detection
     this.result?.interfaces.delete('Routes');
     const routesDiffPairs = patchRoutes(this.context!);
     this.result?.interfaces.set('Routes', routesDiffPairs);
+  }
+
+  private shouldIgnoreInterfaceBreakingChange(v: DiffPair[], k: string): boolean {    
+    if(k.endsWith('NextOptionalParams')) {
+      // Ignore NextOptionalParams as they are not breaking changes
+      return true;
+    }
+
+    if (k.endsWith('Result') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
+      return true;
+    }
+
+    if (k.endsWith('Headers') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
+      return true;
+    }
+
+    // Special case: if interface is ErrorAdditionalInfo and any pair has reasons == 2, ignore it
+    if (k === 'ErrorAdditionalInfo' && v.some(pair => pair.reasons === DiffReasons.TypeChanged)) {
+      return true;
+    }    
+
+    // Check if any pair has a target name that should be ignored
+    const ignoreTargets = [
+      "resumeFrom",
+      "$host",
+      "endpoint"
+    ];
+    return v.some(pair => pair.target?.name && ignoreTargets.includes(pair.target.name));
+  }
+
+  private shouldIgnoreTypeAliasBreakingChange(v: DiffPair[], k: string): boolean {
+    if (k.endsWith('Response') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
+      return true;
+    }    
+    return false;
+  }
+
+  private shouldIgnoreFunctionBreakingChange(v: DiffPair[], k: string): boolean {
+    if (k === 'getContinuationToken' && v.some(pair => pair.reasons === DiffReasons.Removed)) {
+      return true;
+    }
+    
+    return false;
   }
 
   private convertHighLevelClientToModularClientCode(code: string): string {

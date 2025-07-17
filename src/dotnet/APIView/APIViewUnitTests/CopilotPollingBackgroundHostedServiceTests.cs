@@ -27,7 +27,7 @@ using Xunit;
 
 namespace APIViewUnitTests
 {
-    public class CopilotPollingBackgroundHostedServiceTests : IDisposable
+    public class CopilotPollingBackgroundHostedServiceTests : IAsyncLifetime
     {
         private readonly Mock<IPollingJobQueueManager> _mockPollingJobQueueManager;
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
@@ -72,10 +72,29 @@ namespace APIViewUnitTests
                 _mockLogger.Object);
         }
 
-        public void Dispose()
+        public async Task InitializeAsync()
         {
-            _service?.Dispose();
-            _httpClient?.Dispose();
+            ResetAllMocks();
+            _service = CreateService();
+            await Task.CompletedTask;
+        }
+
+        public async Task DisposeAsync()
+        {
+            if (_service != null)
+            {
+                try
+                {
+                    await _service.StopAsync(CancellationToken.None);
+                }
+                catch
+                {
+                    // Swallow exceptions during disposal to prevent masking test failures
+                }
+                _service.Dispose();
+                _service = null;
+            }
+            await Task.CompletedTask;
         }
 
         private void ResetAllMocks()
@@ -95,9 +114,6 @@ namespace APIViewUnitTests
         public async Task ExecuteAsync_DifferentScenarios_HandlesCorrectly(
             string responseStatus, bool shouldProcessComments, bool throwHttpException)
         {
-            ResetAllMocks();
-            _service = CreateService();
-            
             AIReviewJobInfoModel jobInfo = CreateTestJobInfo();
             var pollResponse = new AIReviewJobPolledResponseModel
             {
@@ -134,9 +150,6 @@ namespace APIViewUnitTests
         [InlineData("any", 2, "line-2")]
         public async Task ExecuteAsync_CommentTypes_FormatsCorrectly(string commentType, int lineNo, string expectedElementId)
         {
-            ResetAllMocks();
-            _service = CreateService();
-            
             List<(string lineText, string lineId)> codeLinesList = new()
             {
                 (string.Empty, null),
@@ -155,9 +168,6 @@ namespace APIViewUnitTests
         [Fact]
         public async Task ExecuteAsync_CommentTypes_NotSummary_NotElementId_Skipped()
         {
-            ResetAllMocks();
-            _service = CreateService();
-            
             List<(string lineText, string lineId)> codeLinesList =
             [
                 (string.Empty, null),
@@ -199,10 +209,8 @@ namespace APIViewUnitTests
         public async Task ExecuteAsync_GuidelinesHandling_FormatsCorrectly(bool shouldIncludeGuidelines,
             string[] ruleIds)
         {
-            ResetAllMocks();
-            _service = CreateService();
-            
             AIReviewComment comment = CreateAIReviewComment(ruleIds.ToList());
+            
             CommentItemModel capturedComment = await ProcessCommentAndGetText(comment);
             string commentText = capturedComment.CommentText;
 
@@ -310,14 +318,6 @@ namespace APIViewUnitTests
             await revisionUpdateCompleted.Task.WaitAsync(TimeSpan.FromSeconds(5));
             
             cancellationTokenSource.Cancel();
-            try
-            {
-                await _service.StopAsync(CancellationToken.None);
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected when service is cancelled
-            }
         }
 
         private void SetupSignalRMock()
@@ -402,13 +402,6 @@ namespace APIViewUnitTests
             await commentCaptured.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             cancellationTokenSource.Cancel();
-            try
-            {
-                await _service.StopAsync(CancellationToken.None);
-            }
-            catch (OperationCanceledException)
-            {
-            }
 
             Assert.NotNull(capturedComment);
             return capturedComment;

@@ -1,4 +1,4 @@
-export function createFeedbackCard(conversationId: string, activityId: string) {
+export function createFeedbackCard() {
   const feedbackCard = {
     type: 'AdaptiveCard',
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
@@ -17,8 +17,6 @@ export function createFeedbackCard(conversationId: string, activityId: string) {
         title: '👍Like',
         data: {
           action: 'feedback-like',
-          conversationId,
-          activityId,
         },
       },
       {
@@ -26,8 +24,6 @@ export function createFeedbackCard(conversationId: string, activityId: string) {
         title: '👎Dislike',
         data: {
           action: 'feedback-dislike',
-          conversationId,
-          activityId,
         },
       },
     ],

@@ -41,7 +41,6 @@ const testReply: RAGReply = {
 
 const testContactCard: ContactCard = {
   version: '1.0',
-  resourceId: 'test-resource-123',
 };
 
 const testMessage: ConversationMessage = {

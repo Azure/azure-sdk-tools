@@ -13,7 +13,6 @@ export interface Prompt {
 
 export interface ContactCard {
   version: string;
-  resourceId: string;
 }
 
 /**

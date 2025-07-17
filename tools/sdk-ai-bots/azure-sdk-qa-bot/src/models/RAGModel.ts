@@ -3,7 +3,6 @@ import { TurnContext } from 'botbuilder';
 import {
   AdditionalInfo,
   CompletionRequestPayload,
-  CompletionResponsePayload,
   getRAGReply,
   Message,
   RAGOptions,
@@ -15,7 +14,7 @@ import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGenera
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { getRagTanent as getRagTetant } from '../config/utils.js';
-import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
+import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
@@ -61,8 +60,7 @@ export class RAGModel implements PromptCompletionModel {
     }
     // TODO: try merge cancelTimer and stop into one method
     await thinkingHandler.safeCancelTimer();
-    await this.saveCurrentConversationMessage(context, currentPrompt, ragReply, meta);
-    await thinkingHandler.stop(ragReply);
+    await thinkingHandler.stop(ragReply, currentPrompt);
 
     return { status: 'success' };
   }
@@ -113,30 +111,5 @@ export class RAGModel implements PromptCompletionModel {
     logger.info(`Add conversation messages to prompt`, { meta, messages: messages });
     const fullPrompt = await this.promptGenerator.generateFullPrompt(prompt, messages, meta);
     return fullPrompt;
-  }
-
-  private async saveCurrentConversationMessage(
-    context: TurnContext,
-    prompt: Prompt,
-    replyPayload: CompletionResponsePayload,
-    meta: object
-  ) {
-    const reply: RAGReply = {
-      answer: replyPayload.answer,
-      has_result: replyPayload.has_result,
-      references: replyPayload.references.map((ref) => ({ ...ref })) || [],
-    };
-    const currentMessage: ConversationMessage = {
-      conversationId: context.activity.conversation.id,
-      activityId: context.activity.id,
-      prompt,
-      reply,
-      timestamp: prompt.timestamp,
-    };
-    try {
-      await this.conversationHandler.saveMessage(currentMessage, meta);
-    } catch (error) {
-      logger.error('Failed to save current prompt', { error, meta });
-    }
   }
 }

@@ -75,10 +75,10 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 1. Build messages from the openai request
-	llmMessages, _ := s.buildMessages(req)
+	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
 	// 2. Build query for search
-	query := s.buildQueryForSearch(req, llmMessages)
+	query := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Agentic search
 	agenticSearchChunks, err := s.agenticSearch(ctx, req.Message.Content, req)
@@ -186,17 +186,17 @@ func processName(name *string) *string {
 	return to.Ptr(processedName)
 }
 
-func getImageDataURI(url string) string {
+func getImageDataURI(url string) (string, error) {
 	if !strings.HasPrefix(url, "https://smba.trafficmanager.net") {
 		log.Printf("URL does not start with expected prefix: %s", url)
-		return url
+		return url, nil
 	}
 	cred, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
 		ID: azidentity.ClientID(config.GetBotClientID()),
 	})
 	if err != nil {
 		log.Printf("Failed to create managed identity credential: %v", err)
-		return url
+		return "", err
 	}
 	token, err := cred.GetToken(context.Background(), policy.TokenRequestOptions{
 		TenantID: config.GetBotTenantID(),
@@ -204,44 +204,43 @@ func getImageDataURI(url string) string {
 	})
 	if err != nil {
 		log.Printf("Failed to get token: %v", err)
-		return url
+		return "", err
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("Failed to create request: %v", err)
-		return url
+		return "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+token.Token)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Failed to download attachment: %v", err)
-		return url
+		return "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Failed to download attachment, status code: %d", resp.StatusCode)
-		return url
+		return "", fmt.Errorf("failed to download attachment, status code: %d", resp.StatusCode)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Failed to read response body: %v", err)
-		return url
+		return "", err
 	}
 	base64Encode := base64.StdEncoding.EncodeToString(body)
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "image/png" {
-		return fmt.Sprintf("data:image/png;base64,%s", base64Encode)
+		return fmt.Sprintf("data:image/png;base64,%s", base64Encode), nil
 	} else if contentType == "image/jpeg" {
-		return fmt.Sprintf("data:image/jpeg;base64,%s", base64Encode)
+		return fmt.Sprintf("data:image/jpeg;base64,%s", base64Encode), nil
 	} else if contentType == "image/gif" {
-		return fmt.Sprintf("data:image/gif;base64,%s", base64Encode)
+		return fmt.Sprintf("data:image/gif;base64,%s", base64Encode), nil
 	} else {
-		return fmt.Sprintf("data:image/png;base64,%s", base64Encode)
+		return fmt.Sprintf("data:image/png;base64,%s", base64Encode), nil
 	}
 }
 
-func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []model.KnowledgeAgentMessage) {
+func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []azopenai.ChatRequestMessageClassification) {
 	// avoid token limit error, we need to limit the number of messages in the history
 	if len(req.Message.Content) > config.AOAI_CHAT_MAX_TOKENS {
 		log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
@@ -251,7 +250,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
 	llmMessages := []azopenai.ChatRequestMessageClassification{}
-	aiSearchMessages := []model.KnowledgeAgentMessage{}
+	reasoningModelMessages := []azopenai.ChatRequestMessageClassification{}
 
 	// process additional info(image, link)
 	if len(req.AdditionalInfos) > 0 {
@@ -261,20 +260,17 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
 					info.Content = info.Content[:config.AOAI_CHAT_MAX_TOKENS]
 				}
-				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
+				msg := &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
-				})
-				aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
-					Content: []model.KnowledgeAgentMessageContent{
-						{
-							Type: "text",
-							Text: fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content),
-						},
-					},
-					Role: model.Role_User,
-				})
+				}
+				llmMessages = append(llmMessages, msg)
+				reasoningModelMessages = append(reasoningModelMessages, msg)
 			} else if info.Type == model.AdditionalInfoType_Image {
-				link := getImageDataURI(info.Link)
+				link, err := getImageDataURI(info.Link)
+				if err != nil {
+					log.Printf("Failed to get image data URI: %v", err)
+					continue
+				}
 				log.Println("Image link:", link)
 				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
 					Content: azopenai.NewChatRequestUserMessageContent(
@@ -287,43 +283,22 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 						},
 					),
 				})
-				aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
-					Content: []model.KnowledgeAgentMessageContent{
-						{
-							Type: "image",
-							Text: link,
-						},
-					},
-					Role: model.Role_User,
-				})
 			}
 		}
 	}
 
 	// process history messages
 	for _, message := range req.History {
-		var role model.Role
 		if message.Role == model.Role_Assistant {
-			llmMessages = append(llmMessages, &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)})
-			role = model.Role_Assistant
-
+			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)}
+			llmMessages = append(llmMessages, msg)
+			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
 		if message.Role == model.Role_User {
-			role = model.Role_User
-			llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
-				Content: azopenai.NewChatRequestUserMessageContent(message.Content),
-				Name:    processName(message.Name),
-			})
+			msg := &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(message.Content), Name: processName(message.Name)}
+			llmMessages = append(llmMessages, msg)
+			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
-		aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
-			Content: []model.KnowledgeAgentMessageContent{
-				{
-					Type: "text",
-					Text: message.Content,
-				},
-			},
-			Role: role,
-		})
 	}
 
 	// process current user message
@@ -338,20 +313,13 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		}
 		currentMessage = preProcessedMessage
 	}
-	llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
+	msg := &azopenai.ChatRequestUserMessage{
 		Content: azopenai.NewChatRequestUserMessageContent(currentMessage),
 		Name:    processName(req.Message.Name),
-	})
-	aiSearchMessages = append(aiSearchMessages, model.KnowledgeAgentMessage{
-		Content: []model.KnowledgeAgentMessageContent{
-			{
-				Type: "text",
-				Text: currentMessage,
-			},
-		},
-		Role: model.Role_User,
-	})
-	return llmMessages, aiSearchMessages
+	}
+	llmMessages = append(llmMessages, msg)
+	reasoningModelMessages = append(reasoningModelMessages, msg)
+	return llmMessages, reasoningModelMessages
 }
 
 func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) string {

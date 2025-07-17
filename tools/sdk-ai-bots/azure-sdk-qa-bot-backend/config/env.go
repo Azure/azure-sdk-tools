@@ -35,7 +35,7 @@ func InitBotEnv() error {
 }
 
 func GetBotClientID() string {
-	if BotEnv == nil {
+	if BotEnv == nil || len(BotEnv.BOT_CLIENT_ID) == 0 {
 		if err := InitBotEnv(); err != nil {
 			log.Println(err)
 			return ""
@@ -45,7 +45,7 @@ func GetBotClientID() string {
 }
 
 func GetBotTenantID() string {
-	if BotEnv == nil {
+	if BotEnv == nil || len(BotEnv.BOT_TENANT_ID) == 0 {
 		if err := InitBotEnv(); err != nil {
 			log.Println(err)
 			return ""

@@ -24,7 +24,7 @@ def search_knowledge_base(
         with open(path, "r") as f:
             query = f.read()
     results = search.search_all(query=query)
-    context = search.build_context(results)
+    context = search.build_context(results.results)
     return context
 
 

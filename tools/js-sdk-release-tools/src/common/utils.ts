@@ -112,20 +112,35 @@ export function getNpmPackageName(packageRoot: string): string {
 }
 
 export function getApiReviewPath(packageRoot: string): string {
+    const NODE_API_MD_SUFFIX = '-node.api.md';
+    const API_REVIEW_SUFFIX = '.api.md';
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
+    let apiReviewPath: string;
     switch (sdkType) {
         case SDKType.ModularClient:
             const modularPackageName = npmPackageName.substring('@azure/'.length);
-            const apiViewFileName = `${modularPackageName}.api.md`;
-            return path.join(packageRoot, 'review', apiViewFileName);
+            const apiViewFileName = `${modularPackageName}`;
+            apiReviewPath = path.join(packageRoot, 'review', apiViewFileName);
+            break;
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
             const packageName = npmPackageName.split('/')[1];
-            return path.join(packageRoot, 'review', `${packageName}.api.md`);
+            apiReviewPath = path.join(packageRoot, 'review', `${packageName}`);
     }
+
+    // First check if node.api.md exists
+    const nodePath = `${apiReviewPath}${NODE_API_MD_SUFFIX}`;
+    if (fs.existsSync(nodePath)) {
+        logger.info(`Using node API review file: ${nodePath}`);
+        return nodePath;
+    }
+
+    // If node.api.md doesn't exist, return the standard .api.md path
+    const standardPath = `${apiReviewPath}${API_REVIEW_SUFFIX}`;
+    return standardPath;
 }
 
 export function getTsSourceFile(filePath: string): SourceFile | undefined {
@@ -351,6 +366,12 @@ export async function cleanUpDirectory(
     directory: string, 
     entriesToPreserve: string[] = []
 ): Promise<void> {      
+    // Check if directory exists first
+    if (!fs.existsSync(directory)) {
+        logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
+        return;
+    }
+    
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
@@ -385,9 +406,22 @@ export async function cleanUpPackageDirectory(
     packageDirectory: string,
     runMode: RunMode,
 ): Promise<void> {
-    // Preserve test directory and assets.json file in non-SpecPullRequest mode
-    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest;
+    // Preserve test directory and assets.json file only in Release and Local modes
+    // In SpecPullRequest and Batch modes, remove everything
+    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
     const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
 
     await cleanUpDirectory(packageDirectory, entriesToPreserve);
+}
+
+export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
+    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const emitterOptions = tspConfig.options?.[emitterName];
+    
+    // Get from package-details.name which is the actual NPM package name
+    if (emitterOptions?.['package-details']?.name) {
+        return emitterOptions['package-details'].name;
+    }
+    
+    return undefined;
 }

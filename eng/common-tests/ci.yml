@@ -29,4 +29,5 @@ extends:
     TargetDirectory: eng/common-tests
     TargetTags: UnitTest,IntegrationTest
     PreTestSteps:
+      - template: /eng/pipelines/templates/steps/install-dotnet.yml
       - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml

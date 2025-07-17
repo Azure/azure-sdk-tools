@@ -14,6 +14,8 @@ namespace APIViewWeb.Helpers
 {
     public class CodeFileHelpers
     {
+        public static readonly string FirstRowElementId = "FIRST_ROW";
+
         public static async Task<CodePanelData> GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
         {
             var codePanelData = new CodePanelData();
@@ -308,9 +310,9 @@ namespace APIViewWeb.Helpers
             }
             else
             {
-                if (!codePanelRawData.IsFirstCodeLineAdded && codePanelRawData.Comments.Any(c => c.ElementId == "FIRST_ROW"))
+                if (!codePanelRawData.IsFirstCodeLineAdded && codePanelRawData.Comments.Any(c => c.ElementId == FirstRowElementId))
                 {
-                    commentsForRow.Add(codePanelRawData.Comments.First(c => c.ElementId == "FIRST_ROW"));
+                    commentsForRow.Add(codePanelRawData.Comments.First(c => c.ElementId == FirstRowElementId));
                 }
                 codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text hide";
             }
@@ -344,7 +346,7 @@ namespace APIViewWeb.Helpers
                 rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
                 if (!codePanelRawData.IsFirstCodeLineAdded && String.IsNullOrEmpty(rowData.NodeId))
                 {
-                    rowData.NodeId = "FIRST_ROW"; // Used to ensure the first codeline has an id regardless of what is occurring in the parser
+                    rowData.NodeId = FirstRowElementId; // Used to ensure the first codeline has an id regardless of what is occurring in the parser
                     codePanelRawData.IsFirstCodeLineAdded = true;
                 }
                 codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);

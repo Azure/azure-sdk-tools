@@ -29,6 +29,17 @@ public class GitConnection
 
         private static string GetGitHubAuthToken()
         {
+            var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+            {
+                return token;
+            }
+            token = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+            {
+                return token;
+            }
+            // If the GITHUB_TOKEN environment variable is not set, try to get the token using the 'gh' CLI command
             bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             string command = isWindows ? "cmd.exe" : "gh";
             string args = isWindows ? "/C gh auth token" : "auth token";
@@ -63,10 +74,11 @@ public class GitConnection
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName);
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body);
+        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -117,7 +129,7 @@ public class GitConnection
             return comparison?.MergeBaseCommit != null;
         }
 
-        public async Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body)
+        public async Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
             var responseList = new List<string>();
             // Check if a pull request already exists for the branch
@@ -163,7 +175,8 @@ public class GitConnection
                 responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
                 var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
                 {
-                    Body = body
+                    Body = body,
+                    Draft = draft
                 };
 
                 createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
@@ -172,7 +185,16 @@ public class GitConnection
                     responseList.Add($"Failed to create pull request for changes in {headBranch}.");
                     return responseList;
                 }
-                responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
+
+                if (draft)
+                {
+                    responseList.Add($"Pull request created successfully as draft PR. Pull request URL: {createdPullRequest.HtmlUrl}");
+                    responseList.Add("Once you have successfully generated the SDK transition the PR to review ready.");
+                }
+                else
+                {
+                    responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
+                }
             }
             catch (Exception ex)
             {
@@ -262,6 +284,32 @@ public class GitConnection
         public async Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)
         {
             return await gitHubClient.Issue.Get(repoOwner, repoName, issueNumber);
+        }
+
+        /// <summary>
+        /// Helper method to get contents from a GitHub repository path.
+        /// </summary>
+        /// <param name="owner">Repository owner</param>
+        /// <param name="repoName">Repository name</param>
+        /// <param name="path">Directory or file path</param>
+        /// <param name="expectSingleFile">If true, returns only the first file content; if false, returns all contents</param>
+        /// <returns>List of repository contents or null if path doesn't exist</returns>
+        public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
+        {
+            try
+            {
+                return await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
+            }
+            catch (NotFoundException)
+            {
+                logger.LogInformation($"Path {path} not found in {owner}/{repoName}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
+                throw;
+            }
         }
     }
 }

@@ -164,12 +164,12 @@ namespace APIViewWeb.Managers
             if (pullRequestModel.Commits.Any(c => c == commitSha))
             {
                 // PR commit is already processed. No need to reprocess it again.
-                responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed.");
+                responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed. Return with no further actions.");
                 return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices) : "";
             }
 
             pullRequestModel.Commits.Add(commitSha);
-            responseContent.ActionsTaken.Add($"Pull Request data for PR updated with new CommitSha '{commitSha}'");
+            responseContent.ActionsTaken.Add($"Pull Request data for PR updated with new CommitSha '{commitSha}' in memory - not yet saved to database.");
 
             try
             {
@@ -195,13 +195,16 @@ namespace APIViewWeb.Managers
                     });
                 }
 
-                List<PullRequestModel> pullRequests = new List<PullRequestModel>();
                 //Add pull request info only if API revision is created
                 if (!string.IsNullOrEmpty(pullRequestModel.APIRevisionId))
                 {
                     // Update pull request metadata in DB
                     await UpsertPullRequestAsync(pullRequestModel);
-                    pullRequests = (await GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
+                    responseContent.ActionsTaken.Add($"Pull Request data changes saved to database.");
+                }
+                else
+                {
+                    responseContent.ActionsTaken.Add("Pull Request data has no APIRevisionId, changes not saved to database.");
                 }
             }
             finally
@@ -236,7 +239,7 @@ namespace APIViewWeb.Managers
                 var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(pullRequestModel.APIRevisionId);
                 if (apiRevision != null && !apiRevision.Approvers.Any())
                 {
-                    await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(userName: "azure-sdk", apiRevision: apiRevision, notes: "Deleted by PullRequest CleanUp Automation");
+                    await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(userName: ApiViewConstants.AzureSdkBotName, apiRevision: apiRevision, notes: "Deleted by PullRequest CleanUp Automation");
                 }
             }
 
@@ -256,6 +259,7 @@ namespace APIViewWeb.Managers
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
             }
             pullRequestModel.ReviewId = review.Id;
+            responseContent.ActionsTaken.Add($"Pull Request data ReviewId set to '{pullRequestModel.ReviewId}' in memory - not yet saved to database.");
 
             // Base line file is sent in request only for swagger and TypeSpec
             if (baselineCodeFile == null)
@@ -296,6 +300,7 @@ namespace APIViewWeb.Managers
                 responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
 
                 prModel.APIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data APIRevisionId set to '{prModel.APIRevisionId}' in memory - not yet saved to database.");
             } 
         }
 
@@ -387,8 +392,11 @@ namespace APIViewWeb.Managers
                     userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                     label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
                     originalName: originalFileName);
-                prModel.BaselineAPIRevisionId = newAPIRevision.Id;
                 responseContent.ActionsTaken.Add($"Created new Baseline APIRevisions with Id '{newAPIRevision.Id}'.");
+
+                prModel.BaselineAPIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data BaselineAPIRevisionId set to '{prModel.BaselineAPIRevisionId}' in memory - not yet saved to database.");
+                
             }
 
             // Create modified revision
@@ -398,8 +406,11 @@ namespace APIViewWeb.Managers
                     userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                     label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
                     originalName: originalFileName);
-                prModel.APIRevisionId = newAPIRevision.Id;
                 responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
+
+                prModel.APIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data APIRevisionId set to '{prModel.APIRevisionId}' in memory - not yet saved to database.");
+
             }
 
             //Calculate the diff if it's for swagger as an async task.

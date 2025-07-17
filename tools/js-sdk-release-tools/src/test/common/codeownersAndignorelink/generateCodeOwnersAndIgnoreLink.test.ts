@@ -106,6 +106,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         // Call the function
         await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
+            mockPackageName
         );
 
         // Check that fs.writeFileSync was not called
@@ -114,9 +115,11 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
 
     test("should update both CODEOWNERS and ignore-links.txt for first beta release", async () => {
         // Setup mock for tryGetNpmView to return undefined (package doesn't exist)
-        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined); // Call the function
+        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined);
+        // Call the function
         await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
+            mockPackageName
         );
 
         // Check that fs.writeFileSync was called twice (for CODEOWNERS and ignore-links.txt)
@@ -181,6 +184,7 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         }); // Call the function
         await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
+            mockPackageName
         );
 
         // Check that fs.writeFileSync was called only once (for ignore-links.txt)
@@ -211,11 +215,13 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             }
             if (path === mockIgnoreLinksPath) {
                 return contentWithExistingLink;
-            }
-            return "";
-        }); // Call the function
+            } return "";
+        });
+
+        // Call the function
         await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
             mockPackageFolderPath,
+            mockPackageName
         );
 
         // Check that fs.writeFileSync was called only once (for CODEOWNERS)

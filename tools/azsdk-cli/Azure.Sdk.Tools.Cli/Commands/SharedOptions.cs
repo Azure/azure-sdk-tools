@@ -4,6 +4,7 @@ using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
+using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
 using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
 using Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool;
 
@@ -11,13 +12,17 @@ namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
-        public static readonly List<Type> ToolsList = new List<Type>(){
-            typeof(AnalyzePipelinesTool),
-            typeof(PipelineDetailsTool),
+        public static readonly List<Type> ToolsList = [
             typeof(CleanupTool),
+            typeof(DownloadPromptsTool),
             typeof(LogAnalysisTool),
+            typeof(FileValidationTool),
             typeof(HostServerTool),
+            typeof(PipelineAnalysisTool),
+            typeof(PipelineTestsTool),
             typeof(ReleasePlanTool),
+            typeof(ReleaseReadinessTool),
+            typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(SpecPullRequestTools),
             typeof(SpecWorkflowTool),
@@ -25,11 +30,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReleaseReadinessTool),
             typeof(GitHubLabelsTool),
             typeof(TestTools),
+            typeof(TestAnalysisTool),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),
             #endif
-        };
+        ];
 
         public static Option<string> ToolOption = new("--tools")
         {

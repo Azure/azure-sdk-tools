@@ -1,5 +1,5 @@
 ---
-name: Just Generic APIView Review Comments
+name: Judge Generic APIView Review Comments
 description: A prompt that judged generic API review comments to ensure they are not contradicting internal guidance.
 authors:
   - tjprescott

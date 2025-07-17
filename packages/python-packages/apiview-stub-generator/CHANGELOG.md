@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.19 (2025-07-17)
+## Version 0.3.19 (2025-07-18)
 Fixed an issue with APIView not running in src directories where the package name differs from the directory name.
 
 ## Version 0.3.18 (2025-04-02)

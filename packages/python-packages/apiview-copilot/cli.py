@@ -601,14 +601,14 @@ def _get_apiview_cosmos_client():
         sys.exit(1)
 
 
-def _get_apiview_revisions_client():
+def _get_apiview_reviews_client():
     """
-    Returns the Cosmos DB container client for APIView revisions.
+    Returns the Cosmos DB container client for APIView reviews.
     """
     try:
         cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
         cosmos_db = "APIViewV2"
-        container_name = "APIRevisions"
+        container_name = "Reviews"
         if not cosmos_acc:
             raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
         cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
@@ -706,61 +706,96 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
     and calculates what percentage of those ReviewIds have AI comments.
     Returns a dictionary with languages as keys and adoption percentages as values.
     """
-    # Get revisions container client
-    revisions_client = _get_apiview_revisions_client()
-
     # Get comments container client
     comments_client = _get_apiview_cosmos_client()
-
-    # Query revisions created in the date range to get active ReviewIds
-    revisions_query = """
-    SELECT c.ReviewId, c.Language FROM c 
-    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
-    """
+    reviews_client = _get_apiview_reviews_client()
 
     iso_start = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
     iso_end = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59.999999Z")
 
-    raw_revisions = list(
-        revisions_client.query_items(
-            query=revisions_query,
-            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-            enable_cross_partition_query=True,
-        )
-    )
-
-    # Group active ReviewIds by language (a ReviewId may appear multiple times if it has multiple revisions)
-    language_reviews = {}
-    for revision in raw_revisions:
-        review_id = revision.get("ReviewId")
-        language = revision.get("Language", "").lower()
-        if language and review_id:
-            if language not in language_reviews:
-                language_reviews[language] = set()
-            language_reviews[language].add(review_id)
-
-    # Query AI comments to get distinct ReviewIds that have AI comments
-    ai_comments_query = """
-    SELECT DISTINCT c.ReviewId FROM c 
-    WHERE c.CreatedBy = "azure-sdk" AND c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+    # Query all comments in the date range to get active ReviewIds
+    comments_query = """
+    SELECT c.ReviewId, c.CreatedBy FROM c 
+    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
     """
 
-    raw_ai_comments = list(
+    raw_comments = list(
         comments_client.query_items(
-            query=ai_comments_query,
+            query=comments_query,
             parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
             enable_cross_partition_query=True,
         )
     )
 
-    # Get set of ReviewIds that have AI comments
-    reviews_with_ai = {comment["ReviewId"] for comment in raw_ai_comments if comment.get("ReviewId")}
+    # Build set of active ReviewIds from comments
+    active_reviews = set()
+    for comment in raw_comments:
+        review_id = comment.get("ReviewId")
+        if review_id:
+            active_reviews.add(review_id)
+
+    # Find ReviewIds with AI comments
+    ai_reviews = {
+        comment["ReviewId"]
+        for comment in raw_comments
+        if comment.get("CreatedBy") == "azure-sdk" and comment.get("ReviewId")
+    }
+
+    # If no comments, try to get all reviews in the date range
+    if not active_reviews:
+        # Query all reviews in the date range
+        reviews_query = """
+        SELECT r.id, r.Language FROM r WHERE r.CreatedOn >= @start_date AND r.CreatedOn <= @end_date
+        """
+        batch_reviews = list(
+            reviews_client.query_items(
+                query=reviews_query,
+                parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+                enable_cross_partition_query=True,
+            )
+        )
+        review_to_language = {}
+        language_reviews = {}
+        for review in batch_reviews:
+            review_id = review.get("id")
+            language = review.get("Language", "").lower()
+            if language and review_id:
+                review_to_language[review_id] = language
+                if language not in language_reviews:
+                    language_reviews[language] = set()
+                language_reviews[language].add(review_id)
+    else:
+        # Query all reviews for active ReviewIds and get their languages
+        review_to_language = {}
+        language_reviews = {}
+        batch_size = 100
+        review_ids = list(active_reviews)
+        for i in range(0, len(review_ids), batch_size):
+            batch_ids = review_ids[i : i + batch_size]
+            reviews_query = """
+            SELECT r.id, r.Language FROM r WHERE ARRAY_CONTAINS(@review_ids, r.id)
+            """
+            batch_reviews = list(
+                reviews_client.query_items(
+                    query=reviews_query,
+                    parameters=[{"name": "@review_ids", "value": batch_ids}],
+                    enable_cross_partition_query=True,
+                )
+            )
+            for review in batch_reviews:
+                review_id = review.get("id")
+                language = review.get("Language", "").lower()
+                if language and review_id:
+                    review_to_language[review_id] = language
+                    if language not in language_reviews:
+                        language_reviews[language] = set()
+                    language_reviews[language].add(review_id)
 
     # Calculate adoption rate and counts per language
     adoption_stats = {}
     for language, review_ids in language_reviews.items():
         total_reviews = len(review_ids)
-        reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in reviews_with_ai)
+        reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in ai_reviews)
         adoption_rate = reviews_with_ai_comments / total_reviews if total_reviews > 0 else 0.0
         adoption_stats[language] = {
             "adoption_rate": f"{adoption_rate:.2f}",

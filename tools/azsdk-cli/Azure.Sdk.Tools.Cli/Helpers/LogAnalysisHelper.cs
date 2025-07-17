@@ -69,7 +69,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         // Permission/access errors
         "access denied", "permission denied", "unauthorized", "forbidden", "token expired",
         // File/IO errors
-        "file not found", "directory not found", "no such file", "permission denied", "disk full", "out of space",
+        "file not found", "directory not found", "no such file", "permission denied", "disk full", "out of space", "because it does not exist",
         // Memory/resource errors
         "out of memory", "memory leak", "resource exhausted", "quota exceeded", "too many", "limit exceeded", "overflow", "underflow",
         // Process/service errors

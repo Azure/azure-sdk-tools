@@ -19,12 +19,10 @@ from ._models import ReviewResult, Comment, ExistingComment
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._retry import retry_with_backoff
-from ._utils import get_language_pretty_name
+from ._utils import get_language_pretty_name, get_prompt_path
 
-
-# Set up paths
+# Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
 # Configure logger to write to project root error.log and info.log
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
@@ -97,8 +95,8 @@ class ApiViewReview:
             self.max_chunk_size = 500
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
-        language_guideline_ids = [x.id for x in self.search.language_guidelines]
-        self.results = ReviewResult(allowed_ids=language_guideline_ids, comments=[])
+        self.allowed_ids = [x.id for x in self.search.language_guidelines]
+        self.results = ReviewResult()
         self.summary = None
         self.outline = outline
         self.existing_comments = (
@@ -313,7 +311,7 @@ class ApiViewReview:
         # 1. Summary task
         all_futures[summary_tag] = self.executor.submit(
             self._execute_prompt_task,
-            prompt_path=os.path.join(_PROMPTS_FOLDER, summary_prompt_file),
+            prompt_path=get_prompt_path(folder="summarize", filename=summary_prompt_file),
             inputs={
                 "language": get_language_pretty_name(self.language),
                 "content": summary_content,
@@ -333,7 +331,7 @@ class ApiViewReview:
             guideline_key = f"{guideline_tag}_{section_idx}"
             all_futures[guideline_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, guideline_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=guideline_prompt_file),
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "context": guideline_context_string,
@@ -349,7 +347,7 @@ class ApiViewReview:
             generic_key = f"{generic_tag}_{section_idx}"
             all_futures[generic_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, generic_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=generic_prompt_file),
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "custom_rules": generic_metadata["custom_rules"],
@@ -363,11 +361,10 @@ class ApiViewReview:
             # Context prompt
             context_key = f"{context_tag}_{section_idx}"
             context = self._retrieve_context(str(section))
-            section_contexts[section_idx] = [x.id for x in context] if context else []
             context_string = context.to_markdown() if context else ""
             all_futures[context_key] = self.executor.submit(
                 self._execute_prompt_task,
-                prompt_path=os.path.join(_PROMPTS_FOLDER, context_prompt_file),
+                prompt_path=get_prompt_path(folder="api_review", filename=context_prompt_file),
                 inputs={
                     "language": get_language_pretty_name(self.language),
                     "context": context_string,
@@ -422,9 +419,10 @@ class ApiViewReview:
             # Merge results from all sections
             for section_idx, section_result in section_results.items():
                 if section_result and section_result["comments"]:
+                    comments = section_result["comments"]
                     section = sections_to_process[section_idx][1]
-                    section_result = ReviewResult(allowed_ids=section_contexts[section_idx], **section_result)
-                    self.results.merge(section_result, section=section)
+                    section_result = ReviewResult(comments=comments, allowed_ids=self.allowed_ids, section=section)
+                    self.results.comments.extend(section_result.comments)
         except KeyboardInterrupt:
             self._print_message("\n\nCancellation requested! Terminating process...")
             cancel_event.set()
@@ -452,7 +450,7 @@ class ApiViewReview:
                 continue
             batches[line_id] = matches
 
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "merge_comments.prompty")
+        prompt_path = get_prompt_path(folder="api_review", filename="merge_comments.prompty")
 
         self._print_message("Deduplicating comments...")
 
@@ -498,7 +496,7 @@ class ApiViewReview:
         Run the filter prompt on the comments, processing each comment in parallel.
         """
         filter_prompt_file = "comment_filter.prompty"
-        filter_prompt_path = os.path.join(_PROMPTS_FOLDER, filter_prompt_file)
+        filter_prompt_path = get_prompt_path(folder="api_review", filename=filter_prompt_file)
 
         # Submit each comment to the executor for parallel processing
         futures = {}
@@ -572,7 +570,7 @@ class ApiViewReview:
                 "existing": [e.model_dump() for e in existing_comments],
                 "language": get_language_pretty_name(self.language),
             }
-            prompt_path = os.path.join(_PROMPTS_FOLDER, "existing_comment_filter.prompty")
+            prompt_path = get_prompt_path(folder="api_review", filename="existing_comment_filter.prompty")
             tasks.append((idx, comment, prompt_path, inputs))
             indices.append(idx)
 
@@ -724,7 +722,6 @@ class ApiViewReview:
         Returns an error string if authentication fails, otherwise None.
         """
         try:
-            # Canary: minimal search query
             self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             try:
                 # Use a real search result, even if empty
@@ -758,7 +755,7 @@ class ApiViewReview:
             guidelines = self.search.language_guidelines
             if not guidelines:
                 return None
-            context = self.search.build_context(self.search.language_guidelines)
+            context = self.search.build_context(self.search.language_guidelines.results)
             return context
         except Exception as e:
             logger.error(f"Error retrieving guidelines: {type(e).__name__}: {e}", exc_info=True)

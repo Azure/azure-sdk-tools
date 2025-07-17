@@ -13,7 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Services
          /// todo: make this use reflection to populate itself with all of our services and helpers
         public static void RegisterCommonServices(IServiceCollection services)
         {
-            // Service classes
             services.AddSingleton<IAzureService, AzureService>();
             services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddSingleton<IDevOpsService, DevOpsService>();

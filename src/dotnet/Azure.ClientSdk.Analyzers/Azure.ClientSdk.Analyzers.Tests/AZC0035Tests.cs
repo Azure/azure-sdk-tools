@@ -530,5 +530,50 @@ namespace Azure.Test
 
             await Verifier.CreateAnalyzer(code).RunAsync();
         }
+
+
+        [Fact]
+        public async Task AZC0035_OnlyAnalyzesSourceDefinedClientTypes()
+        {
+            const string code = @"
+using Azure;
+using System.Threading.Tasks;
+
+namespace Azure.Test
+{
+    // Source-defined model that should be flagged
+    public class {|AZC0035:MyCustomModel|}
+    {
+        private MyCustomModel() { }
+        public string Value { get; }
+    }
+
+    // Source-defined client - should be analyzed
+    public class MyClient
+    {
+        public virtual Response<MyCustomModel> GetModel()
+        {
+            return null;
+        }
+    }
+
+    // Source-defined model factory - should be analyzed
+    public static class MyModelFactory
+    {
+        // This factory method doesn't cover MyCustomModel, so MyCustomModel should be flagged
+        public static SomeOtherModel SomeOtherModel()
+        {
+            return null;
+        }
+    }
+
+    public class SomeOtherModel
+    {
+        public string Name { get; set; }
+    }
+}";
+
+            await Verifier.CreateAnalyzer(code).RunAsync();
+        }
     }
 }

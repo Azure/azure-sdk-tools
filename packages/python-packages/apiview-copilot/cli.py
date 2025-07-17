@@ -18,11 +18,13 @@ from typing import Optional
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 
-from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src.agent._agent import get_main_agent, invoke_agent
 from src._credential import get_credential
 from src._search_manager import SearchManager
 from src._database_manager import get_database_manager, ContainerNames
+from src._mention import handle_mention_request
 from src._models import APIViewComment
+from src._utils import get_language_pretty_name
 
 colorama.init(autoreset=True)
 
@@ -529,8 +531,12 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         return
     comments = data.get("comments", [])
     language = data.get("language", None)
-    package_name = data.get("packageName", None)
+    package_name = data.get("package_name", None)
     code = data.get("code", None)
+    if language not in SUPPORTED_LANGUAGES:
+        print(f"Unsupported language `{language}`")
+        return
+    pretty_language = get_language_pretty_name(language)
 
     if remote:
         APP_NAME = os.getenv("AZURE_APP_NAME")
@@ -539,32 +545,24 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
             return
         api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/mention"
         try:
-            response = requests.post(
+            resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
             )
-            response_data = response.json()
-            if response.status_code == 200:
-                print(f"{BOLD_BLUE}Agent response:{RESET}\n{response_data.get('response')}")
+            data = resp.json()
+            if resp.status_code == 200:
+                print(f"{BOLD_BLUE}Agent response:{RESET}\n{data.get('response', '')}\n")
             else:
-                print(f"Error: {response.status_code} - {response_data.get('response')}")
+                print(f"Error: {resp.status_code} - {data}")
         except Exception as e:
             print(f"Error: {e}")
     else:
-
-        async def run_local_mention():
-            try:
-                async with get_mention_agent(
-                    comments=comments, language=language, package_name=package_name, code=code, auth=""
-                ) as agent:
-                    response, _, _ = await invoke_agent(
-                        agent=agent, user_input="Please handle this @mention.", thread_id=None, messages=None
-                    )
-                    print(f"{BOLD_BLUE}Agent response:{RESET}\n{response}")
-            except Exception as e:
-                print(f"Error handling agent mention: {e}")
-
-        asyncio.run(run_local_mention())
+        return handle_mention_request(
+            comments=comments,
+            language=pretty_language,
+            package_name=package_name,
+            code=code,
+        )
 
 
 def db_get(container_name: str, id: str):

@@ -7,10 +7,7 @@ from semantic_kernel.functions import kernel_function
 from urllib.parse import urlparse
 
 from src._diff import create_diff_with_line_numbers
-
-# Set up paths
-_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
+from src._utils import get_prompt_path
 
 
 class UtilityPlugin:
@@ -40,7 +37,7 @@ class UtilityPlugin:
             api (str): The API to summarize.
             language (str): The programming language of the API.
         """
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_api.prompty")
+        prompt_path = get_prompt_path(folder="summarize", filename="summarize_api.prompty")
         if not os.path.exists(prompt_path):
             raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         response = prompty.execute(prompt_path, inputs={"content": api, "language": language}, configuration={})
@@ -55,7 +52,7 @@ class UtilityPlugin:
             base (str): The base (old) API to compare against.
             language (str): The programming language of the APIs.
         """
-        prompt_path = os.path.join(_PROMPTS_FOLDER, "summarize_diff.prompty")
+        prompt_path = get_prompt_path(folder="summarize", filename="summarize_diff.prompty")
         if not os.path.exists(prompt_path):
             raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         api_diff = create_diff_with_line_numbers(old=base, new=target)

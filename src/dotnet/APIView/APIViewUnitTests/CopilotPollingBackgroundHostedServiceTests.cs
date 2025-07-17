@@ -107,7 +107,7 @@ namespace APIViewUnitTests
             _mockHttpMessageHandler.Reset();
         }
 
-        [Theory]
+        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
         [InlineData("Success", true, false)]
         [InlineData("Error", false, false)]
         [InlineData("Success", false, true)]

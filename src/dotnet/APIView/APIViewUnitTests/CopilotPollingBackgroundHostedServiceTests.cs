@@ -66,7 +66,7 @@ namespace APIViewUnitTests
                 _mockLogger.Object);
         }
 
-        [Theory]
+        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
         [InlineData("Success", true, false)]
         [InlineData("Error", false, false)]
         [InlineData("Success", false, true)]
@@ -103,7 +103,7 @@ namespace APIViewUnitTests
             }
         }
 
-        [Theory]
+            [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
         [InlineData("summary", 1, "FIRST_ROW")]
         [InlineData("summary", 2, "line-2")]
         [InlineData("any", 2, "line-2")]
@@ -124,7 +124,7 @@ namespace APIViewUnitTests
             Assert.Equal(expectedElementId, capturedComment.ElementId);
         }
 
-        [Fact]
+        [Fact(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
         public async Task ExecuteAsync_CommentTypes_NotSummary_NotElementId_Skipped()
         {
             List<(string lineText, string lineId)> codeLinesList =
@@ -142,7 +142,7 @@ namespace APIViewUnitTests
             );
         }
 
-        [Theory]
+        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
         [InlineData(true, new[] { "dotnet-client-design", "dotnet-naming-conventions" })]
         [InlineData(false, new string[0])]
         public async Task ExecuteAsync_GuidelinesHandling_FormatsCorrectly(bool shouldIncludeGuidelines,

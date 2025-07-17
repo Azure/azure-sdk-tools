@@ -46,13 +46,6 @@ helps[
 """
 
 helps[
-    "review job"
-] = """
-    type: group
-    short-summary: Commands for managing API review jobs.
-"""
-
-helps[
     "agent"
 ] = """
     type: group
@@ -104,7 +97,7 @@ helps[
 # COMMANDS
 
 
-def local_review(
+def _local_review(
     language: str,
     target: str,
     base: str = None,
@@ -267,6 +260,30 @@ def deploy_flask_app(
     from scripts.deploy_app import deploy_app_to_azure
 
     deploy_app_to_azure(app_name, resource_group, subscription_id)
+
+
+def generate_review(
+    language: str,
+    target: str,
+    base: Optional[str] = None,
+    outline: Optional[str] = None,
+    existing_comments: Optional[str] = None,
+    remote: bool = False,
+):
+    """
+    Generates a review synchronously.
+    """
+    if remote:
+        # TODO: Call the start job endpoint and wait for the job to complete
+        pass
+    else:
+        return _local_review(
+            language=language,
+            target=target,
+            base=base,
+            outline=outline,
+            existing_comments=existing_comments,
+        )
 
 
 def generate_review_from_app(
@@ -741,8 +758,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
         with CommandGroup(self, "review", "__main__#{}") as g:
-            g.command("local", "local_review")
-            g.command("remote", "generate_review_from_app")
+            g.command("generate", "generate_review")
+            g.command("start-job", "review_job_start")
+            g.command("get-job", "review_job_get")
             g.command("summarize", "review_summarize")
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
@@ -755,9 +773,6 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
-        with CommandGroup(self, "review job", "__main__#{}") as g:
-            g.command("start", "review_job_start")
-            g.command("get", "review_job_get")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
         with CommandGroup(self, "metrics", "__main__#{}") as g:

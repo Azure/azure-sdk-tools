@@ -63,10 +63,20 @@ async function addApiViewInfo(
     } else if (packageName.startsWith('@azure-rest/')) {
         actualPackageName = packageName.substring('@azure-rest/'.length);
     }
-    const expectedApiViewFileName = `${actualPackageName}-node.api.json`;
-    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**', expectedApiViewFileName);
-    const apiViews = await glob(apiViewPathPattern);
-    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
+    // Try both possible API view file name formats
+    const nodeApiViewFileName = `${actualPackageName}-node.api.json`;
+    const standardApiViewFileName = `${actualPackageName}.api.json`;
+    const nodeApiViewPattern = posix.join(packageDirectory, 'temp', '**', nodeApiViewFileName);
+    const standardApiViewPattern = posix.join(packageDirectory, 'temp', '**', standardApiViewFileName);
+    
+    // Search for both possible API view file name formats simultaneously
+    const [nodeApiViews, standardApiViews] = await Promise.all([
+        glob(nodeApiViewPattern),
+        glob(standardApiViewPattern)
+    ]);
+    const apiViews = [...nodeApiViews, ...standardApiViews];
+
+    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${nodeApiViewPattern}' or '${standardApiViewPattern}'. cwd: ${process.cwd()}`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = relative(sdkRoot, apiViews[0]);
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();

@@ -103,7 +103,7 @@ namespace APIViewUnitTests
             }
         }
 
-            [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
+        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
         [InlineData("summary", 1, "FIRST_ROW")]
         [InlineData("summary", 2, "line-2")]
         [InlineData("any", 2, "line-2")]

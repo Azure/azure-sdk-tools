@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(FileValidationTool),
             typeof(DownloadPromptsTool),
             typeof(SdkReleaseTool),
-            typeof(ReviewSchedulerTool),
+            typeof(TestTools),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

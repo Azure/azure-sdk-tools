@@ -10,6 +10,7 @@ using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
 using System.Text;
+using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -218,7 +219,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return response;
             }
         }
-
 
         [McpServerTool(Name ="RunGenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
         public async Task<string> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)

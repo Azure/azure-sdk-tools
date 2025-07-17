@@ -503,7 +503,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task test()
         {
-            var result = await githubService.GetContentsAsync("Azure", "azure-rest-api-specs", "eng/README.md");
+            var result = await githubService.GetContentsAsync("Azure", "azure-rest-api-specs", "eng");
             
             if (result != null)
             {

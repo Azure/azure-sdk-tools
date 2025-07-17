@@ -37,4 +37,8 @@
     <ProjectReference Include="../Azure.Sdk.Tools.Cli.Analyzer/Azure.Sdk.Tools.Cli.Analyzer.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../codeowners-utils/Azure.Sdk.Tools.CodeownersUtils/Azure.Sdk.Tools.CodeownersUtils.csproj" />
+  </ItemGroup>
+
 </Project>

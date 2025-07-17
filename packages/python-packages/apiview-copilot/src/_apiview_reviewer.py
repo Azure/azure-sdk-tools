@@ -306,7 +306,6 @@ class ApiViewReview:
 
         # Submit all jobs to the executor
         all_futures = {}
-        section_contexts = {}
 
         # 1. Summary task
         all_futures[summary_tag] = self.executor.submit(
@@ -434,14 +433,16 @@ class ApiViewReview:
 
     def _judge_generic_comments(self):
         """
-        Judge generic comments by running the judge prompt on each comment.
+        Judge generic comments by running the judge prompt on each comment, separating into keep and discard lists, reporting counts, and dumping to debug log if enabled.
         """
         judge_prompt_file = "generic_comment_judge.prompty"
         judge_prompt_path = get_prompt_path(folder="api_review", filename=judge_prompt_file)
 
-        # Submit each comment to the executor for parallel processing
+        self._print_message("Reviewing generic comments...")
+
+        # Submit each generic comment to the executor for parallel processing
         futures = {}
-        idx_to_remove = []
+        generic_indices = []
         for idx, comment in enumerate(self.results.comments):
             if comment.source != "generic":
                 continue
@@ -454,26 +455,55 @@ class ApiViewReview:
                     "context": self.search.search_all(query=comment.comment),
                 },
             )
+            generic_indices.append(idx)
 
         # Collect results as they complete, with % complete logging
-        total = len(futures)
-        for idx, future in futures.items():
+        keep_comments = []
+        discard_comments = []
+        total = len(generic_indices)
+        for progress_idx, idx in enumerate(generic_indices):
+            future = futures[idx]
             try:
                 response = future.result()
                 response_json = json.loads(response)
                 if response_json.get("status") == "KEEP":
-                    continue  # Keep the comment
+                    keep_comments.append(response_json)
                 else:
-                    idx_to_remove.append(idx)
+                    discard_comments.append(response_json)
             except Exception as e:
                 self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
-            # Log % complete
-            percent = int(((idx + 1) / total) * 100) if total else 100
-            self._print_message(f"Judging generic comments... {percent}% complete", overwrite=True)
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Judging comments... {percent}% complete", overwrite=True)
+        self._print_message()  # Ensure the progress bar is visible before the summary
 
-        # Remove judged comments
-        if idx_to_remove:
-            self.results.comments = [c for i, c in enumerate(self.results.comments) if i not in idx_to_remove]
+        # Report summary
+        self._print_message(
+            f"Judging completed. Kept {len(keep_comments)} generic comments. Discarded {len(discard_comments)} generic comments."
+        )
+
+        # Debug log: dump keep_comments and discard_comments to files if enabled
+        if self.debug_log:
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            debug_dir = os.path.join("scratch", "logs", self.language)
+            os.makedirs(debug_dir, exist_ok=True)
+            keep_path = os.path.join(debug_dir, f"debug_keep_generic_comments_{ts}.json")
+            discard_path = os.path.join(debug_dir, f"debug_discard_generic_comments_{ts}.json")
+            with open(keep_path, "w", encoding="utf-8") as f:
+                json.dump(keep_comments, f, indent=2)
+            with open(discard_path, "w", encoding="utf-8") as f:
+                json.dump(discard_comments, f, indent=2)
+            self.logger.debug(f"Kept generic comments written to {keep_path}")
+            self.logger.debug(f"Discarded generic comments written to {discard_path}")
+
+        # Update the results: keep all non-generic comments, plus kept generic comments
+        new_comments = []
+        # Add non-generic comments
+        for idx, comment in enumerate(self.results.comments):
+            if comment.source != "generic":
+                new_comments.append(comment)
+        # Add kept generic comments
+        new_comments.extend([Comment(**comment) for comment in keep_comments])
+        self.results.comments = new_comments
 
     def _deduplicate_comments(self):
         """

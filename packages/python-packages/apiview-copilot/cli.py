@@ -8,11 +8,11 @@ from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
 import os
-from pprint import pprint
 import requests
 import sys
 import pathlib
 import requests
+import time
 from typing import Optional
 
 from azure.cosmos import CosmosClient
@@ -269,13 +269,42 @@ def generate_review(
     outline: Optional[str] = None,
     existing_comments: Optional[str] = None,
     remote: bool = False,
+    debug_log: bool = False,
 ):
     """
     Generates a review synchronously.
     """
     if remote:
-        # TODO: Call the start job endpoint and wait for the job to complete
-        pass
+        elapsed = 0
+        job_info = review_job_start(
+            language=language,
+            target=target,
+            base=base,
+            outline=outline,
+            existing_comments=existing_comments,
+        )
+        job_id = job_info.get("job_id") if job_info else None
+        print(f"Started review job {job_id}...")
+        if not job_id:
+            print("Error: Could not extract job_id from review_job_start output.")
+            print(job_info)
+            return
+        for _ in range(1800):  # up to 30 minutes
+            status_info = review_job_get(job_id)
+            status = status_info.get("status") if status_info else None
+            if not status_info:
+                print(f"Error: Could not get status for job {job_id}")
+                return
+            if status == "Success":
+                print(json.dumps(status_info, indent=2))
+                return
+            elif status == "Error":
+                print(f"Review job failed: {json.dumps(status_info, indent=2)}")
+                return
+            time.sleep(30)
+            elapsed += 30
+            print(f"  Status: {status}. Elapsed time: {elapsed / 60.0:.1f} min")
+        print("Timed out waiting for review job to complete.")
     else:
         return _local_review(
             language=language,
@@ -283,54 +312,8 @@ def generate_review(
             base=base,
             outline=outline,
             existing_comments=existing_comments,
+            debug_log=debug_log,
         )
-
-
-def generate_review_from_app(
-    language: str,
-    target: str,
-    base: Optional[str] = None,
-    outline: Optional[str] = None,
-    existing_comments: Optional[str] = None,
-):
-    """Generates a review using the deployed Flask app."""
-    from scripts.remote_review import generate_remote_review
-
-    # Read the file content
-    with open(target, "r", encoding="utf-8") as f:
-        target_content = f.read()
-    if base:
-        with open(base, "r", encoding="utf-8") as f:
-            base_content = f.read()
-    else:
-        base_content = None
-
-    outline_text = None
-    if outline:
-        with open(outline, "r", encoding="utf-8") as f:
-            outline_text = f.read()
-
-    comments_obj = None
-    if existing_comments:
-        with open(existing_comments, "r", encoding="utf-8") as f:
-            comments_obj = json.load(f)
-
-    response = asyncio.run(
-        generate_remote_review(
-            target=target_content,
-            base=base_content,
-            language=language,
-            outline=outline_text,
-            existing_comments=comments_obj,
-        )
-    )
-
-    # response is already a dict, no need to parse it
-    if isinstance(response, dict):
-        pprint(response, indent=2)
-    else:
-        # Handle error responses which are strings
-        print(response)
 
 
 def review_job_start(
@@ -378,7 +361,7 @@ def review_job_start(
 
     resp = requests.post(api_endpoint, json=payload)
     if resp.status_code == 202:
-        pprint(resp.json(), indent=2)
+        return resp.json()
     else:
         print(f"Error: {resp.status_code} {resp.text}")
 
@@ -392,7 +375,7 @@ def review_job_get(job_id: str):
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
     resp = requests.get(url)
     if resp.status_code == 200:
-        pprint(resp.json(), indent=2)
+        return resp.json()
     else:
         print(f"Error: {resp.status_code} {resp.text}")
 
@@ -903,7 +886,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--containers", "-c"],
                 choices=[c.value for c in ContainerNames if c != "review-jobs"],
             )
-        with ArgumentsContext(self, "review job start") as ac:
+        with ArgumentsContext(self, "review start-job") as ac:
             ac.argument(
                 "language",
                 type=str,
@@ -938,7 +921,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 default=None,
             )
 
-        with ArgumentsContext(self, "review job get") as ac:
+        with ArgumentsContext(self, "review get-job") as ac:
             ac.argument(
                 "job_id",
                 type=str,

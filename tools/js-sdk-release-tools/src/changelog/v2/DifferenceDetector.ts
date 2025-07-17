@@ -202,6 +202,75 @@ export class DifferenceDetector {
     );
   }
 
+  /**
+   * Get the structural content of an interface for comparison, ignoring the interface name
+   * This includes type parameters, extends clause, and all members
+   */
+  private getInterfaceStructure(interfaceName: string, sourceFile: SourceFile): string | null {
+    const interfaceDecl = sourceFile.getInterface(interfaceName);
+    if (!interfaceDecl) return null;
+
+    const typeParams = interfaceDecl.getTypeParameters().map((tp) => tp.getText()).join(', ');
+    const extendsClause = interfaceDecl.getExtends().map((ext) => ext.getText()).join(', ');
+    const members = interfaceDecl.getMembers().map((member) => member.getText()).sort().join('\n');
+
+    return `<${typeParams}>${extendsClause ? ` extends ${extendsClause}` : ''} { ${members} }`;
+  }
+
+  /**
+   * Find generic interfaces that have the same structure but different names
+   */
+  private findMatchingGenericInterface(
+    targetStructure: string,
+    sourceFile: SourceFile,
+    excludeName?: string
+  ): string | null {
+    const interfaces = sourceFile
+      .getInterfaces()
+      .filter((i) => i.getTypeParameters().length > 0 && i.getName() !== excludeName);
+
+    for (const interfaceDecl of interfaces) {
+      const structure = this.getInterfaceStructure(interfaceDecl.getName(), sourceFile);
+      if (structure === targetStructure) {
+        return interfaceDecl.getName();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check if a generic interface was only renamed (structure unchanged)
+   */
+  private isGenericInterfaceRenamed(interfaceName: string): boolean {
+    const baselineInterface = this.context!.baseline.getInterface(interfaceName);
+    const currentInterface = this.context!.current.getInterface(interfaceName);
+
+    // If interface exists in both with same name, check if it's generic
+    if (baselineInterface && currentInterface) {
+      return false; // Not renamed, same name exists in both
+    }
+
+    // If interface exists only in baseline, check if there's a matching structure in current
+    if (baselineInterface && !currentInterface && baselineInterface.getTypeParameters().length > 0) {
+      const baselineStructure = this.getInterfaceStructure(interfaceName, this.context!.baseline);
+      if (baselineStructure) {
+        const matchingName = this.findMatchingGenericInterface(baselineStructure, this.context!.current, interfaceName);
+        return matchingName !== null;
+      }
+    }
+
+    // If interface exists only in current, check if there's a matching structure in baseline
+    if (!baselineInterface && currentInterface && currentInterface.getTypeParameters().length > 0) {
+      const currentStructure = this.getInterfaceStructure(interfaceName, this.context!.current);
+      if (currentStructure) {
+        const matchingName = this.findMatchingGenericInterface(currentStructure, this.context!.baseline, interfaceName);
+        return matchingName !== null;
+      }
+    }
+
+    return false;
+  }  
+
   private getFunctions(sourceFile: SourceFile): FunctionDeclaration[] {
     return sourceFile
       .getStatements()
@@ -218,8 +287,9 @@ export class DifferenceDetector {
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) {
-        logger.warn(`Generic interface '${n}' breaking change detection is not supported.`);
+      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration) && this.isGenericInterfaceRenamed(n)) {
+        // Check if this is just a rename of a generic interface with same structure
+        logger.info(`Generic interface '${n}' appears to be renamed with same structure, skipping breaking change detection.`);
         return map;
       }
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);

@@ -1776,6 +1776,230 @@ export function processData(data: string): string;
 
 describe("Breaking change detection from high level client to modular client", () => {});
 
+
+describe("Generic Interface Detection", () => {
+    test("should not detect breaking change for renamed generic interface with same structure", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterfaceNameChange<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+       const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+        
+        // Should not detect breaking changes for renamed interface with same structure
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelRemoved,
+            ).length,
+        ).toBe(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelAdded,
+            ).length,
+        ).toBe(0);
+        
+        // Verify no breaking changes detected
+        const totalBreakingChanges = [...changelogItems.breakingChanges.keys()].flatMap(
+            (category) => changelogItems.breakingChanges.get(category) ?? [],
+        ).length;
+        expect(totalBreakingChanges).toBe(0);
+    });
+
+    test("should detect breaking change for truly removed generic interface", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+
+// @public
+export interface AnotherInterface {
+    value: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface AnotherInterface {
+    value: string;
+}
+\`\`\`
+            `;
+
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.HighLevelClient },
+            { apiView: currentApiView, sdkType: SDKType.HighLevelClient }
+        );
+
+        // Should detect the removal of GenericInterface
+        const removedItems = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelRemoved,
+        );
+        expect(removedItems).toHaveLength(1);
+        expect(removedItems[0]).toBe("Removed Interface GenericInterface");
+    });
+
+    test("should detect breaking change for truly added generic interface", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface AnotherInterface {
+    value: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+
+// @public
+export interface AnotherInterface {
+    value: string;
+}
+\`\`\`
+            `;
+
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.HighLevelClient },
+            { apiView: currentApiView, sdkType: SDKType.HighLevelClient }
+        );
+
+        // Should detect the addition of GenericInterface
+        const addedItems = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelAdded,
+        );
+        expect(addedItems).toHaveLength(1);
+        expect(addedItems[0]).toBe("Added Interface GenericInterface");
+    });
+
+    test("should detect breaking change for generic interface with structural changes", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+    newProperty: number; // Added optional property
+}
+\`\`\`
+            `;
+
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.HighLevelClient },
+            { apiView: currentApiView, sdkType: SDKType.HighLevelClient }
+        );
+
+        // Should detect changes in the interface structure
+        const propertyAddedItems = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelRequiredPropertyAdded,
+        );
+        expect(propertyAddedItems).toHaveLength(1);
+        expect(propertyAddedItems[0]).toBe(
+            "Interface GenericInterface has a new required parameter newProperty"
+        );
+    });
+
+    test("should handle complex generic interface with extends clause", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface BaseInterface {
+    baseProperty: string;
+}
+
+// @public
+export interface GenericInterface<T, U> extends BaseInterface {
+    data: T;
+    meta: U;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface BaseInterface {
+    baseProperty: string;
+}
+
+// @public
+export interface RenamedGenericInterface<T, U> extends BaseInterface {
+    data: T;
+    meta: U;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const changelogItems = await generateChangelogItems(
+            { apiView: baselineApiView, sdkType: SDKType.HighLevelClient },
+            { apiView: currentApiView, sdkType: SDKType.HighLevelClient }
+        );
+
+        // Should not detect breaking changes for renamed interface with same structure
+        const removedItems = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelRemoved,
+        );
+        const addedItems = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelAdded,
+        );
+        expect(removedItems).toHaveLength(0);
+        expect(addedItems).toHaveLength(0);
+    });
+});
+
+
 describe("Changelog reading", () => {
     test("Read changelog that doesn't exist", () => {
         const content = tryReadNpmPackageChangelog(

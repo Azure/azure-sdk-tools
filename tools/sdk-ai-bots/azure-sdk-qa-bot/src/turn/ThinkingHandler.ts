@@ -1,6 +1,6 @@
 import { CardFactory, MessageFactory, TurnContext } from 'botbuilder';
 import { getTurnContextLogMeta } from '../logging/utils.js';
-import { ConversationHandler, ConversationMessage } from '../input/ConversationHandler.js';
+import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
 import { CompletionResponsePayload } from '../backend/rag.js';
@@ -49,7 +49,7 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(reply: CompletionResponsePayload) {
+  public async stop(reply: CompletionResponsePayload, currentPrompt: Prompt) {
     const answer = this.addReferencesToReply(reply);
     const updated: Partial<TurnContext> = {
       type: 'message',
@@ -57,7 +57,17 @@ export class ThinkingHandler {
       text: answer,
       conversation: this.context.activity.conversation,
     } as any;
-    await this.context.updateActivity(updated);
+    const response = await this.context.updateActivity(updated);
+    if (response) {
+      await this.saveCurrentConversationMessage(
+        this.context.activity.conversation.id,
+        this.context.activity.id,
+        response.id,
+        currentPrompt,
+        reply,
+        this.meta
+      );
+    }
   }
 
   private async startCore(context: TurnContext, resourceId: string) {
@@ -135,20 +145,56 @@ export class ThinkingHandler {
   private async trySendContactCard(context: TurnContext, conversationMessages: ConversationMessage[]) {
     const hasContactCard = conversationMessages.find((msg) => msg.contactCard);
     if (!hasContactCard) {
-      const card = createContactCard(context.activity.conversation.id, context.activity.id);
+      const card = createContactCard();
       const attachment = CardFactory.adaptiveCard(card);
       const replyCard = MessageFactory.attachment(attachment);
-      await context.sendActivity(replyCard);
-      const contactCardMessage: ConversationMessage = {
-        conversationId: context.activity.conversation.id,
-        activityId: context.activity.id,
-        contactCard: {
-          resourceId: replyCard.id,
-          version: contactCardVersion,
-        },
-        timestamp: new Date(),
-      };
-      await this.conversationHandler.saveMessage(contactCardMessage, this.meta);
+      const response = await context.sendActivity(replyCard);
+      if (response) {
+        const contactCardMessage: ConversationMessage = {
+          conversationId: context.activity.conversation.id,
+          activityId: response.id,
+          contactCard: {
+            version: contactCardVersion,
+          },
+          timestamp: new Date(),
+        };
+        await this.conversationHandler.saveMessage(contactCardMessage, this.meta);
+      }
+    }
+  }
+
+  private async saveCurrentConversationMessage(
+    conversationId: string,
+    promptActivityId: string,
+    replyActivityId: string,
+    prompt: Prompt,
+    replyPayload: CompletionResponsePayload,
+    meta: object
+  ) {
+    const reply: RAGReply = {
+      answer: replyPayload.answer,
+      has_result: replyPayload.has_result,
+      references: replyPayload.references.map((ref) => ({ ...ref })) || [],
+    };
+    const promptMessage: ConversationMessage = {
+      conversationId,
+      activityId: promptActivityId,
+      prompt,
+      timestamp: prompt.timestamp,
+    };
+    const replyMessage: ConversationMessage = {
+      conversationId,
+      activityId: replyActivityId,
+      reply,
+      timestamp: prompt.timestamp,
+    };
+    try {
+      await Promise.all([
+        this.conversationHandler.saveMessage(promptMessage, meta),
+        this.conversationHandler.saveMessage(replyMessage, meta),
+      ]);
+    } catch (error) {
+      logger.error('Failed to save current prompt', { error, meta });
     }
   }
 }

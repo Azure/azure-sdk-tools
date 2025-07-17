@@ -1,8 +1,8 @@
 import { createFeedbackCard } from './feedback.js';
 import { supportChannelCard } from './support-channel.js';
 
-export function createContactCard(conversationId: string, activity: string) {
-  const feedbackCard = createFeedbackCard(conversationId, activity);
+export function createContactCard() {
+  const feedbackCard = createFeedbackCard();
   const feedbackAction = {
     type: 'Action.ShowCard',
     title: '👍Feedback👎',

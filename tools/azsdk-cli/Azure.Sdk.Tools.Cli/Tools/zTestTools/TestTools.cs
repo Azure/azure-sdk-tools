@@ -220,18 +220,28 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return matchingEntry;
         }
 
-        private async Task<List<string>> ValidateServiceLabels(IList<string> serviceLabels)
+        private async Task<List<string>> ValidateServiceLabels(string serviceLabel)
         {
-            var invalidLabels = new List<string>();
+            bool isValidLabel = false;
 
             // Mock implementation for validating against common-labels.csv
+            GithubLabelsTool.CheckServiceLabel(serviceLabel);
             var validLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "Azure.AI", "Azure.Storage", "Azure.KeyVault", "Azure.Identity", "Azure.Core",
                 "Azure.Data", "Azure.Messaging", "Azure.Security", "Azure.Monitor"
             };
 
-            foreach (var label in serviceLabels)
+            if (!validLabels.Contains(serviceLabel))
+            {
+                isInvalidLabel = true;
+                logger.LogWarning($"Invalid service label found: {serviceLabel}");
+
+                // Mock: Simulate creating a new label
+                await CreateServiceLabel(serviceLabel);
+            }
+
+            return isInvalidLabel;
             {
                 if (!validLabels.Contains(label))
                 {

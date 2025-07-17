@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool
 {
 
     [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV")]
-    public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output) : MCPTool
+    public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output, IGitHubService githubService) : MCPTool
     {
         private const string COMMON_LABELS_URL = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/github/data/common-labels.csv";
         private const string DEFAULT_COLOR_CODE = "e99695";
@@ -57,8 +57,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool
                 logger.LogInformation("Checking service label: {serviceLabel}", serviceLabel);
 
                 // Download the CSV content
-                string csvContent = await httpClient.GetStringAsync(COMMON_LABELS_URL);
-                
+                string csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "main/tools/github/data/common-labels.csv");
+
                 // Parse CSV and look for the service label
                 var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                 

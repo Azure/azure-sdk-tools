@@ -200,6 +200,11 @@ public class PipelineAnalysisTool : MCPTool
                 return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT);
             }
             response.EnsureSuccessStatusCode();
+            // Devops will return a sign-in html page if the user is not authorized
+            if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+            {
+                throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
+            }
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
             var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
@@ -236,6 +241,11 @@ public class PipelineAnalysisTool : MCPTool
         logger.LogDebug("Getting timeline records from {url}", timelineUrl);
         var response = await httpClient.GetAsync(timelineUrl, ct);
         response.EnsureSuccessStatusCode();
+        // Devops will return a sign-in html page if the user is not authorized
+        if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+        {
+            throw new Exception($"Not authorized to get timeline records from {timelineUrl}");
+        }
         var json = await response.Content.ReadAsStringAsync(ct);
         if (string.IsNullOrEmpty(json))
         {
@@ -340,6 +350,11 @@ public class PipelineAnalysisTool : MCPTool
         logger.LogDebug("Fetching log file from {url}", logUrl);
         var response = await httpClient.GetAsync(logUrl, ct);
         response.EnsureSuccessStatusCode();
+        // Devops will return a sign-in html page if the user is not authorized
+        if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+        {
+            throw new Exception($"Not authorized to get log file from {logUrl}");
+        }
         var logContent = await response.Content.ReadAsStringAsync(ct);
         return logContent;
     }

@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using System.Text;
 
 
-namespace Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
 
     [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV")]
@@ -57,7 +57,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool
                 logger.LogInformation("Checking service label: {serviceLabel}", serviceLabel);
 
                 // Download the CSV content
-                string csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "main/tools/github/data/common-labels.csv");
+                var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+                
+                if (contents == null || contents.Count == 0)
+                {
+                    throw new InvalidOperationException("Could not retrieve common-labels.csv file");
+                }
+
+                // Get the first (and should be only) file content
+                var csvContent = contents[0].Content;
+                
+                if (string.IsNullOrEmpty(csvContent))
+                {
+                    throw new InvalidOperationException("common-labels.csv file is empty");
+                }
 
                 // Parse CSV and look for the service label
                 var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -77,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool
                         string colorCode = columns[2].Trim();
                         
                         // Case-insensitive comparison
-                        if (string.Equals(labelName, serviceLabel, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(labelName, serviceLabel, StringComparison.OrdinalIgnoreCase) && colorCode.Equals("e99695"))
                         {
                             logger.LogInformation("Found service label '{serviceLabel}' with color code '{colorCode}'", serviceLabel, colorCode);
                             
@@ -145,7 +158,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHubLabelsTool
             
             return columns;
         }
+    }
 
-
+    public class ServiceLabelResponse
+    {
+        public string ServiceLabel { get; set; } = "";
+        public bool Found { get; set; }
+        public string? ColorCode { get; set; }
+        public string? Description { get; set; }
+        public string? ResponseError { get; set; }
     }
 }

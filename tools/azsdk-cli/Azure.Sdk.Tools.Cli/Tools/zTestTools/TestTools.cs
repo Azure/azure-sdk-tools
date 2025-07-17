@@ -220,39 +220,41 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return matchingEntry;
         }
 
-        private async Task<List<string>> ValidateServiceLabels(string serviceLabel)
+        private async Task<List<string>> ValidateServiceLabels(List<string> serviceLabels)
         {
-            bool isValidLabel = false;
-
-            // Mock implementation for validating against common-labels.csv
-            GithubLabelsTool.CheckServiceLabel(serviceLabel);
-            var validLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            var invalidLabels = new List<string>();
+            
+            // Create a logger factory to create the correct logger type
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var githubLabelsLogger = loggerFactory.CreateLogger<GitHubLabelsTool>();
+            
+            var githubLabelsTool = new GitHubLabelsTool(githubLabelsLogger, output, githubService);
+            
+            foreach (var serviceLabel in serviceLabels)
             {
-                "Azure.AI", "Azure.Storage", "Azure.KeyVault", "Azure.Identity", "Azure.Core",
-                "Azure.Data", "Azure.Messaging", "Azure.Security", "Azure.Monitor"
-            };
-
-            if (!validLabels.Contains(serviceLabel))
-            {
-                isInvalidLabel = true;
-                logger.LogWarning($"Invalid service label found: {serviceLabel}");
-
-                // Mock: Simulate creating a new label
-                await CreateServiceLabel(serviceLabel);
-            }
-
-            return isInvalidLabel;
-            {
-                if (!validLabels.Contains(label))
+                try
                 {
-                    invalidLabels.Add(label);
-                    logger.LogWarning($"Invalid service label found: {label}");
+                    var result = await githubLabelsTool.CheckServiceLabel(serviceLabel);
                     
-                    // Mock: Simulate creating a new label
-                    await CreateServiceLabel(label);
+                    if (!result.Found)
+                    {
+                        invalidLabels.Add(serviceLabel);
+                        logger.LogWarning($"Invalid service label found: {serviceLabel}");
+                        
+                        // Mock: Simulate creating a new label
+                        await CreateServiceLabel(serviceLabel);
+                    }
+                    else
+                    {
+                        logger.LogInformation($"Service label '{serviceLabel}' is valid (Color: {result.ColorCode})");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Error validating service label '{serviceLabel}': {ex.Message}");
+                    invalidLabels.Add(serviceLabel);
                 }
             }
-
             return invalidLabels;
         }
 

@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <IsPackable>true</IsPackable>
     <ToolCommandName>azsdk</ToolCommandName>

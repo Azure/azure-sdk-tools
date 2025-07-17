@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator
 
             public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
             {
-                if (trivia.Kind() == SyntaxKind.DisabledTextTrivia)
+                if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
                     return SyntaxFactory.Whitespace("");
 
                 return base.VisitTrivia(trivia);

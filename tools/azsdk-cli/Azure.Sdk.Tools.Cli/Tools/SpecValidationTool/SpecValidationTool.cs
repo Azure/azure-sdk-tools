@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
-namespace AzureSDKDevToolsMCP.Tools
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     /// <summary>
     /// This tool is used to validate the TypeSpec specification for Azure SDK service.

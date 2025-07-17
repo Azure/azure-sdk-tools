@@ -1,6 +1,5 @@
 import sys
 import os
-from os import path
 import glob
 import json
 import argparse
@@ -14,7 +13,7 @@ from build import DotNetBuild
 
 
 spec_location = (
-    "./directory/examples_dir.py" if path.exists("./directory/examples_dir.py") else "../directory/examples_dir.py"
+    "./directory/examples_dir.py" if os.path.exists("./directory/examples_dir.py") else "../directory/examples_dir.py"
 )
 spec = importlib.util.spec_from_file_location("examples_dir", spec_location)
 examples_dir = importlib.util.module_from_spec(spec)
@@ -158,7 +157,7 @@ def format_dotnet(lines: List[str]) -> List[str]:
 def process_dotnet_example(filepath: str) -> List[DotNetExample]:
     # process aggregated DotNet sample to examples
 
-    filename = path.basename(filepath)
+    filename = os.path.basename(filepath)
     logging.info(f"Processing DotNet aggregated sample: {filename}")
 
     with open(filepath, encoding="utf-8") as f:
@@ -175,7 +174,7 @@ def process_dotnet_example(filepath: str) -> List[DotNetExample]:
                 example_lines = aggregated_dotnet_example.class_opening + format_dotnet(dotnet_example_method.content)
 
                 example_filepath = dotnet_example_method.example_relative_path
-                example_dir, example_filename = path.split(example_filepath)
+                example_dir, example_filename = os.path.split(example_filepath)
 
                 try:
                     example_dir = examples_dir.try_find_resource_manager_example(
@@ -230,31 +229,32 @@ def write_code_to_file(
 
     metadata_json = {"sdkUrl": sdk_url}
 
-    target_dir_path = path.join(sdk_examples_path, target_dir)
+    target_dir_path = os.path.join(sdk_examples_path, target_dir)
     os.makedirs(target_dir_path, exist_ok=True)
 
-    code_file_path = path.join(target_dir_path, code_filename)
+    code_file_path = os.path.join(target_dir_path, code_filename)
     with open(code_file_path, "w", encoding="utf-8") as f:
         f.write(code_content)
     logging.info(f"Code written to file: {code_file_path}")
 
-    metadata_file_path = path.join(target_dir_path, metadata_filename)
+    metadata_file_path = os.path.join(target_dir_path, metadata_filename)
     with open(metadata_file_path, "w", encoding="utf-8") as f:
         json.dump(metadata_json, f)
     logging.info(f"Metadata written to file: {metadata_file_path}")
 
-    return [path.join(target_dir, code_filename), path.join(target_dir, metadata_filename)]
+    return [os.path.join(target_dir, code_filename), os.path.join(target_dir, metadata_filename)]
 
 
 def create_dotnet_examples(
-    release: Release, dotnet_module: str, sdk_examples_path: str, dotnet_examples_path: str
-) -> (bool, List[str]):
+    release: Release, dotnet_module: str, sdk_examples_path: str, dotnet_examples_paths: List[str]
+) -> tuple[bool, List[str]]:
     dotnet_paths = []
-    for root, dirs, files in os.walk(dotnet_examples_path):
-        for name in files:
-            filepath = path.join(root, name)
-            if path.splitext(filepath)[1] == ".cs":
-                dotnet_paths.append(filepath)
+    for dotnet_examples_path in dotnet_examples_paths:
+        for root, dirs, files in os.walk(dotnet_examples_path):
+            for name in files:
+                filepath = os.path.join(root, name)
+                if os.path.splitext(filepath)[1] == ".cs":
+                    dotnet_paths.append(filepath)
 
     logging.info(f"Processing SDK examples: {release.package}")
     dotnet_examples = []
@@ -279,14 +279,47 @@ def create_dotnet_examples(
 
 def get_module_relative_path(sdk_name: str, sdk_path: str) -> str:
     global module_relative_path
-    candidate_sdk_paths = glob.glob(path.join(sdk_path, f"sdk/*/{sdk_name}"))
+    candidate_sdk_paths = glob.glob(os.path.join(sdk_path, f"sdk/*/{sdk_name}"))
     if len(candidate_sdk_paths) > 0:
-        candidate_sdk_paths = [path.relpath(p, sdk_path) for p in candidate_sdk_paths]
+        candidate_sdk_paths = [os.path.relpath(p, sdk_path) for p in candidate_sdk_paths]
         logging.info(f"Use first item of {candidate_sdk_paths} for SDK folder")
         module_relative_path = candidate_sdk_paths[0]
     else:
         raise RuntimeError(f"Source folder not found for SDK {sdk_name}")
     return module_relative_path
+
+
+def find_dotnet_examples_paths(sdk_path: str, module_relative_path_local: str) -> List[str]:
+    """
+    Find dotnet examples paths in the SDK directory.
+
+    Args:
+        sdk_path: Path to the SDK root directory
+        module_relative_path_local: Relative path to the module within the SDK
+
+    Returns:
+        List of paths where dotnet examples are found
+    """
+    dotnet_examples_paths: List[str] = []
+
+    # Try primary path first: tests/Generated/Samples
+    dotnet_examples_relative_path = os.path.join(module_relative_path_local, "tests", "Generated", "Samples")
+    dotnet_examples_path = os.path.join(sdk_path, dotnet_examples_relative_path)
+
+    if os.path.exists(dotnet_examples_path):
+        dotnet_examples_paths.append(dotnet_examples_path)
+    else:
+        # fallback to iterating all directories under tests/*/Generated/Samples
+        tests_dir = os.path.join(sdk_path, module_relative_path_local, "tests")
+        if os.path.exists(tests_dir):
+            for item in os.listdir(tests_dir):
+                item_path = os.path.join(tests_dir, item)
+                if os.path.isdir(item_path):
+                    candidate_path = os.path.join(item_path, "Generated", "Samples")
+                    if os.path.exists(candidate_path):
+                        dotnet_examples_paths.append(candidate_path)
+
+    return dotnet_examples_paths
 
 
 def main():
@@ -297,7 +330,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %X")
 
-    script_path = path.abspath(path.dirname(sys.argv[0]))
+    script_path = os.path.abspath(os.path.dirname(sys.argv[0]))
 
     parser = argparse.ArgumentParser(description='Requires 2 arguments, path of "input.json" and "output.json".')
     parser.add_argument("paths", metavar="path", type=str, nargs=2, help='path of "input.json" or "output.json"')
@@ -314,20 +347,15 @@ def main():
 
     release = Release(config["release"]["tag"], config["release"]["package"], config["release"]["version"])
 
-    # samples/Generated/Samples
+    # find paths that contain the dotnet examples
     module_relative_path_local = get_module_relative_path(release.package, sdk_path)
-    dotnet_examples_relative_path = path.join(module_relative_path_local, "samples", "Generated", "Samples")
-    dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
-    if not path.exists(dotnet_examples_path):
-        # fallback to tests/Generated/Samples
-        dotnet_examples_relative_path = path.join(module_relative_path_local, "tests", "Generated", "Samples")
-        dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+    dotnet_examples_paths = find_dotnet_examples_paths(sdk_path, module_relative_path_local)
 
-    sdk_package_path = path.join(sdk_path, module_relative_path_local)
+    sdk_package_path = os.path.join(sdk_path, module_relative_path_local)
 
     dotnet_module = f"{release.package},{release.version}"
 
-    succeeded, files = create_dotnet_examples(release, dotnet_module, sdk_examples_path, dotnet_examples_path)
+    succeeded, files = create_dotnet_examples(release, dotnet_module, sdk_examples_path, dotnet_examples_paths)
 
     with open(output_json_path, "w", encoding="utf-8") as f_out:
         output = {"status": "succeeded" if succeeded else "failed", "name": dotnet_module, "files": files}

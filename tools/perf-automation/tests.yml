@@ -90,13 +90,13 @@ parameters:
   # Use general pools instead of perf pools for faster startup due to more warm agents
 - name: LinuxPool
   type: string
-  default: 'azsdk-pool-mms-ubuntu-2204-general'
+  default: 'azsdk-pool'
 - name: LinuxVmImage
   type: string
-  default: 'ubuntu-22.04'
+  default: 'ubuntu-24.04'
 - name: WindowsPool
   type: string
-  default: 'azsdk-pool-mms-win-2022-general'
+  default: 'azsdk-pool'
 - name: WindowsVmImage
   type: string
   default: 'windows-2022'
@@ -310,7 +310,8 @@ stages:
 - stage: Print_Results
   displayName: Print Results
   pool:
-    name: azsdk-pool-mms-ubuntu-2204-general
+    name: azsdk-pool
+    demands: ImageOverride -equals ubuntu-24.04
   condition: succeededOrFailed()
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

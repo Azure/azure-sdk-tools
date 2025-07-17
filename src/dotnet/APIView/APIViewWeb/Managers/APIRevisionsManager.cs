@@ -184,7 +184,7 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
             string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy="azure-sdk")
+            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName)
         {
             var apiRevision = new APIRevisionListItemModel()
             {
@@ -626,7 +626,7 @@ namespace APIViewWeb.Managers
         /// <param name="apiRevision"></param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = "azure-sdk", string notes = "")
+        public async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = ApiViewConstants.AzureSdkBotName, string notes = "")
         {
             if (!apiRevision.IsDeleted)
             {
@@ -711,12 +711,18 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="renderedCodeFile"></param>
+        /// <param name="considerPackageVersion"></param>
         /// <returns></returns>
-        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile)
+        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false)
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            return _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            var result = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            if (considerPackageVersion)
+            {
+                return result && lastRevisionFile.CodeFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
+            }
+            return result;
         }
 
         /// <summary>

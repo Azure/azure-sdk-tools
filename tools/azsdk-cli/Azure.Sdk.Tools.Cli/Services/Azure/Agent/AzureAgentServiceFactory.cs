@@ -1,17 +1,14 @@
-namespace Azure.Sdk.Tools.Cli.Services
+namespace Azure.Sdk.Tools.Cli.Services;
+
+public interface IAzureAgentServiceFactory
 {
-    public interface IAzureAgentServiceFactory
-    {
-        IAzureAgentService Create(string? model, string? endpoint);
-    }
+    IAzureAgentService Create(string? projectEndpoint = null, string? model = null);
+}
 
-    public class AzureAgentServiceFactory(IAzureService azureService) : IAzureAgentServiceFactory
+public class AzureAgentServiceFactory(IAzureService azureService, ILogger<AzureAgentService> logger) : IAzureAgentServiceFactory
+{
+    public IAzureAgentService Create(string? projectEndpoint = null, string? model = null)
     {
-        private readonly IAzureService azureService = azureService;
-
-        public IAzureAgentService Create(string? model, string? endpoint)
-        {
-            return new AzureAgentService(azureService, endpoint, model);
-        }
+        return new AzureAgentService(azureService, logger, projectEndpoint, model);
     }
 }

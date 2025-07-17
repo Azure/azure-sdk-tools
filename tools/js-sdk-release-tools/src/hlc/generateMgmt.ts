@@ -15,8 +15,9 @@ import {getOutputPackageInfo} from "../utils/getOutputPackageInfo.js";
 import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
-import { migratePackage } from "../common/migration.js";
 import { isRushRepo } from "../common/rushUtils.js";
+import { updateSnippets } from "../common/devToolUtils.js";
+import { ChangelogResult } from "../changelog/v2/ChangelogGenerator.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -114,13 +115,11 @@ export async function generateMgmt(options: {
                     outputPackageInfo.path.push(file);
                 }
             }
-            let changelog: Changelog | undefined;
+            let changelog: ChangelogResult | undefined;
             if (isRushRepo(options.sdkRepo)) {
                 logger.info(`Start to run command: 'rush update'.`);
                 execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-    
-                await migratePackage(options.sdkRepo,packagePath);
-    
+        
                 logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
@@ -143,6 +142,8 @@ export async function generateMgmt(options: {
                 execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
             }
             
+            await updateSnippets(packagePath);
+
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
             }
@@ -151,8 +152,8 @@ export async function generateMgmt(options: {
             if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
                 if (changelog) {
                     outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
-                    outputPackageInfo.changelog.content = changelog.displayChangeLog();
-                    const breakingChangeItems = changelog.getBreakingChangeItems();
+                    outputPackageInfo.changelog.content = changelog.content;
+                    const breakingChangeItems = changelog.breakingChangeItems;
                     if (!!breakingChangeItems && breakingChangeItems.length > 0) {
                         outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
                     } else {

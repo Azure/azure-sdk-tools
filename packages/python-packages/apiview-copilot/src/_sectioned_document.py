@@ -48,7 +48,7 @@ class SectionedDocument:
         lines: List[str] = None,
         line_data: List[LineData] = None,
         base_indent: int = 0,
-        max_chunk_size: int = 250,
+        max_chunk_size: int = 500,
     ):
         if max_chunk_size == 1:
             raise ValueError("max_chunk_size must be greater than 1")

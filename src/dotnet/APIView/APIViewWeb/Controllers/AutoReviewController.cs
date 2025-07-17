@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Filters;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
@@ -12,6 +13,7 @@ using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Controllers
 {
@@ -22,15 +24,20 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
+        private readonly IConfiguration _configuration;
+        private readonly IEnumerable<LanguageService> _languageServices;
 
         public AutoReviewController(IAuthorizationService authorizationService, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager)
+            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager,
+            IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
             _authorizationService = authorizationService;
             _codeFileManager = codeFileManager;
             _apiRevisionsManager = apiRevisionManager;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
+            _configuration = configuration;
+            _languageServices = languageServices;
         }
 
         // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
@@ -51,7 +58,7 @@ namespace APIViewWeb.Controllers
                     if (apiRevision != null)
                     {
                         apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
-                        var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
+                        var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
                         if (apiRevision.IsApproved)
                         {
@@ -151,7 +158,7 @@ namespace APIViewWeb.Controllers
             if (apiRevision != null)
             {
                 apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
-                var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
+                var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
                 if (apiRevision.IsApproved)
                 {
@@ -209,18 +216,20 @@ namespace APIViewWeb.Controllers
                         // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
                         // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
 
+                        bool considerPackageVersion = !String.IsNullOrWhiteSpace(codeFile.PackageVersion) && !(new AzureEngSemanticVersion(codeFile.PackageVersion, codeFile.Language).IsPrerelease);
+
                         if (compareAllRevisions)
                         {
                             foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
                             {
-                                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile))
+                                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile, considerPackageVersion))
                                 {
                                     return (review, approvedAPIRevision);
                                 }
                             }
                         }
 
-                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile))
+                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
                         {
                             apiRevision = latestAutomaticAPIRevision;
                             createNewRevision = false;

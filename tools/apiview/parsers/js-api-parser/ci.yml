@@ -38,8 +38,8 @@ extends:
           - job: 'Build'
 
             pool:
-              name: $(LINUXNEXTPOOL)
-              image: $(LINUXNEXTVMIMAGE)
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
               os: linux
 
             steps:
@@ -87,8 +87,8 @@ extends:
           - job: PublishPackage
             displayName: 'Publish ts-genapi package to devops feed'
             pool:
-              name: $(LINUXNEXTPOOL)
-              image: $(LINUXNEXTVMIMAGE)
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
               os: linux
             steps:
             - download: current

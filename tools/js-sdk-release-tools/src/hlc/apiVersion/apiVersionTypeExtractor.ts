@@ -1,9 +1,14 @@
 import { ApiVersionType } from "../../common/types.js"
 import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
 import { getClassicClientParametersPath, getTsSourceFile } from "../../common/utils.js";
+import { isBetaVersion } from "../../utils/version.js";
 
 // TODO: add unit test
-export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: string): Promise<ApiVersionType> => {
+export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: string, apiVersion?: string): Promise<ApiVersionType> => {
+    if (apiVersion) {
+        return isBetaVersion(apiVersion) ? ApiVersionType.Preview : ApiVersionType.Stable;
+    }
+
     const paraPath = getClassicClientParametersPath(packageRoot);
     const source = getTsSourceFile(paraPath);
     const variableDeclarations = source?.getVariableDeclarations();

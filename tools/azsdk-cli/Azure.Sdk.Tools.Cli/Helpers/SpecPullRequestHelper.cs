@@ -9,11 +9,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         public List<ApiviewData> FindApiReviewLinks(List<string> comments);        
     }
-    public class SpecPullRequestHelper(ILogger<SpecPullRequestHelper> logger, IGitHelper gitHelper) : ISpecPullRequestHelper
+    public class SpecPullRequestHelper(ILogger<SpecPullRequestHelper> logger) : ISpecPullRequestHelper
     {
         private ILogger<SpecPullRequestHelper> _logger = logger;
-        private IGitHelper _gitHelper = gitHelper;
-        private readonly string apiReviewRegex = "\\|\\s([\\w]+)\\s\\|\\s\\[(.+)\\]\\((.+)\\)";
+        private readonly string apiReviewRegex = "\\|\\s([\\w#]+)\\s\\|\\s\\[(.+)\\]\\((.+)\\)";
 
         public List<ApiviewData> FindApiReviewLinks(List<string> comments)
         {

@@ -11,13 +11,11 @@ namespace APIViewWeb.LeanControllers
 {
     public class UserProfileController : BaseApiController
     {
-        private readonly ILogger<AuthController> _logger;
         private readonly IUserProfileManager _userProfileManager;
         private readonly UserProfileCache _userProfileCache;
 
         public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager, UserProfileCache userProfileCache)
         {
-            _logger = logger;
             _userProfileManager = userProfileManager;
             _userProfileCache = userProfileCache;
         }
@@ -26,12 +24,15 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<UserProfileModel>> GetUserPreference([FromQuery]string userName = null)
         {
             userName = userName ?? User.GetGitHubLogin();
-            var userProfile = await _userProfileCache.GetUserProfileAsync(userName);
-            if (userProfile == default)
+            try 
+            {
+                var userProfile = await _userProfileCache.GetUserProfileAsync(userName, createIfNotExist: false);
+                return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
+            }
+            catch
             {
                 return new LeanJsonResult(null, StatusCodes.Status404NotFound);
             }
-            return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
         }
 
         [HttpPut("preference", Name = "UpdateUserPreference")]

@@ -25,7 +25,13 @@ namespace Azure.Sdk.Tools.Cli.Models
         public bool IsTestReleasePlan { get; set; } = false;
         public int ReleasePlanId { get; set; }
         public string SDKReleaseType { get; set; } = string.Empty;
-        public List<SDKGenerationInfo> SDKGenerationInfos { get; set; } = [];
+        public List<SDKInfo> SDKInfo { get; set; } = [];
+        public string ReleasePlanSubmittedByEmail { get; set; } = string.Empty;
+        public bool IsCreatedByAgent { get; set; }
+        public string ActiveSpecPullRequest { get; set; } = string.Empty;
+        public string SDKLanguages { get; set; } = string.Empty;
+        public bool IsSpecApproved { get; set; } = false;
+        public int ApiSpecWorkItemId { get; set; } = 0;
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
@@ -93,19 +99,39 @@ namespace Azure.Sdk.Tools.Cli.Models
                 };
                 jsonDocument.Add(tag);
             }
-            return jsonDocument;
-        }
 
-        public static string WrapSpecPullRequestAsHref(string pullRequest)
-        {
-            return $"<a href=\"{pullRequest}\">{pullRequest}</a>";
+            // Add flag in release plan to indicate that it's used by Copilot agent
+            if (IsCreatedByAgent)
+            {
+                var createdUsingAgent = new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.CreatedUsing",
+                    Value = "Copilot"
+                };
+                jsonDocument.Add(createdUsingAgent);
+            }
+
+            // Add release plan submitted by email field
+            if (!string.IsNullOrEmpty(ReleasePlanSubmittedByEmail))
+            {
+                var submittedByEmail = new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.ReleasePlanSubmittedby",
+                    Value = ReleasePlanSubmittedByEmail
+                };
+                jsonDocument.Add(submittedByEmail);
+            }
+            return jsonDocument;
         }
     }
 
-    public class SDKGenerationInfo
+    public class SDKInfo
     {
         public string Language { get; set; } = string.Empty;
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl {  get; set; } = string.Empty;
+        public string PackageName { get; set; } = string.Empty;
     }
 }

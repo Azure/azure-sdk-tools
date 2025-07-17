@@ -16,7 +16,6 @@ namespace Azure.ClientSdk.Analyzers.ModelName
     {
         protected static readonly string Title = "Improper model name suffix";
         protected static readonly string Description = "Suffix is not recommended. Consider to remove or modify it.";
-        protected static readonly string GeneralRenamingMessageFormat = "Model name '{0}' ends with '{1}'. Suggest to rename it to an appropriate name.";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray<DiagnosticDescriptor>.Empty;
 

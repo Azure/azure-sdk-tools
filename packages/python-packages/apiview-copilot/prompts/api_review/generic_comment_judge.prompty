@@ -229,7 +229,7 @@ system:
 
   # OUTPUT REQUIREMENTS
   
-  - You must output the following schema:
+  - You must output the following schema, but NO DOT includes the ```json or ``` tags:
   ```json
   {
     "is_valid": boolean,

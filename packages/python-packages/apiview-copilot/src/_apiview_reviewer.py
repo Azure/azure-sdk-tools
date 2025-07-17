@@ -442,7 +442,6 @@ class ApiViewReview:
 
         # Submit each generic comment to the executor for parallel processing
         futures = {}
-        generic_indices = []
         for idx, comment in enumerate(self.results.comments):
             if comment.source != "generic":
                 continue
@@ -455,21 +454,29 @@ class ApiViewReview:
                     "context": self.search.search_all(query=comment.comment),
                 },
             )
-            generic_indices.append(idx)
 
         # Collect results as they complete, with % complete logging
-        keep_comments = []
-        discard_comments = []
-        total = len(generic_indices)
-        for progress_idx, idx in enumerate(generic_indices):
-            future = futures[idx]
+        keep_results = []
+        discard_results = []
+        total = len(futures)
+        for progress_idx, (idx, future) in enumerate(futures.items()):
             try:
                 response = future.result()
-                response_json = json.loads(response)
-                if response_json.get("status") == "KEEP":
-                    keep_comments.append(response_json)
+                if not response or not response.strip():
+                    self.logger.error(f"Error judging comment at index {idx}: Empty response from prompt.")
+                    continue
+                try:
+                    response_json = json.loads(response)
+                    response_json["idx"] = idx
+                except Exception as je:
+                    self.logger.error(
+                        f"Error judging comment at index {idx}: Invalid JSON response: {repr(response)} | {str(je)}"
+                    )
+                    continue
+                if response_json.get("is_valid") == True:
+                    keep_results.append(response_json)
                 else:
-                    discard_comments.append(response_json)
+                    discard_results.append(response_json)
             except Exception as e:
                 self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
             percent = int(((progress_idx + 1) / total) * 100) if total else 100
@@ -478,11 +485,21 @@ class ApiViewReview:
 
         # Report summary
         self._print_message(
-            f"Judging completed. Kept {len(keep_comments)} generic comments. Discarded {len(discard_comments)} generic comments."
+            f"Judging completed. Kept {len(keep_results)} generic comments. Discarded {len(discard_results)} generic comments."
         )
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
         if self.debug_log:
+            keep_comments = []
+            discard_comments = []
+            for result in keep_results + discard_results:
+                # combine the comment and result info
+                comment_dict = self.results.comments[result["idx"]].model_dump()
+                comment = {**comment_dict, **result}
+                if result.get("is_valid") == True:
+                    keep_comments.append(comment)
+                else:
+                    discard_comments.append(comment)
             ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             debug_dir = os.path.join("scratch", "logs", self.language)
             os.makedirs(debug_dir, exist_ok=True)
@@ -494,16 +511,6 @@ class ApiViewReview:
                 json.dump(discard_comments, f, indent=2)
             self.logger.debug(f"Kept generic comments written to {keep_path}")
             self.logger.debug(f"Discarded generic comments written to {discard_path}")
-
-        # Update the results: keep all non-generic comments, plus kept generic comments
-        new_comments = []
-        # Add non-generic comments
-        for idx, comment in enumerate(self.results.comments):
-            if comment.source != "generic":
-                new_comments.append(comment)
-        # Add kept generic comments
-        new_comments.extend([Comment(**comment) for comment in keep_comments])
-        self.results.comments = new_comments
 
     def _deduplicate_comments(self):
         """

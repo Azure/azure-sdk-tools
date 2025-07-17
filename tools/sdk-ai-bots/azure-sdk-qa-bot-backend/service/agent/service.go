@@ -381,9 +381,9 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 		log.Printf("Vector searched chunk: %+v", result)
 		normalResult = append(normalResult, result)
 	}
-	if len(needCompleteResults) == 0 && len(normalResult) > 0 {
+	supplyNum := 5
+	if len(needCompleteResults) < supplyNum {
 		log.Printf("No results found with high relevance score, supply with normal results")
-		supplyNum := 5
 		if len(normalResult) < supplyNum {
 			supplyNum = len(normalResult)
 		}
@@ -553,7 +553,15 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {
 	agenticSearchStart := time.Now()
 	searchClient := search.NewSearchClient()
-	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources)
+
+	// Get the tenant-specific agentic search prompt
+	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
+	agenticSearchPrompt := ""
+	if hasConfig {
+		agenticSearchPrompt = tenantConfig.AgenticSearchPrompt
+	}
+
+	resp, err := searchClient.AgenticSearch(ctx, query, req.Sources, agenticSearchPrompt)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err

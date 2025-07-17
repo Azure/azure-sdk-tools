@@ -50,7 +50,7 @@ func TestGetFullContext(t *testing.T) {
 func TestAgenticSearch(t *testing.T) {
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
-	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil)
+	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil, "")
 	if err != nil {
 		t.Errorf("AgenticSearch() got an error: %v", err)
 	}

@@ -655,32 +655,63 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
 
 
-def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
+def get_apiview_comments(review_id: str, environment: str = "production", use_api: bool = False) -> dict:
     """
-    Retrieves comments for a specific APIView revision and returns them grouped by element ID and sorted by CreatedOn time.
+    Retrieves comments for a specific APIView review and returns them grouped by element ID and sorted by CreatedOn time.
     Omits resolved and deleted comments, and removes unnecessary fields.
     """
+    comments = []
     try:
-        container = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
-        result = container.query_items(
-            query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
-            parameters=[{"name": "@revision_id", "value": revision_id}],
-        )
-        conversations = {}
-        comments = list(result)
-        if comments:
-            for comment in comments:
-                element_id = comment.get("ElementId")
-                if element_id in conversations:
-                    conversations[element_id].append(comment)
+        if use_api:
+            if not review_id:
+                raise ValueError("When using the API, `--review-id` must be provided.")
+            apiview_endpoints = {
+                "production": "https://apiview.dev",
+                "staging": "https://apiviewstaging.azurewebsites.net",
+            }
+            endpoint_root = apiview_endpoints.get(environment)
+            endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
+            response = requests.get(
+                endpoint,
+                # TODO: Fix this cookie handling
+                headers={"Content-Type": "application/json", "Cookie": "TODO"},
+            )
+            if response.status_code != 200:
+                print(f"Error retrieving comments: {response.status_code} - {response.text}")
+                return {}
+            try:
+                comments = response.json()
+            except Exception as json_exc:
+                content = response.content.decode("utf-8")
+                if "Please login using your GitHub account" in content:
+                    print("Error: API is still requesting authentication via Github.")
+                    return {}
                 else:
-                    conversations[element_id] = [comment]
-        for element_id, comments in conversations.items():
-            # sort comments by created_on time
-            comments.sort(key=lambda x: x.get("CreatedOn", 0))
-        return conversations
+                    print(f"Error parsing comments JSON: {json_exc}")
+                    return {}
+        else:
+            container = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
+            result = container.query_items(
+                query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @review_id AND c.IsResolved = false AND c.IsDeleted = false",
+                parameters=[{"name": "@review_id", "value": review_id}],
+            )
+            comments = list(result)
     except Exception as e:
-        print(f"Error retrieving comments for revision {revision_id}: {e}")
+        print(f"Error retrieving comments for review {review_id}: {e}")
+        return {}
+
+    conversations = {}
+    if comments:
+        for comment in comments:
+            element_id = comment.get("ElementId")
+            if element_id in conversations:
+                conversations[element_id].append(comment)
+            else:
+                conversations[element_id] = [comment]
+    for element_id, comments in conversations.items():
+        # sort comments by created_on time
+        comments.sort(key=lambda x: x.get("CreatedOn", 0))
+    return conversations
 
 
 def _calculate_ai_vs_manual_comment_ratio(comments: list[APIViewComment]) -> float:
@@ -1132,10 +1163,10 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(
-                "revision_id",
+                "review_id",
                 type=str,
-                help="The revision ID of the APIView to retrieve comments for.",
-                options_list=["--revision-id", "-r"],
+                help="The review ID of the APIView to retrieve comments for.",
+                options_list=["--review-id", "-r"],
             )
             ac.argument(
                 "environment",
@@ -1144,6 +1175,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "use_api",
+                action="store_true",
+                help="Use the APIView API to retrieve comments instead of Cosmos DB.",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument(

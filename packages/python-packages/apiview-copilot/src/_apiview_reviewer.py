@@ -306,7 +306,6 @@ class ApiViewReview:
 
         # Submit all jobs to the executor
         all_futures = {}
-        section_contexts = {}
 
         # 1. Summary task
         all_futures[summary_tag] = self.executor.submit(
@@ -431,6 +430,87 @@ class ApiViewReview:
             # Restore original signal handler if it was set
             if is_main_thread:
                 signal.signal(signal.SIGINT, original_handler)
+
+    def _judge_generic_comments(self):
+        """
+        Judge generic comments by running the judge prompt on each comment, separating into keep and discard lists, reporting counts, and dumping to debug log if enabled.
+        """
+        judge_prompt_file = "generic_comment_judge.prompty"
+        judge_prompt_path = get_prompt_path(folder="api_review", filename=judge_prompt_file)
+
+        self._print_message("Reviewing generic comments...")
+
+        # Submit each generic comment to the executor for parallel processing
+        futures = {}
+        for idx, comment in enumerate(self.results.comments):
+            if comment.source != "generic":
+                continue
+            futures[idx] = self.executor.submit(
+                self._run_prompt,
+                judge_prompt_path,
+                inputs={
+                    "content": comment.model_dump(),
+                    "language": get_language_pretty_name(self.language),
+                    "context": self.search.search_all(query=comment.comment),
+                },
+            )
+
+        # Collect results as they complete, with % complete logging
+        keep_results = []
+        discard_results = []
+        total = len(futures)
+        for progress_idx, (idx, future) in enumerate(futures.items()):
+            try:
+                response = future.result()
+                if not response or not response.strip():
+                    self.logger.error(f"Error judging comment at index {idx}: Empty response from prompt.")
+                    continue
+                try:
+                    response_json = json.loads(response)
+                    response_json["idx"] = idx
+                except Exception as je:
+                    self.logger.error(
+                        f"Error judging comment at index {idx}: Invalid JSON response: {repr(response)} | {str(je)}"
+                    )
+                    continue
+                if response_json.get("is_valid") == True:
+                    keep_results.append(response_json)
+                else:
+                    discard_results.append(response_json)
+            except Exception as e:
+                self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Judging comments... {percent}% complete", overwrite=True)
+        self._print_message()  # Ensure the progress bar is visible before the summary
+
+        # Report summary
+        self._print_message(
+            f"Judging completed. Kept {len(keep_results)} generic comments. Discarded {len(discard_results)} generic comments."
+        )
+
+        # Debug log: dump keep_comments and discard_comments to files if enabled
+        if self.debug_log:
+            keep_comments = []
+            discard_comments = []
+            for result in keep_results + discard_results:
+                # combine the comment and result info
+                comment_dict = self.results.comments[result["idx"]].model_dump()
+                comment = {**comment_dict, **result}
+                if result.get("is_valid") == True:
+                    keep_comments.append(comment)
+                else:
+                    discard_comments.append(comment)
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            debug_dir = os.path.join("scratch", "logs", self.language)
+            os.makedirs(debug_dir, exist_ok=True)
+            keep_path = os.path.join(debug_dir, f"debug_keep_generic_comments_{ts}.json")
+            discard_path = os.path.join(debug_dir, f"debug_discard_generic_comments_{ts}.json")
+            with open(keep_path, "w", encoding="utf-8") as f:
+                json.dump(keep_comments, f, indent=2)
+            with open(discard_path, "w", encoding="utf-8") as f:
+                json.dump(discard_comments, f, indent=2)
+            self.logger.debug(f"Kept generic comments written to {keep_path}")
+            self.logger.debug(f"Discarded generic comments written to {discard_path}")
 
     def _deduplicate_comments(self):
         """
@@ -671,6 +751,12 @@ class ApiViewReview:
             self._generate_comments()
             generate_end_time = time()
             self._print_message(f"  Generated comments in {generate_end_time - generate_start_time:.2f} seconds.")
+
+            # Run generic comments through a judge prompt
+            judge_start_time = time()
+            self._judge_generic_comments()
+            judge_end_time = time()
+            self._print_message(f"  Generic comments judged in {judge_end_time - judge_start_time:.2f} seconds.")
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()

@@ -1,0 +1,58 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/content-validation
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/content-validation
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/content-validation
+    ReleaseBinaries: true
+    TestPreSteps:
+      - task: DotNetCoreCLI@2
+        displayName: New Manifest for tool
+        inputs:
+          command: custom
+          custom: 'new '
+          arguments: tool-manifest
+
+      - task: DotNetCoreCLI@2
+        displayName: Install Playwright CLI
+        inputs:
+          command: custom
+          custom: 'tool'
+          arguments: install Microsoft.Playwright.CLI
+    
+      - task: DotNetCoreCLI@2
+        displayName: Build all projects and libraries
+        inputs:
+          command: 'build'
+          projects: 'tools/content-validation/content-validation.sln'
+
+      - task: DotNetCoreCLI@2
+        displayName: Run Playwright Install
+        inputs:
+          command: custom
+          custom: 'tool '
+          arguments: run playwright install
+
+        

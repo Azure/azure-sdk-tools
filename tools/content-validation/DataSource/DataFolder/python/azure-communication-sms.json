@@ -1,0 +1,15 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication-sms-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-sms/azure.communication.sms?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-sms/azure.communication.sms.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-sms/azure.communication.sms.aio.smsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-sms/azure.communication.sms.smsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-sms/azure.communication.sms.smssendresult?view=azure-python\u0026branch=main"
+    ]
+  }
+]

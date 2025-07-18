@@ -1,5 +1,20 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Grant access to the APIView Cosmos DB for the current user.
+This script requires the user has elevated access to the Azure SDK Engineering System
+subscription. It will assign the "DocumentDB Account Contributor" ARM role and the
+"Built-in Data Reader" SQL role to the current user for the production and staging
+APIView Cosmos DB accounts.
+"""
+
 import argparse
 from uuid import uuid4
+
 import requests
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.authorization import AuthorizationManagementClient
@@ -7,15 +22,17 @@ from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
 
 def get_current_user_object_id():
+    """Retrieve the current user's object ID from Microsoft Graph API."""
     credential = DefaultAzureCredential()
     token = credential.get_token("https://graph.microsoft.com/.default")
     headers = {"Authorization": f"Bearer {token.token}"}
-    resp = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
+    resp = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers, timeout=20)
     resp.raise_for_status()
     return resp.json()["id"]
 
 
-def main():
+def modify_permissions():
+    """Grant or revoke APIView Cosmos DB permissions for the current user."""
     parser = argparse.ArgumentParser(description="Grant or revoke Cosmos DB permissions for the current user.")
     parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
     args = parser.parse_args()
@@ -40,7 +57,7 @@ def main():
             scope = cosmos_resource_id
             role_defs = list(auth_client.role_definitions.list(scope, filter=f"roleName eq '{role_name}'"))
             if not role_defs:
-                raise Exception(f"Role definition '{role_name}' not found.")
+                raise KeyError(f"Role definition '{role_name}' not found.")
             role_def_id = role_defs[0].id
             existing = list(
                 auth_client.role_assignments.list_for_scope(scope, filter=f"principalId eq '{user_principal_id}'")
@@ -78,6 +95,7 @@ def main():
                 print("ℹ️ No ARM role assignment found to revoke.")
 
         def assign_sql_role():
+            # pylint: disable=line-too-long
             sql_role_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DocumentDB/databaseAccounts/{cosmos_account}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
             assignments = list(cosmos_client.sql_resources.list_sql_role_assignments(resource_group, cosmos_account))
             if any(a.principal_id == user_principal_id for a in assignments):
@@ -98,6 +116,7 @@ def main():
             print("✓ SQL role assigned")
 
         def revoke_sql_role():
+            # pylint: disable=line-too-long
             sql_role_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DocumentDB/databaseAccounts/{cosmos_account}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
             assignments = list(cosmos_client.sql_resources.list_sql_role_assignments(resource_group, cosmos_account))
             found = False
@@ -136,4 +155,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    modify_permissions()

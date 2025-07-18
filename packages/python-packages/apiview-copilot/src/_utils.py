@@ -1,3 +1,13 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module of utility functions for APIView Copilot.
+"""
+
 import os
 
 
@@ -25,15 +35,15 @@ def get_prompt_path(*, folder: str, filename: str) -> str:
         folder (str): The folder containing the prompt.
         filename (str): The name of the prompt file.
     """
-    # if filename doens't end with .prompty, append it
+    # if filename doesn't end with .prompty, append it
     if not filename.endswith(".prompty"):
         filename += ".prompty"
 
     # Set up paths
-    PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    PROMPTS_FOLDER = os.path.join(PACKAGE_ROOT, "prompts")
+    package_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    prompts_folder = os.path.join(package_root, "prompts")
 
-    prompt_path = os.path.abspath(os.path.join(PROMPTS_FOLDER, folder, filename))
+    prompt_path = os.path.abspath(os.path.join(prompts_folder, folder, filename))
     if not os.path.exists(prompt_path):
         raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
     return prompt_path

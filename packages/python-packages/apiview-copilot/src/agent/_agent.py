@@ -1,27 +1,40 @@
-from contextlib import asynccontextmanager, AsyncExitStack
-from dotenv import load_dotenv
-from azure.identity.aio import DefaultAzureCredential
-from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollingOptions, AzureAIAgentThread
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
 
-from datetime import timedelta
-import json
+"""
+Module for managing APIView Copilot agents.
+"""
+
 import logging
 import os
+from contextlib import AsyncExitStack, asynccontextmanager
+from datetime import timedelta
 
-from src._database_manager import ContainerNames
-from src._models import ExistingComment, Memory, Example
+from azure.identity.aio import DefaultAzureCredential
+from dotenv import load_dotenv
+from semantic_kernel import Kernel
+
+# pylint: disable=no-name-in-module
+from semantic_kernel.agents import (
+    AzureAIAgent,
+    AzureAIAgentSettings,
+    AzureAIAgentThread,
+    RunPollingOptions,
+)
+from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 
 from .plugins import (
+    ApiReviewPlugin,
     SearchPlugin,
     UtilityPlugin,
-    ApiReviewPlugin,
-    get_delete_agent,
     get_create_agent,
-    get_retrieve_agent,
+    get_delete_agent,
     get_link_agent,
+    get_retrieve_agent,
 )
-from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 
 load_dotenv(override=True)
 
@@ -41,6 +54,7 @@ _SUPPORTED_LANGUAGES = [
 
 
 def create_kernel() -> Kernel:
+    """Creates a Kernel instance configured for Azure OpenAI."""
     base_url = os.getenv("AZURE_OPENAI_ENDPOINT")
     deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
@@ -50,7 +64,7 @@ def create_kernel() -> Kernel:
         raise RuntimeError("AZURE_OPENAI_DEPLOYMENT environment variable is required.")
     if not api_key:
         raise RuntimeError("AZURE_OPENAI_API_KEY environment variable is required.")
-    logging.info(f"Using Azure OpenAI at {base_url} with deployment {deployment_name}")
+    logging.info("Using Azure OpenAI at %s with deployment %s", base_url, deployment_name)
     kernel = Kernel(
         plugins={},  # Register your plugins here if needed
         services={
@@ -65,6 +79,7 @@ def create_kernel() -> Kernel:
 
 
 async def invoke_agent(*, agent, user_input, thread_id=None, messages=None):
+    """Invoke an agent with the provided user input and thread ID."""
     messages = messages or []
     # Only append user_input if not already the last message
     if not messages or messages[-1] != user_input:
@@ -81,6 +96,7 @@ async def invoke_agent(*, agent, user_input, thread_id=None, messages=None):
 
 @asynccontextmanager
 async def get_main_agent():
+    """Create and yield the main APIView Copilot agent."""
     kernel = create_kernel()
     ai_agent_settings = AzureAIAgentSettings(
         endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
@@ -91,8 +107,8 @@ async def get_main_agent():
 Your job is to receive a request from the user, determine their intent, and pass the request to the
 appropriate agent or agents for processing. You will then return the response from that agent to the user.
 If there's no agent that can handle the request, you will respond with a message indicating that you cannot
-process the request. You will also handle any errors that occur during the processing of the request and return an appropriate
-error message to the user.
+process the request. You will also handle any errors that occur during the processing of the request and return
+an appropriate error message to the user.
 """
 
     async with AsyncExitStack() as stack:

@@ -20,21 +20,37 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IOutputService output,
         ILogger<TestTools> logger) : MCPTool
     {
-        // Commands
-        private const string validateCodeOwnerCommandName = "validate-code-owner";
-        private const string validateServiceCodeOwnersCommandName = "validate-service-code-owners";
+    private static readonly Dictionary<string, string> azureRepositories = new Dictionary<string, string>
+        {
+            { "dotnet", "azure-sdk-for-net" },
+            { "cpp", "azure-sdk-for-cpp" },
+            /*{ "go", "azure-sdk-for-go" },
+            { "java", "azure-sdk-for-java" },
+            { "javascript", "azure-sdk-for-js" },
+            { "typescript", "azure-sdk-for-js" },
+            { "python", "azure-sdk-for-python" },
+            { "rest-api-specs", "azure-rest-api-specs" },
+            { "rust", "azure-sdk-for-rust" }*/
+        };
 
-        // Options
-        private readonly Option<string> userNameOpt = new(["--username", "-u"], "GitHub username to validate") { IsRequired = false };
-        private readonly Option<string> serviceNameOpt = new(["--service", "-s"], "Service name to validate code owners for") { IsRequired = true };
+        // Command names
+        private const string isValidCodeOwnerCommandName = "is-valid-code-owner";
+        private const string validateServiceLabelCommandName = "validate-service-label";
+        private const string isValidServiceCodeOwnersCommandName = "is-valid-service-code-owners"; // Proabably change to something more general.
+
+        // Command options
+        private readonly Option<string> gitHubAliasOpt = new(["--username", "-u"], "GitHub alias to validate") { IsRequired = false };
+        private readonly Option<string> serviceNameOpt = new(["--service", "-s"], "Service name to find and validate the service label for") { IsRequired = true };
+        private readonly Option<string> serviceLabelOpt = new(["--serviceLabel", "-sl"], "Confirmed service label to validate code owners for") { IsRequired = true };
 
         public override Command GetCommand()
         {
             var command = new Command("test-tools", "Test tools for validation and testing purposes.");
             var subCommands = new[]
             {
-                new Command(validateCodeOwnerCommandName, "Validate if a user is a GitHub code owner") { userNameOpt },
-                new Command(validateServiceCodeOwnersCommandName, "Validate code owners for a service across all Azure SDK repositories") { serviceNameOpt }
+                new Command(isValidCodeOwnerCommandName, "Validate if a GitHub alias has proper organizational membership and write access") { gitHubAliasOpt },
+                new Command(validateServiceLabelCommandName, "Validate the service label for a given service name against the common labels CSV") { serviceNameOpt },
+                new Command(isValidServiceCodeOwnersCommandName, "Validate code owners for a service across all Azure SDK repositories") { serviceLabelOpt }
             };
 
             foreach (var subCommand in subCommands)
@@ -52,14 +68,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             switch (command)
             {
-                case validateCodeOwnerCommandName:
-                    var userName = commandParser.GetValueForOption(userNameOpt);
-                    var validationResult = await ValidateGithubCodeOwner(userName ?? "");
-                    output.Output($"GitHub code owner validation result: {validationResult}");
+                case isValidCodeOwnerCommandName:
+                    var gitHubAlias = commandParser.GetValueForOption(gitHubAliasOpt);
+                    var aliasValidationResult = await isValidCodeOwner(gitHubAlias ?? "");
+                    output.Output($"GitHub alias validation result: {aliasValidationResult}");
                     return;
-                case validateServiceCodeOwnersCommandName:
+                case validateServiceLabelCommandName:
                     var serviceName = commandParser.GetValueForOption(serviceNameOpt);
-                    var serviceValidationResult = await ValidateServiceCodeOwners(serviceName ?? "");
+                    var serviceLabelResult = await ValidateServiceLabel(serviceName ?? "");
+                    output.Output($"Service label validation result: {serviceLabelResult}");
+                    return;
+                case isValidServiceCodeOwnersCommandName:
+                    var confirmedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
+                    var serviceValidationResult = await ValidateServiceCodeOwners(confirmedServiceLabel ?? "");
                     output.Output($"Service code owners validation result: {serviceValidationResult}");
                     return;
                 default:
@@ -69,36 +90,50 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "ValidateServiceCodeOwners"), Description("Validates code owners for a service across all Azure SDK repositories.")]
-        public async Task<string> ValidateServiceCodeOwners(string serviceName)
+        [McpServerTool(Name = "ValidateServiceLabel"), Description("Validates the service label for a given service name against the common labels CSV.")]
+        public async Task<string> ValidateServiceLabel(string serviceName)
         {
             try
             {
-                var results = new List<ServiceCodeOwnerResult>();
-                
-                // Repository mapping
-                var azureRepositories = new Dictionary<string, string>
+                // Process dotnet first to find the service label
+                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{azureRepositories["dotnet"]}/main/.github/CODEOWNERS";
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl);
+
+                var matchingEntry = FindServiceEntries(codeownersEntries, serviceName); // Does this need to be async?
+                var confirmedServiceLabels = matchingEntry?.ServiceLabels != null ? string.Join(",", matchingEntry.ServiceLabels) : null;
+                if (confirmedServiceLabels == null)
                 {
-                    /*{ "cpp", "azure-sdk-for-cpp" },
-                    { "go", "azure-sdk-for-go" },
-                    { "java", "azure-sdk-for-java" },
-                    { "javascript", "azure-sdk-for-js" },
-                    { "typescript", "azure-sdk-for-js" },
-                    { "dotnet", "azure-sdk-for-net" },
-                    { "python", "azure-sdk-for-python" },
-                    { "rest-api-specs", "azure-rest-api-specs" },*/
-                    { "rust", "azure-sdk-for-rust" }
-                };
-                
+                    return $"Service '{serviceName}' not found in the dotnet repository.";
+                }
+                return confirmedServiceLabels;
+            }
+            catch (Exception ex)
+            {
+                return $"Failed to validate service label. Error: {ex.Message}";
+            }
+        }
+
+        [McpServerTool(Name = "ValidateServiceCodeOwners"), Description("Validates code owners for a service across all Azure SDK repositories.")]
+        public async Task<string> ValidateServiceCodeOwners(string confirmedServiceLabels)
+        {
+            try
+            {
+                // Parse and validate service labels once at the top level
+                var serviceLabels = confirmedServiceLabels.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+                var invalidLabels = await ValidateServiceLabels(serviceLabels);
+                var validLabels = serviceLabels.Except(invalidLabels).ToList();
+
+                var results = new List<ServiceCodeOwnerResult>();
+
                 // Process each repository
                 foreach (var repo in azureRepositories)
                 {
-                    var repoResult = await ProcessRepositoryForService(repo.Key, repo.Value, serviceName);
+                    var repoResult = await ProcessRepositoryForService(repo.Key, repo.Value, serviceLabels);
                     results.Add(repoResult);
                 }
 
                 // Generate summary
-                var summary = GenerateServiceValidationSummary(results, serviceName);
+                var summary = GenerateServiceValidationSummary(results, confirmedServiceLabels, validLabels, invalidLabels);
                 return System.Text.Json.JsonSerializer.Serialize(summary, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
             catch (Exception ex)
@@ -112,16 +147,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<ServiceCodeOwnerResult> ProcessRepositoryForService(string repoType, string repoName, string serviceName)
+        private async Task<ServiceCodeOwnerResult> ProcessRepositoryForService(string repoType, string repoName, List<string> serviceLabels)
         {
             var result = new ServiceCodeOwnerResult
             {
                 Repository = repoName,
                 RepositoryType = repoType,
-                ServiceName = serviceName,
                 CodeOwners = new List<CodeOwnerValidationResult>(),
-                ServiceLabels = new List<string>(),
-                InvalidLabels = new List<string>(),
                 Status = "Processing"
             };
 
@@ -131,34 +163,27 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{repoName}/main/.github/CODEOWNERS";
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl);
 
-                // Find entries matching the service
-                var matchingEntry = FindServiceEntries(codeownersEntries, serviceName);
-
-                if (matchingEntry == null)
+                // Find entries matching any of the service labels
+                var matchingEntries = new List<CodeownersEntry>();
+                foreach (var serviceLabel in serviceLabels)
                 {
-                    result.Status = "Service not found";
-                    result.Message = $"Service '{serviceName}' not found in {repoName}";
-                    return result;
+                    var matchingEntry = FindServiceEntries(codeownersEntries, serviceLabel);
+                    if (matchingEntry != null && !matchingEntries.Contains(matchingEntry))
+                    {
+                        matchingEntries.Add(matchingEntry);
+                    }
                 }
 
-                // Process each matching entry
-                if (matchingEntry != null)
+                if (matchingEntries.Any())
                 {
-                    // Extract service labels
-                    if (matchingEntry.ServiceLabels?.Any() == true)
-                    {
-                        result.ServiceLabels.AddRange(matchingEntry.ServiceLabels);
-
-                        // Validate service labels
-                        var invalidLabels = await ValidateServiceLabels(matchingEntry.ServiceLabels);
-                        result.InvalidLabels.AddRange(invalidLabels);
-                    }
-
-                    // Extract and validate code owners
+                    // Extract and validate code owners from all matching entries
                     var allOwners = new List<string>();
-                    if (matchingEntry.SourceOwners?.Any() == true) allOwners.AddRange(matchingEntry.SourceOwners);
-                    if (matchingEntry.ServiceOwners?.Any() == true) allOwners.AddRange(matchingEntry.ServiceOwners);
-                    if (matchingEntry.AzureSdkOwners?.Any() == true) allOwners.AddRange(matchingEntry.AzureSdkOwners);
+                    foreach (var entry in matchingEntries)
+                    {
+                        if (entry.SourceOwners?.Any() == true) allOwners.AddRange(entry.SourceOwners);
+                        if (entry.ServiceOwners?.Any() == true) allOwners.AddRange(entry.ServiceOwners);
+                        if (entry.AzureSdkOwners?.Any() == true) allOwners.AddRange(entry.AzureSdkOwners);
+                    }
 
                     // Remove duplicates and validate each owner
                     var uniqueOwners = allOwners.Where(o => !string.IsNullOrEmpty(o)).Distinct().ToList();
@@ -166,13 +191,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         logger.LogInformation($"Validating code owner: {owner}");
                         var username = owner.TrimStart('@');
-                        var ownerValidation = await ValidateCodeOwner(username);
-                        result.CodeOwners.Add(ownerValidation);
+                        var ownerValidationResult = await ValidateCodeOwner(username);
+                        result.CodeOwners.Add(ownerValidationResult);
                     }
-                }
 
-                result.Status = "Success";
-                result.Message = $"Found {matchingEntry} matching entries with {result.CodeOwners.Count} code owners";
+                    result.Status = "Success";
+                    result.Message = $"Found {matchingEntries.Count} matching entries with {result.CodeOwners.Count} code owners";
+                }
+                else
+                {
+                    result.Status = "Service not found";
+                    result.Message = $"Service labels '{string.Join(",", serviceLabels)}' not found in {repoName}";
+                }
             }
             catch (Exception ex)
             {
@@ -184,9 +214,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return result;
         }
 
-        private CodeownersEntry FindServiceEntries(IList<CodeownersEntry> entries, string serviceName)
+        private CodeownersEntry? FindServiceEntries(IList<CodeownersEntry> entries, string serviceName)
         {
-            CodeownersEntry matchingEntry = null;
+            CodeownersEntry? matchingEntry = null;
 
             foreach (var entry in entries)
             {
@@ -271,7 +301,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task<CodeOwnerValidationResult> ValidateCodeOwner(string username)
         {
-            var result = new CodeOwnerValidationResult
+            var validationResult = new CodeOwnerValidationResult
             {
                 Username = username,
                 Status = "Processing"
@@ -279,42 +309,41 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                var validationJson = await ValidateGithubCodeOwner(username);
-                var validation = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(validationJson);
+                var gitHubAliasValidationJson = await isValidCodeOwner(username);
+                var parsedValidation = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(gitHubAliasValidationJson);
                 
-                result.Status = "Success";
-                result.IsValidCodeOwner = validation.GetProperty("IsValidCodeOwner").GetBoolean();
-                result.HasWritePermission = validation.GetProperty("WritePermission").GetBoolean();
+                validationResult.Status = "Success";
+                validationResult.IsValidCodeOwner = parsedValidation.GetProperty("IsValidCodeOwner").GetBoolean();
+                validationResult.HasWritePermission = parsedValidation.GetProperty("WritePermission").GetBoolean();
                 
                 // Parse organizations
-                if (validation.GetProperty("Organizations").ValueKind == System.Text.Json.JsonValueKind.Object)
+                if (parsedValidation.GetProperty("Organizations").ValueKind == System.Text.Json.JsonValueKind.Object)
                 {
-                    var orgs = validation.GetProperty("Organizations");
-                    result.Organizations = new Dictionary<string, bool>();
+                    var organizationsProperty = parsedValidation.GetProperty("Organizations");
+                    validationResult.Organizations = new Dictionary<string, bool>();
                     
-                    foreach (var org in orgs.EnumerateObject())
+                    foreach (var organizationProperty in organizationsProperty.EnumerateObject())
                     {
-                        result.Organizations[org.Name] = org.Value.GetBoolean();
+                        validationResult.Organizations[organizationProperty.Name] = organizationProperty.Value.GetBoolean();
                     }
                 }
             }
             catch (Exception ex)
             {
-                result.Status = "Error";
-                result.Message = $"Error validating {username}: {ex.Message}";
+                validationResult.Status = "Error";
+                validationResult.Message = $"Error validating {username}: {ex.Message}";
                 logger.LogError(ex, "Error validating code owner {username}", username);
             }
 
-            return result;
+            return validationResult;
         }
 
-        [McpServerTool(Name = "ValidateGithubCodeOwner"), Description("Validates if the user is a code owner for the TypeSpec project in the public Azure/azure-rest-api-specs repository.")]
-        public async Task<string> ValidateGithubCodeOwner(string githubAlias = "")
+        [McpServerTool(Name = "isValidCodeOwner"), Description("Validates if the user is a code owner given their GitHub alias. (Default is the current user)")]
+        public async Task<string> isValidCodeOwner(string githubAlias = "")
         {
             try
             {
                 //await test();
-
                 //Gets the current users github username if not provided
                 var user = await githubService.GetGitUserDetailsAsync();
                 var userDetails = string.IsNullOrEmpty(githubAlias) ? user?.Login : githubAlias;
@@ -397,68 +426,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
         }
 
-        private ServiceValidationSummary GenerateServiceValidationSummary(List<ServiceCodeOwnerResult> results, string serviceName)
-        {
-            var summary = new ServiceValidationSummary
-            {
-                ServiceName = serviceName,
-                TotalRepositories = results.Count,
-                RepositoriesWithService = results.Count(r => r.Status == "Success"),
-                RepositoriesWithoutService = results.Count(r => r.Status == "Service not found"),
-                RepositoriesWithErrors = results.Count(r => r.Status == "Error"),
-                Results = results,
-                AllCodeOwners = results.SelectMany(r => r.CodeOwners).ToList(),
-                AllServiceLabels = results.SelectMany(r => r.ServiceLabels).Distinct().ToList(),
-                AllInvalidLabels = results.SelectMany(r => r.InvalidLabels).Distinct().ToList()
-            };
-
-            // Generate summary statistics
-            summary.ValidCodeOwners = summary.AllCodeOwners.Count(co => co.IsValidCodeOwner);
-            summary.InvalidCodeOwners = summary.AllCodeOwners.Count(co => !co.IsValidCodeOwner);
-            summary.CodeOwnersWithErrors = summary.AllCodeOwners.Count(co => co.Status == "Error");
-
-            return summary;
-        }
-
-        // Data models
-        public class ServiceCodeOwnerResult
-        {
-            public string Repository { get; set; } = "";
-            public string RepositoryType { get; set; } = "";
-            public string ServiceName { get; set; } = "";
-            public string Status { get; set; } = "";
-            public string Message { get; set; } = "";
-            public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
-            public List<string> ServiceLabels { get; set; } = new();
-            public List<string> InvalidLabels { get; set; } = new();
-        }
-
-        public class CodeOwnerValidationResult
-        {
-            public string Username { get; set; } = "";
-            public string Status { get; set; } = "";
-            public string Message { get; set; } = "";
-            public bool IsValidCodeOwner { get; set; }
-            public bool HasWritePermission { get; set; }
-            public Dictionary<string, bool> Organizations { get; set; } = new();
-        }
-
-        public class ServiceValidationSummary
-        {
-            public string ServiceName { get; set; } = "";
-            public int TotalRepositories { get; set; }
-            public int RepositoriesWithService { get; set; }
-            public int RepositoriesWithoutService { get; set; }
-            public int RepositoriesWithErrors { get; set; }
-            public int ValidCodeOwners { get; set; }
-            public int InvalidCodeOwners { get; set; }
-            public int CodeOwnersWithErrors { get; set; }
-            public List<ServiceCodeOwnerResult> Results { get; set; } = new();
-            public List<CodeOwnerValidationResult> AllCodeOwners { get; set; } = new();
-            public List<string> AllServiceLabels { get; set; } = new();
-            public List<string> AllInvalidLabels { get; set; } = new();
-        }
-
         private List<string> ExtractOrganizations(string output)
         {
             var organizations = new List<string>();
@@ -511,6 +478,65 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private bool ExtractCodeOwnerValidity(string output)
         {
             return output.Contains("Valid code owner");
+        }
+
+        private ServiceValidationSummary GenerateServiceValidationSummary(List<ServiceCodeOwnerResult> results, string serviceName, List<string> validLabels, List<string> invalidLabels)
+        {
+            var summary = new ServiceValidationSummary
+            {
+                ServiceName = serviceName,
+                ValidServiceLabels = validLabels,
+                InvalidServiceLabels = invalidLabels,
+                TotalRepositories = results.Count,
+                RepositoriesWithService = results.Count(r => r.Status == "Success"),
+                RepositoriesWithoutService = results.Count(r => r.Status == "Service not found"),
+                RepositoriesWithErrors = results.Count(r => r.Status == "Error"),
+                Results = results,
+                AllCodeOwners = results.SelectMany(r => r.CodeOwners).ToList()
+            };
+
+            // Generate summary statistics
+            summary.ValidCodeOwners = summary.AllCodeOwners.Count(co => co.IsValidCodeOwner);
+            summary.InvalidCodeOwners = summary.AllCodeOwners.Count(co => !co.IsValidCodeOwner);
+            summary.CodeOwnersWithErrors = summary.AllCodeOwners.Count(co => co.Status == "Error");
+
+            return summary;
+        }
+
+        // Data models
+        public class ServiceCodeOwnerResult
+        {
+            public string Repository { get; set; } = "";
+            public string RepositoryType { get; set; } = "";
+            public string Status { get; set; } = "";
+            public string Message { get; set; } = "";
+            public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
+        }
+
+        public class CodeOwnerValidationResult
+        {
+            public string Username { get; set; } = "";
+            public string Status { get; set; } = "";
+            public string Message { get; set; } = "";
+            public bool IsValidCodeOwner { get; set; }
+            public bool HasWritePermission { get; set; }
+            public Dictionary<string, bool> Organizations { get; set; } = new();
+        }
+
+        public class ServiceValidationSummary
+        {
+            public string ServiceName { get; set; } = "";
+            public List<string> ValidServiceLabels { get; set; } = new();
+            public List<string> InvalidServiceLabels { get; set; } = new();
+            public int TotalRepositories { get; set; }
+            public int RepositoriesWithService { get; set; }
+            public int RepositoriesWithoutService { get; set; }
+            public int RepositoriesWithErrors { get; set; }
+            public int ValidCodeOwners { get; set; }
+            public int InvalidCodeOwners { get; set; }
+            public int CodeOwnersWithErrors { get; set; }
+            public List<ServiceCodeOwnerResult> Results { get; set; } = new();
+            public List<CodeOwnerValidationResult> AllCodeOwners { get; set; } = new();
         }
 
         private async Task test()

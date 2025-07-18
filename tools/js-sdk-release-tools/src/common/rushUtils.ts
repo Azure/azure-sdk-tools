@@ -52,9 +52,19 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 async function addApiViewInfo(
     packageDirectory: string,
     sdkRoot: string,
+    packageName: string,
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
-    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**/*.api.json');
+    // Extract the actual package name part from scoped package name 
+    // (e.g., @azure/arm-oracledatabase -> arm-oracledatabase, @azure-rest/ai-language-conversations -> ai-language-conversations)
+    let actualPackageName = packageName;
+    if (packageName.startsWith('@azure/')) {
+        actualPackageName = packageName.substring('@azure/'.length);
+    } else if (packageName.startsWith('@azure-rest/')) {
+        actualPackageName = packageName.substring('@azure-rest/'.length);
+    }
+    const expectedApiViewFileName = `${actualPackageName}-node.api.json`;
+    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**', expectedApiViewFileName);
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
@@ -102,7 +112,7 @@ export async function buildPackage(
         await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
     }
 
-    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
+    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);
     logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder

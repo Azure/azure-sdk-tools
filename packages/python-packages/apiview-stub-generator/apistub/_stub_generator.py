@@ -18,6 +18,11 @@ import tempfile
 from subprocess import check_call
 import zipfile
 import tarfile
+import re
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 from apistub._metadata_map import MetadataMap
 
@@ -164,7 +169,16 @@ class StubGenerator:
         if not self.wheel_path:
             pkg_root_path = self.pkg_path
             pkg_name = os.path.split(self.pkg_path)[-1]
-            version = importlib.metadata.version(pkg_name)
+            try:
+                version = importlib.metadata.version(pkg_name)
+            except importlib.metadata.PackageNotFoundError:
+                # If the package name from directory doesn't match actual package name,
+                # try to get it from metadata files
+                pkg_name = self._get_package_name_from_metadata_files(self.pkg_path)
+                if not pkg_name:
+                    # If we still can't find it, re-raise the original error
+                    raise
+                version = importlib.metadata.version(pkg_name)
             dist = importlib.metadata.distribution(pkg_name)
             self.extras_require = dist.metadata.get_all('Provides-Extra') or []
             return pkg_root_path, pkg_name, version
@@ -365,6 +379,41 @@ class StubGenerator:
             for item in os.listdir(internal_folder):
                 shutil.move(os.path.join(internal_folder, item), temp_pkg_dir)
             os.rmdir(internal_folder)
+
+    def _get_package_name_from_metadata_files(self, path):
+        """Extract the package name from metadata files in the given directory.
+
+        This function first attempts to extract the package name from a `pyproject.toml` file.
+        If that fails, it falls back to parsing a `setup.py` file for a `PACKAGE_NAME` variable.
+        """
+        pkg_name = None
+
+        # try pyproject.toml
+        pyproject_path = os.path.join(path, 'pyproject.toml')
+        if os.path.exists(pyproject_path):
+            try:
+                with open(pyproject_path, 'rb') as f:
+                    data = tomllib.load(f)
+                if 'project' in data and 'name' in data['project']:
+                    pkg_name = data['project']['name']
+            except Exception:
+                pass
+
+        # try setup.py for package_name = "name" pattern
+        if not pkg_name:
+            setup_py_path = os.path.join(path, 'setup.py')
+            if os.path.exists(setup_py_path):
+                try:
+                    with open(setup_py_path, 'r') as f:
+                        content = f.read()
+                    # Look for PACKAGE_NAME = "package-name"
+                    match = re.search(r'PACKAGE_NAME\s*=\s*["\']([^"\']+)["\']', content)
+                    if match:
+                        pkg_name = match.group(1)
+                except Exception as exc:
+                    logging.warning(f"Failed to read setup.py or parse PACKAGE_NAME: {exc}")
+
+        return pkg_name
 
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]

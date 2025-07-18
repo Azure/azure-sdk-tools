@@ -13,30 +13,28 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("This type contains test MCP tools for validation and testing purposes.")]
     [McpServerToolType]
-    public class TestTools(IGitHubService githubService,
-        IDevOpsService devopsService,
-        IGitHelper gitHelper,
-        ITypeSpecHelper typespecHelper,
+    public class CommonValidationTool(IGitHubService githubService,
         IOutputService output,
-        ILogger<TestTools> logger) : MCPTool
+        ILogger<CommonValidationTool> logger) : MCPTool
     {
-    private static readonly Dictionary<string, string> azureRepositories = new Dictionary<string, string>
+        private static Dictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new Dictionary<string, CodeOwnerValidationResult>();
+        private static readonly Dictionary<string, string> azureRepositories = new Dictionary<string, string>
         {
             { "dotnet", "azure-sdk-for-net" },
             { "cpp", "azure-sdk-for-cpp" },
-            /*{ "go", "azure-sdk-for-go" },
+            { "go", "azure-sdk-for-go" },
             { "java", "azure-sdk-for-java" },
             { "javascript", "azure-sdk-for-js" },
             { "typescript", "azure-sdk-for-js" },
             { "python", "azure-sdk-for-python" },
             { "rest-api-specs", "azure-rest-api-specs" },
-            { "rust", "azure-sdk-for-rust" }*/
+            { "rust", "azure-sdk-for-rust" }
         };
 
         // Command names
         private const string isValidCodeOwnerCommandName = "is-valid-code-owner";
         private const string validateServiceLabelCommandName = "validate-service-label";
-        private const string isValidServiceCodeOwnersCommandName = "is-valid-service-code-owners"; // Proabably change to something more general.
+        private const string isValidServiceCodeOwnersCommandName = "is-valid-service-code-owners";
 
         // Command options
         private readonly Option<string> gitHubAliasOpt = new(["--username", "-u"], "GitHub alias to validate") { IsRequired = false };
@@ -95,45 +93,45 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                // Process dotnet first to find the service label
-                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{azureRepositories["dotnet"]}/main/.github/CODEOWNERS";
-                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl);
-
-                var matchingEntry = FindServiceEntries(codeownersEntries, serviceName); // Does this need to be async?
-                var confirmedServiceLabels = matchingEntry?.ServiceLabels != null ? string.Join(",", matchingEntry.ServiceLabels) : null;
-                if (confirmedServiceLabels == null)
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var githubLabelsLogger = loggerFactory.CreateLogger<GitHubLabelsTool>();
+                
+                var githubLabelsTool = new GitHubLabelsTool(githubLabelsLogger, output, githubService);
+                
+                var result = await githubLabelsTool.CheckServiceLabel(serviceName);
+                    
+                if (result.Found)
                 {
-                    return $"Service '{serviceName}' not found in the dotnet repository.";
+                    logger.LogInformation($"Service label '{result.ServiceLabel}' is valid (Color: {result.ColorCode})");
+                    return result.ServiceLabel;
                 }
-                return confirmedServiceLabels;
+                else
+                {
+                    logger.LogWarning($"Service label '{serviceName}' not found in common-labels.csv");
+                    return $"Service label '{serviceName}' not found in common-labels.csv";
+                }
             }
             catch (Exception ex)
             {
-                return $"Failed to validate service label. Error: {ex.Message}";
+                logger.LogError(ex, $"Failed to validate service label for: {serviceName}");
+                return $"Error: Failed to validate service label. {ex.Message}";
             }
         }
 
         [McpServerTool(Name = "ValidateServiceCodeOwners"), Description("Validates code owners for a service across all Azure SDK repositories.")]
-        public async Task<string> ValidateServiceCodeOwners(string confirmedServiceLabels)
+        public async Task<string> ValidateServiceCodeOwners(string confirmedServiceLabel)
         {
             try
             {
-                // Parse and validate service labels once at the top level
-                var serviceLabels = confirmedServiceLabels.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-                var invalidLabels = await ValidateServiceLabels(serviceLabels);
-                var validLabels = serviceLabels.Except(invalidLabels).ToList();
-
                 var results = new List<ServiceCodeOwnerResult>();
 
-                // Process each repository
                 foreach (var repo in azureRepositories)
                 {
-                    var repoResult = await ProcessRepositoryForService(repo.Key, repo.Value, serviceLabels);
+                    var repoResult = await ProcessRepositoryForService(repo.Key, repo.Value, confirmedServiceLabel);
                     results.Add(repoResult);
                 }
 
-                // Generate summary
-                var summary = GenerateServiceValidationSummary(results, confirmedServiceLabels, validLabels, invalidLabels);
+                var summary = GenerateServiceValidationSummary(results, confirmedServiceLabel);
                 return System.Text.Json.JsonSerializer.Serialize(summary, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
             catch (Exception ex)
@@ -147,7 +145,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<ServiceCodeOwnerResult> ProcessRepositoryForService(string repoType, string repoName, List<string> serviceLabels)
+        private async Task<ServiceCodeOwnerResult> ProcessRepositoryForService(string repoType, string repoName, string serviceLabel)
         {
             var result = new ServiceCodeOwnerResult
             {
@@ -159,49 +157,44 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                // Get CODEOWNERS file
                 var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{repoName}/main/.github/CODEOWNERS";
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl);
 
-                // Find entries matching any of the service labels
-                var matchingEntries = new List<CodeownersEntry>();
-                foreach (var serviceLabel in serviceLabels)
-                {
-                    var matchingEntry = FindServiceEntries(codeownersEntries, serviceLabel);
-                    if (matchingEntry != null && !matchingEntries.Contains(matchingEntry))
-                    {
-                        matchingEntries.Add(matchingEntry);
-                    }
-                }
+                // Find entries matching the single service label
+                var matchingEntry = FindServiceEntries(codeownersEntries, serviceLabel);
 
-                if (matchingEntries.Any())
+                if (matchingEntry != null)
                 {
-                    // Extract and validate code owners from all matching entries
+                    // Extract and validate code owners from the matching entry
                     var allOwners = new List<string>();
-                    foreach (var entry in matchingEntries)
-                    {
-                        if (entry.SourceOwners?.Any() == true) allOwners.AddRange(entry.SourceOwners);
-                        if (entry.ServiceOwners?.Any() == true) allOwners.AddRange(entry.ServiceOwners);
-                        if (entry.AzureSdkOwners?.Any() == true) allOwners.AddRange(entry.AzureSdkOwners);
-                    }
+                    if (matchingEntry.SourceOwners?.Any() == true) allOwners.AddRange(matchingEntry.SourceOwners);
+                    if (matchingEntry.ServiceOwners?.Any() == true) allOwners.AddRange(matchingEntry.ServiceOwners);
+                    if (matchingEntry.AzureSdkOwners?.Any() == true) allOwners.AddRange(matchingEntry.AzureSdkOwners);
 
                     // Remove duplicates and validate each owner
                     var uniqueOwners = allOwners.Where(o => !string.IsNullOrEmpty(o)).Distinct().ToList();
                     foreach (var owner in uniqueOwners)
                     {
-                        logger.LogInformation($"Validating code owner: {owner}");
                         var username = owner.TrimStart('@');
+
+                        // implement caching to improve performance.
+                        if (codeOwnerValidationCache.ContainsKey(username))
+                        {
+                            result.CodeOwners.Add(codeOwnerValidationCache[username]);
+                            continue;
+                        }
                         var ownerValidationResult = await ValidateCodeOwner(username);
                         result.CodeOwners.Add(ownerValidationResult);
+                        //codeOwnerValidationCache[username] = ownerValidationResult;
                     }
 
                     result.Status = "Success";
-                    result.Message = $"Found {matchingEntries.Count} matching entries with {result.CodeOwners.Count} code owners";
+                    result.Message = $"Found 1 matching entry with {result.CodeOwners.Count} code owners";
                 }
                 else
                 {
                     result.Status = "Service not found";
-                    result.Message = $"Service labels '{string.Join(",", serviceLabels)}' not found in {repoName}";
+                    result.Message = $"Service label '{serviceLabel}' not found in {repoName}";
                 }
             }
             catch (Exception ex)
@@ -250,44 +243,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return matchingEntry;
         }
 
-        private async Task<List<string>> ValidateServiceLabels(List<string> serviceLabels)
-        {
-            var invalidLabels = new List<string>();
-            
-            // Create a logger factory to create the correct logger type
-            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            var githubLabelsLogger = loggerFactory.CreateLogger<GitHubLabelsTool>();
-            
-            var githubLabelsTool = new GitHubLabelsTool(githubLabelsLogger, output, githubService);
-            
-            foreach (var serviceLabel in serviceLabels)
-            {
-                try
-                {
-                    var result = await githubLabelsTool.CheckServiceLabel(serviceLabel);
-                    
-                    if (!result.Found)
-                    {
-                        invalidLabels.Add(serviceLabel);
-                        logger.LogWarning($"Invalid service label found: {serviceLabel}");
-                        
-                        // Mock: Simulate creating a new label
-                        await CreateServiceLabel(serviceLabel);
-                    }
-                    else
-                    {
-                        logger.LogInformation($"Service label '{serviceLabel}' is valid (Color: {result.ColorCode})");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError($"Error validating service label '{serviceLabel}': {ex.Message}");
-                    invalidLabels.Add(serviceLabel);
-                }
-            }
-            return invalidLabels;
-        }
-
         private async Task CreateServiceLabel(string label)
         {
             // Mock implementation for creating a new service label
@@ -309,24 +264,37 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                var gitHubAliasValidationJson = await isValidCodeOwner(username);
-                var parsedValidation = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(gitHubAliasValidationJson);
+                // Call PowerShell script directly
+                var powerShellOutput = await CallPowerShellScriptViaCMD($"-UserName \"{username}\"");
                 
-                validationResult.Status = "Success";
-                validationResult.IsValidCodeOwner = parsedValidation.GetProperty("IsValidCodeOwner").GetBoolean();
-                validationResult.HasWritePermission = parsedValidation.GetProperty("WritePermission").GetBoolean();
-                
-                // Parse organizations
-                if (parsedValidation.GetProperty("Organizations").ValueKind == System.Text.Json.JsonValueKind.Object)
+                if (string.IsNullOrEmpty(powerShellOutput))
                 {
-                    var organizationsProperty = parsedValidation.GetProperty("Organizations");
-                    validationResult.Organizations = new Dictionary<string, bool>();
-                    
-                    foreach (var organizationProperty in organizationsProperty.EnumerateObject())
+                    validationResult.Status = "Error";
+                    validationResult.Message = "No output received from PowerShell script";
+                    return validationResult;
+                }
+
+                // Parse the PowerShell output directly
+                var requiredOrganizations = new Dictionary<string, bool>
+                {
+                    { "azure", false },
+                    { "microsoft", false }
+                };
+                
+                var organizations = ExtractOrganizations(powerShellOutput);
+                foreach (var organization in organizations)
+                {
+                    var organizationLower = organization.ToLower();
+                    if (requiredOrganizations.ContainsKey(organizationLower))
                     {
-                        validationResult.Organizations[organizationProperty.Name] = organizationProperty.Value.GetBoolean();
+                        requiredOrganizations[organizationLower] = true;
                     }
                 }
+
+                validationResult.Status = "Success";
+                validationResult.Organizations = requiredOrganizations;
+                validationResult.HasWritePermission = ExtractWritePermission(powerShellOutput);
+                validationResult.IsValidCodeOwner = ExtractCodeOwnerValidity(powerShellOutput);
             }
             catch (Exception ex)
             {
@@ -343,13 +311,32 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                //await test();
-                //Gets the current users github username if not provided
+                // Get the current user's GitHub username if not provided
                 var user = await githubService.GetGitUserDetailsAsync();
                 var userDetails = string.IsNullOrEmpty(githubAlias) ? user?.Login : githubAlias;
-                var validation = await CallPowerShellScriptViaCMD($"-UserName \"{userDetails}\"");
-                var parsedResult = ParseCodeOwnerValidation(validation);
-                return parsedResult;
+                
+                if (string.IsNullOrEmpty(userDetails))
+                {
+                    var errorResponse = new GenericResponse()
+                    {
+                        Status = "Failed",
+                        Details = { "Unable to determine GitHub username" }
+                    };
+                    return output.Format(errorResponse);
+                }
+
+                // Use the existing ValidateCodeOwner method
+                var validationResult = await ValidateCodeOwner(userDetails);
+                
+                // Convert to the expected JSON format for backward compatibility
+                var result = new
+                {
+                    validationResult.Organizations,
+                    validationResult.HasWritePermission,
+                    validationResult.IsValidCodeOwner
+                };
+
+                return System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             }
             catch (Exception ex)
             {
@@ -391,39 +378,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 return $"Error: {ex.Message}";
             }
-        }
-
-        private string ParseCodeOwnerValidation(string powerShellOutput)
-        {
-            if (string.IsNullOrEmpty(powerShellOutput))
-            {
-                return "No output received";
-            }
-
-            var requiredOrganizations = new Dictionary<string, bool>
-            {
-                { "azure", false },
-                { "microsoft", false }
-            };
-            var organizations = ExtractOrganizations(powerShellOutput);
-
-            foreach (var organization in organizations)
-            {
-                var organizationLower = organization.ToLower();
-                if (requiredOrganizations.ContainsKey(organizationLower))
-                {
-                    requiredOrganizations[organizationLower] = true;
-                }
-            }
-
-            var result = new
-            {
-                Organizations = requiredOrganizations,
-                WritePermission = ExtractWritePermission(powerShellOutput),
-                IsValidCodeOwner = ExtractCodeOwnerValidity(powerShellOutput)
-            };
-
-            return System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
         }
 
         private List<string> ExtractOrganizations(string output)
@@ -480,19 +434,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return output.Contains("Valid code owner");
         }
 
-        private ServiceValidationSummary GenerateServiceValidationSummary(List<ServiceCodeOwnerResult> results, string serviceName, List<string> validLabels, List<string> invalidLabels)
+        private ServiceValidationSummary GenerateServiceValidationSummary(List<ServiceCodeOwnerResult> results, string serviceLabel)
         {
             var summary = new ServiceValidationSummary
             {
-                ServiceName = serviceName,
-                ValidServiceLabels = validLabels,
-                InvalidServiceLabels = invalidLabels,
+                ServiceLabel = serviceLabel,
                 TotalRepositories = results.Count,
                 RepositoriesWithService = results.Count(r => r.Status == "Success"),
                 RepositoriesWithoutService = results.Count(r => r.Status == "Service not found"),
                 RepositoriesWithErrors = results.Count(r => r.Status == "Error"),
                 Results = results,
-                AllCodeOwners = results.SelectMany(r => r.CodeOwners).ToList()
+                AllCodeOwners = results.SelectMany(r => r.CodeOwners)
+                    .GroupBy(co => co.Username)
+                    .Select(g => g.First())
+                    .ToList()
             };
 
             // Generate summary statistics
@@ -525,9 +480,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public class ServiceValidationSummary
         {
-            public string ServiceName { get; set; } = "";
-            public List<string> ValidServiceLabels { get; set; } = new();
-            public List<string> InvalidServiceLabels { get; set; } = new();
+            public string ServiceLabel { get; set; } = "";
             public int TotalRepositories { get; set; }
             public int RepositoriesWithService { get; set; }
             public int RepositoriesWithoutService { get; set; }
@@ -537,26 +490,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             public int CodeOwnersWithErrors { get; set; }
             public List<ServiceCodeOwnerResult> Results { get; set; } = new();
             public List<CodeOwnerValidationResult> AllCodeOwners { get; set; } = new();
-        }
-
-        private async Task test()
-        {
-            var result = await githubService.GetContentsAsync("Azure", "azure-rest-api-specs", "eng");
-            
-            if (result != null)
-            {
-                logger.LogInformation($"Found {result.Count} items in the eng folder:");
-
-                foreach (var item in result)
-                {
-                    logger.LogInformation($"- {item.Type}: {item.Name} (Path: {item.Path})");
-                    logger.LogInformation(item.Content); // STRINGSSSSSSSS
-                }
-            }
-            else
-            {
-                logger.LogInformation("No items found or result is null");
-            }
         }
     }
 }

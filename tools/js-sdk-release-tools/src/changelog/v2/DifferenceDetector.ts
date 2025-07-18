@@ -124,14 +124,12 @@ export class DifferenceDetector {
   }
 
   private hasIgnoreTargetNames(v: DiffPair[]): boolean {
-    console.log('Checking for ignore target names in:', v);
      // Check if any pair has a target name that should be ignored only when removed
     const ignoreTargets = [
       "resumeFrom",
       "$host",
       "endpoint"
     ];
-    console.log(v);
     return v.some(pair => {
       const name = pair.target?.name || pair.source?.name;
       return name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed;

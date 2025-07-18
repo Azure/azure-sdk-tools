@@ -8,10 +8,11 @@ from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
 import os
+import pathlib
+import prompty
+import prompty.azure
 import requests
 import sys
-import pathlib
-import requests
 import time
 from typing import Optional
 
@@ -24,7 +25,7 @@ from src._search_manager import SearchManager
 from src._database_manager import get_database_manager, ContainerNames
 from src._mention import handle_mention_request
 from src._models import APIViewComment
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, get_prompt_path
 
 colorama.init(autoreset=True)
 
@@ -576,16 +577,31 @@ def db_get(container_name: str, id: str):
         print(f"Error retrieving item: {e}")
 
 
-def _get_apiview_cosmos_client():
+def _get_apiview_cosmos_client(*, environment: str = "production"):
     """
     Returns the Cosmos DB container client for APIView comments.
     """
+    apiview_account_names = {
+        "production": "apiview-cosmos",
+        "staging": "apiviewstaging",
+    }
+
+
+def _get_apiview_cosmos_client(container_name: str, environment: str = "production"):
+    """
+    Returns the Cosmos DB container client for the specified container and environment.
+    """
+    apiview_account_names = {
+        "production": "apiview-cosmos",
+        "staging": "apiviewstaging",
+    }
     try:
-        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+        cosmos_acc = apiview_account_names.get(environment)
         cosmos_db = "APIViewV2"
-        container_name = "Comments"
         if not cosmos_acc:
-            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+            raise ValueError(
+                f"Unrecognized environment: {environment}. Valid options are: {', '.join(apiview_account_names.keys())}."
+            )
         cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
         client = CosmosClient(url=cosmos_url, credential=get_credential())
         database = client.get_database_client(cosmos_db)
@@ -599,7 +615,7 @@ def _get_apiview_cosmos_client():
         sys.exit(1)
 
 
-def _get_apiview_reviews_client():
+def _get_apiview_reviews_client(environment: str = "production"):
     """
     Returns the Cosmos DB container client for APIView reviews.
     """
@@ -639,13 +655,13 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
 
 
-def get_apiview_comments(revision_id: str):
+def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
     """
     Retrieves comments for a specific APIView revision and returns them grouped by element ID and sorted by CreatedOn time.
     Omits resolved and deleted comments, and removes unnecessary fields.
     """
     try:
-        container = _get_apiview_cosmos_client()
+        container = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
         result = container.query_items(
             query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @revision_id AND c.IsResolved = false AND c.IsDeleted = false",
             parameters=[{"name": "@revision_id", "value": revision_id}],
@@ -697,7 +713,7 @@ def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> floa
     return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
 
 
-def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
+def _calculate_language_adoption(start_date: str, end_date: str, environment: str = "production") -> dict:
     """
     Calculates the adoption rate of AI review comments by language.
     Looks at distinct ReviewIds that had new revisions created during the time period
@@ -705,8 +721,8 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
     Returns a dictionary with languages as keys and adoption percentages as values.
     """
     # Get comments container client
-    comments_client = _get_apiview_cosmos_client()
-    reviews_client = _get_apiview_reviews_client()
+    comments_client = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    reviews_client = _get_apiview_cosmos_client(container_name="Reviews", environment=environment)
 
     iso_start = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
     iso_end = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59.999999Z")
@@ -804,7 +820,7 @@ def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
     return adoption_stats
 
 
-def report_metrics(start_date: str, end_date: str):
+def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
     iso_start = None
@@ -824,14 +840,14 @@ def report_metrics(start_date: str, end_date: str):
         print(f"ValueError: Dates must be in YYYY-MM-DD format. Invalid date(s) found: {', '.join(bad_dates)}")
         return
 
-    client = _get_apiview_cosmos_client()
+    comments_client = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
     query = f"""
     SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c
     WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
     """
     # retrieve comments created between start_date and end_date (ISO 8601)
     raw_comments = list(
-        client.query_items(
+        comments_client.query_items(
             query=query,
             parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
             enable_cross_partition_query=True,
@@ -840,7 +856,7 @@ def report_metrics(start_date: str, end_date: str):
     comments = [APIViewComment(**d) for d in raw_comments]
 
     # Calculate language adoption
-    language_adoption = _calculate_language_adoption(start_date, end_date)
+    language_adoption = _calculate_language_adoption(start_date, end_date, environment=environment)
 
     report = {
         "start_date": start_date,
@@ -851,7 +867,13 @@ def report_metrics(start_date: str, end_date: str):
             "language_adoption": language_adoption,
         },
     }
-    return report
+    if markdown:
+        prompt_path = get_prompt_path(folder="other", filename="summarize_metrics")
+        inputs = {"data": report}
+        summary = prompty.execute(prompt_path, inputs=inputs)
+        print(summary)
+    else:
+        return report
 
 
 SUPPORTED_LANGUAGES = [
@@ -1115,6 +1137,14 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The revision ID of the APIView to retrieve comments for.",
                 options_list=["--revision-id", "-r"],
             )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment from which to retrieve comments. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument(
                 "start_date",
@@ -1127,6 +1157,14 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The end date for the metrics report (YYYY-MM-DD).",
                 options_list=["--end-date", "-e"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment from which to calculate the metrics report. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

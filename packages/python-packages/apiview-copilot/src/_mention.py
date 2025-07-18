@@ -1,8 +1,9 @@
 import json
 import os
+import uuid
+
 import prompty
 import prompty.azure
-import uuid
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
@@ -41,7 +42,7 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
     elif action_results.get("recommendation") == "no_action":
         return f"No action required: {action_results.get('reasoning')}"
     else:
-        return f"Something went wrong!"
+        return "Something went wrong!"
 
 
 def _parse_conversation_action(

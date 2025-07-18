@@ -172,16 +172,16 @@ def create_test_case(
     """
     Creates or updates a test case for the APIView reviewer.
     """
-    with open(apiview_path, "r") as f:
+    with open(apiview_path, "r", encoding="utf-8") as f:
         apiview_contents = f.read()
 
-    with open(expected_path, "r") as f:
+    with open(expected_path, "r", encoding="utf-8") as f:
         expected_contents = json.loads(f.read())
 
     guidelines_path = pathlib.Path(__file__).parent / "guidelines" / language
     guidelines = []
     for file in guidelines_path.glob("*.json"):
-        with open(file, "r") as f:
+        with open(file, "r", encoding="utf-8") as f:
             guidelines.extend(json.loads(f.read()))
 
     context = ""
@@ -202,22 +202,22 @@ def create_test_case(
 
     if os.path.exists(test_file):
         if overwrite:
-            with open(test_file, "r") as f:
+            with open(test_file, "r", encoding="utf-8") as f:
                 existing_test_cases = [json.loads(line) for line in f if line.strip()]
             for existing_test_case in existing_test_cases:
                 if existing_test_case["testcase"] == test_case["testcase"]:
                     existing_test_cases.remove(existing_test_case)
                     break
             existing_test_cases.append(test_case)
-            with open(test_file, "w") as f:
+            with open(test_file, "w", encoding="utf-8") as f:
                 for existing_test_case in existing_test_cases:
                     f.write(json.dumps(existing_test_case) + "\n")
         else:
-            with open(test_file, "a") as f:
+            with open(test_file, "a", encoding="utf-8") as f:
                 f.write("\n")
                 json.dump(test_case, f)
     else:
-        with open(test_file, "w") as f:
+        with open(test_file, "w", encoding="utf-8") as f:
             json.dump(test_case, f)
 
 
@@ -226,7 +226,7 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
     Deconstructs a test case into its component APIView test and expected results file.
     """
     test_cases = {}
-    with open(test_file, "r") as f:
+    with open(test_file, "r", encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 parsed = json.loads(line)
@@ -240,10 +240,10 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
     expected = test_cases[test_case].get("response", "")
     deconstructed_apiview = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.txt"
     deconstructed_expected = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.json"
-    with open(deconstructed_apiview, "w") as f:
+    with open(deconstructed_apiview, "w", encoding="utf-8") as f:
         f.write(apiview)
 
-    with open(deconstructed_expected, "w") as f:
+    with open(deconstructed_expected, "w", encoding="utf-8") as f:
         # sort comments by line number
         expected = json.loads(expected)
         expected["comments"] = sorted(expected["comments"], key=lambda x: x["line_no"])
@@ -258,6 +258,7 @@ def deploy_flask_app(
     subscription_id: Optional[str] = None,
 ):
     """Command to deploy the Flask app."""
+    # pylint: disable=import-outside-toplevel
     from scripts.deploy_app import deploy_app_to_azure
 
     deploy_app_to_azure(app_name, resource_group, subscription_id)

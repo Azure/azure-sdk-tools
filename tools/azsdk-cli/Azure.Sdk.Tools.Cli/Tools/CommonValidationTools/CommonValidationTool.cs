@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the csv.")]
+        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
         public async Task<string> CreateServiceLabel(string label, string link)
         {
             try

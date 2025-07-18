@@ -16,8 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV")]
     public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output, IGitHubService githubService) : MCPTool
     {
-        private const string COMMON_LABELS_URL = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/github/data/common-labels.csv";
-        private const string DEFAULT_COLOR_CODE = "e99695";
+        private const string labelColorCode = "e99695";
         
         private readonly Argument<string> _serviceLabelArg = new Argument<string>(
             name: "service-label",
@@ -26,8 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             Arity = ArgumentArity.ExactlyOne
         };
-
-        private readonly HttpClient httpClient = new();
 
         public override Command GetCommand()
         {
@@ -90,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         string colorCode = columns[2].Trim();
                         
                         // Case-insensitive comparison
-                        if (string.Equals(labelName, serviceLabel, StringComparison.OrdinalIgnoreCase) && colorCode.Equals("e99695"))
+                        if (string.Equals(labelName, serviceLabel, StringComparison.OrdinalIgnoreCase) && colorCode.Equals(labelColorCode, StringComparison.OrdinalIgnoreCase))
                         {
                             logger.LogInformation("Found service label '{serviceLabel}' with color code '{colorCode}'", serviceLabel, colorCode);
                             
@@ -98,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                             {
                                 ServiceLabel = labelName,
                                 Found = true,
-                                ColorCode = string.IsNullOrEmpty(colorCode) ? DEFAULT_COLOR_CODE : colorCode,
+                                ColorCode = string.IsNullOrEmpty(colorCode) ? labelColorCode : colorCode,
                                 Description = string.IsNullOrEmpty(description) ? null : description
                             };
                         }

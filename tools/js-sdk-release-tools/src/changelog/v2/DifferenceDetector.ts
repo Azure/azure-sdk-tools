@@ -3,6 +3,7 @@ import {
   AstContext,
   createAstContext,
   DiffPair,
+  DiffReasons,
   patchClass,
   patchFunction,
   patchInterface,
@@ -202,6 +203,7 @@ export class DifferenceDetector {
     );
   }
 
+
   private getFunctions(sourceFile: SourceFile): FunctionDeclaration[] {
     return sourceFile
       .getStatements()
@@ -218,12 +220,18 @@ export class DifferenceDetector {
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) {
-        logger.warn(`Generic interface '${n}' breaking change detection is not supported.`);
-        return map;
-      }
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
-      map.set(n, diffPairs);
+      
+      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) {
+        logger.warn(`Generic interface '${n}' breaking change detection is limited to Added/Removed changes only.`);
+        // For generic interfaces, only keep Added/Removed diff pairs
+        const filteredDiffPairs = diffPairs.filter(pair => 
+          pair.reasons === DiffReasons.Added || pair.reasons === DiffReasons.Removed
+        );
+        map.set(n, filteredDiffPairs);
+      } else {
+        map.set(n, diffPairs);
+      }
       return map;
     }, new Map<string, DiffPair[]>());
     const classDiffPairs = classNames.reduce((map, n) => {

@@ -117,7 +117,10 @@ export class DifferenceDetector {
       "$host",
       "endpoint"
     ];
-    return v.some(pair => pair.target?.name && ignoreTargets.includes(pair.target.name));
+    return v.some(pair => {
+      const name = pair.target?.name || pair.source?.name;
+      return name && ignoreTargets.includes(name);
+    });
   }
 
   private shouldIgnoreTypeAliasBreakingChange(v: DiffPair[], k: string): boolean {

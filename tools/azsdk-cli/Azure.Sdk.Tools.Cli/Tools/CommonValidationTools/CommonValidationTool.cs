@@ -391,6 +391,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        private void UpdateCommonLabelsFile(string Label)
+        {
+            // Implementation for updating the common labels file
+        }
         private async Task<string> CallPowerShellScriptViaCMD(string arguments = "")
         {
             try
@@ -498,9 +502,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             summary.CodeOwnersWithErrors = summary.AllCodeOwners.Count(co => co.Status == "Error");
 
             return summary;
-        }
-
-        // Data models
+        }       // Data models
         public class ServiceCodeOwnerResult
         {
             public string Repository { get; set; } = "";

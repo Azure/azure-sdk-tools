@@ -599,6 +599,29 @@ def _get_apiview_cosmos_client():
         sys.exit(1)
 
 
+def _get_apiview_reviews_client():
+    """
+    Returns the Cosmos DB container client for APIView reviews.
+    """
+    try:
+        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
+        cosmos_db = "APIViewV2"
+        container_name = "Reviews"
+        if not cosmos_acc:
+            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
+        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
+        client = CosmosClient(url=cosmos_url, credential=get_credential())
+        database = client.get_database_client(cosmos_db)
+        container = database.get_container_client(container_name)
+        return container
+    except CosmosHttpResponseError as e:
+        if e.status_code == 403:
+            print(
+                f"Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+            )
+        sys.exit(1)
+
+
 _APIVIEW_COMMENT_SELECT_FIELDS = [
     "id",
     "CreatedOn",
@@ -674,6 +697,113 @@ def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> floa
     return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
 
 
+def _calculate_language_adoption(start_date: str, end_date: str) -> dict:
+    """
+    Calculates the adoption rate of AI review comments by language.
+    Looks at distinct ReviewIds that had new revisions created during the time period
+    and calculates what percentage of those ReviewIds have AI comments.
+    Returns a dictionary with languages as keys and adoption percentages as values.
+    """
+    # Get comments container client
+    comments_client = _get_apiview_cosmos_client()
+    reviews_client = _get_apiview_reviews_client()
+
+    iso_start = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
+    iso_end = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59.999999Z")
+
+    # Query all comments in the date range to get active ReviewIds
+    comments_query = """
+    SELECT c.ReviewId, c.CreatedBy FROM c 
+    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+    """
+
+    raw_comments = list(
+        comments_client.query_items(
+            query=comments_query,
+            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    # Build set of active ReviewIds from comments
+    active_reviews = set()
+    for comment in raw_comments:
+        review_id = comment.get("ReviewId")
+        if review_id:
+            active_reviews.add(review_id)
+
+    # Find ReviewIds with AI comments
+    ai_reviews = {
+        comment["ReviewId"]
+        for comment in raw_comments
+        if comment.get("CreatedBy") == "azure-sdk" and comment.get("ReviewId")
+    }
+
+    # If no comments, try to get all reviews in the date range
+    if not active_reviews:
+        # Query all reviews in the date range
+        reviews_query = """
+        SELECT r.id, r.Language FROM r WHERE r.CreatedOn >= @start_date AND r.CreatedOn <= @end_date
+        """
+        batch_reviews = list(
+            reviews_client.query_items(
+                query=reviews_query,
+                parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
+                enable_cross_partition_query=True,
+            )
+        )
+        review_to_language = {}
+        language_reviews = {}
+        for review in batch_reviews:
+            review_id = review.get("id")
+            language = review.get("Language", "").lower()
+            if language and review_id:
+                review_to_language[review_id] = language
+                if language not in language_reviews:
+                    language_reviews[language] = set()
+                language_reviews[language].add(review_id)
+    else:
+        # Query all reviews for active ReviewIds and get their languages
+        review_to_language = {}
+        language_reviews = {}
+        batch_size = 100
+        review_ids = list(active_reviews)
+        for i in range(0, len(review_ids), batch_size):
+            batch_ids = review_ids[i : i + batch_size]
+            reviews_query = """
+            SELECT r.id, r.Language FROM r WHERE ARRAY_CONTAINS(@review_ids, r.id)
+            """
+            batch_reviews = list(
+                reviews_client.query_items(
+                    query=reviews_query,
+                    parameters=[{"name": "@review_ids", "value": batch_ids}],
+                    enable_cross_partition_query=True,
+                )
+            )
+            for review in batch_reviews:
+                review_id = review.get("id")
+                language = review.get("Language", "").lower()
+                if language and review_id:
+                    review_to_language[review_id] = language
+                    if language not in language_reviews:
+                        language_reviews[language] = set()
+                    language_reviews[language].add(review_id)
+
+    # Calculate adoption rate and counts per language
+    adoption_stats = {}
+    for language, review_ids in language_reviews.items():
+        total_reviews = len(review_ids)
+        reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in ai_reviews)
+        adoption_rate = reviews_with_ai_comments / total_reviews if total_reviews > 0 else 0.0
+        adoption_stats[language] = {
+            "adoption_rate": f"{adoption_rate:.2f}",
+            "active_reviews": total_reviews,
+            "active_copilot_reviews": reviews_with_ai_comments,
+        }
+
+    return adoption_stats
+
+
 def report_metrics(start_date: str, end_date: str):
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
@@ -708,12 +838,17 @@ def report_metrics(start_date: str, end_date: str):
         )
     )
     comments = [APIViewComment(**d) for d in raw_comments]
+
+    # Calculate language adoption
+    language_adoption = _calculate_language_adoption(start_date, end_date)
+
     report = {
         "start_date": start_date,
         "end_date": end_date,
         "metrics": {
             "ai_vs_manual_comment_ratio": _calculate_ai_vs_manual_comment_ratio(comments),
             "good_vs_bad_comment_ratio": _calculate_good_vs_bad_comment_ratio(comments),
+            "language_adoption": language_adoption,
         },
     }
     return report

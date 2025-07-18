@@ -1,7 +1,15 @@
-import os
-import re
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for creating unified diffs with line numbers.
+"""
+
 import difflib
-from typing import Optional
+import re
 
 
 def create_diff_with_line_numbers(*, old: str, new: str) -> str:

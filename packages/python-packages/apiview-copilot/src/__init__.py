@@ -1,9 +1,13 @@
-import os
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Initialize the APIView Copilot root package.
+"""
 
 from ._version import VERSION
-from ._apiview_reviewer import ApiViewReview
-from ._models import ReviewResult, Comment, ExistingComment
 
 __version__ = VERSION
-
-_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

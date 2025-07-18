@@ -1956,19 +1956,19 @@ export interface DataProduct {
         const baselineApiView = `
 \`\`\`ts
 // @public
-export class DataProduct {
-    resumeFrom: string;
-    $host: string;
-    endpoint: string;
-    normalProperty: string;
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    readonly resumeFrom: string;
+    readonly $host: string;
+    readonly endpoint: string;
 }
 \`\`\`
 `;
         const currentApiView = `
 \`\`\`ts
 // @public
-export class DataProduct {
-    normalProperty: string;
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
 }
 \`\`\`
 `;
@@ -1984,7 +1984,7 @@ export class DataProduct {
         );
         const items = getItemsByCategory(
             changelogItems,
-            ChangelogItemCategory.ModelPropertyRemoved,
+            ChangelogItemCategory.ClassPropertyRemoved,
         );
         expect(items).toHaveLength(0);
     });

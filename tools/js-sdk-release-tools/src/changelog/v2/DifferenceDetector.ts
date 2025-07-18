@@ -76,6 +76,10 @@ export class DifferenceDetector {
     this.result?.functions.forEach((v, k) => {
       if (this.shouldIgnoreFunctionBreakingChange(v, k)) this.result?.functions.delete(k);      
     });
+    
+    this.result?.classes.forEach((v, k) => {
+      if (this.hasIgnoreTargetNames(v)) this.result?.classes.delete(k);
+    });
 
     this.result?.typeAliases.forEach((v, k) => {
       if(this.shouldIgnoreTypeAliasBreakingChange(v, k)) this.result?.typeAliases.delete(k);
@@ -83,6 +87,7 @@ export class DifferenceDetector {
 
     this.result?.interfaces.forEach((v, k) => {
       if(this.shouldIgnoreInterfaceBreakingChange(v, k)) this.result?.interfaces.delete(k);
+      if(this.hasIgnoreTargetNames(v)) this.result?.interfaces.delete(k);
     });
 
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
@@ -107,17 +112,7 @@ export class DifferenceDetector {
     if (k.endsWith('Headers') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
       return true;
     }
-    
-    // Check if any pair has a target name that should be ignored
-    const ignoreTargets = [
-      "resumeFrom",
-      "$host",
-      "endpoint"
-    ];
-    return v.some(pair => {
-      const name = pair.target?.name || pair.source?.name;
-      return name && ignoreTargets.includes(name);
-    });
+    return false;
   }
 
   private shouldIgnoreTypeAliasBreakingChange(v: DiffPair[], k: string): boolean {
@@ -126,6 +121,21 @@ export class DifferenceDetector {
 
   private shouldIgnoreFunctionBreakingChange(v: DiffPair[], k: string): boolean {
     return k === 'getContinuationToken' && v.some(pair => pair.reasons === DiffReasons.Removed);
+  }
+
+  private hasIgnoreTargetNames(v: DiffPair[]): boolean {
+    console.log('Checking for ignore target names in:', v);
+     // Check if any pair has a target name that should be ignored
+    const ignoreTargets = [
+      "resumeFrom",
+      "$host",
+      "endpoint"
+    ];
+    console.log(v);
+    return v.some(pair => {
+      const name = pair.target?.name || pair.source?.name;
+      return name && ignoreTargets.includes(name);
+    });
   }
 
   private convertHighLevelClientToModularClientCode(code: string): string {

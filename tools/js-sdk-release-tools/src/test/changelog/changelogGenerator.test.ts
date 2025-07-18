@@ -1763,90 +1763,6 @@ describe("Changelog reading", () => {
 });
 
 describe("Should Be Ignored Due to Not Exposed", () => {
-    test("xxx no longer has parameter $host", async () => {
-        const baselineApiView = `
-\`\`\`ts
-// @public
-export interface Prop {
-    $host: string
-}
-export interface DataProduct {
-    $host: Record<string, Prop>;
-}
-\`\`\`
-`;
-        const currentApiView = `
-\`\`\`ts
-// @public
-export interface Prop {
-    p: string
-}
-export interface DataProduct {
-    $host: {[xxx: string]: Prop};
-}
-\`\`\`
-`;
-        const changelogItems = await generateChangelogItems(
-            {
-                apiView: baselineApiView,
-                sdkType: SDKType.ModularClient,
-            },
-            {
-                apiView: currentApiView,
-                sdkType: SDKType.ModularClient,
-            },
-        );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
-    });
-
-    test("no longer has parameter endpoint", async () => {
-        const baselineApiView = `
-\`\`\`ts
-// @public
-export interface Prop {
-    endpoint: string
-}
-export interface DataProduct {
-    readonly endpoint?: {[xxx: string]: Prop};
-}
-\`\`\`
-`;
-        const currentApiView = `
-\`\`\`ts
-// @public
-export interface Prop {
-    p: string
-}
-export interface DataProduct {
-    readonly endpoint?: Record<string, Prop>;
-}
-\`\`\`
-`;
-        const changelogItems = await generateChangelogItems(
-            {
-                apiView: baselineApiView,
-                sdkType: SDKType.ModularClient,
-            },
-            {
-                apiView: currentApiView,
-                sdkType: SDKType.ModularClient,
-            },
-        );
-        const count = [...changelogItems.breakingChanges.keys()].flatMap(
-            (b) => changelogItems.breakingChanges.get(b) ?? [],
-        ).length;
-        expect(count).toBe(0);
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
-    });
-
     test("models ending with 'NextOptionalParams'", async () => {
         const baselineApiView = `
 \`\`\`ts
@@ -1877,43 +1793,6 @@ export interface DataProductDataProductNextOptionalParams {
         const items = getItemsByCategory(
             changelogItems,
             ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
-    });
-
-    test("no longer has parameter resumeFrom", async () => {
-        const baselineApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    readonly id?: string;
-    name: string;
-    resumeFrom?: string;
-}
-\`\`\`
-`;
-        const currentApiView = `
-\`\`\`ts
-// @public
-export interface DataProduct {
-    readonly id?: string;
-    name: string;
-}
-\`\`\`
-`;
-        const changelogItems = await generateChangelogItems(
-            {
-                apiView: baselineApiView,
-                sdkType: SDKType.ModularClient,
-            },
-            {
-                apiView: currentApiView,
-                sdkType: SDKType.ModularClient,
-            },
-        );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyRemoved,
         );
         expect(items).toHaveLength(0);
     });
@@ -2032,6 +1911,158 @@ export type DataProductResponse = "Active" | "Inactive" | "Pending";
         const items = getItemsByCategory(
             changelogItems,
             ChangelogItemCategory.TypeAliasRemoved,
+        );
+        expect(items).toHaveLength(0);
+    });
+
+    test("Removed Class with ignored target names", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProduct {
+    name: string;
+    resumeFrom: string;
+    $host: string;
+    endpoint: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+export class DataProduct {
+    name: string;    
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassRemoved,
+        );
+        expect(items).toHaveLength(0);
+    });
+
+    test("Removed Interface with ignored target names", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    name: string;
+    resumeFrom: string;
+    $host: string;
+    endpoint: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+export interface DataProduct {
+    name: string;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelRemoved,
+        );
+        expect(items).toHaveLength(0);
+    });
+
+    test("Interface with ignored target names - property change", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    resumeFrom: string;
+    $host: string;
+    endpoint: string;
+    normalProperty: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    resumeFrom: number;
+    $host: number;
+    endpoint: number;
+    normalProperty: number;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ModelPropertyTypeChanged,
+        );
+        expect(items).toHaveLength(0);
+    });
+
+    test("Class with ignored target names - property change", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProduct {
+    resumeFrom: string;
+    $host: string;
+    endpoint: string;
+    normalProperty: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProduct {
+    resumeFrom: number;
+    $host: number;
+    endpoint: number;
+    normalProperty: number;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        const items = getItemsByCategory(
+            changelogItems,
+            ChangelogItemCategory.ClassChanged,
         );
         expect(items).toHaveLength(0);
     });

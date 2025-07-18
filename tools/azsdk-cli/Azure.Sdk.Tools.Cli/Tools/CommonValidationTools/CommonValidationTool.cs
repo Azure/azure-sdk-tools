@@ -118,6 +118,48 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the csv.")]
+        public async Task<string> CreateServiceLabel(string label, string link)
+        {
+            try
+            {
+                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
+           
+                // Call the CreatePullRequestAsync method from GitHubService
+                var result = await githubService.CreatePullRequestAsync(
+                    repoName: "azure-sdk-tools",
+                    repoOwner: "Azure",              
+                    baseBranch: "main",
+                    headBranch: $"add-service-label-{label}",
+                    title: $"Add service label: {label}",
+                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
+                    draft: true
+                );
+               
+                logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
+               
+                var response = new GenericResponse()
+                {
+                    Status = "Success",
+                    Details = { $"Service label '{label}' pull request created successfully." }
+                };
+                response.Details.AddRange(result);
+               
+                return output.Format(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
+               
+                var errorResponse = new GenericResponse()
+                {
+                    Status = "Failed",
+                    Details = { $"Failed to create pull request for service label '{label}'. Error: {ex.Message}" }
+                };
+                return output.Format(errorResponse);
+            }
+        }
+
         [McpServerTool(Name = "ValidateServiceCodeOwners"), Description("Validates code owners for a service across all Azure SDK repositories.")]
         public async Task<string> ValidateServiceCodeOwners(string confirmedServiceLabel)
         {

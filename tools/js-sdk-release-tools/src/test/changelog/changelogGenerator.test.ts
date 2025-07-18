@@ -1918,40 +1918,6 @@ export interface DataProduct {
         expect(items).toHaveLength(0);
     });
 
-    test("interface ErrorAdditionalInfo is changed from Record<string, unknown> to any", async () => {
-        const baselineApiView = `
-\`\`\`ts
-// @public
-export interface ErrorAdditionalInfo {
-    info: Record<string, unknown>;
-}
-\`\`\`
-`;
-        const currentApiView = `
-\`\`\`ts
-// @public
-export interface ErrorAdditionalInfo {
-    info: any;
-}
-\`\`\`
-`;
-        const changelogItems = await generateChangelogItems(
-            {
-                apiView: baselineApiView,
-                sdkType: SDKType.ModularClient,
-            },
-            {
-                apiView: currentApiView,
-                sdkType: SDKType.ModularClient,
-            },
-        );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
-    });
-
     test("Removed Interface ends with 'Headers'", async () => {
         const baselineApiView = `
 \`\`\`ts

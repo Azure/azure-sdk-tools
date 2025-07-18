@@ -93,6 +93,8 @@ export class DifferenceDetector {
   }
 
   private shouldIgnoreInterfaceBreakingChange(v: DiffPair[], k: string): boolean {    
+     // TODO: Create a new PR to ignore all 'any' cases for breaking change detection
+
     if(k.endsWith('NextOptionalParams')) {
       // Ignore NextOptionalParams as they are not breaking changes
       return true;
@@ -105,12 +107,7 @@ export class DifferenceDetector {
     if (k.endsWith('Headers') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
       return true;
     }
-
-    // Special case: if interface is ErrorAdditionalInfo and any pair has reasons == 2, ignore it
-    if (k === 'ErrorAdditionalInfo' && v.some(pair => pair.reasons === DiffReasons.TypeChanged)) {
-      return true;
-    }    
-
+    
     // Check if any pair has a target name that should be ignored
     const ignoreTargets = [
       "resumeFrom",
@@ -124,18 +121,11 @@ export class DifferenceDetector {
   }
 
   private shouldIgnoreTypeAliasBreakingChange(v: DiffPair[], k: string): boolean {
-    if (k.endsWith('Response') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
-      return true;
-    }    
-    return false;
+    return k.endsWith('Response') && v.some(pair => pair.reasons === DiffReasons.Removed)
   }
 
   private shouldIgnoreFunctionBreakingChange(v: DiffPair[], k: string): boolean {
-    if (k === 'getContinuationToken' && v.some(pair => pair.reasons === DiffReasons.Removed)) {
-      return true;
-    }
-    
-    return false;
+    return k === 'getContinuationToken' && v.some(pair => pair.reasons === DiffReasons.Removed);
   }
 
   private convertHighLevelClientToModularClientCode(code: string): string {

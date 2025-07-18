@@ -39,7 +39,7 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
         results = _execute_plan(plan=plan)
         return _summarize_results(results)
     elif action_results.get("recommendation") == "no_action":
-        return f"No action required: {action_results.get("reasoning")}"
+        return f"No action required: {action_results.get('reasoning')}"
     else:
         return f"Something went wrong!"
 

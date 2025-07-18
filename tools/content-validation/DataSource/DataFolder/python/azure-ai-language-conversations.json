@@ -1,0 +1,18 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/cognitive-services?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/ai-language-conversations-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.aio.conversationanalysisclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.authoring?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.authoring.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.authoring.aio.conversationauthoringclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.authoring.conversationauthoringclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-language-conversations/azure.ai.language.conversations.conversationanalysisclient?view=azure-python\u0026branch=main"
+    ]
+  }
+]

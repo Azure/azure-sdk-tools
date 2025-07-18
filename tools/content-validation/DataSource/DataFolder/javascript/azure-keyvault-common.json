@@ -1,0 +1,11 @@
+[
+  {
+    "version": "view=azure-node-latest",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/keyvault-common-readme?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/keyvault-common/?view=azure-node-latest",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/keyvault-common/keyvaultauthenticationpolicyoptions?view=azure-node-latest\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/keyvault-common/keyvaultentityidentifier?view=azure-node-latest\u0026branch=main"
+    ]
+  }
+]

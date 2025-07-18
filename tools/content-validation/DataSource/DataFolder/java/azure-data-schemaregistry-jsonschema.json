@@ -1,0 +1,15 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/schema-registry?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/data-schemaregistry-jsonschema-readme?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.jsonschema?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.jsonschema.jsonschemagenerator?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.jsonschema.schemaregistryjsonschemaexception?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.jsonschema.schemaregistryjsonschemaserializer?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.data.schemaregistry.jsonschema.schemaregistryjsonschemaserializerbuilder?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

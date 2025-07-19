@@ -285,17 +285,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return matchingEntry;
         }
 
-        private async Task CreateServiceLabel(string label)
-        {
-            // Mock implementation for creating a new service label
-            logger.LogInformation($"[MOCK] Creating new service label: {label}");
-            
-            // Simulate some async work
-            await Task.Delay(100);
-            
-            logger.LogInformation($"[MOCK] Service label '{label}' created successfully");
-        }
-
         private async Task<CodeOwnerValidationResult> ValidateCodeOwner(string username)
         {
             var validationResult = new CodeOwnerValidationResult
@@ -398,7 +387,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = "pwsh.exe",
-                    Arguments = $"-ExecutionPolicy Bypass -File \"C:\\Code\\azure-sdk-tools\\tools\\github\\scripts\\Validate-AzsdkCodeOwner.ps1\" {arguments}",
+                    Arguments = $"-ExecutionPolicy Bypass -File \"..\\..\\..\\tools\\github\\scripts\\Validate-AzsdkCodeOwner.ps1\" {arguments}",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

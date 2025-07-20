@@ -1,0 +1,43 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/cognitive-services?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/ai-translation-text-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.aio.texttranslationclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.backtranslation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.breaksentenceitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.detectedlanguage?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.dictionaryexample?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.dictionaryexampleitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.dictionaryexampletextitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.dictionarylookupitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.dictionarytranslation?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.errordetails?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.errorresponse?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.getsupportedlanguagesresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.inputtextitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.languagescript?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.sentenceboundaries?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.sourcedictionarylanguage?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.sourcetext?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.targetdictionarylanguage?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.translatedtextalignment?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.translatedtextitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.translationlanguage?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.translationtext?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.transliterablescript?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.transliteratedtext?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.transliterationlanguage?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.languagedirectionality?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.profanityaction?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.profanitymarker?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.models.texttype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-translation-text/azure.ai.translation.text.texttranslationclient?view=azure-python\u0026branch=main"
+    ]
+  }
+]

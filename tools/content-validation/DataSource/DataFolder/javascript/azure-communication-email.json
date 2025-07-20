@@ -1,0 +1,26 @@
+[
+  {
+    "version": "view=azure-node-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/communication-email-readme?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/?view=azure-node-preview",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailclient?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailaddress?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailattachment?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailclientoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailmessage?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailrecipients?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailsendheaders?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailsendoptionalparams?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailsendresult?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/erroradditionalinfo?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/errordetail?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/htmlemailcontent?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/plaintextemailcontent?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailcontent?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailsendresponse?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/emailsendstatus?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-email/knownemailsendstatus?view=azure-node-preview\u0026branch=main"
+    ]
+  }
+]

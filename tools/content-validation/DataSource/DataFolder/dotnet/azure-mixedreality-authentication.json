@@ -1,0 +1,35 @@
+[
+  {
+    "version": "view=azure-node",
+    "url": [
+      "https://learn.microsoft.com/en-us/dotnet/azure/intro?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/azure/key-azure-services?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/mixed-reality?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/mixedreality.authentication-readme?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.-ctor?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-ctor\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.-ctor?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-ctor(system-guid-system-string-azure-azurekeycredential-azure-mixedreality-authentication-mixedrealitystsclientoptions)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.-ctor?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-ctor(system-guid-system-string-azure-core-tokencredential-azure-mixedreality-authentication-mixedrealitystsclientoptions)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.-ctor?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-ctor(system-guid-system-uri-azure-azurekeycredential-azure-mixedreality-authentication-mixedrealitystsclientoptions)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.-ctor?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-ctor(system-guid-system-uri-azure-core-tokencredential-azure-mixedreality-authentication-mixedrealitystsclientoptions)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.accountid?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-accountid\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.endpoint?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-endpoint\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.gettoken?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-gettoken(system-threading-cancellationtoken)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclient.gettokenasync?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclient-gettokenasync(system-threading-cancellationtoken)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclientoptions?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclientoptions.-ctor?view=azure-dotnet#azure-mixedreality-authentication-mixedrealitystsclientoptions-ctor(azure-mixedreality-authentication-mixedrealitystsclientoptions-serviceversion)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.diagnostics?view=azure-dotnet#azure-core-clientoptions-diagnostics\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.-ctor?view=azure-dotnet#azure-core-clientoptions-ctor\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.-ctor?view=azure-dotnet#azure-core-clientoptions-ctor(azure-core-diagnosticsoptions)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.default?view=azure-dotnet#azure-core-clientoptions-default\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.retry?view=azure-dotnet#azure-core-clientoptions-retry\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.retrypolicy?view=azure-dotnet#azure-core-clientoptions-retrypolicy\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.transport?view=azure-dotnet#azure-core-clientoptions-transport\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.core.clientoptions.addpolicy?view=azure-dotnet#azure-core-clientoptions-addpolicy(azure-core-pipeline-httppipelinepolicy-azure-core-httppipelineposition)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.mixedreality.authentication.mixedrealitystsclientoptions.serviceversion?view=azure-dotnet\u0026branch=main"
+    ]
+  }
+]

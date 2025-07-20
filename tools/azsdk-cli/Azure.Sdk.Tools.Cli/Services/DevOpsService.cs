@@ -40,8 +40,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             var credential = azureService.GetCredential();
-            _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
-
+            try
+            {
+                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
+            }
+            catch
+            {
+                credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
+                // Retry with interactive browser credential if the initial credential fails
+                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
+            }
+            // If we still don't have a token, throw an exception
             if (_token == null)
             {
                 throw new Exception("Failed to get devops access token. " +

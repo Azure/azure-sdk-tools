@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV")]
     public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output, IGitHubService githubService) : MCPTool
     {
-        private const string labelColorCode = "e99695";
+        private const string serviceLabelColorCode = "e99695";
         
         private readonly Argument<string> _serviceLabelArg = new Argument<string>(
             name: "service-label",
@@ -86,16 +86,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         string description = columns[1].Trim();
                         string colorCode = columns[2].Trim();
                         
-                        // Case-insensitive comparison
-                        if (string.Equals(labelName, serviceLabel, StringComparison.OrdinalIgnoreCase) && colorCode.Equals(labelColorCode, StringComparison.OrdinalIgnoreCase))
+                        // Only consider labels with the expected color code and check if it contains the service label
+                        if (colorCode.Equals(serviceLabelColorCode, StringComparison.OrdinalIgnoreCase) && 
+                            labelName.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
                         {
-                            logger.LogInformation("Found service label '{serviceLabel}' with color code '{colorCode}'", serviceLabel, colorCode);
+                            logger.LogInformation("Found service label match: '{inputLabel}' -> '{actualLabel}'", serviceLabel, labelName);
                             
                             return new ServiceLabelResponse
                             {
                                 ServiceLabel = labelName,
                                 Found = true,
-                                ColorCode = string.IsNullOrEmpty(colorCode) ? labelColorCode : colorCode,
+                                ColorCode = colorCode,
                                 Description = string.IsNullOrEmpty(description) ? null : description
                             };
                         }

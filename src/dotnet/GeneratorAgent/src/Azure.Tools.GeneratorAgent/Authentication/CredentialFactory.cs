@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.Authentication
 {
-    public sealed class CredentialFactory : ICredentialFactory
+    internal class CredentialFactory
     {
         private readonly ILogger<CredentialFactory> _logger;
 
@@ -27,42 +27,38 @@ namespace Azure.Tools.GeneratorAgent.Authentication
 
         private static TokenCredential CreateDevelopmentCredential(TokenCredentialOptions? options)
         {
-            // Get tenant ID from environment (since base options doesn't have it)
-            string? tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+            string? tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
 
             TokenCredential[] credentials = [
                 new AzureCliCredential(new AzureCliCredentialOptions
-            {
-                TenantId = tenantId,
-                AuthorityHost = options?.AuthorityHost
-            }),
-            new AzurePowerShellCredential(new AzurePowerShellCredentialOptions
-            {
-                TenantId = tenantId,
-                AuthorityHost = options?.AuthorityHost
-            }),
-            new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions
-            {
-                TenantId = tenantId,
-                AuthorityHost = options?.AuthorityHost
-            }),
-            new VisualStudioCredential(new VisualStudioCredentialOptions
-            {
-                TenantId = tenantId,
-                AuthorityHost = options?.AuthorityHost
-            })
+                {
+                    TenantId = tenantId,
+                    AuthorityHost = options?.AuthorityHost
+                }),
+                new AzurePowerShellCredential(new AzurePowerShellCredentialOptions
+                {
+                    TenantId = tenantId,
+                    AuthorityHost = options?.AuthorityHost
+                }),
+                new AzureDeveloperCliCredential(new AzureDeveloperCliCredentialOptions
+                {
+                    TenantId = tenantId,
+                    AuthorityHost = options?.AuthorityHost
+                }),
+                new VisualStudioCredential(new VisualStudioCredentialOptions
+                {
+                    TenantId = tenantId,
+                    AuthorityHost = options?.AuthorityHost
+                })
             ];
 
             return new ChainedTokenCredential(credentials);
         }
 
-        private static TokenCredential CreatePipelineCredential(TokenCredentialOptions? options)
-        {
-
-            return new ManagedIdentityCredential(new ManagedIdentityCredentialOptions
+        private static TokenCredential CreatePipelineCredential(TokenCredentialOptions? options) =>
+            new ManagedIdentityCredential(new ManagedIdentityCredentialOptions
             {
                 AuthorityHost = options?.AuthorityHost
             });
-        }
     }
 }

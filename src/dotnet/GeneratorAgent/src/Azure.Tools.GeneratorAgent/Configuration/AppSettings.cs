@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Azure.Tools.GeneratorAgent.Configuration
 {
-    public class AppSettings
+    internal class AppSettings
     {
         private readonly IConfiguration Configuration;
 

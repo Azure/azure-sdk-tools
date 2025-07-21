@@ -3,7 +3,7 @@ namespace Azure.Tools.GeneratorAgent.Authentication
     /// <summary>
     /// Represents the runtime environment where the application is executing.
     /// </summary>
-    public enum RuntimeEnvironment
+    internal enum RuntimeEnvironment
     {
         /// <summary>
         /// Local development environment (developer machine).
@@ -11,7 +11,7 @@ namespace Azure.Tools.GeneratorAgent.Authentication
         LocalDevelopment,
 
         /// <summary>
-        /// DevOps pipeline environment (CI/CD, GitHub Actions, etc.).
+        /// DevOps pipeline environment (Azure DevOps CI/CD)
         /// </summary>
         DevOpsPipeline
     }

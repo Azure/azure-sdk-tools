@@ -3,7 +3,6 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -33,7 +32,7 @@ namespace Azure.Tools.GeneratorAgent
                 RuntimeEnvironment environment = DetermineRuntimeEnvironment();
                 TokenCredentialOptions? credentialOptions = CreateCredentialOptions();
 
-                ICredentialFactory credentialFactory = new CredentialFactory(CredentialLogger);
+                CredentialFactory credentialFactory = new CredentialFactory(CredentialLogger);
                 TokenCredential credential = credentialFactory.CreateCredential(environment, credentialOptions);
 
                 PersistentAgentsAdministrationClient adminClient = new PersistentAgentsAdministrationClient(
@@ -61,8 +60,8 @@ namespace Azure.Tools.GeneratorAgent
 
         private static RuntimeEnvironment DetermineRuntimeEnvironment()
         {
-            bool isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")) ||
-                                 !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_WORKFLOW"));
+            bool isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubActions)) ||
+                                 !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubWorkflow));
 
             if (isGitHubActions)
             {
@@ -74,17 +73,19 @@ namespace Azure.Tools.GeneratorAgent
 
         private static TokenCredentialOptions? CreateCredentialOptions()
         {
-            string? tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+            string? tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
             Uri? authorityHost = null;
 
-            string? authority = Environment.GetEnvironmentVariable("AZURE_AUTHORITY_HOST");
+            string? authority = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureAuthorityHost);
             if (!string.IsNullOrEmpty(authority) && Uri.TryCreate(authority, UriKind.Absolute, out Uri? parsedAuthority))
             {
                 authorityHost = parsedAuthority;
             }
 
             if (tenantId == null && authorityHost == null)
+            {
                 return null;
+            }
 
             var options = new TokenCredentialOptions();
 

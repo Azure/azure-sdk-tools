@@ -9,152 +9,130 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests.Authentication
 {
     [TestFixture]
-    [Category("Unit")]
     public class CredentialFactoryTests
     {
-        private ICredentialFactory _factory;
-        private Mock<ILogger<CredentialFactory>> _loggerMock;
-
-        [SetUp]
-        public void Setup()
+        private static CredentialFactory CreateCredentialFactory(ILogger<CredentialFactory>? logger = null)
         {
-            _loggerMock = new Mock<ILogger<CredentialFactory>>();
-            _factory = new CredentialFactory(_loggerMock.Object);
+            return new CredentialFactory(logger ?? NullLogger<CredentialFactory>.Instance);
+        }
+
+        private static Mock<ILogger<CredentialFactory>> CreateLoggerMock()
+        {
+            return new Mock<ILogger<CredentialFactory>>();
+        }
+
+        private static TokenCredentialOptions CreateTokenCredentialOptions(Uri? authorityHost = null)
+        {
+            return new TokenCredentialOptions { AuthorityHost = authorityHost };
         }
 
         [Test]
-        [Category("Constructor")]
         public void Constructor_WithNullLogger_ThrowsArgumentNullException()
         {
-            // Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new CredentialFactory(null!));
-            Assert.That(ex.ParamName, Is.EqualTo("logger"));
+            Assert.That(ex.ParamName!, Is.EqualTo("logger"));
         }
 
         [Test]
-        [Category("Constructor")]
         public void Constructor_WithValidLogger_DoesNotThrow()
         {
-            // Act & Assert
-            Assert.DoesNotThrow(() => new CredentialFactory(NullLogger<CredentialFactory>.Instance));
+            Assert.DoesNotThrow(() => CreateCredentialFactory());
         }
 
         [Test]
-        [Category("LocalDevelopment")]
         public void CreateCredential_LocalDevelopment_WithoutOptions_ReturnsChainedTokenCredential()
         {
-            // Act
-            TokenCredential credential = _factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
+            var factory = CreateCredentialFactory();
 
-            // Assert
+            TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
+
             Assert.That(credential, Is.Not.Null);
             Assert.That(credential, Is.TypeOf<ChainedTokenCredential>());
         }
 
         [Test]
-        [Category("LocalDevelopment")]
         public void CreateCredential_LocalDevelopment_WithOptions_ReturnsChainedTokenCredential()
         {
-            // Arrange
-            var options = new TokenCredentialOptions
-            {
-                AuthorityHost = new Uri("https://login.microsoftonline.com/")
-            };
+            var factory = CreateCredentialFactory();
+            var options = CreateTokenCredentialOptions(new Uri("https://fake-authority.example.com/"));
 
-            // Act
-            TokenCredential credential = _factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, options);
+            TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, options);
 
-            // Assert
             Assert.That(credential, Is.Not.Null);
             Assert.That(credential, Is.TypeOf<ChainedTokenCredential>());
         }
 
         [Test]
-        [Category("LocalDevelopment")]
         public void CreateCredential_LocalDevelopment_WithCustomRetryOptions_ReturnsChainedTokenCredential()
         {
-            // Arrange
+            var factory = CreateCredentialFactory();
             var options = new TokenCredentialOptions();
             options.Retry.MaxRetries = 5;
             options.Retry.Delay = TimeSpan.FromSeconds(2);
 
-            // Act
-            TokenCredential credential = _factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, options);
+            TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, options);
 
-            // Assert
             Assert.That(credential, Is.Not.Null);
             Assert.That(credential, Is.TypeOf<ChainedTokenCredential>());
         }
 
         [Test]
-        [Category("DevOpsPipeline")]
         public void CreateCredential_DevOpsPipeline_WithoutOptions_ReturnsManagedIdentityCredential()
         {
-            // Act
-            TokenCredential credential = _factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline);
+            var factory = CreateCredentialFactory();
 
-            // Assert
+            TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline);
+
             Assert.That(credential, Is.Not.Null);
             Assert.That(credential, Is.TypeOf<ManagedIdentityCredential>());
         }
 
         [Test]
-        [Category("DevOpsPipeline")]
         public void CreateCredential_DevOpsPipeline_WithOptions_ReturnsManagedIdentityCredential()
         {
-            // Arrange
-            var options = new TokenCredentialOptions
-            {
-                AuthorityHost = new Uri("https://login.microsoftonline.com/")
-            };
+            var factory = CreateCredentialFactory();
+            var options = CreateTokenCredentialOptions(new Uri("https://fake-authority.example.com/"));
 
-            // Act
-            TokenCredential credential = _factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options);
+            TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options);
 
-            // Assert
             Assert.That(credential, Is.Not.Null);
             Assert.That(credential, Is.TypeOf<ManagedIdentityCredential>());
         }
 
         [Test]
-        [Category("DevOpsPipeline")]
         public void CreateCredential_DevOpsPipeline_WithDiagnosticsOptions_ReturnsManagedIdentityCredential()
         {
-            // Arrange
+            var factory = CreateCredentialFactory();
             var options = new TokenCredentialOptions();
             options.Diagnostics.IsLoggingEnabled = true;
             options.Diagnostics.IsAccountIdentifierLoggingEnabled = true;
 
-            // Act
-            TokenCredential credential = _factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options);
+            TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options);
 
-            // Assert
             Assert.That(credential, Is.Not.Null);
             Assert.That(credential, Is.TypeOf<ManagedIdentityCredential>());
         }
 
         [Test]
-        [Category("Validation")]
         public void CreateCredential_InvalidEnvironment_ThrowsArgumentException()
         {
-            // Arrange
+            var factory = CreateCredentialFactory();
             const RuntimeEnvironment invalidEnvironment = (RuntimeEnvironment)999;
 
-            // Act & Assert
-            var ex = Assert.Throws<ArgumentException>(() => _factory.CreateCredential(invalidEnvironment));
+            var ex = Assert.Throws<ArgumentException>(() => factory.CreateCredential(invalidEnvironment));
             Assert.That(ex.ParamName, Is.EqualTo("environment"));
             Assert.That(ex.Message, Does.Contain("Unsupported runtime environment"));
         }
 
         [Test]
-        [Category("Logging")]
         public void CreateCredential_LogsCredentialCreation()
         {
-            // Act
-            _factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
+            var loggerMock = CreateLoggerMock();
+            var factory = CreateCredentialFactory(loggerMock.Object);
 
-            // Assert
-            _loggerMock.Verify(
+            factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
+
+            loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
@@ -165,27 +143,64 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
         }
 
         [Test]
-        [Category("Options")]
         public void CreateCredential_NullOptions_DoesNotThrow()
         {
-            // Act & Assert
-            Assert.DoesNotThrow(() => _factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, null));
-            Assert.DoesNotThrow(() => _factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, null));
+            var factory = CreateCredentialFactory();
+
+            Assert.DoesNotThrow(() => factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, null));
+            Assert.DoesNotThrow(() => factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, null));
         }
 
         [Test]
-        [Category("Options")]
         public void CreateCredential_WithAuthorityHost_AcceptsValidUri()
         {
-            // Arrange
-            var options = new TokenCredentialOptions
-            {
-                AuthorityHost = new Uri("https://login.microsoftonline.us/") // Government cloud
-            };
+            var factory = CreateCredentialFactory();
+            var options = CreateTokenCredentialOptions(new Uri("https://fake-government-cloud.example.com/")); // Fake government cloud
 
-            // Act & Assert
-            Assert.DoesNotThrow(() => _factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, options));
-            Assert.DoesNotThrow(() => _factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options));
+            Assert.DoesNotThrow(() => factory.CreateCredential(RuntimeEnvironment.LocalDevelopment, options));
+            Assert.DoesNotThrow(() => factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options));
+        }
+
+        [Test]
+        public void CreateCredential_LocalDevelopment_RespectsEnvironmentVariables()
+        {
+            var factory = CreateCredentialFactory();
+            string originalTenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID") ?? "";
+            
+            try
+            {
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", "test-tenant-id");
+
+                TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
+
+                Assert.That(credential, Is.Not.Null);
+                Assert.That(credential, Is.TypeOf<ChainedTokenCredential>());
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", originalTenantId);
+            }
+        }
+
+        [Test]
+        public void CreateCredential_LocalDevelopment_WithoutEnvironmentVariables_StillWorks()
+        {
+            var factory = CreateCredentialFactory();
+            string originalTenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID") ?? "";
+            
+            try
+            {
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", null);
+
+                TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
+
+                Assert.That(credential, Is.Not.Null);
+                Assert.That(credential, Is.TypeOf<ChainedTokenCredential>());
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", originalTenantId);
+            }
         }
     }
 }

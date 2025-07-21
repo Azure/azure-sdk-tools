@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
-    public class ErrorFixerAgent : IAsyncDisposable
+    internal class ErrorFixerAgent : IAsyncDisposable
     {
         private readonly AppSettings AppSettings;
         private readonly ILogger<ErrorFixerAgent> Logger;

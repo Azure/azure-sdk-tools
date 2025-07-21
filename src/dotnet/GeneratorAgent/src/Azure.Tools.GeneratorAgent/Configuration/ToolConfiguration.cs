@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Azure.Tools.GeneratorAgent;
 
-public sealed class ToolConfiguration
+internal class ToolConfiguration
 {
     private readonly IConfiguration _configuration;
     private readonly string ToolDirectory;

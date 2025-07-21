@@ -64,7 +64,7 @@ namespace APIViewWeb.Pages.Assemblies
                 // Check if the parent review has namespace approval requested using cached data
                 if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview) && 
                     parentReview.IsNamespaceReviewRequested && 
-                    !parentReview.IsNamespaceApproved)
+                    !parentReview.IsApproved)
                 {
                     namespaceApprovalRequestedAPIRevs.Add(apiRevision);
                 }

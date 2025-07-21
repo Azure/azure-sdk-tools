@@ -13,7 +13,6 @@ export class Review {
   lastUpdatedOn: string;
   isDeleted: boolean;
   isApproved: boolean;
-  isNamespaceApproved: boolean;
   namespaceApprovers: string[];
   isNamespaceReviewRequested: boolean;
   changeHistory: ChangeHistory[];
@@ -25,7 +24,6 @@ export class Review {
     this.lastUpdatedOn = ''
     this.isDeleted = false
     this.isApproved = false
-    this.isNamespaceApproved = false
     this.namespaceApprovers = []
     this.isNamespaceReviewRequested = false
     this.changeHistory = []

@@ -576,7 +576,7 @@ namespace APIViewWeb.Managers
             {
                 // Find the TypeSpec review for this package
                 var typeSpecReview = await _reviewsRepository.GetReviewAsync("TypeSpec", packageName, false);
-                if (typeSpecReview == null || typeSpecReview.IsDeleted || typeSpecReview.IsNamespaceApproved)
+                if (typeSpecReview == null || typeSpecReview.IsDeleted || typeSpecReview.IsApproved)
                     return;
 
                 // Check if all related SDK reviews are approved
@@ -588,7 +588,7 @@ namespace APIViewWeb.Managers
                     var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
                         typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceApproved, userId, "Auto-approved: All related SDK reviews are approved");
                     typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
-                    typeSpecReview.IsNamespaceApproved = changeUpdate.ChangeStatus;
+                    typeSpecReview.IsApproved = changeUpdate.ChangeStatus;
                     
                     if (changeUpdate.ChangeStatus)
                     {

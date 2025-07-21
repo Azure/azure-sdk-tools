@@ -105,7 +105,6 @@ namespace APIViewWeb.LeanModels
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
         public bool IsApproved { get; set; }
-        public bool IsNamespaceApproved { get; set; }
         public HashSet<string> NamespaceApprovers { get; set; } = new HashSet<string>();
         public bool IsNamespaceReviewRequested { get; set; }
         public string CreatedBy { get; set; }

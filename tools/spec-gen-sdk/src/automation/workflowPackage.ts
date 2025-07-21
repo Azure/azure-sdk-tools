@@ -1,6 +1,7 @@
 import { default as FileHound } from 'filehound';
-import path from 'path';
-import fs, { copyFileSync, existsSync } from 'fs';
+import * as path from 'path';
+// import fs, { copyFileSync, existsSync } from 'fs';
+import * as fs from 'fs';
 import { InstallInstructionScriptInput } from '../types/InstallInstructionScriptInput';
 import { getInstallInstructionScriptOutput } from '../types/InstallInstructionScriptOutput';
 import { PackageData } from '../types/PackageData';
@@ -34,7 +35,7 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
   context.logger.log('endsection', `Handle package ${pkg.name}`);
 };
 
-const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: PackageData) => {
+export const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: PackageData) => {
   const runOptions = context.swaggerToSdkConfig.packageOptions.buildScript;
   if (!runOptions) {
     context.logger.info('buildScript of packageOptions is not configured in swagger_to_sdk_config.json.');
@@ -52,7 +53,7 @@ const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: Package
   context.logger.log('endsection', 'Call BuildScript');
 };
 
-const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: PackageData) => {
+export const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: PackageData) => {
   const runOptions = context.swaggerToSdkConfig.packageOptions.changelogScript;
   if (!runOptions) {
     context.logger.info('changelogScript is not configured');
@@ -88,7 +89,7 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
   }
 };
 
-const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: PackageData) => {
+export const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: PackageData) => {
   const searchOption = context.swaggerToSdkConfig.artifactOptions.artifactPathFromFileSearch;
   if (!searchOption) {
     context.logger.info(`Skip artifact search`);
@@ -128,7 +129,7 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
  * 
  * Copy sdk artifact path to {work_dir}/out/stagedArtifacts
  */
-const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: PackageData) => {
+export const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: PackageData) => {
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
   const relativeFolderPathParts = pkg.relativeFolderPath.split('/');
   let serviceName = relativeFolderPathParts[relativeFolderPathParts.indexOf('sdk') + 1];
@@ -140,7 +141,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
   context.stagedArtifactsFolder = stagedArtifactsFolder;
-  if (!existsSync(stagedArtifactsFolder)) {
+  if (!fs.existsSync(stagedArtifactsFolder)) {
     fs.mkdirSync(stagedArtifactsFolder, { recursive: true });
   }
 
@@ -150,7 +151,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   }
 
   const destination = path.join(stagedArtifactsFolder, pkg.name);
-  if (!existsSync(destination)) {
+  if (!fs.existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkArtifactFolder = destination;
@@ -158,7 +159,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     const fileName = path.basename(artifactPath);
     if (context.config.runEnv !== 'test') {
       context.logger.info(`Copy SDK artifact ${fileName} from ${path.join(context.config.localSdkRepoPath, artifactPath)} to ${path.join(destination, fileName)}`);
-      copyFileSync(path.join(context.config.localSdkRepoPath, artifactPath), path.join(destination, fileName));
+      fs.copyFileSync(path.join(context.config.localSdkRepoPath, artifactPath), path.join(destination, fileName));
     }
   }
 };
@@ -166,25 +167,25 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
 /*
 * Copy apiView artifact and generate meta file in {work_dir}/out/stagedArtifacts
 * */
-const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: PackageData) => {
+export const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: PackageData) => {
   if (!pkg.apiViewArtifactPath) {
     return;
   }
 
   const destination = path.join(context.config.workingFolder, 'out', 'stagedArtifacts', pkg.name);
-  if (!existsSync(destination)) {
+  if (!fs.existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
   const fileName = path.basename(pkg.apiViewArtifactPath);
   const newApiViewArtifactPath = path.join(destination, fileName);
   context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${newApiViewArtifactPath}`);
-  copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), newApiViewArtifactPath);
+  fs.copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), newApiViewArtifactPath);
   pkg.apiViewArtifactPath = newApiViewArtifactPath;
 };
 
 const fileInstallInstructionInput = 'installInstructionInput.json';
 const fileInstallInstructionOutput = 'installInstructionOutput.json';
-const workflowPkgCallInstallInstructionScript = async (
+export const workflowPkgCallInstallInstructionScript = async (
   context: WorkflowContext,
   pkg: PackageData
 ) => {

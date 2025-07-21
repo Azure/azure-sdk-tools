@@ -1,6 +1,7 @@
+using Mcp;
 using Azure.Tsp.Tools.Mcp.Tools;
 
-namespace Mcp
+namespace Azure.Tsp.Tools.Mcp
 {
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
@@ -8,7 +9,6 @@ namespace Mcp
     {
         public static async Task Main(string[] args)
         {
-            Console.Error.WriteLine($"Running process id is {Environment.ProcessId}");
             System.CommandLine.Option<McpTransport> transport = new("--transport")
             {
                 Description = "What transport to use for the MCP server"
@@ -28,8 +28,6 @@ namespace Mcp
         public static void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IInit, InitImpl>();
-            // services.AddSingleton<ILearn, LearnImpl>();
-            // Add other services as needed
         }
     }
 }

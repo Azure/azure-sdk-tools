@@ -10,7 +10,7 @@ namespace Mcp
         /// This is the tool to call when you want to initialize a new TypeSpec project.
         /// Call this tool when starting a new TypeSpec project.
         /// Pass in the <c>template</c> to use: <c>azure-core</c> for data-plane services, or <c>azure-arm</c> for resource-manager services.
-        /// Pass in the <c>serviceNamespace</c> to use, which is the namespace of the service you are creating. Should be Pascal case.
+        /// Pass in the <c>serviceNamespace</c> to use, which is the namespace of the service you are creating. Should be Pascal case. Exclude the 'Microsoft.' prefix for ARM services.
         /// Pass in the <c>outputDirectory</c> where the project should be created. This must be an existing empty directory.
         /// Returns the path to the created project.
         /// </summary>

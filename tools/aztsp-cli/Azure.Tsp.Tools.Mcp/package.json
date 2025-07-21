@@ -23,7 +23,6 @@
     "build:tsp": "tsp compile .",
     "build:cs": "dotnet build Mcp.csproj",
     "build": "npm run build:tsp && npm run build:cs",
-    "mcp": "mcp-cli node dist/src/mcp-server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "debug": "dotnet build Mcp.csproj /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary /p:Configuration=Debug /p:Platform=\"AnyCPU\"",
     "inspect": "mcp-inspector ../../artifacts/bin/Mcp/Debug/net8.0/Mcp.exe"

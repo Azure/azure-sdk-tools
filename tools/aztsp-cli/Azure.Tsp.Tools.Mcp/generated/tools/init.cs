@@ -17,7 +17,7 @@ namespace Mcp
         [McpServerTool(Name = "init_quickstart"), Description(@"This is the tool to call when you want to initialize a new TypeSpec project.
         **Call this tool when starting a new TypeSpec project.**
         Pass in the `template` to use: `azure-core` for data-plane services, or `azure-arm` for resource-manager services.
-        Pass in the `serviceNamespace` to use, which is the namespace of the service you are creating. Should be Pascal case.
+        Pass in the `serviceNamespace` to use, which is the namespace of the service you are creating. Should be Pascal case. Exclude the 'Microsoft.' prefix for ARM services.
         Pass in the `outputDirectory` where the project should be created. This must be an existing empty directory.
         Returns the path to the created project.")]
         public async Task<string> QuickstartAsync(

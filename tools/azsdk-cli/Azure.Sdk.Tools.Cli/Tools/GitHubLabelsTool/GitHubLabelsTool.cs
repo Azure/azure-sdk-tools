@@ -17,7 +17,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output, IGitHubService githubService) : MCPTool
     {
         private const string serviceLabelColorCode = "e99695";
-        
+
+        //command names
+        private const string checkServiceLabelCommandName = "check-service-label";
+        private const string createServiceLabelCommandName = "create-service-label";
+
+        // Command options
+        private readonly Option<string> proposedServiceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
+        private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
+
         private readonly Argument<string> _serviceLabelArg = new Argument<string>(
             name: "service-label",
             description: "The service label to check in the common labels CSV"
@@ -28,22 +36,45 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            Command command = new("github-labels", "GitHub service labels tools");
-            
-            var checkServiceLabelCommand = new Command("check-service-label", "Check if a service label exists in the common labels CSV");
-            checkServiceLabelCommand.AddArgument(_serviceLabelArg);
-            checkServiceLabelCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            
-            command.AddCommand(checkServiceLabelCommand);
+            var command = new Command("github-labels", "GitHub service labels tools");
+            var subCommands = new[]
+            {
+                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { _serviceLabelArg },
+                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { proposedServiceLabelOpt, documentationLinkOpt },
+            };
+
+            foreach (var subCommand in subCommands)
+            {
+                subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+                command.AddCommand(subCommand);
+            }
             return command;
         }
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            string serviceLabel = ctx.ParseResult.GetValueForArgument(_serviceLabelArg);
-            var result = await CheckServiceLabel(serviceLabel);
-            ctx.ExitCode = ExitCode;
-            output.Output(result);
+            var command = ctx.ParseResult.CommandResult.Command.Name;
+            var commandParser = ctx.ParseResult;
+
+            switch (command)
+            {
+                case checkServiceLabelCommandName:
+                    var serviceLabel = commandParser.GetValueForArgument(_serviceLabelArg);
+                    var result = await CheckServiceLabel(serviceLabel);
+                    ctx.ExitCode = ExitCode;
+                    output.Output(result);
+                    return;
+                case createServiceLabelCommandName:
+                    var proposedServiceLabel = commandParser.GetValueForOption(proposedServiceLabelOpt);
+                    var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
+                    var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? ""); // Should probably just return the created PR link.
+                    output.Output($"Create service label result: {createdPRLink}");
+                    return;
+                default:
+                    SetFailure();
+                    output.OutputError($"Unknown command: '{command}'");
+                    return;
+            }
         }
 
         [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns the color code (e99695) if found")]
@@ -125,17 +156,58 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 };
             }
         }
+        
+        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
+        public async Task<string> CreateServiceLabel(string label, string link)
+            {
+                try
+                {
+                    logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
+
+                    var result = await githubService.CreatePullRequestAsync(
+                        repoName: "azure-sdk-tools",
+                        repoOwner: "Azure",
+                        baseBranch: "main",
+                        headBranch: $"add-service-label-{label}",
+                        title: $"Add service label: {label}",
+                        body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
+                        draft: true
+                    );
+
+                    logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
+
+                    var response = new GenericResponse()
+                    {
+                        Status = "Success",
+                        Details = { $"Service label '{label}' pull request created successfully." }
+                    };
+                    response.Details.AddRange(result);
+
+                    return output.Format(response);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
+
+                    var errorResponse = new GenericResponse()
+                    {
+                        Status = "Failed",
+                        Details = { $"Failed to create pull request for service label '{label}'. Error: {ex.Message}" }
+                    };
+                    return output.Format(errorResponse);
+                }
+            }
 
         private static List<string> ParseCsvLine(string line)
         {
             var columns = new List<string>();
             var currentColumn = new StringBuilder();
             bool inQuotes = false;
-            
+
             for (int i = 0; i < line.Length; i++)
             {
                 char c = line[i];
-                
+
                 if (c == '"')
                 {
                     inQuotes = !inQuotes;
@@ -150,13 +222,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     currentColumn.Append(c);
                 }
             }
-            
+
             // Add the last column
             columns.Add(currentColumn.ToString());
-            
+
             return columns;
         }
     }
+
 
     public class ServiceLabelResponse
     {

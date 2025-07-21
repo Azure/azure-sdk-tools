@@ -1,0 +1,26 @@
+[
+  {
+    "version": "view=azure-dotnet-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/dotnet/azure/intro?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/azure/key-azure-services?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/storage?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/storage.blobs.batch-readme?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.azurestorageblobsbatchcontext?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.azurestorageblobsbatchcontext.default?view=azure-dotnet-preview#azure-storage-blobs-batch-azurestorageblobsbatchcontext-default\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.clientmodel.primitives.modelreaderwritercontext.gettypebuilder?view=azure-dotnet-preview#system-clientmodel-primitives-modelreaderwritercontext-gettypebuilder(system-type)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.clientmodel.primitives.modelreaderwritercontext?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.clientmodel.primitives.modelreaderwritercontext.-ctor?view=azure-dotnet-preview#system-clientmodel-primitives-modelreaderwritercontext-ctor\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.clientmodel.primitives.modelreaderwritercontext.trygettypebuilder?view=azure-dotnet-preview#system-clientmodel-primitives-modelreaderwritercontext-trygettypebuilder(system-type-system-clientmodel-primitives-modelreaderwritertypebuilder@)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.clientmodel.primitives.modelreaderwritercontext.trygettypebuildercore?view=azure-dotnet-preview#system-clientmodel-primitives-modelreaderwritercontext-trygettypebuildercore(system-type-system-clientmodel-primitives-modelreaderwritertypebuilder@)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.azurestorageblobsbatchcontext.trygettypebuildercore?view=azure-dotnet-preview#azure-storage-blobs-batch-azurestorageblobsbatchcontext-trygettypebuildercore(system-type-system-clientmodel-primitives-modelreaderwritertypebuilder@)\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.batchdeletebloboptions?view=azure-dotnet-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.batchdeletebloboptions.-ctor?view=azure-dotnet-preview#azure-storage-blobs-batch-batchdeletebloboptions-ctor\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.batchdeletebloboptions.conditions?view=azure-dotnet-preview#azure-storage-blobs-batch-batchdeletebloboptions-conditions\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.batchdeletebloboptions.snapshotsoption?view=azure-dotnet-preview#azure-storage-blobs-batch-batchdeletebloboptions-snapshotsoption\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/azure.storage.blobs.batch.batchdeletebloboptions.versionid?view=azure-dotnet-preview#azure-storage-blobs-batch-batchdeletebloboptions-versionid\u0026branch=main"
+    ]
+  }
+]

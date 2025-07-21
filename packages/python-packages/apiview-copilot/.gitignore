@@ -3,4 +3,5 @@ scratch/output
 scratch/logs
 raw_requests
 build
+.runs
 *.log

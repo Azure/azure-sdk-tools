@@ -1,0 +1,14 @@
+[
+  {
+    "version": "view=azure-dotnet-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/dotnet/azure/intro?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/azure/key-azure-services?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/cognitive-services?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/cognitiveservices/conversationsauthoring?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/cognitiveservices/openaiassistants?view=azure-dotnet\u0026branch=main",
+      "https://learn.microsoft.com/en-us/dotnet/api/overview/azure/cognitiveservices/speechxamarinios?view=azure-dotnet\u0026branch=main"
+    ]
+  }
+]

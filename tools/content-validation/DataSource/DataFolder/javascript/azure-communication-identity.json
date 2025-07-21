@@ -1,0 +1,19 @@
+[
+  {
+    "version": "view=azure-node-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/javascript/api/overview/azure/communication-identity-readme?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/?view=azure-node-preview",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/communicationidentityclient?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/communicationaccesstoken?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/communicationidentityclientoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/communicationuserdetail?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/communicationusertoken?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/createuserandtokenoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/createuseroptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/gettokenforteamsuseroptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/gettokenoptions?view=azure-node-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/javascript/api/@azure/communication-identity/tokenscope?view=azure-node-preview\u0026branch=main"
+    ]
+  }
+]

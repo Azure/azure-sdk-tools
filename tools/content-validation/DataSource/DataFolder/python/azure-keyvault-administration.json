@@ -1,0 +1,28 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/key-vault?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/keyvault-administration-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.aio.keyvaultaccesscontrolclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.aio.keyvaultbackupclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.aio.keyvaultsettingsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultaccesscontrolclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultbackupclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultbackupresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultpermission?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultroleassignment?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultroleassignmentproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultroledefinition?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultsetting?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultsettingsclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.apiversion?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultdataaction?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultrolescope?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-keyvault-administration/azure.keyvault.administration.keyvaultsettingtype?view=azure-python\u0026branch=main"
+    ]
+  }
+]

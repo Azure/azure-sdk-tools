@@ -44,6 +44,9 @@ param webAppSKU string
 @maxLength(42)
 param botDisplayName string
 
+// Email notification settings (semicolon-separated string from env file)
+param alertEmailAddresses string = 'wanl@microsoft.com'
+
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
   name: identityName
@@ -199,13 +202,11 @@ resource emailActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
   properties: {
     groupShortName: 'EmailAlerts'
     enabled: true
-    emailReceivers: [
-      {
-        name: 'wanl-email'
-        emailAddress: 'wanl@microsoft.com'
-        useCommonAlertSchema: true
-      }
-    ]
+    emailReceivers: [for (email, index) in split(alertEmailAddresses, ','): {
+      name: 'email-${index}'
+      emailAddress: trim(email)
+      useCommonAlertSchema: true
+    }]
   }
 }
 

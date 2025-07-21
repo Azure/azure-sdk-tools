@@ -40,6 +40,9 @@
     },
     "botDisplayName": {
       "value": "${{TEAMS_BOT_FULL_DISPLAY_NAME}}"
+    },
+    "alertEmailAddresses": {
+      "value": "${{ALERT_EMAIL_ADDRESSES}}"
     }
   }
 }

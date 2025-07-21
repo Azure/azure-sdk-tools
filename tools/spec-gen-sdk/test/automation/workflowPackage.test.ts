@@ -1,18 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('fs', () => {
+vi.mock(import('fs'), async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    ...vi.importActual('fs'),
+    ...actual,
     mkdirSync: vi.fn(),
     existsSync: vi.fn(),
     copyFileSync: vi.fn(),
-    readFileSync: vi.fn().mockReturnValue('{"key": "value"}')
   };
 });
 
-vi.mock('path', () => {
+vi.mock(import('path'), async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    ...vi.importActual('path'),
+    ...actual,
     join: vi.fn(),
     relative: vi.fn(),
     basename: vi.fn(),

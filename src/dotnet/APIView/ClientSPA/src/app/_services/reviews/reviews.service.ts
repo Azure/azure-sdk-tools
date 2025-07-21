@@ -113,7 +113,7 @@ export class ReviewsService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/requestNamespaceReview`, notes,
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/requestNamespaceReview`, { notes },
     {
       headers: headers,
       withCredentials: true,

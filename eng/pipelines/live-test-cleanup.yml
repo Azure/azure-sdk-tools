@@ -10,7 +10,7 @@ parameters:
     default: '*'
   - name: Pool
     type: string
-    default: azsdk-pool-mms-ubuntu-2204-general
+    default: azsdk-pool
   - name: Subscriptions
     type: object
     default:
@@ -60,7 +60,8 @@ stages:
   - job: Run
     timeoutInMinutes: 120  # sometimes RP throttling slows down the cleanup script
     pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
 
     steps:
     - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml

@@ -17,12 +17,12 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
-import { migratePackage } from "../../common/migration.js";
 import { isRushRepo } from "../../common/rushUtils.js";
+import { updateSnippets } from "../../common/devToolUtils.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -39,6 +39,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -75,6 +77,9 @@ export async function generateRLCInPipeline(options: {
             } else {
                 logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
+                if (options.apiVersion) {
+                    specifyApiVersionToGenerateSDKByTypeSpec(tspDefDir, options.apiVersion);
+                }
                 const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
@@ -195,6 +200,12 @@ export async function generateRLCInPipeline(options: {
                 cmd += ` --multi-client=true`;
             }
 
+            if(options.apiVersion && options.apiVersion !== '') {
+                // for high level client, we will build a tag for the package
+                logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+                cmd += ` --tag=package-${options.apiVersion}`;
+            }
+
             logger.info(`Start to run command: ${cmd}.`);
             try {
                 execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath), timeout: defaultChildProcessTimeout});
@@ -235,9 +246,7 @@ export async function generateRLCInPipeline(options: {
         if (isRushRepo(options.sdkRepo)) {
             logger.info(`Start to update rush.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-    
-            await migratePackage(options.sdkRepo, packagePath);
-    
+        
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
             execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
@@ -253,11 +262,19 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
             execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
         }
+
+        await updateSnippets(packagePath);
         
         if (!options.skipGeneration) {
-            const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
-            outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
-            outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
+            const getChangelogItems = () => {
+                const categories = changelog?.changelogItems.breakingChanges.keys();
+                if (!categories) return [];
+                const items = [...categories].sort().flatMap(cat => changelog?.changelogItems.breakingChanges.get(cat) ?? []);
+                return items;
+            };
+            const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
+            outputPackageInfo.changelog.breakingChangeItems = getChangelogItems();
+            outputPackageInfo.changelog.content = changelog?.content ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
         }
         if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/event-hubs?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/eventhub-checkpointstoreblob-aio-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventhub-checkpointstoreblob-aio/azure.eventhub.extensions.checkpointstoreblobaio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-eventhub-checkpointstoreblob-aio/azure.eventhub.extensions.checkpointstoreblobaio.blobcheckpointstore?view=azure-python\u0026branch=main"
+    ]
+  }
+]

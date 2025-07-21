@@ -6,7 +6,7 @@ import {generateMgmt} from "./hlc/generateMgmt.js";
 
 import shell from 'shelljs';
 
-async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, additionalArgs?: string) {
+async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, apiVersion?: string, sdkReleaseType?: string, additionalArgs?: string) {
     const regexResult = /^(.*[\/\\]azure-rest-api-specs[-pr]*)[\/\\](specification.*)/.exec(absoluteReadmeMd);
     if (!regexResult || regexResult.length !== 3) {
         logger.error(`Failed to parse README file path '${absoluteReadmeMd}'.`);
@@ -21,6 +21,8 @@ async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: stri
             tag: tag,
             use: use,
             additionalArgs: additionalArgs,
+            apiVersion: apiVersion,
+            sdkReleaseType: sdkReleaseType
         });
     }
 
@@ -30,8 +32,10 @@ const optionDefinitions = [
     { name: 'use',  type: String },
     { name: 'tag', type: String },
     { name: 'readme', type: String },
-    { name: 'additional-args', type: String },
+    { name: 'apiVersion', type: String },
+    { name: 'sdkReleaseType', type: String },
+    { name: 'additional-args', type: String }   
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInTerminal(options.readme, options.tag, options.use, options['additional-args']);
+automationGenerateInTerminal(options.readme, options.tag, options.use, options.apiVersion, options.sdkReleaseType, options['additional-args']);

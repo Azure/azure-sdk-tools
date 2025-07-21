@@ -36,6 +36,8 @@ public class Program
         // it doesn't recognize.
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+        var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
+
         // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
         var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
 
@@ -48,32 +50,36 @@ public class Program
         ServiceRegistrations.RegisterCommonServices(builder.Services);
 
         // add the console logger
+        var logLevel = debug ? LogLevel.Debug : LogLevel.Information;
+
         builder.Services.AddLogging(l =>
         {
             l.AddConsole();
-            l.SetMinimumLevel(LogLevel.Information);
+            l.SetMinimumLevel(logLevel);
         });
 
         if (!isCLI)
         {
             builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Mcp));
         }
+        else if (outputFormat == "plain")
+        {
+            builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Plain));
+        }
+        else if (outputFormat == "json")
+        {
+            builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Json));
+        }
         else
         {
-            var outputFormat = SharedOptions.GetOutputFormat(args);
-            if (outputFormat == "plain")
-            {
-                builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Plain));
-            }
-            else if (outputFormat == "json")
-            {
-                builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Json));
-            }
-            else
-            {
-                throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
-            }
+            throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
         }
+
+
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
+        });
 
         var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 

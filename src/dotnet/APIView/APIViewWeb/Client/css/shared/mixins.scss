@@ -131,13 +131,13 @@
     }
 }
 
-@mixin webkit-scrollbar {
+@mixin webkit-scrollbar($height: 10px, $width: 10px) {
     ::-webkit-scrollbar {
-        width: 10px;
+        width: $width;
     }
     
     ::-webkit-scrollbar:horizontal {
-        height: 10px;
+        height: $height;
     }
     
     ::-webkit-scrollbar-thumb {

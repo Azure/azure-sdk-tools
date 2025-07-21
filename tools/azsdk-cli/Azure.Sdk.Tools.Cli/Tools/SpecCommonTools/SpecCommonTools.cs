@@ -27,57 +27,65 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("This tool returns list of TypeSpec projects modified in current branch")]
         public string GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
         {
-            var baseCommitSha = gitHelper.GetMergeBaseCommitSha(repoRootPath, targetBranch);
-            if (string.IsNullOrEmpty(baseCommitSha))
-            {
-                List<string> _out = [$"Failed to get merge base commit SHA for {repoRootPath}"];
-                return output.Format(_out);
-            }
-
-            var scriptPath = Path.Combine(repoRootPath, GET_CHANGED_TYPESPEC_PROJECT_SCRIPT);
-            if (!File.Exists(scriptPath))
-            {
-                List<string> _out = [$"[{scriptPath}] path is not present"];
-                return output.Format(_out);
-            }
-
-            logger.LogInformation("Getting changed files in current branch with diff against commit SHA {baseCommitSha}", baseCommitSha);
             try
             {
-                var processInfo = new ProcessStartInfo
+                var baseCommitSha = gitHelper.GetMergeBaseCommitSha(repoRootPath, targetBranch);
+                if (string.IsNullOrEmpty(baseCommitSha))
                 {
-                    FileName = "pwsh",
-                    Arguments = $"{scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = repoRootPath
-                };
-                using var process = Process.Start(processInfo) ?? throw new Exception($"Failed to start the process: git diff {baseCommitSha}  --name-only");
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    SetFailure(process.ExitCode);
-                    List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {process.StandardError.ReadToEnd()}"];
-                    return output.Format(_err);
+                    List<string> _out = [$"Failed to get merge base commit SHA for {repoRootPath}"];
+                    return output.Format(_out);
                 }
-                var stdout = process.StandardOutput.ReadToEnd();
-                var _out = stdout.Split(Environment.NewLine).Where(o => o.StartsWith("specification")).ToList();
-                return output.Format(_out);
+
+                var scriptPath = Path.Combine(repoRootPath, GET_CHANGED_TYPESPEC_PROJECT_SCRIPT);
+                if (!File.Exists(scriptPath))
+                {
+                    List<string> _out = [$"[{scriptPath}] path is not present"];
+                    return output.Format(_out);
+                }
+
+                logger.LogInformation("Getting changed files in current branch with diff against commit SHA {baseCommitSha}", baseCommitSha);
+                try
+                {
+                    var processInfo = new ProcessStartInfo
+                    {
+                        FileName = "pwsh",
+                        Arguments = $"{scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        RedirectStandardInput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        WorkingDirectory = repoRootPath
+                    };
+                    using var process = Process.Start(processInfo) ?? throw new Exception($"Failed to start the process: git diff {baseCommitSha}  --name-only");
+                    process.WaitForExit();
+                    if (process.ExitCode != 0)
+                    {
+                        SetFailure(process.ExitCode);
+                        List<string> _err = [$"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure PowerShell Core is installed. Error {process.StandardError.ReadToEnd()}"];
+                        return output.Format(_err);
+                    }
+                    var stdout = process.StandardOutput.ReadToEnd();
+                    var _out = stdout.Split(Environment.NewLine).Where(o => o.StartsWith("specification")).ToList();
+                    return output.Format(_out);
+                }
+                catch (Exception ex)
+                {
+                    SetFailure();
+                    return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure PowerShell Core is installed. Error {ex.Message}";
+                }
             }
             catch (Exception ex)
             {
                 SetFailure();
-                return $"Failed to execute 'pwsh {scriptPath}  -BaseCommitish {baseCommitSha} -IgnoreCoreFiles' to get modified TypeSpec projects. Please make sure you have PowerShell core is installed. Error {ex.Message}";
+                return $"Failed to get modified TypeSpec projects due to unhandled exception: {ex.Message}";
             }
         }
 
         public override Command GetCommand()
         {
             // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-            Command command = new("spec-tool");
+            Command command = new("spec-tool", "TypeSpec project tools for Azure REST API Specs");
             var getModifiedProjectsCommand = new Command(getModifiedProjectsCommandName, "Get list of modified typespec projects") { repoRootOpt, targetBranchOpt };
             getModifiedProjectsCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             command.AddCommand(getModifiedProjectsCommand);

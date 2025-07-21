@@ -6,12 +6,10 @@ import { getInstallInstructionScriptOutput } from '../types/InstallInstructionSc
 import { PackageData } from '../types/PackageData';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import {
-  WorkflowContext
-} from './workflow';
-import { getLanguageByRepoName } from './entrypoint';
 import { CommentCaptureTransport } from './logging';
 import { toolWarning } from '../utils/messageUtils';
+import { getLanguageByRepoName } from '../utils/workflowUtils';
+import { WorkflowContext } from '../types/Workflow';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
@@ -142,12 +140,15 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
   context.stagedArtifactsFolder = stagedArtifactsFolder;
+  if (!existsSync(stagedArtifactsFolder)) {
+    fs.mkdirSync(stagedArtifactsFolder, { recursive: true });
+  }
 
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 
     return; 
   }
- 
+
   const destination = path.join(stagedArtifactsFolder, pkg.name);
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });

@@ -33,6 +33,14 @@ public class TokenUsageHelper
         {
             (inputPrice, outputPrice) = (0.165, 0.66);
         }
+        if (model == "gpt-4.1")
+        {
+            (inputPrice, outputPrice) = (2, 8);
+        }
+        else if (model == "gpt-4.1-mini")
+        {
+            (inputPrice, outputPrice) = (0.4, 1.60);
+        }
         else if (model == "o3-mini")
         {
             (inputPrice, outputPrice) = (1.21, 4.84);
@@ -53,20 +61,20 @@ public class TokenUsageHelper
         var _outputCost = OutputCost == 0 ? "?" : OutputCost.ToString("F3");
         var _totalCost = (InputCost + OutputCost) == 0 ? "?" : (InputCost + OutputCost).ToString("F3");
         var models = string.Join(", ", Models);
-        Console.WriteLine("----------------------------------------------");
+        Console.WriteLine("--------------------------------------------------------------------------------");
         Console.WriteLine($"[{models}] Usage (cost / tokens):");
         Console.WriteLine($"  Input:  ${_inputCost} / {PromptTokens}");
         Console.WriteLine($"  Output: ${_outputCost} / {CompletionTokens}");
         Console.WriteLine($"  Total:  ${_totalCost} / {PromptTokens + CompletionTokens}");
-        Console.WriteLine("----------------------------------------------");
+        Console.WriteLine("--------------------------------------------------------------------------------");
     }
 
-    public static TokenUsageHelper operator +(TokenUsageHelper a, TokenUsageHelper b) => new()
+    public static TokenUsageHelper operator +(TokenUsageHelper a, TokenUsageHelper? b) => new()
     {
-        Models = a.Models.Union(b.Models).ToList(),
-        PromptTokens = a.PromptTokens + b.PromptTokens,
-        CompletionTokens = a.CompletionTokens + b.CompletionTokens,
-        InputCost = a.InputCost + b.InputCost,
-        OutputCost = a.OutputCost + b.OutputCost,
+        Models = a.Models.Union(b?.Models ?? []).ToList(),
+        PromptTokens = a.PromptTokens + (b?.PromptTokens ?? 0),
+        CompletionTokens = a.CompletionTokens + (b?.CompletionTokens ?? 0),
+        InputCost = a.InputCost + (b?.InputCost ?? 0),
+        OutputCost = a.OutputCost + (b?.OutputCost ?? 0),
     };
 }

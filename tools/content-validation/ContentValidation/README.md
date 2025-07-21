@@ -12,12 +12,12 @@ The current validation rules can fully cover the content validation of [Python S
 
 For a detailed introduction to the rules, please refer to the following table. You can view the specific design of the rules in the markdown files of the respective languages.
 
-| Languages | Path | Description | 
+| Languages | Path | Description |
 | ------- | ---- | ----------- |
 | Python | [python-rules.md](../docs/rules-introduction/python-rules.md) | content validation rules designed for [Microsoft Learn website](https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python).|
 | Java | [java-rules.md](../docs/rules-introduction/java-rules.md) | content validation rules designed for [Microsoft Learn website](https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java).|
-| .NET | md | *TODO* |
-| JavaScript | md | *TODO* |
+| .NET | [dotnet-rules.md](../docs/rules-introduction/dotnet-rules.md) | content validation rules designed for [Microsoft Learn website](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/?view=azure-dotnet).|
+| JavaScript | [javascript-rules.md](../docs/rules-introduction/javascript-rules.md) | content validation rules designed for [Microsoft Learn website](https://learn.microsoft.com/en-us/javascript/api/overview/azure/?view=azure-node-latest).|
 
 >Notes: Currently, the Python and Java rules have been fully developed. The JS rules are being designed and developed. They will be extended to .NET and Go in the future.
 
@@ -63,7 +63,9 @@ You can filter out some unexpected errors by configuring the `ignore.json` file.
     }
 ]
 ```
+
 >Notes: In the above example, three types of rules are introduced to filter out content during content validation.
+>
 >- "**Rule**" - One of the validation rules, where your filter condition needs to be added.
 >- "**IgnoreList**" - This is an array of objects in json, each object contains:
 >   - "**IgnoreText**" - The content that actually needs to be filtered out.

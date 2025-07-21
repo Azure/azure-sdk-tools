@@ -29,6 +29,7 @@
     "levelname",
     "lineterm",
     "loadenv",
+    "mgmt",
     "popleft",
     "prompty",
     "pyenv",
@@ -41,5 +42,8 @@
     "tofile",
     "vectorizable"
   ],
-  "dictionaries": ["python", "softwareTerms"]
+  "dictionaries": [
+    "python",
+    "softwareTerms"
+  ]
 }

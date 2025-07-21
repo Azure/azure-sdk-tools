@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
-namespace AzureSDKDevToolsMCP.Tools
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     /// <summary>
     /// This tool is used to validate the TypeSpec specification for Azure SDK service.
@@ -32,38 +32,47 @@ namespace AzureSDKDevToolsMCP.Tools
         [McpServerTool, Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
         public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
-            logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
-            var validationResults = new List<string>();
-            if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
-            {
-                validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
-                return validationResults;
-            }
-
             try
             {
-                var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
-                logger.LogInformation($"Repo root path: {specRepoRootPath}");
-
-                // Run npm ci only if "node_modules/.bin/tsv" is not present to improve validation performance
-                if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
+                logger.LogInformation($"TypeSpec project root path: {typeSpecProjectRootPath}");
+                var validationResults = new List<string>();
+                if (!typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectRootPath))
                 {
-                    // Run npm ci
-                    logger.LogInformation("Running npm ci");
-                    RunNpmCi(specRepoRootPath);
-                    logger.LogInformation("Completed running npm ci");
+                    validationResults.Add($"TypeSpec project is not found in {typeSpecProjectRootPath}. TypeSpec MCP tools can only be used for TypeSpec based spec projects.");
+                    return validationResults;
                 }
 
-                //Run TypeSpec validation
-                logger.LogInformation("Running npx tsv to run the validation");
-                ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                logger.LogInformation("Completed running TypeSpec validation");
+                try
+                {
+                    var specRepoRootPath = GetGitRepoRootPath(typeSpecProjectRootPath);
+                    logger.LogInformation($"Repo root path: {specRepoRootPath}");
+
+                    // Run npm ci only if "node_modules/.bin/tsv" is not present to improve validation performance
+                    if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
+                    {
+                        // Run npm ci
+                        logger.LogInformation("Running npm ci");
+                        RunNpmCi(specRepoRootPath);
+                        logger.LogInformation("Completed running npm ci");
+                    }
+
+                    //Run TypeSpec validation
+                    logger.LogInformation("Running npx tsv to run the validation");
+                    ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
+                    logger.LogInformation("Completed running TypeSpec validation");
+                }
+                catch (Exception ex)
+                {
+                    validationResults.Add($"Error: {ex.Message}");
+                }
+                return validationResults;
             }
             catch (Exception ex)
             {
-                validationResults.Add($"Error: {ex.Message}");
+                logger.LogError($"Unhandled exception: {ex}");
+                SetFailure();
+                return new List<string> { $"Unhandled exception: {ex.Message}" };
             }
-            return validationResults;
         }
 
         private bool IsTypeSpecValidationExecutablePresent(string repoRoot)
@@ -125,18 +134,29 @@ namespace AzureSDKDevToolsMCP.Tools
                 CreateNoWindow = true,
                 WorkingDirectory = workingDirectory
             };
-            using var process = Process.Start(processInfo) ?? throw new Exception($"Failed to start the process: {args}");
-            StringBuilder output = new ();
-            while (!process.HasExited)
+            var output = new StringBuilder();
+            using (var process = new Process())
             {
-                Thread.Sleep(2000);
-                process.Refresh();
-                output.Append(process.StandardOutput.ReadToEnd());
-            }
-            output.Append(process.StandardOutput.ReadToEnd());
-            if (process.ExitCode != 0)
-            {
-                output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
+                process.StartInfo = processInfo;
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+
+                process.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null)
+                        output.AppendLine(args.Data);
+                };
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                process.WaitForExit(100000);
+                if (process.ExitCode != 0)
+                {
+                    output.Append($"{Environment.NewLine}TypeSpec validation failed!!!");
+                }
             }
             return output.ToString();
         }

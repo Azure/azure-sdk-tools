@@ -17,7 +17,7 @@
     var leftOffCanvasClass = " show-left-offcanvas";
     var mainContainerLeftClass = " move-main-content-container-left";
     var mainContainerRightClass = " move-main-content-container-right";
-    if (Model.UserPreference.HideReviewPageOptions.HasValue && Model.UserPreference.HideReviewPageOptions == true)
+    if (Model.UserPreference.HideReviewPageOptions)
     {
         rightOffCanvasClass = String.Empty;
         mainContainerRightClass = String.Empty;
@@ -160,7 +160,7 @@
                     }
                     else
                     {
-                        approver = "azure-sdk";
+                        approver = ApiViewConstants.AzureSdkBotName;
                     }
                 }
 

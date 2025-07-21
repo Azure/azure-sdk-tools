@@ -26,8 +26,8 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
 
           steps:
             - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -81,8 +81,8 @@ stages:
           environment: githubmerges
 
           pool:
-            name: azsdk-pool-mms-win-2022-general
-            vmImage: windows-2022
+            name: azsdk-pool
+            demands: ImageOverride -equals windows-2022
 
           strategy:
             runOnce:
@@ -151,8 +151,8 @@ stages:
           environment: githubmerges
 
           pool:
-            name: azsdk-pool-mms-win-2022-general
-            vmImage: windows-2022
+            name: azsdk-pool
+            demands: ImageOverride -equals windows-2022
 
           strategy:
             runOnce:
@@ -197,8 +197,8 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
 
           steps:
             - template: /eng/pipelines/templates/steps/sync-directory.yml

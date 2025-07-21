@@ -9,18 +9,21 @@ import copy
 import sys
 import yaml
 
+from src._utils import get_prompt_path
+
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
 import dotenv
 from tabulate import tabulate
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from azure.identity import AzurePipelinesCredential
 
 dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4.1"
+MODEL_JUDGE = "gpt-4.1-nano"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
@@ -37,6 +40,9 @@ weights: dict[str, float] = {
     "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
 }
 
+
+def in_ci():
+    return os.getenv("TF_BUILD", False)
 
 
 class CustomAPIViewEvaluator:
@@ -69,9 +75,7 @@ class CustomAPIViewEvaluator:
         )
 
         false_positive_rate = (
-            review_eval["false_positives"] / review_eval["comments_found"]
-            if review_eval["comments_found"] > 0
-            else 0.0
+            review_eval["false_positives"] / review_eval["comments_found"] if review_eval["comments_found"] > 0 else 0.0
         )
         score = (
             weights["exact_match_weight"] * exact_match_score
@@ -131,9 +135,7 @@ class CustomAPIViewEvaluator:
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            prompt_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "..", "prompts", "eval_judge_prompt.prompty")
-            )
+            prompt_path = get_prompt_path("evals", "eval_judge_prompt.prompty")
             response = prompty.execute(
                 prompt_path,
                 inputs={
@@ -142,6 +144,7 @@ class CustomAPIViewEvaluator:
                     "exceptions": exceptions,
                     "language": language,
                 },
+                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")},
             )
             comment["valid"] = "true" in response.lower()
 
@@ -151,7 +154,7 @@ class CustomAPIViewEvaluator:
             return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
         groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
         return groundedness
-    
+
     def _similarity(self, expected: dict[str, Any], actual: dict[str, Any], query: str) -> None:
         actual = [c for c in actual["comments"] if c["rule_ids"]]
         if not actual:
@@ -387,12 +390,14 @@ def calculate_coverage(args: argparse.Namespace, rule_ids: set[str]) -> None:
 def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Establish the current results as the new baseline."""
 
-    establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-    if establish_baseline.lower() == "y":
-        for name, result in all_results.items():
-            output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
-            with open(str(output_path), "w") as f:
-                json.dump(result, indent=4, fp=f)
+    # only ask if we're not in CI
+    if in_ci() is False:
+        establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+        if establish_baseline.lower() == "y":
+            for name, result in all_results.items():
+                output_path = pathlib.Path(__file__).parent / "results" / args.language / name[:-1]
+                with open(str(output_path), "w") as f:
+                    json.dump(result, indent=4, fp=f)
 
     # whether or not we establish a baseline, we want to write results to a temp dir
     log_path = pathlib.Path(__file__).parent / "results" / args.language / ".log"
@@ -484,6 +489,21 @@ if __name__ == "__main__":
             "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
             "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
         }
+        if in_ci():
+            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+            system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+            kwargs = {
+                "credential": AzurePipelinesCredential(
+                    service_connection_id=service_connection_id,
+                    client_id=client_id,
+                    tenant_id=tenant_id,
+                    system_access_token=system_access_token,
+                )
+            }
+        else:
+            kwargs = {}
 
         run_results = []
         for run in range(args.num_runs):
@@ -508,6 +528,7 @@ if __name__ == "__main__":
                 target=review_apiview,
                 fail_on_evaluator_errors=True,
                 azure_ai_project=azure_ai_project,
+                **kwargs,
             )
 
             run_result = record_run_result(result, rule_ids)

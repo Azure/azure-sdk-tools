@@ -1,5 +1,5 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { ModularClientPackageOptions, PackageResult } from './types.js';
+import { ModularClientPackageOptions, PackageResult, RunMode } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import pkg from 'fs-extra';
@@ -10,8 +10,8 @@ import { runCommand, runCommandOptions } from './utils.js';
 import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
-import { migratePackage } from './migration.js';
 import { existsSync } from 'fs';
+import { formatSdk, updateSnippets } from './devToolUtils.js';
 
 interface ProjectItem {
     packageName: string;
@@ -43,7 +43,7 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     const cwd = join(packageDirectory);
     if (isRushRepo(sdkRepoRoot)) {
         await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
-    }else{
+    } else {
         await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);
     }
     logger.info(`Pack '${packageName}' successfully.`);
@@ -52,9 +52,19 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 async function addApiViewInfo(
     packageDirectory: string,
     sdkRoot: string,
+    packageName: string,
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
-    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**/*.api.json');
+    // Extract the actual package name part from scoped package name 
+    // (e.g., @azure/arm-oracledatabase -> arm-oracledatabase, @azure-rest/ai-language-conversations -> ai-language-conversations)
+    let actualPackageName = packageName;
+    if (packageName.startsWith('@azure/')) {
+        actualPackageName = packageName.substring('@azure/'.length);
+    } else if (packageName.startsWith('@azure-rest/')) {
+        actualPackageName = packageName.substring('@azure-rest/'.length);
+    }
+    const expectedApiViewFileName = `${actualPackageName}-node.api.json`;
+    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**', expectedApiViewFileName);
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
@@ -80,7 +90,7 @@ export async function buildPackage(
     logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
 
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
-    if (isRushRepo(options.sdkRepoRoot)){
+    if (isRushRepo(options.sdkRepoRoot)) {
         await updateRushJson({
             packageName: name,
             projectFolder: unixify(relativePackageDirectoryToSdkRoot),
@@ -91,7 +101,6 @@ export async function buildPackage(
         await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
         logger.info(`Rush update successfully.`);
 
-        await migratePackage(options.sdkRepoRoot, packageDirectory);
         logger.info(`Start to build package '${name}'.`);
         await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     } else {
@@ -102,14 +111,14 @@ export async function buildPackage(
         logger.info(`Start to build package '${name}'.`);
         await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
     }
-    
-    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
+
+    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);
     logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot);    
     await tryTestPackage(packageDirectory, rushxScript, options.sdkRepoRoot);
     await formatSdk(packageDirectory);
+    await updateSnippets(packageDirectory);
 
     // restore in temp folder
     const tempFolder = join(packageDirectory, 'temp');
@@ -118,31 +127,23 @@ export async function buildPackage(
     await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8', flush: true });
 }
 
-// no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string) {
+// no exception will be thrown in non-release mode, since we don't want it stop sdk generation. sdk author will need to resolve the failure
+// in release mode, exceptions will be thrown to ensure sample build succeeds
+export async function tryBuildSamples(packageDirectory: string, rushxScript: string, sdkRepoRoot: string, runMode: RunMode) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
+    const errorAsWarning = runMode !== RunMode.Release;
     try {
         if (isRushRepo(sdkRepoRoot)) {
-            await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, true);
+            await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300, errorAsWarning);
         } else {
-            await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, true);
+            await runCommand(`pnpm`, ['run', 'build:samples'], options, true, 300, errorAsWarning);
         }
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.warn(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
     }
-}
-
-export async function formatSdk(packageDirectory: string) {
-    logger.info(`Start to format code in '${packageDirectory}'.`);
-    const cwd = packageDirectory;
-    const options = { ...runCommandOptions, cwd };
-    const formatCommand = 'run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\" \"test/**/*.{ts,cts,mts}\" \"*.{js,cjs,mjs,json}\" \"samples-dev/*.ts\"';
-    
-    await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);
-    logger.info(`format sdk successfully.`);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
@@ -154,7 +155,7 @@ export async function tryTestPackage(packageDirectory: string, rushxScript: stri
     try {
         if (isRushRepo(sdkRepoRoot)) {
             await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300, true);
-        }else{
+        } else {
             await runCommand(`pnpm`, ['run', 'test:node'], options, true, 300, true);
         }
         logger.info(`tested package successfully.`);

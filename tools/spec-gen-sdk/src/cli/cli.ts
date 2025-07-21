@@ -1,4 +1,4 @@
-import yargs from "yargs/yargs";
+import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { getRepository } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
@@ -28,6 +28,7 @@ export type SpecGenSdkCliConfig = {
   headRepoHttpsUrl?: string;
   headBranch?: string;
   version: string;
+  skipSdkGenFromOpenapi?: string;
 };
 
 const initCliConfig = (argv) : SpecGenSdkCliConfig => {
@@ -46,7 +47,8 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
     headRepoHttpsUrl: argv.headRepoHttpsUrl,
     headBranch: argv.headBranch,
-    version: packageJson.version
+    version: packageJson.version,
+    skipSdkGenFromOpenapi: argv.skipSdkGenFromOpenapi
   };
 };
 
@@ -77,7 +79,8 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       headBranch: config.headBranch,
       runEnv: config.runMode !== "local" ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto',
-      version: config.version
+      version: config.version,
+      skipSdkGenFromOpenapi: config.skipSdkGenFromOpenapi
     });
   } catch (e) {
     console.error(e.message);
@@ -186,6 +189,11 @@ yargs(hideBin(process.argv))
           description: "The run mode of the tool, allowed values are 'local','spec-pull-request','release','batch'",
           default: "local",
           choices: ['local', 'spec-pull-request', 'release', 'batch'],
+        },
+        'skip-sdk-gen-from-openapi': {
+          alias: "skg",
+          type: "string",
+          description: "skip sdk generation from openapi specs, either 'true' or 'false'"
         }
     })},
     async (argv) => {

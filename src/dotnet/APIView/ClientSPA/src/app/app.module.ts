@@ -18,6 +18,7 @@ import { SharedAppModule } from './_modules/shared/shared-app.module';
 import { HttpErrorInterceptorService } from './_services/http-error-interceptor/http-error-interceptor.service';
 import { MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
+import { ProfilePageComponent } from './_components/profile-page/profile-page.component';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -29,7 +30,8 @@ export function initializeApp(configService: ConfigService) {
   declarations: [
     AppComponent,
     IndexPageComponent,
-    ReviewsListComponent
+    ReviewsListComponent,
+    ProfilePageComponent
   ],
   imports: [
     SharedAppModule,

@@ -1,0 +1,21 @@
+[
+  {
+    "version": "view=azure-java-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/communication?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/communication-email-readme?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.emailasyncclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.emailclient?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.emailclientbuilder?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.emailserviceversion?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.models?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.models.emailaddress?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.models.emailattachment?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.models.emailmessage?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.models.emailsendresult?view=azure-java-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.azure.communication.email.models.emailsendstatus?view=azure-java-preview\u0026branch=main"
+    ]
+  }
+]

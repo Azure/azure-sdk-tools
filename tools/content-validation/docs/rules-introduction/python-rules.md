@@ -29,7 +29,7 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
   - Text Content:
     ` Indicates whether OS upgrades should automatically be applied to scale set instances in a rolling fashion when a newer version of the OS image becomes available. <br />``<br /> If this is set to true for Windows based pools, WindowsConfiguration.enableAutomaticUpdates cannot be set to true. `
   - Link:
-    https://learn.microsoft.com/en-us/python/api/azure-mgmt-batch/azure.mgmt.batch.models.automaticosupgradepolicy?view=azure-python#keyword-only-parameters
+    <https://learn.microsoft.com/en-us/python/api/azure-mgmt-batch/azure.mgmt.batch.models.automaticosupgradepolicy?view=azure-python#keyword-only-parameters>
   - Image:  
     &nbsp;<img src="./image/python-sdk/image-ExtraLabelValidation.png" alt="ExtraLabelValidation" style="width:700px;">
 
@@ -78,27 +78,26 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
   - Text Content:
     `ShareProtocols(value, names=None, *, module=None, qualname=None, type=None, start=1, boundary=None)`
   - Link:
-    https://learn.microsoft.com/en-us/python/api/azure-storage-file-share/azure.storage.fileshare.shareprotocols?view=azure-python#constructor
+    <https://learn.microsoft.com/en-us/python/api/azure-storage-file-share/azure.storage.fileshare.shareprotocols?view=azure-python#constructor>
 
   - Image:  
     &nbsp;<img src="./image/python-sdk/image-TypeAnnotationValidation.png" alt="TypeAnnotationValidation" style="width:700px;">
 
 - **Code Snippet:**
+
   ```csharp
-    // If the parameter is "*" ,"/","**kwargs","*args","**kw", it indicates that no type annotation is required.
-    // If the parameter follows the format a=b (e.g., param1=null), it means a default value has been assigned to the parameter.
-    // If the parameter follows the format a:b (e.g., param1:int), it means a type annotation has been provided for the parameter.
+    // Determine whether the parameter correctly contains type annotation
     bool IsCorrectTypeAnnotation(string text)
     {
-        if (text == "*" || text == "/" || text == "**kwargs" || text == "*args" || text == "**kw")
+        if (equalList.Any(item => text.Equals(item.IgnoreText)))
         {
             return true;
         }
-        if (Regex.IsMatch(text, @"^[^=]+=[^=]+$"))
+        if (containList.Any(item => text.Contains(item.IgnoreText)))
         {
             return true;
         }
-        if (text.Contains(":"))
+        if (Regex.IsMatch(text, @"^[^=]+=[^=]+$"))  // pattern like a=b
         {
             return true;
         }
@@ -121,7 +120,7 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
   - Text Content:
     `Access for the ~azure.storage.blob.BlobServiceClient. Default is False.`
   - Link:
-    https://learn.microsoft.com/en-us/python/api/azure-storage-file-share/azure.storage.fileshare.services?view=azure-python#keyword-only-parameters
+    <https://learn.microsoft.com/en-us/python/api/azure-storage-file-share/azure.storage.fileshare.services?view=azure-python#keyword-only-parameters>
   - Image:  
     &nbsp;<img src="./image/python-sdk/image-UnnecessarySymbolsValidation.png" alt="UnnecessarySymbolsValidation" style="width:700px;">
 
@@ -211,7 +210,7 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
 - **Example:**
 
   - Link:
-    https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.aio.azureappconfigurationclient?view=azure-python#parameters
+    <https://learn.microsoft.com/en-us/python/api/azure-appconfiguration/azure.appconfiguration.aio.azureappconfigurationclient?view=azure-python#parameters>
   - Image:  
     &nbsp;<img src="./image/python-sdk/image-MissingContentValidation.png" alt="MissingContentValidation" style="width:700px;">
 
@@ -219,86 +218,67 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
 
   ```csharp
 
-    // Fetch all th and td tags in the test page.
-    var cellElements = await page.Locator("td,th").AllAsync();
-
-    // Check if the cell is empty. If it is, retrieve the href attribute of the anchor tag above it for positioning.
-    foreach (var cell in cellElements)
-    {
-        var cellText = (await cell.InnerTextAsync()).Trim();
-
-        // Usage: Check if it is an empty cell and get the href attribute of the nearest <a> tag with a specific class name before it. Finally, group and format these errors by position and number of occurrences.
-        // Example: The Description column of the Parameter table is Empty.
-        // Link: https://learn.microsoft.com/en-us/python/api/azure-ai-textanalytics/azure.ai.textanalytics.aio.asyncanalyzeactionslropoller?view=azure-python
-        if (string.IsNullOrEmpty(cellText))
+      public bool isIgnore = false;
+      private async Task ProcessCellAsync(
+        IElementHandle cell,
+        IPage page,
+        string testLink,
+        List<string> errorList,
+        List<IgnoreItem> ignoreList,
+        List<IgnoreItem> ignoreListOfErrorClass,
+        bool isColspan2 = false
+        )
+      {
+        var rawText = await cell.EvaluateAsync<string>("el => el.textContent");
+        var cellText = rawText?.Trim() ?? "";
+    
+        // Skip ignored text
+        if (ignoreList.Any(item => cellText.Equals(item.IgnoreText, StringComparison.OrdinalIgnoreCase)))
         {
-            string anchorLink = "No anchor link found, need to manually search for empty cells on the page.";
-            var nearestHTagText = await cell.EvaluateAsync<string?>(@"element => {
-                function findNearestHeading(startNode) {
-                    let currentNode = startNode;
-
-                    while (currentNode && currentNode.tagName !== 'BODY' && currentNode.tagName !== 'HTML') {
-                        // Check the sibling nodes and child nodes of the current node
-                        let sibling = currentNode.previousElementSibling;
-                        while (sibling) {
-                            // Check if the sibling node itself is an <h2> or <h3>
-                            if (['H2', 'H3'].includes(sibling.tagName)) {
-                                return sibling.textContent || '';
-                            }
-
-                            // Recursively check the children of sibling nodes
-                            let childHeading = findNearestHeadingInChildren(sibling);
-                            if (childHeading) {
-                                return childHeading;
-                            }
-
-                            sibling = sibling.previousElementSibling;
-                        }
-
-                        // If not found in the sibling node, continue traversing upwards
-                        currentNode = currentNode.parentElement;
-                    }
-
-                    return null; // If no matching <h> tags are found
-                }
-
-                function findNearestHeadingInChildren(node) {
-                    // Traverse the child nodes and recursively search for <h2> or <h3>
-                    for (let child of node.children) {
-                        if (['H2', 'H3'].includes(child.tagName)) {
-                            return child.textContent || '';
-                        }
-                        let grandChildHeading = findNearestHeadingInChildren(child);
-                        if (grandChildHeading) {
-                            return grandChildHeading;
-                        }
-                    }
-                    return null;
-                }
-
-                return findNearestHeading(element);
-            }");
-
-            if (nearestHTagText != null) {
-                nearestHTagText = nearestHTagText.Replace("\n", "").Replace("\t", "");
-                var aLocators = page.Locator("#side-doc-outline a");
-                var aElements = await aLocators.ElementHandlesAsync();
-
-                foreach (var elementHandle in aElements)
+            isIgnore = true;
+            return;
+        }
+    
+        if (testLink.Contains("javascript", StringComparison.OrdinalIgnoreCase) && testLink.Contains("errors", StringComparison.OrdinalIgnoreCase))
+        {
+            if (ignoreListOfErrorClass.Any(item => cellText.Equals(item.IgnoreText, StringComparison.OrdinalIgnoreCase)))
+            {
+                isIgnore = true;
+                return;
+            }
+        }
+    
+        if (!isColspan2)
+        {
+            if (!string.IsNullOrEmpty(cellText))
+            {
+                isIgnore = false;
+                return;
+            }
+            else
+            {
+                if (isIgnore)
                 {
-                    if(await elementHandle.InnerTextAsync() == nearestHTagText)
-                    {
-                        var href = await elementHandle.GetAttributeAsync("href");
-                        if (href != null) {
-                            anchorLink = testLink + href;
-                        }
-                    }
+                    isIgnore = false;
+                    return; // Skip if the cell is ignored
                 }
             }
+        }
+    
+        var anchorLink = await GetAnchorLinkForCellAsync(cell, page, testLink);
+    
+        if (anchorLink == "This is an ignore cell, please ignore it.")
+        {
+            return; // Skip if the anchor link is the ignore text
+        }
+    
+        if (!anchorLink.Contains("#packages", StringComparison.OrdinalIgnoreCase) &&
+            !anchorLink.Contains("#modules", StringComparison.OrdinalIgnoreCase))
+        {
             errorList.Add(anchorLink);
         }
-    }
-
+      }
+    
 
 
   ```
@@ -322,7 +302,7 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
   - Text Content:
     `Close the :class: ~azure.communication.identity.aio.CommunicationIdentityClient session.`
   - Link:
-    https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.aio.communicationidentityclient?view=azure-python#methods
+    <https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.aio.communicationidentityclient?view=azure-python#methods>
   - Image:  
     &nbsp;<img src="./image/python-sdk/image-GarbledTextValidation.png" alt="GarbledTextValidation" style="width:700px;">
 
@@ -363,7 +343,7 @@ This document introduces 6 rules designed for Python Data SDK on [Microsoft Lear
 - **Example:**
 
   - Link:
-    https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python
+    <https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python>
   - Image:  
     &nbsp;<img src="./image/python-sdk/image-DuplicateServiceValidation.png" alt="DuplicateServiceValidation" style="width:700px;">
 

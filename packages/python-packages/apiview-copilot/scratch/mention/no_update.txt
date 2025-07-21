@@ -1,0 +1,20 @@
+{
+  "language": "python",
+  "package_name": "azure.widgets",
+  "code": "async def list_widgets(): AsyncPageItem[Widget]",
+  "comments": [
+        {
+            "lineNo": 50,
+            "createdBy": "azure-sdk",
+            "createdOn": "2025-07-03T09:15:00-07:00",
+            "commentText": "You should not define list operations that return AsyncPageItem with the async keyword.\n\nSuggestion: `def list_widgets(): AsyncPageItem[Widget]`",
+            "upvotes": ["annatisch"]
+        },
+        {
+            "lineNo": 50,
+            "createdBy": "annatisch",
+            "createdOn": "2025-07-03T09:20:00-07:00",
+            "commentText": "@azure-sdk yes that's right!"
+        }
+    ]
+}

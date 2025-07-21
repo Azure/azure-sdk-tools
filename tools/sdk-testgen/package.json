@@ -1,6 +1,6 @@
 {
     "name": "@autorest/testmodeler",
-    "version": "2.6.2",
+    "version": "2.6.3",
     "description": "Autorest extension for testmodeler",
     "main": "dist/index.js",
     "scripts": {
@@ -16,7 +16,7 @@
         "clean": "ver > nul 2>&1 nul && npm run --silent clean-cmd || npm run --silent clean-bash",
         "clean-cmd": "if exist dist rmdir /s /q dist && exit 0 || exit 0 ",
         "clean-bash": "rm nul && rm -rf dist && exit 0 || exit 0",
-        "build:prod": "webpack",
+        "build:prod": "tsc -p .",
         "prepack": "npm run clean && npm run build:prod"
     },
     "repository": {
@@ -29,12 +29,12 @@
     ],
     "author": "Microsoft Corporation",
     "license": "MIT",
-    "devDependencies": {
+    "dependencies": {
         "@autorest/codemodel": "^4.19.3",
         "@autorest/extension-base": "^3.5.0",
-        "@azure-tools/codegen": "^2.9.2",
-        "@types/jest": "^29.5.13",
-        "@types/node": "^22.7.5",
+        "@azure-tools/codegen": "^3.0.283",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^24.0.1",
         "@typescript-eslint/eslint-plugin": "^8.18.2",
         "@typescript-eslint/parser": "^8.18.2",
         "@types/lodash": "^4.17.5",
@@ -46,19 +46,16 @@
         "eslint-plugin-prettier": "^5.2.2",
         "eslint-plugin-sort-imports-es6-autofix": "0.6.0",
         "eslint-plugin-import":"^2.27.5",
-        "jest": "^29.7.0",
+        "jest": "^30.0.0",
         "jest-junit": "^16.0.0",
         "jsonpath-plus": "^10.0.0",
         "lodash": "^4.17.21",
-        "oav": "3.6.0",
         "prettier": "^3.4.1",
         "reflect-metadata": "0.2.2",
         "source-map-support": "^0.5.19",
         "ts-jest": "^29.2.5",
         "typescript": "~5.8.3",
-        "ts-loader": "^9.4.2",
-        "webpack": "^5.88.2",
-        "webpack-cli": "^5.1.4"
+        "ts-loader": "^9.4.2"
     },
     "files": [
         "dist/src",

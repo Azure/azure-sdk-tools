@@ -10,6 +10,13 @@ using APIView.TreeToken;
 
 namespace APIView.Model.V2
 {
+    public enum TokensFilter
+    {
+        All, // Grab all tokens
+        SkipDiff, // SkipDiff tokens
+        Outline // Take only keyword, typeNames, and memberNames tokens
+    }
+
     /// <summary>
     /// Review line object corresponds to each line displayed on API review. If an empty line is required then add a review line object without any token.
     /// </summary>
@@ -65,7 +72,7 @@ namespace APIView.Model.V2
             Tokens.Add(token);
         }
 
-        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4)
+        public void AppendApiTextToBuilder<T>(T builder, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4, TokensFilter filter = TokensFilter.All) where T : class
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
             {
@@ -75,38 +82,80 @@ namespace APIView.Model.V2
             //Add empty line in case of review line without tokens
             if (Tokens.Count == 0)
             {
-                sb.Append(Environment.NewLine);
+                if (filter != TokensFilter.Outline)
+                {
+                    AppendToBuilder(builder, Environment.NewLine);
+                }
                 return;
             }
             //Add spaces for indentation
-            for (int i = 0; i < indent; i++)
+            string indentSpaces = new string(' ', indent * lineIndentSpaces);
+            var lineString = ToString(filter);
+
+            if (!(filter == TokensFilter.Outline && String.IsNullOrWhiteSpace(lineString)))
             {
-                for(int j = 0; j < lineIndentSpaces; j++)
-                {
-                    sb.Append(" ");
-                }
+                AppendToBuilder(builder, indentSpaces);
+                AppendToBuilder(builder, lineString, LineId);
+                AppendToBuilder(builder, Environment.NewLine);
             }
-            //Process all tokens
-            sb.Append(ToString(true));
-            
-            sb.Append(Environment.NewLine);
             foreach (var child in Children)
             {
-                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs, lineIndentSpaces);
+                child.AppendApiTextToBuilder(builder, indent + 1, skipDocs, lineIndentSpaces, filter);
             }
         }
 
-        private string ToString(bool includeAllTokens)
+        private void AppendToBuilder<T>(T builder, string text, string lineId = null)
         {
-            var filterdTokens = includeAllTokens ? Tokens: Tokens.Where(x => x.SkipDiff != true);
+            switch (builder)
+            {
+                case StringBuilder stringBuilder:
+                    stringBuilder.Append(text);
+                    break;
+                case List<(string lineText, string lineId)> stringList:
+                    if (stringList.Count == 0 || text.Equals(Environment.NewLine))
+                    {
+                        stringList.Add((text, lineId));
+                    }
+                    else 
+                    {
+                        var lastTuple = stringList[stringList.Count - 1];
+                        var currLineId = string.IsNullOrEmpty(lineId) ? lastTuple.lineId : lineId;
+                        stringList[stringList.Count - 1] = (lastTuple.lineText + text, currLineId);
+                    }
+                    break;
+                default:
+                    throw new ArgumentException("Unsupported type for builder. Expected StringBuilder or List<string>.");
+            }
+        }
+
+        private string ToString(TokensFilter filter)
+        {
+            var filterdTokens = Tokens;
+            if (filter == TokensFilter.SkipDiff)
+            {
+                filterdTokens = Tokens.Where(x => x.SkipDiff != true).ToList();
+            }
+
             if (!filterdTokens.Any())
             {
                 return string.Empty;
             }
             StringBuilder sb = new();
             bool spaceAdded = false;
+
+            if (filter == TokensFilter.Outline && !(filterdTokens.Count >= 2 && filterdTokens[0].Kind == TokenKind.Keyword && filterdTokens[0].HasSuffixSpace))
+            {
+                return sb.ToString();
+            }
+
+            string[] punctuations = { "(", "{", "=", ";" };
+
             foreach (var token in filterdTokens)
             {
+                if (filter == TokensFilter.Outline && punctuations.Contains(token.Value))
+                {
+                    break;
+                }
                 sb.Append(token.HasPrefixSpace == true && !spaceAdded ? " " : string.Empty);
                 sb.Append(token.Value);
                 sb.Append(token.HasSuffixSpace == true ? " " : string.Empty);
@@ -118,7 +167,7 @@ namespace APIView.Model.V2
         
         public override string ToString()
         {
-            return ToString(false);
+            return ToString(TokensFilter.SkipDiff);
         }
 
         public override bool Equals(object obj)

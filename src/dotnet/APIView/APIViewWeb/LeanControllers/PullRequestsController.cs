@@ -2,11 +2,13 @@ using APIViewWeb.DTOs;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,14 +17,16 @@ namespace APIViewWeb.LeanControllers
 {
     public class PullRequestsController  : BaseApiController
     {
-        private readonly ILogger<PullRequestsController> _logger;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
         private readonly IEnumerable<LanguageService> _languageServices;
 
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };
+
         public PullRequestsController(
-            ILogger<PullRequestsController> logger,
-            IPullRequestManager pullRequestManager, IConfiguration configuration, IEnumerable<LanguageService> languageServices)
+            ILogger<PullRequestsController> logger, IPullRequestManager pullRequestManager,
+            IConfiguration configuration, IEnumerable<LanguageService> languageServices)
         {
             _logger = logger;
             _pullRequestManager = pullRequestManager;
@@ -75,11 +79,6 @@ namespace APIViewWeb.LeanControllers
             IEnumerable<PullRequestModel> pullRequestModels = await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: pullRequestNumber, repoName: repoName);
             var prsForCommit = pullRequestModels.Where(c => c.Commits.Contains(commitSHA));
 
-            var host = _configuration["APIVIew-Host-Url"];
-            var spaHost = _configuration["APIVIew-SPA-Host-Url"];
-            var reviewSpaUrlTemplate = "{0}/review/{1}?activeApiRevisionId={2}";
-            var reviewUrlTemplate = "{0}/Assemblies/Review/{1}?revisionId={2}";
-
             List<PullRequestReviewDto> pullRequestReviewDtos = new List<PullRequestReviewDto>();
             var statusCode = StatusCodes.Status204NoContent;
 
@@ -89,15 +88,7 @@ namespace APIViewWeb.LeanControllers
                 {
                     var prDto = new PullRequestReviewDto();
                     var language = LanguageServiceHelpers.MapLanguageAlias(pr.Language);
-                    var languageService = LanguageServiceHelpers.GetLanguageService(language: language, languageServices: _languageServices);
-                    if (languageService.UsesTreeStyleParser) // Languages using treestyle parser are also using the spa UI
-                    {
-                        prDto.Url = string.Format(reviewSpaUrlTemplate, spaHost, pr.ReviewId, pr.APIRevisionId);
-                    }
-                    else 
-                    {
-                        prDto.Url = string.Format(reviewUrlTemplate, host, pr.ReviewId, pr.APIRevisionId);
-                    }
+                    prDto.Url = ManagerHelpers.ResolveReviewUrl(reviewId: pr.ReviewId, apiRevisionId: pr.APIRevisionId, language: language, configuration: _configuration, languageServices: _languageServices);
                     prDto.PackageName = pr.PackageName;
                     prDto.Language = language;
                     pullRequestReviewDtos.Add(prDto);
@@ -105,6 +96,87 @@ namespace APIViewWeb.LeanControllers
                 statusCode = StatusCodes.Status200OK;
             }
             return new LeanJsonResult(pullRequestReviewDtos, statusCode);
+        }
+
+        /// <summary>
+        /// Check if there are changes in API surface between new and existing API revisions
+        /// Create new API revision based on presence of API changes
+        /// </summary>
+        /// <param name="buildId"></param>
+        /// <param name="artifactName"></param>
+        /// <param name="filePath"></param>
+        /// <param name="commitSha"></param>
+        /// <param name="repoName"></param>
+        /// <param name="packageName"></param>
+        /// <param name="pullRequestNumber"></param>
+        /// <param name="codeFile"></param>
+        /// <param name="baselineCodeFile"></param>
+        /// <param name="language"></param>
+        /// <param name="project"></param>
+        /// <returns></returns>
+        [AllowAnonymous]
+        [HttpGet("CreateAPIRevisionIfAPIHasChanges", Name = "CreateAPIRevisionIfAPIHasChanges")]
+        public async Task<ActionResult<IEnumerable<CreateAPIRevisionAPIResponse>>> CreateAPIRevisionIfAPIHasChanges(
+            string buildId, string artifactName, string filePath, string commitSha,string repoName, string packageName,
+            int pullRequestNumber = 0, string codeFile = null, string baselineCodeFile = null, string language = null,
+            string project = "internal")
+        {
+            var responseContent = new CreateAPIRevisionAPIResponse();
+            if (!ValidateInputParams())
+            {
+                return new LeanJsonResult(responseContent, StatusCodes.Status400BadRequest);
+            }
+
+            //Handle only authorization exception and send 401 as status code.
+            //All other exception should not be handled so we will have required info in app insights.
+            try
+            {
+                var apiRevisionUrl = await _pullRequestManager.CreateAPIRevisionIfAPIHasChanges(buildId: buildId,
+                    artifactName: artifactName, originalFileName: filePath, commitSha: commitSha, repoName: repoName,
+                    packageName: packageName, prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
+                    responseContent: responseContent, codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
+                    language: language, project: project);
+
+                responseContent.APIRevisionUrl = apiRevisionUrl;
+
+                return !string.IsNullOrEmpty(apiRevisionUrl) ? new LeanJsonResult(responseContent, StatusCodes.Status201Created) : new LeanJsonResult(responseContent, StatusCodes.Status208AlreadyReported);
+            }
+            catch (AuthorizationFailedException)
+            {
+                return new LeanJsonResult(responseContent, StatusCodes.Status401Unauthorized);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating API revision if API has changes.");
+                return new LeanJsonResult(responseContent, StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        private bool ValidateInputParams()
+        {
+            foreach (var queryParam in this.Request.Query)
+            {
+                var value = queryParam.Value.ToString();
+                if (queryParam.Key == "filePath")
+                {
+                    if (!VALID_EXTENSIONS.Any(e => value.EndsWith(e))) 
+                    {
+                        _logger.LogWarning($"QueryParam 'filePath' has an invalid extension.");
+                        return false;
+                    }
+                       
+                }
+
+                if (queryParam.Key == "repoName")
+                {
+                    if (!value.Contains("/"))
+                    {
+                        _logger.LogWarning($"QueryParam 'repoName' should contain '/'.");
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
     }
 }

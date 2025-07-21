@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Octokit;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -79,6 +80,7 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
+        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -101,7 +103,7 @@ public class GitConnection
         {
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
-        }        
+        }
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)
         {
@@ -310,6 +312,65 @@ public class GitConnection
                 logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
                 throw;
             }
+        }
+
+        public async Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            try
+            {
+                // Get the base branch reference first
+                var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
+                
+                if (baseReference == null)
+                {
+                    return $"Base branch '{baseBranchName}' not found in repository {repoOwner}/{repoName}.";
+                }
+
+                // Use the Octokit extension method to create the branch
+                var createdReference = await gitHubClient.Git.Reference.CreateBranch(repoOwner, repoName, branchName, baseReference);
+                
+                if (createdReference != null)
+                {
+                    return $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
+                }
+                else
+                {
+                    return $"Failed to create branch '{branchName}' in {repoOwner}/{repoName}.";
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
+                return $"Error creating branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}";
+            }
+        }
+    }
+
+    // Extension methods for Octokit
+    public static class GitHubExtensions
+    {
+        /// <summary>
+        /// Creates a branch, based off the branch specified.
+        /// </summary>
+        /// <param name="referencesClient">The <see cref="IReferencesClient" /> this method extends</param>
+        /// <param name="owner">The owner of the repository.</param>
+        /// <param name="name">The name of the repository.</param>
+        /// <param name="branchName">The new branch name</param>
+        /// <param name="baseReference">The <see cref="Reference" /> to base the branch from</param>
+        public static async Task<Reference> CreateBranch(this IReferencesClient referencesClient, string owner, string name, string branchName, Reference baseReference)
+        {
+            if (string.IsNullOrEmpty(owner)) throw new ArgumentException("Owner cannot be null or empty", nameof(owner));
+            if (string.IsNullOrEmpty(name)) throw new ArgumentException("Name cannot be null or empty", nameof(name));
+            if (string.IsNullOrEmpty(branchName)) throw new ArgumentException("Branch name cannot be null or empty", nameof(branchName));
+            if (baseReference == null) throw new ArgumentNullException(nameof(baseReference));
+
+            if (branchName.StartsWith("refs/heads"))
+            {
+                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The specified branch name '{0}' appears to be a ref name and not a branch name because it starts with the string 'refs/heads'. Either specify just the branch name or use the Create method if you need to specify the full ref name", branchName), "branchName");
+            }
+
+            var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
+            return await referencesClient.Create(owner, name, newReference).ConfigureAwait(false);
         }
     }
 }

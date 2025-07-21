@@ -1,0 +1,5 @@
+emit:
+  - typespec-mcp-server-csharp
+options:
+  typespec-mcp-server-csharp:
+    emitter-output-dir: "{project-root}"

@@ -1,5 +1,9 @@
 # Release
 
+## 2025-07-22 - 0.26.0
+
+- Fix bug when discovering entrypoint files to only accept `main.tsp` or `client.tsp` unless otherwise specified in tsp-location.yaml.
+
 ## 2025-07-09 - 0.25.0
 
 - Extend dependency retention in `generate-config-files` command to include regular dependencies, not just devDependencies.

@@ -43,7 +43,8 @@
                     </div>
                     <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
                 </div>
-            </ng-template>            <ng-template #userIsNotAPreferedApprover>
+            </ng-template>
+            <ng-template #userIsNotAPreferedApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
         </li>        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">

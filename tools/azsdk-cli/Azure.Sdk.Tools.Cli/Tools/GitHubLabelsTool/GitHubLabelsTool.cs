@@ -13,10 +13,10 @@ using System.Text;
 namespace Azure.Sdk.Tools.Cli.Tools
 {
 
-    [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV")]
+    [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV file")]
     public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output, IGitHubService githubService) : MCPTool
     {
-        private const string serviceLabelColorCode = "e99695";
+        private const string serviceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
         //command names
         private const string checkServiceLabelCommandName = "check-service-label";
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             description: "The service label to check in the common labels CSV"
         )
         {
-            Arity = ArgumentArity.ExactlyOne
+            Arity = ArgumentArity.ExactlyOne // only one service label is expected
         };
 
         public override Command GetCommand()
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns the color code (e99695) if found")]
+        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns its details if found.")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -119,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         
                         // Only consider labels with the expected color code and check if it contains the service label
                         if (colorCode.Equals(serviceLabelColorCode, StringComparison.OrdinalIgnoreCase) && 
-                            labelName.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                            labelName.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase))
                         {
                             logger.LogInformation("Found service label match: '{inputLabel}' -> '{actualLabel}'", serviceLabel, labelName);
                             

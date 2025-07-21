@@ -103,10 +103,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Parse CSV and look for the service label
                 var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                 
-                // Skip the header line if it exists
-                var dataLines = lines.Skip(1);
-                
-                foreach (var line in dataLines)
+                // Process all lines since there's no header
+                foreach (var line in lines)
                 {
                     var columns = ParseCsvLine(line);
                     
@@ -227,6 +225,58 @@ namespace Azure.Sdk.Tools.Cli.Tools
             columns.Add(currentColumn.ToString());
 
             return columns;
+        }
+
+
+        private int GetInsertionLineNumber(string csvContent, string newServiceLabel)
+        {
+            var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+            // Empty file check
+            if (lines.Length == 0) return 1;
+            
+            // Create the label name that will be inserted
+            string newLabelName = $"Service - {newServiceLabel}";
+            
+            // Store service labels and original line indices
+            var serviceLabels = new List<(string labelName, int originalLineIndex)>();
+            
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var columns = ParseCsvLine(lines[i]);
+                
+                if (columns.Count >= 3)
+                {
+                    string labelName = columns[0].Trim();
+                    string colorCode = columns[2].Trim();
+                    
+                    // Only consider service labels (those with the service color code)
+                    if (colorCode.Equals(serviceLabelColorCode, StringComparison.OrdinalIgnoreCase))
+                    {
+                        serviceLabels.Add((labelName, i)); 
+                    }
+                }
+            }
+            
+            // Find the correct insertion point alphabetically
+            for (int i = 0; i < serviceLabels.Count; i++)
+            {
+                if (string.Compare(newLabelName, serviceLabels[i].labelName, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    // Insert before this service label
+                    return serviceLabels[i].originalLineIndex + 1; // +1 to convert to 1-based line number
+                }
+            }
+            
+            // If we get here, the new label should be inserted after all existing service labels
+            if (serviceLabels.Count > 0)
+            {
+                // Insert after the last service label
+                return serviceLabels.Last().originalLineIndex + 2; // +2 to insert after the last service label
+            }
+            
+            // If no service labels exist, insert at beginning of the file
+            return 1;
         }
     }
 

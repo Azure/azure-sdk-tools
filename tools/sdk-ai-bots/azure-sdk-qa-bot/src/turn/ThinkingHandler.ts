@@ -12,7 +12,8 @@ export class ThinkingHandler {
   private readonly defaultThinkingMessage = '⏳Thinking';
   private readonly maxRetryTimesForFinish = 5;
   private readonly maxRetryTimesForThinking = 1800;
-  private readonly defaultInterval = 1000; // unit in milliseconds
+  private readonly maxCancelTimeout = 1000; // unit in milliseconds
+  private readonly defaultThinkingInterval = 5000; // unit in milliseconds
   private readonly context: TurnContext;
   private readonly conversationHandler: ConversationHandler;
   private thinkingMessage = this.defaultThinkingMessage;
@@ -41,7 +42,7 @@ export class ThinkingHandler {
     let retryCount = 0;
     for (; retryCount < this.maxRetryTimesForFinish; retryCount++) {
       if (!this.isRunning) break;
-      await setTimeout(this.defaultInterval);
+      await setTimeout(this.maxCancelTimeout);
     }
     if (retryCount === this.maxRetryTimesForFinish) {
       throw new Error('Failed to stop thinking timer');
@@ -86,7 +87,7 @@ export class ThinkingHandler {
       } finally {
         this.isRunning = false;
       }
-      await setTimeout(this.defaultInterval);
+      await setTimeout(this.defaultThinkingInterval);
     }
     if (count === this.maxRetryTimesForThinking) {
       logger.warn('Thinking timer reached max retry times', { meta: this.meta });
@@ -134,9 +135,9 @@ export class ThinkingHandler {
     };
     reply += '\n\n**References**\n';
     referencesMap.forEach((links, source) => {
-      reply += `- ${prettierSource(source)}\n`;
+      const sourceName = prettierSource(source);
       links.forEach((title, link) => {
-        reply += `  - [${title}](${link})\n`;
+        reply += `- [${title} | ${sourceName}](${link})\n`;
       });
     });
     return reply;

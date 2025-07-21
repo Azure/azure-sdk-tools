@@ -11,5 +11,16 @@ export const logger = winston.createLogger({
     winston.format.splat()
   ),
   defaultMeta: { service: 'azure-sdk-qa-teams-bot' },
-  transports: [new winston.transports.Console()],
+  transports: [
+    new winston.transports.Console({
+      level: 'info',
+      stderrLevels: [],
+    }),
+
+    new winston.transports.Console({
+      level: 'error',
+      stderrLevels: ['warn', 'error'],
+      consoleWarnLevels: ['warn'],
+    }),
+  ],
 });

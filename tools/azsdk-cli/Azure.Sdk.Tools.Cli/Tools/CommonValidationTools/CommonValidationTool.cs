@@ -32,15 +32,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         };
 
         // Command names
-        private const string validateServiceLabelCommandName = "validate-service-label";
-        private const string createServiceLabelCommandName = "create-service-label";
         private const string isValidServiceCodeOwnersCommandName = "is-valid-service-code-owners";
         private const string isValidCodeOwnerCommandName = "is-valid-code-owner";
 
         // Command options
-        private readonly Option<string> serviceNameOpt = new(["--service", "-s"], "Service name to find and validate the service label for") { IsRequired = true };
-        private readonly Option<string> proposedServiceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
-        private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
         private readonly Option<string> serviceLabelOpt = new(["--service", "-s"], "Confirmed service label to validate code owners for") { IsRequired = true };
         private readonly Option<string> gitHubAliasOpt = new(["--username", "-u"], "GitHub alias to validate") { IsRequired = false };
 
@@ -49,8 +44,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var command = new Command("common-validation-tools", "Tools for validating CODEOWNERS files.");
             var subCommands = new[]
             {
-                new Command(validateServiceLabelCommandName, "Validate the service label for a given service name against the common-labels CSV") { serviceNameOpt },
-                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { proposedServiceLabelOpt, documentationLinkOpt },
                 new Command(isValidServiceCodeOwnersCommandName, "Validate code owners for a service across all Azure SDK repositories") { serviceLabelOpt },
                 new Command(isValidCodeOwnerCommandName, "Validate if a GitHub alias has proper organizational membership and write access") { gitHubAliasOpt },
             };
@@ -70,11 +63,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             switch (command)
             {
-                case validateServiceLabelCommandName:
-                    var serviceName = commandParser.GetValueForOption(serviceNameOpt);
-                    var serviceLabelResult = await ValidateServiceLabel(serviceName ?? "");
-                    output.Output($"Service label validation result: {serviceLabelResult}");
-                    return;
                 case isValidServiceCodeOwnersCommandName:
                     var confirmedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var serviceValidationResult = await ValidateServiceCodeOwners(confirmedServiceLabel ?? "");
@@ -85,87 +73,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var aliasValidationResult = await isValidCodeOwner(gitHubAlias ?? "");
                     output.Output($"GitHub alias validation result: {aliasValidationResult}");
                     return;
-                case createServiceLabelCommandName:
-                    var proposedServiceLabel = commandParser.GetValueForOption(proposedServiceLabelOpt);
-                    var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
-                    var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? ""); // Should probably just return the created PR link.
-                    output.Output($"Create service label result: {createdPRLink}");
-                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
                     return;
-            }
-        }
-
-        [McpServerTool(Name = "ValidateServiceLabel"), Description("Validates the service label for a given service name against the common labels CSV.")]
-        public async Task<string> ValidateServiceLabel(string serviceName)
-        {
-            try
-            {
-                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-                var githubLabelsLogger = loggerFactory.CreateLogger<GitHubLabelsTool>();
-                
-                var githubLabelsTool = new GitHubLabelsTool(githubLabelsLogger, output, githubService);
-                
-                var result = await githubLabelsTool.CheckServiceLabel(serviceName);
-                    
-                if (result.Found)
-                {
-                    logger.LogInformation($"Service label '{result.ServiceLabel}' is valid (Color: {result.ColorCode})");
-                    return result.ServiceLabel;
-                }
-                else
-                {
-                    logger.LogWarning($"Service label '{serviceName}' not found in common-labels.csv");
-                    return $"Service label '{serviceName}' not found in common-labels.csv";
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $"Failed to validate service label for: {serviceName}");
-                return $"Error: Failed to validate service label. {ex.Message}";
-            }
-        }
-
-        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
-        public async Task<string> CreateServiceLabel(string label, string link)
-        {
-            try
-            {
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
-           
-                var result = await githubService.CreatePullRequestAsync(
-                    repoName: "azure-sdk-tools",
-                    repoOwner: "Azure",              
-                    baseBranch: "main",
-                    headBranch: $"add-service-label-{label}",
-                    title: $"Add service label: {label}",
-                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
-                    draft: true
-                );
-               
-                logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
-               
-                var response = new GenericResponse()
-                {
-                    Status = "Success",
-                    Details = { $"Service label '{label}' pull request created successfully." }
-                };
-                response.Details.AddRange(result);
-               
-                return output.Format(response);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
-               
-                var errorResponse = new GenericResponse()
-                {
-                    Status = "Failed",
-                    Details = { $"Failed to create pull request for service label '{label}'. Error: {ex.Message}" }
-                };
-                return output.Format(errorResponse);
             }
         }
 
@@ -408,59 +319,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<string> UpdateCommonLabelsFile(string Label)
-        {
-            try
-            {
-                logger.LogInformation($"Updating common-labels.csv with new service label: {Label}");
-
-                var contentResults = await githubService.GetFileContentAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
-                if (contentResults == null || !contentResults.Any())
-                {
-                    throw new InvalidOperationException("Failed to retrieve common-labels.csv content.");
-                }
-
-                var fileContent = contentResults[0];
-                if (string.IsNullOrEmpty(fileContent.content))
-                {
-                    throw new InvalidOperationException("common-labels.csv content is empty.");
-                }
-
-                var lines = fileContent.content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                if (lines.Count == 0)
-                {
-                    throw new InvalidOperationException("common-labels.csv file appears to be empty after parsing");
-                }
-
-                var dataLines = lines.Where(line => !string.IsNullOrWhiteSpace(line)).ToList();
-                
-                var newLabelEntry = $"{Label},,E99695";
-                dataLines.Add(newLabelEntry);
-
-                dataLines.Sort((x, y) =>
-                {
-                    var labelX = x.Split(',')[0].Trim();
-                    var labelY = y.Split(',')[0].Trim();
-                    return string.Compare(labelX, labelY, StringComparison.OrdinalIgnoreCase);
-                });
-
-                var updatedContent = string.Join("\n", dataLines) + "\n";
-
-                // have to update file here (modify the csv with the new label)
-
-                logger.LogInformation($"Successfully updated common-labels.csv with label '{Label}' in alphabetical order");
-                logger.LogDebug($"New entry added: {newLabelEntry}");
-                logger.LogDebug($"Total data lines after update: {dataLines.Count}");
- 
-                return updatedContent;
-
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, $"Failed to update common-labels.csv with label '{Label}': {ex.Message}");
-                throw;
-            }
-        }
         private async Task<string> CallPowerShellScriptViaCMD(string arguments = "")
         {
             try

@@ -26,9 +26,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecPullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
-            typeof(GitHubLabelsTool),
             typeof(CommonValidationTool),
+            typeof(GitHubLabelsTool),
             typeof(TestAnalysisTool),
+            typeof(LanguagePullRequestTools),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

@@ -213,7 +213,7 @@ namespace APIViewWeb.Helpers
                     break;
                 case "NamespaceApproved":
                     Enum.TryParse(typeof(E), "NamespaceApproved", out object na);
-                    actionAdded = action;
+                    actionAdded = (E)na;
                     actionReverted = default(E);
                     break;
                 case "NamespaceReviewRequested":

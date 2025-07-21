@@ -39,10 +39,17 @@ namespace APIViewWeb.Pages.Assemblies
             var reviewIds = APIRevisions.Select(r => r.ReviewId).Distinct().ToList();
             var reviews = new Dictionary<string, ReviewListItemModel>();
             
-            // Fetch all parent reviews in batch
-            foreach (var reviewId in reviewIds)
+            // Fetch all parent reviews in batch using parallel processing
+            var reviewTasks = reviewIds.Select(async reviewId =>
             {
                 var review = await _reviewManager.GetReviewAsync(User, reviewId);
+                return (reviewId, review);
+            });
+
+            var reviewResults = await Task.WhenAll(reviewTasks);
+            
+            foreach (var (reviewId, review) in reviewResults)
+            {
                 if (review != null)
                 {
                     reviews[reviewId] = review;

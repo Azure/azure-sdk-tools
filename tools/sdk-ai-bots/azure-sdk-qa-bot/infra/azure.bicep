@@ -276,7 +276,7 @@ resource serverErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'Global'
   properties: {
     description: 'Alert when server returns 5xx HTTP errors'
-    severity: 1
+    severity: 0  // Critical - because 5xx errors indicate server failure
     enabled: true
     scopes: [
       webApp.id
@@ -321,13 +321,19 @@ resource healthCheckWebTest 'Microsoft.Insights/webtests@2022-06-15' = {
     RetryEnabled: true
     Locations: [
       {
-        Id: 'us-tx-sn1-azr'
+        Id: 'us-tx-sn1-azr'  // South Central US (Texas)
       }
       {
-        Id: 'us-il-ch1-azr'
+        Id: 'us-il-ch1-azr'  // North Central US (Illinois)
       }
       {
-        Id: 'us-ca-sjc-azr'
+        Id: 'us-ca-sjc-azr'  // West US (California)
+      }
+      {
+        Id: 'us-va-ash-azr'  // East US (Virginia)
+      }
+      {
+        Id: 'emea-nl-ams-azr'  // West Europe (Netherlands)
       }
     ]
     Configuration: {
@@ -357,7 +363,7 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
       'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
       webTestId: healthCheckWebTest.id
       componentId: appInsights.id
-      failedLocationCount: 2
+      failedLocationCount: 3
     }
     actions: [
       {

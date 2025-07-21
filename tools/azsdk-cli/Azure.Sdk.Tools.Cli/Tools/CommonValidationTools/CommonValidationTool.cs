@@ -408,9 +408,58 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private void UpdateCommonLabelsFile(string Label)
+        private async Task<string> UpdateCommonLabelsFile(string Label)
         {
-            // Implementation for updating the common labels file
+            try
+            {
+                logger.LogInformation($"Updating common-labels.csv with new service label: {Label}");
+
+                var contentResults = await githubService.GetFileContentAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+                if (contentResults == null || !contentResults.Any())
+                {
+                    throw new InvalidOperationException("Failed to retrieve common-labels.csv content.");
+                }
+
+                var fileContent = contentResults[0];
+                if (string.IsNullOrEmpty(fileContent.content))
+                {
+                    throw new InvalidOperationException("common-labels.csv content is empty.");
+                }
+
+                var lines = fileContent.content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                if (lines.Count == 0)
+                {
+                    throw new InvalidOperationException("common-labels.csv file appears to be empty after parsing");
+                }
+
+                var dataLines = lines.Where(line => !string.IsNullOrWhiteSpace(line)).ToList();
+                
+                var newLabelEntry = $"{Label},,E99695";
+                dataLines.Add(newLabelEntry);
+
+                dataLines.Sort((x, y) =>
+                {
+                    var labelX = x.Split(',')[0].Trim();
+                    var labelY = y.Split(',')[0].Trim();
+                    return string.Compare(labelX, labelY, StringComparison.OrdinalIgnoreCase);
+                });
+
+                var updatedContent = string.Join("\n", dataLines) + "\n";
+
+                // have to update file here (modify the csv with the new label)
+
+                logger.LogInformation($"Successfully updated common-labels.csv with label '{Label}' in alphabetical order");
+                logger.LogDebug($"New entry added: {newLabelEntry}");
+                logger.LogDebug($"Total data lines after update: {dataLines.Count}");
+ 
+                return updatedContent;
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to update common-labels.csv with label '{Label}': {ex.Message}");
+                throw;
+            }
         }
         private async Task<string> CallPowerShellScriptViaCMD(string arguments = "")
         {

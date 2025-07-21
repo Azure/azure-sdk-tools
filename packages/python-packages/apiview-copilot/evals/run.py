@@ -9,6 +9,8 @@ import copy
 import sys
 import yaml
 
+from src._utils import get_prompt_path
+
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
@@ -73,9 +75,7 @@ class CustomAPIViewEvaluator:
         )
 
         false_positive_rate = (
-            review_eval["false_positives"] / review_eval["comments_found"]
-            if review_eval["comments_found"] > 0
-            else 0.0
+            review_eval["false_positives"] / review_eval["comments_found"] if review_eval["comments_found"] > 0 else 0.0
         )
         score = (
             weights["exact_match_weight"] * exact_match_score
@@ -135,9 +135,7 @@ class CustomAPIViewEvaluator:
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            prompt_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "..", "prompts", "eval_judge_prompt.prompty")
-            )
+            prompt_path = get_prompt_path("evals", "eval_judge_prompt.prompty")
             response = prompty.execute(
                 prompt_path,
                 inputs={
@@ -146,7 +144,7 @@ class CustomAPIViewEvaluator:
                     "exceptions": exceptions,
                     "language": language,
                 },
-                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
+                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")},
             )
             comment["valid"] = "true" in response.lower()
 
@@ -156,7 +154,7 @@ class CustomAPIViewEvaluator:
             return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
         groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
         return groundedness
-    
+
     def _similarity(self, expected: dict[str, Any], actual: dict[str, Any], query: str) -> None:
         actual = [c for c in actual["comments"] if c["rule_ids"]]
         if not actual:
@@ -530,7 +528,7 @@ if __name__ == "__main__":
                 target=review_apiview,
                 fail_on_evaluator_errors=True,
                 azure_ai_project=azure_ai_project,
-                **kwargs
+                **kwargs,
             )
 
             run_result = record_run_result(result, rule_ids)

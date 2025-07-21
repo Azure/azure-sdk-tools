@@ -23,4 +23,9 @@
     <PackageReference Update="NETStandard.Library" PrivateAssets="All" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="reserved-type-names.txt" />
+    <EmbeddedResource Include="reserved-type-qualified-names.txt" />
+  </ItemGroup>
+
 </Project>

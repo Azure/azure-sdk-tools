@@ -21,8 +21,8 @@ import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoD
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
-import { migratePackage } from "../../common/migration.js";
 import { isRushRepo } from "../../common/rushUtils.js";
+import { updateSnippets } from "../../common/devToolUtils.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -246,9 +246,7 @@ export async function generateRLCInPipeline(options: {
         if (isRushRepo(options.sdkRepo)) {
             logger.info(`Start to update rush.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-    
-            await migratePackage(options.sdkRepo, packagePath);
-    
+        
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
             execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
@@ -264,11 +262,19 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
             execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
         }
+
+        await updateSnippets(packagePath);
         
         if (!options.skipGeneration) {
+            const getChangelogItems = () => {
+                const categories = changelog?.changelogItems.breakingChanges.keys();
+                if (!categories) return [];
+                const items = [...categories].sort().flatMap(cat => changelog?.changelogItems.breakingChanges.get(cat) ?? []);
+                return items;
+            };
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
-            outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
-            outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
+            outputPackageInfo.changelog.breakingChangeItems = getChangelogItems();
+            outputPackageInfo.changelog.content = changelog?.content ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
         }
         if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {

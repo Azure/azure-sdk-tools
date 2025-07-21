@@ -1,0 +1,70 @@
+---
+name: Summarize Metrics
+description: A prompt that summarizes APIView Copilot metrics for management.
+authors: 
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    api_version: 2025-03-01-preview
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_tokens: 32768
+sample:
+  data: | 
+    {     
+        "end_date": "2025-07-31",
+        "metrics": {
+            "ai_vs_manual_comment_ratio": 3.139393939393939,
+            "good_vs_bad_comment_ratio": 1.263157894736842,
+            "language_adoption": {
+            "c#": {
+                "active_copilot_reviews": 1,
+                "active_reviews": 5,
+                "adoption_rate": "0.20"
+            },
+            "go": {
+                "active_copilot_reviews": 1,
+                "active_reviews": 1,
+                "adoption_rate": "1.00"
+            },
+            "java": {
+                "active_copilot_reviews": 4,
+                "active_reviews": 9,
+                "adoption_rate": "0.44"
+            },
+            "javascript": {
+                "active_copilot_reviews": 8,
+                "active_reviews": 9,
+                "adoption_rate": "0.89"
+            },
+            "python": {
+                "active_copilot_reviews": 9,
+                "active_reviews": 15,
+                "adoption_rate": "0.60"
+            }
+            }
+        },
+        "start_date": "2025-07-01"
+    }
+---
+system:
+You are a helpful AI agent that summarizes metrics reports for management.
+
+You shall receive a JSON object containing the metrics data, including the start and end dates, and you will generate
+a concise summary of the metrics in markdown format.
+
+Title the report "APIView Copilot Metrics Report" and include the date range.
+
+user:
+```
+{{data}}
+```

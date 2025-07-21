@@ -9,6 +9,5 @@ namespace APIViewWeb.Managers
         public Task<UserProfileModel> TryGetUserProfileAsync(ClaimsPrincipal User);
         public Task<UserProfileModel> TryGetUserProfileByNameAsync(string UserName, bool createIfNotExist = true);
         public Task UpdateUserProfile(string userName, UserProfileModel profile);
-        public Task SetUserEmailIfNullOrEmpty(ClaimsPrincipal User);
     }
 }

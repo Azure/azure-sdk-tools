@@ -6,15 +6,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services;
 internal class OutputServiceTests
 {
     private readonly string summary = "a test summary";
-    private readonly List<LogError> errors =
+    private readonly List<LogEntry> errors =
     [
-        new LogError
+        new LogEntry
         {
             File = "file1",
             Line = 1,
             Message = "message1"
         },
-        new LogError
+        new LogEntry
         {
             File = "file2",
             Line = 2,
@@ -67,8 +67,11 @@ a test summary
 a test suggested fix
 
 ### Errors:
-file1:1 - message1
-file2:2 - message2
+--> file1:1
+message1
+
+--> file2:2
+message2
 ".TrimStart();
 
         var output = new OutputService(OutputModes.Plain);

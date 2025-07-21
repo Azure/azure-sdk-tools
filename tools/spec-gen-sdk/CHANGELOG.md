@@ -1,4 +1,11 @@
 # Release
+## 2025-07-01 - 0.9.0
+
+- Restructure code directory and add unit test in test/ folder
+
+## 2025-06-03 - 0.8.1
+
+- Created stagedArtifacts folder all the time if it's been set to the execution report
 
 ## 2025-05-22 - 0.8.0
 

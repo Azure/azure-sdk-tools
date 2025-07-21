@@ -13,8 +13,8 @@ stages:
   - job: Run
     timeoutInMinutes: 120
     pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
 
     variables:
       Organization: azure-sdk
@@ -27,6 +27,8 @@ stages:
       RepoListFile: "$(Build.SourcesDirectory)/tools/github/data/repositories.txt"
 
     steps:
+      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
       - task: AzureCLI@2
         displayName: 'Fetch and store team/user data'
         inputs:

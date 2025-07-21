@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
+using Polly;
 
 namespace APIViewWeb.Helpers
 {
@@ -127,6 +129,7 @@ namespace APIViewWeb.Helpers
             if (!string.IsNullOrEmpty(_locationUrl))
             {
                 response.Headers["Location"] = _locationUrl;
+                response.Headers.Append("Access-Control-Expose-Headers", "Location");
             }
 
             var serializedValue = JsonSerializer.Serialize(Value, _serializerOptions);
@@ -145,6 +148,34 @@ namespace APIViewWeb.Helpers
         public int NoOfItemsRead { get; set; }
         public int PageSize { get; set; }
         public int TotalCount { get; set; }
+    }
+
+    /// <summary>
+    /// Pool endpoint with exponential backoff
+    /// </summary>
+    public class Poller
+    {
+        public async Task<T> PollAsync<T>(
+            Func<Task<T>> operation,
+            Func<T, bool> isComplete,
+            int initialInterval = 10,
+            int maxInterval = 120,
+            CancellationToken cancellationToken = default)
+        {
+            var retryPolicy = Policy
+                .HandleResult<T>(result => !isComplete(result))
+                .WaitAndRetryForeverAsync(
+                    retryAttempt => TimeSpan.FromSeconds(Math.Min(initialInterval * retryAttempt, maxInterval)));
+
+            var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromMinutes(30));
+            var combinedPolicy = retryPolicy.WrapAsync(timeoutPolicy);
+
+            return await combinedPolicy.ExecuteAsync(async (ct) =>
+            {
+                var result = await operation();
+                return result;
+            }, cancellationToken);
+        }
     }
 }
 

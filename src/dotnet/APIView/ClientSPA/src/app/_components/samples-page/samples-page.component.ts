@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, Injector, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MenuItem, MessageService } from 'primeng/api';
 import { FileSelectEvent } from 'primeng/fileupload';
 import { Subject, take, takeUntil } from 'rxjs';
@@ -76,7 +77,7 @@ export class SamplesPageComponent {
     private apiRevisionsService: APIRevisionsService, private samplesRevisionService: SamplesRevisionService, 
     private router: Router, private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef,
     private messageService: MessageService, private commentsService: CommentsService, private renderer: Renderer2, private el: ElementRef,
-    private injector: Injector, private viewContainerRef: ViewContainerRef) {}
+    private injector: Injector, private viewContainerRef: ViewContainerRef, private titleService: Title) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -138,6 +139,7 @@ export class SamplesPageComponent {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.updatePageTitle();
         }
     });
   }
@@ -271,7 +273,7 @@ export class SamplesPageComponent {
           this.isCreatingSamples = false;
           this.createSamplesButton = "Save";
           this.uploadSamplesButton = "Upload";
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to create new Usage Sample', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to create new Usage Sample', key: 'bc', life: 3000 });
         }
       });
   }
@@ -295,7 +297,7 @@ export class SamplesPageComponent {
         error: (error: any) => {
           this.isUpdatingSamples = false;
           this.updateSamplesButton = "Save";
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to update Usage Sample', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to update Usage Sample', key: 'bc', life: 3000 });
         }
       });
   }
@@ -319,7 +321,7 @@ export class SamplesPageComponent {
           this.showSamplesDeleteModal = false;
           this.isDeletingSamples = false;
           this.deleteSamplesButton = "Delete";
-          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to delete Usage Sample', key: 'bl', life: 3000 });
+          this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to delete Usage Sample', key: 'bc', life: 3000 });
         }});
   }
 
@@ -579,6 +581,14 @@ export class SamplesPageComponent {
       }
       target.classList.remove('hide', 'can-show')
       target.classList.add('show');
+    }
+  }
+
+  updatePageTitle() {
+    if (this.review?.packageName) {
+      this.titleService.setTitle(this.review.packageName);
+    } else {
+      this.titleService.setTitle('APIView');
     }
   }
 }

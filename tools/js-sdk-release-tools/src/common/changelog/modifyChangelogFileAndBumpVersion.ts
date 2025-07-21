@@ -30,7 +30,7 @@ export function getFirstReleaseContent(packageFolderPath: string, isStableReleas
     }
 }
 
-export function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
+export async function makeChangesForFirstRelease(packageFolderPath: string, isStableRelease: boolean) {
     const newVersion = isStableRelease? '1.0.0' : '1.0.0-beta.1';
     const contentLog = getFirstReleaseContent(packageFolderPath, isStableRelease);
     const content = `# Release History
@@ -43,10 +43,10 @@ ${contentLog}
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
-    updateUserAgent(packageFolderPath, newVersion);
+    await updateUserAgent(packageFolderPath, newVersion);
 }
 
-export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, nextPackageVersion: string) {
+export async function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, nextPackageVersion: string) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
     const content = `# Release History
     
@@ -64,7 +64,7 @@ To learn more, please refer to our documentation [Quick Start](https://aka.ms/az
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, nextPackageVersion);
-    updateUserAgent(packageFolderPath, nextPackageVersion)
+    await updateUserAgent(packageFolderPath, nextPackageVersion)
 }
 
 function changePackageJSON(packageFolderPath: string, packageVersion: string) {
@@ -73,26 +73,20 @@ function changePackageJSON(packageFolderPath: string, packageVersion: string) {
     fs.writeFileSync(path.join(packageFolderPath, 'package.json'), result, 'utf8');
 }
 
-export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
+export async function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: string, originalChangeLogContent: string, comparedVersion:string) {
     let pacakgeVersionDetail = `## ${packageVersion} (${date})`;
     if(packageVersion.includes("beta")){
         pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
     }
     const modifiedChangelogContent = `# Release History
-    
+
 ${pacakgeVersionDetail}
-    
-${changeLog.displayChangeLog()}
-    
+
+${changeLog}
 ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
 
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), modifiedChangelogContent, {encoding: 'utf-8'});
 
     changePackageJSON(packageFolderPath, packageVersion);
-    updateUserAgent(packageFolderPath, packageVersion);
-}
-
-export function makeChangesForPatchReleasingTrack2(packageFolderPath: string, packageVersion: string) {
-    changePackageJSON(packageFolderPath, packageVersion);
-    updateUserAgent(packageFolderPath, packageVersion);
+    await updateUserAgent(packageFolderPath, packageVersion);
 }

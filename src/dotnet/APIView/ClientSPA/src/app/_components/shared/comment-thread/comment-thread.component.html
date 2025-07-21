@@ -5,7 +5,8 @@
 <div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}">
     <p-timeline [value]="codePanelRowData!.comments">
         <ng-template pTemplate="marker" let-comment>
-            <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
+            <img *ngIf="comment.createdBy !== 'azure-sdk'" [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
+            <img *ngIf="comment.createdBy === 'azure-sdk'" alt="Azure SDK Copilot" src="/assets/icons/copilot.svg" width="40" height="40" class="user-avartar"/>
         </ng-template>        
         <ng-template pTemplate="content" let-comment>
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
@@ -41,6 +42,12 @@
                         <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
                         <ng-template #noUpVotes>
                             <span class="bi bi-hand-thumbs-up"></span>
+                        </ng-template>
+                    </button>
+                    <button *ngIf="comment.createdBy == 'azure-sdk'" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
+                        <span *ngIf="comment.downvotes.length > 0; else noDownVotes" class="bi bi-hand-thumbs-down-fill emoji-active" pTooltip="{{comment.downvotes.join(', ')}}" tooltipPosition="bottom">{{comment.downvotes.length}}</span>
+                        <ng-template #noDownVotes>
+                            <span class="bi bi-hand-thumbs-down"></span>
                         </ng-template>
                     </button>
                     <button *ngIf="(getCommentActionMenuContent(comment.id)).length > 0" class="p-panel-header-icon p-link" (click)="toggleActionMenu($event, comment.id)">

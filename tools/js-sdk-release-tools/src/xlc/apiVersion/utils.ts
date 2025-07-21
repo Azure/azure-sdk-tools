@@ -1,11 +1,12 @@
 import { getTsSourceFile } from '../../common/utils.js';
 import { ApiVersionType } from '../../common/types.js';
 import path, { basename } from 'node:path';
-import shell from 'shelljs';
 import { FunctionDeclaration, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
+import { tryGetNpmView } from "../../common/npmUtils.js";
+import { getLatestStableVersion, isBetaVersion } from "../../utils/version.js";
 
 import unixify from 'unixify';
 
@@ -129,4 +130,16 @@ export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVers
     if (!apiVersions) return ApiVersionType.None;
     const previewVersions = apiVersions.filter((v) => v.indexOf('-preview') >= 0);
     return previewVersions.length > 0 ? ApiVersionType.Preview : ApiVersionType.Stable;
+};
+
+export const getApiVersionTypeFromNpm = async (
+    packageName: string,
+): Promise<ApiVersionType> => {
+    logger.info("Fallback to get api version type from latest version in NPM");
+    const npmViewResult = await tryGetNpmView(packageName);
+    if (!npmViewResult) return ApiVersionType.Preview;
+    const latestVersion = getLatestStableVersion(npmViewResult);
+    return latestVersion && !isBetaVersion(latestVersion)
+        ? ApiVersionType.Stable
+        : ApiVersionType.Preview;
 };

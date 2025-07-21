@@ -10,7 +10,11 @@ public class LogAnalysisResponse : Response
 
     [JsonPropertyName("errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<LogError> Errors { get; set; } = [];
+    public List<LogEntry> Errors { get; set; } = null;
+
+    [JsonPropertyName("matches")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<LogEntry> Matches { get; set; } = null;
 
     [JsonPropertyName("suggested_fix")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -19,20 +23,40 @@ public class LogAnalysisResponse : Response
     public override string ToString()
     {
         var output = $"### Summary:" + Environment.NewLine +
-                     $"{Summary}" + Environment.NewLine + Environment.NewLine +
-                     $"### Suggested Fix:" + Environment.NewLine +
-                     $"{SuggestedFix}" + Environment.NewLine +
-                     $"{Environment.NewLine}### Errors:{Environment.NewLine}{string.Join(Environment.NewLine, Errors.Select(e => $"{e.File}:{e.Line} - {e.Message}"))}" + Environment.NewLine;
+                     $"{Summary}" + Environment.NewLine + Environment.NewLine;
+
+        if (Matches?.Count > 0)
+        {
+            output += $"### Matches:" + Environment.NewLine +
+                      $"{string.Join(Environment.NewLine, Matches.Select(m => $"{m.File}:{m.Line} - {m.Message}"))}" +
+                      Environment.NewLine + Environment.NewLine;
+        }
+
+        if (Errors?.Count > 0)
+        {
+            output += $"### Suggested Fix:" + Environment.NewLine +
+                      $"{SuggestedFix}" + Environment.NewLine + Environment.NewLine +
+                      $"### Errors:" + Environment.NewLine +
+                      $"{string.Join(Environment.NewLine + Environment.NewLine, Errors.Select(e => $"--> {e.File}:{e.Line}{Environment.NewLine}{e.Message}"))}" +
+                      Environment.NewLine;
+        }
+
         return ToString(output);
     }
 }
 
-public class LogError
+public class LogEntry
 {
     [JsonPropertyName("file")]
-    public string File { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string File { get; set; }
+    [JsonPropertyName("url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string Url { get; set; }
     [JsonPropertyName("line")]
-    public int Line { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Line { get; set; }
     [JsonPropertyName("message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Message { get; set; } = string.Empty;
 }

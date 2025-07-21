@@ -39,7 +39,7 @@ public class MonitorParameter
 }")]
         public async Task ClassWithoutSerializationMethodsButInModelsNamespaceIsChecked(string test)
         {
-            var expectedMessage = $"Suggest to rename it to 'MonitorContent' or 'MonitorPatch' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'TestMonitorParameterContent' or 'TestMonitorParameterPatch' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(3, 14, 3, 30).WithArguments("MonitorParameter", "Parameter", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
@@ -57,7 +57,7 @@ public class MonitorParameter
         return null;
     }
 }";
-            var expectedMessage = $"Suggest to rename it to 'MonitorContent' or 'MonitorPatch' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'NotModelsMonitorParameterContent' or 'NotModelsMonitorParameterPatch' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(4, 14, 4, 30).WithArguments("MonitorParameter", "Parameter", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
@@ -80,7 +80,7 @@ public class MonitorParameter : IUtf8JsonSerializable
         return;
     }
 }";
-            var expectedMessage = $"Suggest to rename it to 'MonitorContent' or 'MonitorPatch' or any other appropriate name.";
+            var expectedMessage = $"We suggest renaming it to 'NotModelsMonitorParameterContent' or 'NotModelsMonitorParameterPatch' or another name with this suffix.";
             var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(9, 14, 9, 30).WithArguments("MonitorParameter", "Parameter", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }

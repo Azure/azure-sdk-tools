@@ -13,6 +13,7 @@ from pytest import fail, mark
 
 from apistub import ApiView, StubGenerator
 import json
+import zipfile
 
 SDK_PARAMS = [
     ("azure-core", "1.32.0", "core", "azure.core", "src"),
@@ -119,8 +120,65 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type):
         raise ValueError(f"Could not find {pkg_type} file for the specified version.")
     
     pkg_path = _download_file(temp_dir, url)
-    
+
+    # Linting errors like `do-not-import-asyncio` are ignored in pkg `azure.core`.
+    # Since the whl file does not have a `azure/__init__.py` file, pylint does not recognize it as the `azure.core` pkg.
+    # Adding an empty `__init__.py` file to the package directory so specific pylint errors are skipped correctly.
+    # Workaround for issue:
+    # If whl file, add an empty __init__.py file to the azure directory.
+    if pkg_type == "whl":
+        _add_init_for_whl(pkg_path)
     return pkg_path
+
+def _add_init_for_whl(pkg_path):
+    # Create a temporary directory to extract and rebuild the wheel
+    extract_dir = tempfile.mkdtemp()
+
+    try:
+        # Extract the wheel file
+        with zipfile.ZipFile(pkg_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+
+        # Check if the azure directory exists in the extracted content
+        azure_dir = None
+        for root, dirs, files in os.walk(extract_dir):
+            if os.path.basename(root) == 'azure':
+                azure_dir = root
+                break
+
+        # Add __init__.py recursively up the directory tree inside azure if needed
+        def add_init_recursively(folder):
+            # Stop if __init__.py exists in this folder
+            if os.path.exists(os.path.join(folder, '__init__.py')):
+                return
+            # Add __init__.py to this folder
+            with open(os.path.join(folder, '__init__.py'), 'w') as f:
+                pass
+            # Check if this folder contains exactly one subfolder (and no files except __init__.py)
+            entries = [e for e in os.listdir(folder) if e != '__init__.py']
+            subfolders = [e for e in entries if os.path.isdir(os.path.join(folder, e))]
+            if len(subfolders) == 1 and not any(os.path.isfile(os.path.join(folder, e)) for e in entries):
+                # Recurse into the single subfolder
+                add_init_recursively(os.path.join(folder, subfolders[0]))
+
+        if azure_dir:
+            add_init_recursively(azure_dir)
+
+        # Repackage the wheel
+        # Save the original filename
+        orig_filename = os.path.basename(pkg_path)
+        # Create a new wheel file
+        with zipfile.ZipFile(pkg_path, 'w') as new_zip:
+            for root, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    # Add file to the zip with the correct relative path
+                    arcname = os.path.relpath(file_path, extract_dir)
+                    new_zip.write(file_path, arcname)
+
+    finally:
+        # Clean up the temporary directory
+        shutil.rmtree(extract_dir)
 
 
 class TestApiViewAzure:

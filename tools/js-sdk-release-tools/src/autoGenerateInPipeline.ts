@@ -59,6 +59,7 @@ async function automationGenerateInPipeline(
                 });
                 break;
             case SDKType.RestLevelClient:
+                // RLC + swagger is not supported.
                 await generateRLCInPipeline({
                     sdkRepo: String(shell.pwd()),
                     swaggerRepo: path.isAbsolute(specFolder) ? specFolder : path.join(String(shell.pwd()), specFolder),
@@ -95,7 +96,8 @@ async function automationGenerateInPipeline(
                     versionPolicyName: 'management',
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
-                };                
+                    runMode: runMode as RunMode,
+                };
                 const packageResult = await generateAzureSDKPackage(options);
                 outputJson.packages = [packageResult];
                 break;

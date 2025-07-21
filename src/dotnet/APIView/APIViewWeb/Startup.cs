@@ -37,7 +37,6 @@ using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
@@ -94,6 +93,8 @@ namespace APIViewWeb
                 options.Conventions.AddPageRoute("/Assemblies/Index", "");
             });
 
+            services.AddHttpClient();
+            services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
             services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
             services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
@@ -257,6 +258,10 @@ namespace APIViewWeb
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
+            services.AddHostedService<CopilotPollingBackgroundHostedService>();
+            
+            services.AddSingleton<Services.IBackgroundTaskQueue, Services.BackgroundTaskQueue>();
+            services.AddHostedService<QueuedHostedService>();
 
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)

@@ -1,6 +1,5 @@
 import { default as FileHound } from 'filehound';
 import * as path from 'path';
-// import fs, { copyFileSync, existsSync } from 'fs';
 import * as fs from 'fs';
 import { InstallInstructionScriptInput } from '../types/InstallInstructionScriptInput';
 import { getInstallInstructionScriptOutput } from '../types/InstallInstructionScriptOutput';

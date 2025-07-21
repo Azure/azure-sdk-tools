@@ -1,0 +1,131 @@
+name: Run switched packages content validation for .NET
+trigger: none
+
+parameters:
+- name: packages
+  displayName: |
+      Comma-delimited list of packages to test against (by default, 'all' to run all). Example: 'azure-communication-chat, azure-communication-common'
+  type: string
+  default: 'all'
+
+- name: branch
+  displayName: |
+      You can choose the review version of the page for testing, and you need to select the corresponding branch. Example: 'nickwalk/yaml-changes'
+  type: string
+  default: 'main'
+
+- name: language
+  displayName: |
+      You can choose the language for testing. Example: DotNet
+  type: string
+  default: 'DotNet'
+  values:
+  - Python
+  - Java
+  - JavaScript
+  - DotNet
+
+stages:
+- stage: ContentValidationTesting
+  jobs:
+  - ${{ each packageName in split(parameters.packages, ',') }}:
+    - ${{ if ne(parameters.packages, 'all') }}:
+      - template: /eng/pipelines/dotnet/package/${{ packageName }}.yml
+        parameters:
+          GitHubPat: $(GITHUB_PAT)
+          GitHubOwner: $(GITHUB_OWNER)
+          GitHubRepo: $(GITHUB_REPO)
+          Branch: ${{ parameters.branch }}
+
+  - ${{ if eq(parameters.packages, 'all') }}:
+    - template: /eng/pipelines/dotnet/package/run-all-packages.yml
+      parameters:
+        GitHubPat: $(GITHUB_PAT)
+        GitHubOwner: $(GITHUB_OWNER)
+        GitHubRepo: $(GITHUB_REPO)
+        Branch: ${{ parameters.branch }}
+
+## Need to confirm, disabled for now
+# - stage: TotalIssuesSummary
+#   condition: always()
+#   jobs:
+#   - job: Maintain_Total_Issues_List
+#     displayName: Maintain_Total_Issues_List
+#     pool:
+#       vmImage: ubuntu-latest
+#     steps:
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Last Artifact history-issues-summary
+#       inputs:
+#         buildType: 'specific'
+#         project: '$(System.TeamProject)'
+#         pipeline: '$(System.DefinitionName)'
+#         buildVersionToDownload: 'latestFromBranch'
+#         allowPartiallySucceededBuilds: true
+#         allowFailedBuilds: true
+#         branchName: 'refs/heads/main'
+#         artifactName: 'issues-summary'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+#       continueOnError: true
+
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Current Artifact 
+#       inputs:
+#         buildType: 'current'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+
+#     - task: DotNetCoreCLI@2
+#       displayName: Build issuer helper project
+#       inputs:
+#         command: 'build'
+#         projects: 'IssuerHelper/IssuerHelper.csproj'
+
+#     - script: |
+#         organization=$(System.CollectionUri)
+#         project=$(System.TeamProject)
+#         buildId=$(Build.BuildId)
+  
+#         pipelineUrl="${organization}${project}/_build/results?buildId=${buildId}"
+  
+#         echo "##vso[task.setvariable variable=pipelineUrl;]$pipelineUrl"
+#       displayName: Get the current pipeline url
+
+#     - task: DotNetCoreCLI@2
+#       displayName: Summary Total Issues of all packages
+#       env:
+#         PackageName: ${{ parameters.packages }}
+#         PipelineRunLink: $(pipelineUrl)
+#         GitHubPat: $(GITHUB_PAT)
+#         Language: ${{ parameters.language }}
+#         GitHubOwner: $(GITHUB_OWNER)
+#         GitHubRepo: $(GITHUB_REPO)
+#       inputs:
+#         command: 'run'
+#         workingDirectory: '$(System.DefaultWorkingDirectory)/IssuerHelper'
+
+#     - task: PublishPipelineArtifact@1
+#       displayName: "Upload pipeline test data"
+#       inputs:
+#         targetPath: $(System.DefaultWorkingDirectory)/Reports
+#         artifactName: issues-summary
+#         publishLocation: "pipeline"
+
+#     - task: Bash@3
+#       displayName: 'Set Script Executable'
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#           chmod +x $(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh
+
+#     - task: Bash@3
+#       displayName: 'Push commit about current pipeline status'
+#       inputs:
+#         targetType: 'filePath'
+#         filePath: '$(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh'
+#         arguments: >-
+#           $(GITHUB_PAT)
+#           $(GITHUB_OWNER)
+#           $(GITHUB_REPO)
+#           $(GIT_USER_NAME)
+#           $(GIT_USER_EMAIL)
+#           ${{ parameters.language }}

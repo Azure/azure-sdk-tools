@@ -16,7 +16,7 @@ parameters:
 
 - name: language
   displayName: |
-      You can choose the language for testing, only Python, Java supported now. We plan extent to JavaScript, .NET and Go in future. Example: Python
+      You can choose the language for testing. Example: Python
   type: string
   default: 'Python'
   values:
@@ -24,7 +24,6 @@ parameters:
   - Java
   - JavaScript
   - DotNet
-  - Go
 
 stages:
 - stage: ContentValidationTesting
@@ -41,92 +40,92 @@ stages:
   - ${{ if eq(parameters.packages, 'all') }}:
     - template: /eng/pipelines/python/package/run-all-packages.yml
       parameters:
-        AzureDevOpsPat: $(AZURE_DEVOPS_PAT)
         GitHubPat: $(GITHUB_PAT)
         GitHubOwner: $(GITHUB_OWNER)
         GitHubRepo: $(GITHUB_REPO)
         Branch: ${{ parameters.branch }}
 
-- stage: TotalIssuesSummary
-  condition: always()
-  jobs:
-  - job: Maintain_Total_Issues_List
-    displayName: Maintain_Total_Issues_List
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: DownloadPipelineArtifact@2
-      displayName: Download The Last Artifact history-issues-summary
-      inputs:
-        buildType: 'specific'
-        project: '$(System.TeamProject)'
-        pipeline: '$(System.DefinitionName)'
-        buildVersionToDownload: 'latestFromBranch'
-        allowPartiallySucceededBuilds: true
-        allowFailedBuilds: true
-        branchName: 'refs/heads/main'
-        artifactName: 'issues-summary'
-        downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
-      continueOnError: true
+## Need to confirm, disabled for now
+# - stage: TotalIssuesSummary
+#   condition: always()
+#   jobs:
+#   - job: Maintain_Total_Issues_List
+#     displayName: Maintain_Total_Issues_List
+#     pool:
+#       vmImage: ubuntu-latest
+#     steps:
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Last Artifact history-issues-summary
+#       inputs:
+#         buildType: 'specific'
+#         project: '$(System.TeamProject)'
+#         pipeline: '$(System.DefinitionName)'
+#         buildVersionToDownload: 'latestFromBranch'
+#         allowPartiallySucceededBuilds: true
+#         allowFailedBuilds: true
+#         branchName: 'refs/heads/main'
+#         artifactName: 'issues-summary'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+#       continueOnError: true
 
-    - task: DownloadPipelineArtifact@2
-      displayName: Download The Current Artifact 
-      inputs:
-        buildType: 'current'
-        downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Current Artifact 
+#       inputs:
+#         buildType: 'current'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
 
-    - task: DotNetCoreCLI@2
-      displayName: Build issuer helper project
-      inputs:
-        command: 'build'
-        projects: 'IssuerHelper/IssuerHelper.csproj'
+#     - task: DotNetCoreCLI@2
+#       displayName: Build issuer helper project
+#       inputs:
+#         command: 'build'
+#         projects: 'IssuerHelper/IssuerHelper.csproj'
 
-    - script: |
-        organization=$(System.CollectionUri)
-        project=$(System.TeamProject)
-        buildId=$(Build.BuildId)
+#     - script: |
+#         organization=$(System.CollectionUri)
+#         project=$(System.TeamProject)
+#         buildId=$(Build.BuildId)
   
-        pipelineUrl="${organization}${project}/_build/results?buildId=${buildId}"
+#         pipelineUrl="${organization}${project}/_build/results?buildId=${buildId}"
   
-        echo "##vso[task.setvariable variable=pipelineUrl;]$pipelineUrl"
-      displayName: Get the current pipeline url
+#         echo "##vso[task.setvariable variable=pipelineUrl;]$pipelineUrl"
+#       displayName: Get the current pipeline url
 
-    - task: DotNetCoreCLI@2
-      displayName: Summary Total Issues of all packages
-      env:
-        PackageName: ${{ parameters.packages }}
-        PipelineRunLink: $(pipelineUrl)
-        GitHubPat: $(GITHUB_PAT)
-        Language: ${{ parameters.language }}
-        GitHubOwner: $(GITHUB_OWNER)
-        GitHubRepo: $(GITHUB_REPO)
-      inputs:
-        command: 'run'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/IssuerHelper'
+#     - task: DotNetCoreCLI@2
+#       displayName: Summary Total Issues of all packages
+#       env:
+#         PackageName: ${{ parameters.packages }}
+#         PipelineRunLink: $(pipelineUrl)
+#         GitHubPat: $(GITHUB_PAT)
+#         Language: ${{ parameters.language }}
+#         GitHubOwner: $(GITHUB_OWNER)
+#         GitHubRepo: $(GITHUB_REPO)
+#       inputs:
+#         command: 'run'
+#         workingDirectory: '$(System.DefaultWorkingDirectory)/IssuerHelper'
 
-    - task: PublishPipelineArtifact@1
-      displayName: "Upload pipeline test data"
-      inputs:
-        targetPath: $(System.DefaultWorkingDirectory)/Reports
-        artifactName: issues-summary
-        publishLocation: "pipeline"
+#     - task: PublishPipelineArtifact@1
+#       displayName: "Upload pipeline test data"
+#       inputs:
+#         targetPath: $(System.DefaultWorkingDirectory)/Reports
+#         artifactName: issues-summary
+#         publishLocation: "pipeline"
 
-    - task: Bash@3
-      displayName: 'Set Script Executable'
-      inputs:
-        targetType: 'inline'
-        script: |
-          chmod +x $(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh
+#     - task: Bash@3
+#       displayName: 'Set Script Executable'
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#           chmod +x $(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh
 
-    - task: Bash@3
-      displayName: 'Push commit about current pipeline status'
-      inputs:
-        targetType: 'filePath'
-        filePath: '$(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh'
-        arguments: >-
-          $(GITHUB_PAT)
-          $(GITHUB_OWNER)
-          $(GITHUB_REPO)
-          $(GIT_USER_NAME)
-          $(GIT_USER_EMAIL)
-          ${{ parameters.language }}
+#     - task: Bash@3
+#       displayName: 'Push commit about current pipeline status'
+#       inputs:
+#         targetType: 'filePath'
+#         filePath: '$(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh'
+#         arguments: >-
+#           $(GITHUB_PAT)
+#           $(GITHUB_OWNER)
+#           $(GITHUB_REPO)
+#           $(GIT_USER_NAME)
+#           $(GIT_USER_EMAIL)
+#           ${{ parameters.language }}

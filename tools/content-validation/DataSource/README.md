@@ -3,7 +3,6 @@
 ## Overview
 
 The Data Source Project is used to obtain the test data source (all pages need to be verified on [Microsoft Learn website](https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python)).
->Notes: currently only for getting Python and Java SDK doc.
 
 ## Getting started
 

@@ -21,8 +21,6 @@ For a detailed introduction to the rules, please refer to the following table. Y
 | .NET | [dotnet-rules.md](../docs/rules-introduction/dotnet-rules.md) | content validation rules designed for [Microsoft Learn website](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/?view=azure-dotnet).|
 | JavaScript | [javascript-rules.md](../docs/rules-introduction/javascript-rules.md) | content validation rules designed for [Microsoft Learn website](https://learn.microsoft.com/en-us/javascript/api/overview/azure/?view=azure-node-latest).|
 
->Notes: Currently, the Python and Java rules have been fully developed. The JS rules are being designed and developed. They will be extended to .NET and Go in the future.
-
 ## Configuration
 
 You can filter out some unexpected errors by configuring the `ignore.json` file. Compared to hard-coding filter conditions, it is more portable and flexible. Here is an example:

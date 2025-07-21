@@ -14,12 +14,6 @@ parameters:
 - name: GitHubRepo
   type: string
   default: ''
-- name: OrganizationName
-  type: string
-  default: 'zedy-wj'
-- name: ProjectName
-  type: string
-  default: 'content-validation-automation'
 - name: AzureDevOpsPat
   type: string
   default: ''
@@ -59,7 +53,7 @@ jobs:
         command: custom
         custom: 'tool '
         arguments: install Microsoft.Playwright.CLI
-
+   
     - task: DotNetCoreCLI@2
       displayName: Build all projects and libraries
       inputs:
@@ -74,12 +68,6 @@ jobs:
         arguments: run playwright install
 
     - task: DotNetCoreCLI@2
-      displayName: Build get data source project
-      inputs:
-        command: 'build'
-        projects: 'DataSource/DataSource.csproj'
-
-    - task: DotNetCoreCLI@2
       displayName: Get test data source
       env:
         ReadmeName: ${{ parameters.ReadmeName }}
@@ -91,16 +79,13 @@ jobs:
         workingDirectory: '$(System.DefaultWorkingDirectory)/DataSource'
 
     - task: DotNetCoreCLI@2
-      displayName: Build test project
+      displayName: Run common test case
       inputs:
-        command: 'build'
+        command: 'test'
         projects: 'ContentValidation.Test/ContentValidation.Test.csproj'
-
-    - task: DotNetCoreCLI@2
-      displayName: Restore project dependencies
-      inputs:
-        command: 'restore'
-        projects: 'ContentValidation.Test/ContentValidation.Test.csproj'
+        arguments: '-e BROWSER=chromium --filter Category=CommonTest'
+        testRunTitle: 'Content Validation Testing Start'
+      continueOnError: false
 
     - task: DotNetCoreCLI@2
       displayName: Run test case
@@ -115,8 +100,8 @@ jobs:
       displayName: Download The Last Artifact issues-summary
       inputs:
         buildType: 'specific'
-        project: 'content-validation-automation'
-        pipeline: 'Content Validation For Python'
+        project: '$(System.TeamProject)'
+        pipeline: '$(System.DefinitionName)'
         buildVersionToDownload: 'latestFromBranch'
         allowPartiallySucceededBuilds: true
         allowFailedBuilds: false
@@ -124,12 +109,6 @@ jobs:
         artifactName: 'issues-summary'
         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
       continueOnError: true
-
-    - task: DotNetCoreCLI@2
-      displayName: Build report helper project
-      inputs:
-        command: 'build'
-        projects: 'ReportHelper/ReportHelper.csproj'
 
     - task: DotNetCoreCLI@2
       displayName: Resolve data by report helper
@@ -167,25 +146,3 @@ jobs:
             cat "$FILE_PATH"
             exit 1
           fi
-
-    # - task: Bash@3
-    #   displayName: 'Set Script Executable'
-    #   inputs:
-    #     targetType: 'inline'
-    #     script: |
-    #       chmod +x $(System.DefaultWorkingDirectory)/eng/scripts/create-github-issue.sh
-
-    # - task: Bash@3
-    #   displayName: 'Create GitHub Issue'
-    #   inputs:
-    #     targetType: 'filePath'
-    #     filePath: '$(System.DefaultWorkingDirectory)/eng/scripts/create-github-issue.sh'
-    #     arguments: >-
-    #       ${{ parameters.PackageName }}
-    #       ${{ parameters.GitHubPat }}
-    #       ${{ parameters.GitHubOwner }}
-    #       ${{ parameters.GitHubRepo }}
-    #       ${{ parameters.OrganizationName }}
-    #       ${{ parameters.ProjectName }}
-    #       $(Build.BuildId)
-    #       ${{ parameters.Language }}

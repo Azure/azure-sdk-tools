@@ -14,7 +14,7 @@ The `ReportHelper` project is used for processing and comparing data, as well as
       "PackageName": "azure-storage-blob"
     }
   ```
-  
+
 - **Program.cs**  
   Acts as the entry point of the project. It reads the current and previous test data, invokes comparison methods, and saves the results in JSON, Excel, and TXT formats.
 

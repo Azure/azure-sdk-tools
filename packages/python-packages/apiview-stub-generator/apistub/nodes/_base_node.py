@@ -34,11 +34,11 @@ class NodeEntityBase:
         Python object that is represented by current node. For e.g. class, function, property
     """
 
-    def __init__(self, namespace, parent_node, obj):
+    def __init__(self, namespace, parent_node, obj, *, name=""):
         self.namespace = namespace
         self.parent_node = parent_node
         self.obj = obj
-        self.name = ""
+        self.name = name
         if hasattr(obj, "__name__"):
             self.name = obj.__name__
         self.display_name = self.name

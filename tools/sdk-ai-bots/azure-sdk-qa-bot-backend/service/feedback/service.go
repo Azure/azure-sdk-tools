@@ -21,7 +21,7 @@ func NewFeedbackService() *FeedbackService {
 func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	timestamp := time.Now()
 	filename := fmt.Sprintf("feedback_%s.csv", timestamp.Format("2006-01-02"))
-	header := "Timestamp,TenantID,Messages,Reaction,Comment\n"
+	header := "Timestamp,TenantID,Messages,Reaction,Comment,Reasons,Link\n"
 	// Read file from storage
 	storageService, err := storage.NewStorageService()
 	if err != nil {
@@ -58,14 +58,18 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		f.Close()
 		log.Printf("Failed to write feedback record: %v", err)
 	}
+	reasonStr, _ := json.Marshal(feedback.Reasons)
+	// Convert messages to JSON string for CSV
 	messageStr, _ := json.Marshal(feedback.Messages)
 	// Format and write the new record
-	record := fmt.Sprintf("%s,%s,%s,%s,%s\n",
+	record := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s\n",
 		timestamp.Format(time.RFC3339),
 		feedback.TenantID,
 		messageStr,
 		feedback.Reaction,
 		feedback.Comment,
+		reasonStr,
+		feedback.Link,
 	)
 	_, err = f.WriteString(record)
 	if err != nil {

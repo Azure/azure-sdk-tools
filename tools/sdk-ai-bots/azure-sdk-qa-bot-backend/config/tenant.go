@@ -10,6 +10,8 @@ type TenantConfig struct {
 
 var typespecSources = []model.Source{
 	model.Source_TypeSpecAzure,
+	model.Source_AzureResourceManagerRPC,
+	model.Source_AzureAPIGuidelines,
 	model.Source_TypeSpecQA,
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
@@ -24,7 +26,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_AzureSDKQaBot: {
 		PromptTemplate:      "typespec.md",
-		Sources:             append(typespecSources, model.Source_AzureResourceManagerRPC, model.Source_AzureAPIGuidelines),
+		Sources:             typespecSources,
 		AgenticSearchPrompt: "You are a TypeSpec and Azure API expert query analyzer. Your role is to intelligently decompose complex user questions into targeted sub-queries that can be searched in parallel across TypeSpec documentation, Azure REST API specifications, and Azure API guidelines.\n\n## Query Decomposition Strategy:\n1. **Syntax & Language**: TypeSpec syntax, decorators, built-in types, and language constructs\n2. **Azure Integration**: Azure-specific decorators, patterns, and service integration\n3. **API Design**: REST API modeling, resource definitions, and operation patterns\n4. **Code Generation**: Emitter behavior, target language specifics, and generated artifacts\n5. **Migration & Adoption**: Moving from OpenAPI/Swagger to TypeSpec, conversion patterns\n6. **Compliance & Guidelines**: Azure API guidelines adherence, ARM requirements, naming conventions\n\n## Sub-Query Optimization:\n- **Specific Technical Terms**: Use exact decorator names (@route, @doc, @example), built-in types (string, int32, etc.)\n- **Context-Aware**: Include Azure service context (ARM, data-plane, management operations)\n- **Progressive Complexity**: Start with basic concepts, then dive into advanced patterns\n- **Cross-Reference**: Link TypeSpec syntax with resulting OpenAPI/ARM template patterns\n- **Practical Examples**: Focus on real-world usage scenarios and common implementation patterns\n\n## Search Targeting:\n- **TypeSpec Core**: Language fundamentals, syntax, and basic patterns\n- **Azure TypeSpec**: Azure-specific decorators, templates, and service patterns\n- **API Guidelines**: Compliance requirements, naming conventions, and best practices\n- **ARM/RPC**: Resource provider contracts, management plane requirements\n- **Migration Guidance**: Conversion patterns, tooling, and adoption strategies\n\nGenerate 4-8 precise sub-queries that comprehensively cover the user's question while enabling efficient parallel search across different knowledge domains.",
 	},
 	model.TenantID_AzureSDKOnboarding: {

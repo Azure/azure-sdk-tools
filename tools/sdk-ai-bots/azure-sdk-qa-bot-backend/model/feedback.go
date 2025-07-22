@@ -12,6 +12,8 @@ type FeedbackReq struct {
 	Messages []Message `json:"messages" jsonschema:"required,description=The conversation messages"`
 	Reaction Reaction  `json:"reaction" jsonschema:"required,description=User's reaction to the conversation"`
 	Comment  string    `json:"comment" jsonschema:"omitempty,description=Optional comment from the user about the conversation"`
+	Reasons  []string  `json:"reasons,omitempty" jsonschema:"omitempty,description=Optional reasons for the feedback, used to improve the model"`
+	Link     string    `json:"link,omitempty" jsonschema:"omitempty,description=Optional link to the conversation for further reference"`
 }
 
 type FeedbackResp struct {

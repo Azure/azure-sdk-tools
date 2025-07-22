@@ -100,7 +100,8 @@ Tool classes are the core of the azure sdk app and implement CLI commands or MCP
 - Reference or copy from the [hello world tool](Azure.Sdk.Tools.Cli/Tools/HelloWorldTool/HelloWorldTool.cs) for an example.
 - See [Tools/README.md](./Azure.Sdk.Tools.Cli/Tools/README.md) for more details
 
-Each tool must implement a `GetCommand()` method and a `HandleCommand(...)` method. These allow the tool to be called from CLI mode.
+Each tool class should implement a `GetCommand()` method and a `HandleCommand(...)` method. These allow the tools to be called from CLI mode.
+Some exceptions may apply on a case by case basis for tool classes where we implement MCP mode but not CLI mode and vice versa.
 
 ```csharp
 public override Command GetCommand()

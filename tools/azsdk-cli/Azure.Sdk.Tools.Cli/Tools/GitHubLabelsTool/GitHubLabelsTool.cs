@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns its details if found.")]
-        public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
+        public async Task<bool> CheckServiceLabel(string serviceLabel)
         {
             try
             {
@@ -104,22 +104,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
-                return new ServiceLabelResponse
-                {
-                    ServiceLabel = serviceLabel,
-                    Found = result != null,
-                };
+
+                logger.LogInformation($"Service label '{serviceLabel}' found: {result != null}");
+                return result != null;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
                 SetFailure();
-                return new ServiceLabelResponse
-                {
-                    ServiceLabel = serviceLabel,
-                    Found = false,
-                    ResponseError = $"Error occurred while checking service label '{serviceLabel}': {ex.Message}"
-                };
+                return false;
             }
         }
 
@@ -198,7 +191,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return columns;
         }
 
-
         private int GetInsertionLineNumber(string csvContent, string newServiceLabel)
         {
             var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -243,15 +235,5 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             return 1;
         }
-    }
-
-
-    public class ServiceLabelResponse
-    {
-        public string ServiceLabel { get; set; } = "";
-        public bool Found { get; set; }
-        public string? ColorCode { get; set; }
-        public string? Description { get; set; }
-        public string? ResponseError { get; set; }
     }
 }

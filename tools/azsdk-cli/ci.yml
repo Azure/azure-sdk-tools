@@ -27,6 +27,7 @@ extends:
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
     ReleaseBinaries: true
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    PublishEnvironment: 'tools'  # require engsys team approval for release
     StandaloneExeMatrix:
     - rid: osx-x64
       framework: net8.0

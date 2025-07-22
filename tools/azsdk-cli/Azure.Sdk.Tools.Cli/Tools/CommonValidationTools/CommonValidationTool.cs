@@ -34,10 +34,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // Command names
         private const string isValidServiceCodeOwnersCommandName = "is-valid-service-code-owners";
         private const string isValidCodeOwnerCommandName = "is-valid-code-owner";
+        private const string validateCodeOwnersForServiceCommandName = "validate-code-owners-for-service";
 
         // Command options
         private readonly Option<string> serviceLabelOpt = new(["--service", "-s"], "Confirmed service label to validate code owners for") { IsRequired = true };
         private readonly Option<string> gitHubAliasOpt = new(["--username", "-u"], "GitHub alias to validate") { IsRequired = false };
+        private readonly Option<string> repoNameOpt = new(["--repo", "-r"], "Repository name to process") { IsRequired = true };
 
         public override Command GetCommand()
         {
@@ -46,6 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 new Command(isValidServiceCodeOwnersCommandName, "Validate code owners for a service across all Azure SDK repositories") { serviceLabelOpt },
                 new Command(isValidCodeOwnerCommandName, "Validate if a GitHub alias has proper organizational membership and write access") { gitHubAliasOpt },
+                new Command(validateCodeOwnersForServiceCommandName, "Process a specific repository to validate code owners for a service") { repoNameOpt, serviceLabelOpt },
             };
 
             foreach (var subCommand in subCommands)
@@ -73,6 +76,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var aliasValidationResult = await isValidCodeOwner(gitHubAlias ?? "");
                     output.Output($"GitHub alias validation result: {aliasValidationResult}");
                     return;
+                case validateCodeOwnersForServiceCommandName:
+                    var repoName = commandParser.GetValueForOption(repoNameOpt);
+                    var serviceLabel = commandParser.GetValueForOption(serviceLabelOpt);
+                    var repoValidationResult = await ValidateCodeOwnersForService(repoName ?? "", serviceLabel ?? "");
+                    output.Output($"Repository validation result: {System.Text.Json.JsonSerializer.Serialize(repoValidationResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}");
+                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -85,9 +94,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var repositoryTasks = azureRepositories.Select(repo => 
-                    ProcessRepositoryForService(repo.Key, repo.Value, confirmedServiceLabel)).ToArray();
-                
+                var repositoryTasks = azureRepositories.Select(repo =>
+                    ValidateCodeOwnersForService(repo.Value, confirmedServiceLabel)).ToArray();
+
                 var results = await Task.WhenAll(repositoryTasks);
 
                 var summary = GenerateServiceValidationSummary(results.ToList(), confirmedServiceLabel);
@@ -104,18 +113,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<ServiceCodeOwnerResult> ProcessRepositoryForService(string repoType, string repoName, string serviceLabel)
+        [McpServerTool(Name = "ValidateCodeOwnersForService"), Description("Validates code owners in a specific repository for a given service.")]
+        public async Task<ServiceCodeOwnerResult> ValidateCodeOwnersForService(string repoName, string serviceLabel)
         {
-            var result = new ServiceCodeOwnerResult
-            {
-                Repository = repoName,
-                RepositoryType = repoType,
-                CodeOwners = new List<CodeOwnerValidationResult>(),
-                Status = "Processing"
-            };
-
             try
             {
+                repoName = azureRepositories[repoName.ToLowerInvariant()];
+
+                var result = new ServiceCodeOwnerResult
+                {
+                    Repository = repoName,
+                    CodeOwners = new List<CodeOwnerValidationResult>(),
+                    Status = "Processing"
+                };
+
                 var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{repoName}/main/.github/CODEOWNERS";
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob");
@@ -140,15 +151,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     result.Status = "Service not found";
                     result.Message = $"Service label '{serviceLabel}' not found in {repoName}";
                 }
+
+                return result;
             }
             catch (Exception ex)
             {
-                result.Status = "Error";
-                result.Message = $"Error processing {repoName}: {ex.Message}";
                 logger.LogError(ex, "Error processing repository {repo}", repoName);
+                return new ServiceCodeOwnerResult
+                {
+                    Repository = repoName,
+                    Status = "Error",
+                    Message = $"Error processing {repoName}: {ex.Message}",
+                    CodeOwners = new List<CodeOwnerValidationResult>()
+                };
             }
-
-            return result;
         }
 
         private CodeownersEntry? FindServiceEntries(IList<CodeownersEntry> entries, string serviceName)
@@ -430,7 +446,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public class ServiceCodeOwnerResult
         {
             public string Repository { get; set; } = "";
-            public string RepositoryType { get; set; } = "";
             public string Status { get; set; } = "";
             public string Message { get; set; } = "";
             public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();

@@ -17,7 +17,7 @@ class KeyNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: ReviewLines
         """
-        line = review_lines.create_review_line()
+        line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         line.add_line_marker(self.namespace_id)
         line.add_text(text="key")
         line.add_text(text=self.name, has_suffix_space=False)

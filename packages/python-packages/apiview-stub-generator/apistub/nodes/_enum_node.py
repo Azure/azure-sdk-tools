@@ -21,7 +21,7 @@ class EnumNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        line = review_lines.create_review_line()
+        line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         line.add_line_marker(self.namespace_id)
         line.add_text(self.name)
         line.add_punctuation("=")

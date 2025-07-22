@@ -1,6 +1,7 @@
 from typing import List, Union, TYPE_CHECKING
 import astroid
 from .nodes._function_node import FunctionNode
+from .nodes._base_node import is_handwritten
 
 if TYPE_CHECKING:
     from .nodes._module_node import ModuleNode
@@ -48,5 +49,6 @@ def add_overload_nodes(
     # This will break down if overloads are moved around in the source file.
     for x, overload in enumerate(func_overloads):
         overload.namespace_id = overload.namespace_id + f"_{x+1}"
+        overload.is_handwritten = func_node.is_handwritten
         node.child_nodes.append(overload)
     node.child_nodes.append(func_node)

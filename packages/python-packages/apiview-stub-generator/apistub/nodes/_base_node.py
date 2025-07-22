@@ -1,4 +1,5 @@
 import astroid
+import inspect
 from inspect import Parameter
 import re
 
@@ -44,6 +45,7 @@ class NodeEntityBase:
         self.child_nodes = []
         self.apiview = None
         self.pylint_errors = []
+        self.is_handwritten = is_handwritten(self.obj)
         PylintParser.match_items(obj)
 
     def generate_id(self):
@@ -69,6 +71,22 @@ class NodeEntityBase:
         for child in self.child_nodes or []:
             child.generate_diagnostics()
 
+def is_handwritten(obj):
+    """Check if the object is handwritten by checking if its source file is named
+        "_patch.py".
+
+    :param obj: The object to check.
+    :return: True if the object is handwritten, False if generated.
+    :rtype: bool
+    """
+    try:
+        # Unwrap the object so the function src is used, not the decorator src
+        source_file = inspect.getfile(inspect.unwrap(obj))
+        return source_file.endswith("_patch.py")
+    except (TypeError, OSError):
+        # inspect.getfile() can raise TypeError for built-in objects
+        # or OSError if the source file cannot be found
+        return False
 
 def get_qualified_name(obj, namespace: str) -> str:
     """Generate and return fully qualified name of object with module name for internal types.

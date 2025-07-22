@@ -12,6 +12,33 @@ import { logger } from './logging/logger.js';
 const expressApp = express();
 expressApp.use(express.json());
 
+// Health check endpoint
+expressApp.get('/health', (req, res) => {
+  try {
+    // Perform basic health checks
+    const healthStatus = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0',
+    };
+
+    logger.info('Health check requested', {
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+    });
+
+    res.status(200).json(healthStatus);
+  } catch (error) {
+    logger.error('Health check failed', { error: error.message });
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: 'Internal server error',
+    });
+  }
+});
+
 const server = expressApp.listen(process.env.port || process.env.PORT || 3978, () => {
   const address = server.address();
   if (!address) {

@@ -44,9 +44,26 @@ param webAppSKU string
 @maxLength(42)
 param botDisplayName string
 
+// Email notification settings (semicolon-separated string from env file)
+param alertEmailAddresses string = 'wanl@microsoft.com'
+
+// Storage Account for TypeSpec Helper
+param typespecHelperStorageAccountName string = 'typespechelper4storage'
+param typespecHelperStorageResourceGroupName string = 'typespec_helper'
+
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
   name: identityName
+}
+
+// Resource Group Delete Lock to prevent accidental deletion
+resource resourceGroupDeleteLock 'Microsoft.Authorization/locks@2020-05-01' = {
+  name: '${resourceBaseName}-delete-lock'
+  scope: resourceGroup()
+  properties: {
+    level: 'CanNotDelete'
+    notes: 'This resource group is protected from deletion. If you need to delete this resource group or have any issues, please contact: ${alertEmailAddresses}'
+  }
 }
 
 // Compute resources for your Web App
@@ -147,6 +164,7 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
       detailedErrorLoggingEnabled: true
       requestTracingEnabled: true
       logsDirectorySizeLimit: 35
+      healthCheckPath: '/health'
     }
   }
   identity: {
@@ -163,6 +181,46 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   location: location
   properties: {
     retentionInDays: 30
+  }
+}
+
+// Create Application Insights for better monitoring
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: '${resourceBaseName}-insights'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalytics.id
+    IngestionMode: 'LogAnalytics'
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
+
+// Grant the managed identity Monitoring Metrics Publisher role on Application Insights
+resource appInsightsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appInsights.id, identity.id, 'MonitoringMetricsPublisher')
+  scope: appInsights
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb') // Monitoring Metrics Publisher
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Create Action Group for email notifications
+resource emailActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+  name: '${resourceBaseName}-email-alerts'
+  location: 'Global'
+  properties: {
+    groupShortName: 'EmailAlerts'
+    enabled: true
+    emailReceivers: [for (email, index) in split(alertEmailAddresses, ','): {
+      name: 'email-${index}'
+      emailAddress: trim(email)
+      useCommonAlertSchema: true
+    }]
   }
 }
 
@@ -224,6 +282,120 @@ resource webAppDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
         }
       }
     ]
+  }
+}
+
+// Alert rule for HTTP 5xx errors (server errors)
+resource serverErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: '${resourceBaseName}-server-errors'
+  location: 'Global'
+  properties: {
+    description: 'Alert when server returns 5xx HTTP errors'
+    severity: 0  // Critical - because 5xx errors indicate server failure
+    enabled: true
+    scopes: [
+      webApp.id
+    ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'Http5xxCriteria'
+          metricName: 'Http5xx'
+          metricNamespace: 'Microsoft.Web/sites'
+          operator: 'GreaterThan'
+          threshold: 0
+          timeAggregation: 'Total'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    actions: [
+      {
+        actionGroupId: emailActionGroup.id
+      }
+    ]
+  }
+}
+
+// Web test for health check endpoint monitoring
+resource healthCheckWebTest 'Microsoft.Insights/webtests@2022-06-15' = {
+  name: '${resourceBaseName}-health-test'
+  location: location
+  kind: 'ping'
+  properties: {
+    SyntheticMonitorId: '${resourceBaseName}-health-test'
+    Name: '${resourceBaseName} Health Check Test'
+    Description: 'Health check test to monitor server availability'
+    Enabled: true
+    Frequency: 300 // 5 minutes
+    Timeout: 30
+    Kind: 'ping'
+    RetryEnabled: true
+    Locations: [
+      {
+        Id: 'us-tx-sn1-azr'  // South Central US (Texas)
+      }
+      {
+        Id: 'us-il-ch1-azr'  // North Central US (Illinois)
+      }
+      {
+        Id: 'us-ca-sjc-azr'  // West US (California)
+      }
+      {
+        Id: 'us-va-ash-azr'  // East US (Virginia)
+      }
+      {
+        Id: 'emea-nl-ams-azr'  // West Europe (Netherlands)
+      }
+    ]
+    Configuration: {
+      WebTest: '<WebTest Name="${resourceBaseName} Health Check Test" Id="ABD48585-0831-40CB-9069-682EA6BB3584" Enabled="True" CssProjectStructure="" CssIteration="" Timeout="30" WorkItemIds="" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" Description="" CredentialUserName="" CredentialPassword="" PreAuthenticate="True" Proxy="default" StopOnError="False" RecordedResultFile="" ResultsLocale=""><Items><Request Method="GET" Guid="a5f10126-e4cd-570d-961c-cea43999a201" Version="1.1" Url="https://${webApp.properties.defaultHostName}/health" ThinkTime="0" Timeout="30" ParseDependentRequests="False" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" Encoding="utf-8" ExpectedHttpStatusCode="200" ExpectedResponseUrl="" ReportingName="" IgnoreHttpStatusCode="False" /></Items></WebTest>'
+    }
+  }
+  tags: {
+    'hidden-link:${appInsights.id}': 'Resource'
+  }
+}
+
+// Alert rule for health check web test failures
+resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: '${resourceBaseName}-health-check-failure'
+  location: 'Global'
+  properties: {
+    description: 'Alert when health check fails (server is down or not responding)'
+    severity: 0
+    enabled: true
+    scopes: [
+      healthCheckWebTest.id
+      appInsights.id
+    ]
+    evaluationFrequency: 'PT1M'
+    windowSize: 'PT5M'
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
+      webTestId: healthCheckWebTest.id
+      componentId: appInsights.id
+      failedLocationCount: 3
+    }
+    actions: [
+      {
+        actionGroupId: emailActionGroup.id
+      }
+    ]
+  }
+}
+
+// Module to assign storage permissions to Bot Identity on TypeSpec Helper Storage Account
+module typespecStoragePermissions './storagePermissions.bicep' = {
+  name: 'typespec-storage-permissions'
+  scope: resourceGroup(typespecHelperStorageResourceGroupName)  // Use specified resource group
+  params: {
+    storageAccountName: typespecHelperStorageAccountName
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

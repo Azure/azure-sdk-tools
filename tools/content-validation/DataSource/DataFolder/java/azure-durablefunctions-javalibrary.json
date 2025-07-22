@@ -1,0 +1,15 @@
+[
+  {
+    "version": "view=azure-java-stable",
+    "url": [
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/functions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/overview/azure/functions/durablefunctions-javalibrary?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.durabletask.azurefunctions?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.durabletask.azurefunctions.durableclientcontext?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.durabletask.azurefunctions.durableactivitytrigger?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.durabletask.azurefunctions.durableclientinput?view=azure-java-stable\u0026branch=main",
+      "https://learn.microsoft.com/en-us/java/api/com.microsoft.durabletask.azurefunctions.durableorchestrationtrigger?view=azure-java-stable\u0026branch=main"
+    ]
+  }
+]

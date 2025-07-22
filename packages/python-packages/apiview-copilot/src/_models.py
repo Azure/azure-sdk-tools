@@ -208,6 +208,7 @@ class Memory(BaseModel):
 
 
 class ReviewResult(BaseModel):
+
     comments: List[Comment] = Field(description="List of comments, if any")
 
     # truly private, never part of Pydantic’s schema or serialization
@@ -216,12 +217,13 @@ class ReviewResult(BaseModel):
     def __init__(
         self,
         *,
+        comments: List[Dict] = None,
         allowed_ids: Optional[List[str]] = None,
-        **data,
+        section: Optional[Section] = None,
     ):
-        comments = data.pop("comments", [])
-        data["comments"] = []
-        super().__init__(**data)
+        comments = comments or []
+        # initialize with no comments since we are going to process them
+        super().__init__(comments=[])
 
         # sanitize allowed_ids to convert the search IDs to the proper format
         allowed_ids = [x.replace("=html=", ".html#") for x in allowed_ids] if allowed_ids else None
@@ -232,15 +234,16 @@ class ReviewResult(BaseModel):
             "_allowed_ids",
             set(allowed_ids) if allowed_ids else set(),
         )
-        self._process_comments(comments)
+        self._process_comments(comments=comments, section=section)
 
-    def _process_comments(self, comments: List[Dict]):
+    def _process_comments(self, *, comments: List[Dict], section: Optional[Section] = None):
         """
         Process comment dictionaries, handling various line_no formats:
         - single number (e.g., "10"): Use as is, cast to int
         - range (e.g., "10-20"): Take the first number
         - list (e.g., "10, 20" or "10, 20-25"): Create a copy of the comment for each line
         - invalid (e.g., "abc"): Use a fallback value of 0
+        If section is provided, fix line numbers and only add valid comments.
         """
         result_comments = []
         default_line_no = 0
@@ -265,7 +268,11 @@ class ReviewResult(BaseModel):
                     except ValueError:
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
-                    result_comments.append(Comment(**comment_copy))
+                    new_comment = Comment(**comment_copy)
+                    self._filter_rule_ids(new_comment)
+                    new_comment.line_no = self._find_line_number(section, new_comment)
+                    if new_comment.line_no is not None:
+                        result_comments.append(new_comment)
                 else:
                     try:
                         # Handle single number format (e.g., "10")
@@ -273,21 +280,12 @@ class ReviewResult(BaseModel):
                     except ValueError:
                         # Use fallback value if conversion fails
                         comment_copy["line_no"] = default_line_no
-                    result_comments.append(Comment(**comment_copy))
+                    new_comment = Comment(**comment_copy)
+                    self._filter_rule_ids(new_comment)
+                    new_comment.line_no = self._find_line_number(section, new_comment)
+                    if new_comment.line_no is not None:
+                        result_comments.append(new_comment)
         self.comments.extend(result_comments)
-
-    def merge(
-        self,
-        other: "ReviewResult",
-        *,
-        section: Section,
-    ):
-        """
-        Merge two ReviewResult objects.
-        """
-        self._allowed_ids.update(other._allowed_ids)
-        filtered_comments = [x for x in other.comments if self._validate(item=x, section=section)]
-        self.comments.extend(filtered_comments)
 
     def sort(self):
         """
@@ -302,43 +300,18 @@ class ReviewResult(BaseModel):
         self.sort()
         return self
 
-    def _validate(self, *, item: Comment, section: Section) -> bool:
+    def _filter_rule_ids(self, item: Comment):
         """
-        Validate a comment against a section of code.
-
-        This method:
-        1. Corrects line numbers by finding the actual line in the section
-        2. Validates rule IDs against known guidelines
-        3. Handles general comments that don't have specific rule IDs
-
-        Args:
-            item: The comment to validate
-            section: The section of code the comment applies to
-
-        Returns:
-            bool: True if the comment is valid, False otherwise
+        Filter out invalid rule IDs from a comment, keeping only those that resolve.
         """
-        # Cure minor deviations in line numbers. If the line number can't be resolved, it is invalid
-        item.line_no = self._find_line_number(section, item)
-        if not item.line_no:
-            print(f"WARNING: Invalid line number {item.line_no} for comment: {item.comment}")
-            return False
-
-        # If the rule IDs are empty, assume valid. These come from the
-        # general prompts as opposed to the guideline-specific ones.
         if not item.rule_ids:
-            return True
-
-        # Validate and sanitize rule IDs, if provided
+            return
         resolved_rule_ids = set()
         for rule_id in item.rule_ids:
             resolved_rule_id = self._resolve_rule_id(rule_id)
             if resolved_rule_id:
                 resolved_rule_ids.add(resolved_rule_id)
-        # rule IDs only apply to *guidelines* so the IDs associated with memories
-        # and examples aren't relevant here anyways.
         item.rule_ids = list(resolved_rule_ids)
-        return True
 
     def _resolve_rule_id(self, rid: str) -> str | None:
         """
@@ -356,10 +329,12 @@ class ReviewResult(BaseModel):
                 return gid
         return None
 
-    def _find_line_number(self, chunk: Section, comment: Comment) -> Optional[int]:
+    def _find_line_number(self, chunk: Optional[Section], comment: Comment) -> Optional[int]:
         """
-        Algorithm to correct line numbers that are slightly off.
+        Algorithm to correct line numbers that are slightly off. If chunk is None, return the original line_no.
         """
+        if chunk is None:
+            return comment.line_no
         bad_code = comment.bad_code
         target_idx = chunk.idx_for_line_no(comment.line_no)
         if target_idx is None:

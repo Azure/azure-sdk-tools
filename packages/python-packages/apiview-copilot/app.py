@@ -13,12 +13,13 @@ import prompty.azure
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 
-from src._apiview_reviewer import ApiViewReview, _PROMPTS_FOLDER
+from src._apiview_reviewer import ApiViewReview
 from src._diff import create_diff_with_line_numbers
-from src._utils import get_language_pretty_name
-from src.agent._agent import get_main_agent, get_mention_agent, invoke_agent
+from src._utils import get_language_pretty_name, get_prompt_path
+from src.agent._agent import get_main_agent, invoke_agent
 from src.agent._api import router as agent_router
 from src._database_manager import get_database_manager
+from src._mention import handle_mention_request
 
 
 # How long to keep completed jobs (seconds)
@@ -227,7 +228,7 @@ async def summarize_api(request: SummarizeRequest):
 
         pretty_language = get_language_pretty_name(request.language)
 
-        prompt_path = os.path.join(_PROMPTS_FOLDER, summary_prompt_file)
+        prompt_path = get_prompt_path(folder="summarize", filename=summary_prompt_file)
         inputs = {"language": pretty_language, "content": summary_content}
 
         # Run prompty in a thread pool to avoid blocking
@@ -241,7 +242,7 @@ async def summarize_api(request: SummarizeRequest):
             raise HTTPException(status_code=500, detail="Summary could not be generated.")
         return SummarizeResponse(summary=summary)
     except Exception as e:
-        logger.error(f"Error: {e}", exc_info=True)
+        logger.error(f"Error in /api-review/summarize: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -249,7 +250,6 @@ class MentionRequest(BaseModel):
     comments: list
     language: str
     package_name: str = Field(..., alias="packageName")
-    thread_id: str = Field(None, alias="threadId")
     code: str
 
     class Config:
@@ -259,31 +259,20 @@ class MentionRequest(BaseModel):
 @app.post("/api-review/mention", response_model=AgentChatResponse)
 async def handle_mention(request: MentionRequest, http_request: Request):
     logger.info(
-        f"Received /api-review/mention request: language={request.language}, package_name={request.package_name}, thread_id={request.thread_id}, comments_count={len(request.comments) if request.comments else 0}"
+        f"Received /api-review/mention request: language={request.language}, package_name={request.package_name}, comments_count={len(request.comments) if request.comments else 0}"
     )
     try:
-        async with get_mention_agent(
+        pretty_language = get_language_pretty_name(request.language)
+        response = handle_mention_request(
             comments=request.comments,
-            language=request.language,
+            language=pretty_language,
             package_name=request.package_name,
             code=request.code,
-            auth=http_request.headers.get("Authorization"),
-        ) as agent:
-            response, thread_id_out, messages = await invoke_agent(
-                agent=agent, user_input="Please handle this feedback.", thread_id=request.thread_id
-            )
-        return AgentChatResponse(
-            response=response,
-            thread_id=thread_id_out,
-            messages=messages,
         )
-    except AgentInvokeException as e:
-        if "Rate limit is exceeded" in str(e):
-            logger.warning(f"Rate limit exceeded: {e}")
-            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.")
-        logger.error(f"AgentInvokeException: {e}")
-        raise HTTPException(status_code=500, detail="Agent error: " + str(e))
-    except Exception as e:
+        return AgentChatResponse(
+            response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
+        )
+    except HTTPException as e:
         logger.error(f"Error in /api-review/mention: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 

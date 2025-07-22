@@ -47,8 +47,14 @@ namespace Azure.ClientSdk.Analyzers
             var modelFactoryMethods = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
 
             // Find all client classes and extract output models from their methods
+            // Only process types defined in the current source tree (not dependencies)
             foreach (var namedType in GetAllTypes(context.Compilation.GlobalNamespace))
             {
+                if (!SymbolEqualityComparer.Default.Equals(namedType.ContainingAssembly, context.Compilation.Assembly))
+                {
+                    continue;
+                }
+
                 if (IsClientType(namedType))
                 {
                     ExtractOutputModelsFromClientType(namedType, outputModels);

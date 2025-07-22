@@ -4,8 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Xml;
+using System.Web;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
@@ -58,7 +57,7 @@ public class PipelineAnalysisTool : MCPTool
     }
 
     // Options
-    private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
+    private readonly Argument<string> pipelineArg = new("Pipeline link or Build ID");
     private readonly Option<int> logIdOpt = new(["--log-id"], "ID of the pipeline task log");
     private readonly Option<string> projectOpt = new(["--project", "-p"], "Pipeline project name");
     private readonly Option<bool> analyzeWithAgentOpt = new(["--agent", "-a"], () => false, "Analyze logs with RAG via upstream ai agent");
@@ -92,7 +91,7 @@ public class PipelineAnalysisTool : MCPTool
     public override Command GetCommand()
     {
         var analyzePipelineCommand = new Command("analyze", "Analyze a pipeline run") {
-            buildIdArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt
+            pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt
         };
         analyzePipelineCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
@@ -101,7 +100,7 @@ public class PipelineAnalysisTool : MCPTool
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
-        var buildId = ctx.ParseResult.GetValueForArgument(buildIdArg);
+        var pipelineIdentifier = ctx.ParseResult.GetValueForArgument(pipelineArg);
         var project = ctx.ParseResult.GetValueForOption(projectOpt);
 
         var logId = ctx.ParseResult.GetValueForOption(logIdOpt);
@@ -109,23 +108,57 @@ public class PipelineAnalysisTool : MCPTool
         var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
         var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
 
-        logger.LogInformation("Analyzing pipeline {buildId}...", buildId);
+        var (buildId, projectFromLink) = getBuildIdFromPipelineIdentifier(pipelineIdentifier);
+        logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
         azureAgentService = azureAgentServiceFactory.Create(projectEndpoint, aiModel);
 
         if (logId != 0)
         {
-            var result = await AnalyzePipelineFailureLogs(project, buildId, [logId], analyzeWithAgent, ct);
+            var result = await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, [logId], analyzeWithAgent, ct);
             ctx.ExitCode = ExitCode;
             usage?.LogCost();
             output.Output(result);
         }
         else
         {
-            var result = await AnalyzePipeline(project, buildId, analyzeWithAgent, ct);
+            var result = await AnalyzePipeline(project ?? projectFromLink, buildId, analyzeWithAgent, ct);
             ctx.ExitCode = ExitCode;
             usage?.LogCost();
             output.Output(result);
         }
+    }
+
+    private static (int, string?) getBuildIdFromPipelineIdentifier(string pipelineIdentifier)
+    {
+        // pipelineIdentifier could be a pipeline link like
+        // https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5094469&view=results (buildId 5094469, project internal)
+        // or just an id like 5094469 (project will be auto-discovered)
+        if (int.TryParse(pipelineIdentifier, out int buildId))
+        {
+            return (buildId, null);
+        }
+
+        string? project = null;
+        if (!Uri.TryCreate(pipelineIdentifier, UriKind.Absolute, out var uri))
+        {
+            throw new ArgumentException($"Invalid pipeline identifier: {pipelineIdentifier}. Expected a valid absolute URI or an integer.");
+        }
+
+        // Extract devops project from URI segments
+        var segments = uri.Segments.Select(s => s.Trim('/')).ToList();
+        if (segments.Count >= 3)
+        {
+            project = segments[2];
+        }
+
+        var query = uri.Query;
+        var queryParams = HttpUtility.ParseQueryString(query);
+        if (int.TryParse(queryParams.Get("buildId"), out buildId))
+        {
+            return (buildId, project);
+        }
+
+        throw new ArgumentException($"Could not extract buildId from pipeline identifier: {pipelineIdentifier}");
     }
 
     private void Initialize(bool auth = true)
@@ -138,7 +171,7 @@ public class PipelineAnalysisTool : MCPTool
         if (auth)
         {
             var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope));
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
             _buildClient = connection.GetClient<BuildHttpClient>();
@@ -354,10 +387,13 @@ public class PipelineAnalysisTool : MCPTool
 
             var (result, _usage) = await azureAgentService.QueryFiles(logs, session, "Why did this pipeline fail?", ct);
             // Sometimes chat gpt likes to wrap the json in markdown
-            if (result.StartsWith("```json")
-                && result.EndsWith("```"))
+            if (result.StartsWith("```json"))
             {
-                result = result[7..^3].Trim();
+                result = result[7..].Trim();
+            }
+            if (result.EndsWith("```"))
+            {
+                result = result[..^3].Trim();
             }
 
             foreach (var log in logs)
@@ -470,6 +506,10 @@ public class PipelineAnalysisTool : MCPTool
 
     public bool IsTestStep(string stepName)
     {
+        if (stepName.Contains("deploy test resources", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
         return stepName.Contains("test", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public ProjectHttpClient GetProjectClient();
     }
 
-    public class DevOpsConnection : IDevOpsConnection
+    public class DevOpsConnection(IAzureService azureService) : IDevOpsConnection
     {
         private BuildHttpClient _buildClient;
         private WorkItemTrackingHttpClient _workItemClient;
@@ -35,32 +35,33 @@ namespace Azure.Sdk.Tools.Cli.Services
         private void RefreshConnection()
         {
             if (_token != null && _token?.ExpiresOn > DateTimeOffset.Now.AddMinutes(5))
+            {
                 return;
+            }
 
+            var credential = azureService.GetCredential();
             try
             {
-                _token = (new DefaultAzureCredential()).GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]));
+                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
             }
             catch
             {
-                _token = (new InteractiveBrowserCredential()).GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]));
+                credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
+                // Retry with interactive browser credential if the initial credential fails
+                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
             }
-
+            // If we still don't have a token, throw an exception
             if (_token == null)
-                throw new Exception("Failed to get DevOps access token. Please make sure you have access to Azure DevOps and you are logged in using az login.");
-
-
-            try
             {
-                var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
-                _buildClient = connection.GetClient<BuildHttpClient>();
-                _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
-                _projectClient = connection.GetClient<ProjectHttpClient>();
+                throw new Exception("Failed to get devops access token. " +
+                                    "Ensure you have access to the azure-sdk devops project (http://aka.ms/azsdk/access)" +
+                                    "and are logged in via az cli, az powershell, vs/vscode or interactive browser sign-in.");
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to refresh DevOps connection. Error: {ex.Message}");
-            }
+
+            var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), new VssOAuthAccessTokenCredential(_token?.Token));
+            _buildClient = connection.GetClient<BuildHttpClient>();
+            _workItemClient = connection.GetClient<WorkItemTrackingHttpClient>();
+            _projectClient = connection.GetClient<ProjectHttpClient>();
         }
 
         public BuildHttpClient GetBuildClient()

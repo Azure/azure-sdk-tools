@@ -103,16 +103,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         azureSdkOwners?.ToList() ?? new List<string>());
                     output.Output($"Code owner PR result: {serviceLabelResult}");
                     return;
-                case updateFileCommandName:
-                    var updateRepoOwner = commandParser.GetValueForOption(repoOwnerOpt);
-                    var updateRepoName = commandParser.GetValueForOption(repoNameOpt);
-                    var updateHeadBranch = commandParser.GetValueForOption(headBranchOpt);
-                    var fileName = commandParser.GetValueForOption(fileNameOpt);
-                    var lineNumber = commandParser.GetValueForOption(lineNumberOpt);
-                    var textToInsert = commandParser.GetValueForOption(textToInsertOpt);
-                    var updateResult = await UpdateFileWithTextInsertion(updateRepoOwner ?? "", updateRepoName ?? "", updateHeadBranch ?? "", fileName ?? "", lineNumber, true, textToInsert ?? "");
-                    output.Output($"File update result: {updateResult}");
-                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -136,12 +126,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Get the first (and should be only) file content
                 var csvContent = contents[0].Content;
 
-                var gitHubLabelsTool = new GitHubLabelsTool(logger as ILogger<GitHubLabelsTool>, output, githubService);
-                var insertionLineNumber = gitHubLabelsTool.GetInsertionLineNumber(csvContent, "RandomService!");
-                logger.LogInformation("Insertion line number for 'RandomService!': {insertionLineNumber}", insertionLineNumber);
-                var formattedEntryString = "RandomService!,,e99695";
-
-                await UpdateFileWithTextInsertion(repoOwner, repoName, branch, fileName, insertionLineNumber, false, formattedEntryString);
                 return null;
                 /*var (insertionLineNumber, updatingContent) = await findAlphaSortedLocation(serviceLabels[0], repoName);
 
@@ -279,144 +263,5 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "UpdateFileWithTextInsertion"), Description("Updates a file by inserting text at a specific line number")]
-        public async Task<string> UpdateFileWithTextInsertion(string repoOwner, string repoName, string branch, string fileName, int lineNumber, bool updatingContent, string textToInsert)
-        {
-            var result = new FileUpdateResult
-            {
-                FileName = fileName,
-                LineNumber = lineNumber,
-                TextInserted = textToInsert
-            };
-
-            try
-            {
-                // Get the current file content
-                var contents = await githubService.GetContentsAsync(repoOwner, repoName, fileName, branch);
-                
-                if (contents == null || !contents.Any())
-                {
-                    result.Success = false;
-                    result.Error = $"File {fileName} not found in repository {repoOwner}/{repoName}";
-                    return JsonSerializer.Serialize(result);
-                }
-
-                var fileContent = contents.First();
-                var currentContent = fileContent.Content;
-                var currentSha = fileContent.Sha;
-
-                var lines = currentContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).ToList();
-                result.TotalLines = lines.Count;
-
-                var textToInsertLines = textToInsert.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-                var normalizedTextToInsert = string.Join("\n", textToInsertLines.Select(line => line.Trim())).Trim();
-                var normalizedCurrentContent = string.Join("\n", lines.Select(line => line.Trim())).Trim();
-
-                /*if (normalizedCurrentContent.Contains(normalizedTextToInsert, StringComparison.OrdinalIgnoreCase))
-                {
-                    result.Success = false;
-                    result.Error = $"Text block already exists in the file. Duplicate insertion prevented.";
-                    logger.LogWarning("Duplicate multi-line text insertion prevented for file {fileName} in {repoOwner}/{repoName}", fileName, repoOwner, repoName);
-                    return JsonSerializer.Serialize(result);
-                }*/
-
-                if (lineNumber == 0 && !updatingContent)
-                {
-                    lines.Add(textToInsert);
-                    result.LineNumber = lines.Count;
-                }
-                else if (lineNumber == 0 && updatingContent)
-                {
-                    // Append at the end of the file
-                    lines.Add(textToInsert);
-                    result.LineNumber = lines.Count;
-                }
-                else if (lineNumber > 0 && lineNumber <= lines.Count && !updatingContent)
-                {
-                    // Insert at specified line (1-based indexing)
-                    lines.Insert(lineNumber - 1, textToInsert);
-                }
-                else if (lineNumber > 0 && lineNumber <= lines.Count && updatingContent)
-                {
-                    int startLine = lineNumber - 1; // Convert to 0-based indexing
-                    int endLine = startLine;
-
-                    var targetServiceLabel = "Azure.Identity"; // This should come from the method parameter
-                    
-                    logger.LogInformation("Starting at line {startLine}: {lineContent}", startLine, lines[startLine]);
-                    
-                    while (endLine < lines.Count)
-                    {
-                        var currentLine = lines[endLine];
-                        
-                        if (string.IsNullOrWhiteSpace(currentLine))
-                        {
-                            int lookAhead = endLine + 1;
-                            while (lookAhead < lines.Count && string.IsNullOrWhiteSpace(lines[lookAhead]))
-                            {
-                                lookAhead++;
-                            }
-                            
-                            if (lookAhead < lines.Count)
-                            {
-                                var nextLine = lines[lookAhead];
-                                if (nextLine.StartsWith("# ServiceLabel:", StringComparison.OrdinalIgnoreCase) ||
-                                    nextLine.StartsWith("# PRLabel:", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    var labelValue = nextLine.Substring(nextLine.IndexOf(':') + 1).Trim();
-                                    if (labelValue.StartsWith("%"))
-                                    {
-                                        labelValue = labelValue.Substring(1);
-                                    }
-                                    
-                                    if (!labelValue.Equals(targetServiceLabel, StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        endLine++;
-                    }
-
-                    for (int i = endLine - 1; i >= startLine; i--)
-                    {
-
-                        lines.RemoveAt(i);
-                    }
-
-                    lines.Insert(startLine, textToInsert);
-                    result.LineNumber = startLine + 1;
-                }
-                else
-                {
-                    result.Success = false;
-                    result.Error = $"Line number {lineNumber} is out of range. File has {lines.Count} lines.";
-                    return JsonSerializer.Serialize(result);
-                }
-
-                var newContent = string.Join("\n", lines);
-
-                var commitMessage = $"Update {fileName}: Insert text at line {result.LineNumber}";
-                var updateResponse = await githubService.UpdateFileAsync(repoOwner, repoName, fileName, commitMessage, newContent, currentSha, branch);
-
-                result.Success = true;
-                result.Message = $"Successfully updated {fileName}";
-                result.CommitSha = updateResponse.Commit.Sha;
-                result.TotalLines = lines.Count;
-
-                logger.LogInformation("Successfully updated file {fileName} in {repoOwner}/{repoName} at line {lineNumber}", fileName, repoOwner, repoName, result.LineNumber);
-                
-                return JsonSerializer.Serialize(result);
-            }
-            catch (Exception ex)
-            {
-                result.Success = false;
-                result.Error = ex.Message;
-                logger.LogError(ex, "Failed to update file {fileName} in {repoOwner}/{repoName}", fileName, repoOwner, repoName);
-                return JsonSerializer.Serialize(result);
-            }
-        }
     }
 }

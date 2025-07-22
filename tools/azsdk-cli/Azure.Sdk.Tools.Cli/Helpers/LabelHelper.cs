@@ -1,21 +1,20 @@
 using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
+using CsvHelper;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ILabelHelper
     {
-        public string CheckServiceLabel(string csvContent, string serviceName);
+        public bool CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
     }
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public string CheckServiceLabel(string csvContent, string serviceName)
+        public bool CheckServiceLabel(string csvContent, string serviceName)
         {
-            logger.LogInformation($"Checking service label for: {serviceName}");
-
             var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines)
@@ -32,12 +31,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     if (colorCode.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase)
                         && labelName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                     {
-                        return serviceName;
+                        return true;
                     }
                 }
             }
-
-            return null;
+            
+            return false;
         }
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
@@ -48,36 +47,23 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return "Service1,Description1,e99695\nService2,Description2,e99695...";
         }
 
-
-        // This should probably be replaced with a 3rd party CSV parser
-        // TODO: This should probably be internal or private
+        // should be private or internal, but used in tests
         public static List<string> ParseCsvLine(string line)
         {
             var columns = new List<string>();
-            var currentColumn = new StringBuilder();
-            bool inQuotes = false;
 
-            for (int i = 0; i < line.Length; i++)
+            using var reader = new StringReader(line);
+            using var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture);
+
+            // Read & parse the CSV line
+            if (csv.Read())
             {
-                char c = line[i];
-
-                if (c == '"')
+                var fieldCount = csv.Parser.Count; // number of fields in the current record
+                for (int i = 0; i < fieldCount; i++)
                 {
-                    inQuotes = !inQuotes;
-                }
-                else if (c == ',' && !inQuotes)
-                {
-                    columns.Add(currentColumn.ToString());
-                    currentColumn.Clear();
-                }
-                else
-                {
-                    currentColumn.Append(c);
+                    columns.Add(csv.GetField(i) ?? string.Empty);
                 }
             }
-
-            // Add the last column
-            columns.Add(currentColumn.ToString());
 
             return columns;
         }

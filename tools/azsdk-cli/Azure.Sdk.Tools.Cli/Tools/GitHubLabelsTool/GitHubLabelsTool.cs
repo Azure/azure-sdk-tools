@@ -9,6 +9,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
+using CsvHelper;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools
@@ -163,30 +164,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private static List<string> ParseCsvLine(string line)
         {
             var columns = new List<string>();
-            var currentColumn = new StringBuilder();
-            bool inQuotes = false;
 
-            for (int i = 0; i < line.Length; i++)
+            // Use CsvHelper to parse the CSV line
+            using var reader = new StringReader(line);
+            using var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture);
+
+            // Read & parse the CSV line
+            if (csv.Read())
             {
-                char c = line[i];
-
-                if (c == '"')
+                var fieldCount = csv.Parser.Count; // number of fields in the current record
+                for (int i = 0; i < fieldCount; i++)
                 {
-                    inQuotes = !inQuotes;
-                }
-                else if (c == ',' && !inQuotes)
-                {
-                    columns.Add(currentColumn.ToString());
-                    currentColumn.Clear();
-                }
-                else
-                {
-                    currentColumn.Append(c);
+                    columns.Add(csv.GetField(i) ?? string.Empty);
                 }
             }
-
-            // Add the last column
-            columns.Add(currentColumn.ToString());
 
             return columns;
         }

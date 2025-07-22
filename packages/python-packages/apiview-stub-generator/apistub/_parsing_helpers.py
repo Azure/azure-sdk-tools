@@ -1,7 +1,6 @@
 from typing import List, Union, TYPE_CHECKING
 import astroid
 from .nodes._function_node import FunctionNode
-from .nodes._base_node import is_handwritten
 
 if TYPE_CHECKING:
     from .nodes._module_node import ModuleNode

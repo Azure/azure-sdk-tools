@@ -15,7 +15,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
 
     [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV file")]
-    public class GitHubLabelsTool(ILogger<GitHubLabelsTool> logger, IOutputService output, ILabelHelper labelHelper, IGitHubService githubService) : MCPTool
+    public class GitHubLabelsTool(
+        ILogger<GitHubLabelsTool> logger,
+        IOutputService output,
+        ILabelHelper labelHelper,
+        IGitHubService githubService
+    ) : MCPTool
     {
         private const string serviceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 

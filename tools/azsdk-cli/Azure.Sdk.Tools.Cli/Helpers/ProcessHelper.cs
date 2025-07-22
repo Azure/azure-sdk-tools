@@ -6,9 +6,18 @@ using System.Text;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public class ProcessHelper
+    public interface IProcessHelper
     {
-        public static ProcessResult RunProcess(string command, string[] args, string workingDirectory)
+        public ProcessResult RunProcess(string command, string[] args, string workingDirectory);
+        public ProcessResult RunNpx(List<string> args, string workingDirectory);
+    }
+
+    public class ProcessHelper(ILogger<ProcessHelper> logger) : IProcessHelper
+    {
+
+        private readonly ILogger<ProcessHelper> logger = logger;
+
+        public ProcessResult RunProcess(string command, string[] args, string workingDirectory)
         {
             var processStartInfo = new ProcessStartInfo
             {
@@ -47,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 };
 
-                Console.Error.WriteLine($"Running command: {command} {string.Join(" ", args)} in {workingDirectory}");
+                logger.LogInformation($"Running command: {command} {string.Join(" ", args)} in {workingDirectory}");
 
                 process.Start();
                 process.BeginOutputReadLine();
@@ -65,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return new ProcessResult { Output = output.ToString(), ExitCode = exitCode };
         }
 
-        public static ProcessResult RunNpx(List<string> args, string workingDirectory)
+        public ProcessResult RunNpx(List<string> args, string workingDirectory)
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
@@ -85,14 +94,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 );
             }
         }
+    }
 
-        /// <summary>
-        /// Result of running a process.
-        /// </summary>
-        public class ProcessResult
-        {
-            public int ExitCode { get; set; }
-            public string Output { get; set; } = string.Empty;
-        }
+    /// <summary>
+    /// Result of running a process.
+    /// </summary>
+    public class ProcessResult
+    {
+        public int ExitCode { get; set; }
+        public string Output { get; set; } = string.Empty;
     }
 }

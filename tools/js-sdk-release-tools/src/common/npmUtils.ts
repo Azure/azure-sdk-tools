@@ -84,6 +84,11 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
         const lastStableNpmViewContext = shell.exec(gitCommand, { silent: true }).stdout;
 
         fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
+        
+        console.log(`[DEBUG] command: ${gitCommand}`);
+        console.log(`[DEBUG] targetFilePath: ${targetFilePath}`);
+        console.log(`[DEBUG] lastStableNpmViewContext: ${lastStableNpmViewContext}`);
+
         logger.info(`Create ${packageFolderPath} from the tag ${packageName}_${version} successfully`);
     } catch (error) {
         logger.error(`Failed to read ${packageFolderPath} in ${sdkFilePath} from the tag ${packageName}_${version}.\n Error details: ${error}`)

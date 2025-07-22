@@ -138,7 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var repoName = gitHelper.GetRepoName(repoRootPath);
 
                     var headBranch = $"{headRepoOwner}:{headBranchName}";
-                    logger.LogInformation($"Repo name: {repoName} Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
+                    logger.LogInformation($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
                     logger.LogInformation($"Creating pull request in {targetRepoOwner}:{repoName}");
                     //Create pull request
                     var createResponseList = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);

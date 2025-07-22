@@ -84,7 +84,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 logger.LogInformation("Checking service label: {serviceLabel}", serviceLabel);
 
-                // Download the CSV content
                 var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
                 
                 if (contents == null || contents.Count == 0)
@@ -100,10 +99,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     throw new InvalidOperationException("common-labels.csv file is empty");
                 }
 
-                // Parse CSV and look for the service label
                 var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                 
-                // Process all lines since there's no header
                 foreach (var line in lines)
                 {
                     var columns = ParseCsvLine(line);
@@ -115,7 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         string description = columns[1].Trim();
                         string colorCode = columns[2].Trim();
                         
-                        // Only consider labels with the expected color code and check if it contains the service label
+                        // Only consider labels with the service label color code and check if it contains the service label
                         if (colorCode.Equals(serviceLabelColorCode, StringComparison.OrdinalIgnoreCase) && 
                             labelName.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase))
                         {
@@ -232,10 +229,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-            // Empty file check
             if (lines.Length == 0) return 1;
-            
-            // Create the label name that will be inserted
+
             string newLabelName = $"Service - {newServiceLabel}";
             
             // Store service labels and original line indices
@@ -250,7 +245,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     string labelName = columns[0].Trim();
                     string colorCode = columns[2].Trim();
                     
-                    // Only consider service labels (those with the service color code)
+                    // Only consider service labels
                     if (colorCode.Equals(serviceLabelColorCode, StringComparison.OrdinalIgnoreCase))
                     {
                         serviceLabels.Add((labelName, i)); 
@@ -258,24 +253,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
             }
             
-            // Find the correct insertion point alphabetically
             for (int i = 0; i < serviceLabels.Count; i++)
             {
                 if (string.Compare(newLabelName, serviceLabels[i].labelName, StringComparison.OrdinalIgnoreCase) < 0)
                 {
-                    // Insert before this service label
                     return serviceLabels[i].originalLineIndex + 1; // +1 to convert to 1-based line number
                 }
             }
             
-            // If we get here, the new label should be inserted after all existing service labels
+            // Insert after all existing service labels
             if (serviceLabels.Count > 0)
             {
-                // Insert after the last service label
-                return serviceLabels.Last().originalLineIndex + 2; // +2 to insert after the last service label
+                return serviceLabels.Last().originalLineIndex + 2; 
             }
             
-            // If no service labels exist, insert at beginning of the file
             return 1;
         }
     }

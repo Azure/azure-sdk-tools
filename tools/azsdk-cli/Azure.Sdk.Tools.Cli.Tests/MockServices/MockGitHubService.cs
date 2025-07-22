@@ -91,6 +91,76 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
         }
 
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch)
+        {
+            // Handle specific test scenarios for branch-specific requests
+            if (path == "non-existent-path")
+            {
+                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(null);
+            }
+
+            if (path == "empty-directory")
+            {
+                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());
+            }
+
+            // Handle single file requests (when specific files are requested)
+            if (path.Contains("/") && path.EndsWith(".md"))
+            {
+                var fileName = System.IO.Path.GetFileName(path);
+                var content = CreateMockRepositoryContent(fileName, path, "test");
+                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent> { content }.AsReadOnly());
+            }
+
+            // Default: Return mock directory listing for .github/prompts or similar paths
+            var contents = new List<RepositoryContent>
+            {
+                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"), 
+                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"), 
+                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")  
+            };
+
+            return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
+        }
+
+        public Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        {
+            // Create a mock RepositoryContentChangeSet
+            var mockContent = CreateMockRepositoryContent(System.IO.Path.GetFileName(path), path, content);
+            var mockCommit = CreateMockCommit(message, sha);
+            
+            var changeSet = new RepositoryContentChangeSet(
+                content: mockContent,
+                commit: mockCommit
+            );
+
+            return Task.FromResult(changeSet);
+        }
+
+        private Commit CreateMockCommit(string message, string sha)
+        {
+            var user = CreateMockUser("testuser", 123456);
+            var author = new Committer($"test@example.com", "testuser", DateTimeOffset.Now);
+            var repo = CreateMockRepository("testowner", "testrepo", user);
+            
+            return new Commit(
+                url: $"https://api.github.com/repos/testowner/testrepo/commits/{sha}",
+                label: null,
+                @ref: null,
+                sha: sha,
+                nodeId: $"COMMIT_{sha}",
+                user: user,
+                repository: repo,
+                message: message,
+                author: author,
+                committer: author,
+                tree: new GitReference(null, null, "tree123", "TREE_123", "https://api.github.com/repos/testowner/testrepo/git/trees/tree123", user, null),
+                parents: new List<GitReference>(),
+                commentCount: 0,
+                verification: null
+            );
+        }
+
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
         {
             return new RepositoryContent(

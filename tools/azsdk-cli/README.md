@@ -1,6 +1,6 @@
 # Azure SDK CLI and MCP server
 
-This tool serves as the primary integration point for all `azure-sdk` provided MCP tools. This tool built and published out of the `azure-sdk-tools` repo but consumed primarily through the `.vscode/mcp.json` within each `Azure-sdk-for-<lang>` language repository. Tool installation is carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps1`.
+This project is the primary integration point for all `azure-sdk` provided [MCP](https://modelcontextprotocol.io/introduction) tools as well as a convenient CLI app for azure sdk developers. It is built and published out of the `azure-sdk-tools` repo but consumed primarily through the `.vscode/mcp.json` file within each `Azure-sdk-for-<lang>` language repository. Server installation is carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps1`.
 
 * [Getting Started](#getting-started)
   * [Prerequisites](#prerequisites)
@@ -58,7 +58,7 @@ dotnet test
 
 ## Project Structure and Information
 
-This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/dotnet/standard/commandline/) app and an [MCP server](https://github.com/modelcontextprotocol/csharp-sdk).
+This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/dotnet/standard/commandline/) app and an MCP server using the [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
 
 ### Directory Structure
 
@@ -80,6 +80,17 @@ This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/do
 Public CI - https://dev.azure.com/azure-sdk/public/_build?definitionId=7677
 
 Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684 
+
+## Design Guidelines
+
+- Think of the server primarily as a first class CLI app
+    - Add attributes to enable MCP hooks, but MCP server functionality is a pluggable feature, not foundational to the architecture
+    - Rapid ad-hoc testing is easier via CLI than MCP, and any tools we build can be consumed by other software/scripts outside of MCP
+    - For example, the engsys/azsdk cli app is built around System.CommandLine along with some dependency injection and ASP.net glue + attributes to get it working with the MCP C# sdk
+- Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
+- Write debug logging to stderr and/or a file in MCP mode. This avoids the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
+- Support both stdio and http mode for MCP to enable easy debugging with tools like mcp inspector
+- Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
 
 ## Adding a New Tool
 

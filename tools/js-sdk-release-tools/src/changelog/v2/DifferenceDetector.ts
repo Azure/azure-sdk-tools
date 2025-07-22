@@ -158,6 +158,11 @@ export class DifferenceDetector {
   }
 
   private async load() {
+    console.log("[DEBUG] baseline path:", this.baselineApiViewOptions.path);
+    console.log("[DEBUG] current path:", this.currentApiViewOptions.path);
+    console.log("[DEBUG] baseline apiView:", this.baselineApiViewOptions.apiView);
+    console.log("[DEBUG] current apiView:", this.currentApiViewOptions.apiView);
+    
     this.context = await createAstContext(
       { path: this.baselineApiViewOptions.path, apiView: this.baselineApiViewOptions.apiView },
       { path: this.currentApiViewOptions.path, apiView: this.currentApiViewOptions.apiView },

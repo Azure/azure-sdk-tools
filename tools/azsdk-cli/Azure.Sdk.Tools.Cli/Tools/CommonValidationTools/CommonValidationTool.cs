@@ -32,7 +32,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         };
 
         // Command names
-        private const string isValidServiceCodeOwnersCommandName = "is-valid-service-code-owners";
         private const string isValidCodeOwnerCommandName = "is-valid-code-owner";
         private const string validateCodeOwnersForServiceCommandName = "validate-code-owners-for-service";
 
@@ -46,7 +45,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var command = new Command("common-validation-tools", "Tools for validating CODEOWNERS files.");
             var subCommands = new[]
             {
-                new Command(isValidServiceCodeOwnersCommandName, "Validate code owners for a service across all Azure SDK repositories") { serviceLabelOpt },
                 new Command(isValidCodeOwnerCommandName, "Validate if a GitHub alias has proper organizational membership and write access") { gitHubAliasOpt },
                 new Command(validateCodeOwnersForServiceCommandName, "Process a specific repository to validate code owners for a service") { repoNameOpt, serviceLabelOpt },
             };
@@ -66,11 +64,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             switch (command)
             {
-                case isValidServiceCodeOwnersCommandName:
-                    var confirmedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
-                    var serviceValidationResult = await ValidateServiceCodeOwners(confirmedServiceLabel ?? "");
-                    output.Output($"Service code owners validation result: {serviceValidationResult}");
-                    return;
                 case isValidCodeOwnerCommandName:
                     var gitHubAlias = commandParser.GetValueForOption(gitHubAliasOpt);
                     var aliasValidationResult = await isValidCodeOwner(gitHubAlias ?? "");
@@ -86,30 +79,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
                     return;
-            }
-        }
-
-        [McpServerTool(Name = "ValidateServiceCodeOwners"), Description("Validates code owners for a service across all Azure SDK repositories.")]
-        public async Task<string> ValidateServiceCodeOwners(string confirmedServiceLabel)
-        {
-            try
-            {
-                var repositoryTasks = azureRepositories.Select(repo =>
-                    ValidateCodeOwnersForService(repo.Value, confirmedServiceLabel)).ToArray();
-
-                var results = await Task.WhenAll(repositoryTasks);
-
-                var summary = GenerateServiceValidationSummary(results.ToList(), confirmedServiceLabel);
-                return System.Text.Json.JsonSerializer.Serialize(summary, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new GenericResponse()
-                {
-                    Status = "Failed",
-                    Details = { $"Failed to validate service code owners. Error: {ex.Message}" }
-                };
-                return output.Format(errorResponse);
             }
         }
 

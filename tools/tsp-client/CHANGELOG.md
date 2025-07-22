@@ -1,6 +1,6 @@
 # Release
 
-## 2025-07-22 - 0.26.0
+## 2025-07-21 - 0.26.0
 
 - Fix bug when discovering entrypoint files to only accept `main.tsp` or `client.tsp` unless otherwise specified in tsp-location.yaml.
 

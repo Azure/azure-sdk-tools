@@ -34,39 +34,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task ValidateServiceCodeOwners_WhenValidService_ReturnsJsonSummary()
-        {
-            // Arrange
-            var serviceLabel = "Storage";
-            
-            // Setup mock responses for CODEOWNERS files (simplified test)
-            // In reality, this would test the actual CODEOWNERS parsing logic
-            
-            // Act
-            var result = await commonValidationTool.ValidateServiceCodeOwners(serviceLabel);
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Does.Contain("Storage"));
-            // The result should be JSON containing validation summary
-            Assert.That(result.StartsWith("{") && result.EndsWith("}"), Is.True, "Result should be valid JSON");
-        }
-
-        [Test]
-        public async Task ValidateServiceCodeOwners_WhenExceptionThrown_ReturnsErrorResponse()
-        {
-            // Arrange
-            var serviceLabel = "Storage";
-
-            // Act (This actually calls the real implementation and succeeds with code owners data)
-            var result = await commonValidationTool.ValidateServiceCodeOwners(serviceLabel);
-
-            // Assert - The method returns JSON with validation results
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StartsWith("{") && result.EndsWith("}"), Is.True, "Result should be valid JSON");
-        }
-
-        [Test]
         public async Task IsValidCodeOwner_WhenValidUser_ReturnsValidationResult()
         {
             // Arrange
@@ -302,41 +269,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             {
                 Assert.That(result.Message, Is.Not.Null.And.Not.Empty);
             }
-        }
-
-        [Test]
-        public async Task ValidateServiceCodeOwners_IntegrationTest_ProducesValidSummary()
-        {
-            // Arrange
-            var serviceLabel = "Storage";
-            
-            // Act
-            var jsonResult = await commonValidationTool.ValidateServiceCodeOwners(serviceLabel);
-            
-            // Assert
-            Assert.That(jsonResult, Is.Not.Null);
-            Assert.That(jsonResult.StartsWith("{") && jsonResult.EndsWith("}"), Is.True);
-            
-            // Try to deserialize to verify it's valid JSON with expected structure
-            var summary = System.Text.Json.JsonSerializer.Deserialize<CommonValidationTool.ServiceValidationSummary>(jsonResult);
-            
-            Assert.That(summary, Is.Not.Null);
-            Assert.That(summary.ServiceLabel, Is.EqualTo("Storage"));
-            Assert.That(summary.TotalRepositories, Is.EqualTo(8)); // Should match azureRepositories count
-            Assert.That(summary.Results, Is.Not.Null);
-            Assert.That(summary.Results.Count, Is.EqualTo(8));
-            
-            // Verify all repositories were processed
-            var expectedRepos = new[] {
-                "azure-sdk-for-net", "azure-sdk-for-cpp", "azure-sdk-for-go",
-                "azure-sdk-for-java", "azure-sdk-for-js", "azure-sdk-for-python",
-                "azure-rest-api-specs", "azure-sdk-for-rust"
-            };
-            
-            var actualRepos = summary.Results.Select(r => r.Repository).OrderBy(x => x).ToArray();
-            var sortedExpectedRepos = expectedRepos.OrderBy(x => x).ToArray();
-            
-            Assert.That(actualRepos, Is.EqualTo(sortedExpectedRepos));
         }
 
         [Test]

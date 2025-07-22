@@ -295,5 +295,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 stateReason: null
             );
         }
+
+        public async Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            return "TODO";
+        }
     }
 }

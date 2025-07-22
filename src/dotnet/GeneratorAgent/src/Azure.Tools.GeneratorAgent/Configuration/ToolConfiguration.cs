@@ -9,6 +9,7 @@ internal class ToolConfiguration
     private readonly IConfiguration _configuration;
     private readonly string ToolDirectory;
 
+
     public ToolConfiguration()
     {
         ToolDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)

@@ -2,7 +2,7 @@ import pkg from '@npmcli/package-json';
 const { load } = pkg;
 import { NpmPackageInfo } from './types.js';
 import * as fetch from 'npm-registry-fetch';
-import { getApiReviewPath } from './utils.js';
+import { getApiReviewPath, getApiReviewBasePath } from './utils.js';
 import shell from 'shelljs';
 import { writeFile } from 'fs';
 import path, { relative } from 'path';
@@ -74,14 +74,29 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
         targetFilePath = path.join(npmPackagePath, file);
     }
     else {
-        sdkFilePath = relative(sdkRootPath, getApiReviewPath(packageFolderPath)).replace(/\\/g, "/");
+        sdkFilePath = relative(sdkRootPath, getApiReviewBasePath(packageFolderPath)).replace(/\\/g, "/");
         targetFilePath = getApiReviewPath(npmPackagePath)
     }
 
-    const gitCommand = `git --no-pager show ${packageName}_${version}:${sdkFilePath}`;
+    // Generate two file paths with different suffixes
+    const nodeApiFilePath = `${sdkFilePath}-node.api.md`;
+    const standardApiFilePath = `${sdkFilePath}.api.md`;
+    
+    // Generate two git commands
+    const nodeApiGitCommand = `git --no-pager show ${packageName}_${version}:${nodeApiFilePath}`;
+    const standardApiGitCommand = `git --no-pager show ${packageName}_${version}:${standardApiFilePath}`;
 
     try {
-        const lastStableNpmViewContext = shell.exec(gitCommand, { silent: true }).stdout;
+        // Execute both git commands
+        const nodeApiResult = shell.exec(nodeApiGitCommand, { silent: true }).stdout;
+        const standardApiResult = shell.exec(standardApiGitCommand, { silent: true }).stdout;
+
+        // Use nodeApi result if it has content, otherwise use standardApi result
+        const lastStableNpmViewContext = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
+        
+        if (!lastStableNpmViewContext.trim()) {
+            logger.warn(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
+        }
 
         fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
         logger.info(`Create ${packageFolderPath} from the tag ${packageName}_${version} successfully`);

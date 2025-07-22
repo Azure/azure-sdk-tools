@@ -106,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetRepoName(string path)
         {
             var repoRoot = DiscoverRepoRoot(path);
-            return Path.GetFileName(repoRoot) ?? throw new InvalidOperationException("Unable to determine repository name");
+            return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException("Unable to determine repository name");
         }
     }
 }

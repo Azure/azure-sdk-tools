@@ -318,6 +318,16 @@ public class GitConnection
         {
             try
             {
+                // Validate input parameters
+                if (string.IsNullOrEmpty(repoOwner)) throw new ArgumentException("Owner cannot be null or empty", nameof(repoOwner));
+                if (string.IsNullOrEmpty(repoName)) throw new ArgumentException("Name cannot be null or empty", nameof(repoName));
+                if (string.IsNullOrEmpty(branchName)) throw new ArgumentException("Branch name cannot be null or empty", nameof(branchName));
+
+                if (branchName.StartsWith("refs/heads"))
+                {
+                    throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The specified branch name '{0}' appears to be a ref name and not a branch name because it starts with the string 'refs/heads'. Either specify just the branch name or use the Create method if you need to specify the full ref name", branchName), nameof(branchName));
+                }
+
                 // Get the base branch reference first
                 var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
                 
@@ -326,8 +336,9 @@ public class GitConnection
                     return $"Base branch '{baseBranchName}' not found in repository {repoOwner}/{repoName}.";
                 }
 
-                // Use the Octokit extension method to create the branch
-                var createdReference = await gitHubClient.Git.Reference.CreateBranch(repoOwner, repoName, branchName, baseReference);
+                // Create the new branch reference
+                var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
+                var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
                 
                 if (createdReference != null)
                 {
@@ -343,34 +354,6 @@ public class GitConnection
                 logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
                 return $"Error creating branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}";
             }
-        }
-    }
-
-    // Extension methods for Octokit
-    public static class GitHubExtensions
-    {
-        /// <summary>
-        /// Creates a branch, based off the branch specified.
-        /// </summary>
-        /// <param name="referencesClient">The <see cref="IReferencesClient" /> this method extends</param>
-        /// <param name="owner">The owner of the repository.</param>
-        /// <param name="name">The name of the repository.</param>
-        /// <param name="branchName">The new branch name</param>
-        /// <param name="baseReference">The <see cref="Reference" /> to base the branch from</param>
-        public static async Task<Reference> CreateBranch(this IReferencesClient referencesClient, string owner, string name, string branchName, Reference baseReference)
-        {
-            if (string.IsNullOrEmpty(owner)) throw new ArgumentException("Owner cannot be null or empty", nameof(owner));
-            if (string.IsNullOrEmpty(name)) throw new ArgumentException("Name cannot be null or empty", nameof(name));
-            if (string.IsNullOrEmpty(branchName)) throw new ArgumentException("Branch name cannot be null or empty", nameof(branchName));
-            if (baseReference == null) throw new ArgumentNullException(nameof(baseReference));
-
-            if (branchName.StartsWith("refs/heads"))
-            {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The specified branch name '{0}' appears to be a ref name and not a branch name because it starts with the string 'refs/heads'. Either specify just the branch name or use the Create method if you need to specify the full ref name", branchName), "branchName");
-            }
-
-            var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
-            return await referencesClient.Create(owner, name, newReference).ConfigureAwait(false);
         }
     }
 }

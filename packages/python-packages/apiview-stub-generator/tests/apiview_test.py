@@ -46,7 +46,7 @@ def _build_dist(src_dir, build_type, extension):
 
 def _add_pyproject_package_to_temp(src_dir):
     temp_dir = tempfile.mkdtemp()
-    dest_dir = os.path.join(temp_dir, os.path.basename(src_dir))
+    dest_dir = os.path.join(temp_dir, os.path.basename(src_dir) + "-copied")
     shutil.copytree(src_dir, dest_dir)
 
     # Remove setup.py and add pyproject.toml

@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.19 (2025-07-17)
+Fixed an issue with APIView not running in src directories where the package name differs from the directory name.
+
 ## Version 0.3.18 (2025-04-02)
 Updated the default mapping path from "apiview_mapping_python.json" to "apiview-properties.json" to align with TCGC mapping file, and additionally check the old default file name if the new default is not found.
 

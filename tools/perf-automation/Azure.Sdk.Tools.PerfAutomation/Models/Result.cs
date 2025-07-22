@@ -30,6 +30,9 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public double OperationsPerSecondMedian => Iterations.Any() ? Median(Iterations.Select(i => i.OperationsPerSecond)) : -1;
         public double OperationsPerSecondMax => Iterations.Any() ? Iterations.Max(i => i.OperationsPerSecond) : -1;
 
+        public double CpuMean => Iterations.Any() ? Iterations.Average(i => i.AverageCpu) : -1;
+        public long MemoryMean => Iterations.Any() ? (long)Iterations.Average(i => i.AverageMemory) : -1;
+
         private double Median(IEnumerable<double> values)
         {
             var count = values.Count();

@@ -1,0 +1,28 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/web-pubsub?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/messaging-webpubsubclient-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.aio.webpubsubclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.aio.webpubsubclientcredential?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.ackmessageerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.onconnectedargs?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.ondisconnectedargs?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.ongroupdatamessageargs?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.onrejoingroupfailedargs?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.onserverdatamessageargs?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.openclienterror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.sendmessageerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.callbacktype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.webpubsubdatatype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.models.webpubsubprotocoltype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.webpubsubclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-messaging-webpubsubclient/azure.messaging.webpubsubclient.webpubsubclientcredential?view=azure-python\u0026branch=main"
+    ]
+  }
+]

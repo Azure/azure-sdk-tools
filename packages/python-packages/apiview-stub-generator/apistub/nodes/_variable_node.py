@@ -61,8 +61,8 @@ class VariableNode(NodeEntityBase):
                     return False
 
             return False
-        except Exception as exc:
-            # Fail silently - return False if anything goes wrong
+        except Exception:
+            # Default to False if errors
             return False
 
     def _find_variable_source_class(self):
@@ -99,7 +99,7 @@ class VariableNode(NodeEntityBase):
                         return parent_class
 
         except Exception:
-            # Fail silently - return None if anything goes wrong
+            # Default to False if errors
             pass
 
         # Variable not found in parent classes - it's defined locally

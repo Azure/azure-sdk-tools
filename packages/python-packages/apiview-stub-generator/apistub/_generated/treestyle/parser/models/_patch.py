@@ -255,14 +255,15 @@ class ReviewLine(ReviewLineImpl):
         self.children = children
 
     def add_token(self, token, *, render_classes=None):
-        # for each handwritten line, all ReviewTokens' renderClasses should include "handwritten"
-        # TODO: Not applied to KeyNodes or VariableNodes since these are parsed from docstring and `inspect` cannot get source file.
+        # For each handwritten line, all ReviewTokens' renderClasses should include "handwritten"
         if self.is_handwritten:
             if not render_classes:
                 token.render_classes = ["handwritten"]
             else:
                 # Create a new list to ensure mutability and assignment back to the object
                 token.render_classes = render_classes + ["handwritten"]
+        else:
+            token.render_classes = render_classes
 
         self.tokens.append(token)
 

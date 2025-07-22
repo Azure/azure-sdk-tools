@@ -3,9 +3,6 @@ trigger:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/azsdk-cli
@@ -14,9 +11,6 @@ pr:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/azsdk-cli

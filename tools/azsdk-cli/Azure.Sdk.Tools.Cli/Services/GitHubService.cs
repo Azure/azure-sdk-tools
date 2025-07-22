@@ -80,6 +80,8 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch);
+        public Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
     }
 
@@ -313,6 +315,53 @@ public class GitConnection
                 throw;
             }
         }
+        
+        /// <summary>
+        /// Helper method to get contents from a GitHub repository path.
+        /// </summary>
+        /// <param name="owner">Repository owner</param>
+        /// <param name="repoName">Repository name</param>
+        /// <param name="path">Directory or file path</param>
+        /// <param name="branch">Branch reference</param>
+        /// <returns>List of repository contents or null if path doesn't exist</returns>
+        public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch)
+        {
+            try
+            {
+                var result = await gitHubClient.Repository.Content.GetAllContentsByRef(owner, repoName, path, branch);
+                return result;
+            }
+            catch (NotFoundException ex)
+            {
+                logger.LogInformation("GitHubService: Path {path} not found in {owner}/{repoName} on reference {branch}. Exception: {exception}", path, owner, repoName, branch, ex.Message);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GitHubService: Error fetching contents from {owner}/{repoName}/{path} on reference {branch}", owner, repoName, path, branch);
+                throw;
+            }
+        }
+
+        public async Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        {
+            try
+            {
+                var updateRequest = new UpdateFileRequest(message, content, sha, branch);
+                var result = await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
+                return result;
+            }
+            catch (NotFoundException ex)
+            {
+                logger.LogInformation("GitHubService: Path {path} not found in {owner}/{repoName} on reference {branch}. Exception: {exception}", path, owner, repoName, branch, ex.Message);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GitHubService: Error fetching contents from {owner}/{repoName}/{path} on reference {branch}", owner, repoName, path, branch);
+                throw;
+            }
+        }
 
         public async Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
         {
@@ -330,7 +379,7 @@ public class GitConnection
 
                 // Get the base branch reference first
                 var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
-                
+
                 if (baseReference == null)
                 {
                     return $"Base branch '{baseBranchName}' not found in repository {repoOwner}/{repoName}.";
@@ -339,7 +388,7 @@ public class GitConnection
                 // Create the new branch reference
                 var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
                 var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
-                
+
                 if (createdReference != null)
                 {
                     return $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";

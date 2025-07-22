@@ -31,7 +31,7 @@ namespace Azure.Tools.GeneratorAgent
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        private PersistentAgent CreateAgent()
+        internal virtual PersistentAgent CreateAgent()
         {
             Logger.LogInformation("Creating AZC Fixer agent...");
             

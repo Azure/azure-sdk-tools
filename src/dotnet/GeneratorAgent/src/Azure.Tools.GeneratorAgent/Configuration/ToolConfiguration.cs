@@ -8,6 +8,7 @@ internal class ToolConfiguration
 {
     private readonly IConfiguration _configuration;
     private readonly string ToolDirectory;
+
     public ToolConfiguration()
     {
         ToolDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
@@ -16,9 +17,9 @@ internal class ToolConfiguration
         _configuration = CreateConfigurationInternal();
     }
 
-    public IConfiguration Configuration => _configuration;
+    public virtual IConfiguration Configuration => _configuration;
 
-    public ILoggerFactory CreateLoggerFactory()
+    public virtual ILoggerFactory CreateLoggerFactory()
     {
         return LoggerFactory.Create(builder =>
             builder
@@ -27,7 +28,7 @@ internal class ToolConfiguration
                 .SetMinimumLevel(LogLevel.Information));
     }
 
-    public AppSettings CreateAppSettings()
+    public virtual AppSettings CreateAppSettings()
     {
         return new AppSettings(_configuration);
     }

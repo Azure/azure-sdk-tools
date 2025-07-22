@@ -38,6 +38,9 @@ parameters:
   - name: RequireStrongNames
     type: boolean
     default: true
+  - name: PublishEnvironment
+    type: string
+    default: ''
   - name: Use1ESOfficial
     type: boolean
     default: true
@@ -87,7 +90,7 @@ extends:
             displayName: Build and Package
 
             templateContext:
-              sdl: 
+              sdl:
                 componentgovernance:
                   enabled: true # Enable CG only on the build job
               outputs:
@@ -215,6 +218,8 @@ extends:
             ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
             ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
+            ${{ if parameters.PublishEnvironment }}:
+              PublishEnvironment: ${{ parameters.PublishEnvironment }}
             dependsOn: BuildTestAndPackage
 
       - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:

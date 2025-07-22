@@ -21,13 +21,16 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         {
             StringBuilder output = new StringBuilder();
 
-            output.AppendLine($"Is Successful: {IsSuccessful}");
+            output.AppendLine($"### Is Successful: {IsSuccessful}");
             if (IsSuccessful)
             {
-
+                output.AppendLine($"### TypeSpec Project Path: {TypeSpecProjectPath}");
             }
-            output.AppendLine($"TypeSpec Project Path: {TypeSpecProjectPath}");
-            output.AppendLine($"Error Message: {ErrorMessage}");
+            else
+            {
+                output.AppendLine($"### Error Message: {ErrorMessage}");
+            }
+
 
             return output.ToString();
         }

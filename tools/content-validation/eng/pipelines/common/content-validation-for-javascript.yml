@@ -16,9 +16,6 @@ parameters:
 - name: GitHubRepo
   type: string
   default: ''
-- name: AzureDevOpsPat
-  type: string
-  default: ''
 - name: jobDisplayName
   type: string
   default: ''

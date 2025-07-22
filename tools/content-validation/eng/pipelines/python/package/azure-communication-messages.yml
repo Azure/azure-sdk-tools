@@ -1,8 +1,5 @@
 
 parameters:
-- name: AzureDevOpsPat
-  type: string
-  default: ''
 - name: GitHubPat
   type: string
   default: ''
@@ -26,5 +23,4 @@ jobs:
       GitHubPat: ${{ parameters.GitHubPat }}
       GitHubOwner: ${{ parameters.GitHubOwner }}
       GitHubRepo: ${{ parameters.GitHubRepo }}
-      AzureDevOpsPat: ${{ parameters.AzureDevOpsPat }}
       Branch: ${{ parameters.Branch }}

@@ -10,6 +10,8 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
 using CsvHelper;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools
@@ -107,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
                 logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
-                return result;
+                return result != null;
             }
             catch (Exception ex)
             {
@@ -129,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 // Create a new branch
-                var branchResult = await githubService.CreateBranchAsync("azure-sdk-tools", "Azure", $"add-service-label-{label}", "main");
+                var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add-service-label-{label}", "main");
                 if (branchResult == null)
                 {
                     throw new InvalidOperationException("Failed to create branch");
@@ -146,11 +148,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     throw new InvalidOperationException("Could not retrieve common-labels.csv file");
                 }
 
-                var insertionLine = GetInsertionLineNumber(csvContent, label);
+                var csvContentString = csvContent[0].Content;
+
+                var insertionLine = GetInsertionLineNumber(csvContentString, label);
                 logger.LogInformation($"Inserting new service label at line {insertionLine}: {csvLine}");
 
-
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
+
+                await UpdateFileWithTextInsertion("Azure", "azure-sdk-tools", $"add-service-label-{label}", "tools/github/data/common-labels.csv", insertionLine, false, csvLine);
 
                 var result = await githubService.CreatePullRequestAsync(
                     repoName: "azure-sdk-tools",
@@ -252,6 +257,104 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             return 1;
+        }
+
+        public async Task<string> UpdateFileWithTextInsertion(string repoOwner, string repoName, string branch, string fileName, int lineNumber, bool updatingContent, string textToInsert)
+        {
+            var result = new FileUpdateResult
+            {
+                FileName = fileName,
+                LineNumber = lineNumber,
+                TextInserted = textToInsert
+            };
+
+            try
+            {
+                // Get the current file content
+                var contents = await githubService.GetContentsAsync(repoOwner, repoName, fileName, branch);
+                
+                if (contents == null || !contents.Any())
+                {
+                    result.Success = false;
+                    result.Error = $"File {fileName} not found in repository {repoOwner}/{repoName}";
+                    return JsonSerializer.Serialize(result);
+                }
+
+                var fileContent = contents.First();
+                var currentContent = fileContent.Content;
+                var currentSha = fileContent.Sha;
+
+                var lines = currentContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).ToList();
+                result.TotalLines = lines.Count;
+
+                var textToInsertLines = textToInsert.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                var normalizedTextToInsert = string.Join("\n", textToInsertLines.Select(line => line.Trim())).Trim();
+                var normalizedCurrentContent = string.Join("\n", lines.Select(line => line.Trim())).Trim();
+
+                if (lineNumber == 0 && !updatingContent)
+                {
+                    lines.Add(textToInsert);
+                    result.LineNumber = lines.Count;
+                }
+                else if (lineNumber == 0 && updatingContent)
+                {
+                    // Append at the end of the file
+                    lines.Add(textToInsert);
+                    result.LineNumber = lines.Count;
+                }
+                else if (lineNumber > 0 && lineNumber <= lines.Count && !updatingContent)
+                {
+                    // Insert at specified line (1-based indexing)
+                    lines.Insert(lineNumber - 1, textToInsert);
+                }
+                else if (lineNumber > 0 && lineNumber <= lines.Count && updatingContent)
+                {   
+                    lines.RemoveAt(lineNumber - 1);
+
+                    lines.Insert(lineNumber - 1, textToInsert);
+                    result.LineNumber = lineNumber;
+                }
+                else
+                {
+                    result.Success = false;
+                    result.Error = $"Line number {lineNumber} is out of range. File has {lines.Count} lines.";
+                    return JsonSerializer.Serialize(result);
+                }
+
+                var newContent = string.Join("\n", lines);
+
+                var commitMessage = $"Update {fileName}: Insert text at line {result.LineNumber}";
+                var updateResponse = await githubService.UpdateFileAsync(repoOwner, repoName, fileName, commitMessage, newContent, currentSha, branch);
+
+                result.Success = true;
+                result.Message = $"Successfully updated {fileName}";
+                result.CommitSha = updateResponse.Commit.Sha;
+                result.TotalLines = lines.Count;
+
+                logger.LogInformation("Successfully updated file {fileName} in {repoOwner}/{repoName} at line {lineNumber}", fileName, repoOwner, repoName, result.LineNumber);
+                
+                return JsonSerializer.Serialize(result);
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = ex.Message;
+                logger.LogError(ex, "Failed to update file {fileName} in {repoOwner}/{repoName}", fileName, repoOwner, repoName);
+                return JsonSerializer.Serialize(result);
+            }
+        }
+
+        // Data model
+        public class FileUpdateResult
+        {
+            public string FileName { get; set; } = "";
+            public int LineNumber { get; set; }
+            public string TextInserted { get; set; } = "";
+            public bool Success { get; set; }
+            public string Error { get; set; } = "";
+            public string Message { get; set; } = "";
+            public string CommitSha { get; set; } = "";
+            public int TotalLines { get; set; }
         }
     }
 }

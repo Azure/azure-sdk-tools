@@ -15,7 +15,7 @@ using CsvHelper;
 namespace Azure.Sdk.Tools.Cli.Tools
 {
 
-    [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK common labels CSV file")]
+    [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK Tools common-labels.csv")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IOutputService output,
@@ -106,8 +106,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
-                logger.LogInformation($"Service label '{serviceLabel}' found: {result != null}");
-                return result != null;
+                logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
+                return result;
             }
             catch (Exception ex)
             {
@@ -120,8 +120,36 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
         public async Task<string> CreateServiceLabel(string label, string link)
         {
+            // Create a new branch
+            // Prepare the CSV line to insert
+            // Determine insertion point
+            // Update the CSV file
+            // Create the pull request
+
             try
             {
+                // Create a new branch
+                var branchResult = await githubService.CreateBranchAsync("azure-sdk-tools", "Azure", $"add-service-label-{label}", "main");
+                if (branchResult == null)
+                {
+                    throw new InvalidOperationException("Failed to create branch");
+                }
+
+                // Prepare the CSV line to insert
+                var csvLine = $"{label},,e99695";
+
+                // Determine insertion point 
+                var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+
+                if (csvContent == null || csvContent.Count == 0)
+                {
+                    throw new InvalidOperationException("Could not retrieve common-labels.csv file");
+                }
+
+                var insertionLine = GetInsertionLineNumber(csvContent, label);
+                logger.LogInformation($"Inserting new service label at line {insertionLine}: {csvLine}");
+
+
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
 
                 var result = await githubService.CreatePullRequestAsync(
@@ -165,7 +193,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var columns = new List<string>();
 
-            // Use CsvHelper to parse the CSV line
             using var reader = new StringReader(line);
             using var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture);
 

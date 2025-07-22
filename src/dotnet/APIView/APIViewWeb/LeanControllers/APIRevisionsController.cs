@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Amazon.Runtime;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -12,13 +11,11 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 
 namespace APIViewWeb.LeanControllers
 {

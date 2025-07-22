@@ -76,9 +76,16 @@ async function addApiViewInfo(
     ]);
     const apiViews = [...nodeApiViews, ...standardApiViews];
 
-    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${nodeApiViewPattern}' or '${standardApiViewPattern}'. cwd: ${process.cwd()}`);
-    if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    packageResult.apiViewArtifact = relative(sdkRoot, apiViews[0]);
+    if (!nodeApiViews.length && !standardApiViews.length) {
+        throw new Error(`Failed to find any API view files matching '${nodeApiViewPattern}' or '${standardApiViewPattern}'. cwd: ${process.cwd()}`);
+    }
+    let selectedApiView: string;
+    if (nodeApiViews.length > 0) {
+        selectedApiView = nodeApiViews[0]; // Prioritize nodeApiViewFileName
+    } else if (standardApiViews.length > 0) {
+        selectedApiView = standardApiViews[0];
+    }
+    packageResult.apiViewArtifact = relative(sdkRoot, selectedApiView);
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
     const name = basename(apiViews[0]);
     return { content, name };

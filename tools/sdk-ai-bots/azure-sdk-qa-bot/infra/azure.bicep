@@ -47,9 +47,23 @@ param botDisplayName string
 // Email notification settings (semicolon-separated string from env file)
 param alertEmailAddresses string = 'wanl@microsoft.com'
 
+// Storage Account for TypeSpec Helper
+param typespecHelperStorageAccountName string = 'typespechelper4storage'
+param typespecHelperStorageResourceGroupName string = 'typespec_helper'
+
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
   name: identityName
+}
+
+// Resource Group Delete Lock to prevent accidental deletion
+resource resourceGroupDeleteLock 'Microsoft.Authorization/locks@2020-05-01' = {
+  name: '${resourceBaseName}-delete-lock'
+  scope: resourceGroup()
+  properties: {
+    level: 'CanNotDelete'
+    notes: 'This resource group is protected from deletion. If you need to delete this resource group or have any issues, please contact: ${alertEmailAddresses}'
+  }
 }
 
 // Compute resources for your Web App
@@ -371,6 +385,17 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
         actionGroupId: emailActionGroup.id
       }
     ]
+  }
+}
+
+// Module to assign storage permissions to Bot Identity on TypeSpec Helper Storage Account
+module typespecStoragePermissions './storagePermissions.bicep' = {
+  name: 'typespec-storage-permissions'
+  scope: resourceGroup(typespecHelperStorageResourceGroupName)  // Use specified resource group
+  params: {
+    storageAccountName: typespecHelperStorageAccountName
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

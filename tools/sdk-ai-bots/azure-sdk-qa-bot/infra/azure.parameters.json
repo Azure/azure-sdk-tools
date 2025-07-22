@@ -43,6 +43,12 @@
     },
     "alertEmailAddresses": {
       "value": "${{ALERT_EMAIL_ADDRESSES}}"
+    },
+    "typespecHelperStorageAccountName": {
+      "value": "${{TYPESPEC_HELPER_STORAGE_ACCOUNT_NAME}}"
+    },
+    "typespecHelperStorageResourceGroupName": {
+      "value": "${{TYPESPEC_HELPER_STORAGE_RESOURCE_GROUP_NAME}}"
     }
   }
 }

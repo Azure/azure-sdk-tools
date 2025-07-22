@@ -16,6 +16,7 @@ import { join } from 'path';
 import { FunctionDeclaration, ModuleKind, Project, ScriptTarget, SourceFile, SyntaxKind } from 'ts-morph';
 import { logger } from '../../utils/logger.js';
 import ts from 'typescript';
+import { readFileSync } from 'fs';
 
 const { JsxEmit } = ts;
 
@@ -160,9 +161,13 @@ export class DifferenceDetector {
   private async load() {
     console.log("[DEBUG] baseline path:", this.baselineApiViewOptions.path);
     console.log("[DEBUG] current path:", this.currentApiViewOptions.path);
-    console.log("[DEBUG] baseline apiView:", this.baselineApiViewOptions.apiView);
-    console.log("[DEBUG] current apiView:", this.currentApiViewOptions.apiView);
-    
+
+    const baselineContent = readFileSync(this.baselineApiViewOptions.path!);
+    const currentContent =  readFileSync(this.currentApiViewOptions.path!);
+
+    console.log("[DEBUG] baseline content:", baselineContent);
+    console.log("[DEBUG] current content:", currentContent);
+
     this.context = await createAstContext(
       { path: this.baselineApiViewOptions.path, apiView: this.baselineApiViewOptions.apiView },
       { path: this.currentApiViewOptions.path, apiView: this.currentApiViewOptions.apiView },

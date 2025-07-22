@@ -126,7 +126,24 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var (insertionLineNumber, updatingContent) = await findAlphaSortedLocation(serviceLabels[0], repoName);
+                var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+
+                if (contents == null || contents.Count == 0)
+                {
+                    throw new InvalidOperationException("Could not retrieve common-labels.csv file");
+                }
+
+                // Get the first (and should be only) file content
+                var csvContent = contents[0].Content;
+
+                var gitHubLabelsTool = new GitHubLabelsTool(logger as ILogger<GitHubLabelsTool>, output, githubService);
+                var insertionLineNumber = gitHubLabelsTool.GetInsertionLineNumber(csvContent, "RandomService!");
+                logger.LogInformation("Insertion line number for 'RandomService!': {insertionLineNumber}", insertionLineNumber);
+                var formattedEntryString = "RandomService!,,e99695";
+
+                await UpdateFileWithTextInsertion(repoOwner, repoName, branch, fileName, insertionLineNumber, false, formattedEntryString);
+                return null;
+                /*var (insertionLineNumber, updatingContent) = await findAlphaSortedLocation(serviceLabels[0], repoName);
 
                 List<string> formattedEntry =
                 [
@@ -155,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     logger.LogInformation("GitHub Response: {response}", v);
                 }
-                return result;
+                return result;*/
             }
             catch (Exception ex)
             {

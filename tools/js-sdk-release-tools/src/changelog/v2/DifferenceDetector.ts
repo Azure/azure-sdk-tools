@@ -165,8 +165,8 @@ export class DifferenceDetector {
     const baselineContent = readFileSync(this.baselineApiViewOptions.path!);
     const currentContent =  readFileSync(this.currentApiViewOptions.path!);
 
-    console.log("[DEBUG] baseline content:", baselineContent);
-    console.log("[DEBUG] current content:", currentContent);
+    console.log("[DEBUG] baseline content:", baselineContent.toString());
+    console.log("[DEBUG] current content:", currentContent.toString());
 
     this.context = await createAstContext(
       { path: this.baselineApiViewOptions.path, apiView: this.baselineApiViewOptions.apiView },

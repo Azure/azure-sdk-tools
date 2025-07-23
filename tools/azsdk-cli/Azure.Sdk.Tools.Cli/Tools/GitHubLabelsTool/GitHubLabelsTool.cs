@@ -124,7 +124,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             // Create a new branch
             // Prepare the CSV line to insert
-            // Determine insertion point
             // Update the CSV file
             // Create the pull request
 
@@ -148,7 +147,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Prepare the CSV line to insert
                 var csvLine = $"{label},,e99695";
 
-                // Determine insertion point 
+                // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
 
                 if (csvContent == null || csvContent.Count == 0)
@@ -164,6 +163,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add-service-label-{label}");
 
+
+                // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(
                     repoName: "azure-sdk-tools",
                     repoOwner: "Azure",

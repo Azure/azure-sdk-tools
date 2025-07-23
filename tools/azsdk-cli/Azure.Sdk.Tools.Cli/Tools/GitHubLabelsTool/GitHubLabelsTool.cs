@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
                 logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
-                return result != null;
+                return result;
             }
             catch (Exception ex)
             {
@@ -131,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 // Create a new branch
-                if (CheckServiceLabel(label))
+                if (await CheckServiceLabel(label))
                 {
                     logger.LogInformation($"Service label '{label}' already exists. No action taken.");
                     return $"Service label '{label}' already exists.";

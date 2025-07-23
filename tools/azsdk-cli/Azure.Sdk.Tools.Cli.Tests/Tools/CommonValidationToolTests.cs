@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -13,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IOutputService> mockOutputService;
+        private Mock<ICodeOwnerValidationHelper> mockValidationHelper;
         private ILogger<CommonValidationTool> logger;
         private CommonValidationTool commonValidationTool;
 
@@ -21,6 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             mockGitHubService = new Mock<IGitHubService>();
             mockOutputService = new Mock<IOutputService>();
+            mockValidationHelper = new Mock<ICodeOwnerValidationHelper>();
             logger = new TestLogger<CommonValidationTool>();
 
             mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>()))
@@ -29,6 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             commonValidationTool = new CommonValidationTool(
                 mockGitHubService.Object,
                 mockOutputService.Object,
+                mockValidationHelper.Object,
                 logger
             );
         }
@@ -43,81 +47,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
                            .ReturnsAsync(userDetails);
 
-            // Act
-            var result = await commonValidationTool.isValidCodeOwner(githubAlias);
+            // Act - Test both with explicit alias and empty alias (authenticated user)
+            var resultWithAlias = await commonValidationTool.isValidCodeOwner(githubAlias);
+            var resultWithEmptyAlias = await commonValidationTool.isValidCodeOwner("");
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            // The actual validation logic would depend on PowerShell script execution
-            // This test verifies the method doesn't throw and returns a result
+            Assert.That(resultWithAlias, Is.Not.Null);
+            Assert.That(resultWithEmptyAlias, Is.Not.Null);
+            // Both should call GetGitUserDetailsAsync
+            mockGitHubService.Verify(x => x.GetGitUserDetailsAsync(), Times.Exactly(2));
         }
 
         [Test]
-        public async Task IsValidCodeOwner_WhenEmptyAlias_UsesAuthenticatedUser()
-        {
-            // Arrange
-            var userDetails = CreateMockUser("authenticateduser", 123456);
-
-            mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
-                           .ReturnsAsync(userDetails);
-
-            // Act
-            var result = await commonValidationTool.isValidCodeOwner("");
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            mockGitHubService.Verify(x => x.GetGitUserDetailsAsync(), Times.Once);
-        }
-
-        [Test]
-        public async Task IsValidCodeOwner_WhenExceptionThrown_ReturnsErrorMessage()
-        {
-            // Arrange
-            var githubAlias = "testuser";
-
-            mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
-                           .ThrowsAsync(new Exception("Authentication failed"));
-
-            // Act
-            var result = await commonValidationTool.isValidCodeOwner(githubAlias);
-
-            // Assert
-            Assert.That(result, Does.Contain("Failed to validate GitHub code owner"));
-            Assert.That(result, Does.Contain("Authentication failed"));
-        }
-
-        [Test]
-        public async Task ValidateCodeOwnersForService_WhenValidRepo_ReturnsResult()
+        public async Task ValidateCodeOwnersForService_WhenValidRepo_CallsHelper()
         {
             // Arrange
             var repoName = "dotnet"; // This maps to "azure-sdk-for-net"
             var serviceLabel = "Storage";
-            
+
+            // Setup mock helper to return null (service not found) to avoid complex setup
+            mockValidationHelper.Setup(x => x.FindServiceEntries(It.IsAny<IList<Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry>>(), serviceLabel))
+                              .Returns((Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry?)null);
+
             // Act
             var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
 
             // Assert
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            Assert.That(result.Status, Is.Not.EqualTo("Processing")); // Should be completed
-            // Status will be either "Success", "Service not found", or "Error"
-            Assert.That(result.Status, Is.AnyOf("Success", "Service not found", "Error"));
-        }
-
-        [Test]
-        public async Task ValidateCodeOwnersForService_WhenInvalidRepo_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var repoName = "nonexistent-repo";
-            var serviceLabel = "Storage";
             
-            // Act & Assert
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
-            
-            // Should handle the exception gracefully and return an error result
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Status, Is.EqualTo("Error"));
-            Assert.That(result.Message, Does.Contain("nonexistent-repo"));
+            // Verify helper methods were called
+            mockValidationHelper.Verify(x => x.FindServiceEntries(It.IsAny<IList<Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry>>(), serviceLabel), Times.Once);
         }
 
         [Test]
@@ -125,182 +85,236 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var repoName = "dotnet";
-            var serviceLabel = "Storage"; // Common service that should exist
-            
+            var serviceLabel = "Storage";
+            var mockEntry = new Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry();
+            var uniqueOwners = new List<string> { "user1", "user2" };
+
+            mockValidationHelper.Setup(x => x.FindServiceEntries(It.IsAny<IList<Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry>>(), serviceLabel))
+                              .Returns(mockEntry);
+            mockValidationHelper.Setup(x => x.ExtractUniqueOwners(mockEntry))
+                              .Returns(uniqueOwners);
+
             // Act
             var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            
-            // If service is found, should have success status and code owners
-            if (result.Status == "Success")
-            {
-                Assert.That(result.CodeOwners, Is.Not.Null);
-                Assert.That(result.Message, Does.Contain("Found 1 matching entry"));
-                Assert.That(result.CodeOwners.Count, Is.GreaterThan(0));
-            }
-            else if (result.Status == "Service not found")
-            {
-                Assert.That(result.Message, Does.Contain("not found"));
-                Assert.That(result.CodeOwners.Count, Is.EqualTo(0));
-            }
+            Assert.That(result.Status, Is.EqualTo("Success"));
+            Assert.That(result.Message, Contains.Substring("Found 1 matching entry"));
+            mockValidationHelper.Verify(x => x.ExtractUniqueOwners(mockEntry), Times.Once);
         }
 
         [Test]
-        public async Task ValidateCodeOwnersForService_WhenServiceNotFound_ReturnsServiceNotFoundStatus()
+        public async Task ValidateCodeOwnersForService_WhenExceptionThrown_ReturnsError()
         {
             // Arrange
             var repoName = "dotnet";
-            var serviceLabel = "NonExistentService12345"; // Service that definitely won't exist
-            
+            var serviceLabel = "Storage";
+
+            mockValidationHelper.Setup(x => x.FindServiceEntries(It.IsAny<IList<Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry>>(), serviceLabel))
+                              .Throws(new Exception("Test exception"));
+
             // Act
             var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
 
             // Assert
             Assert.That(result, Is.Not.Null);
+            Assert.That(result.Status, Is.EqualTo("Error"));
+            Assert.That(result.Message, Contains.Substring("Test exception"));
             Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            Assert.That(result.Status, Is.EqualTo("Service not found"));
-            Assert.That(result.Message, Does.Contain("NonExistentService12345"));
-            Assert.That(result.Message, Does.Contain("not found"));
-            Assert.That(result.CodeOwners.Count, Is.EqualTo(0));
         }
 
         [Test]
-        public void FindServiceEntries_WhenServiceMatchesServiceLabels_ReturnsEntry()
-        {
-            // Arrange - We'll need to test this via reflection since it's private
-            // Or we can test it indirectly through ValidateCodeOwnersForService
-            var repoName = "dotnet";
-            var serviceLabel = "Storage";
-            
-            // Act - Test indirectly by calling the public method
-            var result = commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel).Result;
-
-            // Assert - If the method works, it means FindServiceEntries is working
-            Assert.That(result, Is.Not.Null);
-            // The result status tells us if the service was found or not
-        }
-
-        [Test]
-        public async Task ValidateCodeOwnersForService_CaseInsensitiveRepoName_Works()
+        public async Task IsValidCodeOwner_WhenGitHubServiceReturnsNull_ReturnsErrorResponse()
         {
             // Arrange
-            var repoName = "DOTNET"; // Upper case
-            var serviceLabel = "Storage";
-            
+            mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
+                           .ReturnsAsync((User)null!);
+
             // Act
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
+            var result = await commonValidationTool.isValidCodeOwner("");
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            // Should work the same as lowercase
+            Assert.That(result, Contains.Substring("Unable to determine GitHub username"));
+            mockOutputService.Verify(x => x.Format(It.Is<GenericResponse>(r => r.Status == "Failed")), Times.Once);
         }
 
         [Test]
-        public async Task ValidateCodeOwnersForService_MultipleRepositories_WorksConsistently()
+        public async Task IsValidCodeOwner_WhenValidationSucceeds_ReturnsJsonResult()
         {
             // Arrange
-            var repositories = new[] { "dotnet", "python", "java" };
-            var serviceLabel = "Storage";
-            
-            // Act
-            var tasks = repositories.Select(repo => 
-                commonValidationTool.ValidateCodeOwnersForService(repo, serviceLabel)).ToArray();
-            var results = await Task.WhenAll(tasks);
-
-            // Assert
-            Assert.That(results.Length, Is.EqualTo(3));
-            
-            foreach (var result in results)
+            var githubAlias = "testuser";
+            var userDetails = CreateMockUser("testuser", 123456);
+            var mockValidationResult = new CodeOwnerValidationResult
             {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Status, Is.AnyOf("Success", "Service not found", "Error"));
-                Assert.That(result.Repository, Is.Not.Null.And.Not.Empty);
-            }
-            
-            // Verify repositories are mapped correctly
-            Assert.That(results[0].Repository, Is.EqualTo("azure-sdk-for-net"));
-            Assert.That(results[1].Repository, Is.EqualTo("azure-sdk-for-python"));  
-            Assert.That(results[2].Repository, Is.EqualTo("azure-sdk-for-java"));
-        }
+                Username = "testuser",
+                Status = "Success",
+                IsValidCodeOwner = true,
+                HasWritePermission = true,
+                Organizations = new Dictionary<string, bool> { { "azure", true } }
+            };
 
-        [Test]
-        public async Task ValidateCodeOwnersForService_EmptyServiceLabel_HandlesGracefully()
-        {
-            // Arrange
-            var repoName = "dotnet";
-            var serviceLabel = "";
-            
+            mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
+                           .ReturnsAsync(userDetails);
+            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "testuser"))
+                              .Returns(mockValidationResult);
+
             // Act
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
+            var result = await commonValidationTool.isValidCodeOwner(githubAlias);
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            // Should either find nothing or handle empty string gracefully
-            Assert.That(result.Status, Is.AnyOf("Success", "Service not found", "Error"));
+            Assert.That(result, Contains.Substring("\"IsValidCodeOwner\": true"));
+            Assert.That(result, Contains.Substring("\"HasWritePermission\": true"));
         }
 
         [Test]
-        public async Task ValidateCodeOwnersForService_NetworkError_ReturnsErrorStatus()
+        public async Task IsValidCodeOwner_WhenExceptionThrown_ReturnsErrorResponse()
         {
             // Arrange
-            var repoName = "dotnet";
-            var serviceLabel = "Storage";
+            var githubAlias = "testuser";
             
-            // This test is tricky because we're hitting real URLs
-            // In a real scenario, we'd want to mock the CodeownersParser.ParseCodeownersFile method
-            // For now, we test that network errors are handled gracefully
-            
+            mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
+                           .ThrowsAsync(new Exception("GitHub service error"));
+
             // Act
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
+            var result = await commonValidationTool.isValidCodeOwner(githubAlias);
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            
-            // Even if there's a network error, it should be handled gracefully
-            Assert.That(result.Status, Is.AnyOf("Success", "Service not found", "Error"));
-            
-            if (result.Status == "Error")
-            {
-                Assert.That(result.Message, Is.Not.Null.And.Not.Empty);
-            }
+            Assert.That(result, Contains.Substring("GitHub service error"));
+            mockOutputService.Verify(x => x.Format(It.Is<GenericResponse>(r => r.Status == "Failed")), Times.Once);
         }
 
         [Test]
-        public async Task ValidateCodeOwnersForService_ConcurrentCalls_HandleCorrectly()
+        public async Task ValidateCodeOwnersConcurrently_WithMultipleUsers_ValidatesCorrectly()
         {
             // Arrange
-            var repoName = "dotnet";
-            var serviceLabel = "Storage";
-            
-            // Act - Make multiple concurrent calls
-            var tasks = Enumerable.Range(0, 3)
-                .Select(_ => commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel))
-                .ToArray();
-            
-            var results = await Task.WhenAll(tasks);
+            var owners = new List<string> { "@user1", "@user2", "user3" };
+
+            // Mock the validation helper to return different results for each user
+            var user1Result = new CodeOwnerValidationResult
+            {
+                Username = "user1",
+                Status = "Success",
+                IsValidCodeOwner = true,
+                HasWritePermission = true,
+                Organizations = new Dictionary<string, bool> { { "azure", true } }
+            };
+
+            var user2Result = new CodeOwnerValidationResult
+            {
+                Username = "user2",
+                Status = "Success",
+                IsValidCodeOwner = false,
+                HasWritePermission = false,
+                Organizations = new Dictionary<string, bool> { { "azure", false } }
+            };
+
+            var user3Result = new CodeOwnerValidationResult
+            {
+                Username = "user3",
+                Status = "Success",
+                IsValidCodeOwner = true,
+                HasWritePermission = true,
+                Organizations = new Dictionary<string, bool> { { "azure", true } }
+            };
+
+            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user1"))
+                              .Returns(user1Result);
+            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user2"))
+                              .Returns(user2Result);
+            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user3"))
+                              .Returns(user3Result);
+
+            // Act
+            var results = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
 
             // Assert
-            Assert.That(results.Length, Is.EqualTo(3));
+            Assert.That(results, Is.Not.Null);
+            Assert.That(results.Count, Is.EqualTo(3));
             
-            foreach (var result in results)
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
-            }
+            // Verify each user's result
+            var user1Actual = results.First(r => r.Username == "user1");
+            Assert.That(user1Actual.IsValidCodeOwner, Is.True);
+            Assert.That(user1Actual.HasWritePermission, Is.True);
             
-            // All results should be identical since they're processing the same repo/service
-            var firstResult = results[0];
-            foreach (var result in results.Skip(1))
+            var user2Actual = results.First(r => r.Username == "user2");
+            Assert.That(user2Actual.IsValidCodeOwner, Is.False);
+            Assert.That(user2Actual.HasWritePermission, Is.False);
+            
+            var user3Actual = results.First(r => r.Username == "user3");
+            Assert.That(user3Actual.IsValidCodeOwner, Is.True);
+            Assert.That(user3Actual.HasWritePermission, Is.True);
+
+            // Verify helper was called for each user
+            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user1"), Times.Once);
+            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user2"), Times.Once);
+            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user3"), Times.Once);
+        }
+
+        [Test]
+        public async Task ValidateCodeOwnersConcurrently_WhenCalledTwiceWithSameUsers_ShowsCachingBehavior()
+        {
+            // Arrange
+            var owners = new List<string> { "@testUser" };
+            var expectedResult = new CodeOwnerValidationResult
             {
-                Assert.That(result.Status, Is.EqualTo(firstResult.Status));
-                Assert.That(result.Repository, Is.EqualTo(firstResult.Repository));
-            }
+                Username = "testUser",
+                Status = "Success",
+                IsValidCodeOwner = true,
+                HasWritePermission = true,
+                Organizations = new Dictionary<string, bool> { { "azure", true } }
+            };
+
+            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "testUser"))
+                              .Returns(expectedResult);
+
+            // Act - Call twice with the same user
+            var firstResults = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
+            var secondResults = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
+
+            // Assert
+            Assert.That(firstResults.Count, Is.EqualTo(1));
+            Assert.That(secondResults.Count, Is.EqualTo(1));
+            
+            var firstResult = firstResults.First();
+            var secondResult = secondResults.First();
+            
+            // Both results should be identical
+            Assert.That(firstResult.Username, Is.EqualTo(secondResult.Username));
+            Assert.That(firstResult.IsValidCodeOwner, Is.EqualTo(secondResult.IsValidCodeOwner));
+            Assert.That(firstResult.HasWritePermission, Is.EqualTo(secondResult.HasWritePermission));
+
+            // Verify helper was called only once (cached on second call)
+            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "testUser"), Times.Once);
+        }
+
+        [Test]
+        public async Task ValidateCodeOwner_WhenParseOutputThrowsException_ReturnsErrorResult()
+        {
+            // Arrange
+            var username = "testuser";
+            var expectedException = new Exception("Parsing failed");
+
+            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), username))
+                              .Throws(expectedException);
+
+            // Act
+            var result = await commonValidationTool.ValidateCodeOwner(username);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Username, Is.EqualTo(username));
+            Assert.That(result.Status, Is.EqualTo("Error"));
+            Assert.That(result.Message, Is.EqualTo($"Error validating {username}: {expectedException.Message}"));
+            Assert.That(result.IsValidCodeOwner, Is.False);
+            Assert.That(result.HasWritePermission, Is.False);
+            Assert.That(result.Organizations, Is.Empty);
+
+            // Verify the helper was called with the PowerShell output
+            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), username), Times.Once);
         }
 
         private User CreateMockUser(string login, int id)

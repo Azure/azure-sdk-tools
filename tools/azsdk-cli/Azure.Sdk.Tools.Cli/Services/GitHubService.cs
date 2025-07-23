@@ -119,9 +119,7 @@ public class GitConnection
 
         public async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
-            logger.LogInformation($"Getting all pull request for {repoOwner}/{repoName}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
-            logger.LogInformation($"Branch name: {remoteBranch}");
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 

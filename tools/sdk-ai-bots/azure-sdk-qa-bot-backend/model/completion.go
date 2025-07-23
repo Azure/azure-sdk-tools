@@ -23,6 +23,8 @@ const (
 	Source_TypeSpecMigration       Source = "static_typespec_migration_docs"
 	Source_AzureSDKDocsEng         Source = "azure-sdk-docs-eng"
 	Source_AzureSDKGuidelines      Source = "azure-sdk-guidelines"
+	Source_TypeSpecAzureHttpSpecs  Source = "typespec_azure_http_specs"
+	Source_TypeSpecHttpSpecs       Source = "typespec_http_specs"
 )
 
 type Role string

@@ -77,9 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             }
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        private async Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        private Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
         {
             var template = ctx.ParseResult.GetValueForArgument(templateArg);
             var serviceNamespace = ctx.ParseResult.GetValueForArgument(serviceNamespaceArg);
@@ -88,11 +86,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             var result = Init(template, serviceNamespace, outputDirectory);
             ctx.ExitCode = ExitCode;
             output.Output(result.ToString());
+            return Task.CompletedTask;
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        private async Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        private Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForArgument(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForArgument(outputDirectoryArg);
@@ -102,6 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             var result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
             ctx.ExitCode = ExitCode;
             output.Output(result.ToString());
+            return Task.CompletedTask;
         }
 
         [McpServerTool(Name = "InitializeAzureTypeSpecProject"), Description(@"Initialize a new TypeSpec project

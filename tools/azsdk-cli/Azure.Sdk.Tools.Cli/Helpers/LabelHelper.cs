@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
+using CsvHelper;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
@@ -48,43 +49,45 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return string.Join(
                 "\n",
                 csvContent
-                    .Split("\n")
+                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                     .Select(ParseCsvLine)
                     .Append(new List<string> { serviceLabel, "", ServiceLabelColorCode })
-                    .OrderBy(entry => entry[0], StringComparer.Ordinal)
-                    .Select(entry => string.Join(",", entry))
+                    .OrderBy(entry => entry[0], StringComparer.OrdinalIgnoreCase)
+                    .Select(entry => {
+                        // Use CsvHelper to properly format each line
+                        using var writer = new StringWriter();
+                        using var csv = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+                        foreach (var field in entry)
+                            csv.WriteField(field);
+                        csv.NextRecord();
+                        return writer.ToString().TrimEnd();
+                    })
             );
         }
 
         // This should probably be replaced with a 3rd party CSV parser
-        // TODO: This should probably be internal or private
+        // TODO: This should probably be internal or private. (Is there a way to test it if it's private?)
         public static List<string> ParseCsvLine(string line)
         {
             var columns = new List<string>();
-            var currentColumn = new StringBuilder();
-            bool inQuotes = false;
 
-            for (int i = 0; i < line.Length; i++)
+            using var reader = new StringReader(line);
+            using var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture);
+
+            if (csv.Read())
             {
-                char c = line[i];
-
-                if (c == '"')
+                var fieldCount = csv.Parser.Count;
+                for (int i = 0; i < fieldCount; i++)
                 {
-                    inQuotes = !inQuotes;
-                }
-                else if (c == ',' && !inQuotes)
-                {
-                    columns.Add(currentColumn.ToString());
-                    currentColumn.Clear();
-                }
-                else
-                {
-                    currentColumn.Append(c);
+                    columns.Add(csv.GetField(i) ?? string.Empty);
                 }
             }
 
-            // Add the last column
-            columns.Add(currentColumn.ToString());
+            // Ensure we always have at least 3 columns
+            while (columns.Count < 3)
+            {
+                columns.Add("");
+            }
 
             return columns;
         }

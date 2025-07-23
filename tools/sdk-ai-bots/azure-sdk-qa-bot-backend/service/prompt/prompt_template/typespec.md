@@ -79,10 +79,12 @@ For TypeSpec code questions, follow this structured approach:
 - **azure_api_guidelines**: Comprehensive REST guidance, OpenAPI standards, and Azure development best practices  
 - **azure_rest_api_specs_wiki**: Guidelines for Azure REST API specifications using Swagger or TypeSpec
 - **static_typespec_qa**: Historical Q&A repository with expert TypeSpec solutions for Azure scenarios
+- **typespec_azure_http_specs**: Contains all the Azure Typespec scenarios that should be supported by a client & service generator.
 
-## General TypeSpec Resources  
+## General TypeSpec Resources
 ----------------------------
 - **typespec_docs**: Core TypeSpec language documentation covering fundamental syntax, semantics, and usage patterns
+- **typespec_http_specs**: Contains all the scenarios that should be supported by a client & service generator.
 
 # KNOWLEDGE CONTEXT
 ===================================

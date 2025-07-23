@@ -8,6 +8,7 @@ import { RAGModel } from '../models/RAGModel.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
+import { extractSelectedReasons } from '../cards/components/feedback.js';
 import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
 import { ConversationHandler } from '../input/ConversationHandler.js';
@@ -57,8 +58,15 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   };
   const action = context.activity.value?.action;
   const feedbackComment = context.activity.value?.feedbackComment;
+  const selectedReasons = extractSelectedReasons(context.activity.value);
   const meta = getTurnContextLogMeta(context);
-  logger.info(`Received feedback action: ${action} with comment: "${feedbackComment}"`, { meta });
+  console.log('🚀 ~ app.activity ~ context.activity.value:', context.activity.value);
+  logger.info(
+    `Received feedback action: ${action} with comment: "${feedbackComment}" and reasons: ${JSON.stringify(
+      selectedReasons
+    )}`,
+    { meta }
+  );
 
   const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, meta);
   const messages: Message[] = [];
@@ -77,6 +85,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         messages,
         reaction: 'good',
         comment: feedbackComment,
+        reasons: selectedReasons,
       };
       await sendFeedback(goodFeedback, ragOptions, meta);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
@@ -87,6 +96,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         messages,
         reaction: 'bad',
         comment: feedbackComment,
+        reasons: selectedReasons,
       };
       await sendFeedback(badFeedback, ragOptions, meta);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');

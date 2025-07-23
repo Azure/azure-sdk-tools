@@ -45,9 +45,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // TODO: Extract this logic, write tests
             // Output should be the resulting CSV string with the new service
             // label added in the right place.
-            return "Service1,Description1,e99695\nService2,Description2,e99695...";
+            return string.Join(
+                "\n",
+                csvContent
+                    .Split("\n")
+                    .Select(ParseCsvLine)
+                    .Append(new List<string> { serviceLabel, "", ServiceLabelColorCode })
+                    .OrderBy(entry => entry[0], StringComparer.Ordinal)
+                    .Select(entry => string.Join(",", entry))
+            );
         }
-
 
         // This should probably be replaced with a 3rd party CSV parser
         // TODO: This should probably be internal or private

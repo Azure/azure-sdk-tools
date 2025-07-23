@@ -72,7 +72,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var columns = new List<string>();
 
             using var reader = new StringReader(line);
-            using var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture);
+            var config = new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture);
+            config.BadDataFound = null; // Ignore bad data
+            using var csv = new CsvReader(reader, config);
 
             if (csv.Read())
             {

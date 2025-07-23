@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoName: "azure-sdk-tools",
                     repoOwner: "Azure",
                     baseBranch: "main",
-                    // This is not sufficiently unique
+                    // This is not sufficiently unique (Is better to make the CreateBranch method check for uniqueness or add a way to make each branch unique?)
                     headBranch: $"add-service-label-{label}",
                     title: $"Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
@@ -191,26 +191,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 };
                 return output.Format(errorResponse);
             }
-        }
-
-        private static List<string> ParseCsvLine(string line)
-        {
-            var columns = new List<string>();
-
-            using var reader = new StringReader(line);
-            using var csv = new CsvReader(reader, System.Globalization.CultureInfo.InvariantCulture);
-
-            // Read & parse the CSV line
-            if (csv.Read())
-            {
-                var fieldCount = csv.Parser.Count; // number of fields in the current record
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    columns.Add(csv.GetField(i) ?? string.Empty);
-                }
-            }
-
-            return columns;
         }
     }
 }

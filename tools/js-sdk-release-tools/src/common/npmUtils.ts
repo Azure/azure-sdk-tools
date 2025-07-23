@@ -78,24 +78,31 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
         targetFilePath = getApiReviewPath(npmPackagePath)
     }
 
-    // Generate two file paths with different suffixes
-    const nodeApiFilePath = `${sdkFilePath}-node.api.md`;
-    const standardApiFilePath = `${sdkFilePath}.api.md`;
-    
-    // Generate two git commands
-    const nodeApiGitCommand = `git --no-pager show ${packageName}_${version}:${nodeApiFilePath}`;
-    const standardApiGitCommand = `git --no-pager show ${packageName}_${version}:${standardApiFilePath}`;
-
     try {
-        // Execute both git commands
-        const nodeApiResult = shell.exec(nodeApiGitCommand, { silent: true }).stdout;
-        const standardApiResult = shell.exec(standardApiGitCommand, { silent: true }).stdout;
-
-        // Use nodeApi result if it has content, otherwise use standardApi result
-        const lastStableNpmViewContext = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
+        let lastStableNpmViewContext: string;
         
-        if (!lastStableNpmViewContext.trim()) {
-            throw new Error(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
+        if (file === "CHANGELOG.md") {
+            // For CHANGELOG.md, use sdkFilePath directly
+            const gitCommand = `git --no-pager show ${packageName}_${version}:${sdkFilePath}`;
+            lastStableNpmViewContext = shell.exec(gitCommand, { silent: true }).stdout;
+        } else {
+            // For API review files, generate two file paths with different suffixes
+            const nodeApiFilePath = `${sdkFilePath}-node.api.md`;
+            const standardApiFilePath = `${sdkFilePath}.api.md`;
+            
+            // Generate two git commands
+            const nodeApiGitCommand = `git --no-pager show ${packageName}_${version}:${nodeApiFilePath}`;
+            const standardApiGitCommand = `git --no-pager show ${packageName}_${version}:${standardApiFilePath}`;
+
+            // Execute both git commands
+            const nodeApiResult = shell.exec(nodeApiGitCommand, { silent: true }).stdout;
+            const standardApiResult = shell.exec(standardApiGitCommand, { silent: true }).stdout;
+
+            // Use nodeApi result if it has content, otherwise use standardApi result
+            lastStableNpmViewContext = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
+            if (!lastStableNpmViewContext.trim()) {
+                throw new Error(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
+            }
         }
         
         fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });

@@ -1,56 +1,150 @@
-# The engsys `everything` server
+# Azure SDK CLI and MCP server
 
-This tool will serve as the primary integration point for all of the `azure-sdk` provided MCP tools. This tool will be built and published out of the `azure-sdk-tools` repo, but consumed primarily through the `.vscode/mcp.json` within each `Azure-sdk-for-X` language repo. Tool installation will be carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps`.
+This project is the primary integration point for all `azure-sdk` provided [MCP](https://modelcontextprotocol.io/introduction) tools as well as a convenient CLI app for azure sdk developers. It is built and published out of the `azure-sdk-tools` repo but consumed primarily through the `.vscode/mcp.json` file within each `Azure-sdk-for-<lang>` language repository. Server installation is carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps1`.
 
-## Integration
+* [Getting Started](#getting-started)
+  * [Prerequisites](#prerequisites)
+  * [Setup](#setup)
+  * [Build](#build)
+  * [Run](#run)
+  * [Test](#test)
+* [Project Structure and Information](#project-structure-and-information)
+  * [Directory Structure](#directory-structure)
+  * [Pipelines](#pipelines)
+* [Adding a New Tool](#adding-a-new-tool)
 
-This `everything` or `hub` server starts up and _should_ be able to pass requests for the requested tool. How the server actually runs these classes is very important. Especially when it comes to versioning etc.
+## Getting Started
 
-These are different proposals for how we can organize this. Examples will be linked within this same folder until we settle on one.
+### Prerequisites
 
-### Specific classes within a server
+- [.NET 8.0 SDK or later](https://dotnet.microsoft.com/download)
 
-Users will add classes to a specific folder in the hub server's code. These classes will have to meet an interface, but will be free to implement however they want other than that.
+### Setup
 
-|Pro/Con|Description|
-|---|---|
-|✅|Very easy for users to add new functionalities.|
-|🟥|Version selection will be gated at the server.|
-|🟥|Aside from disabling specific `tools` and changing installed version of the `hub` server, users won't be able to customize their server installation|
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/Azure/azure-sdk-tools.git
+    cd azure-sdk-tools/tools/azsdk-cli
+    ```
 
-### Individual MCP servers that are **referenced** from `hub`
+2. Restore dependencies:
+    ```sh
+    dotnet restore
+    ```
 
-Everything server csproj:
+### Build
 
-```xml
-  <ItemGroup>
-    <PackageReference Include="Azure.SDK.Tools.MCP.ToolName1" Version="1.0.0" />
-    <PackageReference Include="Azure.SDK.Tools.MCP.ToolName2" Version="1.0.0" />
-    <PackageReference Include="Azure.SDK.Tools.MCP.ToolName3" Version="1.0.0" />
+To build the project:
+
+```sh
+dotnet build
 ```
 
-My vision here is that these individual tools should be:
-- implemented as standalone servers
-- when DI-ed into our `hub` server, provide a `route` that can be provided by the hub server
+### Run
 
-This way, users can add local `mcp`
+To run the CLI locally:
 
-|Pro/Con|Description|
-|---|---|
-|✅|Tools will work standalone for easy development and testing.|
-|✅|Much more granular control over what versions of which tools are present in the hub.|
-|🟥|Users will have to match a server convention at the very least, and implement an interface that makes their actual workload pluggable into the `hub`.|
-|🟥|EngSys will need to add good integration testing of the contract, so that local development -> deployment in `everything server` will never surprise them.|
+```sh
+dotnet run --project Azure.Sdk.Tools.Cli -- --help
+```
 
-## Additional features
+### Test
 
-Concept of `chaining` of various MCP servers. Can this hub support taking the output of one spoke and shoving it to another? We probably should right?
+To run the tests:
 
+```sh
+dotnet test
+```
 
-## Some random DOs and DON'Ts of this server
+## Project Structure and Information
 
-- [x] DO build with the idea that authentication WILL be coming. Right now the sole protection we have is that these tools will be running in context of the "current user." This means access to `DefaultAzureCredential` should be enough to allow it to function. Users will be adding other external servers to their `mcp.json` at their own risk.
-  - What does this actually look like in practice?
-- [x] DO Provide `--tools` startup parameter:
-  - Provide `--tools <name>,<name>,<name>` to _enable_ specific functionalities of the `hub` server?
-  - Provide `--tools-exclude <name>,<name>,<name>` to _disable_ specific functionalities of the `hub` server?
+This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/dotnet/standard/commandline/) app and an MCP server using the [MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk).
+
+### Directory Structure
+
+- *Azure.Sdk.Tools.Cli* - Core project for cli/mcp logic
+    - *Commands* - Shared classes for CLI commands
+    - *Configuration* - Constants and other classes
+    - *Helpers* - Helper logic for parsing data
+    - *Models* - Shared models, response classes and schemas
+    - *Services* - Helper classes for working with upstream services, e.g. azure, devops, github
+    - *Tools* - CLI commands and MCP tool implementations
+- *Azure.Sdk.Tools.Cli.Tests* - Test project
+- *Azure.Sdk.Tools.Cli.Contract* - Common classes/interfaces
+- *Azure.Sdk.Tools.Cli.Analyzer* - Compilation addons to enforce conventions
+    - Enforce all tools handled by try/catch
+    - Enforce tool inclusion in service registration for dependency injector
+
+### Pipelines
+
+Public CI - https://dev.azure.com/azure-sdk/public/_build?definitionId=7677
+
+Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684 
+
+## Design Guidelines
+
+- Think of the server primarily as a first class CLI app
+    - Add attributes to enable MCP hooks, but MCP server functionality is a pluggable feature, not foundational to the architecture
+    - Rapid ad-hoc testing is easier via CLI than MCP, and any tools we build can be consumed by other software/scripts outside of MCP
+    - For example, the engsys/azsdk cli app is built around System.CommandLine along with some dependency injection and ASP.net glue + attributes to get it working with the MCP C# sdk
+- Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
+- Write debug logging to stderr and/or a file in MCP mode. This avoids the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
+- Support both stdio and http mode for MCP to enable easy debugging with tools like mcp inspector
+- Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
+
+## Adding a New Tool
+
+Tool classes are the core of the azure sdk app and implement CLI commands or MCP server tools. To add a new tool start with the following:
+
+- Determine the right directory and tool class name under `Azure.Sdk.Tools.Cli/Tools`
+- Reference or copy from the [hello world tool](Azure.Sdk.Tools.Cli/Tools/HelloWorldTool/HelloWorldTool.cs) for an example.
+- See [Tools/README.md](./Azure.Sdk.Tools.Cli/Tools/README.md) for more details
+
+Each tool class should implement a `GetCommand()` method and a `HandleCommand(...)` method. These allow the tools to be called from CLI mode.
+Some exceptions may apply on a case by case basis for tool classes where we implement MCP mode but not CLI mode and vice versa.
+
+```csharp
+public override Command GetCommand()
+{
+    Command command = new("example", "An example CLI command");
+    command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+    return command;
+}
+
+public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+{
+    var result = await SomeMethod();
+    ctx.ExitCode = ExitCode;
+    output.Output(result);
+}
+```
+
+Additionally, the tool class and any methods that will be included in the MCP server tools list must have the MCP attributes:
+
+```csharp
+[McpServerToolType, Description("Example tool")]
+public class ExampleTool(ILogger<ExampleTool> logger, IOutputService output) : MCPTool
+{
+    [McpServerTool(Name = "example-1"), Description("Example tool call 1")]
+    public DefaultCommandResponse Success(string message)
+    {
+        try
+        {
+            return new()
+            {
+                Message = "success"
+            }
+        }
+        catch (Exception ex)
+        {
+            SetFailure(1);
+            return new()
+            {
+                ResponseError = $"failure: {ex.Message}"
+            }
+        }
+    }
+}
+```
+
+**Rather than bubbling up exceptions, all `McpServerTool` methods must handle failures and format them into its response object. This allows tools to be interoperable between CLI and MCP mode.**

@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
+
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 internal class LabelHelperTests
@@ -16,41 +17,43 @@ internal class LabelHelperTests
     }
 
     [Test]
-    public async Task TestCheckServiceLabel_FindsServiceLabel()
+    public void TestCheckServiceLabel_FindsServiceLabel()
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.EqualTo("TestService"));
+        Assert.That(actual, Is.True);
     }
 
     [Test]
-    public async Task TestCheckServiceLabel_DoesNotFindServiceLabel()
+    public void TestCheckServiceLabel_DoesNotFindServiceLabel()
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "NonExistentService");
-        Assert.That(actual, Is.Null);
+        Assert.That(actual, Is.False);
     }
 
     [Test]
-    public async Task TestCheckServiceLabel_ColorCodeDoesNotMatch()
+    public void TestCheckServiceLabel_ColorCodeDoesNotMatch()
     {
         var csvContent = "TestService,Description,123456\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.Null);
+        Assert.That(actual, Is.False);
     }
 
     [Test]
-    public async Task TestPraseCsvLine_Stuff()
+    public void TestCheckServiceLabel_WithComplexCsvFormat()
     {
-        // Actual value:
-        // "Test,Service",Description\",e99695
-        var line = "\"Test,Service\",Description\\\",e99695";
 
-        var columns = LabelHelper.ParseCsvLine(line);
-        Assert.That(columns.Count, Is.EqualTo(3));
-        Assert.That(columns[0], Is.EqualTo("Test,Service"));
-        Assert.That(columns[1], Is.EqualTo("Description\""));
-        Assert.That(columns[2], Is.EqualTo("e99695"));
+        var csvContent = "\"Service - TestService\",\"Description with commas, and stuff\\\",e99695\nAnotherService,Description2,e99695";
+
+        var column = LabelHelper.ParseCsvLine(csvContent.Split('\n')[0]);
+        Assert.That(column.Count, Is.EqualTo(3));
+        Assert.That(column[0], Is.EqualTo("Service - TestService"));
+        Assert.That(column[1], Is.EqualTo("Description with commas, and stuff\\"));
+        Assert.That(column[2], Is.EqualTo("e99695"));
+
+        var actual = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
+        Assert.That(actual, Is.True);
     }
 
 }

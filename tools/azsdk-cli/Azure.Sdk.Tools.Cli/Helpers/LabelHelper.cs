@@ -6,17 +6,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ILabelHelper
     {
-        public string CheckServiceLabel(string csvContent, string serviceName);
+        public bool CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
     }
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public string CheckServiceLabel(string csvContent, string serviceName)
+        public bool CheckServiceLabel(string csvContent, string serviceName)
         {
-            logger.LogInformation($"Checking service label for: {serviceName}");
-
             var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines)
@@ -33,12 +31,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     if (colorCode.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase)
                         && labelName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                     {
-                        return serviceName;
+                        return true;
                     }
                 }
             }
-
-            return null;
+            
+            return false;
         }
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)

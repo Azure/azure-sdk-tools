@@ -136,13 +136,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
             return Task.FromResult(changeSet);
         }
+        
+        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranch)
+        {
+            // TODO
+            return Task.FromResult("Need to implement this");
+        }
 
         private Commit CreateMockCommit(string message, string sha)
         {
             var user = CreateMockUser("testuser", 123456);
             var author = new Committer($"test@example.com", "testuser", DateTimeOffset.Now);
             var repo = CreateMockRepository("testowner", "testrepo", user);
-            
+
             return new Commit(
                 url: $"https://api.github.com/repos/testowner/testrepo/commits/{sha}",
                 label: null,

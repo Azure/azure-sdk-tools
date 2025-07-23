@@ -131,10 +131,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 // Create a new branch
-                var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add-service-label-{label}", "main");
-                if (branchResult == null)
+                if (CheckServiceLabel(label))
                 {
-                    throw new InvalidOperationException("Failed to create branch");
+                    logger.LogInformation($"Service label '{label}' already exists. No action taken.");
+                    return $"Service label '{label}' already exists.";
+                }
+                else
+                {
+                    var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add-service-label-{label}", "main");
+                    if (branchResult == null)
+                    {
+                        throw new InvalidOperationException("Failed to create branch");
+                    }
                 }
 
                 // Prepare the CSV line to insert

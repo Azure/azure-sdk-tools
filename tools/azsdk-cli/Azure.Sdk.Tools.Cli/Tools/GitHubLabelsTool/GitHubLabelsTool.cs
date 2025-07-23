@@ -144,6 +144,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     }
                 }
 
+                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
+
                 // Prepare the CSV line to insert
                 var csvLine = $"{label},,e99695";
 
@@ -157,12 +159,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var csvContentString = csvContent[0].Content;
 
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
-
-                var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label);
+                var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 
                 await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add-service-label-{label}");
-
 
                 // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(

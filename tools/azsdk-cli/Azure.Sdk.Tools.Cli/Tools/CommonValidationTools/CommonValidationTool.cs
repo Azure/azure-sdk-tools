@@ -6,7 +6,6 @@ using ModelContextProtocol.Server;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
-using System.Diagnostics;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using System.Collections.Concurrent;
 
@@ -17,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class CommonValidationTool(IGitHubService githubService,
         IOutputService output,
         ICodeOwnerValidationHelper validationHelper,
+        ICodeOwnerValidator codeOwnerValidator,
         ILogger<CommonValidationTool> logger) : MCPTool
     {
         private static ConcurrentDictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new ConcurrentDictionary<string, CodeOwnerValidationResult>();
@@ -173,37 +173,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task<CodeOwnerValidationResult> ValidateCodeOwnerWithCaching(string username)
         {
-            var result = await ValidateCodeOwner(username);
+            var result = await codeOwnerValidator.ValidateCodeOwnerAsync(username, verbose: false);
             codeOwnerValidationCache.TryAdd(username, result);
             
             return result;
-        }
-
-        public async Task<CodeOwnerValidationResult> ValidateCodeOwner(string username)
-        {
-            try
-            {
-                // Call PowerShell script directly
-                var powerShellOutput = await CallPowerShellScriptViaCMD($"-UserName \"{username}\"");
-
-                var validationResult = validationHelper.ParsePowerShellOutput(powerShellOutput, username);
-                
-                return validationResult;
-            }
-            catch (Exception ex)
-            {
-                var validationResult = new CodeOwnerValidationResult
-                {
-                    Username = username,
-                    Status = "Error",
-                    Message = $"Error validating {username}: {ex.Message}",
-                    IsValidCodeOwner = false,
-                    HasWritePermission = false,
-                    Organizations = new Dictionary<string, bool>()
-                };
-                logger.LogError(ex, "Error validating code owner {username}", username);
-                return validationResult;
-            }
         }
 
         [McpServerTool(Name = "isValidCodeOwner"), Description("Validates if the user is a code owner given their GitHub alias. (Default is the current user)")]
@@ -214,7 +187,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Get the current user's GitHub username if not provided
                 var user = await githubService.GetGitUserDetailsAsync();
                 var userDetails = string.IsNullOrEmpty(githubAlias) ? user?.Login : githubAlias;
-                
+
                 if (string.IsNullOrEmpty(userDetails))
                 {
                     var errorResponse = new GenericResponse()
@@ -225,8 +198,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return output.Format(errorResponse);
                 }
 
-                var validationResult = await ValidateCodeOwner(userDetails);
-                
+                var validationResult = await codeOwnerValidator.ValidateCodeOwnerAsync(userDetails, verbose: false);
+
                 // Convert to the expected JSON format
                 var result = new
                 {
@@ -246,37 +219,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 };
                 return output.Format(errorResponse);
             }
-        }
-
-        private async Task<string> CallPowerShellScriptViaCMD(string arguments = "")
-        {
-            try
-            {
-                var processStartInfo = new ProcessStartInfo
-                {
-                    FileName = "pwsh.exe",
-                    Arguments = $"-ExecutionPolicy Bypass -File \"..\\..\\..\\tools\\github\\scripts\\Validate-AzsdkCodeOwner.ps1\" {arguments}",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using var process = Process.Start(processStartInfo);
-                if (process == null)
-                {
-                    logger.LogError("Failed to start PowerShell process.");
-                    return "Error: Failed to start PowerShell process";
-                }
-                var processOutput = await process.StandardOutput.ReadToEndAsync();
-                await process.WaitForExitAsync();
-
-                return processOutput ?? "";
             }
-            catch (Exception ex)
-            {
-                return $"Error: {ex.Message}";
-            }
-        }
     }
 }

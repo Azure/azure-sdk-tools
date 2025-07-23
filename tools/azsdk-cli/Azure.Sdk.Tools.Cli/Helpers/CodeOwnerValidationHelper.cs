@@ -1,16 +1,11 @@
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
-using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ICodeOwnerValidationHelper
     {
         CodeownersEntry? FindServiceEntries(IList<CodeownersEntry> entries, string serviceName);
-        Dictionary<string, bool> ExtractOrganizationStatus(string powerShellOutput);
-        bool ExtractWritePermission(string powerShellOutput);
-        bool ExtractCodeOwnerValidity(string powerShellOutput);
         List<string> ExtractUniqueOwners(CodeownersEntry entry);
-        CodeOwnerValidationResult ParsePowerShellOutput(string powerShellOutput, string username);
     }
 
     public class CodeOwnerValidationHelper : ICodeOwnerValidationHelper
@@ -48,117 +43,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (entry.AzureSdkOwners?.Any() == true) allOwners.AddRange(entry.AzureSdkOwners);
 
             return allOwners.Where(o => !string.IsNullOrEmpty(o)).Distinct().ToList();
-        }
-
-        public Dictionary<string, bool> ExtractOrganizationStatus(string powerShellOutput)
-        {
-            var organizationStatus = new Dictionary<string, bool>();
-            
-            if (string.IsNullOrEmpty(powerShellOutput))
-                return organizationStatus;
-                
-            var lines = powerShellOutput.Split('\n');
-            bool inOrgSection = false;
-
-            foreach (var line in lines)
-            {
-                if (string.IsNullOrEmpty(line)) continue;
-                
-                var cleanLine = line.Trim().Replace("\r", "");
-                
-                if (string.IsNullOrEmpty(cleanLine)) continue;
-
-                if (cleanLine.StartsWith("Required Org")) // Organization is spelled wrong in Validate-AzsdkCodeOwner.ps1 script.
-                {
-                    inOrgSection = true;
-                    continue;
-                }
-
-                if (cleanLine.StartsWith("Required Permissions") || cleanLine.StartsWith("Validation result"))
-                {
-                    inOrgSection = false;
-                    continue;
-                }
-
-                if (inOrgSection)
-                {
-                    var isSuccess = cleanLine.Contains("✓");
-                    var orgName = cleanLine.Replace("✓", "").Replace("✗", "").Replace("\uFFFD", "").Trim();
-                    if (!string.IsNullOrEmpty(orgName))
-                    {
-                        organizationStatus[orgName] = isSuccess;
-                    }
-                }
-            }
-
-            return organizationStatus;
-        }
-
-        public bool ExtractWritePermission(string powerShellOutput)
-        {
-            if (string.IsNullOrEmpty(powerShellOutput))
-                return false;
-                
-            var lines = powerShellOutput.Split('\n');
-            foreach (var line in lines)
-            {
-                var cleanLine = line.Trim().Replace("\r", "");
-                if (cleanLine.Contains("write", StringComparison.OrdinalIgnoreCase) && 
-                    (cleanLine.Contains("✓") || cleanLine.Contains("\uFFFD")))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool ExtractCodeOwnerValidity(string powerShellOutput)
-        {
-            if (string.IsNullOrEmpty(powerShellOutput))
-                return false;
-                
-            // Look for exact phrase "Valid code owner" (case-insensitive) but not "Invalid code owner"
-            return powerShellOutput.Contains("Valid code owner", StringComparison.OrdinalIgnoreCase) &&
-                   !powerShellOutput.Contains("Invalid code owner", StringComparison.OrdinalIgnoreCase);
-        }
-
-        public CodeOwnerValidationResult ParsePowerShellOutput(string powerShellOutput, string username)
-        {
-            var validationResult = new CodeOwnerValidationResult
-            {
-                Username = username,
-                Status = "Processing"
-            };
-
-            if (string.IsNullOrEmpty(powerShellOutput))
-            {
-                validationResult.Status = "Error";
-                validationResult.Message = "No output received from PowerShell script";
-                return validationResult;
-            }
-
-            // Parse the PowerShell output
-            var requiredOrganizations = new Dictionary<string, bool>
-            {
-                { "azure", false },
-                { "microsoft", false }
-            };
-            
-            var organizationStatus = ExtractOrganizationStatus(powerShellOutput);
-            foreach (var org in organizationStatus)
-            {
-                if (requiredOrganizations.ContainsKey(org.Key.ToLower()))
-                {
-                    requiredOrganizations[org.Key.ToLower()] = org.Value;
-                }
-            }
-
-            validationResult.Status = "Success";
-            validationResult.Organizations = requiredOrganizations;
-            validationResult.HasWritePermission = ExtractWritePermission(powerShellOutput);
-            validationResult.IsValidCodeOwner = ExtractCodeOwnerValidity(powerShellOutput);
-
-            return validationResult;
         }
     }
 

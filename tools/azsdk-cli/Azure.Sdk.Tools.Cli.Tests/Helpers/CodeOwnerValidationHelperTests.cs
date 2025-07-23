@@ -16,45 +16,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void PowerShellOutputParsing_VariousScenarios_ReturnsCorrectResults()
-        {
-            // Test Organization Status parsing
-            var orgOutput = @"
-Required Organizations:
-✓ azure
-✗ microsoft
-Required Permissions:
-✓ write
-Validation result: Valid code owner";
-
-            var organizationStatus = validationHelper.ExtractOrganizationStatus(orgOutput);
-            Assert.That(organizationStatus, Is.Not.Null);
-            Assert.That(organizationStatus.Count, Is.EqualTo(2));
-            Assert.That(organizationStatus["azure"], Is.True);
-            Assert.That(organizationStatus["microsoft"], Is.False);
-
-            // Test Write Permission parsing - positive case
-            var hasWritePermission = validationHelper.ExtractWritePermission(orgOutput);
-            Assert.That(hasWritePermission, Is.True);
-
-            // Test Write Permission parsing - negative case
-            var noWriteOutput = @"
-Required Permissions:
-✗ write
-Validation result: Invalid code owner";
-            var noWritePermission = validationHelper.ExtractWritePermission(noWriteOutput);
-            Assert.That(noWritePermission, Is.False);
-
-            // Test Code Owner Validity - positive case
-            var isValidOwner = validationHelper.ExtractCodeOwnerValidity(orgOutput);
-            Assert.That(isValidOwner, Is.True);
-
-            // Test Code Owner Validity - negative case
-            var isInvalidOwner = validationHelper.ExtractCodeOwnerValidity(noWriteOutput);
-            Assert.That(isInvalidOwner, Is.False);
-        }
-
-        [Test]
         public void ExtractUniqueOwners_ValidEntry_ReturnsUniqueOwners()
         {
             // Arrange - Create a mock CodeownersEntry
@@ -133,39 +94,6 @@ Validation result: Invalid code owner";
             // Test no match scenario
             result = validationHelper.FindServiceEntries(entriesWithServiceLabels, "NonExistentService");
             Assert.That(result, Is.Null);
-        }
-
-        [Test]
-        public void ParsePowerShellOutput_VariousInputs_ReturnsCorrectResults()
-        {
-            // Test valid output
-            var validOutput = @"
-Required Organizations:
-✓ azure
-✗ microsoft
-Required Permissions:
-✓ write
-Validation result: Valid code owner";
-            var username = "testuser";
-
-            var result = validationHelper.ParsePowerShellOutput(validOutput, username);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Username, Is.EqualTo(username));
-            Assert.That(result.Status, Is.EqualTo("Success"));
-            Assert.That(result.HasWritePermission, Is.True);
-            Assert.That(result.IsValidCodeOwner, Is.True);
-            Assert.That(result.Organizations, Is.Not.Null);
-            Assert.That(result.Organizations["azure"], Is.True);
-            Assert.That(result.Organizations["microsoft"], Is.False);
-
-            // Test empty/null output scenarios
-            var emptyResult = validationHelper.ParsePowerShellOutput("", username);
-            Assert.That(emptyResult.Status, Is.EqualTo("Error"));
-            Assert.That(emptyResult.Message, Is.EqualTo("No output received from PowerShell script"));
-
-            var nullResult = validationHelper.ParsePowerShellOutput(null!, username);
-            Assert.That(nullResult.Status, Is.EqualTo("Error"));
-            Assert.That(nullResult.Message, Is.EqualTo("No output received from PowerShell script"));
         }
     }
 }

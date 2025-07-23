@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IOutputService> mockOutputService;
         private Mock<ICodeOwnerValidationHelper> mockValidationHelper;
+        private Mock<ICodeOwnerValidator> mockCodeOwnerValidator;
         private ILogger<CommonValidationTool> logger;
         private CommonValidationTool commonValidationTool;
 
@@ -24,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockGitHubService = new Mock<IGitHubService>();
             mockOutputService = new Mock<IOutputService>();
             mockValidationHelper = new Mock<ICodeOwnerValidationHelper>();
+            mockCodeOwnerValidator = new Mock<ICodeOwnerValidator>();
             logger = new TestLogger<CommonValidationTool>();
 
             mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>()))
@@ -33,6 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 mockGitHubService.Object,
                 mockOutputService.Object,
                 mockValidationHelper.Object,
+                mockCodeOwnerValidator.Object,
                 logger
             );
         }
@@ -43,9 +46,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var githubAlias = "testuser";
             var userDetails = CreateMockUser("testuser", 123456);
+            var validationResult = new CodeOwnerValidationResult
+            {
+                Username = "testuser",
+                Status = "Success",
+                IsValidCodeOwner = true
+            };
 
             mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
                            .ReturnsAsync(userDetails);
+            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("testuser", false))
+                                 .ReturnsAsync(validationResult);
 
             // Act - Test both with explicit alias and empty alias (authenticated user)
             var resultWithAlias = await commonValidationTool.isValidCodeOwner(githubAlias);
@@ -157,8 +168,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             mockGitHubService.Setup(x => x.GetGitUserDetailsAsync())
                            .ReturnsAsync(userDetails);
-            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "testuser"))
-                              .Returns(mockValidationResult);
+            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("testuser", false))
+                                 .ReturnsAsync(mockValidationResult);
 
             // Act
             var result = await commonValidationTool.isValidCodeOwner(githubAlias);
@@ -193,7 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var owners = new List<string> { "@user1", "@user2", "user3" };
 
-            // Mock the validation helper to return different results for each user
+            // Mock the CodeOwnerValidator to return different results for each user
             var user1Result = new CodeOwnerValidationResult
             {
                 Username = "user1",
@@ -221,12 +232,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Organizations = new Dictionary<string, bool> { { "azure", true } }
             };
 
-            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user1"))
-                              .Returns(user1Result);
-            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user2"))
-                              .Returns(user2Result);
-            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user3"))
-                              .Returns(user3Result);
+            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("user1", false))
+                                 .ReturnsAsync(user1Result);
+            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("user2", false))
+                                 .ReturnsAsync(user2Result);
+            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("user3", false))
+                                 .ReturnsAsync(user3Result);
 
             // Act
             var results = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
@@ -248,10 +259,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(user3Actual.IsValidCodeOwner, Is.True);
             Assert.That(user3Actual.HasWritePermission, Is.True);
 
-            // Verify helper was called for each user
-            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user1"), Times.Once);
-            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user2"), Times.Once);
-            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "user3"), Times.Once);
+            // Verify CodeOwnerValidator was called for each user
+            mockCodeOwnerValidator.Verify(x => x.ValidateCodeOwnerAsync("user1", false), Times.Once);
+            mockCodeOwnerValidator.Verify(x => x.ValidateCodeOwnerAsync("user2", false), Times.Once);
+            mockCodeOwnerValidator.Verify(x => x.ValidateCodeOwnerAsync("user3", false), Times.Once);
         }
 
         [Test]
@@ -268,8 +279,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Organizations = new Dictionary<string, bool> { { "azure", true } }
             };
 
-            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), "testUser"))
-                              .Returns(expectedResult);
+            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("testUser", false))
+                                 .ReturnsAsync(expectedResult);
 
             // Act - Call twice with the same user
             var firstResults = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
@@ -287,34 +298,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(firstResult.IsValidCodeOwner, Is.EqualTo(secondResult.IsValidCodeOwner));
             Assert.That(firstResult.HasWritePermission, Is.EqualTo(secondResult.HasWritePermission));
 
-            // Verify helper was called only once (cached on second call)
-            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), "testUser"), Times.Once);
-        }
-
-        [Test]
-        public async Task ValidateCodeOwner_WhenParseOutputThrowsException_ReturnsErrorResult()
-        {
-            // Arrange
-            var username = "testuser";
-            var expectedException = new Exception("Parsing failed");
-
-            mockValidationHelper.Setup(x => x.ParsePowerShellOutput(It.IsAny<string>(), username))
-                              .Throws(expectedException);
-
-            // Act
-            var result = await commonValidationTool.ValidateCodeOwner(username);
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Username, Is.EqualTo(username));
-            Assert.That(result.Status, Is.EqualTo("Error"));
-            Assert.That(result.Message, Is.EqualTo($"Error validating {username}: {expectedException.Message}"));
-            Assert.That(result.IsValidCodeOwner, Is.False);
-            Assert.That(result.HasWritePermission, Is.False);
-            Assert.That(result.Organizations, Is.Empty);
-
-            // Verify the helper was called with the PowerShell output
-            mockValidationHelper.Verify(x => x.ParsePowerShellOutput(It.IsAny<string>(), username), Times.Once);
+            // Verify CodeOwnerValidator was called only once (cached on second call)
+            mockCodeOwnerValidator.Verify(x => x.ValidateCodeOwnerAsync("testUser", false), Times.Once);
         }
 
         private User CreateMockUser(string login, int id)

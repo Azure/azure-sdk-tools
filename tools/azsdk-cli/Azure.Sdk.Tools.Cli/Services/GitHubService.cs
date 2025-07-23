@@ -5,7 +5,6 @@ using Octokit;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Globalization;
-using Octokit.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -316,7 +315,7 @@ public class GitConnection
                 throw;
             }
         }
-
+        
         /// <summary>
         /// Helper method to get contents from a GitHub repository path.
         /// </summary>
@@ -368,16 +367,27 @@ public class GitConnection
         {
             try
             {
+                // Validate input parameters
+                if (string.IsNullOrEmpty(repoOwner)) throw new ArgumentException("Owner cannot be null or empty", nameof(repoOwner));
+                if (string.IsNullOrEmpty(repoName)) throw new ArgumentException("Name cannot be null or empty", nameof(repoName));
+                if (string.IsNullOrEmpty(branchName)) throw new ArgumentException("Branch name cannot be null or empty", nameof(branchName));
+
+                if (branchName.StartsWith("refs/heads"))
+                {
+                    throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The specified branch name '{0}' appears to be a ref name and not a branch name because it starts with the string 'refs/heads'. Either specify just the branch name or use the Create method if you need to specify the full ref name", branchName), nameof(branchName));
+                }
+
                 // Get the base branch reference first
                 var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
-                
+
                 if (baseReference == null)
                 {
                     return $"Base branch '{baseBranchName}' not found in repository {repoOwner}/{repoName}.";
                 }
 
-                // Use the Octokit extension method to create the branch
-                var createdReference = await gitHubClient.Git.Reference.CreateBranch(repoOwner, repoName, branchName, baseReference);
+                // Create the new branch reference
+                var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
+                var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
 
                 if (createdReference != null)
                 {

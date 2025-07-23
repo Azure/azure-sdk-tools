@@ -21,8 +21,12 @@ import {
   getServiceDir,
   makeSparseSpecDir,
   getPathToDependency,
+  loadTspConfig,
+  createRemoteConfigLoader,
+  createLocalConfigLoader,
+  extractSpecificationPath,
 } from "./utils.js";
-import { parse as parseYaml } from "yaml";
+import { stringify } from "yaml";
 import { config as dotenvConfig } from "dotenv";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
@@ -60,26 +64,10 @@ export async function initCommand(argv: any) {
     isUrl = false;
   }
   if (isUrl) {
-    // URL scenario
-    const resolvedConfigUrl = resolveTspConfigUrl(tspConfig);
-    const cloneDir = await makeSparseSpecDir(repoRoot);
-    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
-    await sparseCheckout(cloneDir);
-    const tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
-    await addSpecFiles(cloneDir, tspConfigPath);
-    await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
-    let data;
-    try {
-      data = await readFile(joinPaths(cloneDir, tspConfigPath), "utf8");
-    } catch (err) {
-      throw new Error(`Could not read tspconfig.yaml at ${tspConfigPath}. Error: ${err}`);
-    }
-    if (!data) {
-      throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
-    }
-    const configYaml = parseYaml(data);
+    // URL scenario - use inheritance resolution
+    const { config: configYaml } = 
+      await loadTspConfig<{ directory: string; commit: string; repo: string }>(tspConfig, createRemoteConfigLoader());
+    
     const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
@@ -89,10 +77,13 @@ export async function initCommand(argv: any) {
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!);
     await mkdir(newPackageDir, { recursive: true });
+    
+    // Store child config info for reproducibility - root can be calculated when needed
+    const childConfigInfo = resolveTspConfigUrl(tspConfig);
     const tspLocationData: TspLocation = {
-      directory: resolvedConfigUrl.path,
-      commit: resolvedConfigUrl.commit,
-      repo: resolvedConfigUrl.repo,
+      directory: childConfigInfo.path,      // Store child config directory for reproducibility
+      commit: childConfigInfo.commit,       // Store child config commit for reproducibility
+      repo: childConfigInfo.repo,          // Store child config repo for reproducibility
       additionalDirectories:
         configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
           "additionalDirectories"
@@ -102,24 +93,16 @@ export async function initCommand(argv: any) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
     }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
-    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
     outputDir = newPackageDir;
   } else {
-    // Local directory scenario
+    // Local directory scenario - use inheritance resolution
     if (!tspConfig.endsWith("tspconfig.yaml")) {
       tspConfig = joinPaths(tspConfig, "tspconfig.yaml");
     }
-    let data;
-    try {
-      data = await readFile(tspConfig, "utf8");
-    } catch (err) {
-      throw new Error(`Could not read tspconfig.yaml at ${tspConfig}`);
-    }
-    if (!data) {
-      throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
-    }
-    const configYaml = parseYaml(data);
+    
+    const { config: configYaml, rootMetadata: rootConfigPath } = 
+      await loadTspConfig<string>(tspConfig, createLocalConfigLoader());
+    
     const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
@@ -129,17 +112,12 @@ export async function initCommand(argv: any) {
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
     await mkdir(newPackageDir, { recursive: true });
-    tspConfig = tspConfig.replaceAll("\\", "/");
-    const matchRes = tspConfig.match(".*/(?<path>specification/.*)/tspconfig.yaml$");
-    var directory = "";
-    if (matchRes) {
-      if (matchRes.groups) {
-        directory = matchRes.groups!["path"]!;
-      }
-    }
+    
+    // Extract directory from root config path
+    const rootDirectory = extractSpecificationPath(rootConfigPath);
 
     const tspLocationData: TspLocation = {
-      directory: directory,
+      directory: rootDirectory,
       commit: commit ?? "",
       repo: repo ?? "",
       additionalDirectories:
@@ -199,6 +177,17 @@ export async function syncCommand(argv: any) {
       "NOTE: A path to a local spec was provided, will generate based off of local files...",
     );
     Logger.debug(`Using local spec directory: ${localSpecRepo}`);
+    
+    // Handle inheritance for local spec repo
+    const localConfigPath = joinPaths(localSpecRepo, "tspconfig.yaml");
+    const { config: resolvedConfig } = await loadTspConfig<string>(localConfigPath, createLocalConfigLoader());
+    
+    // Copy resolved config to temp directory
+    await writeFile(
+      joinPaths(srcDir, "tspconfig.yaml"), 
+      stringify(resolvedConfig)
+    );
+    
     function filter(src: string): boolean {
       if (src.includes("node_modules")) {
         return false;
@@ -223,18 +212,23 @@ export async function syncCommand(argv: any) {
       );
     }
   } else {
+    // Remote repository scenario - need to calculate root directory from stored child config
+    const childConfigUrl = `https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`;
+    const { rootMetadata: rootConfigInfo } = 
+      await loadTspConfig<{ directory: string; commit: string; repo: string }>(childConfigUrl, createRemoteConfigLoader());
+    
     const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
     await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, tspLocation.directory);
+    await addSpecFiles(cloneDir, rootConfigInfo.directory);  // Use calculated root directory
     for (const dir of tspLocation.additionalDirectories ?? []) {
       Logger.info(`Processing additional directory: ${dir}`);
       await addSpecFiles(cloneDir, dir);
     }
     await checkoutCommit(cloneDir, tspLocation.commit);
-    await cp(joinPaths(cloneDir, tspLocation.directory), srcDir, { recursive: true });
+    await cp(joinPaths(cloneDir, rootConfigInfo.directory), srcDir, { recursive: true });  // Use calculated root directory
     for (const dir of tspLocation.additionalDirectories!) {
       Logger.info(`Syncing additional directory: ${dir}`);
       await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {
@@ -277,6 +271,14 @@ export async function generateCommand(argv: any) {
     throw new Error("cannot find project name");
   }
   const srcDir = joinPaths(tempRoot, projectName);
+  
+  // Before compilation, ensure the temp tspconfig.yaml is fully resolved
+  const tspConfigPath = joinPaths(srcDir, "tspconfig.yaml");
+  if (await doesFileExist(tspConfigPath)) {
+    const { config: resolvedConfig } = await loadTspConfig<string>(tspConfigPath, createLocalConfigLoader());
+    await writeFile(tspConfigPath, stringify(resolvedConfig));
+  }
+  
   const emitter = await getEmitterFromRepoConfig(
     getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation),
   );
@@ -358,9 +360,36 @@ export async function updateCommand(argv: any) {
     await writeTspLocationYaml(tspLocation, outputDir);
   } else if (tspConfig) {
     const tspLocation: TspLocation = await readTspLocation(outputDir);
-    tspConfig = resolveTspConfigUrl(tspConfig);
-    tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
-    tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
+    
+    // Determine if tspConfig is a URL or local path
+    let isUrl = true;
+    if (await doesFileExist(tspConfig)) {
+      isUrl = false;
+    }
+    
+    if (isUrl) {
+      // Remote URL scenario - use inheritance resolution
+      const { rootMetadata: rootConfigInfo } = 
+        await loadTspConfig<{ directory: string; commit: string; repo: string }>(tspConfig, createRemoteConfigLoader());
+      
+      tspLocation.commit = rootConfigInfo.commit ?? tspLocation.commit;
+      tspLocation.repo = rootConfigInfo.repo ?? tspLocation.repo;
+      tspLocation.directory = rootConfigInfo.directory ?? tspLocation.directory;
+    } else {
+      // Local file scenario - use inheritance resolution
+      if (!tspConfig.endsWith("tspconfig.yaml")) {
+        tspConfig = joinPaths(tspConfig, "tspconfig.yaml");
+      }
+      
+      const { rootMetadata: rootConfigPath } = 
+        await loadTspConfig<string>(tspConfig, createLocalConfigLoader());
+      
+      // Extract directory from root config path for local files
+      const rootDirectory = extractSpecificationPath(rootConfigPath);
+      tspLocation.directory = rootDirectory;
+      // Note: For local files, commit and repo are not updated since they come from the existing tsp-location.yaml
+    }
+    
     await writeTspLocationYaml(tspLocation, outputDir);
   }
   // update argv in case anything changed and call into sync and generate

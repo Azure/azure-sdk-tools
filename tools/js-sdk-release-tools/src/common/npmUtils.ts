@@ -95,9 +95,9 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
         const lastStableNpmViewContext = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
         
         if (!lastStableNpmViewContext.trim()) {
-            logger.warn(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
+            throw new Error(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
         }
-
+        
         fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
         logger.info(`Create ${packageFolderPath} from the tag ${packageName}_${version} successfully`);
     } catch (error) {

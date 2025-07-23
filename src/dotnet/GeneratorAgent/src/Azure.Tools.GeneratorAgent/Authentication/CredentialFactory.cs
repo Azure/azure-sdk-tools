@@ -6,16 +6,17 @@ namespace Azure.Tools.GeneratorAgent.Authentication
 {
     internal class CredentialFactory
     {
-        private readonly ILogger<CredentialFactory> _logger;
+        private readonly ILogger<CredentialFactory> Logger;
 
         public CredentialFactory(ILogger<CredentialFactory> logger)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            ArgumentNullException.ThrowIfNull(logger);
+            Logger = logger;
         }
 
         public TokenCredential CreateCredential(RuntimeEnvironment environment, TokenCredentialOptions? options = null)
         {
-            _logger.LogInformation("Creating credential for environment {Environment}", environment);
+            Logger.LogInformation("Creating credential for environment {Environment}", environment);
 
             return environment switch
             {

@@ -83,12 +83,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
             }
 
-            // Ensure we always have at least 3 columns
-            while (columns.Count < 3)
-            {
-                columns.Add("");
-            }
-
             return columns;
         }
     }

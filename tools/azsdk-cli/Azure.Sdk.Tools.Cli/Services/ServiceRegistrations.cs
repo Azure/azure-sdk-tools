@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
+            services.AddSingleton<INpxHelper, NpxHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();

@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Tools.TspTool;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
+namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
     public class TypeSpecToolTests
     {
@@ -14,10 +14,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
         public void GetCommand_ShouldReturnCommandWithSubcommands()
         {
             // Arrange
-            var processHelper = new Mock<IProcessHelper>().Object;
+            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
             var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(processHelper, logger, outputService);
+            var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
             var command = tool.GetCommand();
@@ -41,10 +41,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
         public void Init_WithInvalidTemplate_ShouldReturnError()
         {
             // Arrange
-            var processHelper = new Mock<IProcessHelper>().Object;
+            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
             var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(processHelper, logger, outputService);
+            var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
             var result = tool.Init("invalid-template", "TestService", @"C:\temp");
@@ -58,10 +58,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
         public void Init_WithEmptyServiceNamespace_ShouldReturnError()
         {
             // Arrange
-            var processHelper = new Mock<IProcessHelper>().Object;
+            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
             var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(processHelper, logger, outputService);
+            var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
             var result = tool.Init("azure-core", "", @"C:\temp");
@@ -75,10 +75,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
         public void Init_WithNonExistentDirectory_ShouldReturnError()
         {
             // Arrange
-            var processHelper = new Mock<IProcessHelper>().Object;
+            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
             var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(processHelper, logger, outputService);
+            var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
             var result = tool.Init("azure-core", "TestService", @"C:\nonexistent");
@@ -92,10 +92,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
         public void ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {
             // Arrange
-            var processHelper = new Mock<IProcessHelper>().Object;
+            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
             var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(processHelper, logger, outputService);
+            var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
             var result = tool.ConvertSwagger("swagger.json", @"C:\temp", false, false);
@@ -109,10 +109,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TspTool
         public void ConvertSwagger_WithNonExistentFile_ShouldReturnError()
         {
             // Arrange
-            var processHelper = new Mock<IProcessHelper>().Object;
+            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
             var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(processHelper, logger, outputService);
+            var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
             var result = tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false);

@@ -9,7 +9,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface IProcessHelper
     {
         public ProcessResult RunProcess(string command, string[] args, string workingDirectory);
-        public ProcessResult RunNpx(List<string> args, string workingDirectory);
     }
 
     public class ProcessHelper(ILogger<ProcessHelper> logger) : IProcessHelper
@@ -72,27 +71,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             return new ProcessResult { Output = output.ToString(), ExitCode = exitCode };
-        }
-
-        public ProcessResult RunNpx(List<string> args, string workingDirectory)
-        {
-            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            if (isWindows)
-            {
-                return RunProcess(
-                    "cmd.exe",
-                    ["/C", "npx", .. args],
-                    workingDirectory
-                );
-            }
-            else
-            {
-                return RunProcess(
-                    "npx",
-                    [.. args],
-                    workingDirectory
-                );
-            }
         }
     }
 

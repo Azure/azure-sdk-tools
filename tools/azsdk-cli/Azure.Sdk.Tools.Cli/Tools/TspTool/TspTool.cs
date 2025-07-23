@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
     /// Use this tool to onboard to TypeSpec for new services or convert existing services.
     /// </summary>
     [McpServerToolType, Description("Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.")]
-    public class TypeSpecTool(IProcessHelper processHelper, ILogger<TypeSpecTool> logger, IOutputService output) : MCPTool
+    public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputService output) : MCPTool
     {
 
         // commands
@@ -278,7 +278,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 AZURE_TEMPLATES_URL
             };
 
-            var result = processHelper.RunNpx(argsList, Environment.CurrentDirectory);
+            var result = npxHelper.RunNpx(argsList, Environment.CurrentDirectory);
             if (result.ExitCode != 0)
             {
                 SetFailure();
@@ -318,7 +318,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 argsList.Add("--fully-compatible");
             }
 
-            var result = processHelper.RunNpx(argsList, Environment.CurrentDirectory);
+            var result = npxHelper.RunNpx(argsList, Environment.CurrentDirectory);
 
             if (result.ExitCode != 0)
             {

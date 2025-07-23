@@ -78,7 +78,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	llmMessages, reasoningModelMessages := s.buildMessages(req)
 
 	// 2. Build query for search
-	query := s.buildQueryForSearch(req, reasoningModelMessages)
+	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
 
 	// 3. Agentic search
 	agenticSearchChunks, err := s.agenticSearch(ctx, req.Message.Content, req)
@@ -115,7 +115,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		fullContext := strings.Join(chunks, "-------------------------\n")
 		result.FullContext = &fullContext
 	}
-
+	result.Intension = intension
 	log.Printf("Total ChatCompletion time: %v", time.Since(startTime))
 	return result, nil
 }
@@ -322,7 +322,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	return llmMessages, reasoningModelMessages
 }
 
-func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) string {
+func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntensionResult) {
 	query := req.Message.Content
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
@@ -348,7 +348,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	}
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
 	log.Printf("Searching query: %s", query)
-	return query
+	return query, intentResult
 }
 
 func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, query string, existingChunks []model.Index) ([]string, error) {
@@ -361,33 +361,40 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	log.Printf("Vector Search took: %v", time.Since(searchStart))
 
 	// filter unrelevant results
-	needCompleteResults := make([]model.Index, 0)
+	needCompleteFiles := make([]model.Index, 0)
+	needCompleteChunks := make([]model.Index, 0)
 	normalResult := make([]model.Index, 0)
-	for _, result := range results {
+	for i, result := range results {
 		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
 			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
 			continue
 		}
+		if result.ContextID == string(model.Source_TypeSpecQA) || result.ContextID == string(model.Source_TypeSpecMigration) {
+			needCompleteChunks = append(needCompleteChunks, result)
+			log.Printf("Vector searched chunk(Q&A): %+v", result)
+			continue
+		}
 		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
-			needCompleteResults = append(needCompleteResults, result)
+			needCompleteFiles = append(needCompleteFiles, result)
 			log.Printf("Vector searched chunk(high score): %+v", result)
 			continue
 		}
-		if result.ContextID == string(model.Source_TypeSpecQA) || result.ContextID == string(model.Source_TypeSpecMigration) {
-			needCompleteResults = append(needCompleteResults, result)
-			log.Printf("Vector searched chunk(Q&A): %+v", result)
+		// every source first document should be completed
+		if i == 0 || (results[i].ContextID != results[i-1].ContextID) {
+			needCompleteFiles = append(needCompleteFiles, result)
+			log.Printf("Vector searched chunk(first document of source): %+v", result)
 			continue
 		}
 		log.Printf("Vector searched chunk: %+v", result)
 		normalResult = append(normalResult, result)
 	}
 	supplyNum := 5
-	if len(needCompleteResults) < supplyNum {
+	if len(needCompleteFiles) < supplyNum {
 		log.Printf("No results found with high relevance score, supply with normal results")
 		if len(normalResult) < supplyNum {
 			supplyNum = len(normalResult)
 		}
-		needCompleteResults = normalResult[:supplyNum]
+		needCompleteFiles = normalResult[:supplyNum]
 		normalResult = normalResult[supplyNum:]
 	}
 
@@ -395,7 +402,7 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	files := make(map[string]bool)
 	chunks := make(map[string]bool)
 	mergedChunks := make([]model.Index, 0)
-	for _, result := range needCompleteResults {
+	for _, result := range needCompleteFiles {
 		if files[result.Title] {
 			continue
 		}
@@ -407,6 +414,7 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 		})
 		log.Printf("Complete chunk: %s/%s", result.ContextID, result.Title)
 	}
+	mergedChunks = append(mergedChunks, needCompleteChunks...)
 	var wg sync.WaitGroup
 	wg.Add(len(mergedChunks))
 	for i := range mergedChunks {
@@ -505,8 +513,16 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 					"additionalProperties": false,
 				},
 			},
+			"category": map[string]interface{}{
+				"type":        "string",
+				"description": "the category of user's question(eg: typespec synax, typespec migration, ci-failure and so on)",
+			},
+			"reasoning_progress": map[string]interface{}{
+				"type":        "string",
+				"description": "output your reasoning progress of generating the answer",
+			},
 		},
-		"required":             []string{"has_result", "answer", "references"},
+		"required":             []string{"has_result", "answer", "references", "category", "reasoning_progress"},
 		"additionalProperties": false,
 	}
 

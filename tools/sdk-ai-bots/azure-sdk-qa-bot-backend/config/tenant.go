@@ -20,6 +20,10 @@ var typespecSources = []model.Source{
 	model.Source_TypeSpecHttpSpecs,
 }
 
+var SourceTopK = map[model.Source]int{
+	model.Source_TypeSpecMigration: 3,
+}
+
 var tenantConfigMap = map[model.TenantID]TenantConfig{
 	model.TenantID_PythonChannelQaBot: {
 		Sources:             append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki}, typespecSources...),

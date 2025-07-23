@@ -141,6 +141,9 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	for _, source := range sources {
 		req := baseReq
 		req.Top = k
+		if val, ok := config.SourceTopK[source]; ok {
+			req.Top = val
+		}
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
@@ -260,6 +263,8 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var err error
 	switch chunk.ContextID {
 	case string(model.Source_TypeSpecQA):
+		chunks, err = s.GetHeader1CompleteContext(chunk)
+	case string(model.Source_TypeSpecMigration):
 		chunks, err = s.GetHeader1CompleteContext(chunk)
 	default:
 		chunks, err = s.GetCompleteContext(chunk)

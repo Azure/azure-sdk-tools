@@ -13,10 +13,10 @@ var typespecSources = []model.Source{
 	model.Source_AzureResourceManagerRPC,
 	model.Source_AzureAPIGuidelines,
 	model.Source_TypeSpecQA,
+	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
 	model.Source_TypeSpecMigration,
-	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpecHttpSpecs,
 }
 

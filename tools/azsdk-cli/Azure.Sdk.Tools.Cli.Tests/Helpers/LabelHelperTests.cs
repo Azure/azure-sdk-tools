@@ -56,4 +56,54 @@ internal class LabelHelperTests
         Assert.That(actual, Is.True);
     }
 
+    [Test]
+    public void TestCreateServiceLabelInsertion()
+    {
+        var csvContent = "SMR,,e99695\nRRC,,e99695\nPVLG,,e99695\nSBEC,,e99695";
+        var serviceLabel = "TestService";
+        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
+        var expected = "PVLG,,e99695\nRRC,,e99695\nSBEC,,e99695\nSMR,,e99695\nTestService,,e99695";
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TestCreateServiceLabelEmptyCSV()
+    {
+        var csvContent = "";
+        var serviceLabel = "TestService";
+        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
+        var expected = "TestService,,e99695";
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+        [Test]
+    public void TestCreateServiceLabelWithSpecialCharacters()
+    {
+        var csvContent = "X-MR,,e99695\nYR - C,,e99695\nZVLG,,e99695\nQ bec,,e99695";
+        var serviceLabel = "Service \"quoted\"";
+        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
+        var expected = "Service \"quoted\",,e99695\nZVLG,,e99695\nYR - C,,e99695\nQ BEC,,e99695\nX-MR,,e99695";
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TestNormalizeLabel_WithSpacesAndDashes()
+    {
+        var actual = labelHelper.NormalizeLabel("Test - Service");
+        Assert.That(actual, Is.EqualTo("test-service"));
+    }
+
+    [Test]
+    public void TestNormalizeLabel_WithSpaces()
+    {
+        var actual = labelHelper.NormalizeLabel("New Test Service");
+        Assert.That(actual, Is.EqualTo("new-test-service"));
+    }
+
+    [Test]
+    public void TestNormalizeLabel_WithSlash()
+    {
+        var actual = labelHelper.NormalizeLabel("Test/Service");
+        Assert.That(actual, Is.EqualTo("test-service"));
+    }
 }

@@ -8,6 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         public bool CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
+        public string NormalizeLabel(string label);
     }
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
@@ -84,6 +85,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             return columns;
+        }
+
+        public string NormalizeLabel(string label)
+        {
+            var normalizedLabel = label
+                    .Replace(" - ", "-")
+                    .Replace(" ", "-")
+                    .Replace("/", "-")
+                    .Replace("_", "-")
+                    .Trim('-')
+                    .ToLowerInvariant();
+            return normalizedLabel;
         }
     }
 }

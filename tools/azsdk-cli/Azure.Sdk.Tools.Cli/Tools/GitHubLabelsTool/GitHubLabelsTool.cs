@@ -124,13 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var normalizedLabel = label
-                    .Replace(" - ", "-")
-                    .Replace(" ", "-")
-                    .Replace("/", "-")          
-                    .Replace("_", "-")
-                    .Trim('-')
-                    .ToLowerInvariant();
+                var normalizedLabel = labelHelper.NormalizeLabel(label);
 
                 // Create a new branch
                 if (await CheckServiceLabel(label))

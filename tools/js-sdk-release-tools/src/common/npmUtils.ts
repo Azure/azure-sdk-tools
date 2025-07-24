@@ -75,7 +75,7 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             targetFilePath = path.join(npmPackagePath, file);
             // For CHANGELOG.md, use sdkFilePath directly
             const gitCommand = `git --no-pager show ${packageName}_${version}:${sdkFilePath}`;
-            const lastStableNpmViewContext = shell.exec(gitCommand, { silent: true }).stdout;
+            const changelogContent= shell.exec(gitCommand, { silent: true }).stdout;
             fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
         }
         else {

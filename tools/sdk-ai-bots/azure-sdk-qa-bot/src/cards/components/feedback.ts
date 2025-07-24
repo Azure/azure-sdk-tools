@@ -4,14 +4,23 @@ const feedbackReasons = {
     'It misunderstood my question',
     'The response is hard to understand',
     'Out of date/obsolete',
-    'The solution doesn\'t work',
+    "The solution doesn't work",
     'The reference link(s) is broken',
     'Other',
   ],
 };
 
+function generateToggleId(index: number): string {
+  return `reason_${index}`;
+}
+
 function createFeedbackActionCard(submitText: string, reasons: string[], action: string) {
-  const reasonToggles = reasons.map((reason) => ({ type: 'Input.Toggle', title: reason }));
+  const reasonToggles = reasons.map((reason, index) => ({
+    type: 'Input.Toggle',
+    title: reason,
+    id: generateToggleId(index),
+    value: 'false',
+  }));
   const question = (action === 'feedback-dislike' ? '👎' : '👍') + 'What is the reason for your feedback?';
   return {
     type: 'AdaptiveCard',
@@ -41,7 +50,7 @@ function createFeedbackActionCard(submitText: string, reasons: string[], action:
       {
         type: 'Action.Submit',
         title: submitText,
-        data: { action },
+        data: { action, reasons },
       },
     ],
   };
@@ -72,4 +81,18 @@ export function createFeedbackCard() {
     actions: [submitLikeCard, submitDislikeCard],
   };
   return feedbackCard;
+}
+
+export function extractSelectedReasons(submittedData: any): string[] {
+  const selectedReasons: string[] = [];
+  const reasons = submittedData.reasons || [];
+
+  reasons.forEach((reason: string, index: number) => {
+    const toggleId = generateToggleId(index);
+    if (submittedData[toggleId] === 'true') {
+      selectedReasons.push(reason);
+    }
+  });
+
+  return selectedReasons;
 }

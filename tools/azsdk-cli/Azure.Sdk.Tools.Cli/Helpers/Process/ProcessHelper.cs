@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Azure.Sdk.Tools.Cli.Helpers

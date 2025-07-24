@@ -31,7 +31,6 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
                 output.AppendLine($"### Error Message: {ErrorMessage}");
             }
 
-
             return output.ToString();
         }
     }

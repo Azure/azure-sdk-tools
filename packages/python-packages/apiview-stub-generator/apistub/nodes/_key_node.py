@@ -13,6 +13,19 @@ class KeyNode(NodeEntityBase):
         self.display_name = f"{self.name}: {self.type}"
         self.apiview = parent_node.apiview
 
+    def check_handwritten(self):
+        """Check if the key is handwritten by inheriting from parent class, since inspect.getfile
+         doesn't return the original source if it's inherited from a different TypedDict subclass.
+
+        :return: True if the parent class is handwritten, False otherwise.
+        :rtype: bool
+        """
+        try:
+            return self.parent_node.is_handwritten
+        except Exception:
+            # Default to False if errors
+            return False
+
     def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: ReviewLines

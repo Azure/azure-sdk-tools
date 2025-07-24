@@ -5,8 +5,9 @@
 # This file contains handwritten code that extends the generated models.
 # --------------------------------------------------------------------------
 
-from typing import overload, Optional, ClassVar, Dict, List, Union
+from typing import overload, Optional, ClassVar, Dict, List, Union, TypedDict
 from dataclasses import dataclass
+from enum import Enum, IntEnum
 from .models._models import (
     ClassWithIvarsAndCvars, 
     SomethingWithOverloads, 
@@ -61,3 +62,14 @@ class HandwrittenExtendedClass(ClassWithIvarsAndCvars, SomethingWithOverloads):
         """Tests: Static method with single-line signature (1 param) and handwritten render_classes."""
         pass
 
+
+class HandwrittenEnum(Enum):
+    """Tests: Handwritten enum with handwritten render_classes."""
+    VALUE_A = "a"
+    VALUE_B = "b"
+
+
+class HandwrittenDict(TypedDict):
+    """Tests: Handwritten TypedDict with handwritten render_classes."""
+    name: str
+    value: int

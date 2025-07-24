@@ -19,6 +19,8 @@ from ._client import (
 )
 from ._patch import (
     HandwrittenExtendedClass,
+    HandwrittenEnum,
+    HandwrittenDict,
 )
 
 __version__ = VERSION

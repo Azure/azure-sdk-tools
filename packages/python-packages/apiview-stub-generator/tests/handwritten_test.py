@@ -6,7 +6,7 @@
 
 import pytest
 from apistub.nodes import ClassNode
-from apistubgentest import HandwrittenExtendedClass
+from apistubgentest import HandwrittenExtendedClass, HandwrittenEnum, HandwrittenDict
 from ._test_util import _tokenize, MockApiView
 
 
@@ -42,6 +42,50 @@ class TestHandwrittenTokens:
         some_generated = handwritten + ["something"]
         with pytest.raises(AssertionError, match="should have 'handwritten'"):
             self._check_handwritten_names(tokens[1]["Children"], some_generated)
+    
+    def test_handwritten_enum_tokens(self):
+        obj = HandwrittenEnum
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        self._check_enum_handwritten(tokens, obj.__name__)
+
+    def test_handwritten_typed_dict_tokens(self):
+        obj = HandwrittenDict
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        for line in tokens:
+            print(line)
+        self._check_typed_dict_handwritten(tokens, obj.__name__)
+
+    def _check_enum_handwritten(self, review_lines, enum_name):
+        for line_idx, line in enumerate(review_lines):
+            for token in line["Tokens"]:
+                if token["Value"] == enum_name:
+                    self._check_tokens_handwritten(line["Tokens"])
+                for child_line in line["Children"]:
+                    self._check_tokens_handwritten(child_line["Tokens"])
+
+    def _check_typed_dict_handwritten(self, review_lines, typed_dict_name):
+        for line_idx, line in enumerate(review_lines):
+            for token in line["Tokens"]:
+                if token["Value"] == typed_dict_name:
+                    self._check_tokens_handwritten(line["Tokens"])
+                    for child_line in line["Children"]:
+                        self._check_tokens_handwritten(child_line["Tokens"])
 
     # Check that class definition tokens have 'handwritten' in RenderClasses
     def _check_class_handwritten(self, review_lines, class_name):

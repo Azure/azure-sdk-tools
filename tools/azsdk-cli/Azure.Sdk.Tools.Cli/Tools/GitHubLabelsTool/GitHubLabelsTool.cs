@@ -122,13 +122,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
         public async Task<string> CreateServiceLabel(string label, string link)
         {
-            // Create a new branch
-            // Prepare the CSV line to insert
-            // Update the CSV file
-            // Create the pull request
-
             try
             {
+                var normalizedLabel = label
+                    .Replace(" - ", "-")
+                    .Replace(" ", "-")
+                    .Replace("/", "-")          
+                    .Replace("_", "-")
+                    .Trim('-')
+                    .ToLowerInvariant();
+
                 // Create a new branch
                 if (await CheckServiceLabel(label))
                 {
@@ -137,10 +140,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 else
                 {
-                    var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add-service-label-{label}", "main");
-                    if (branchResult == null)
+                    var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
+                    logger.LogInformation($"Branch creation result: {branchResult}");
+                    
+                    // If branch already exists, return early with the compare URL
+                    if (branchResult.Contains("already exists"))
                     {
-                        throw new InvalidOperationException("Failed to create branch");
+                        var branchResponse = new GenericResponse()
+                        {
+                            Details = { 
+                                $"Result: {branchResult}"
+                            }
+                        };
+                        return output.Format(branchResponse);
                     }
                 }
 
@@ -161,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 
-                await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add-service-label-{label}");
+                await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
 
                 // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(
@@ -169,7 +181,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoOwner: "Azure",
                     baseBranch: "main",
                     // This is not sufficiently unique (Is better to make the CreateBranch method check for uniqueness or add a way to make each branch unique?)
-                    headBranch: $"add-service-label-{label}",
+                    headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
 

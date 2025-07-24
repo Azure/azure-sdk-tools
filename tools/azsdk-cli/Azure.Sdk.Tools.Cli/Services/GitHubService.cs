@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Octokit;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using System.Globalization;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -367,36 +366,22 @@ public class GitConnection
         {
             try
             {
-                // Validate input parameters
-                if (string.IsNullOrEmpty(repoOwner)) throw new ArgumentException("Owner cannot be null or empty", nameof(repoOwner));
-                if (string.IsNullOrEmpty(repoName)) throw new ArgumentException("Name cannot be null or empty", nameof(repoName));
-                if (string.IsNullOrEmpty(branchName)) throw new ArgumentException("Branch name cannot be null or empty", nameof(branchName));
+                var existingBranches = await gitHubClient.Repository.Branch.GetAll(repoOwner, repoName);
+                var branchExists = existingBranches.Any(b => b.Name.Equals(branchName, StringComparison.OrdinalIgnoreCase));
 
-                if (branchName.StartsWith("refs/heads"))
+                if (branchExists)
                 {
-                    throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "The specified branch name '{0}' appears to be a ref name and not a branch name because it starts with the string 'refs/heads'. Either specify just the branch name or use the Create method if you need to specify the full ref name", branchName), nameof(branchName));
+                    return $"Branch '{branchName}' already exists. Compare URL: https://github.com/{repoOwner}/{repoName}/compare/main...{branchName}";
                 }
 
                 // Get the base branch reference first
                 var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
 
-                if (baseReference == null)
-                {
-                    return $"Base branch '{baseBranchName}' not found in repository {repoOwner}/{repoName}.";
-                }
-
                 // Create the new branch reference
                 var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
                 var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
-
-                if (createdReference != null)
-                {
-                    return $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
-                }
-                else
-                {
-                    return $"Failed to create branch '{branchName}' in {repoOwner}/{repoName}.";
-                }
+                
+                return  $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
             }
             catch (Exception ex)
             {

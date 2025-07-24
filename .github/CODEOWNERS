@@ -48,6 +48,7 @@
 /tools/tsp-client/                      @catalinaperalta @timotheeguerin
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj 
+/tools/perf-regression-finder/          @jsquire @sa7936 @m-redding
 
 ###########
 # Stress

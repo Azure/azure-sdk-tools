@@ -12,21 +12,38 @@ import (
 func CompletionHandler(c *gin.Context) {
 	var req model.CompletionReq
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(400, gin.H{
-			"error": "Failed to bind JSON request: " + err.Error(),
-		})
+		// Use structured error instead of generic error
+		apiErr := model.NewInvalidRequestError("Failed to bind JSON request", err.Error())
+		c.JSON(apiErr.StatusCode, apiErr)
 		return
 	}
+
 	service, err := agent.NewCompletionService()
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		// Use structured error for service initialization failure
+		apiErr := model.NewServiceInitFailureError(err)
+		c.JSON(apiErr.StatusCode, apiErr)
 		return
 	}
+
 	resp, err := service.ChatCompletion(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		// Check if it's already an APIError, otherwise wrap it
+		if apiErr, ok := err.(*model.APIError); ok {
+			c.JSON(apiErr.StatusCode, apiErr)
+		} else {
+			// Wrap unknown errors as internal errors
+			apiErr := model.NewAPIError(
+				model.ErrorCodeInternalError,
+				"An unexpected error occurred",
+				err.Error(),
+			)
+			c.JSON(apiErr.StatusCode, apiErr)
+		}
 		return
 	}
+
+	// Keep your original response logging
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
 		log.Printf("Failed to marshal response: %v\n", err)

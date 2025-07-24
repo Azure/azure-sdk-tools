@@ -36,10 +36,10 @@ func NewCompletionService() (*CompletionService, error) {
 
 func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	if req == nil {
-		return fmt.Errorf("request is nil")
+		return model.NewInvalidRequestError("request is nil", nil)
 	}
 	if req.Message.Content == "" {
-		return fmt.Errorf("message content is empty")
+		return model.NewEmptyContentError()
 	}
 	if req.TopK == nil {
 		topK := 20
@@ -53,6 +53,8 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.PromptTemplate == nil {
 			req.PromptTemplate = &tenantConfig.PromptTemplate
 		}
+	} else {
+		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
 	return nil
 }
@@ -70,7 +72,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	if err := s.CheckArgs(req); err != nil {
-		log.Printf("ERROR: %s", err)
+		log.Printf("Request validation failed: %v", err)
 		return nil, err
 	}
 
@@ -83,21 +85,21 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Agentic search
 	agenticSearchChunks, err := s.agenticSearch(ctx, req.Message.Content, req)
 	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		log.Printf("Agentic search failed: %v", err)
+		return nil, model.NewSearchFailureError(err)
 	}
 
 	// 4. Search for related documents
 	chunks, err := s.searchRelatedKnowledge(req, query, agenticSearchChunks)
 	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		log.Printf("Knowledge search failed: %v", err)
+		return nil, model.NewSearchFailureError(err)
 	}
 
 	// 5. Build prompt
 	prompt, err := s.buildPrompt(chunks, *req.PromptTemplate)
 	if err != nil {
-		log.Printf("ERROR: %s", err)
+		log.Printf("Prompt building failed: %v", err)
 		return nil, err
 	}
 
@@ -105,8 +107,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
 	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
 	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		log.Printf("LLM request failed: %v", err)
+		return nil, model.NewLLMServiceFailureError(err)
 	}
 
 	// 7. Process the result
@@ -122,36 +124,34 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
 	promptParser := prompt.IntensionPromptParser{}
-	promptStr, error := promptParser.ParsePrompt(nil, "intension.md")
-	if error != nil {
-		log.Printf("ERROR: %s", error)
-		return nil, error
-	}
-	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
-	// var temperature float32 = 0.0001
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
-		Messages:       messages,
-		DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
-		// Temperature:    &temperature,
-	}, nil)
-
+	promptStr, err := promptParser.ParsePrompt(nil, "intension.md")
 	if err != nil {
-		// TODO: Update the following line with your application specific error handling logic
-		log.Printf("ERROR: %s", err)
+		log.Printf("Failed to parse intension prompt: %v", err)
 		return nil, err
 	}
 
+	messages = append(messages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)})
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+		Messages:       messages,
+		DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
+	}, nil)
+
+	if err != nil {
+		log.Printf("LLM intension recognition failed: %v", err)
+		return nil, model.NewLLMServiceFailureError(err)
+	}
+
 	for _, choice := range resp.Choices {
-		result, error := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
-		if error != nil {
-			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
-			return nil, error
+		result, err := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
+		if err != nil {
+			log.Printf("Failed to parse intension response: %v, content: %s", err, *choice.Message.Content)
+			return nil, err
 		}
 		return result, nil
 	}
-	return nil, nil
+
+	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 }
 
 func processDocument(result model.Index) string {
@@ -545,6 +545,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 				Strict:      to.Ptr(true),
 			},
 		},
+		TopP: to.Ptr(float32(config.AOAI_CHAT_COMPLETIONS_TOP_P)),
 	}, nil)
 
 	if err != nil {

@@ -9,9 +9,9 @@ type TenantConfig struct {
 }
 
 var typespecSources = []model.Source{
-	model.Source_TypeSpecAzure,
 	model.Source_AzureResourceManagerRPC,
 	model.Source_AzureAPIGuidelines,
+	model.Source_TypeSpecAzure,
 	model.Source_TypeSpecQA,
 	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpec,

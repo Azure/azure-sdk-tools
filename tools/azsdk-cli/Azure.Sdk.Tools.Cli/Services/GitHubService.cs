@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Octokit;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -377,11 +378,23 @@ public class GitConnection
                 // Get the base branch reference first
                 var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
 
+                if (baseReference == null)
+                {
+                    return $"Base branch '{baseBranchName}' not found in repository {repoOwner}/{repoName}.";
+                }
+
                 // Create the new branch reference
                 var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
                 var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
-                
-                return  $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
+
+                if (createdReference != null)
+                {
+                    return $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
+                }
+                else
+                {
+                    return $"Failed to create branch '{branchName}' in {repoOwner}/{repoName}.";
+                }
             }
             catch (Exception ex)
             {

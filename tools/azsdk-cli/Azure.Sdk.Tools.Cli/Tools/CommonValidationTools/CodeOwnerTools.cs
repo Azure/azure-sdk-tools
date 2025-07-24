@@ -620,5 +620,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             return string.Join("\n", block);
         }
+
     }
 }

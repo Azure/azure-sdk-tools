@@ -1,0 +1,20 @@
+default:
+  tenant: azure_sdk_qa_bot
+  endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+channels:
+  - name: TypeSpec Discussion
+    id: 19:906c1efbbec54dc8949ac736633e6bdf@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+  - name: Language - Python
+    id: 19:b97d98e6d22c41e0970a1150b484d935@thread.skype
+    tenant: python_channel_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+  - name: Azure SDK QA bot for Python Testing  🐍
+    id: 19:8551c70d67864a04b843151a256e109a@thread.tacv2  
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot
+  - name: Azure SDK QA bot for SDK Onboarding
+    id: 19:603d15bc0fd248ff82a8326da7322a4d@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_onboarding

@@ -10,14 +10,14 @@ using Octokit;
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
     [TestFixture]
-    internal class CommonValidationToolTests
+    internal class CodeOwnerToolsTests
     {
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IOutputService> mockOutputService;
         private Mock<ICodeOwnerValidationHelper> mockValidationHelper;
         private Mock<ICodeOwnerValidator> mockCodeOwnerValidator;
-        private ILogger<CommonValidationTool> logger;
-        private CommonValidationTool commonValidationTool;
+        private ILogger<CodeOwnerTools> logger;
+        private CodeOwnerTools codeOwnerTools;
 
         [SetUp]
         public void Setup()
@@ -26,12 +26,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockOutputService = new Mock<IOutputService>();
             mockValidationHelper = new Mock<ICodeOwnerValidationHelper>();
             mockCodeOwnerValidator = new Mock<ICodeOwnerValidator>();
-            logger = new TestLogger<CommonValidationTool>();
+            logger = new TestLogger<CodeOwnerTools>();
 
             mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>()))
                            .Returns((GenericResponse r) => string.Join(", ", r.Details));
 
-            commonValidationTool = new CommonValidationTool(
+            codeOwnerTools = new CodeOwnerTools(
                 mockGitHubService.Object,
                 mockOutputService.Object,
                 mockValidationHelper.Object,
@@ -59,8 +59,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                                  .ReturnsAsync(validationResult);
 
             // Act - Test both with explicit alias and empty alias (authenticated user)
-            var resultWithAlias = await commonValidationTool.isValidCodeOwner(githubAlias);
-            var resultWithEmptyAlias = await commonValidationTool.isValidCodeOwner("");
+            var resultWithAlias = await codeOwnerTools.isValidCodeOwner(githubAlias);
+            var resultWithEmptyAlias = await codeOwnerTools.isValidCodeOwner("");
 
             // Assert
             Assert.That(resultWithAlias, Is.Not.Null);
@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                               .Returns((Azure.Sdk.Tools.CodeownersUtils.Parsing.CodeownersEntry?)null);
 
             // Act
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
+            var result = await codeOwnerTools.ValidateCodeOwnersForService(repoName, serviceLabel);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -106,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                               .Returns(uniqueOwners);
 
             // Act
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
+            var result = await codeOwnerTools.ValidateCodeOwnersForService(repoName, serviceLabel);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                               .Throws(new Exception("Test exception"));
 
             // Act
-            var result = await commonValidationTool.ValidateCodeOwnersForService(repoName, serviceLabel);
+            var result = await codeOwnerTools.ValidateCodeOwnersForService(repoName, serviceLabel);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                            .ReturnsAsync((User)null!);
 
             // Act
-            var result = await commonValidationTool.isValidCodeOwner("");
+            var result = await codeOwnerTools.isValidCodeOwner("");
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -172,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                                  .ReturnsAsync(mockValidationResult);
 
             // Act
-            var result = await commonValidationTool.isValidCodeOwner(githubAlias);
+            var result = await codeOwnerTools.isValidCodeOwner(githubAlias);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -190,7 +190,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                            .ThrowsAsync(new Exception("GitHub service error"));
 
             // Act
-            var result = await commonValidationTool.isValidCodeOwner(githubAlias);
+            var result = await codeOwnerTools.isValidCodeOwner(githubAlias);
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -240,7 +240,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                                  .ReturnsAsync(user3Result);
 
             // Act
-            var results = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
+            var results = await codeOwnerTools.ValidateCodeOwnersConcurrently(owners);
 
             // Assert
             Assert.That(results, Is.Not.Null);
@@ -283,8 +283,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                                  .ReturnsAsync(expectedResult);
 
             // Act - Call twice with the same user
-            var firstResults = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
-            var secondResults = await commonValidationTool.ValidateCodeOwnersConcurrently(owners);
+            var firstResults = await codeOwnerTools.ValidateCodeOwnersConcurrently(owners);
+            var secondResults = await codeOwnerTools.ValidateCodeOwnersConcurrently(owners);
 
             // Assert
             Assert.That(firstResults.Count, Is.EqualTo(1));

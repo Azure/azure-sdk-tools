@@ -23,12 +23,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             "Azure"
         };
 
-        private static readonly HashSet<string> ValidPermissions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "admin",
-            "write"
-        };
-
         public CodeOwnerValidator(IGitHubService githubService, ILogger<CodeOwnerValidator> logger)
         {
             _githubService = githubService;

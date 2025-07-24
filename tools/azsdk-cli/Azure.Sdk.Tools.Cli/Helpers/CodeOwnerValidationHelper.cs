@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
     }
 
-    // Data models - moved from CommonValidationTool for better organization
+    // Data models - moved from CodeOwnerTools for better organization
     public class ServiceCodeOwnerResult
     {
         public string Repository { get; set; } = "";

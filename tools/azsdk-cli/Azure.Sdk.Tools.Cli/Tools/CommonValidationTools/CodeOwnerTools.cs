@@ -11,13 +11,17 @@ using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
-    [Description("This type contains test MCP tools for validation and testing purposes.")]
+    /// <summary>
+    /// Tools for validating GitHub users for Azure SDK code owner requirements.
+    /// This is a C# replacement for the Validate-AzsdkCodeOwner.ps1 PowerShell script.
+    /// </summary>
+    [Description("Tools for validating GitHub users for Azure SDK code owner requirements")]
     [McpServerToolType]
-    public class CommonValidationTool(IGitHubService githubService,
+    public class CodeOwnerTools(IGitHubService githubService,
         IOutputService output,
         ICodeOwnerValidationHelper validationHelper,
         ICodeOwnerValidator codeOwnerValidator,
-        ILogger<CommonValidationTool> logger) : MCPTool
+        ILogger<CodeOwnerTools> logger) : MCPTool
     {
         private static ConcurrentDictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new ConcurrentDictionary<string, CodeOwnerValidationResult>();
         private static readonly Dictionary<string, string> azureRepositories = new Dictionary<string, string>
@@ -122,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (matchingEntry != null)
                 {
                     var uniqueOwners = validationHelper.ExtractUniqueOwners(matchingEntry);
-                    
+
                     result.CodeOwners = await ValidateCodeOwnersConcurrently(uniqueOwners);
 
                     result.Status = "Success";
@@ -147,11 +151,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var results = new List<CodeOwnerValidationResult>();
             var asyncValidationTasks = new List<Task<CodeOwnerValidationResult>>();
-            
+
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                
+
                 if (codeOwnerValidationCache.TryGetValue(username, out var cachedResult))
                 {
                     results.Add(cachedResult);
@@ -167,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var asyncResults = await Task.WhenAll(asyncValidationTasks);
                 results.AddRange(asyncResults);
             }
-            
+
             return results;
         }
 
@@ -175,7 +179,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var result = await codeOwnerValidator.ValidateCodeOwnerAsync(username, verbose: false);
             codeOwnerValidationCache.TryAdd(username, result);
-            
+
             return result;
         }
 
@@ -219,6 +223,58 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 };
                 return output.Format(errorResponse);
             }
+        }
+
+        public async Task<ServiceCodeOwnerResult> addCodeOwners(string repoName, string serviceLabel, List<string> codeowners)
+        {
+            string? fullRepoName = null;
+            try
+            {
+                if (!azureRepositories.TryGetValue(repoName.ToLowerInvariant(), out fullRepoName))
+                {
+                    return CreateErrorResult("", $"Unknown repository: {repoName}. Valid options: {string.Join(", ", azureRepositories.Keys)}");
+                }
+
+                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
+
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob");
+                var matchingEntry = validationHelper.FindServiceEntries(codeownersEntries, serviceLabel);
+
+                if (matchingEntry != null)
+                {
+                    await updateCodeOwners();
+                }
+                else
+                {
+                    var codeownersFileContent = await githubService.GetContentsAsync("Azure", fullRepoName, "main/.github/CODEOWNERS");
+
+                    if (codeownersFileContent == null || codeownersFileContent.Count == 0)
+                    {
+                        throw new InvalidOperationException("Could not retrieve CODEOWNERS file");
+                    }
+
+                    var codeownerFile = codeownersFileContent[0].Content;
+
+                    if (string.IsNullOrEmpty(codeownerFile))
+                    {
+                        throw new InvalidOperationException("CODEOWNERS file is empty");
+                    }
+                    
+                    
+                }
+
+                return null;
             }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing repository {repo}", fullRepoName ?? repoName);
+                return CreateErrorResult(fullRepoName ?? repoName, $"Error processing repository: {ex.Message}");
+            }
+        }
+
+        public async Task<ServiceCodeOwnerResult> updateCodeOwners()
+        {
+            return null;
+        }
     }
 }

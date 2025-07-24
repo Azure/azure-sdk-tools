@@ -94,7 +94,7 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             const standardApiResult = shell.exec(standardApiGitCommand, { silent: true }).stdout;
 
             // Use nodeApi result if it has content, otherwise use standardApi result
-            const lastStableNpmViewContext = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
+            const apiViewContent = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
             if (!lastStableNpmViewContext.trim()) {
                 throw new Error(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
             }

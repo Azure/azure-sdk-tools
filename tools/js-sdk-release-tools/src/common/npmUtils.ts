@@ -68,13 +68,22 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     } = NpmViewParameters;
     let sdkFilePath = "";
     let targetFilePath = "";
+    const tag = `${packageName}_${version}`;
+    
+    // Check if tag exists
+    const tagCheckCommand = `git tag -l ${tag}`;
+    const tagExists = shell.exec(tagCheckCommand, { silent: true }).stdout.trim();
+    if (!tagExists) {
+        logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
+    }
+    
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
     try {
         if (file === "CHANGELOG.md") {
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
             targetFilePath = path.join(npmPackagePath, file);
             // For CHANGELOG.md, use sdkFilePath directly
-            const gitCommand = `git --no-pager show ${packageName}_${version}:${sdkFilePath}`;
+            const gitCommand = `git --no-pager show ${tag}:${sdkFilePath}`;
             const changelogContent = shell.exec(gitCommand, { silent: true }).stdout;
             fs.writeFileSync(targetFilePath, changelogContent, { encoding: 'utf-8' });
         }
@@ -86,8 +95,8 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             const standardApiFilePath = `${sdkFilePath}.api.md`;
 
             // Generate two git commands
-            const nodeApiGitCommand = `git --no-pager show ${packageName}_${version}:${nodeApiFilePath}`;
-            const standardApiGitCommand = `git --no-pager show ${packageName}_${version}:${standardApiFilePath}`;
+            const nodeApiGitCommand = `git --no-pager show ${tag}:${nodeApiFilePath}`;
+            const standardApiGitCommand = `git --no-pager show ${tag}:${standardApiFilePath}`;
 
             // Execute both git commands
             const nodeApiResult = shell.exec(nodeApiGitCommand, { silent: true }).stdout;
@@ -97,11 +106,13 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             const apiViewContent = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
             if (!apiViewContent.trim()) {
                 throw new Error(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
+            } else {
+                logger.info(`API View Content:\n\`\`\`ts\n${apiViewContent}\n\`\`\``);
             }
             fs.writeFileSync(targetFilePath, apiViewContent, { encoding: 'utf-8' });
         }
-        logger.info(`Create ${packageFolderPath} from the tag ${packageName}_${version} successfully`);
+        logger.info(`Create ${packageFolderPath} from the tag ${tag} successfully`);
     } catch (error) {
-        logger.error(`Failed to read ${packageFolderPath} in ${sdkFilePath} from the tag ${packageName}_${version}.\n Error details: ${error}`)
+        logger.error(`Failed to read ${packageFolderPath} in ${sdkFilePath} from the tag ${tag}.\n Error details: ${error}`)
     }
 }

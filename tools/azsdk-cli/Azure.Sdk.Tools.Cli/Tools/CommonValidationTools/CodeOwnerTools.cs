@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using System.Collections.Concurrent;
+using LibGit2Sharp;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -47,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> gitHubAliasOpt = new(["--username", "-u"], "GitHub alias to validate") { IsRequired = false };
         private readonly Option<string> repoNameOpt = new(["--repo", "-r"], "Repository name to process") { IsRequired = true };
         private readonly Option<List<string>> codeOwnersOpt = new(["--codeowners", "-c"], "List of code owners to add (required for source path/owner blocks)") { IsRequired = false };
-        
+
         // New options for codeowner entry management
         private readonly Option<string> repoPathOpt = new(["--path", "-p"], "Repository path pattern for the codeowner entry (required for source path/owner blocks)") { IsRequired = false };
         private readonly Option<string> azureSdkOwnersOpt = new(["--azure-sdk-owners"], "Azure SDK owners (optional, requires service-label)") { IsRequired = false };
@@ -259,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "AddCodeOwnerEntry"), Description("Add a new codeowner entry with metadata")]
-        public async Task<ServiceCodeOwnerResult> AddCodeOwnerEntry(string repoName, string repoPath, List<string> codeOwners, 
+        public async Task<ServiceCodeOwnerResult> AddCodeOwnerEntry(string repoName, string repoPath, List<string> codeOwners,
             string? serviceLabel = null, string? prLabel = null, string? azureSdkOwners = null, string? serviceOwners = null)
         {
             string? fullRepoName = null;
@@ -296,11 +297,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var blockToParse = findBlock(currentContent, repoInfo.ServiceCategory);
 
                 // Check if entry already exists
-                var existingEntries = CodeownersParser.ParseCodeownersFile($"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS", 
+                var existingEntries = CodeownersParser.ParseCodeownersFile($"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS",
                     "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob",
                     blockToParse.StartLine,
                     blockToParse.EndLine);
-                
+
                 var existingEntry = existingEntries.FirstOrDefault(e => e.PathExpression == repoPath);
                 if (existingEntry != null)
                 {
@@ -309,11 +310,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Build the new entry
                 var newEntry = BuildCodeOwnerEntry(repoPath, codeOwners, serviceLabel, prLabel, azureSdkOwners, serviceOwners);
-                
+
                 // Create branch for the change
                 var normalizedLabel = (serviceLabel ?? prLabel ?? "entry").Replace(" ", "-").Replace("/", "-").ToLowerInvariant();
                 var branchName = $"add-codeowner-entry-{normalizedLabel}-{DateTime.Now:yyyyMMdd-HHmmss}";
-                
+
                 var branchResult = await githubService.CreateBranchAsync("Azure", fullRepoName, branchName, "main");
                 if (branchResult.Contains("already exists"))
                 {
@@ -325,11 +326,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 lines.Insert(insertIndex, "");
                 lines.Insert(insertIndex, newEntry);
-                
+
                 var updatedContent = string.Join("\n", lines);
 
                 // Update the file
-                await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", 
+                await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS",
                     $"Add codeowner entry for {repoPath}", updatedContent, codeownersFileContent[0].Sha, branchName);
 
                 return new ServiceCodeOwnerResult
@@ -388,7 +389,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Find the entry to modify
                 var lines = currentContent.Split('\n');
                 var entryLineIndex = -1;
-                
+
                 for (int i = 0; i < lines.Length; i++)
                 {
                     var line = lines[i].Trim();
@@ -418,7 +419,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 await githubService.CreateBranchAsync("Azure", fullRepoName, branchName, "main");
 
                 var updatedContent = string.Join("\n", lines);
-                await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", 
+                await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS",
                     $"Add {normalizedCodeOwner} to {repoPath}", updatedContent, codeownersFileContent[0].Sha, branchName);
 
                 return new ServiceCodeOwnerResult
@@ -577,11 +578,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Helper method to build a codeowner entry with metadata according to CODEOWNERS rules
         /// Simplified sequential block building approach
         /// </summary>
-        private string BuildCodeOwnerEntry(string repoPath, List<string> codeOwners, 
+        private string BuildCodeOwnerEntry(string repoPath, List<string> codeOwners,
             string? serviceLabel, string? prLabel, string? azureSdkOwners, string? serviceOwners)
         {
             var block = new List<string>();
-            
+
             bool hasRepoPath = !string.IsNullOrWhiteSpace(repoPath);
             bool hasSourcePathOwnerLine = hasRepoPath && codeOwners?.Count > 0;
 
@@ -620,6 +621,95 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             return string.Join("\n", block);
         }
+        
+        //[McpServerTool(Name = "DeleteCodeOwners"), Description("Removes specified code owners from a service entry in the CODEOWNERS file, ensuring at least one owner remains.")]
+        public async Task<ServiceCodeOwnerResult> DeleteCodeOwners(string repoName, string serviceLabel, List<string> codeOwnersToDelete)
+        {
+            string? fullRepoName = null;
+            try
+            {
+                if (!azureRepositories.TryGetValue(repoName.ToLowerInvariant(), out var repoInfo))
+                {
+                    return CreateErrorResult("", $"Unknown repository: {repoName}. Valid options: {string.Join(", ", azureRepositories.Keys)}");
+                }
 
+                fullRepoName = repoInfo.RepoName;
+ 
+                var result = new ServiceCodeOwnerResult
+                {
+                    Repository = fullRepoName,
+                    CodeOwners = new List<CodeOwnerValidationResult>(),
+                    Status = "Processing"
+                };
+ 
+                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob");
+                var matchingEntry = validationHelper.FindServiceEntries(codeownersEntries, serviceLabel);
+ 
+                if (matchingEntry == null)
+                {
+                    result.Status = "Service not found";
+                    result.Message = $"Service label '{serviceLabel}' not found in {fullRepoName}";
+                    return result;
+                }
+ 
+                // Get all current owners from the entry
+                var currentOwners = validationHelper.ExtractUniqueOwners(matchingEntry);
+                var normalizedOwnersToDelete = codeOwnersToDelete.Select(owner => owner.TrimStart('@')).ToList();
+ 
+                // Find owners that would remain after deletion
+                var remainingOwners = currentOwners.Where(owner =>
+                    !normalizedOwnersToDelete.Any(toDelete =>
+                        owner.TrimStart('@').Equals(toDelete, StringComparison.OrdinalIgnoreCase))).ToList();
+ 
+                if (remainingOwners.Count == 0)
+                {
+                    result.Status = "Error";
+                    result.Message = $"Cannot delete all code owners. At least one owner must remain for service '{serviceLabel}'";
+                    return result;
+                }
+ 
+                // Find owners that will actually be deleted
+                var ownersToDelete = currentOwners.Where(owner =>
+                    normalizedOwnersToDelete.Any(toDelete =>
+                        owner.TrimStart('@').Equals(toDelete, StringComparison.OrdinalIgnoreCase))).ToList();
+ 
+                if (ownersToDelete.Count == 0)
+                {
+                    result.Status = "No changes";
+                    result.Message = $"None of the specified code owners were found in the service '{serviceLabel}' entry";
+                    return result;
+                }
+ 
+                // Get CODEOWNERS file content for modification
+                var codeownersFileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
+ 
+                if (codeownersFileContent == null || codeownersFileContent.Count == 0)
+                {
+                    throw new InvalidOperationException("Could not retrieve CODEOWNERS file");
+                }
+ 
+                var fileContent = codeownersFileContent[0].Content;
+                var fileSha = codeownersFileContent[0].Sha;
+ 
+                if (string.IsNullOrEmpty(fileContent))
+                {
+                    throw new InvalidOperationException("CODEOWNERS file is empty");
+                }
+ 
+ 
+                /// TO-DO:
+                /// Find code owner entry for the service label (make sure all cases are covered)
+                /// Create a branch for the changes
+                /// Update file by removing specified code owners from the entry
+                /// Create a pull request with the changes
+ 
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing repository {repo}", fullRepoName ?? repoName);
+                return CreateErrorResult(fullRepoName ?? repoName, $"Error processing repository: {ex.Message}");
+            }
+        }        
     }
 }

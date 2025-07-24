@@ -20,11 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
     {
 
         // commands
-        private const string initCommandName = "init";
         private const string convertSwaggerCommandName = "convert-swagger";
 
-        private readonly Option<string> templateArg = new("--template", "The template to use for the TypeSpec project. Valid values are: azure-core (for data-plane services), azure-arm (for resource-manager services)");
-        private readonly Option<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.");
         private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.");
 
         private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.");
@@ -37,11 +34,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
             var subCommands = new[]
             {
-                new Command(initCommandName, "Initialize a new TypeSpec project") {
-                    templateArg,
-                    serviceNamespaceArg,
-                    outputDirectoryArg
-                },
                 new Command(convertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project") {
                     swaggerReadmeArg,
                     outputDirectoryArg,
@@ -65,9 +57,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
             switch (command)
             {
-                case initCommandName:
-                    await HandleInitCommand(ctx, ct);
-                    return 0;
                 case convertSwaggerCommandName:
                     await HandleConvertCommand(ctx, ct);
                     return 0;
@@ -75,18 +64,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                     logger.LogError($"Unknown command: {command}");
                     return 1;
             }
-        }
-
-        private Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
-        {
-            var template = ctx.ParseResult.GetValueForOption(templateArg);
-            var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
-            var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
-
-            var result = Init(template, serviceNamespace, outputDirectory);
-            ctx.ExitCode = ExitCode;
-            output.Output(result.ToString());
-            return Task.CompletedTask;
         }
 
         private Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
@@ -100,68 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             ctx.ExitCode = ExitCode;
             output.Output(result.ToString());
             return Task.CompletedTask;
-        }
-
-        [McpServerTool(Name = "InitializeAzureTypeSpecProject"), Description(@"Initialize a new TypeSpec project
-        **Call this tool when starting a new TypeSpec project.**
-        Pass in the `template` to use: `azure-core` for data-plane services, or `azure-arm` for resource-manager services.
-        Pass in the `serviceNamespace` to use, which is the namespace of the service you are creating. Should be Pascal case. Exclude the 'Microsoft.' prefix for ARM services.
-        Pass in the `outputDirectory` where the project should be created. This must be an existing empty directory.
-        Returns the path to the created project.")]
-        public TspToolResponse Init(string template, string serviceNamespace, string outputDirectory)
-        {
-            try
-            {
-                logger.LogInformation("Initializing TypeSpec project with template: {template}, namespace: {serviceNamespace}, output: {outputDirectory}", template, serviceNamespace, outputDirectory);
-
-                // Validate template
-                var validTemplates = new[] { "azure-core", "azure-arm" };
-                if (string.IsNullOrWhiteSpace(template) || !validTemplates.Contains(template.Trim(), StringComparer.OrdinalIgnoreCase))
-                {
-                    SetFailure(1);
-                    return new TspToolResponse
-                    {
-                        IsSuccessful = false,
-                        ErrorMessage = $"Failed: template must be one of: {string.Join(", ", validTemplates)} but was '{template}'"
-                    };
-                }
-
-                // Validate serviceNamespace
-                if (string.IsNullOrWhiteSpace(serviceNamespace))
-                {
-                    SetFailure(1);
-                    return new TspToolResponse
-                    {
-                        IsSuccessful = false,
-                        ErrorMessage = "Failed: serviceNamespace must be provided and cannot be empty."
-                    };
-                }
-
-                // Validate outputDir
-                var validationResult = ValidateOutputDirectory(outputDirectory);
-                if (validationResult != null)
-                {
-                    SetFailure(1);
-                    return new TspToolResponse
-                    {
-                        IsSuccessful = false,
-                        ErrorMessage = validationResult
-                    };
-                }
-
-                var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return RunTspInit(template, serviceNamespace, fullOutputDir);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while initializing TypeSpec project: {template}, {serviceNamespace}, {outputDirectory}", template, serviceNamespace, outputDirectory);
-                SetFailure(1);
-                return new TspToolResponse
-                {
-                    IsSuccessful = false,
-                    ErrorMessage = $"Failed: An error occurred trying to initialize TypeSpec project: {ex.Message}"
-                };
-            }
         }
 
         [McpServerTool(Name = "ConvertSwaggerToTypeSpec"), Description(@"**Call this tool when trying to convert an existing Azure service to TypeSpec.**
@@ -256,44 +171,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             }
 
             return null; // Validation passed
-        }
-
-        private TspToolResponse RunTspInit(string template, string serviceNamespace, string outputDirectory)
-        {
-            const string AZURE_TEMPLATES_URL = "https://aka.ms/typespec/azure-init";
-
-            var argsList = new List<string>
-            {
-                "tsp",
-                "init",
-                "--template",
-                template,
-                "--project-name",
-                serviceNamespace,
-                "--args",
-                $"ServiceNamespace={serviceNamespace}",
-                "--output-dir",
-                outputDirectory,
-                "--no-prompt",
-                AZURE_TEMPLATES_URL
-            };
-
-            var result = npxHelper.RunNpx(argsList, Environment.CurrentDirectory);
-            if (result.ExitCode != 0)
-            {
-                SetFailure();
-                return new TspToolResponse
-                {
-                    IsSuccessful = false,
-                    ErrorMessage = $"Failed to initialize TypeSpec project: {result.Output}"
-                };
-            }
-
-            return new TspToolResponse
-            {
-                IsSuccessful = true,
-                TypeSpecProjectPath = outputDirectory
-            };
         }
 
         private TspToolResponse RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible)

@@ -26,66 +26,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             {
                 Assert.That(command.Name, Is.EqualTo("tsp"));
                 Assert.That(command.Description, Does.Contain("Tools for initializing TypeSpec projects"));
-                Assert.That(command.Subcommands, Has.Count.EqualTo(2));
+                Assert.That(command.Subcommands, Has.Count.EqualTo(1));
             });
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(command.Subcommands.Any(c => c.Name == "init"), Is.True);
-                Assert.That(command.Subcommands.Any(c => c.Name == "convert-swagger"), Is.True);
-            });
-
-        }
-
-        [Test]
-        public void Init_WithInvalidTemplate_ShouldReturnError()
-        {
-            // Arrange
-            var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(npxHelper, logger, outputService);
-
-            // Act
-            var result = tool.Init("invalid-template", "TestService", @"C:\temp");
-
-            // Assert
-            Assert.That(result.IsSuccessful, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("template must be one of: azure-core, azure-arm"));
-        }
-
-        [Test]
-        public void Init_WithEmptyServiceNamespace_ShouldReturnError()
-        {
-            // Arrange
-            var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(npxHelper, logger, outputService);
-
-            // Act
-            var result = tool.Init("azure-core", "", @"C:\temp");
-
-            // Assert
-            Assert.That(result.IsSuccessful, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("serviceNamespace must be provided"));
-        }
-
-        [Test]
-        public void Init_WithNonExistentDirectory_ShouldReturnError()
-        {
-            // Arrange
-            var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
-            var tool = new TypeSpecTool(npxHelper, logger, outputService);
-
-            // Act
-            var result = tool.Init("azure-core", "TestService", @"C:\nonexistent");
-
-            // Assert
-            Assert.That(result.IsSuccessful, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("does not exist"));
         }
 
         [Test]

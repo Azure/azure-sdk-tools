@@ -51,11 +51,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // New options for codeowner entry management
         private readonly Option<string> repoPathOpt = new(["--path", "-p"], "Repository path pattern for the codeowner entry (required for source path/owner blocks)") { IsRequired = false };
-        private readonly Option<string> azureSdkOwnersOpt = new(["--azure-sdk-owners"], "Azure SDK owners (optional, requires service-label)") { IsRequired = false };
-        private readonly Option<string> serviceOwnersOpt = new(["--service-owners"], "Service owners (for metadata-only blocks)") { IsRequired = false };
+        private readonly Option<List<string>> azureSdkOwnersOpt = new(["--azure-sdk-owners"], "Azure SDK owners (optional, requires service-label)") { IsRequired = false };
+        private readonly Option<List<string>> serviceOwnersOpt = new(["--service-owners"], "Service owners (for metadata-only blocks)") { IsRequired = false };
         private readonly Option<string> prLabelOpt = new(["--pr-label"], "PR label (only valid with source path/owner blocks)") { IsRequired = false };
         private readonly Option<string> serviceLabelOptional = new(["--service-label"], "Service label (optional for source blocks, required for metadata blocks)") { IsRequired = false };
-        private readonly Option<string> codeOwnerToAddOpt = new(["--codeowner"], "Single code owner to add or remove") { IsRequired = true };
+        private readonly Option<List<string>> codeOwnerToAddOpt = new(["--codeowner"], "Code owners to add or remove") { IsRequired = true };
 
         public override Command GetCommand()
         {
@@ -108,8 +108,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case addCodeOwnerToEntryCommandName:
                     var addToEntryRepoName = commandParser.GetValueForOption(repoNameOpt);
                     var addToEntryRepoPath = commandParser.GetValueForOption(repoPathOpt);
-                    var addToEntryCodeOwner = commandParser.GetValueForOption(codeOwnerToAddOpt);
-                    var addToEntryResult = await AddCodeOwnerToEntry(addToEntryRepoName ?? "", addToEntryRepoPath ?? "", addToEntryCodeOwner ?? "");
+                    var addToEntryCodeOwners = commandParser.GetValueForOption(codeOwnerToAddOpt);
+                    var addToEntryResult = await AddCodeOwnerToEntry(addToEntryRepoName ?? "", addToEntryRepoPath ?? "", addToEntryCodeOwners ?? new List<string>());
                     output.Output($"Add to entry result: {System.Text.Json.JsonSerializer.Serialize(addToEntryResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}");
                     return;
                 default:
@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         [McpServerTool(Name = "AddCodeOwnerEntry"), Description("Add a new codeowner entry with metadata")]
         public async Task<ServiceCodeOwnerResult> AddCodeOwnerEntry(string repoName, string repoPath, List<string> codeOwners,
-            string? serviceLabel = null, string? prLabel = null, string? azureSdkOwners = null, string? serviceOwners = null)
+            string? serviceLabel = null, string? prLabel = null, List<string>? azureSdkOwners = null, List<string>? serviceOwners = null)
         {
             string? fullRepoName = null;
             try
@@ -298,9 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Check if entry already exists
                 var existingEntries = CodeownersParser.ParseCodeownersFile($"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS",
-                    "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob",
-                    blockToParse.StartLine,
-                    blockToParse.EndLine);
+                    "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob");
 
                 var existingEntry = existingEntries.FirstOrDefault(e => e.PathExpression == repoPath);
                 if (existingEntry != null)
@@ -349,10 +347,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         /// <summary>
-        /// Method 2: Add a codeowner to an existing entry
+        /// Method 2: Add codeowners to an existing entry
         /// </summary>
-        [McpServerTool(Name = "AddCodeOwnerToEntry"), Description("Add a codeowner to an existing entry")]
-        public async Task<ServiceCodeOwnerResult> AddCodeOwnerToEntry(string repoName, string repoPath, string codeOwner)
+        [McpServerTool(Name = "AddCodeOwnerToEntry"), Description("Add codeowners to an existing entry")]
+        public async Task<ServiceCodeOwnerResult> AddCodeOwnerToEntry(string repoName, string repoPath, List<string> codeOwners)
         {
             string? fullRepoName = null;
             try
@@ -365,13 +363,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 fullRepoName = repoInfo.RepoName;
 
-                // Validate codeowner format
-                if (string.IsNullOrWhiteSpace(codeOwner))
+                // Validate codeowners format
+                if (codeOwners == null || codeOwners.Count == 0)
                 {
-                    return CreateErrorResult(fullRepoName, "Code owner cannot be empty");
+                    return CreateErrorResult(fullRepoName, "At least one code owner must be provided");
                 }
 
-                var normalizedCodeOwner = codeOwner.StartsWith("@") ? codeOwner : $"@{codeOwner}";
+                var normalizedCodeOwners = codeOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}").ToList();
 
                 // Get current CODEOWNERS file
                 var codeownersFileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
@@ -405,28 +403,51 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return CreateErrorResult(fullRepoName, $"No entry found for path '{repoPath}'");
                 }
 
-                // Check if codeowner already exists
-                if (lines[entryLineIndex].Contains(normalizedCodeOwner))
+                // Check if any codeowners already exist and filter out duplicates
+                var ownersToAdd = new List<string>();
+                var alreadyExists = new List<string>();
+                
+                foreach (var normalizedOwner in normalizedCodeOwners)
                 {
-                    return CreateErrorResult(fullRepoName, $"Code owner '{normalizedCodeOwner}' already exists in entry for '{repoPath}'");
+                    if (lines[entryLineIndex].Contains(normalizedOwner))
+                    {
+                        alreadyExists.Add(normalizedOwner);
+                    }
+                    else
+                    {
+                        ownersToAdd.Add(normalizedOwner);
+                    }
                 }
 
-                // Add the codeowner to the line
-                lines[entryLineIndex] = lines[entryLineIndex].TrimEnd() + " " + normalizedCodeOwner;
+                if (ownersToAdd.Count == 0)
+                {
+                    var existingOwnersMsg = alreadyExists.Count == 1 ? 
+                        $"Code owner '{alreadyExists[0]}' already exists" : 
+                        $"Code owners {string.Join(", ", alreadyExists.Select(o => $"'{o}'"))} already exist";
+                    return CreateErrorResult(fullRepoName, $"{existingOwnersMsg} in entry for '{repoPath}'");
+                }
+
+                // Add the new codeowners to the line
+                lines[entryLineIndex] = lines[entryLineIndex].TrimEnd() + " " + string.Join(" ", ownersToAdd);
 
                 // Create branch and update file
-                var branchName = $"add-codeowner-{normalizedCodeOwner.Replace("@", "")}-{DateTime.Now:yyyyMMdd-HHmmss}";
+                var ownerNames = string.Join("-", ownersToAdd.Select(o => o.Replace("@", "")));
+                var branchName = $"add-codeowners-{ownerNames}-{DateTime.Now:yyyyMMdd-HHmmss}";
                 await githubService.CreateBranchAsync("Azure", fullRepoName, branchName, "main");
 
                 var updatedContent = string.Join("\n", lines);
                 await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS",
-                    $"Add {normalizedCodeOwner} to {repoPath}", updatedContent, codeownersFileContent[0].Sha, branchName);
+                    $"Add {string.Join(", ", ownersToAdd)} to {repoPath}", updatedContent, codeownersFileContent[0].Sha, branchName);
+
+                var successMsg = ownersToAdd.Count == 1 ? 
+                    $"Successfully added '{ownersToAdd[0]}' to entry for '{repoPath}' in branch '{branchName}'" :
+                    $"Successfully added {string.Join(", ", ownersToAdd.Select(o => $"'{o}'"))} to entry for '{repoPath}' in branch '{branchName}'";
 
                 return new ServiceCodeOwnerResult
                 {
                     Repository = fullRepoName,
                     Status = "Success",
-                    Message = $"Successfully added '{normalizedCodeOwner}' to entry for '{repoPath}' in branch '{branchName}'",
+                    Message = successMsg,
                     CodeOwners = new List<CodeOwnerValidationResult>()
                 };
             }
@@ -460,14 +481,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         private (bool IsValid, string ErrorMessage) ValidateEntryRequirements(string repoPath, List<string> codeOwners,
-            string? serviceLabel, string? prLabel, string? azureSdkOwners, string? serviceOwners)
+            string? serviceLabel, string? prLabel, List<string>? azureSdkOwners, List<string>? serviceOwners)
         {
             // Determine what we have
             bool hasRepoPath = !string.IsNullOrWhiteSpace(repoPath);
             bool hasServiceLabel = !string.IsNullOrWhiteSpace(serviceLabel);
             bool hasPrLabel = !string.IsNullOrWhiteSpace(prLabel);
-            bool hasAzureSdkOwners = !string.IsNullOrWhiteSpace(azureSdkOwners);
-            bool hasServiceOwners = !string.IsNullOrWhiteSpace(serviceOwners);
+            bool hasAzureSdkOwners = azureSdkOwners != null && azureSdkOwners.Count > 0;
+            bool hasServiceOwners = serviceOwners != null && serviceOwners.Count > 0;
             bool hasCodeOwners = codeOwners != null && codeOwners.Count > 0;
 
             // According to the docs, there are exactly 3 valid block types:
@@ -579,7 +600,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Simplified sequential block building approach
         /// </summary>
         private string BuildCodeOwnerEntry(string repoPath, List<string> codeOwners,
-            string? serviceLabel, string? prLabel, string? azureSdkOwners, string? serviceOwners)
+            string? serviceLabel, string? prLabel, List<string>? azureSdkOwners, List<string>? serviceOwners)
         {
             var block = new List<string>();
 
@@ -589,9 +610,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             // Build metadata in correct order: AzureSdkOwners, ServiceLabel, PRLabel, ServiceOwners, source path/owner line
 
             // Add AzureSdkOwners metadata (if present)
-            if (!string.IsNullOrWhiteSpace(azureSdkOwners))
+            if (azureSdkOwners != null && azureSdkOwners.Count > 0)
             {
-                block.Add($"# AzureSdkOwners: {azureSdkOwners}");
+                block.Add($"# AzureSdkOwners: {string.Join(" ", azureSdkOwners)}");
             }
 
             // Add ServiceLabel metadata (if present)
@@ -607,9 +628,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             // Add ServiceOwners metadata (only for metadata-only blocks)
-            if (!string.IsNullOrWhiteSpace(serviceOwners) && !hasSourcePathOwnerLine)
+            if (serviceOwners != null && serviceOwners.Count > 0 && !hasSourcePathOwnerLine)
             {
-                block.Add($"# ServiceOwners: {serviceOwners}");
+                block.Add($"# ServiceOwners: {string.Join(" ", serviceOwners)}");
             }
 
             // Add source path/owner line (if this is a source path/owner block)
@@ -703,13 +724,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 /// Create a branch for the changes
                 /// Update file by removing specified code owners from the entry
                 /// Create a pull request with the changes
- 
+
+                return CreateErrorResult(fullRepoName, "Method not yet implemented");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error processing repository {repo}", fullRepoName ?? repoName);
                 return CreateErrorResult(fullRepoName ?? repoName, $"Error processing repository: {ex.Message}");
             }
-        }        
+        }
     }
 }

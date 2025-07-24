@@ -23,11 +23,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
         private const string initCommandName = "init";
         private const string convertSwaggerCommandName = "convert-swagger";
 
-        private readonly Argument<string> templateArg = new("--template", "The template to use for the TypeSpec project. Valid values are: azure-core (for data-plane services), azure-arm (for resource-manager services)");
-        private readonly Argument<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.");
-        private readonly Argument<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.");
+        private readonly Option<string> templateArg = new("--template", "The template to use for the TypeSpec project. Valid values are: azure-core (for data-plane services), azure-arm (for resource-manager services)");
+        private readonly Option<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.");
+        private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.");
 
-        private readonly Argument<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.");
+        private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.");
         private readonly Option<bool> isArmOption = new("--arm", "Whether the generated TypeSpec project is for an Azure Resource Management (ARM) API. This should be true if the swagger's path contains 'resource-manager'.");
         private readonly Option<bool> fullyCompatibleOption = new("--fully-compatible", "Whether to generate a TypeSpec project that is fully compatible with the swagger. It is recommended not to set this to true so that the converted TypeSpec project leverages TypeSpec built-in libraries with standard patterns and templates.");
 
@@ -79,9 +79,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
         private Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var template = ctx.ParseResult.GetValueForArgument(templateArg);
-            var serviceNamespace = ctx.ParseResult.GetValueForArgument(serviceNamespaceArg);
-            var outputDirectory = ctx.ParseResult.GetValueForArgument(outputDirectoryArg);
+            var template = ctx.ParseResult.GetValueForOption(templateArg);
+            var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
+            var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
 
             var result = Init(template, serviceNamespace, outputDirectory);
             ctx.ExitCode = ExitCode;
@@ -91,8 +91,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
         private Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var swaggerReadme = ctx.ParseResult.GetValueForArgument(swaggerReadmeArg);
-            var outputDirectory = ctx.ParseResult.GetValueForArgument(outputDirectoryArg);
+            var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
+            var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
@@ -300,6 +300,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
         {
             var argsList = new List<string>
             {
+                "--package=@azure-tools/typespec-client-generator-cli",
+                "--yes",
+                "--",
                 "tsp-client",
                 "convert",
                 "--swagger-readme",

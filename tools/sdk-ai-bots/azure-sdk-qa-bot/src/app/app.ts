@@ -10,15 +10,15 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
 import { extractSelectedReasons } from '../cards/components/feedback.js';
 import config from '../config/config.js';
-import { getRagTanent } from '../config/utils.js';
+import channelConfigManager from '../config/channel.js';
 import { ConversationHandler, ConversationMessage } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 
 const conversationHandler = new ConversationHandler();
-await conversationHandler.initialize();
+await Promise.all([conversationHandler.initialize(), channelConfigManager.initialize()]);
 
 // Create AI components
-const model = new RAGModel(conversationHandler);
+const model = new RAGModel(conversationHandler, channelConfigManager);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,9 +52,10 @@ const isSubmitMessage = async (ctx: TurnContext) =>
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
   const channelId = context.activity.conversation.id.split(';')[0];
-  const ragTanentId = getRagTanent(channelId);
+  const ragTanentId = await channelConfigManager.getRagTenant(channelId);
+  const ragEndpoint = await channelConfigManager.getRagEndpoint(channelId);
   const ragOptions: RAGOptions = {
-    endpoint: config.ragEndpoint,
+    endpoint: ragEndpoint,
     apiKey: config.ragApiKey,
   };
   const action = context.activity.value?.action;

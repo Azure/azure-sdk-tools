@@ -295,19 +295,5 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 stateReason: null
             );
         }
-
-        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch)
-        {
-            return Task.FromResult<IReadOnlyList<RepositoryContent>?>(null);
-        }
-        public Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
-        {
-            return Task.FromResult(new RepositoryContentChangeSet());
-        }
-
-        public async Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
-        {
-            return "TODO";
-        }
     }
 }

@@ -75,8 +75,8 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             targetFilePath = path.join(npmPackagePath, file);
             // For CHANGELOG.md, use sdkFilePath directly
             const gitCommand = `git --no-pager show ${packageName}_${version}:${sdkFilePath}`;
-            const changelogContent= shell.exec(gitCommand, { silent: true }).stdout;
-            fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
+            const changelogContent = shell.exec(gitCommand, { silent: true }).stdout;
+            fs.writeFileSync(targetFilePath, changelogContent, { encoding: 'utf-8' });
         }
         else {
             sdkFilePath = relative(sdkRootPath, getApiReviewBasePath(packageFolderPath)).replace(/\\/g, "/");
@@ -95,10 +95,10 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
 
             // Use nodeApi result if it has content, otherwise use standardApi result
             const apiViewContent = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
-            if (!lastStableNpmViewContext.trim()) {
+            if (!apiViewContent.trim()) {
                 throw new Error(`Both node API and standard API paths failed: ${nodeApiFilePath}, ${standardApiFilePath}`);
             }
-            fs.writeFileSync(targetFilePath, lastStableNpmViewContext, { encoding: 'utf-8' });
+            fs.writeFileSync(targetFilePath, apiViewContent, { encoding: 'utf-8' });
         }
         logger.info(`Create ${packageFolderPath} from the tag ${packageName}_${version} successfully`);
     } catch (error) {

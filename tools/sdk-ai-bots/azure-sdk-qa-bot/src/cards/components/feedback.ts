@@ -10,7 +10,6 @@ const feedbackReasons = {
   ],
 };
 
-// 生成toggle的唯一ID
 function generateToggleId(index: number): string {
   return `reason_${index}`;
 }

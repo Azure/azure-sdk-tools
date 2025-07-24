@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 };
 
-                logger.LogInformation($"Running command: {command} {string.Join(" ", args)} in {workingDirectory}");
+                logger.LogDebug($"Running command: {command} {string.Join(" ", args)} in {workingDirectory}");
 
                 process.Start();
                 process.BeginOutputReadLine();

@@ -1,8 +1,8 @@
-﻿# Perf-Regression-Finder Agent
+# Perf-Regression-Finder Agent
 ## Overview
 
 A C#/.NET 8 project for diagnosing and solving performance regressions in Azure SDKs using Semantic Kernel and Azure AI Agents.
-It provides the call-stack and suggestions of where a regression could be occuring. It works with using the plugin for access to the `Azure.Core` and `System.ClientModel` and can be extended to have more functionality
+It provides the call-stack and suggestions of where a regression could be occurring. It works with using the plugin for access to the `Azure.Core` and `System.ClientModel` and can be extended to have more functionality
 with an addition of more plugins.
 
 ## Features

@@ -16,7 +16,10 @@ class TestHandwrittenTokens:
     pkg_namespace = "apistubgentest"
 
     def test_handwritten_extended_class_tokens(self):
-        """Test that HandwrittenExtendedClass tokens have 'handwritten' in render_classes."""
+        """Test that HandwrittenExtendedClass tokens have 'handwritten' in render_classes.
+
+        Tests handwritten class, methods, overloads, properties, ivars, cvars.
+        """
         obj = HandwrittenExtendedClass
         class_node = ClassNode(
             name=obj.__name__,
@@ -67,8 +70,6 @@ class TestHandwrittenTokens:
             apiview=MockApiView,
         )
         tokens = _tokenize(class_node)
-        for line in tokens:
-            print(line)
         self._check_typed_dict_handwritten(tokens, obj.__name__)
 
     def _check_enum_handwritten(self, review_lines, enum_name):
@@ -116,7 +117,7 @@ class TestHandwrittenTokens:
                             # check handwritten multi-line methods
                             for child_line in line["Children"]:
                                 self._check_tokens_handwritten(child_line["Tokens"])
-                # If handwritten line, move to next line
+                # If handwritten line found, move to next line
                 if handwritten_line:
                     break
             # If no tokens in line are in handwritten_names, then they should be generated
@@ -125,17 +126,22 @@ class TestHandwrittenTokens:
                     # If generated, check that tokens don't have "handwritten"
                     self._check_tokens_generated(line["Tokens"])
                 except AssertionError as exc:
+                    # since decorators are on prior ReviewLines from the func def signature line, these will error
                     if "should not have 'handwritten'" in str(exc) and self._is_decorator_line(line["Tokens"]):
-                        # handwritten decorator will be checked during method line check
+                        # skip since handwritten decorator will be checked during method line check
                         pass
                     else:
                         raise
     
     def _check_decorators_handwritten(self, review_lines, prev_line_idx, related_to_line):
+        # check for any and all decorators preceding line
         while prev_line_idx > 0 and review_lines[prev_line_idx]["Tokens"][0]["Value"].startswith("@"):
+            # double check that the RelatedToLine for the decorator is the same as the LineID
             assert review_lines[prev_line_idx]["LineId"] == related_to_line, \
                 f"Expected related line ID {related_to_line}, but got {review_lines[prev_line_idx]['LineId']}"
+            # check that the decorator tokens are all handwritten
             self._check_tokens_handwritten(review_lines[prev_line_idx]["Tokens"])
+            # keep going until no decorators found on previous line
             prev_line_idx -= 1
     
     def _is_decorator_line(self, tokens):
@@ -148,13 +154,6 @@ class TestHandwrittenTokens:
             assert "RenderClasses" in token and "handwritten" in token["RenderClasses"], \
                 f"Token {token['Value']} should have 'handwritten' render class"
 
-    def _check_decorators_generated(self, review_lines, prev_line_idx, related_to_line):
-        while prev_line_idx > 0 and review_lines[prev_line_idx]["Tokens"][0]["Value"].startswith("@"):
-            assert review_lines[prev_line_idx]["LineId"] == related_to_line, \
-                f"Expected related line ID {related_to_line}, but got {review_lines[prev_line_idx]['LineId']}"
-            self._check_tokens_generated(review_lines[prev_line_idx]["Tokens"])
-            prev_line_idx -= 1
-    
     def _check_tokens_generated(self, tokens):
         for token in tokens:
             # Generated classes should not have "handwritten"
@@ -167,82 +166,3 @@ class TestHandwrittenTokens:
                     for child_token in child_line:
                         assert "RenderClasses" not in child_token or "handwritten" not in child_token["RenderClasses"], \
                             f"Token {child_token['Value']} should not have 'handwritten' render class"
-
-    def test_inherited_functions_not_handwritten(self):
-        """Test that inherited functions do NOT have 'handwritten' in render_classes."""
-        obj = HandwrittenExtendedClass
-        class_node = ClassNode(
-            name=obj.__name__,
-            namespace=obj.__name__,
-            parent_node=None,
-            obj=obj,
-            pkg_root_namespace=self.pkg_namespace,
-            apiview=MockApiView,
-        )
-        tokens = _tokenize(class_node)
-        
-        # Find inherited methods (they should NOT have 'handwritten')
-        # These are methods inherited from base classes, not defined in _patch.py
-        inherited_methods = ["do_thing", "double", "something", "mixin_overloaded_method"]
-        self._check_inherited_not_handwritten(tokens, inherited_methods)
-
-    def _check_inherited_not_handwritten(self, review_lines, inherited_methods):
-        """Check that inherited methods do not have 'handwritten' render class."""
-        for line in review_lines:
-            if line.line_id:
-                for method_name in inherited_methods:
-                    if method_name in line.line_id:
-                        # Inherited methods should NOT have 'handwritten'
-                        for token in line.tokens:
-                            if hasattr(token, 'render_classes') and token.render_classes:
-                                assert 'handwritten' not in token.render_classes, \
-                                    f"Inherited method '{method_name}' should not have 'handwritten' render class"
-            
-            # Recursively check children
-            if hasattr(line, 'children') and line.children:
-                self._check_inherited_not_handwritten(line.children, inherited_methods)
-
-    def test_handwritten_functions_have_handwritten_tokens(self):
-        """Test that all tokens for handwritten functions have 'handwritten' render class."""
-        obj = HandwrittenExtendedClass
-        class_node = ClassNode(
-            name=obj.__name__,
-            namespace=obj.__name__,
-            parent_node=None,
-            obj=obj,
-            pkg_root_namespace=self.pkg_namespace,
-            apiview=MockApiView,
-        )
-        tokens = _tokenize(class_node)
-        
-        # Functions defined in _patch.py should have handwritten tokens
-        handwritten_functions = [
-            "handwritten_process", "__init__", 
-            "get_summary", "validate_data"
-        ]
-        self._check_function_tokens_handwritten(tokens, handwritten_functions)
-
-    def _check_function_tokens_handwritten(self, review_lines, function_names):
-        """Check that all tokens in handwritten functions have 'handwritten' render class."""
-        for line in review_lines:
-            if line.line_id:
-                for func_name in function_names:
-                    if func_name in line.line_id:
-                        # All tokens in handwritten functions should have 'handwritten'
-                        self._check_all_tokens_in_line_handwritten(line, func_name)
-            
-            # Recursively check children
-            if hasattr(line, 'children') and line.children:
-                self._check_function_tokens_handwritten(line.children, function_names)
-
-    def _check_all_tokens_in_line_handwritten(self, line, context_name):
-        """Check that all tokens in a line and its children have 'handwritten' render class."""
-        for token in line.tokens:
-            if hasattr(token, 'render_classes') and token.render_classes:
-                assert 'handwritten' in token.render_classes, \
-                    f"Token '{token.value}' in {context_name} missing 'handwritten' render class"
-        
-        # Check children tokens too (for multi-line functions)
-        if hasattr(line, 'children') and line.children:
-            for child_line in line.children:
-                self._check_all_tokens_in_line_handwritten(child_line, context_name)

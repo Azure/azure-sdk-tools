@@ -81,9 +81,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
         [McpServerTool(Name = "ConvertSwaggerToTypeSpec"), Description(@"**Call this tool when trying to convert an existing Azure service to TypeSpec.**
         This command should only be ran once to get started working on a TypeSpec project.
-        Verify whether the source swagger describes an Azure Resource Management (ARM) API
-        or a data plane API if unsure.
-        Pass in the `pathToSwaggerReadme` which is the path or URL to the swagger README file.
+        Verify whether the source swagger describes an Azure Resource Management (ARM) API or a data plane API if unsure.
+        Pass in the `pathToSwaggerReadme` which is the path to the swagger README file.
         Pass in the `outputDirectory` where the TypeSpec project should be created. This must be an existing empty directory.
         Pass in `isAzureResourceManagement` to indicate whether the swagger is for an Azure Resource Management (ARM) API.
         This should be true if the swagger's path contains `resource-manager`.

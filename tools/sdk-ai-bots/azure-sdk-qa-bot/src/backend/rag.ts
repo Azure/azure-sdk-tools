@@ -88,6 +88,7 @@ export interface FeedbackRequestPayload {
   reaction: Reaction;
   comment?: string;
   reasons?: string[];
+  link?: string;
 }
 
 // TODO: reuse function to post request to RAG backend

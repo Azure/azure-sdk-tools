@@ -11,7 +11,8 @@ import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../ba
 import { extractSelectedReasons } from '../cards/components/feedback.js';
 import config from '../config/config.js';
 import { getRagTanent } from '../config/utils.js';
-import { ConversationHandler } from '../input/ConversationHandler.js';
+import { ConversationHandler, ConversationMessage } from '../input/ConversationHandler.js';
+import { parseConversationId } from '../common/shared.js';
 
 const conversationHandler = new ConversationHandler();
 await conversationHandler.initialize();
@@ -60,7 +61,6 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   const feedbackComment = context.activity.value?.feedbackComment;
   const selectedReasons = extractSelectedReasons(context.activity.value);
   const meta = getTurnContextLogMeta(context);
-  console.log('🚀 ~ app.activity ~ context.activity.value:', context.activity.value);
   logger.info(
     `Received feedback action: ${action} with comment: "${feedbackComment}" and reasons: ${JSON.stringify(
       selectedReasons
@@ -69,6 +69,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   );
 
   const conversations = await conversationHandler.getConversationMessages(context.activity.conversation.id, meta);
+
   const messages: Message[] = [];
   conversations.map((msg) => {
     const question: Message = msg.prompt ? { content: msg.prompt.textWithoutMention, role: 'user' } : undefined;
@@ -78,6 +79,9 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
     if (answer) messages.push(answer);
   });
 
+  const parsed = parseConversationId(context.activity.conversation.id);
+  const postLink = parsed.postId ? generateLink(context, parsed.postId) : undefined;
+
   switch (action) {
     case 'feedback-like':
       const goodFeedback: FeedbackRequestPayload = {
@@ -86,6 +90,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         reaction: 'good',
         comment: feedbackComment,
         reasons: selectedReasons,
+        link: postLink,
       };
       await sendFeedback(goodFeedback, ragOptions, meta);
       await context.sendActivity('You liked my service. Thanks for your feedback!');
@@ -97,6 +102,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
         reaction: 'bad',
         comment: feedbackComment,
         reasons: selectedReasons,
+        link: postLink,
       };
       await sendFeedback(badFeedback, ragOptions, meta);
       await context.sendActivity('You disliked my service. Thanks for your feedback!');
@@ -105,4 +111,44 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       break;
   }
 });
+
+function generateLink(context: TurnContext, postId: string): string {
+  const activity = context.activity;
+
+  // Extract basic information
+  const tenantId = activity.conversation?.tenantId;
+  const rawConversationId = activity.conversation?.id; // Raw conversation ID
+  // const replyToId = activity.replyToId; // Parent message ID if this is a reply
+
+  // Extract clean conversation ID (thread ID)
+  // Format: 19:xxx@thread.tacv2;messageid=xxx -> 19:xxx@thread.tacv2
+  const conversationId = rawConversationId?.split(';')[0] || rawConversationId;
+
+  // Extract additional information from channelData if available
+  const channelData = activity.channelData;
+  const teamName = channelData?.team?.name || '';
+  const channelName = channelData?.channel?.name || '';
+  // const createdTime = activity.timestamp;
+
+  // Build base URL
+  let shareUrl = `https://teams.microsoft.com/l/message/${conversationId}/${postId}`;
+
+  // Build query parameters
+  const params = new URLSearchParams();
+  if (tenantId) params.append('tenantId', tenantId);
+  // if (groupId) params.append('groupId', groupId);
+  // if (replyToId) params.append('parentMessageId', replyToId);
+  if (teamName) params.append('teamName', encodeURIComponent(teamName));
+  if (channelName) params.append('channelName', encodeURIComponent(channelName));
+  // if (createdTime) params.append('createdTime', createdTime.getTime().toString());
+
+  // Combine complete URL
+  const queryString = params.toString();
+  if (queryString) {
+    shareUrl += `?${queryString}`;
+  }
+
+  return shareUrl;
+}
+
 export default app;

@@ -84,12 +84,10 @@ export function createFeedbackCard() {
   return feedbackCard;
 }
 
-// 处理提交数据，提取选中的原因作为数组
 export function extractSelectedReasons(submittedData: any): string[] {
   const selectedReasons: string[] = [];
   const reasons = submittedData.reasons || [];
 
-  // 遍历原因数组，检查对应的toggle是否被选中
   reasons.forEach((reason: string, index: number) => {
     const toggleId = generateToggleId(index);
     if (submittedData[toggleId] === 'true') {

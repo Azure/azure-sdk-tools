@@ -24,10 +24,12 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// <param name="teamStorageURI"></param>
         /// <returns></returns>
         public static List<CodeownersEntry> ParseCodeownersFile(string codeownersFilePathOrUrl,
-                                                                string teamStorageURI = null)
+                                                                string teamStorageURI = null,
+                                                                int startLine = -1,
+                                                                int endLine = -1)
         {
             List<string> codeownersFile = FileHelpers.LoadFileAsStringList(codeownersFilePathOrUrl);
-            return ParseCodeownersEntries(codeownersFile, teamStorageURI);
+            return ParseCodeownersEntries(codeownersFile, teamStorageURI, startLine, endLine);
         }
 
         /// <summary>
@@ -36,17 +38,28 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// <param name="teamStorageURI">The URI of the team storage data if being overridden.</param>
         /// <returns>List&gt;CodeownersEntry&lt;</returns>
         public static List<CodeownersEntry> ParseCodeownersEntries(List<string> codeownersFile,
-                                                                   string teamStorageURI = null)
+                                                                   string teamStorageURI = null,
+                                                                   int startLine = -1,
+                                                                   int endLine = -1)
         {
             OwnerDataUtils ownerDataUtils = new OwnerDataUtils(teamStorageURI);
             List<CodeownersEntry> codeownersEntries = new List<CodeownersEntry>();
+
+            if (startLine == -1)
+            {
+                startLine = 0;
+            }
+            if (endLine == -1)
+            {
+                endLine = codeownersFile.Count;
+            }
 
             // Start parsing the codeowners file, a block at a time.
             // A block can be one of the following:
             // 1. A single source path/owner line
             // 2. One or more monikers that either ends in source path/owner line or a blank line, depending
             //    on the moniker.
-            for (int currentLineNum = 0; currentLineNum < codeownersFile.Count; currentLineNum++)
+            for (int currentLineNum = startLine; currentLineNum < endLine; currentLineNum++)
             {
                 string line = codeownersFile[currentLineNum];
                 if (ParsingUtils.IsMonikerOrSourceLine(line))
@@ -62,7 +75,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                     if (errors.Count > 0)
                     {
                         // There should only be a single block error here.
-                        foreach(BaseError error in errors)
+                        foreach (BaseError error in errors)
                         {
                             Console.Error.WriteLine($"Block error encountered while parsing, entry will be skipped.\n{error}");
                         }

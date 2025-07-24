@@ -259,8 +259,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         throw new InvalidOperationException("CODEOWNERS file is empty");
                     }
-                    
-                    
+
+
                 }
 
                 return null;
@@ -272,9 +272,93 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        public async Task<ServiceCodeOwnerResult> updateCodeOwners()
+        //[McpServerTool(Name = "DeleteCodeOwners"), Description("Removes specified code owners from a service entry in the CODEOWNERS file, ensuring at least one owner remains.")]
+        public async Task<ServiceCodeOwnerResult> DeleteCodeOwners(string repoName, string serviceLabel, List<string> codeOwnersToDelete)
         {
-            return null;
+            string? fullRepoName = null;
+            try
+            {
+                if (!azureRepositories.TryGetValue(repoName.ToLowerInvariant(), out fullRepoName))
+                {
+                    return CreateErrorResult("", $"Unknown repository: {repoName}. Valid options: {string.Join(", ", azureRepositories.Keys)}");
+                }
+
+                var result = new ServiceCodeOwnerResult
+                {
+                    Repository = fullRepoName,
+                    CodeOwners = new List<CodeOwnerValidationResult>(),
+                    Status = "Processing"
+                };
+
+                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob");
+                var matchingEntry = validationHelper.FindServiceEntries(codeownersEntries, serviceLabel);
+
+                if (matchingEntry == null)
+                {
+                    result.Status = "Service not found";
+                    result.Message = $"Service label '{serviceLabel}' not found in {fullRepoName}";
+                    return result;
+                }
+
+                // Get all current owners from the entry
+                var currentOwners = validationHelper.ExtractUniqueOwners(matchingEntry);
+                var normalizedOwnersToDelete = codeOwnersToDelete.Select(owner => owner.TrimStart('@')).ToList();
+
+                // Find owners that would remain after deletion
+                var remainingOwners = currentOwners.Where(owner =>
+                    !normalizedOwnersToDelete.Any(toDelete =>
+                        owner.TrimStart('@').Equals(toDelete, StringComparison.OrdinalIgnoreCase))).ToList();
+
+                if (remainingOwners.Count == 0)
+                {
+                    result.Status = "Error";
+                    result.Message = $"Cannot delete all code owners. At least one owner must remain for service '{serviceLabel}'";
+                    return result;
+                }
+
+                // Find owners that will actually be deleted 
+                var ownersToDelete = currentOwners.Where(owner =>
+                    normalizedOwnersToDelete.Any(toDelete =>
+                        owner.TrimStart('@').Equals(toDelete, StringComparison.OrdinalIgnoreCase))).ToList();
+
+                if (ownersToDelete.Count == 0)
+                {
+                    result.Status = "No changes";
+                    result.Message = $"None of the specified code owners were found in the service '{serviceLabel}' entry";
+                    return result;
+                }
+
+                // Get CODEOWNERS file content for modification
+                var codeownersFileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
+
+                if (codeownersFileContent == null || codeownersFileContent.Count == 0)
+                {
+                    throw new InvalidOperationException("Could not retrieve CODEOWNERS file");
+                }
+
+                var fileContent = codeownersFileContent[0].Content;
+                var fileSha = codeownersFileContent[0].Sha;
+
+                if (string.IsNullOrEmpty(fileContent))
+                {
+                    throw new InvalidOperationException("CODEOWNERS file is empty");
+                }
+
+
+                /// TO-DO: 
+                /// Find code owner entry for the service label (make sure all cases are covered)
+                /// Create a branch for the changes
+                /// Update file by removing specified code owners from the entry
+                /// Create a pull request with the changes
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing repository {repo}", fullRepoName ?? repoName);
+                return CreateErrorResult(fullRepoName ?? repoName, $"Error processing repository: {ex.Message}");
+            }
         }
+
     }
 }

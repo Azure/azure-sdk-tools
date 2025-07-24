@@ -7,14 +7,11 @@
 
 from typing import overload, Optional, ClassVar, Dict, List, Union, TypedDict
 from dataclasses import dataclass
-from enum import Enum, IntEnum
+from enum import Enum
 from .models._models import (
     ClassWithIvarsAndCvars, 
     SomethingWithOverloads, 
-    ObjectWithDefaults,
-    PetEnumPy3MetaclassAlt
 )
-from .models._mixin import MixinWithOverloads
 
 
 @dataclass

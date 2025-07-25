@@ -90,7 +90,7 @@ Consumption - Billing,All issues in consumption where billing/price-related data
 Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
 Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
 Consumption - RIandShowBack,"All issues in consumption associated with Reservation and ShowBack.",e99695
-Consumption - UsageDetailsAndExport,All issues in consumption for usage details API and exports API.,e99695
+Consumption - UsageDetailsAndExport,"All issues in consumption for usage details API and exports API.",e99695
 Container Instances,,e99695
 Container Orchestrator Runtime,,e99695
 Container Registry,,e99695

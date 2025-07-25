@@ -21,7 +21,6 @@ function createFeedbackActionCard(submitText: string, reasons: string[], action:
     id: generateToggleId(index),
     value: 'false',
   }));
-  const question = (action === 'feedback-dislike' ? '👎' : '👍') + 'What is the reason for your feedback?';
   return {
     type: 'AdaptiveCard',
     $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
@@ -29,15 +28,10 @@ function createFeedbackActionCard(submitText: string, reasons: string[], action:
     body: [
       {
         type: 'TextBlock',
-        text: question,
-        wrap: true,
-      },
-      ...reasonToggles,
-      {
-        type: 'TextBlock',
         text: 'Tell us more.',
         wrap: true,
       },
+      ...reasonToggles,
       {
         type: 'Input.Text',
         id: 'feedbackComment',
@@ -74,7 +68,7 @@ export function createFeedbackCard() {
     body: [
       {
         type: 'TextBlock',
-        text: 'Was this conversation helpful to you?',
+        text: 'Was the response helpful?',
         wrap: true,
       },
     ],

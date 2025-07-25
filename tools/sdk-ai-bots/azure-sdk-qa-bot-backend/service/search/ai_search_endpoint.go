@@ -141,6 +141,9 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	for _, source := range sources {
 		req := baseReq
 		req.Top = k
+		if val, ok := config.SourceTopK[source]; ok {
+			req.Top = val
+		}
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
@@ -203,7 +206,9 @@ func sortResultsBySource(results []model.Index, sources []model.Source) {
 				priorityJ = idx
 			}
 		}
-
+		if priorityI == priorityJ {
+			return results[i].RerankScore > results[j].RerankScore // If same source, sort by score
+		}
 		// If both sources are in the priority list, sort by priority
 		if priorityI >= 0 && priorityJ >= 0 {
 			return priorityI < priorityJ // Lower index = higher priority
@@ -258,6 +263,8 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var err error
 	switch chunk.ContextID {
 	case string(model.Source_TypeSpecQA):
+		chunks, err = s.GetHeader1CompleteContext(chunk)
+	case string(model.Source_TypeSpecMigration):
 		chunks, err = s.GetHeader1CompleteContext(chunk)
 	default:
 		chunks, err = s.GetCompleteContext(chunk)
@@ -315,14 +322,21 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	return chunk
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source) (*model.AgenticSearchResponse, error) {
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
 	var messages []model.KnowledgeAgentMessage
+
+	// Use custom prompt if provided, otherwise fall back to default
+	promptText := agenticSearchPrompt
+	if promptText == "" {
+		promptText = "You are a TypeSpec expert assistant. You are deeply knowledgeable about TypeSpec syntax, decorators, patterns, and best practices. you must extract every single questions of user's query, and answer every question about TypeSpec"
+	}
+
 	messages = append(messages, model.KnowledgeAgentMessage{
 		Role: "assistant",
 		Content: []model.KnowledgeAgentMessageContent{
 			{
 				Type: "text",
-				Text: "You are a TypeSpec expert assistant. You are deeply knowledgeable about TypeSpec syntax, decorators, patterns, and best practices. you must extract every single questions of user's query, and answer every question about TypeSpec",
+				Text: promptText,
 			},
 		},
 	})

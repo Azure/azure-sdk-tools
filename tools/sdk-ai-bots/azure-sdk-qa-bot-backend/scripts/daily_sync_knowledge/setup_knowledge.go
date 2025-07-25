@@ -175,6 +175,7 @@ func main() {
 			return
 		}
 	}
+	
 	// Delete expired blobs
 	err = deleteExpiredBlobs(currentFiles)
 	if err != nil {

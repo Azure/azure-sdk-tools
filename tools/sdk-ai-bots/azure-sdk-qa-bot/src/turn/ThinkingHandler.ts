@@ -3,7 +3,7 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
-import { CompletionResponsePayload } from '../backend/rag.js';
+import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
 
@@ -12,7 +12,8 @@ export class ThinkingHandler {
   private readonly defaultThinkingMessage = '⏳Thinking';
   private readonly maxRetryTimesForFinish = 5;
   private readonly maxRetryTimesForThinking = 1800;
-  private readonly defaultInterval = 1000; // unit in milliseconds
+  private readonly maxCancelTimeout = 1000; // unit in milliseconds
+  private readonly defaultThinkingInterval = 5000; // unit in milliseconds
   private readonly context: TurnContext;
   private readonly conversationHandler: ConversationHandler;
   private thinkingMessage = this.defaultThinkingMessage;
@@ -41,7 +42,7 @@ export class ThinkingHandler {
     let retryCount = 0;
     for (; retryCount < this.maxRetryTimesForFinish; retryCount++) {
       if (!this.isRunning) break;
-      await setTimeout(this.defaultInterval);
+      await setTimeout(this.maxCancelTimeout);
     }
     if (retryCount === this.maxRetryTimesForFinish) {
       throw new Error('Failed to stop thinking timer');
@@ -49,8 +50,8 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(reply: CompletionResponsePayload, currentPrompt: Prompt) {
-    const answer = this.addReferencesToReply(reply);
+  public async stop(reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
+    const answer = this.generateAnswer(reply);
     const updated: Partial<TurnContext> = {
       type: 'message',
       id: this.resourceId,
@@ -70,6 +71,18 @@ export class ThinkingHandler {
     }
   }
 
+  private generateAnswer(reply: CompletionResponsePayload | RagApiError) {
+    if (!isCompletionResponsePayload(reply)) {
+      const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
+      const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
+      const errorReply = `🚫Sorry, I'm having some ${reply.category} issues right now and can't answer your question.${retryMessage} Error: ${reply.message}.`;
+      return errorReply;
+    }
+
+    // received reply successfully
+    return this.addReferencesToReply(reply);
+  }
+
   private async startCore(context: TurnContext, resourceId: string) {
     let count = 0;
     for (; count < this.maxRetryTimesForThinking; count++) {
@@ -86,7 +99,7 @@ export class ThinkingHandler {
       } finally {
         this.isRunning = false;
       }
-      await setTimeout(this.defaultInterval);
+      await setTimeout(this.defaultThinkingInterval);
     }
     if (count === this.maxRetryTimesForThinking) {
       logger.warn('Thinking timer reached max retry times', { meta: this.meta });
@@ -134,9 +147,9 @@ export class ThinkingHandler {
     };
     reply += '\n\n**References**\n';
     referencesMap.forEach((links, source) => {
-      reply += `- ${prettierSource(source)}\n`;
+      const sourceName = prettierSource(source);
       links.forEach((title, link) => {
-        reply += `  - [${title}](${link})\n`;
+        reply += `- [${title} | ${sourceName}](${link})\n`;
       });
     });
     return reply;
@@ -168,14 +181,10 @@ export class ThinkingHandler {
     promptActivityId: string,
     replyActivityId: string,
     prompt: Prompt,
-    replyPayload: CompletionResponsePayload,
+    replyPayload: CompletionResponsePayload | RagApiError,
     meta: object
   ) {
-    const reply: RAGReply = {
-      answer: replyPayload.answer,
-      has_result: replyPayload.has_result,
-      references: replyPayload.references.map((ref) => ({ ...ref })) || [],
-    };
+    const reply = this.convertPayloadToReply(replyPayload);
     const promptMessage: ConversationMessage = {
       conversationId,
       activityId: promptActivityId,
@@ -196,5 +205,21 @@ export class ThinkingHandler {
     } catch (error) {
       logger.error('Failed to save current prompt', { error, meta });
     }
+  }
+
+  private convertPayloadToReply(replyPayload: CompletionResponsePayload | RagApiError) {
+    if (!isCompletionResponsePayload(replyPayload)) {
+      const answer = this.generateAnswer(replyPayload);
+      return {
+        answer,
+        has_result: false,
+        references: [],
+      };
+    }
+    return {
+      answer: replyPayload.answer,
+      has_result: replyPayload.has_result,
+      references: replyPayload.references?.map((ref) => ({ ...ref })) || [],
+    };
   }
 }

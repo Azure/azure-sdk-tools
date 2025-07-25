@@ -77,9 +77,53 @@ export interface CompletionResponsePayload {
   references?: Reference[];
   full_context?: string;
   intension?: IntensionResult;
+  Category?: string;
+  ReasoningProgress?: string;
+}
+
+export function isCompletionResponsePayload(
+  response: CompletionResponsePayload | RagApiError | undefined
+): response is CompletionResponsePayload {
+  const completionResponse = response as CompletionResponsePayload;
+  return (
+    completionResponse.id !== undefined &&
+    completionResponse.answer !== undefined &&
+    completionResponse.has_result !== undefined
+  );
 }
 
 export type Reaction = 'good' | 'bad';
+
+// Error Code definitions
+export type ErrorCode =
+  // Client Error Codes (4xx)
+  | 'INVALID_REQUEST'
+  | 'MISSING_MESSAGE'
+  | 'EMPTY_CONTENT'
+  | 'INVALID_TENANT_ID'
+  | 'UNAUTHORIZED'
+  // Server Error Codes (5xx)
+  | 'SERVICE_INIT_FAILURE'
+  | 'LLM_SERVICE_FAILURE'
+  | 'SEARCH_FAILURE'
+  | 'INTERNAL_ERROR';
+
+// Error Category definitions
+export type ErrorCategory =
+  | 'validation'
+  | 'authentication'
+  | 'authorization'
+  | 'rate_limit'
+  | 'service'
+  | 'dependency'
+  | 'internal';
+
+// API Error interface
+export interface RagApiError {
+  code: ErrorCode;
+  message: string;
+  category: ErrorCategory;
+}
 
 // Feedback request interface
 export interface FeedbackRequestPayload {
@@ -87,6 +131,8 @@ export interface FeedbackRequestPayload {
   messages: Message[];
   reaction: Reaction;
   comment?: string;
+  reasons?: string[];
+  link?: string;
 }
 
 // TODO: reuse function to post request to RAG backend
@@ -94,7 +140,7 @@ export async function getRAGReply(
   payload: CompletionRequestPayload,
   options: RAGOptions,
   meta: object
-): Promise<CompletionResponsePayload | undefined> {
+): Promise<CompletionResponsePayload | RagApiError | undefined> {
   logger.info(
     `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.completion} with tenant ${
       payload.tenant_id
@@ -112,6 +158,7 @@ export async function getRAGReply(
     });
     if (response.status !== 200) {
       logger.warn(`Failed to fetch data from RAG backend. Status: ${response.status}`, { meta });
+      return response.data;
     }
     logger.info('Get response from RAG', { responseBody: response.data, meta });
     return response.data;
@@ -121,7 +168,7 @@ export async function getRAGReply(
   }
 }
 
-export async function sendFeedback(payload: FeedbackRequestPayload, options: RAGOptions, meta: object) {
+export async function sendFeedback(payload: FeedbackRequestPayload, options: RAGOptions, meta: object): Promise<void> {
   logger.info(
     `Post to get reply from RAG on endpoint ${options.endpoint + ragApiPaths.feedback} with tenant ${
       payload.tenant_id
@@ -138,9 +185,9 @@ export async function sendFeedback(payload: FeedbackRequestPayload, options: RAG
     if (response.status !== 200) {
       logger.warn(`Failed to fetch data from feedback backend. Status: ${response.status}`);
     }
-    return response.data;
+    return;
   } catch (error) {
     logger.warn('Failed to send feedback:', { error, meta });
-    return undefined;
+    return;
   }
 }

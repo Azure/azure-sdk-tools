@@ -1,4 +1,6 @@
 #!/bin/bash
+. /etc/profile
+. ~/.bash_profile
 
 set -e  # Exit on error
 

@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                     .Select(ParseCsvLine)
                     .Append(new List<string> { serviceLabel, "", ServiceLabelColorCode })
-                    .OrderBy(entry => entry[0], StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(entry => entry[0], StringComparer.Ordinal)
                     .Select(entry => {
                         // Use CsvHelper to properly format each line
                         using var writer = new StringWriter();

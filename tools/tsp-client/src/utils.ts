@@ -153,6 +153,46 @@ export interface ConfigLoader {
 /**
  * Single entry point for loading tspconfig with inheritance (iterative with single inheritance)
  */
+
+/**
+ * Resolve additional directory path to absolute path based on config location
+ */
+function resolveAdditionalDirectoryPath(dirPath: string, configMetadata: any): string {
+  // If it's already an absolute path, return as-is
+  if (dirPath.startsWith('/') || dirPath.includes('://')) {
+    return dirPath;
+  }
+  
+  // Relative path - resolve based on config location
+  if (typeof configMetadata === 'string') {
+    // Local config - metadata is absolute file path
+    // Resolve to absolute filesystem path
+    const configDir = dirname(configMetadata);
+    return resolvePath(configDir, dirPath);
+  } else if (configMetadata && typeof configMetadata === 'object') {
+    // Remote config - metadata has directory, repo, commit structure  
+    // Keep paths relative to repository root for remote configs
+    const { directory } = configMetadata as { directory: string; repo: string; commit: string };
+    const configDir = directory;
+    
+    // For remote configs, resolve relative to the config directory but keep it repo-relative
+    if (dirPath.startsWith('./')) {
+      // Remove leading './' and resolve relative to config directory
+      const relativePath = dirPath.substring(2);
+      return joinPaths(configDir, relativePath).replace(/\\/g, '/');
+    } else {
+      // Direct relative path
+      return joinPaths(configDir, dirPath).replace(/\\/g, '/');
+    }
+  }
+  
+  // Fallback - return as-is if we can't determine the context
+  return dirPath;
+}
+
+/**
+ * Loads and merges TypeSpec configuration with inheritance support
+ */
 export async function loadTspConfig<T>(
   initialPath: string,
   loader: ConfigLoader
@@ -200,6 +240,21 @@ export async function loadTspConfig<T>(
     if (configEntry) {
       const configToMerge = { ...configEntry.config };
       delete configToMerge.extends; // Remove extends field
+      
+      // Resolve additionalDirectories to absolute paths based on this config's location
+      if (configToMerge.options?.["@azure-tools/typespec-client-generator-cli"]?.additionalDirectories) {
+        const additionalDirs = configToMerge.options["@azure-tools/typespec-client-generator-cli"].additionalDirectories;
+        if (Array.isArray(additionalDirs)) {
+          const resolvedDirs = additionalDirs.map(dir => {
+            if (typeof dir === 'string') {
+              return resolveAdditionalDirectoryPath(dir, configEntry.metadata);
+            }
+            return dir;
+          });
+          configToMerge.options["@azure-tools/typespec-client-generator-cli"].additionalDirectories = resolvedDirs;
+        }
+      }
+      
       mergedConfig = deepMergeConfigs(mergedConfig, configToMerge);
     }
   }

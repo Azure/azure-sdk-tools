@@ -5,7 +5,9 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
 ## Table of Contents
 
 * [Azure SDK CLI and MCP server](#azure-sdk-cli-and-mcp-server)
+   * [Table of Contents](#table-of-contents)
    * [Getting Started](#getting-started)
+      * [Install standalone](#install-standalone)
       * [Prerequisites](#prerequisites)
       * [Setup](#setup)
       * [Build](#build)
@@ -19,8 +21,27 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
    * [Design Guidelines](#design-guidelines)
    * [Adding a New Tool](#adding-a-new-tool)
 
-
 ## Getting Started
+
+### Install standalone
+
+**To use the CLI immediately** (not intended for development), run the installation script:
+
+```pwsh
+<repo root>/eng/common/mcp/azure-sdk-mcp.ps1
+```
+
+To add the CLI tool to your shell path, run this instead:
+
+```pwsh
+<repo root>/eng/common/mcp/azure-sdk-mcp.ps1 -UpdatePathInProfile
+```
+
+The tool can now be run by typing `azsdk` into the shell.
+
+**To use the MCP server immediately**
+
+See the [mcp quick start docs](./Azure.Sdk.Tools.Cli/README.md#quick-start).
 
 ### Prerequisites
 

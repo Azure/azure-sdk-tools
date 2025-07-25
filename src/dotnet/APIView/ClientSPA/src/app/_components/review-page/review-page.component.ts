@@ -12,6 +12,7 @@ import { APIRevisionsService } from 'src/app/_services/revisions/revisions.servi
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
+import { ReviewPageOptionsComponent } from '../review-page-options/review-page-options.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
@@ -31,6 +32,7 @@ import { HttpResponse } from '@angular/common/http';
 })
 export class ReviewPageComponent implements OnInit {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
+  @ViewChild(ReviewPageOptionsComponent) reviewPageOptionsComponent!: ReviewPageOptionsComponent;
 
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
@@ -497,6 +499,10 @@ export class ReviewPageComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error requesting namespace review:', error);
+          // Reset loading state in the options component on error
+          if (this.reviewPageOptionsComponent) {
+            this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
+          }
         }
       });
     }

@@ -98,6 +98,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   // Namespace review properties
   canRequestNamespaceReview: boolean = false;
   isNamespaceReviewRequested: boolean = false;
+  isNamespaceReviewInProgress: boolean = false;
   namespaceReviewBtnClass: string = '';
   namespaceReviewBtnLabel: string = '';
   namespaceReviewMessage: string = '';
@@ -179,6 +180,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setReviewApprovalStatus();
       this.setNamespaceReviewStates();
       this.updateDiffStyle();
+
+      // Reset loading state when review data is updated (indicating the request completed)
+      if (this.isNamespaceReviewInProgress && changes['review'].currentValue.isNamespaceReviewRequested) {
+        this.isNamespaceReviewInProgress = false;
+        this.isNamespaceReviewRequested = true;
+        this.updateNamespaceReviewButtonState();
+      }
     }
 
     if (changes['hasHiddenAPIThatIsDiff']) {
@@ -231,9 +239,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
-  * Disable Lazy Loading
-  * @param event the Filter event
-  */
+   * Disable Lazy Loading
+   * @param event the Filter event
+   */
   onDisableLazyLoadingSwitchChange(event: InputSwitchChangeEvent) {
     if (event.checked) {
       this.showDisableCodeLinesLazyLoadingModal = true;
@@ -242,6 +250,27 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     }
   }
 
+  /**
+   * Handle disable lazy loading modal hide
+   */
+  onDisableLazyLoadingModalHide() {
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Confirm disable lazy loading
+   */
+  onDisableLazyLoadingConfirm() {
+    this.disableCodeLinesLazyLoadingEmitter.emit(true);
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Cancel disable lazy loading
+   */
+  onDisableLazyLoadingCancel() {
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
 
   /**
   * Callback for markedAsViewSwitch Change
@@ -344,20 +373,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec';
     this.isNamespaceReviewRequested = this.review?.isNamespaceReviewRequested || false;
 
-    // Check if namespace review is approved (using isApproved flag)
-    if (this.review?.isApproved) {
-      this.namespaceReviewBtnClass = "btn btn-outline-success";
-      this.namespaceReviewBtnLabel = "Namespace Review Approved";
-      this.namespaceReviewMessage = "";
-    } else if (this.isNamespaceReviewRequested) {
-      this.namespaceReviewBtnClass = "btn btn-outline-secondary";
-      this.namespaceReviewBtnLabel = "Namespace Review Requested";
-      this.namespaceReviewMessage = "";
-    } else {
-      this.namespaceReviewBtnClass = "btn btn-success";
-      this.namespaceReviewBtnLabel = "Request Namespace Review";
-      this.namespaceReviewMessage = "";
-    }
+    // Update button state
+    this.updateNamespaceReviewButtonState();
   }
 
   setPullRequestsInfo() {
@@ -536,35 +553,42 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   handleNamespaceReviewAction() {
     console.log('Namespace review button clicked, isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
     // Only allow if not already requested
-    if (!this.isNamespaceReviewRequested) {
+    if (!this.isNamespaceReviewRequested && !this.isNamespaceReviewInProgress) {
+      // Optimistic UI update - immediately show as in progress
+      this.isNamespaceReviewInProgress = true;
+      this.updateNamespaceReviewButtonState();
+
+      // Emit the action to parent component
       this.namespaceApprovalEmitter.emit(true);
     }
   }
 
-  /**
-   * Handle when the disable lazy loading modal is hidden
-   */
-  onDisableLazyLoadingModalHide() {
-    // Reset the switch if modal is closed without confirmation
-    this.disableCodeLinesLazyLoading = false;
-    this.showDisableCodeLinesLazyLoadingModal = false;
+  updateNamespaceReviewButtonState() {
+    if (this.isNamespaceReviewInProgress) {
+      this.namespaceReviewBtnClass = "btn btn-outline-primary";
+      this.namespaceReviewBtnLabel = "Requesting...";
+      this.namespaceReviewMessage = "";
+    } else if (this.review?.isApproved) {
+      this.namespaceReviewBtnClass = "btn btn-outline-success";
+      this.namespaceReviewBtnLabel = "Namespace Review Approved";
+      this.namespaceReviewMessage = "";
+    } else if (this.isNamespaceReviewRequested) {
+      this.namespaceReviewBtnClass = "btn btn-outline-secondary";
+      this.namespaceReviewBtnLabel = "Namespace Review Requested";
+      this.namespaceReviewMessage = "";
+    } else {
+      this.namespaceReviewBtnClass = "btn btn-success";
+      this.namespaceReviewBtnLabel = "Request Namespace Review";
+      this.namespaceReviewMessage = "";
+    }
   }
 
   /**
-   * Handle confirmation of disabling lazy loading
+   * Reset the namespace review loading state (called when request fails)
    */
-  onDisableLazyLoadingConfirm() {
-    this.disableCodeLinesLazyLoading = true;
-    this.disableCodeLinesLazyLoadingEmitter.emit(true);
-    this.showDisableCodeLinesLazyLoadingModal = false;
-  }
-
-  /**
-   * Handle cancellation of disabling lazy loading
-   */
-  onDisableLazyLoadingCancel() {
-    this.disableCodeLinesLazyLoading = false;
-    this.showDisableCodeLinesLazyLoadingModal = false;
+  resetNamespaceReviewLoadingState() {
+    this.isNamespaceReviewInProgress = false;
+    this.updateNamespaceReviewButtonState();
   }
 
   /**

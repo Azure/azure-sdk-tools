@@ -54,7 +54,8 @@
                 <div class="d-grid gap-2">
                     <button class="{{namespaceReviewBtnClass}}" type="button"
                             (click)="handleNamespaceReviewAction()"
-                            [disabled]="isNamespaceReviewRequested || isNamespaceApproved()">
+                            [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress">
+                        <span *ngIf="isNamespaceReviewInProgress" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         {{namespaceReviewBtnLabel}}
                     </button>
                 </div>

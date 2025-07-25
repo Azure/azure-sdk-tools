@@ -2,16 +2,23 @@
 
 This project is the primary integration point for all `azure-sdk` provided [MCP](https://modelcontextprotocol.io/introduction) tools as well as a convenient CLI app for azure sdk developers. It is built and published out of the `azure-sdk-tools` repo but consumed primarily through the `.vscode/mcp.json` file within each `Azure-sdk-for-<lang>` language repository. Server installation is carried out by the eng/common scripts present at `eng/common/mcp/azure-sdk-mcp.ps1`.
 
-* [Getting Started](#getting-started)
-  * [Prerequisites](#prerequisites)
-  * [Setup](#setup)
-  * [Build](#build)
-  * [Run](#run)
-  * [Test](#test)
-* [Project Structure and Information](#project-structure-and-information)
-  * [Directory Structure](#directory-structure)
-  * [Pipelines](#pipelines)
-* [Adding a New Tool](#adding-a-new-tool)
+## Table of Contents
+
+* [Azure SDK CLI and MCP server](#azure-sdk-cli-and-mcp-server)
+   * [Getting Started](#getting-started)
+      * [Prerequisites](#prerequisites)
+      * [Setup](#setup)
+      * [Build](#build)
+      * [Run](#run)
+      * [Test](#test)
+      * [Test with GitHub Coding Agent](#test-with-github-coding-agent)
+      * [Release](#release)
+   * [Project Structure and Information](#project-structure-and-information)
+      * [Directory Structure](#directory-structure)
+      * [Pipelines](#pipelines)
+   * [Design Guidelines](#design-guidelines)
+   * [Adding a New Tool](#adding-a-new-tool)
+
 
 ## Getting Started
 
@@ -42,11 +49,13 @@ dotnet build
 
 ### Run
 
-To run the CLI locally:
+To quickly run local changes in CLI mode:
 
 ```sh
 dotnet run --project Azure.Sdk.Tools.Cli -- --help
 ```
+
+See the [development docs](./Azure.Sdk.Tools.Cli/README.md) for more detailed instructions on how to run this tool as an MCP server or CLI app.
 
 ### Test
 
@@ -55,6 +64,114 @@ To run the tests:
 ```sh
 dotnet test
 ```
+
+### Test with GitHub Coding Agent
+
+This tool can be used as an MCP server in a github action invoked by the [GitHub Coding Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent). The azure-sdk language repositories and azure-rest-api-specs repository already have this MCP server configured for the coding agent.
+
+To add to another repository for usage or for testing out new changes in a fork, push the below configs **to the main branch**.
+
+Any pull requests managed by copilot will always run github actions and workflow configs with the commit state snapshotted by the PR branch.
+If you make updates to the config in main you must file a new issue for copilot or push your changes to copilot's PR branch for it to apply.
+
+1. A copilot setup steps workflow needs to be checked into main
+      ```yaml
+      name: Copilot Setup Steps
+
+      on: workflow_dispatch
+
+      jobs:
+        copilot-setup-steps:
+          runs-on: ubuntu-latest
+
+          permissions:
+            contents: read
+
+          steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Install azsdk mcp server
+              shell: pwsh
+              run: |
+                ./eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $HOME/bin
+      ```
+
+1. To test changes in the source repository without requiring a release, change the install step to build from source:
+      ```yaml
+      - name: Build azsdk cli
+        run: |
+          set -ex
+          dotnet publish -f net8.0 -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained --output ./artifacts/linux-x64 ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
+          cp ./artifacts/linux-x64/azsdk /home/runner/bin/azsdk
+          /home/runner/bin/azsdk --help
+      ```
+
+1. The coding agent MCP configuration needs to be updated
+      - Navigate to https://github.com/YOUR_ORGANIZATION/YOUR_REPOSITORY/settings/copilot/coding_agent
+      - OR go the repository homepage, click `Settings`, under `Code and automation` expand `Copilot`, select `Coding agent`
+      - Paste the below configuration into the text box under `MCP Configuration`, then click `Save MCP Configuration`
+      - Update the tools list to include any MCP tools for testing, or change the value to `"tools": ["*"]` to include all
+
+          ```yaml
+          {
+            "mcpServers": {
+              "azure-sdk-mcp": {
+                "type": "local",
+                "command": "/home/runner/bin/azsdk",
+                "tools": [
+                  "AnalyzePipeline",
+                  "GetFailedTestCaseData",
+                  "CheckPackageReleaseReadiness"
+                ],
+                "args": [
+                  "start"
+                ]
+              }
+            }
+          }
+          ```
+
+1. Test changes by assigning issues to @copilot
+      - Copilot will create a pull request linked to the issue where you can view its session
+      - Navigate to the Actions tab and find the `Copilot` workflow
+      - Locate the run from the copilot session and click into the task logs
+      - Expand the `Install azsdk mcp server` task to verify installation success:
+        ```
+        Run ./eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $HOME/bin
+        Attempting to find latest version for package 'azsdk'
+        Installing 'azsdk' '1.0.0-dev.20250724.2' to '/tmp/azsdk-install-17651c80-ecb9-4031-aca5-b4f7db466c0d' from https://github.com/Azure/azure-sdk-tools/releases/download/azsdk_1.0.0-dev.20250724.2/Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz
+        Package azsdk is installed at /home/runner/bin/azsdk
+        ```
+      - Expand the `Start MCP Servers` task to verify MCP server start
+        ```
+        Starting MCP client for azure-sdk-mcp with command: /home/runner/bin/azsdk and args: start
+        Creating MCP client for azure-sdk-mcp...
+        Connecting MCP client for azure-sdk-mcp...
+        info: ModelContextProtocol.Protocol.Transport.StdioServerTransport[857250842]
+              Server (stream) (azsdk) transport reading messages.
+        info: ModelContextProtocol.Server.McpServer[570385771]
+              Server (azsdk 1.0.0.0) method 'initialize' request handler called.
+        info: ModelContextProtocol.Server.McpServer[1867955179]
+              Server (azsdk 1.0.0.0), Client (github-*** 1.0.0) method 'initialize' request handler completed.
+        info: Microsoft.Hosting.Lifetime[14]
+              Now listening on: http://127.0.0.1:40641
+        info: Microsoft.Hosting.Lifetime[0]
+              Application started. Press Ctrl+C to shut down.
+        info: Microsoft.Hosting.Lifetime[0]
+              Hosting environment: Production
+        info: Microsoft.Hosting.Lifetime[0]
+              Content root path: /home/runner/work/_temp
+        MCP client for azure-sdk-mcp connected, took 555ms
+        Started MCP client for azure-sdk-mcp
+        ```
+        - If all the above steps look good, then copilot will be able to call the MCP tools listed in the config!
+
+### Release
+
+This tool is published to [github releases](https://github.com/Azure/azure-sdk-tools/releases?q=&expanded=true)
+
+The [release pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684) can be run off main to sign and publish a new release. The release stage requires manual approval from an azure sdk team member.
 
 ## Project Structure and Information
 
@@ -79,7 +196,7 @@ This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/do
 
 Public CI - https://dev.azure.com/azure-sdk/public/_build?definitionId=7677
 
-Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684 
+Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
 
 ## Design Guidelines
 

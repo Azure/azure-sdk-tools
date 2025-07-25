@@ -151,12 +151,25 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // returns (IsValid, FullRepoName, ServiceCategory, ErrorMessage)
         private (bool IsValid, string FullRepoName, string ServiceCategory, string ErrorMessage) ValidateAndGetRepositoryInfo(string repoName)
         {
-            if (!azureRepositories.TryGetValue(repoName.ToLowerInvariant(), out var repoInfo))
+            // First, try direct lookup with the provided name (short key like "dotnet")
+            if (azureRepositories.TryGetValue(repoName.ToLowerInvariant(), out var repoInfo))
             {
-                return (false, string.Empty, string.Empty, $"Unknown repository: {repoName}. Valid options: {string.Join(", ", azureRepositories.Keys)}");
+                return (true, repoInfo.RepoName, repoInfo.ServiceCategory, string.Empty);
             }
 
-            return (true, repoInfo.RepoName, repoInfo.ServiceCategory, string.Empty);
+            // If not found, try reverse lookup by full repository name (like "azure-sdk-for-net")
+            var matchingEntry = azureRepositories.FirstOrDefault(kvp => 
+                string.Equals(kvp.Value.RepoName, repoName, StringComparison.OrdinalIgnoreCase));
+            
+            if (matchingEntry.Key != null)
+            {
+                return (true, matchingEntry.Value.RepoName, matchingEntry.Value.ServiceCategory, string.Empty);
+            }
+
+            // If still not found, return error with all valid options
+            var validOptions = azureRepositories.Keys.Concat(azureRepositories.Values.Select(v => v.RepoName));
+            return (false, string.Empty, string.Empty, 
+                $"Unknown repository: {repoName}. Valid options: {string.Join(", ", validOptions)}");
         }
 
 

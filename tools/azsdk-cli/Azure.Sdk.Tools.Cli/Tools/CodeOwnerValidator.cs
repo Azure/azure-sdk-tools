@@ -33,7 +33,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Validates if a GitHub user meets the requirements to be an Azure SDK code owner.
         /// </summary>
         /// <param name="username">The GitHub username to validate</param>
-        /// <param name="verbose">Whether to include verbose output</param>
         /// <returns>Validation result with detailed information</returns>
         public async Task<CodeOwnerValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false)
         {
@@ -48,25 +47,23 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                _logger.LogInformation("Validating GitHub user: {Username}", username);
+                _logger.LogInformation("Starting validation for GitHub user: {Username}", username);
 
-                // Validate organizations
-                var organizationValidation = await ValidateOrganizationsAsync(username, verbose);
-                result.Organizations = organizationValidation.Organizations;
-                var hasRequiredOrgs = organizationValidation.HasAllRequired;
+                // Validate organizations (Microsoft and Azure membership)
+                var hasRequiredOrgs = await ValidateOrganizationsAsync(username, result);
 
-                // Validate permissions
-                var permissionValidation = await ValidatePermissionsAsync(username, verbose);
-                result.HasWritePermission = permissionValidation.HasWritePermission;
+                // Validate write permissions on azure-sdk-for-net
+                var hasWritePermission = await ValidatePermissionsAsync(username);
+                result.HasWritePermission = hasWritePermission;
 
                 // Final validation
-                result.IsValidCodeOwner = hasRequiredOrgs && result.HasWritePermission;
+                result.IsValidCodeOwner = hasRequiredOrgs && hasWritePermission;
                 result.Status = "Success";
                 result.Message = result.IsValidCodeOwner
                     ? "Valid code owner"
                     : "Not a valid code owner";
 
-                _logger.LogInformation("Validation complete for {Username}: {IsValid}",
+                _logger.LogInformation("Validation completed for {Username}. IsValid: {IsValid}",
                     username, result.IsValidCodeOwner);
 
                 return result;
@@ -76,6 +73,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 result.Status = "Error";
                 result.Message = $"GitHub user '{username}' not found";
                 _logger.LogWarning("GitHub user not found: {Username}", username);
+                return result;
+            }
+            catch (RateLimitExceededException ex)
+            {
+                result.Status = "Error";
+                result.Message = $"Rate limit exceeded. Reset at: {ex.Reset}";
+                _logger.LogError("Rate limit exceeded for user {Username}. Reset at: {Reset}", 
+                    username, ex.Reset);
+                return result;
+            }
+            catch (SecondaryRateLimitExceededException ex)
+            {
+                result.Status = "Error";
+                result.Message = $"Secondary rate limit exceeded. Please wait a few minutes before trying again.";
+                _logger.LogError("Secondary rate limit exceeded for user {Username}: {Message}", 
+                    username, ex.Message);
                 return result;
             }
             catch (Exception ex)
@@ -88,49 +101,24 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         /// <summary>
-        /// Validates the user's organization memberships.
+        /// Validates the user's organization memberships (Microsoft and Azure only).
         /// </summary>
-        private async Task<OrganizationValidationResult> ValidateOrganizationsAsync(string username, bool verbose)
+        private async Task<bool> ValidateOrganizationsAsync(string username, CodeOwnerValidationResult result)
         {
-            var result = new OrganizationValidationResult
-            {
-                Organizations = new Dictionary<string, bool>(),
-                OtherOrganizations = new List<string>()
-            };
-
             try
             {
-                // Get user's public organizations
                 var client = ((GitHubService)_githubService).gitHubClient;
                 var organizations = await client.Organization.GetAllForUser(username);
-
                 var userOrgs = organizations.Select(org => org.Login).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                // Check required organizations
-                var missingOrgs = new HashSet<string>(RequiredOrganizations);
-
+                // Check only required organizations
                 foreach (var requiredOrg in RequiredOrganizations)
                 {
                     bool isMember = userOrgs.Contains(requiredOrg);
                     result.Organizations[requiredOrg] = isMember;
-
-                    if (isMember)
-                    {
-                        missingOrgs.Remove(requiredOrg);
-                    }
                 }
 
-                // Track other organizations for verbose output
-                if (verbose)
-                {
-                    result.OtherOrganizations = userOrgs
-                        .Where(org => !RequiredOrganizations.Contains(org))
-                        .ToList();
-                }
-
-                result.HasAllRequired = missingOrgs.Count == 0;
-
-                return result;
+                return RequiredOrganizations.All(org => result.Organizations[org]);
             }
             catch (Exception ex)
             {
@@ -140,53 +128,24 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         /// <summary>
-        /// Validates the user's repository permissions.
+        /// Validates the user's write permissions on azure-sdk-for-net repository.
         /// </summary>
-        private async Task<PermissionValidationResult> ValidatePermissionsAsync(string username, bool verbose)
+        private async Task<bool> ValidatePermissionsAsync(string username)
         {
-            var result = new PermissionValidationResult();
-
             try
             {
-                // Check permissions on azure-sdk-for-net repository as the canonical test
                 var client = ((GitHubService)_githubService).gitHubClient;
-
-                // Check if user is a collaborator
-                var collaborators = await client.Repository.Collaborator.GetAll("Azure", "azure-sdk-for-net");
-                var userCollaborator = collaborators.FirstOrDefault(c =>
-                    string.Equals(c.Login, username, StringComparison.OrdinalIgnoreCase));
-
-                if (userCollaborator != null)
+                
+                try
                 {
-                    // User is a collaborator, assume they have write permissions
-                    // This is a conservative approach since the PowerShell script checks specific permissions
-                    result.Permission = "write";
-                    result.HasWritePermission = true;
+                    var permission = await client.Repository.Collaborator.ReviewPermission("Azure", "azure-sdk-for-net", username);
+                    return permission.Permission.Equals("write", StringComparison.OrdinalIgnoreCase) || 
+                           permission.Permission.Equals("admin", StringComparison.OrdinalIgnoreCase);
                 }
-                else
+                catch (NotFoundException)
                 {
-                    // User is not a direct collaborator
-                    result.Permission = "none";
-                    result.HasWritePermission = false;
+                    return false;
                 }
-
-                if (verbose)
-                {
-                    result.RawPermissions = new Dictionary<string, bool>
-                    {
-                        ["is_collaborator"] = userCollaborator != null,
-                        ["has_write_access"] = result.HasWritePermission
-                    };
-                }
-
-                return result;
-            }
-            catch (NotFoundException)
-            {
-                // Repository not found or access denied
-                result.Permission = "none";
-                result.HasWritePermission = false;
-                return result;
             }
             catch (Exception ex)
             {
@@ -196,23 +155,4 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
     }
 
-    /// <summary>
-        /// Result of organization validation.
-        /// </summary>
-        public class OrganizationValidationResult
-        {
-            public Dictionary<string, bool> Organizations { get; set; } = new();
-            public List<string> OtherOrganizations { get; set; } = new();
-            public bool HasAllRequired { get; set; }
-        }
-
-    /// <summary>
-    /// Result of permission validation.
-    /// </summary>
-    public class PermissionValidationResult
-    {
-        public string Permission { get; set; } = "none";
-        public bool HasWritePermission { get; set; }
-        public Dictionary<string, bool>? RawPermissions { get; set; }
-    }
 }

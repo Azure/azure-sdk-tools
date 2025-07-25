@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 new Command(isValidCodeOwnerCommandName, "Validate if a GitHub alias has proper organizational membership and write access") { gitHubAliasOpt },
                 new Command(validateCodeOwnersForServiceCommandName, "Process a specific repository to validate code owners for a service") { repoNameOpt, serviceLabelOpt },
-                new Command(addCodeOwnerEntryCommandName, "Add a new codeowner entry with metadata") { repoNameOpt, repoPathOpt, codeOwnersOpt, serviceLabelOptional, prLabelOpt, azureSdkOwnersOpt, serviceOwnersOpt },
+                new Command(addCodeOwnerEntryCommandName, "Add a new codeowner entry with metadata") { repoNameOpt, repoPathOpt, codeOwnersOpt },
                 new Command(addCodeOwnerToEntryCommandName, "Add a codeowner to an existing entry") { repoNameOpt, repoPathOpt, codeOwnerToAddOpt },
                 new Command(deleteCodeOwnersCommandName, "Remove code owners from a service entry") { repoNameOpt, serviceLabelOpt, codeOwnersToDeleteOpt },
             };
@@ -101,14 +101,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var entryRepoName = commandParser.GetValueForOption(repoNameOpt);
                     var entryRepoPath = commandParser.GetValueForOption(repoPathOpt);
                     var entryCodeOwners = commandParser.GetValueForOption(codeOwnersOpt);
-                    var entryServiceLabel = commandParser.GetValueForOption(serviceLabelOptional);
-                    var entryPrLabel = commandParser.GetValueForOption(prLabelOpt);
-                    var entryAzureSdkOwners = commandParser.GetValueForOption(azureSdkOwnersOpt);
-                    var entryServiceOwners = commandParser.GetValueForOption(serviceOwnersOpt);
-                    var entryResult = await AddCodeOwnerEntry(entryRepoName ?? "", entryRepoPath ?? "", entryCodeOwners ?? new List<string>(), entryServiceLabel, entryPrLabel, entryAzureSdkOwners, entryServiceOwners);
+                    var entryResult = await AddCodeOwnerEntry(entryRepoName ?? "", entryRepoPath ?? "", entryCodeOwners ?? new List<string>());
                     output.Output($"Add entry result: {System.Text.Json.JsonSerializer.Serialize(entryResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}");
                     return;
-                case addCodeOwnerToEntryCommandName:
+                /*case addCodeOwnerToEntryCommandName:
                     var addToEntryRepoName = commandParser.GetValueForOption(repoNameOpt);
                     var addToEntryRepoPath = commandParser.GetValueForOption(repoPathOpt);
                     var addToEntryCodeOwner = commandParser.GetValueForOption(codeOwnerToAddOpt);
@@ -122,7 +118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var deleteCodeOwners = commandParser.GetValueForOption(codeOwnersToDeleteOpt);
                     var deleteResult = await DeleteCodeOwners(deleteRepoName ?? "", deleteServiceLabel ?? "", deleteCodeOwners ?? new List<string>());
                     output.Output($"Delete code owners result: {System.Text.Json.JsonSerializer.Serialize(deleteResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}");
-                    return;
+                    return;*/
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -130,14 +126,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private ServiceCodeOwnerResult CreateErrorResult(string repository, string message)
+        private ServiceCodeOwnerResult CreateErrorResult(string repository, string message, List<CodeOwnerValidationResult>? codeOwners = null)
         {
             return new ServiceCodeOwnerResult
             {
                 Repository = repository,
                 Status = "Error",
                 Message = message,
-                CodeOwners = new List<CodeOwnerValidationResult>()
+                CodeOwners = codeOwners ?? new List<CodeOwnerValidationResult>()
             };
         }
 
@@ -395,8 +391,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "AddCodeOwnerEntry"), Description("Add a new codeowner entry with metadata")]
-        public async Task<ServiceCodeOwnerResult> AddCodeOwnerEntry(string repoName, string repoPath, List<string> codeOwners,
-            string? serviceLabel = null, string? prLabel = null, List<string>? azureSdkOwners = null, List<string>? serviceOwners = null)
+        public async Task<ServiceCodeOwnerResult> AddCodeOwnerEntry(string repoName, string repoPath, List<string> codeOwners)
         {
             string? fullRepoName = null;
             try
@@ -410,11 +405,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 fullRepoName = repoFullName;
 
-                // Validate requirements
-                var validationResult = ValidateEntryRequirements(repoPath, codeOwners, serviceLabel, prLabel, azureSdkOwners, serviceOwners);
-                if (!validationResult.IsValid)
+                if (string.IsNullOrEmpty(repoPath))
                 {
-                    return CreateErrorResult(fullRepoName, validationResult.ErrorMessage);
+                    return CreateErrorResult(fullRepoName, "Repository Path cannot be empty.");
+                }
+
+                // Validate requirements
+                var validationResult = await ValidateEntryRequirements(repoPath, codeOwners);
+                if (!validationResult.isValid)
+                {
+                    var validationErrorMessage = $"Some code owners are invalid.";
+                    return CreateErrorResult(fullRepoName, validationErrorMessage, validationResult.ValidationResults);
                 }
 
                 // Get current CODEOWNERS file
@@ -437,10 +438,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Build the new entry
-                var newEntry = BuildCodeOwnerEntry(repoPath, codeOwners, serviceLabel, prLabel, azureSdkOwners, serviceOwners);
+                var newEntry = BuildCodeOwnerEntry(repoPath, codeOwners);
 
                 // Create branch name
-                var branchName = CreateBranchName("add-codeowner-entry", serviceLabel ?? prLabel ?? "entry");
+                var branchName = CreateBranchName("add-codeowner-entry", repoPath ?? "entry");
 
                 var lines = currentContent.Split('\n').ToList();
                 var insertIndex = blockToParse.EndLine == -1 ? lines.Count : blockToParse.EndLine;
@@ -468,6 +469,40 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        public string BuildCodeOwnerEntry(string repoPath, List<string> codeOwners)
+        {
+            var normalizedCodeOwners = NormalizeCodeOwners(codeOwners);
+            return $"{repoPath.PadRight(66)} {string.Join(" ", normalizedCodeOwners)}";
+        }
+
+        public async Task<(List<CodeOwnerValidationResult> ValidationResults, bool isValid)> ValidateEntryRequirements(string repoPath, List<string> codeOwners)
+        {
+            try
+            {
+                if (codeOwners == null || codeOwners.Count <= 0)
+                {
+                    return (new List<CodeOwnerValidationResult>(), false);
+                }
+
+                var codeOwnerValidationResults = await ValidateCodeOwnersConcurrently(codeOwners);
+                
+                // Check if all code owners are valid
+                bool isValid = codeOwnerValidationResults.All(result => result.IsValidCodeOwner);
+                
+                return (codeOwnerValidationResults, isValid);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error validating entry requirements");
+                return (new List<CodeOwnerValidationResult>(), false);
+            }        
+        }
+        
+        
+        
+        
+        
+/*
         /// <summary>
         /// Method 2: Add codeowners to an existing entry
         /// </summary>
@@ -560,7 +595,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogError(ex, "Error adding codeowner to entry in repository {repo}", fullRepoName ?? repoName);
                 return CreateErrorResult(fullRepoName ?? repoName, $"Error adding codeowner to entry: {ex.Message}");
             }
-        }
+        }*/
 
         public (int StartLine, int EndLine) findBlock(string currentContent, string serviceCategory)
         {

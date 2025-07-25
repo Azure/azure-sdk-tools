@@ -4,6 +4,7 @@ parameters:
   Feed: 'public/azure-sdk-for-net'
   ShouldPublishExecutables: false
   RequireStrongNames: true
+  PublishEnvironment: ''
   ExeMatrix: []
 
 # Needs Github Release variable group linked.
@@ -33,6 +34,8 @@ stages:
     parameters:
       ArtifactName: packages
       Feed: ${{ parameters.Feed }}
+      ${{ if parameters.PublishEnvironment }}:
+        PublishEnvironment: ${{ parameters.PublishEnvironment }}
 
   - job: PostPackagePublish
     displayName: Post Package Publish
@@ -81,7 +84,7 @@ stages:
           parameters:
             BinariesPath: $(Binaries)
             BuildScriptsPath: $(BuildToolScripts)
-            ExeMatrix: ${{ parameters.ExeMatrix }} 
+            ExeMatrix: ${{ parameters.ExeMatrix }}
 
         - task: PowerShell@2
           displayName: 'Post to github release'
@@ -93,7 +96,7 @@ stages:
             pwsh: true
           env:
             GH_TOKEN: $(azuresdk-github-pat)
-            
+
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'
         inputs:

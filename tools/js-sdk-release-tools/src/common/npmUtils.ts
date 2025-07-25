@@ -77,7 +77,9 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     const tagExists = shell.exec(tagCheckCommand, { silent: true }).stdout.trim();
     if (!tagExists) {
         logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-        fs.writeFileSync(targetFilePath, defaultContent, { encoding: 'utf-8' });
+        if(file !== "CHANGELOG.md") {
+            fs.writeFileSync(targetFilePath, defaultContent, { encoding: 'utf-8' });
+        }        
         return;
     }
 

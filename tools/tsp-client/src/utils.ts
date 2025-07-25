@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
-import { normalizeDirectory } from "./fs.js";
+import { normalizeDirectory, readTspLocation } from "./fs.js";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
@@ -101,4 +101,36 @@ export async function writeTspLocationYaml(
     tspLocationContent += `\nemitterPackageJsonPath: ${tspLocation.emitterPackageJsonPath}`;
   }
   await writeFile(joinPaths(projectPath, "tsp-location.yaml"), tspLocationContent);
+}
+
+export async function updateExistingTspLocation(
+  tspLocationData: TspLocation,
+  projectPath: string,
+): Promise<TspLocation> {
+  try {
+    const existingTspLocation = await readTspLocation(projectPath);
+    // Compare the tspLocationData with the existingTspLocation to see if there are updates needed in the file
+    if (tspLocationData.repo !== "<replace with your value>" && tspLocationData.repo !== undefined) {
+        existingTspLocation.repo = tspLocationData.repo;
+    }
+    if (tspLocationData.commit !== "<replace with your value>" && tspLocationData.commit !== undefined) {
+        existingTspLocation.commit = tspLocationData.commit;
+    }
+    if (tspLocationData.directory !== undefined) {
+        existingTspLocation.directory = tspLocationData.directory;
+    }
+    if (tspLocationData.entrypointFile !== undefined) {
+      existingTspLocation.entrypointFile = tspLocationData.entrypointFile;
+    }
+    if (tspLocationData.additionalDirectories !== undefined) {
+      existingTspLocation.additionalDirectories = tspLocationData.additionalDirectories;
+    }
+    if (tspLocationData.emitterPackageJsonPath !== undefined) {
+      existingTspLocation.emitterPackageJsonPath = tspLocationData.emitterPackageJsonPath;
+    }
+    return existingTspLocation;
+  } catch (error) {
+    Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
+  }
+  return tspLocationData;
 }

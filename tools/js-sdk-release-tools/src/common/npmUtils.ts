@@ -89,6 +89,9 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             // For CHANGELOG.md, use sdkFilePath directly
             const gitCommand = `git --no-pager show ${tag}:${sdkFilePath}`;
             const changelogContent = shell.exec(gitCommand, { silent: true }).stdout;
+            if (!changelogContent.trim()) {
+                logger.warn(`Warning: CHANGELOG.md content is empty for tag ${tag} at path ${sdkFilePath}.`);
+            }
             fs.writeFileSync(targetFilePath, changelogContent, { encoding: 'utf-8' });
         }
         else {
@@ -109,7 +112,6 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             let apiViewContent = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
             if (!apiViewContent.trim()) {
                 logger.warn(`Warning: No API view content found for either ${nodeApiFilePath} or ${standardApiFilePath}. Using default content.`);
-                apiViewContent = defaultContent
             }
             fs.writeFileSync(targetFilePath, apiViewContent, { encoding: 'utf-8' });
         }

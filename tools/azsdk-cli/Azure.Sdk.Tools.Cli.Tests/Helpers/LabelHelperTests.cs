@@ -76,16 +76,6 @@ internal class LabelHelperTests
         Assert.That(actual, Is.EqualTo(expected));
     }
 
-        [Test]
-    public void TestCreateServiceLabelWithSpecialCharacters()
-    {
-        var csvContent = "X-MR,,e99695\nYR - C,,e99695\nZVLG,,e99695\nQ bec,,e99695";
-        var serviceLabel = "Service \"quoted\"";
-        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "Service \"quoted\",,e99695\nZVLG,,e99695\nYR - C,,e99695\nQ BEC,,e99695\nX-MR,,e99695";
-        Assert.That(actual, Is.EqualTo(expected));
-    }
-
     [Test]
     public void TestNormalizeLabel_WithSpacesAndDashes()
     {

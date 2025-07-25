@@ -137,9 +137,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult(changeSet);
         }
 
-        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranch)
+        //this is a mock but we have to keep the name
+        public Task<string> CreateBranchAsync(string owner, string repoName, string branchName, string baseBranch = "main")
         {
-            return Task.FromResult("Todo: Implement branch creation");
+            if (_existingBranches.Contains(branchName))
+            {
+                return Task.FromResult($"Branch '{branchName}' already exists. Compare URL: https://github.com/{owner}/{repoName}/compare/main...{branchName}");
+            }
+
+            _existingBranches.Add(branchName);
+
+            return Task.FromResult($"Branch '{branchName}' created successfully in {owner}/{repoName}. Branch URL: https://github.com/{owner}/{repoName}/tree/{branchName}");
         }
 
         private Commit CreateMockCommit(string message, string sha)

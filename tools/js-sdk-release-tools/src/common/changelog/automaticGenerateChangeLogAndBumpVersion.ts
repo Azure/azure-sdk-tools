@@ -13,8 +13,8 @@ import {
     bumpPreviewVersion,
     getLatestStableVersion,
     getNewVersion,
+    getNextBetaVersion,
     getUsedVersions,
-    getVersion,
     isBetaVersion,
     isStableSDKReleaseType,
 } from "../../utils/version.js";
@@ -36,8 +36,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
-    const betaVersion = npmViewResult ? getVersion(npmViewResult, "beta") : undefined;
-    const nextVersion = npmViewResult ? getVersion(npmViewResult, "next") : undefined;
+    const nextVersion = getNextBetaVersion(npmViewResult);
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
@@ -104,47 +103,31 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     npmPackagePath: npmPackageRoot,
                 }
                 let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, lastStableChangelog);
-                
-                // Try to get the latest preview version (beta or next)
-                let previewVersion = nextVersion;
-                let previewTag = "next";
-                
-                // Check if beta version is more recent than next version
-                if (betaVersion) {
-                    const nextDate = nextVersion ? getversionDate(npmViewResult, nextVersion) : null;
-                    const betaDate = betaVersion ? getversionDate(npmViewResult, betaVersion) : null;
-                    
-                    if (!nextVersion || (nextDate && betaDate && betaDate > nextDate)) {
-                        previewVersion = betaVersion;
-                        previewTag = "beta";
-                    }
-                }
-                
-                if (previewVersion) {
+                if (nextVersion) {
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-                    shell.mkdir(path.join(packageFolderPath, 'changelog-temp', previewTag));
-                    shell.cd(path.join(packageFolderPath, 'changelog-temp', previewTag));
+                    shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
+                    shell.cd(path.join(packageFolderPath, 'changelog-temp', 'next'));
                     // TODO: consider get all npm package from github instead
-                    shell.exec(`npm pack ${packageName}@${previewVersion}`, { silent: true });
+                    shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true });
                     const files = shell.ls('*.tgz');
                     shell.exec(`tar -xzf ${files[0]}`);
                     shell.cd(packageFolderPath);
-                    logger.info(`Created ${previewTag} folder successfully.`);
+                    logger.info("Created next folder successfully.")
 
                     const latestDate = getversionDate(npmViewResult, stableVersion);
-                    const previewDate = getversionDate(npmViewResult, previewVersion);
-                    if (latestDate && previewDate && latestDate <= previewDate) {
-                        const previewChangelogPath = path.join(packageFolderPath, 'changelog-temp', previewTag, 'package', 'CHANGELOG.md');
-                        const latestPreviewChangelog: NpmViewParameters = {
+                    const nextDate = getversionDate(npmViewResult, nextVersion);
+                    if (latestDate && nextDate && latestDate <= nextDate) {
+                        const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
+                        const latestNextChangelog: NpmViewParameters = {
                             file: "CHANGELOG.md",
-                            version: previewVersion,
+                            version: nextVersion,
                             packageName: packageName,
                             packageFolderPath: packageFolderPath,
                             sdkRootPath: jsSdkRepoPath,
                             npmPackagePath: npmPackageRoot,
                         }
-                        originalChangeLogContent = tryReadNpmPackageChangelog(previewChangelogPath, latestPreviewChangelog);
-                        logger.info(`Keep previous ${previewTag} preview changelog.`);
+                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, latestNextChangelog);
+                        logger.info('Keep previous preview changelog.');
                     }
                 }
                 if (originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")) {

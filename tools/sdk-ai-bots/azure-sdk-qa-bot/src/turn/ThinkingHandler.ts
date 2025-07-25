@@ -3,7 +3,7 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
-import { CompletionResponsePayload } from '../backend/rag.js';
+import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
 
@@ -50,8 +50,8 @@ export class ThinkingHandler {
   }
 
   // separate this method from cancelTimer to make sure complete message is always shown
-  public async stop(reply: CompletionResponsePayload, currentPrompt: Prompt) {
-    const answer = this.addReferencesToReply(reply);
+  public async stop(reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
+    const answer = this.generateAnswer(reply);
     const updated: Partial<TurnContext> = {
       type: 'message',
       id: this.resourceId,
@@ -69,6 +69,18 @@ export class ThinkingHandler {
         this.meta
       );
     }
+  }
+
+  private generateAnswer(reply: CompletionResponsePayload | RagApiError) {
+    if (!isCompletionResponsePayload(reply)) {
+      const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
+      const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
+      const errorReply = `🚫Sorry, I'm having some ${reply.category} issues right now and can't answer your question.${retryMessage} Error: ${reply.message}.`;
+      return errorReply;
+    }
+
+    // received reply successfully
+    return this.addReferencesToReply(reply);
   }
 
   private async startCore(context: TurnContext, resourceId: string) {
@@ -169,14 +181,10 @@ export class ThinkingHandler {
     promptActivityId: string,
     replyActivityId: string,
     prompt: Prompt,
-    replyPayload: CompletionResponsePayload,
+    replyPayload: CompletionResponsePayload | RagApiError,
     meta: object
   ) {
-    const reply: RAGReply = {
-      answer: replyPayload.answer,
-      has_result: replyPayload.has_result,
-      references: replyPayload.references.map((ref) => ({ ...ref })) || [],
-    };
+    const reply = this.convertPayloadToReply(replyPayload);
     const promptMessage: ConversationMessage = {
       conversationId,
       activityId: promptActivityId,
@@ -197,5 +205,21 @@ export class ThinkingHandler {
     } catch (error) {
       logger.error('Failed to save current prompt', { error, meta });
     }
+  }
+
+  private convertPayloadToReply(replyPayload: CompletionResponsePayload | RagApiError) {
+    if (!isCompletionResponsePayload(replyPayload)) {
+      const answer = this.generateAnswer(replyPayload);
+      return {
+        answer,
+        has_result: false,
+        references: [],
+      };
+    }
+    return {
+      answer: replyPayload.answer,
+      has_result: replyPayload.has_result,
+      references: replyPayload.references?.map((ref) => ({ ...ref })) || [],
+    };
   }
 }

@@ -56,7 +56,7 @@ export class RAGModel implements PromptCompletionModel {
     logger.info('prompt to RAG', { prompt: fullPrompt, meta });
     let ragReply = await getRAGReply(completionPayload, ragOptions, meta);
     if (!ragReply) {
-      ragReply = { id: 'N/A', answer: 'AI service is not available', has_result: false, references: [] };
+      ragReply = { id: 'N/A', answer: '⚠️Unable to establish a connection to the AI service at this time. Please try again later.', has_result: false, references: [] };
     }
     // TODO: try merge cancelTimer and stop into one method
     await thinkingHandler.safeCancelTimer();

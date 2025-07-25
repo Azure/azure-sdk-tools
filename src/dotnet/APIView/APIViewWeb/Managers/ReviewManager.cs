@@ -43,13 +43,14 @@ namespace APIViewWeb.Managers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IPollingJobQueueManager _pollingJobQueueManager;
+        private readonly INotificationManager _notificationManager;
 
         public ReviewManager (
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager)
+            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager)
 
         {
             _authorizationService = authorizationService;
@@ -65,6 +66,7 @@ namespace APIViewWeb.Managers
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
             _pollingJobQueueManager = pollingJobQueueManager;
+            _notificationManager = notificationManager;
         }
 
         /// <summary>
@@ -360,6 +362,9 @@ namespace APIViewWeb.Managers
             typeSpecReview.IsNamespaceReviewRequested = changeUpdate.ChangeStatus;
             
             await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+
+            // Send email notifications to preferred approvers
+            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, notes);
 
             // Find and mark related SDK language reviews
             await MarkRelatedSDKReviewsForNamespaceReview(typeSpecReview.PackageName, userId, notes);

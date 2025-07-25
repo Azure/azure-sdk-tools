@@ -19,7 +19,11 @@ namespace APIViewWeb.Pages.Assemblies
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ApprovedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
-        public IEnumerable<APIRevisionListItemModel> NamespaceApprovalRequestedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();        
+        public IEnumerable<APIRevisionListItemModel> NamespaceApprovalRequestedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
+        public IEnumerable<APIRevisionListItemModel> ReviewsWithoutNamespaceApproval { get; set; } = new List<APIRevisionListItemModel>();
+        
+        [BindProperty(SupportsGet = true)]
+        public bool ShowWithoutNamespaceApproval { get; set; } = false;        
         public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, UserProfileCache userProfileCache)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -33,7 +37,8 @@ namespace APIViewWeb.Pages.Assemblies
 
             List<APIRevisionListItemModel> activeAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
-            List<APIRevisionListItemModel> namespaceApprovalRequestedAPIRevs = new List<APIRevisionListItemModel>();
+            List<APIRevisionListItemModel> namespaceApprovalAPIRevs = new List<APIRevisionListItemModel>();
+            List<APIRevisionListItemModel> reviewsWithoutNamespaceApproval = new List<APIRevisionListItemModel>();
 
             // Get all unique review IDs to minimize database calls
             var reviewIds = APIRevisions.Select(r => r.ReviewId).Distinct().ToList();
@@ -69,17 +74,26 @@ namespace APIViewWeb.Pages.Assemblies
                 }
 
                 // Check if the parent review has namespace approval requested using cached data
-                if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview) && 
-                    parentReview.IsNamespaceReviewRequested && 
-                    !parentReview.IsApproved)
+                if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview))
                 {
-                    namespaceApprovalRequestedAPIRevs.Add(apiRevision);
+                    // Add to namespace approval list if the parent review has namespace approval requested
+                    if (parentReview.IsNamespaceReviewRequested && !parentReview.IsApproved)
+                    {
+                        namespaceApprovalAPIRevs.Add(apiRevision);
+                    }
+                    
+                    // Add to reviews without namespace approval if the parent review doesn't have namespace approval
+                    if (!parentReview.IsNamespaceReviewRequested && !parentReview.IsApproved)
+                    {
+                        reviewsWithoutNamespaceApproval.Add(apiRevision);
+                    }
                 }
             }
             
             ActiveAPIRevisions = activeAPIRevs;
             ApprovedAPIRevisions = approvedAPIRevs;
-            NamespaceApprovalRequestedAPIRevisions = namespaceApprovalRequestedAPIRevs;
+            NamespaceApprovalRequestedAPIRevisions = namespaceApprovalAPIRevs;
+            ReviewsWithoutNamespaceApproval = reviewsWithoutNamespaceApproval;
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
             return Page();

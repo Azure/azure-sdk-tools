@@ -344,7 +344,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec';
     this.isNamespaceReviewRequested = this.review?.isNamespaceReviewRequested || false;
 
-    if (this.isNamespaceReviewRequested) {
+    // Check if namespace review is approved (using isApproved flag)
+    if (this.review?.isApproved) {
+      this.namespaceReviewBtnClass = "btn btn-outline-success";
+      this.namespaceReviewBtnLabel = "Namespace Review Approved";
+      this.namespaceReviewMessage = "";
+    } else if (this.isNamespaceReviewRequested) {
       this.namespaceReviewBtnClass = "btn btn-outline-secondary";
       this.namespaceReviewBtnLabel = "Namespace Review Requested";
       this.namespaceReviewMessage = "";
@@ -534,6 +539,39 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (!this.isNamespaceReviewRequested) {
       this.namespaceApprovalEmitter.emit(true);
     }
+  }
+
+  /**
+   * Handle when the disable lazy loading modal is hidden
+   */
+  onDisableLazyLoadingModalHide() {
+    // Reset the switch if modal is closed without confirmation
+    this.disableCodeLinesLazyLoading = false;
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Handle confirmation of disabling lazy loading
+   */
+  onDisableLazyLoadingConfirm() {
+    this.disableCodeLinesLazyLoading = true;
+    this.disableCodeLinesLazyLoadingEmitter.emit(true);
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Handle cancellation of disabling lazy loading
+   */
+  onDisableLazyLoadingCancel() {
+    this.disableCodeLinesLazyLoading = false;
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Check if namespace review has been approved in change history
+   */
+  isNamespaceApproved(): boolean {
+    return this.review?.changeHistory?.some(ch => ch.changeAction === 'namespaceApproved') || false;
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

@@ -57,6 +57,15 @@ namespace APIViewWeb.Helpers
             changeHistory.Add(obj);
 
             var actionsAdded = GetActionsAdded(changeHistory, actionAdded);
+            
+            // For actions that don't have a revert action (like NamespaceReviewRequested and NamespaceApproved),
+            // we should return true if there are any added actions, regardless of other actions in the history
+            var actionString = actionAdded.ToString();
+            if (actionString == "NamespaceReviewRequested" || actionString == "NamespaceApproved")
+            {
+                return (changeHistory, actionsAdded.Count() > 0);
+            }
+            
             var actionsReverted = GetActionsReverted(changeHistory, actionReverted);
 
             if (actionsAdded.Count() > actionsReverted.Count())
@@ -217,7 +226,6 @@ namespace APIViewWeb.Helpers
                     actionReverted = default(E);
                     break;
                 case "NamespaceReviewRequested":
-                    Enum.TryParse(typeof(E), "NamespaceReviewRequested", out object nr);
                     actionAdded = action;
                     actionReverted = default(E);
                     break;

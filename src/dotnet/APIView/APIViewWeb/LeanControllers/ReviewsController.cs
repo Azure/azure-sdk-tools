@@ -20,6 +20,11 @@ using System;
 
 namespace APIViewWeb.LeanControllers
 {
+    public class RequestNamespaceReviewModel
+    {
+        public string Notes { get; set; } = "";
+    }
+
     public class ReviewsController : BaseApiController
     {
         private readonly ILogger<ReviewsController> _logger;
@@ -137,13 +142,14 @@ namespace APIViewWeb.LeanControllers
         /// Endpoint used by Client SPA for Requesting Namespace Review
         /// </summary>
         /// <param name="reviewId"></param>
-        /// <param name="notes"></param>
+        /// <param name="request">The request containing notes for the namespace review</param>
         /// <returns></returns>
         [HttpPost("{reviewId}/requestNamespaceReview", Name = "RequestNamespaceReview")]
-        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] string notes = "")
+        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] RequestNamespaceReviewModel request)
         {
             try
             {
+                var notes = request?.Notes ?? "";
                 _logger.LogInformation("RequestNamespaceReview called for reviewId: {ReviewId}, notes: {Notes}", reviewId, notes);
                 var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, notes);
                 await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);

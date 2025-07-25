@@ -6,18 +6,7 @@ namespace APIViewLogicTest
 {
     public class Program
     {
-        public static void Main(string[] args)
-        {
-            Console.WriteLine("Testing Automatic Namespace Approval Logic");
-            Console.WriteLine("===========================================");
-
-            TestIsSDKLanguage();
-            TestExtractPackageBaseName();
-            TestAreAllRelatedSDKReviewsApproved();
-
-            Console.WriteLine("\nAll tests completed successfully!");
-            Console.WriteLine("The automatic namespace approval logic is working correctly.");
-        }
+        // Removed Main method to avoid multiple entry point conflicts with test runner
 
         private static void TestIsSDKLanguage()
         {

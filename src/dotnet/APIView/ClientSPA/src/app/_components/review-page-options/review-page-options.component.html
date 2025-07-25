@@ -26,7 +26,7 @@
                 <span class="small text-muted mt-1">Current Revision approval pending</span>
             </ng-template>
         </li>
-        <li class="list-group-item text-center">
+        <li class="list-group-item text-center" *ngIf="review?.language !== 'TypeSpec'">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
@@ -47,22 +47,29 @@
             <ng-template #userIsNotAPreferedApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
-        </li>        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
+        </li>
+        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">
+            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
                 <span *ngIf="namespaceReviewMessage" class="small text-muted">{{namespaceReviewMessage}}</span>
                 <div class="d-grid gap-2">
                     <button class="{{namespaceReviewBtnClass}}" type="button"
                             (click)="handleNamespaceReviewAction()"
-                            [disabled]="isNamespaceReviewRequested">
+                            [disabled]="isNamespaceReviewRequested || isNamespaceApproved()">
                         {{namespaceReviewBtnLabel}}
                     </button>
                 </div>
             </ng-container>
             <span *ngIf="!userProfile || !preferredApprovers.includes(userProfile?.userName!)" class="small text-muted mt-1">
-                <ng-container *ngIf="isNamespaceReviewRequested; else noNamespaceReviewRequested">
-                    Namespace review has been requested
+                <ng-container *ngIf="isNamespaceApproved(); else notApproved">
+                    Namespace review has been approved
                 </ng-container>
-                <ng-template #noNamespaceReviewRequested>
-                    Namespace review not yet requested
+                <ng-template #notApproved>
+                    <ng-container *ngIf="isNamespaceReviewRequested; else noNamespaceReviewRequested">
+                        Namespace review has been requested
+                    </ng-container>
+                    <ng-template #noNamespaceReviewRequested>
+                        Namespace review not yet requested
+                    </ng-template>
                 </ng-template>
             </span>
         </li>
@@ -294,11 +301,11 @@
 
     <p-dialog header="Disable Lazy Loading"
         [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
-        [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
+        [style]="{ width: '30dvw' }" (onHide)="onDisableLazyLoadingModalHide()">
         <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
         <div class="d-grid gap-2 mt-2">
-        <button class="btn btn-primary" type="button" (click)="disableCodeLinesLazyLoadingEmitter.emit(disableCodeLinesLazyLoading); showDisableCodeLinesLazyLoadingModal = false">Disable</button>
-        <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="onDisableLazyLoadingConfirm()">Disable</button>
+        <button class="btn btn-link" type="button" (click)="onDisableLazyLoadingCancel()">Cancel</button>
         </div>
     </p-dialog>
 </ng-container>

@@ -100,7 +100,7 @@ Cost Management - Billing,All issues in cost management where billing/price-rela
 Cost Management - Budget,"All issues in cost management for Budgets API, Alert API and other Notification scenarios.",e99695
 Cost Management - Query,"All issues in cost management associated with tags, dimensions and forecasts.",e99695
 Cost Management - RIandShowBack,"All issues in cost management associated with Reservation and ShowBack.",e99695
-Cost Management - UsageDetailsAndExport,All issues in cost management for usage details API and exports API.,e99695
+Cost Management - UsageDetailsAndExport,"All issues in cost management for usage details API and exports API.",e99695
 Custom Providers,,e99695
 Customer Insights,,e99695
 CycleCloud,,e99695

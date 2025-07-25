@@ -32,7 +32,7 @@ export const generateReport = (context: WorkflowContext) => {
   let isTypeSpec = false;
   let generateFromTypeSpec = false;
 
-  if (context.specConfigPath && context.specConfigPath.includes('tspconfig')) {
+  if (context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
     generateFromTypeSpec = true;
   }
   for (const pkg of context.handledPackages) {

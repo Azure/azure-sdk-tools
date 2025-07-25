@@ -287,17 +287,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool(Name = "ValidateCodeOwnersForService"), Description("Validates code owners in a specific repository for a given service.")]
         public async Task<ServiceCodeOwnerResult> ValidateCodeOwnersForService(string repoName, string serviceLabel)
         {
-            string? fullRepoName = null;
             try
             {
                 // Validate repo name exists in our mapping
-                var (isValid, repoFullName, serviceCategory, errorMessage) = ValidateAndGetRepositoryInfo(repoName);
+                var (isValid, fullRepoName, serviceCategory, errorMessage) = ValidateAndGetRepositoryInfo(repoName);
                 if (!isValid)
                 {
                     return CreateErrorResult("", errorMessage);
                 }
-
-                fullRepoName = repoFullName;
                 var result = CreateProcessingResult(fullRepoName);
 
                 var codeownersEntries = ParseCodeOwnersEntries(fullRepoName);
@@ -406,17 +403,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool(Name = "AddCodeOwnerEntry"), Description("Add a new codeowner entry with metadata")]
         public async Task<ServiceCodeOwnerResult> AddCodeOwnerEntry(string repoName, string repoPath, List<string> codeOwners)
         {
-            string? fullRepoName = null;
             try
             {
                 // Validate repo name
-                var (isValid, repoFullName, serviceCategory, errorMessage) = ValidateAndGetRepositoryInfo(repoName);
+                var (isValid, fullRepoName, serviceCategory, errorMessage) = ValidateAndGetRepositoryInfo(repoName);
                 if (!isValid)
                 {
                     return CreateErrorResult("", errorMessage);
                 }
-
-                fullRepoName = repoFullName;
 
                 if (string.IsNullOrEmpty(repoPath))
                 {

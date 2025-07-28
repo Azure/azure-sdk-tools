@@ -51,7 +51,7 @@ const isSubmitMessage = async (ctx: TurnContext) =>
   ctx.activity.type === ActivityTypes.Message && !!ctx.activity.value?.action;
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
-  const channelId = context.activity.channelId;
+  const channelId = context.activity.conversation.id.split(';')[0];
   const ragTanentId = getRagTanent(channelId);
   const ragOptions: RAGOptions = {
     endpoint: config.ragEndpoint,

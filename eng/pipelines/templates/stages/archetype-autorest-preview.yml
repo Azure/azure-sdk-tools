@@ -403,7 +403,7 @@ stages:
     - checkout: self
     - checkout: azure-sdk-tools
     - pwsh: |
-      git checkout $(branchName)
+        git checkout $(branchName)
       displayName: 'Checkout PR branch $(branchName)'
     - task: UseNode@1
       displayName: 'Install Node.js'

@@ -200,6 +200,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                     codeownersEntry.ServiceOwners = codeownersEntry.SourceOwners;
                 }
             }
+            codeownersEntry.startLine = startBlockLineNumber;
+            codeownersEntry.endLine = endBlockLineNumber;
             return codeownersEntry;
         }
 

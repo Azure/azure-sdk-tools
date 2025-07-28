@@ -78,6 +78,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         // the source path/owner line.
         public List<string> AzureSdkOwners { get; set; } = new List<string>();
 
+        public int startLine { get; set; } = -1;
+        public int endLine { get; set; } = -1;
+
         public bool IsValid => !string.IsNullOrWhiteSpace(PathExpression);
 
         public CodeownersEntry()
@@ -92,7 +95,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                         $"PRLabels:{string.Join(", ", PRLabels)}",
                         $"ServiceLabels:{string.Join(", ", ServiceLabels)}",
                         $"ServiceOwners:{string.Join(", ", ServiceOwners)}",
-                        $"AzureSdkOwners:{string.Join(", ", AzureSdkOwners)}"
+                        $"AzureSdkOwners:{string.Join(", ", AzureSdkOwners)}",
+                        $"Start line: {startLine}",
+                        $"End line: {endLine}"
                    );
         }
 

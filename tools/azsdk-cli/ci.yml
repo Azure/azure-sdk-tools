@@ -3,9 +3,6 @@ trigger:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/azsdk-cli
@@ -14,9 +11,6 @@ pr:
   branches:
     include:
       - main
-      - feature/*
-      - release/*
-      - hotfix/*
   paths:
     include:
       - tools/azsdk-cli
@@ -24,8 +18,11 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      SkipReleaseStage: false
+    PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
+    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
     StandaloneExeMatrix:
     - rid: osx-x64

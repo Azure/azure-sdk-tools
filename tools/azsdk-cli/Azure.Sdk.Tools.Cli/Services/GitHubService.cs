@@ -81,7 +81,7 @@ public class GitConnection
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch);
-        public Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
+        public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
     }
 
@@ -343,13 +343,13 @@ public class GitConnection
             }
         }
 
-        public async Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch = "main")
+        public async Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch = "main")
         {
             try
             {
                 var updateRequest = new UpdateFileRequest(message, content, sha, branch);
                 var result = await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
-                return result;
+                return $"GitHubService: File created in {owner}/{repoName} on reference {branch}.";
             }
             catch (NotFoundException ex)
             {

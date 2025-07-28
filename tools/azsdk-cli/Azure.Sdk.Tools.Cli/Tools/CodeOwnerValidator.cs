@@ -7,6 +7,17 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
+    public interface ICodeOwnerValidator
+    {
+        /// <summary>
+        /// Validates if a GitHub user meets the requirements to be an Azure SDK code owner.
+        /// </summary>
+        /// <param name="username">The GitHub username to validate</param>
+        /// <param name="verbose">Whether to include verbose output</param>
+        /// <returns>Validation result with detailed information</returns>
+        Task<CodeOwnerValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false);
+    }
+
     /// <summary>
     /// Validates GitHub users for Azure SDK code owner requirements.
     /// This is a C# replacement for the Validate-AzsdkCodeOwner.ps1 PowerShell script.

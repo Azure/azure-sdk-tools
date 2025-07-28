@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
-            services.AddSingleton<ICodeOwnerValidationHelper, CodeOwnerValidationHelper>();
+            services.AddSingleton<ICodeOwnerHelper, CodeOwnerHelper>();
             
             // Tools
             services.AddSingleton<ICodeOwnerValidator, CodeOwnerValidator>();

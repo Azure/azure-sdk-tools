@@ -27,12 +27,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(GitHubLabelsTool),
-            typeof(CodeOwnerTools),
             typeof(TestAnalysisTool),
+            typeof(MockTool),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),
-            #endif
+#endif
         ];
 
         public static Option<string> ToolOption = new("--tools")

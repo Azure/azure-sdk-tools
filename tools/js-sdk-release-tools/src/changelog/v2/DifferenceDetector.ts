@@ -3,6 +3,7 @@ import {
   AstContext,
   createAstContext,
   DiffPair,
+  DiffReasons,
   patchClass,
   patchFunction,
   patchInterface,
@@ -75,6 +76,19 @@ export class DifferenceDetector {
     this.result?.interfaces.forEach((v, k) => {
       if (k.endsWith('NextOptionalParams')) this.result?.interfaces.delete(k);
     });
+    
+    // Handle generic interfaces - filter to only Added/Removed changes
+    this.result?.interfaces.forEach((v, k) => {
+      if (this.hasTypeParameters(k, SyntaxKind.InterfaceDeclaration)) {
+        logger.warn(`Generic interface '${k}' breaking change detection is limited to Added/Removed changes only.`);
+        // For generic interfaces, only keep Added/Removed diff pairs
+        const filteredDiffPairs = v.filter(pair => 
+          pair.reasons === DiffReasons.Added || pair.reasons === DiffReasons.Removed
+        );
+        this.result?.interfaces.set(k, filteredDiffPairs);
+      }
+    });
+    
     if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
     // use Routes specific detection
     this.result?.interfaces.delete('Routes');
@@ -218,10 +232,6 @@ export class DifferenceDetector {
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) {
-        logger.warn(`Generic interface '${n}' breaking change detection is not supported.`);
-        return map;
-      }
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
       map.set(n, diffPairs);
       return map;

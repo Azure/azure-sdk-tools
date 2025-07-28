@@ -97,6 +97,7 @@ exports[`reportStatus > generateReport > should generate report successfully wit
   "executionResult": "succeeded",
   "filteredLogPath": "/tmp/filtered.log",
   "fullLogPath": "/tmp/full.log",
+  "generateFromTypeSpec": false,
   "isSdkConfigDuplicated": false,
   "packages": [
     {

@@ -10,11 +10,12 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
 import { extractSelectedReasons } from '../cards/components/feedback.js';
 import config from '../config/config.js';
-import channelConfigManager from '../config/channel.js';
-import { ConversationHandler, ConversationMessage } from '../input/ConversationHandler.js';
+import { ChannelConfigManager } from '../config/channel.js';
+import { ConversationHandler } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 
 const conversationHandler = new ConversationHandler();
+const channelConfigManager = new ChannelConfigManager();
 await Promise.all([conversationHandler.initialize(), channelConfigManager.initialize()]);
 
 // Create AI components
@@ -51,7 +52,7 @@ const isSubmitMessage = async (ctx: TurnContext) =>
   ctx.activity.type === ActivityTypes.Message && !!ctx.activity.value?.action;
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
-  const channelId = context.activity.conversation.id.split(';')[0];
+  const { channelId } = parseConversationId(context.activity.conversation.id);
   const ragTanentId = await channelConfigManager.getRagTenant(channelId);
   const ragEndpoint = await channelConfigManager.getRagEndpoint(channelId);
   const ragOptions: RAGOptions = {

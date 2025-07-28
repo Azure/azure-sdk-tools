@@ -268,7 +268,4 @@ class ChannelConfigManager {
   }
 }
 
-// Create singleton instance
-const channelConfigManager = new ChannelConfigManager();
-
 export { ChannelConfigManager };

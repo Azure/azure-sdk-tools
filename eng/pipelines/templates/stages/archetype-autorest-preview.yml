@@ -334,7 +334,16 @@ stages:
   jobs:
   - job: Initialize
     steps:
-    - checkout: sdk-repository
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Paths:
+        - "/*"
+        - "!SessionRecords"
+        Repositories:
+        - Name: Azure/$(sdkRepositoryName)
+          WorkingDirectory: $(sdkRepositoryPath)
+          Commitish: $(sdkRepositoryCommitSha)
+        SkipCheckoutNone: true
     - checkout: self
       path: s/autorest
     - checkout: azure-sdk-tools
@@ -402,9 +411,17 @@ stages:
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
-    - pwsh: |
-        git checkout $(branchName)
-      displayName: 'Checkout PR branch $(branchName)'
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Paths:
+        - "/*"
+        - "!SessionRecords"
+        Repositories:
+        - Name: azure-sdk/$(sdkRepositoryName)
+          WorkingDirectory: $(sdkRepositoryPath)
+          Commitish: $(branchName)
+        SkipCheckoutNone: true
+
     - task: UseNode@1
       displayName: 'Install Node.js'
       inputs:

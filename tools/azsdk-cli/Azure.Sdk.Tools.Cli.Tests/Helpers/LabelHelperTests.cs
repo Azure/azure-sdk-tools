@@ -53,7 +53,7 @@ internal class LabelHelperTests
         Assert.That(column[2], Is.EqualTo("e99695"));
 
         var actual = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
-        Assert.AreEqual(LabelHelper.ResultType.Exists, actual);
+        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.Exists));
     }
 
     [Test]

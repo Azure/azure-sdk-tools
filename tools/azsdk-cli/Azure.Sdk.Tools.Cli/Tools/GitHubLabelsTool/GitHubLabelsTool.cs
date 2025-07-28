@@ -122,6 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
+
                 logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
 
                 return result;

@@ -5,17 +5,19 @@ import { fileURLToPath } from 'url';
 import { parse } from 'yaml';
 import { logger } from '../logging/logger.js';
 
+export interface ChannelItem {
+  name: string;
+  id: string;
+  tenant: string;
+  endpoint: string;
+}
+
 export interface ChannelConfig {
   default: {
     tenant: string;
     endpoint: string;
   };
-  channels: {
-    name: string;
-    id: string;
-    tenant: string;
-    endpoint: string;
-  }[];
+  channels: ChannelItem[];
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,13 +28,10 @@ class ChannelConfigManager {
   private config: ChannelConfig | null = null;
   private lastModified: number = 0;
   private isWatching: boolean = false;
-  private isLoading: boolean = false;
   private loadPromise: Promise<void> | null = null;
   private readonly watchInterval: number = 5000; // 5 seconds
 
-  constructor() {
-    // Constructor is now empty - initialization happens externally
-  }
+  constructor() {}
 
   public async initialize(): Promise<void> {
     await this.loadConfig();
@@ -54,31 +53,27 @@ class ChannelConfigManager {
   /**
    * Get channel configuration by channel ID
    */
-  public async getChannelConfig(channelId: string): Promise<{ tenant: string; endpoint: string }> {
+  public async getChannelConfig(channelId: string): Promise<ChannelItem> {
     const config = await this.getConfig();
 
     // Find matching channel
     const channel = config.channels.find((ch) => ch.id === channelId);
     if (channel) {
       return {
+        name: channel.name,
+        id: channel.id,
         tenant: channel.tenant || config.default.tenant,
         endpoint: channel.endpoint || config.default.endpoint,
       };
     }
 
-    // Return default configuration if no match found
+    // Return default configuration with generated name and id if no match found
     return {
+      name: 'default',
+      id: channelId, // Use the requested channelId
       tenant: config.default.tenant,
       endpoint: config.default.endpoint,
     };
-  }
-
-  /**
-   * Get all channel IDs
-   */
-  public async getAllChannelIds(): Promise<string[]> {
-    const config = await this.getConfig();
-    return config.channels.map((ch) => ch.id);
   }
 
   /**
@@ -90,9 +85,6 @@ class ChannelConfigManager {
       return channelConfig.tenant;
     } catch (error) {
       logger.error('Failed to get RAG tenant for channel', { channelId, error: error.message });
-      // Fallback to default configuration
-      const config = await this.getConfig();
-      return config.default.tenant;
     }
   }
 
@@ -105,9 +97,6 @@ class ChannelConfigManager {
       return channelConfig.endpoint;
     } catch (error) {
       logger.error('Failed to get RAG endpoint for channel', { channelId, error: error.message });
-      // Fallback to default configuration
-      const config = await this.getConfig();
-      return config.default.endpoint;
     }
   }
 
@@ -115,11 +104,9 @@ class ChannelConfigManager {
    * Check if file has been modified and reload if necessary
    */
   private async checkAndReload(): Promise<void> {
-    if (this.isLoading) {
+    if (this.loadPromise) {
       // If already loading, wait for the current load to complete
-      if (this.loadPromise) {
-        await this.loadPromise;
-      }
+      await this.loadPromise;
       return;
     }
 
@@ -147,20 +134,17 @@ class ChannelConfigManager {
    * Load configuration from YAML file
    */
   private async loadConfig(): Promise<void> {
-    if (this.isLoading) {
-      if (this.loadPromise) {
-        await this.loadPromise;
-      }
+    if (this.loadPromise) {
+      // If already loading, wait for the current load to complete
+      await this.loadPromise;
       return;
     }
 
-    this.isLoading = true;
     this.loadPromise = this.loadConfigCore();
 
     try {
       await this.loadPromise;
     } finally {
-      this.isLoading = false;
       this.loadPromise = null;
     }
   }
@@ -171,7 +155,7 @@ class ChannelConfigManager {
 
       // Parse YAML content using yaml library with type assertion
       const parsedConfig = parse(fileContent, {
-        schema: 'failsafe', // Use failsafe schema for better compatibility
+        schema: 'core',
         strict: true, // Strict parsing
         uniqueKeys: true, // Ensure unique keys
       }) as ChannelConfig;
@@ -188,7 +172,7 @@ class ChannelConfigManager {
       });
 
       // Validate configuration
-      this.validateConfig();
+      this.ensureConfig();
     } catch (error) {
       logger.error('Failed to load channel configuration', {
         error: error.message,
@@ -199,9 +183,9 @@ class ChannelConfigManager {
   }
 
   /**
-   * Validate the loaded configuration
+   * Ensure the loaded configuration is valid
    */
-  private validateConfig(): void {
+  private ensureConfig(): void {
     if (!this.config) {
       throw new Error('Configuration is null');
     }
@@ -232,14 +216,16 @@ class ChannelConfigManager {
     }
 
     try {
-      fsSync.watchFile(CHANNEL_CONFIG_PATH, { interval: this.watchInterval }, (curr, prev) => {
+      fsSync.watchFile(CHANNEL_CONFIG_PATH, { interval: this.watchInterval }, async (curr, prev) => {
         if (curr.mtime > prev.mtime) {
           logger.info('Channel config file changed (via watch), reloading...', {
             file: CHANNEL_CONFIG_PATH,
           });
-          this.loadConfig().catch((error) => {
+          try {
+            await this.loadConfig();
+          } catch (error) {
             logger.error('Failed to reload config after file change', { error: error.message });
-          });
+          }
         }
       });
 

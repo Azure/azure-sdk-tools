@@ -12,15 +12,19 @@
   },
   "dependencies": {
     "@azure/functions": "^4.0.0",
+    "@azure/identity": "^4.5.0",
+    "@azure/openai": "^1.0.0-beta.12",
+    "@azure/storage-blob": "^12.21.0",
     "@microsoft/microsoft-graph-types": "^2.40.0",
-    "botframework-schema": "^4.17.0-blobs1"
+    "botframework-schema": "^4.17.0-blobs1",
+    "openai": "^5.10.2"
   },
   "devDependencies": {
-    "@types/node": "^20.x",
-    "rimraf": "^5.0.0",
-    "typescript": "^4.0.0",
     "@microsoft/microsoft-graph-types": "^2.40.0",
-    "botframework-schema": "^4.17.0-blobs1"
+    "@types/node": "^20.x",
+    "botframework-schema": "^4.17.0-blobs1",
+    "rimraf": "^5.0.0",
+    "typescript": "^4.0.0"
   },
   "main": "dist/src/{index.js,functions/*.js}"
 }

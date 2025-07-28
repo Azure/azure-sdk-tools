@@ -17,10 +17,11 @@ const (
 	ErrorCodeUnauthorized    ErrorCode = "UNAUTHORIZED"
 
 	// Server Error Codes (5xx)
-	ErrorCodeServiceInitFailure ErrorCode = "SERVICE_INIT_FAILURE"
-	ErrorCodeLLMServiceFailure  ErrorCode = "LLM_SERVICE_FAILURE"
-	ErrorCodeSearchFailure      ErrorCode = "SEARCH_FAILURE"
-	ErrorCodeInternalError      ErrorCode = "INTERNAL_ERROR"
+	ErrorCodeServiceInitFailure  ErrorCode = "SERVICE_INIT_FAILURE"
+	ErrorCodeLLMServiceFailure   ErrorCode = "LLM_SERVICE_FAILURE"
+	ErrorCodeLLMRateLimitFailure ErrorCode = "LLM_RATE_LIMIT_FAILURE"
+	ErrorCodeSearchFailure       ErrorCode = "SEARCH_FAILURE"
+	ErrorCodeInternalError       ErrorCode = "INTERNAL_ERROR"
 )
 
 // ErrorCategory represents the category of error for monitoring and alerting
@@ -30,7 +31,7 @@ const (
 	ErrorCategoryValidation     ErrorCategory = "validation"
 	ErrorCategoryAuthentication ErrorCategory = "authentication"
 	ErrorCategoryAuthorization  ErrorCategory = "authorization"
-	ErrorCategoryRateLimit      ErrorCategory = "rate_limit"
+	ErrorCategoryRateLimit      ErrorCategory = "rate limit"
 	ErrorCategoryService        ErrorCategory = "service"
 	ErrorCategoryDependency     ErrorCategory = "dependency"
 	ErrorCategoryInternal       ErrorCategory = "internal"
@@ -81,6 +82,8 @@ func getErrorMetadata(code ErrorCode) (ErrorCategory, int) {
 		return ErrorCategoryDependency, http.StatusInternalServerError
 	case ErrorCodeSearchFailure:
 		return ErrorCategoryDependency, http.StatusInternalServerError
+	case ErrorCodeLLMRateLimitFailure:
+		return ErrorCategoryRateLimit, http.StatusTooManyRequests
 	default:
 		return ErrorCategoryInternal, http.StatusInternalServerError
 	}
@@ -109,6 +112,10 @@ func NewServiceInitFailureError(err error) *APIError {
 
 func NewLLMServiceFailureError(err error) *APIError {
 	return NewAPIError(ErrorCodeLLMServiceFailure, "LLM service request failed (retryable)", err.Error())
+}
+
+func NewLLMRateLimitFailureError(err error) *APIError {
+	return NewAPIError(ErrorCodeLLMRateLimitFailure, "LLM service hit rate limit (retryable)", err.Error())
 }
 
 func NewSearchFailureError(err error) *APIError {

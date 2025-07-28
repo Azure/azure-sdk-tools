@@ -549,7 +549,10 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	}, nil)
 
 	if err != nil {
-		// TODO: Update the following line with your application specific error handling logic
+		// Check if this is a rate limit error (429)
+		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
+			return nil, model.NewLLMRateLimitFailureError(err)
+		}
 		log.Printf("ERROR: %s", err)
 		return nil, err
 	}

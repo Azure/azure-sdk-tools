@@ -326,6 +326,7 @@ stages:
     toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
     sdkRepositoryPath: $(Build.SourcesDirectory)/azure-sdk
     sdkRepositoryName: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository.name']]
+    sdkRepository: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository']]
     pullRequestTargetBranch: $[coalesce(stageDependencies.Build.Build.outputs['repositories.sdk-repository.branch'], 'main')]
     sdkRepositoryCommitSha: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository.version']]
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
@@ -334,7 +335,7 @@ stages:
   jobs:
   - job: Initialize
     steps:
-    - checkout: $(sdkRepositoryName)
+    - checkout: $(sdkRepository)
     - checkout: self
       path: s/autorest
     - checkout: azure-sdk-tools

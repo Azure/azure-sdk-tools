@@ -1,0 +1,11 @@
+[
+  {
+    "version": "view=azure-python-preview",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/identity-broker-readme?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-identity-broker/azure.identity.broker/?view=azure-python-preview",
+      "https://learn.microsoft.com/en-us/python/api/azure-identity-broker/azure.identity.broker.interactivebrowserbrokercredential?view=azure-python-preview\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-identity-broker/azure.identity.broker.poptokenrequestoptions?view=azure-python-preview\u0026branch=main"
+    ]
+  }
+]

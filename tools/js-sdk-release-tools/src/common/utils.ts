@@ -111,21 +111,41 @@ export function getNpmPackageName(packageRoot: string): string {
     return packageName;
 }
 
-export function getApiReviewPath(packageRoot: string): string {
+export function getApiReviewBasePath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
+    let apiReviewPath: string;
     switch (sdkType) {
         case SDKType.ModularClient:
             const modularPackageName = npmPackageName.substring('@azure/'.length);
-            const apiViewFileName = `${modularPackageName}.api.md`;
-            return path.join(packageRoot, 'review', apiViewFileName);
+            const apiViewFileName = `${modularPackageName}`;
+            apiReviewPath = path.join(packageRoot, 'review', apiViewFileName);
+            break;
         case SDKType.HighLevelClient:
         case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
             const packageName = npmPackageName.split('/')[1];
-            return path.join(packageRoot, 'review', `${packageName}.api.md`);
+            apiReviewPath = path.join(packageRoot, 'review', `${packageName}`);
     }
+    return apiReviewPath;
+}
+
+export function getApiReviewPath(packageRoot: string): string {
+    const NODE_API_MD_SUFFIX = '-node.api.md';
+    const API_REVIEW_SUFFIX = '.api.md';
+    const apiReviewPath = getApiReviewBasePath(packageRoot);
+
+    // First check if node.api.md exists
+    const nodePath = `${apiReviewPath}${NODE_API_MD_SUFFIX}`;
+    if (fs.existsSync(nodePath)) {
+        logger.info(`Using node API review file: ${nodePath}`);
+        return nodePath;
+    }
+
+    // If node.api.md doesn't exist, return the standard .api.md path
+    const standardPath = `${apiReviewPath}${API_REVIEW_SUFFIX}`;
+    return standardPath;
 }
 
 export function getTsSourceFile(filePath: string): SourceFile | undefined {

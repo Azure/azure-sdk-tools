@@ -35,7 +35,7 @@ jobs:
       value: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
     - name: BuildToolPath
       value: $(Pipeline.Workspace)/_azure-sdk-build-tools
-      
+
     templateContext:
       outputs:
         - output: pipelineArtifact

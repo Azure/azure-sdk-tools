@@ -1,0 +1,34 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/cognitive-services?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/ai-contentsafety-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.aio.blocklistclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.aio.contentsafetyclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsoptions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.addorupdatetextblocklistitemsresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.analyzeimageoptions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.analyzeimageresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.analyzetextoptions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.analyzetextresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.imagecategoriesanalysis?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.imagedata?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.removetextblocklistitemsoptions?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.textblocklist?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.textblocklistitem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.textblocklistmatch?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.textcategoriesanalysis?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.analyzeimageoutputtype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.analyzetextoutputtype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.imagecategory?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.models.textcategory?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.blocklistclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-ai-contentsafety/azure.ai.contentsafety.contentsafetyclient?view=azure-python\u0026branch=main"
+    ]
+  }
+]

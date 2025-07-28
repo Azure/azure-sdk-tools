@@ -3,6 +3,7 @@ import {
   AstContext,
   createAstContext,
   DiffPair,
+  DiffReasons,
   patchClass,
   patchFunction,
   patchInterface,
@@ -10,7 +11,6 @@ import {
   patchEnum,
   isPropertyMethod,
   patchRoutes,
-  DiffReasons,
 } from 'typescript-codegen-breaking-change-detector';
 import { SDKType } from '../../common/types.js';
 import { join } from 'path';
@@ -73,6 +73,20 @@ export class DifferenceDetector {
   }
 
   private postprocess() {
+    // Handle generic interfaces - filter to only Added/Removed changes
+    this.result?.interfaces.forEach((v, k) => {
+      if (this.hasTypeParameters(k, SyntaxKind.InterfaceDeclaration)) {
+        logger.warn(`Generic interface '${k}' breaking change detection is limited to Added/Removed changes only.`);
+        // For generic interfaces, only keep Added/Removed diff pairs
+        const filteredDiffPairs = v.filter(pair => 
+          pair.reasons === DiffReasons.Added || pair.reasons === DiffReasons.Removed
+        );
+        this.result?.interfaces.set(k, filteredDiffPairs);
+      }
+    });
+    
+    if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
+
     this.result?.functions.forEach((v, k) => {
       if (this.shouldIgnoreFunctionBreakingChange(v, k)) this.result?.functions.delete(k);      
     });
@@ -89,8 +103,7 @@ export class DifferenceDetector {
       if(this.shouldIgnoreInterfaceBreakingChange(v, k)) this.result?.interfaces.delete(k);
       if(this.hasIgnoreTargetNames(v)) this.result?.interfaces.delete(k);
     });
-
-    if (this.currentApiViewOptions.sdkType !== SDKType.RestLevelClient) return;
+    
     // use Routes specific detection
     this.result?.interfaces.delete('Routes');
     const routesDiffPairs = patchRoutes(this.context!);
@@ -272,10 +285,6 @@ export class DifferenceDetector {
 
     // TODO: be careful about input models and output models
     const interfaceDiffPairs = interfaceNames.reduce((map, n) => {
-      if (this.hasTypeParameters(n, SyntaxKind.InterfaceDeclaration)) {
-        logger.warn(`Generic interface '${n}' breaking change detection is not supported.`);
-        return map;
-      }
       const diffPairs = patchInterface(n, this.context!, AssignDirection.CurrentToBaseline);
       map.set(n, diffPairs);
       return map;

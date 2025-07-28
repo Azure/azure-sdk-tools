@@ -52,13 +52,37 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 async function addApiViewInfo(
     packageDirectory: string,
     sdkRoot: string,
+    packageName: string,
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
-    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**/*.api.json');
-    const apiViews = await glob(apiViewPathPattern);
-    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
-    if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    packageResult.apiViewArtifact = relative(sdkRoot, apiViews[0]);
+    // Extract the actual package name part from scoped package name 
+    // (e.g., @azure/arm-oracledatabase -> arm-oracledatabase, @azure-rest/ai-language-conversations -> ai-language-conversations)
+    let actualPackageName = packageName;
+    if (packageName.startsWith('@azure/')) {
+        actualPackageName = packageName.substring('@azure/'.length);
+    } else if (packageName.startsWith('@azure-rest/')) {
+        actualPackageName = packageName.substring('@azure-rest/'.length);
+    }
+    // Try both possible API view file name formats
+    const nodeApiViewFileName = `${actualPackageName}-node.api.json`;
+    const standardApiViewFileName = `${actualPackageName}.api.json`;
+    const nodeApiViewPattern = posix.join(packageDirectory, 'temp', '**', nodeApiViewFileName);
+    const standardApiViewPattern = posix.join(packageDirectory, 'temp', '**', standardApiViewFileName);
+    
+    // Search for both possible API view file name formats simultaneously
+    const [nodeApiViews, standardApiViews] = await Promise.all([
+        glob(nodeApiViewPattern),
+        glob(standardApiViewPattern)
+    ]);
+    const apiViews = [...nodeApiViews, ...standardApiViews];
+
+    if (!nodeApiViews.length && !standardApiViews.length) {
+        throw new Error(`Failed to find any API view files matching '${nodeApiViewPattern}' or '${standardApiViewPattern}'. cwd: ${process.cwd()}`);
+    }
+    
+    const selectedApiView = nodeApiViews.length > 0 ? nodeApiViews[0] : standardApiViews[0];
+    
+    packageResult.apiViewArtifact = relative(sdkRoot, selectedApiView);
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
     const name = basename(apiViews[0]);
     return { content, name };
@@ -102,7 +126,7 @@ export async function buildPackage(
         await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
     }
 
-    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
+    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);
     logger.info(`Build package '${name}' successfully.`);
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder

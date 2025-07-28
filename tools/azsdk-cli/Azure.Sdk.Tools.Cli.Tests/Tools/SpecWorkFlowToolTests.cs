@@ -190,7 +190,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns(true);
             var labels = new List<Octokit.Label>
             {
-               new Label(1, "", SpecWorkflowTool.ARM_SIGN_OFF_LABEL, "", "", "", false)
+               new Octokit.Label(1, "", SpecWorkflowTool.ARM_SIGN_OFF_LABEL, "", "", "", false)
             };
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(

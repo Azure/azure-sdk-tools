@@ -21,7 +21,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.True);
+        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.Exists));
     }
 
     [Test]
@@ -29,7 +29,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "NonExistentService");
-        Assert.That(actual, Is.False);
+        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.DoesNotExist));
     }
 
     [Test]
@@ -37,7 +37,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,123456\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.False);
+        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.NotAServiceLabel));
     }
 
     [Test]
@@ -53,7 +53,7 @@ internal class LabelHelperTests
         Assert.That(column[2], Is.EqualTo("e99695"));
 
         var actual = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
-        Assert.That(actual, Is.True);
+        Assert.AreEqual(LabelHelper.ResultType.Exists, actual);
     }
 
     [Test]
@@ -62,7 +62,7 @@ internal class LabelHelperTests
         var csvContent = "SMR,,e99695\nRRC,,e99695\nPVLG,,e99695\nSBEC,,e99695";
         var serviceLabel = "TestService";
         var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "PVLG,,e99695\nRRC,,e99695\nSBEC,,e99695\nSMR,,e99695\nTestService,,e99695";
+        var expected = "PVLG,,e99695\nRRC,,e99695\nSBEC,,e99695\nSMR,,e99695\nTestService,,e99695\n";
         Assert.That(actual, Is.EqualTo(expected));
     }
 
@@ -72,7 +72,7 @@ internal class LabelHelperTests
         var csvContent = "";
         var serviceLabel = "TestService";
         var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "TestService,,e99695";
+        var expected = "TestService,,e99695\n";
         Assert.That(actual, Is.EqualTo(expected));
     }
 

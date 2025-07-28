@@ -9,6 +9,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 {
     public class MockGitHubService : IGitHubService
     {
+        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<User> GetGitUserDetailsAsync()
         {
             // Create a simple mock user - we'll use reflection to set properties if needed
@@ -135,19 +140,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             );
 
             return Task.FromResult(changeSet);
-        }
-
-        //this is a mock but we have to keep the name
-        public Task<string> CreateBranchAsync(string owner, string repoName, string branchName, string baseBranch = "main")
-        {
-            if (_existingBranches.Contains(branchName))
-            {
-                return Task.FromResult($"Branch '{branchName}' already exists. Compare URL: https://github.com/{owner}/{repoName}/compare/main...{branchName}");
-            }
-
-            _existingBranches.Add(branchName);
-
-            return Task.FromResult($"Branch '{branchName}' created successfully in {owner}/{repoName}. Branch URL: https://github.com/{owner}/{repoName}/tree/{branchName}");
         }
 
         private Commit CreateMockCommit(string message, string sha)

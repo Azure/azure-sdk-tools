@@ -109,28 +109,36 @@ export async function updateExistingTspLocation(
 ): Promise<TspLocation> {
   try {
     const existingTspLocation = await readTspLocation(projectPath);
-    // Compare the tspLocationData with the existingTspLocation to see if there are updates needed in the file
-    if (tspLocationData.repo !== "<replace with your value>" && tspLocationData.repo !== undefined) {
-        existingTspLocation.repo = tspLocationData.repo;
+
+    // Helper function to check if a value should be updated
+    const shouldUpdate = (value: any): boolean => {
+      return value !== undefined && value !== "<replace with your value>";
+    };
+
+    // Used to update tsp-location.yaml data by iterating over properties
+    const updatedTspLocation = { ...existingTspLocation };
+    
+    // Define the properties that can be updated
+    const updatableProperties: (keyof TspLocation)[] = [
+      'repo',
+      'commit', 
+      'directory',
+      'entrypointFile',
+      'additionalDirectories',
+      'emitterPackageJsonPath'
+    ];
+
+    // Update each property if it has a valid value
+    for (const property of updatableProperties) {
+      const value = tspLocationData[property];
+      if (shouldUpdate(value)) {
+        (updatedTspLocation as any)[property] = value;
+      }
     }
-    if (tspLocationData.commit !== "<replace with your value>" && tspLocationData.commit !== undefined) {
-        existingTspLocation.commit = tspLocationData.commit;
-    }
-    if (tspLocationData.directory !== undefined) {
-        existingTspLocation.directory = tspLocationData.directory;
-    }
-    if (tspLocationData.entrypointFile !== undefined) {
-      existingTspLocation.entrypointFile = tspLocationData.entrypointFile;
-    }
-    if (tspLocationData.additionalDirectories !== undefined) {
-      existingTspLocation.additionalDirectories = tspLocationData.additionalDirectories;
-    }
-    if (tspLocationData.emitterPackageJsonPath !== undefined) {
-      existingTspLocation.emitterPackageJsonPath = tspLocationData.emitterPackageJsonPath;
-    }
-    return existingTspLocation;
+
+    return updatedTspLocation;
   } catch (error) {
     Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
+    return tspLocationData;
   }
-  return tspLocationData;
 }

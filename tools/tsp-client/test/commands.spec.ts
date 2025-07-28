@@ -43,6 +43,7 @@ describe.sequential("Verify commands", () => {
       { recursive: true },
     );
     await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+    await rm("./test/examples/initOrUpdate/", { recursive: true });
   });
 
   it("Generate lock file", async () => {
@@ -357,7 +358,6 @@ describe.sequential("Verify commands", () => {
         additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
       });
-      await removeDirectory(joinPaths(cwd(), "./test/examples/initOrUpdate/"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

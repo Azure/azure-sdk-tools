@@ -361,7 +361,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     }
   }
   setReviewApprovalStatus() {
-    this.canToggleApproveAPIRevision = (this.review && this.review!.packageName && !(mapLanguageAliases(["Swagger", "TypeSpec"]).includes(this.review?.language!))) ? true : false;
     this.reviewIsApproved = this.review && this.review?.isApproved ? true : false;
     if (this.reviewIsApproved) {
       this.reviewApprover = this.review?.changeHistory.find(ch => ch.changeAction === 'approved')?.changedBy ?? 'azure-sdk';

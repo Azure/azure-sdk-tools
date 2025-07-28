@@ -45,7 +45,7 @@ func InitOpenAIClient() {
 }
 
 func InitSecrets() {
-	keyVaultURL := "https://azuresdkqabotconfig.vault.azure.net"
+	keyVaultURL := "https://azuresdkqabotea.vault.azure.net"
 
 	//Create a credential using the NewDefaultAzureCredential type.
 	cred, err := azidentity.NewDefaultAzureCredential(nil)

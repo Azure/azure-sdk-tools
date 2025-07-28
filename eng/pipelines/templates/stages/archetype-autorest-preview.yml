@@ -334,7 +334,7 @@ stages:
   jobs:
   - job: Initialize
     steps:
-    - checkout: Azure/$(sdkRepositoryName)
+    - checkout: $(sdkRepositoryName)
     - checkout: self
       path: s/autorest
     - checkout: azure-sdk-tools

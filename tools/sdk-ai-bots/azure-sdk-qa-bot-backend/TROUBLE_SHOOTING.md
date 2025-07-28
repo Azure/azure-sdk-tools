@@ -23,6 +23,12 @@ The Azure SDK Q&A Bot operates in three environments, each with dedicated resour
 - **Logic APP(For Auto Reply)**: [AzureSDKQABot-Dev](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Logic/workflows/AzureSDKQABot-Dev/logicApp)
 - **Channel**: [Azure SDK QA bot for TypeSpec Testing](https://teams.microsoft.com/l/channel/19%3ArMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1%40thread.tacv2/Azure%20SDK%20QA%20bot%20for%20TypeSpec%20Testing?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
+### Preview Environment(Onboarding Channel)
+- **Backend Service**: [azuresdkbot-preview](https://ms.portal.azure.com/#resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/slots/preview)
+- **Frontend Bot**: Azure SDK Q&A Bot Dev
+- **Logic APP(For Auto Reply)**: [AzureSDKQABot-Dev-Onboarding](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Logic/workflows/AzureSDKQABot-Dev-Onboarding/logicApp)
+- **Channel**: [Azure SDK QA bot for SDK Onboarding](https://teams.microsoft.com/l/channel/19%3A603d15bc0fd248ff82a8326da7322a4d%40thread.tacv2/Azure%20SDK%20QA%20bot%20for%20SDK%20Onboarding?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+
 ### Production Environment
 - **Backend Service**: [azuresdkbot-prod](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/appServices)
 - **Frontend Bot**: Azure SDK Q&A Bot

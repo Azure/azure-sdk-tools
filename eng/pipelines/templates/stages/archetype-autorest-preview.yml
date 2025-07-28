@@ -335,7 +335,7 @@ stages:
   jobs:
   - job: Initialize
     steps:
-    - checkout: $(sdkRepository)
+    - checkout: ${{ variables['sdkRepository'] }}
     - checkout: self
       path: s/autorest
     - checkout: azure-sdk-tools

@@ -90,12 +90,10 @@ dotnet test
 
 This tool can be used as an MCP server in a github action invoked by the [GitHub Coding Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent). The azure-sdk language repositories and azure-rest-api-specs repository already have this MCP server configured for the coding agent.
 
-To add to another repository for usage or for testing out new changes in a fork, push the below configs **to the main branch**.
+Pull requests managed by copilot will run github actions and workflow configs with the commit state snapshotted by the PR branch.
+If you need to make updates to the config, either push them to main and file a new issue for copilot or push your changes to copilot's PR branch then mention @copilot in a comment with a new request.
 
-Any pull requests managed by copilot will always run github actions and workflow configs with the commit state snapshotted by the PR branch.
-If you make updates to the config in main you must file a new issue for copilot or push your changes to copilot's PR branch for it to apply.
-
-1. A copilot setup steps workflow needs to be checked into main
+1. A copilot setup steps workflow needs to be added:
       ```yaml
       name: Copilot Setup Steps
 

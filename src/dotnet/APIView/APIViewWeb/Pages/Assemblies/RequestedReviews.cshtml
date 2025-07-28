@@ -5,7 +5,8 @@
 @{
     ViewData["Title"] = "Requested Reviews";
     var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User) ?? new UserPreferenceModel();
-    TempData["UserPreference"] = userPreference;
+    // Don't store complex objects in TempData as they can't be serialized
+    // TempData["UserPreference"] = userPreference;
 }
 <div class="mx-5 row">
     <div class="col-md-12" id="reviews-filter-partial">
@@ -47,9 +48,9 @@
                         {
                             @foreach (var apiRevision in reviewsToShow)
                             {
-                                var assignment = apiRevision.AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
-                                var approvalRequestedOn = assignment.AssingedOn;
-                                var requestBy = assignment.AssignedBy;
+                                var assignment = apiRevision.AssignedReviewers.FirstOrDefault(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var approvalRequestedOn = assignment?.AssingedOn;
+                                var requestBy = assignment?.AssignedBy;
 
                                 var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
                                 <tr class="package-data-row">
@@ -79,10 +80,24 @@
                                         <span>@apiRevision.APIRevisionType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@approvalRequestedOn.ToLocalTime()"></span>
+                                        @if (approvalRequestedOn.HasValue)
+                                        {
+                                            <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@approvalRequestedOn.Value.ToLocalTime()"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>N/A</span>
+                                        }
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <a username="@requestBy">@requestBy</a>
+                                        @if (!string.IsNullOrEmpty(requestBy))
+                                        {
+                                            <a username="@requestBy">@requestBy</a>
+                                        }
+                                        else
+                                        {
+                                            <span>N/A</span>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -116,9 +131,9 @@
                         {
                             @foreach (var apiRevision in Model.NamespaceApprovalRequestedAPIRevisions)
                             {
-                                var assignment = apiRevision.AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
-                                var approvalRequestedOn = assignment.AssingedOn;
-                                var requestBy = assignment.AssignedBy;
+                                var assignment = apiRevision.AssignedReviewers.FirstOrDefault(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var approvalRequestedOn = assignment?.AssingedOn;
+                                var requestBy = assignment?.AssignedBy;
 
                                 var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
                                 <tr class="package-data-row">
@@ -145,10 +160,24 @@
                                         <span>@apiRevision.APIRevisionType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@approvalRequestedOn" date="@approvalRequestedOn.ToLocalTime()"></span>
+                                        @if (approvalRequestedOn.HasValue)
+                                        {
+                                            <span data-placement="left" data-toggle="tooltip" title="@approvalRequestedOn" date="@approvalRequestedOn.Value.ToLocalTime()"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>N/A</span>
+                                        }
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <a username="@requestBy">@requestBy</a>
+                                        @if (!string.IsNullOrEmpty(requestBy))
+                                        {
+                                            <a username="@requestBy">@requestBy</a>
+                                        }
+                                        else
+                                        {
+                                            <span>N/A</span>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -182,9 +211,9 @@
                         {
                             @foreach (var apiRevision in Model.ApprovedAPIRevisions)
                             {
-                                var assignment = apiRevision.AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
-                                var approvalRequestedOn = assignment.AssingedOn;
-                                var requestBy = assignment.AssignedBy;
+                                var assignment = apiRevision.AssignedReviewers.FirstOrDefault(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var approvalRequestedOn = assignment?.AssingedOn;
+                                var requestBy = assignment?.AssignedBy;
 
                                 var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
                                 <tr class="package-data-row">
@@ -214,7 +243,14 @@
                                         <span>@apiRevision.APIRevisionType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@approvalRequestedOn.ToLocalTime()"></span>
+                                        @if (approvalRequestedOn.HasValue)
+                                        {
+                                            <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@approvalRequestedOn.Value.ToLocalTime()"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>N/A</span>
+                                        }
                                     </td>
                                     <td class="align-middle border-left pl-3">
                                         <span>

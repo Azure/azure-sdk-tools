@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock(import('fs'), async (importOriginal) => {
+vi.mock(import('node:fs'), async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -10,7 +10,7 @@ vi.mock(import('fs'), async (importOriginal) => {
   };
 });
 
-vi.mock(import('path'), async (importOriginal) => {
+vi.mock(import('node:path'), async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -68,8 +68,8 @@ vi.mock('../../src/types/InstallInstructionScriptOutput', () => {
   };
 });
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { PackageData } from '../../src/types/PackageData';
 import { getInstallInstructionScriptOutput, InstallInstructionScriptOutput } from '../../src/types/InstallInstructionScriptOutput';
 import { runSdkAutoCustomScript } from '../../src/utils/runScript';

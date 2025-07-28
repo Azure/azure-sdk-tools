@@ -1,12 +1,12 @@
-vi.mock('fs', () => ({
+vi.mock('node:fs', () => ({
   existsSync: vi.fn(),
   readFileSync: vi.fn(() => Buffer.from('{{mock handlebars template}}')),
   rmSync: vi.fn(),
   writeFileSync: vi.fn(),
 }));
 
-vi.mock('path', () => ({
-  ...vi.importActual('path'),
+vi.mock('node:path', () => ({
+  ...vi.importActual('node:path'),
   join: vi.fn((...args) => args.join('/')),
 }));
 
@@ -22,7 +22,7 @@ vi.mock('marked', () => ({
 }));
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { generateReport, saveVsoLog, saveFilteredLog, generateHtmlFromFilteredLog } from '../../src/automation/reportStatus';
 import { WorkflowContext, FailureType } from '../../src/types/Workflow';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';

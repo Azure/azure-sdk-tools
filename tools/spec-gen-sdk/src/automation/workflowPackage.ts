@@ -1,6 +1,6 @@
 import { default as FileHound } from 'filehound';
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import { InstallInstructionScriptInput } from '../types/InstallInstructionScriptInput';
 import { getInstallInstructionScriptOutput } from '../types/InstallInstructionScriptOutput';
 import { PackageData } from '../types/PackageData';

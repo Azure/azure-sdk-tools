@@ -1,6 +1,6 @@
 import { MessageRecord } from '../types/Message';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { setSdkAutoStatus } from '../utils/runScript';
 import { extractPathFromSpecConfig, mapToObject } from '../utils/utils';
 import { vsoAddAttachment, vsoLogError, vsoLogWarning } from './logging';

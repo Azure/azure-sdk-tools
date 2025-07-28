@@ -125,6 +125,12 @@ export class DifferenceDetector {
     if (k.endsWith('Headers') && v.some(pair => pair.reasons === DiffReasons.Removed)) {
       return true;
     }
+
+    // Ignore ErrorAdditionalInfo changes to 'any' type
+    if( k === 'ErrorAdditionalInfo' ){
+      return this.shouldIgnoreErrorAdditionalInfoChangeToAny(v);
+    }
+    
     return false;
   }
 
@@ -146,6 +152,29 @@ export class DifferenceDetector {
     return v.some(pair => {
       const name = pair.target?.name || pair.source?.name;
       return name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed;
+    });
+  }
+
+  private shouldIgnoreErrorAdditionalInfoChangeToAny(v: DiffPair[]): boolean {
+    return v.some(pair => {
+      // Check if the type changed
+      if (pair.reasons !== DiffReasons.TypeChanged) return false;
+
+      // Get the node from the source
+      const node = pair.source?.node;
+      if (!node) return false;
+      
+      // For property signatures, get the type directly
+      if (node.getKind() === SyntaxKind.PropertySignature) {
+        const propertySignature = node.asKindOrThrow(SyntaxKind.PropertySignature);
+        const typeNode = propertySignature.getTypeNode();
+        // Check if the type is explicitly 'any'
+        if (typeNode?.getKind() === SyntaxKind.AnyKeyword) {
+          return true;
+        }
+      }
+
+      return false;
     });
   }
 

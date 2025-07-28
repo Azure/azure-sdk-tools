@@ -1,5 +1,9 @@
 # Release
 
+## 2025-07-29 - 0.26.1
+
+- Support an `--update-if-exists` flag when using `tsp-client init`. This flag will update the tspconfig.yaml file based on new inputs to the command and keep any other existing config in the file.
+
 ## 2025-07-21 - 0.26.0
 
 - Fix bug when discovering entrypoint files to only accept `main.tsp` or `client.tsp` unless otherwise specified in tsp-location.yaml.

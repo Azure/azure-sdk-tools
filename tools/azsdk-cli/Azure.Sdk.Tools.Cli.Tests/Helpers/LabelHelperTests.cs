@@ -21,7 +21,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.True);
+        Assert.That(actual, Is.EqualTo("e99695"));
     }
 
     [Test]
@@ -29,7 +29,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "NonExistentService");
-        Assert.That(actual, Is.False);
+        Assert.That(actual, Is.Null);
     }
 
     [Test]
@@ -37,7 +37,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,123456\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.False);
+        Assert.That(actual, Is.EqualTo("123456"));
     }
 
     [Test]
@@ -53,7 +53,7 @@ internal class LabelHelperTests
         Assert.That(column[2], Is.EqualTo("e99695"));
 
         var actual = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
-        Assert.That(actual, Is.True);
+        Assert.That(actual, Is.EqualTo("e99695"));
     }
 
     [Test]

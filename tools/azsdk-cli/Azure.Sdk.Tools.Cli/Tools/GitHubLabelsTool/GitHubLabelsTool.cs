@@ -108,8 +108,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
+                if (result == null)
+                {
+                    logger.LogInformation($"Service label '{serviceLabel}' not found in common-labels.csv");
+                    return false;
+                }
+
+                else if (!result.Equals("e99695", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation($"Service label '{serviceLabel}' found in common-labels.csv, but does not match the expected color code '{serviceLabelColorCode}'.");
+                    return false;
+                }
+
                 logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
-                return result;
+                return true;
             }
             catch (Exception ex)
             {

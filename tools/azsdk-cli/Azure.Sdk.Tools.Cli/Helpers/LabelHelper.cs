@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ILabelHelper
     {
-        public bool CheckServiceLabel(string csvContent, string serviceName);
+        public string CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
         public string NormalizeLabel(string label);
     }
@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public bool CheckServiceLabel(string csvContent, string serviceName)
+        public string CheckServiceLabel(string csvContent, string serviceName)
         {
             var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
@@ -29,15 +29,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     var colorCode = columns[2].Trim();
 
                     // Only consider labels with the service label color code and check if it contains the service label
-                    if (colorCode.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase)
-                        && labelName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                    if (labelName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                     {
-                        return true;
+                        return colorCode;
                     }
                 }
             }
-            
-            return false;
+
+            return null;
         }
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)

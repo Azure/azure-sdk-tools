@@ -1823,11 +1823,17 @@ export interface GenericInterfaceNameChange<T> {
             ).length,
         ).toBe(1);
         
-        // Verify no breaking changes detected
+        // Verify breaking changes detected
         const totalBreakingChanges = [...changelogItems.breakingChanges.keys()].flatMap(
             (category) => changelogItems.breakingChanges.get(category) ?? [],
         ).length;
         expect(totalBreakingChanges).toBe(1);
+        
+        // Verify new features detected
+        const totalNewFeatures = [...changelogItems.features.keys()].flatMap(
+            (category) => changelogItems.features.get(category) ?? [],
+        ).length;
+        expect(totalNewFeatures).toBe(1);
     });
 
     test("should just ignore inner changes", async () => {

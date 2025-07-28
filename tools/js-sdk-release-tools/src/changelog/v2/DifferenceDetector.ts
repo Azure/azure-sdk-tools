@@ -216,7 +216,6 @@ export class DifferenceDetector {
     );
   }
 
-
   private getFunctions(sourceFile: SourceFile): FunctionDeclaration[] {
     return sourceFile
       .getStatements()

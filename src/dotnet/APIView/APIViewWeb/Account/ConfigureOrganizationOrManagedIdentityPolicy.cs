@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Claims;
 using APIViewWeb.Account;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

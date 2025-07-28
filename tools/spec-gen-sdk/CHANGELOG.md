@@ -1,6 +1,8 @@
 # Release
-## 2025-07-01 - 0.9.0
 
+## 2025-07-25 - 0.9.0
+
+- Added 'generateFromTypeSpec' property to ExecutionReport
 - Restructure code directory and add unit test in test/ folder
 
 ## 2025-06-03 - 0.8.1

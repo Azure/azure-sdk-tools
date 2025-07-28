@@ -111,9 +111,7 @@ export function getNpmPackageName(packageRoot: string): string {
     return packageName;
 }
 
-export function getApiReviewPath(packageRoot: string): string {
-    const NODE_API_MD_SUFFIX = '-node.api.md';
-    const API_REVIEW_SUFFIX = '.api.md';
+export function getApiReviewBasePath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
     let apiReviewPath: string;
@@ -130,6 +128,13 @@ export function getApiReviewPath(packageRoot: string): string {
             const packageName = npmPackageName.split('/')[1];
             apiReviewPath = path.join(packageRoot, 'review', `${packageName}`);
     }
+    return apiReviewPath;
+}
+
+export function getApiReviewPath(packageRoot: string): string {
+    const NODE_API_MD_SUFFIX = '-node.api.md';
+    const API_REVIEW_SUFFIX = '.api.md';
+    const apiReviewPath = getApiReviewBasePath(packageRoot);
 
     // First check if node.api.md exists
     const nodePath = `${apiReviewPath}${NODE_API_MD_SUFFIX}`;

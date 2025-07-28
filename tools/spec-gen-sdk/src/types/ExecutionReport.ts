@@ -14,6 +14,7 @@ export type ExecutionReport = {
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
   isSdkConfigDuplicated?: boolean;
+  generateFromTypeSpec?: boolean;
 };
 
 export type PackageReport = {

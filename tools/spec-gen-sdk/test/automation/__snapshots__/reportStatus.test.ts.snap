@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`reportStatus > generateHtmlFromFilteredLog > should parse note blocks correctly 1`] = `
+exports[`reportStatus > generateHtmlFromFilteredLog > should generate HTML from filtered log successfully 1`] = `
 "
 <!DOCTYPE html>
 <html lang="en">
@@ -85,3 +85,81 @@ exports[`reportStatus > generateHtmlFromFilteredLog > should parse note blocks c
 </html>
 "
 `;
+
+exports[`reportStatus > generateHtmlFromFilteredLog > should handle markdown without note blocks 1`] = `
+"# Simple Markdown
+
+This is a simple paragraph."
+`;
+
+exports[`reportStatus > generateReport > should generate report successfully with valid context 1`] = `
+{
+  "executionResult": "succeeded",
+  "filteredLogPath": "/tmp/filtered.log",
+  "fullLogPath": "/tmp/full.log",
+  "isSdkConfigDuplicated": false,
+  "packages": [
+    {
+      "absentBreakingChangeSuppressions": [],
+      "apiViewArtifact": "apiview.json",
+      "areBreakingChangeSuppressed": false,
+      "artifactPaths": [
+        "artifact1.zip",
+        "artifact2.zip",
+      ],
+      "breakingChangeLabel": "breaking-change",
+      "hasBreakingChange": false,
+      "installInstructions": "npm install test-package",
+      "language": "JavaScript",
+      "packageName": "test-package",
+      "presentBreakingChangeSuppressions": [],
+      "readmeMd": [
+        "README.md",
+      ],
+      "result": "succeeded",
+      "serviceName": "test-service",
+      "shouldLabelBreakingChange": false,
+      "typespecProject": undefined,
+      "version": "1.0.0",
+    },
+  ],
+  "sdkArtifactFolder": "/tmp/sdk-artifacts",
+  "stagedArtifactsFolder": "/tmp/artifacts",
+  "vsoLogPath": "/tmp/vso.log",
+}
+`;
+
+exports[`reportStatus > generateReport > should write markdown file when pullNumber is provided 1`] = `
+"## Package Name
+test-package
+## Version
+1.0.0
+## Result
+succeeded
+## Spec Configuration
+README.md
+## Has Breaking Change
+false
+## Is Beta Management SDK
+false
+## Has Suppressions
+false
+## Has Absent Suppressions
+false
+
+"
+`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 1`] = `"{"type":"Markdown","mode":"replace","level":"Error","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 2`] = `"{"type":"Markdown","mode":"replace","level":"Error","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 3`] = `"{"type":"Markdown","mode":"replace","level":"Error","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 4`] = `"{"type":"Markdown","mode":"replace","level":"Warning","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 5`] = `"{"type":"Markdown","mode":"replace","level":"Info","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should map different status levels correctly 6`] = `"{"type":"Markdown","mode":"replace","level":"Warning","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;
+
+exports[`reportStatus > saveFilteredLog > should save filtered log successfully 1`] = `"{"type":"Markdown","mode":"replace","level":"Info","message":"mocked comment body","time":"2022-01-01T00:00:00.000Z"}"`;

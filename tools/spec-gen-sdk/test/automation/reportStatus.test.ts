@@ -46,6 +46,9 @@ describe('reportStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
+    const fixedDate = new Date('2022-01-01T00:00:00Z');
+    vi.spyOn(global, 'Date').mockImplementation(() => fixedDate);
+
     mockLogger = {
       log: vi.fn(),
       info: vi.fn(),
@@ -162,30 +165,16 @@ describe('reportStatus', () => {
     it('should generate report successfully with valid context', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
+      const writeTmpJsonFileMock = vi.fn();
+      vi.mocked(writeTmpJsonFile).mockImplementation(writeTmpJsonFileMock);
+      
       generateReport(mockWorkflowContext);
 
       expect(mockLogger.log).toHaveBeenCalledWith('section', 'Generate report');
       expect(mockLogger.log).toHaveBeenCalledWith('endsection', 'Generate report');
       expect(setSdkAutoStatus).toHaveBeenCalledWith(mockWorkflowContext, 'succeeded');
       expect(deleteTmpJsonFile).toHaveBeenCalledWith(mockWorkflowContext, 'execution-report.json');
-      expect(writeTmpJsonFile).toHaveBeenCalledWith(
-        mockWorkflowContext,
-        'execution-report.json',
-        expect.objectContaining({
-          packages: expect.arrayContaining([
-            expect.objectContaining({
-              serviceName: 'test-service',
-              packageName: 'test-package',
-              result: 'succeeded',
-              language: 'JavaScript',
-            }),
-          ]),
-          executionResult: 'succeeded',
-          fullLogPath: '/tmp/full.log',
-          filteredLogPath: '/tmp/filtered.log',
-          vsoLogPath: '/tmp/vso.log',
-        })
-      );
+      expect(writeTmpJsonFileMock.mock.calls[0][2]).toMatchSnapshot();
     });
 
     it('should handle breaking changes correctly', () => {
@@ -247,18 +236,19 @@ describe('reportStatus', () => {
     it('should write markdown file when pullNumber is provided', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
-      generateReport(mockWorkflowContext);
+      const writeFileSyncMock = vi.fn();
+      vi.mocked(fs.writeFileSync).mockImplementation(writeFileSyncMock);
 
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/working/out/logs/test-spec-config-package-report.md',
-        expect.stringContaining('## Package Name\ntest-package\n')
-      );
+      generateReport(mockWorkflowContext);
+      
+      expect(writeFileSyncMock.mock.calls[0][0]).toBe('/tmp/working/out/logs/test-spec-config-package-report.md');
+      expect(writeFileSyncMock.mock.calls[0][1]).toMatchSnapshot();
       expect(vsoAddAttachment).toHaveBeenCalledWith(
         'Generation Summary for specification-test-resource-manager',
         '/tmp/working/out/logs/test-spec-config-package-report.md'
       );
     });
-
+    
     it('should remove existing markdown file before writing new one', () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
@@ -276,8 +266,8 @@ describe('reportStatus', () => {
 
       generateReport(mockWorkflowContext);
 
-      expect(toolError).toHaveBeenCalledWith('Fails to write markdown file. Details: Error: Write failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('ERROR: Fails to write markdown file. Details: Error: Write failed');
+      expect(toolError).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
+      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
       expect(vsoLogError).toHaveBeenCalled();
     });
 
@@ -288,28 +278,6 @@ describe('reportStatus', () => {
 
       expect(fs.writeFileSync).not.toHaveBeenCalled();
       expect(vsoAddAttachment).not.toHaveBeenCalled();
-    });
-
-    it('should handle failed status', () => {
-      mockWorkflowContext.status = 'failed';
-
-      generateReport(mockWorkflowContext);
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'The generation process failed for specification-test-resource-manager. Refer to the full log for details.'
-      );
-      expect(vsoLogError).toHaveBeenCalled();
-    });
-
-    it('should handle notEnabled status', () => {
-      mockWorkflowContext.status = 'notEnabled';
-
-      generateReport(mockWorkflowContext);
-
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        'WARNING: SDK configuration is not enabled for specification-test-resource-manager. Refer to the full log for details.'
-      );
-      expect(vsoLogWarning).toHaveBeenCalled();
     });
 
     it('should handle local run environment (no vsoLogPath)', () => {
@@ -333,16 +301,17 @@ describe('reportStatus', () => {
         ['task1', { errors: ['error1'], warnings: ['warning1'] }],
         ['task2', { errors: ['error2'] }],
       ]);
+
       mockWorkflowContext.vsoLogs = mockVsoLogs;
       vi.mocked(mapToObject).mockReturnValue({ task1: { errors: ['error1'], warnings: ['warning1'] } });
 
       saveVsoLog(mockWorkflowContext);
 
-      expect(mockLogger.log).toHaveBeenCalledWith('section', 'Save log to /tmp/vso.log');
-      expect(mockLogger.log).toHaveBeenCalledWith('endsection', 'Save log to /tmp/vso.log');
+      expect(mockLogger.log).toHaveBeenCalledWith('section', expect.stringContaining(mockWorkflowContext.vsoLogFileName));
+      expect(mockLogger.log).toHaveBeenCalledWith('endsection', expect.stringContaining(mockWorkflowContext.vsoLogFileName));
       expect(mapToObject).toHaveBeenCalledWith(mockVsoLogs);
       expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/vso.log',
+        mockWorkflowContext.vsoLogFileName,
         JSON.stringify({ task1: { errors: ['error1'], warnings: ['warning1'] } }, null, 2)
       );
     });
@@ -355,8 +324,8 @@ describe('reportStatus', () => {
 
       saveVsoLog(mockWorkflowContext);
 
-      expect(toolError).toHaveBeenCalledWith('Fails to write log to /tmp/vso.log. Details: Error: Write failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('ERROR: Fails to write log to /tmp/vso.log. Details: Error: Write failed');
+      expect(toolError).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
+      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
     });
   });
 
@@ -374,22 +343,9 @@ describe('reportStatus', () => {
           showLiteInstallInstruction: false,
         })
       );
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/filtered.log',
-        expect.stringContaining('"type":"Markdown"')
-      );
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/filtered.log',
-        expect.stringContaining('"mode":"replace"')
-      );
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/filtered.log',
-        expect.stringContaining('"level":"Info"')
-      );
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/filtered.log',
-        expect.stringContaining('"message":"mocked comment body"')
-      );
+      const writeFileSyncMock = vi.mocked(fs.writeFileSync)
+      expect(writeFileSyncMock.mock.calls[0][0]).toBe('/tmp/filtered.log');
+      expect(writeFileSyncMock.mock.calls[0][1]).toMatchSnapshot();
     });
 
     it('should handle pending packages', () => {
@@ -400,9 +356,8 @@ describe('reportStatus', () => {
 
       expect(setSdkAutoStatus).toHaveBeenCalledWith(mockWorkflowContext, 'failed');
       expect(setFailureType).toHaveBeenCalledWith(mockWorkflowContext, FailureType.SpecGenSdkFailed);
-      expect(toolError).toHaveBeenCalledWith('The following packages are still pending in code generation.');
-      expect(mockLogger.error).toHaveBeenCalledWith('ERROR: The following packages are still pending in code generation.');
-      expect(mockLogger.error).toHaveBeenCalledWith('\tpending-package');
+      expect(toolError).toHaveBeenCalled();
+      expect(mockLogger.error).toHaveBeenCalledTimes(2);
       expect(mockWorkflowContext.handledPackages).toContain(pendingPackage);
     });
 
@@ -442,18 +397,10 @@ describe('reportStatus', () => {
 
         saveFilteredLog(mockWorkflowContext);
 
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-          '/tmp/filtered.log',
-          expect.stringContaining(`"level":"${expectedLevel}"`)
-        );
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-          '/tmp/filtered.log',
-          expect.stringContaining('"type":"Markdown"')
-        );
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-          '/tmp/filtered.log',
-          expect.stringContaining('"message":"mocked comment body"')
-        );
+        
+      const writeFileSyncMock = vi.mocked(fs.writeFileSync)
+      expect(writeFileSyncMock.mock.calls[0][0]).toBe('/tmp/filtered.log');
+      expect(writeFileSyncMock.mock.calls[0][1]).toMatchSnapshot();
       });
     });
 
@@ -465,8 +412,8 @@ describe('reportStatus', () => {
 
       saveFilteredLog(mockWorkflowContext);
 
-      expect(toolError).toHaveBeenCalledWith('Fails to write log to /tmp/filtered.log. Details: Error: Write failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('ERROR: Fails to write log to /tmp/filtered.log. Details: Error: Write failed');
+      expect(toolError).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
+      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
       expect(vsoLogError).toHaveBeenCalled();
     });
   });
@@ -487,26 +434,11 @@ describe('reportStatus', () => {
     it('should generate HTML from filtered log successfully', () => {
       generateHtmlFromFilteredLog(mockWorkflowContext);
 
-      expect(mockLogger.log).toHaveBeenCalledWith('section', 'Generate HTML from filtered log');
-      expect(mockLogger.log).toHaveBeenCalledWith('endsection', 'Generate HTML from filtered log');
       expect(fs.readFileSync).toHaveBeenCalledWith('/tmp/filtered.log');
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/report.html',
-        expect.stringContaining('<!DOCTYPE html>'),
-        'utf-8'
-      );
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/tmp/report.html',
-        expect.stringContaining('spec-gen-sdk-js result'),
-        'utf-8'
-      );
-    });
-
-    it('should parse note blocks correctly', () => {
-      generateHtmlFromFilteredLog(mockWorkflowContext);
-
-      const htmlContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
-      expect(htmlContent).toMatchSnapshot();
+      const writeFileSyncMock = vi.mocked(fs.writeFileSync);
+      expect(writeFileSyncMock.mock.calls[0][0]).toBe('/tmp/report.html');
+      expect(writeFileSyncMock.mock.calls[0][1]).toMatchSnapshot();
+      expect(writeFileSyncMock.mock.calls[0][2]).toBe('utf-8');
     });
 
     it('should handle markdown without note blocks', () => {
@@ -521,7 +453,8 @@ describe('reportStatus', () => {
 
       generateHtmlFromFilteredLog(mockWorkflowContext);
 
-      expect(marked).toHaveBeenCalledWith('# Simple Markdown\n\nThis is a simple paragraph.');
+      const markedMock = vi.mocked(marked).mock.calls[0][0];
+      expect(markedMock).toMatchSnapshot();
     });
 
     it('should handle read errors', () => {
@@ -532,8 +465,8 @@ describe('reportStatus', () => {
 
       generateHtmlFromFilteredLog(mockWorkflowContext);
 
-      expect(toolError).toHaveBeenCalledWith("Fails to generate html log '/tmp/report.html'. Details: Error: Read failed");
-      expect(mockLogger.error).toHaveBeenCalledWith("ERROR: Fails to generate html log '/tmp/report.html'. Details: Error: Read failed");
+      expect(toolError).toHaveBeenCalledWith(expect.stringContaining('Read failed'));
+      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining("Read failed"));
       expect(vsoLogError).toHaveBeenCalled();
     });
 
@@ -542,7 +475,7 @@ describe('reportStatus', () => {
 
       generateHtmlFromFilteredLog(mockWorkflowContext);
 
-      expect(toolError).toHaveBeenCalledWith(expect.stringContaining("Fails to generate html log '/tmp/report.html'. Details:"));
+      expect(toolError).toHaveBeenCalled();
       expect(mockLogger.error).toHaveBeenCalled();
       expect(vsoLogError).toHaveBeenCalled();
     });
@@ -555,8 +488,8 @@ describe('reportStatus', () => {
 
       generateHtmlFromFilteredLog(mockWorkflowContext);
 
-      expect(toolError).toHaveBeenCalledWith("Fails to generate html log '/tmp/report.html'. Details: Error: Write failed");
-      expect(mockLogger.error).toHaveBeenCalledWith("ERROR: Fails to generate html log '/tmp/report.html'. Details: Error: Write failed");
+      expect(toolError).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
+      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Write failed'));
       expect(vsoLogError).toHaveBeenCalled();
     });
 

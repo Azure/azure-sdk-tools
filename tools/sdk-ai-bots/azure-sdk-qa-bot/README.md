@@ -1,32 +1,6 @@
-# Overview of the Basic AI Chatbot template
-
-This app template is built on top of [Teams AI library](https://aka.ms/teams-ai-library).
-It showcases a bot app that responds to user questions like ChatGPT. This enables your users to talk with the AI bot in Teams.
-
-## Naming
-
-- botDisplayName: The name displayed in Teams channel
-- TEAMS_BOT_SHORT_DISPLAY_NAME: The name displayed when you @ the bot
-
-## TODO
-
-### Infra
-
-- [] Split envs for computer vision
-- [] Add bicep for grant managed identity in storage
-- [] Add `Storage Account Contributor` and `Storage Table Data Contributor` in IAM
-
-### Test
-
-- [] Add test for conversation context
-
----
-
-> Below are the auto generated readme
-> [TODO]: update the below content 
+# Overview of the Azure SDK QA Bot
 
 ## Get started with the template
-
 
 > **Prerequisites**
 >
@@ -34,12 +8,7 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 >
 > - [Node.js](https://nodejs.org/), supported versions: 18, 20, 22.
 > - [Teams Toolkit Visual Studio Code Extension](https://aka.ms/teams-toolkit) latest version or [Teams Toolkit CLI](https://aka.ms/teamsfx-toolkit-cli).
-> - Prepare your own [Azure OpenAI](https://aka.ms/oai/access) resource.
 
-> For local debugging using Teams Toolkit CLI, you need to do some extra steps described in [Set up your Teams Toolkit CLI for local debugging](https://aka.ms/teamsfx-cli-debugging).
-
-1. First, select the Teams Toolkit icon on the left in the VS Code toolbar.
-1. In file _env/.env.testtool.user_, fill in your Azure OpenAI key `SECRET_RAG_API_KEY=<your-key>`, endpoint `RAG_ENDPOINT=<your-endpoint>`, and deployment name `RAG_TANENT_ID=<your-deployment>`.
 1. Press F5 to start debugging which launches your app in Teams App Test Tool using a web browser. Select `Debug in Test Tool`.
 1. You can send any message to get a response from the bot.
 
@@ -57,38 +26,94 @@ It showcases a bot app that responds to user questions like ChatGPT. This enable
 | `infra`      | Templates for provisioning Azure resources   |
 | `src`        | The source code for the application          |
 
-The following files can be customized and demonstrate an example implementation to get you started.
-
-| File                            | Contents                                          |
-| ------------------------------- | ------------------------------------------------- |
-| `src/index.ts`                  | Sets up the bot app server.                       |
-| `src/input/ConversationHandler.ts` | Handles conversation message storage in Cosmos DB. |
-
-For details about setting up and using Cosmos DB storage for conversation history, see the [Cosmos DB Storage documentation](./docs/cosmos-db-storage.md).
-| `src/adapter.ts`                | Sets up the bot adapter.                          |
-| `src/config.ts`                 | Defines the environment variables.                |
-| `src/prompts/chat/skprompt.txt` | Defines the prompt.                               |
-| `src/prompts/chat/config.json`  | Configures the prompt.                            |
-| `src/app/app.ts`                | Handles business logics for the Basic AI Chatbot. |
-
 The following are Teams Toolkit specific project files. You can [visit a complete guide on Github](https://github.com/OfficeDev/TeamsFx/wiki/Teams-Toolkit-Visual-Studio-Code-v5-Guide#overview) to understand how Teams Toolkit works.
 
 | File                    | Contents                                                                                                                                  |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamsapp.yml`          | This is the main Teams Toolkit project file. The project file defines two primary things: Properties and configuration Stage definitions. |
-| `teamsapp.local.yml`    | This overrides `teamsapp.yml` with actions that enable local execution and debugging.                                                     |
 | `teamsapp.testtool.yml` | This overrides `teamsapp.yml` with actions that enable local execution and debugging in Teams App Test Tool.                              |
 
-## Extend the template
+## Azure Resources
 
-You can follow [Build a Basic AI Chatbot in Teams](https://aka.ms/teamsfx-basic-ai-chatbot) to extend the Basic AI Chatbot template with more AI capabilities, like:
+The Azure resources for this bot follow a consistent naming pattern:
 
-- [Customize prompt](https://aka.ms/teamsfx-basic-ai-chatbot#customize-prompt)
-- [Customize user input](https://aka.ms/teamsfx-basic-ai-chatbot#customize-user-input)
-- [Customize conversation history](https://aka.ms/teamsfx-basic-ai-chatbot#customize-conversation-history)
-- [Customize model type](https://aka.ms/teamsfx-basic-ai-chatbot#customize-model-type)
-- [Customize model parameters](https://aka.ms/teamsfx-basic-ai-chatbot#customize-model-parameters)
-- [Handle messages with image](https://aka.ms/teamsfx-basic-ai-chatbot#handle-messages-with-image)
+### Resource Group Naming
+
+Resource groups are named using the pattern: `azure-sdk-qa-bot-<environment>-<region>`
+
+For example: `azure-sdk-qa-bot-prod-eastasia` - Production environment in East Asia region
+
+### Resource Naming
+
+Individual Azure resources within the resource groups are prefixed with: `azsdkqabot<environment><region>`.
+
+For example, resources in the production East Asia environment would be prefixed with:
+
+- `azsdkqabotprodea` (where "prod" is the environment and "ea" represents East Asia)
+
+This naming convention ensures consistency and makes it easy to identify which environment and region each resource belongs to.
+
+## Troubleshooting
+
+The troubleshooting process involves identifying the root cause through logs, fixing issues when necessary by submitting Pull Requests, and using the Teams Toolkit Visual Studio Code Extension for provisioning or deployment. In rare cases, you may need to uninstall and reinstall the bot in Teams.
+
+### Troubleshooting Through App Service Logs
+
+#### Step 1: Locate the App Service in Azure Portal
+
+1. Navigate to the Azure Portal and find the appropriate resource group based on the naming pattern described in the Azure Resources section above.
+2. Look for the App Service resource within the resource group (it will have the prefix `azsdkqabot<environment><region>`). For more details, refer to [Azure Resources](#azure-resources) section.
+
+![Resource Group Overview](./doc/images/troubleshooting/resource-group.png)
+
+_Example: The `azure-sdk-qa-bot-prod-eastasia` resource group showing the App Service `azsdkqabotprodea` and other related resources._
+
+#### Step 2: Access App Service Logs
+
+1. In the App Service resource, expand the **Monitoring** section in the left-side menu.
+2. Click on **Logs**.
+3. Click on **Tables** tab.
+4. Expand the **AppServices** category.
+5. Find **AppServiceConsoleLogs** and click the **Run** button on the right side to query the logs.
+
+![App Service Overview](./doc/images/troubleshooting/app-service.png)
+
+#### Step 3: [Optional] Write Custom Query to Filter Logs
+
+1. Switch to **KQL** mode.
+2. Add the following query condition to filter out health check logs:
+   ```kql
+   AppServiceConsoleLogs
+   | where * has "Health check requested" == false
+   ```
+3. Click the **Run** button to update the query results with the filtered logs.
+
+![KQL Overview](./doc/images/troubleshooting/kql.png)
+
+> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
+
+#### Step 4: Analyze the Logs
+
+1. Query the logs you are interested in. The console logs are located in the **ResultDescription** column.
+2. Use the magnifying glass icon (🔍) in the top-right corner for quick search functionality.
+3. Sort by **TimeGenerated** column to get logs in chronological order for easier reading and analysis.
+
+> **Important:** Log ingestion may have delays. Based on experience, the maximum delay can be several minutes. It is recommended to wait patiently for some time after sending messages before querying the logs.
+
+![Log Result](./doc/images/troubleshooting/log-result.png)
+
+4. **Search logs by message content**: You can usually search logs directly using the message content.
+5. **Search by Teams Activity ID** (for duplicate messages): If messages are duplicated, you can get a unique identifier by:
+   1. Right-clicking the message in Teams and selecting the three dots in the upper right corner
+   1. Click **Copy link**
+   1. The link follows this pattern: `https://teams.microsoft.com/l/message/<channel-id>/<activity-id>?<queries>`
+   1. For example, in the link `https://teams.microsoft.com/l/message/19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2/1753756500464`, the activity ID is `1753756500464`
+   1. Use this activity ID to search in the logs for precise message identification
+
+![Teams Copy Links](./doc/images/troubleshooting/teams-copy-links.png)
+![Search by ID](./doc/images/troubleshooting/search-by-id.png)
+
+> **Note:** For more information about working with logs and KQL queries, please refer to the [Log Analytics workspace documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-workspace-overview). For KQL syntax reference, see [Keyword Query Language (KQL) syntax reference](https://learn.microsoft.com/en-us/sharepoint/dev/general-development/keyword-query-language-kql-syntax-reference).
 
 ## Additional information and references
 

@@ -337,27 +337,23 @@ namespace APIViewWeb.Pages.Assemblies
                 // 5 second timeout to improve performance and avoid hanging on database/AAD delays
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
-                    // Get ALL reviews with namespace approval requested
+                    // Get reviews with namespace approval requested - only TypeSpec reviews can have namespace approval requests
                     var (allReviews, _, _, _, _, _) = await _reviewManager.GetPagedReviewListAsync(
                         search: new string[] { }, // No search filter
-                        languages: new HashSet<string>(), // ALL languages
+                        languages: new HashSet<string> { "TypeSpec" }, // Only TypeSpec reviews have namespace approval requests
                         isClosed: false, // Only open reviews
                         isApproved: false, // Only unapproved reviews
+                        isNamespaceReviewRequested: true,
                         offset: 0,
-                        limit: 100, // Reduced from 1000 to improve performance - most approvers won't have >100 pending namespace requests
+                        limit: 50,
                         orderBy: "created"
                     );
 
-                    Console.WriteLine($"*** DEBUG: Total reviews found: {allReviews.Count()}");
-                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Total reviews found: {allReviews.Count()}");
-                    
-                    // Filter to only reviews with namespace approval requested
-                    var nameSpaceReviews = allReviews.Where(r => r.IsNamespaceReviewRequested).ToList();
-                    Console.WriteLine($"*** DEBUG: Namespace reviews found: {nameSpaceReviews.Count}");
-                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace reviews found: {nameSpaceReviews.Count}");
+                    Console.WriteLine($"*** DEBUG: Total TypeSpec reviews with namespace approval found: {allReviews.Count()}");
+                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Total TypeSpec reviews with namespace approval found: {allReviews.Count()}");
                     
                     // Process only reviews the user can approve
-                    var eligibleReviews = nameSpaceReviews.Where(r => CanUserApproveReview(r)).ToList();
+                    var eligibleReviews = allReviews.Where(r => CanUserApproveReview(r)).ToList();
                     Console.WriteLine($"*** DEBUG: Processing {eligibleReviews.Count} eligible reviews with namespace approval requested");
                     System.Diagnostics.Debug.WriteLine($"*** DEBUG: Processing {eligibleReviews.Count} eligible reviews with namespace approval requested");
                     

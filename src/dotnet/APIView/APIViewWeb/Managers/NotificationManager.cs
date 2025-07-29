@@ -22,10 +22,12 @@ namespace APIViewWeb.Managers
 {
     public class NotificationManager : INotificationManager
     {
+        private readonly IConfiguration _configuration;
         private readonly string _apiviewEndpoint;
         private readonly ICosmosReviewRepository _reviewRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionRepository;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
+        private readonly UserProfileCache _userProfileCache;
         private readonly string _testEmailToAddress;
         private readonly string _emailSenderServiceUrl;
         private readonly TelemetryClient _telemetryClient;
@@ -35,12 +37,15 @@ namespace APIViewWeb.Managers
         public NotificationManager(IConfiguration configuration,
             ICosmosReviewRepository reviewRepository, ICosmosAPIRevisionsRepository apiRevisionRepository,
             ICosmosUserProfileRepository userProfileRepository,
+            UserProfileCache userProfileCache,
             TelemetryClient telemetryClient)
         {
+            _configuration = configuration;
             _apiviewEndpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _reviewRepository = reviewRepository;
             _apiRevisionRepository = apiRevisionRepository;
             _userProfileRepository = userProfileRepository;
+            _userProfileCache = userProfileCache;
             _testEmailToAddress = configuration["apiview-email-test-address"] ?? "";
             _emailSenderServiceUrl = configuration["azure-sdk-emailer-url"] ?? "";
             _telemetryClient = telemetryClient;
@@ -281,6 +286,95 @@ namespace APIViewWeb.Managers
                 return "";
             var user = await _userProfileRepository.TryGetUserProfileAsync(username);
             return user.Email;
+        }
+
+        public async Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, string notes = "")
+        {
+            try
+            {
+                // Use the existing PageModelHelpers to get preferred approvers
+                var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
+                if (!preferredApprovers.Any())
+                {
+                    _telemetryClient.TrackTrace($"No preferred approvers found for language: {review.Language}");
+                    return;
+                }
+
+                var requesterName = GetUserName(user);
+                var subject = $"Namespace Review Requested: {review.PackageName}";
+                
+                var contentBuilder = new StringBuilder();
+                contentBuilder.AppendLine($"Hello,");
+                contentBuilder.AppendLine();
+                contentBuilder.AppendLine($"{requesterName} has requested a namespace review for: {review.PackageName}");
+                contentBuilder.AppendLine();
+                contentBuilder.AppendLine($"Package: {review.PackageName}");
+                contentBuilder.AppendLine($"Language: {review.Language}");
+                if (!string.IsNullOrEmpty(notes))
+                {
+                    contentBuilder.AppendLine($"Notes: {notes}");
+                }
+                contentBuilder.AppendLine();
+                contentBuilder.AppendLine($"Please review at: {_apiviewEndpoint}/Assemblies/Review/{review.Id}");
+                contentBuilder.AppendLine();
+                contentBuilder.AppendLine("Thank you,");
+                contentBuilder.AppendLine("APIView Team");
+
+                var emailContent = contentBuilder.ToString();
+                
+                // Get email addresses for preferred approvers
+                var emailAddresses = new List<string>();
+                foreach (var approverUsername in preferredApprovers)
+                {
+                    var emailAddress = await GetEmailAddress(approverUsername);
+                    if (!string.IsNullOrEmpty(emailAddress))
+                    {
+                        emailAddresses.Add(emailAddress);
+                    }
+                }
+                
+                var emailToList = string.Join("; ", emailAddresses);
+                
+                if (!string.IsNullOrEmpty(emailToList))
+                {
+                    await SendEmailAsync(emailToList, subject, emailContent);
+                    _telemetryClient.TrackTrace($"Namespace review notification sent to {emailToList} for review {review.Id}");
+                }
+                else
+                {
+                    _telemetryClient.TrackTrace($"No email addresses found for preferred approvers of language: {review.Language}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        private async Task SendEmailAsync(string emailToList, string subject, string content)
+        {
+            if (string.IsNullOrEmpty(_emailSenderServiceUrl))
+            {
+                _telemetryClient.TrackTrace($"Email sender service URL is not configured. Email will not be sent to {emailToList} with subject: {subject}");
+                return;
+            }
+            var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
+            var requestBody = new EmailModel(emailToAddress, subject, content);
+            var httpClient = new HttpClient();
+            try
+            {
+                var requestBodyJson = JsonSerializer.Serialize(requestBody);
+                _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
+                var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
+                if (response.StatusCode !=  HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
+                {
+                    _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
         }
     }
 }

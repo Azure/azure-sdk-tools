@@ -11,6 +11,7 @@ namespace APIViewWeb.Managers
         public Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment);
         public Task NotifyUserOnCommentTag(CommentItemModel comment);
         public Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers);
+        public Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, string notes = "");
         public Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user);
         public Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId, bool? state = null);
         public Task SubscribeAsync(ReviewListItemModel review, ClaimsPrincipal user);

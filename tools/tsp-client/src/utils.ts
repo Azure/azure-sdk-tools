@@ -277,6 +277,7 @@ export function createRemoteConfigLoader(): ConfigLoader {
       const config = parseYaml(configData);
       
       const metadata = {
+        url: url,
         directory: configInfo.path,
         commit: configInfo.commit,
         repo: configInfo.repo

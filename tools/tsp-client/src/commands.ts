@@ -160,9 +160,10 @@ export async function syncCommand(argv: any) {
 
   const { config: resolvedConfig, rootMetadata: rootConfigPath } = localSpecRepo
                                                                   ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
-                                                                  : await loadTspConfig<string>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
+                                                                  : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
+  const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;
   // assume directory of root tspconfig.yaml is ${projectName}.xxx
-  const dirSplit = rootConfigPath.split("/");
+  const dirSplit = rootConfigPathStr.split("/");
   let projectName = dirSplit[dirSplit.length - 2];
   Logger.debug(`Using project name: ${projectName}`);
   if (!projectName) {
@@ -176,10 +177,10 @@ export async function syncCommand(argv: any) {
     stringify(resolvedConfig)
   );
 
-  let isLocalRootConfig = await doesFileExist(rootConfigPath) ? true : false;
+  let isLocalRootConfig = await doesFileExist(rootConfigPathStr) ? true : false;
   if (isLocalRootConfig) {
     // root config path is guaranteed to be tspconfig.yaml
-    const specPath = rootConfigPath.split("tspconfig.yaml")[0]!;
+    const specPath = rootConfigPathStr.split("tspconfig.yaml")[0]!;
     Logger.info(
       "NOTE: A path to a local spec was provided, will generate based off of local files...",
     );
@@ -201,140 +202,19 @@ export async function syncCommand(argv: any) {
     }
     //TODO: handle additional directories
   } else {
-
-  }
-
-
-
-
-  if (localSpecRepo) {
-    if (localSpecRepo.endsWith("tspconfig.yaml")) {
-      // If the path is to tspconfig.yaml, we need to remove it to get the spec directory
-      localSpecRepo = localSpecRepo.split("tspconfig.yaml")[0];
-    }
-    Logger.info(
-      "NOTE: A path to a local spec was provided, will generate based off of local files...",
-    );
-    Logger.debug(`Using local spec directory: ${localSpecRepo}`);
-    
-    // Handle inheritance for local spec repo
-    const localConfigPath = joinPaths(localSpecRepo, "tspconfig.yaml");
-    const { config: resolvedConfig, rootMetadata: rootConfigPath } = await loadTspConfig<string>(localConfigPath, createLocalConfigLoader());
-    
-    function filter(src: string): boolean {
-      if (src.includes("node_modules")) {
-        return false;
-      }
-      if (src.includes("tsp-output")) {
-        return false;
-      }
-      return true;
-    }
-    
-    // Check if root config is local or remote
-    if (!(await doesFileExist(rootConfigPath))) {
-      // Root config is remote - use remote loader
-      const { rootMetadata: rootConfigInfo } = 
-        await loadTspConfig<{ directory: string; commit: string; repo: string }>(rootConfigPath, createRemoteConfigLoader());
-      
-      const cloneDir = await makeSparseSpecDir(repoRoot);
-      Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-      Logger.debug(`Cloning repo to ${cloneDir}`);
-      await cloneRepo(tempRoot, cloneDir, `https://github.com/${rootConfigInfo.repo}.git`);
-      await sparseCheckout(cloneDir);
-      await addSpecFiles(cloneDir, rootConfigInfo.directory);
-      await checkoutCommit(cloneDir, rootConfigInfo.commit);
-      await cp(joinPaths(cloneDir, rootConfigInfo.directory), srcDir, { recursive: true });
-      
-      // For additional directories, use the remote repo
-      for (const dir of tspLocation.additionalDirectories!) {
-        Logger.info(`Syncing additional directory: ${dir}`);
-        await cp(
-          joinPaths(cloneDir, dir),
-          joinPaths(tempRoot, getAdditionalDirectoryName(dir)),
-          { recursive: true, filter: filter },
-        );
-      }
-      Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-      await removeDirectory(cloneDir);
-    } else {
-      // Root config is local - use the already resolved root config path
-      const specPath = rootConfigPath.split("tspconfig.yaml")[0]!;
-      await cp(specPath, srcDir, { recursive: true, filter: filter });
-      const localSpecRepoRoot = await getRepoRoot(specPath);
-      Logger.info(`Local spec repo root is ${localSpecRepoRoot}`);
-      if (!localSpecRepoRoot) {
-        throw new Error("Could not find local spec repo root, please make sure the path is correct");
-      }
-      for (const dir of tspLocation.additionalDirectories!) {
-        Logger.info(`Syncing additional directory: ${dir}`);
-        await cp(
-          dir,  // dir is now absolute path for local scenarios
-          joinPaths(tempRoot, getAdditionalDirectoryName(dir)),
-          { recursive: true, filter: filter },
-        );
-      }
-    }
-  } else {
-    // Reuse tspconfig from tsp-location.yaml - reconstruct child config URL from stored metadata
-    const childConfigUrl = `https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`;
-    const { rootMetadata: rootConfigPath } = 
-      await loadTspConfig<string>(childConfigUrl, createRemoteConfigLoader());
-    
-    // Check if root config is local or remote
-    if (!(await doesFileExist(rootConfigPath))) {
-      // Root config is remote - use remote loader
-      const { rootMetadata: rootConfigInfo } = 
-        await loadTspConfig<{ directory: string; commit: string; repo: string }>(rootConfigPath, createRemoteConfigLoader());
-      
-      const cloneDir = await makeSparseSpecDir(repoRoot);
-      Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-      Logger.debug(`Cloning repo to ${cloneDir}`);
-      await cloneRepo(tempRoot, cloneDir, `https://github.com/${rootConfigInfo.repo}.git`);
-      await sparseCheckout(cloneDir);
-      await addSpecFiles(cloneDir, rootConfigInfo.directory);  // Use calculated root directory
-      for (const dir of tspLocation.additionalDirectories ?? []) {
-        Logger.info(`Processing additional directory: ${dir}`);
-        await addSpecFiles(cloneDir, dir);
-      }
-      await checkoutCommit(cloneDir, rootConfigInfo.commit);
-      await cp(joinPaths(cloneDir, rootConfigInfo.directory), srcDir, { recursive: true });  // Use calculated root directory
-      for (const dir of tspLocation.additionalDirectories!) {
-        Logger.info(`Syncing additional directory: ${dir}`);
-        await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), {
-          recursive: true,
-        });
-      }
-      Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-      await removeDirectory(cloneDir);
-    } else {
-      // Root config is local
-      function filter(src: string): boolean {
-        if (src.includes("node_modules")) {
-          return false;
-        }
-        if (src.includes("tsp-output")) {
-          return false;
-        }
-        return true;
-      }
-      
-      const rootDirectory = extractSpecificationPath(rootConfigPath);
-      await cp(rootDirectory, srcDir, { recursive: true, filter: filter });
-      const localSpecRepoRoot = await getRepoRoot(rootDirectory);
-      Logger.info(`Local spec repo root is ${localSpecRepoRoot}`);
-      if (!localSpecRepoRoot) {
-        throw new Error("Could not find local spec repo root, please make sure the path is correct");
-      }
-      for (const dir of tspLocation.additionalDirectories!) {
-        Logger.info(`Syncing additional directory: ${dir}`);
-        await cp(
-          dir,  // dir is now absolute path for local scenarios
-          joinPaths(tempRoot, getAdditionalDirectoryName(dir)),
-          { recursive: true, filter: filter },
-        );
-      }
-    }
+    const rootConfigMetadata = rootConfigPath as { url: string; directory: string; commit: string; repo: string };
+    const cloneDir = await makeSparseSpecDir(repoRoot);
+    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
+    Logger.debug(`Cloning repo to ${cloneDir}`);
+    await cloneRepo(tempRoot, cloneDir, `https://github.com/${rootConfigMetadata.repo}.git`);
+    await sparseCheckout(cloneDir);
+    await addSpecFiles(cloneDir, rootConfigMetadata.directory);
+    //TODO: handle additional directories
+    await checkoutCommit(cloneDir, rootConfigMetadata.commit);
+    await cp(joinPaths(cloneDir, rootConfigMetadata.directory), srcDir, { recursive: true });
+    //TODO: handle additional directories
+    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+    await removeDirectory(cloneDir);
   }
 
   try {
@@ -360,16 +240,23 @@ export async function generateCommand(argv: any) {
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
   const skipInstall = argv["skip-install"];
+  const localSpecRepo = argv["local-spec-repo"];
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
-  const dirSplit = tspLocation.directory.split("/");
-  let projectName = dirSplit[dirSplit.length - 1];
+  const { config: resolvedConfig, rootMetadata: rootConfigPath } = localSpecRepo
+                                                                  ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
+                                                                  : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
+  const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;
+  // assume directory of root tspconfig.yaml is ${projectName}.xxx
+  const dirSplit = rootConfigPathStr.split("/");
+  let projectName = dirSplit[dirSplit.length - 2];
+  Logger.debug(`Using project name: ${projectName}`);
   if (!projectName) {
     throw new Error("cannot find project name");
   }
   const srcDir = joinPaths(tempRoot, projectName);
-  
+
   // Before compilation, ensure the temp tspconfig.yaml is fully resolved
   const tspConfigPath = joinPaths(srcDir, "tspconfig.yaml");
   if (await doesFileExist(tspConfigPath)) {
@@ -451,39 +338,23 @@ export async function updateCommand(argv: any) {
       "Commit SHA is required when specifying `--repo`; please specify a commit using `--commit`",
     );
   }
+  const tspLocation: TspLocation = await readTspLocation(outputDir);
   if (commit) {
-    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspLocation.commit = commit ?? tspLocation.commit;
     tspLocation.repo = repo ?? tspLocation.repo;
     await writeTspLocationYaml(tspLocation, outputDir);
   } else if (tspConfig) {
-    const tspLocation: TspLocation = await readTspLocation(outputDir);
-    
     // Determine if tspConfig is a URL or local path
-    let isUrl = true;
-    if (await doesFileExist(tspConfig)) {
-      isUrl = false;
-    }
-    
-    if (isUrl) {
-      // Remote URL scenario - store child config info for reproducibility (root can be calculated when needed)
-      const childConfigInfo = resolveTspConfigUrl(tspConfig);
-      
-      tspLocation.commit = childConfigInfo.commit ?? tspLocation.commit;
-      tspLocation.repo = childConfigInfo.repo ?? tspLocation.repo;
-      tspLocation.directory = childConfigInfo.path ?? tspLocation.directory;
+    if (!await doesFileExist(tspConfig)) {
+      tspConfig = resolveTspConfigUrl(tspConfig);
+      tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
+      tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
+      tspLocation.directory = tspConfig.path ?? tspLocation.directory;
     } else {
-      // Local file scenario - store child config directory for reproducibility (root can be calculated when needed)
-      if (!tspConfig.endsWith("tspconfig.yaml")) {
-        tspConfig = joinPaths(tspConfig, "tspconfig.yaml");
-      }
-      
-      // Store child config directory for reproducibility - root can be calculated when needed
-      const childConfigDirectory = dirname(tspConfig);
-      tspLocation.directory = childConfigDirectory;
       // Note: For local files, commit and repo are not updated since they come from the existing tsp-location.yaml
+      tspLocation.directory = !tspConfig.endsWith("tspconfig.yaml") ? tspConfig : dirname(tspConfig);
+
     }
-    
     await writeTspLocationYaml(tspLocation, outputDir);
   }
   // update argv in case anything changed and call into sync and generate

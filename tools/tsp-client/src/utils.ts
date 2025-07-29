@@ -110,14 +110,9 @@ export async function updateExistingTspLocation(
   try {
     const existingTspLocation = await readTspLocation(projectPath);
 
-    // Helper function to check if a value should be updated
-    const shouldUpdate = (value: any): boolean => {
-      return value !== undefined && value !== "<replace with your value>";
-    };
-
     // Used to update tsp-location.yaml data by iterating over properties
     const updatedTspLocation = { ...existingTspLocation };
-    
+
     // Define the properties that can be updated
     const updatableProperties: (keyof TspLocation)[] = [
       'repo',
@@ -131,7 +126,7 @@ export async function updateExistingTspLocation(
     // Update each property if it has a valid value
     for (const property of updatableProperties) {
       const value = tspLocationData[property];
-      if (shouldUpdate(value)) {
+      if (value !== undefined && value !== "<replace with your value>") {
         (updatedTspLocation as any)[property] = value;
       }
     }

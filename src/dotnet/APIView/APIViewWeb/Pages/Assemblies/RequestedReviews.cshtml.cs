@@ -33,9 +33,6 @@ namespace APIViewWeb.Pages.Assemblies
         // Track namespace approval request info for associated revisions
         public Dictionary<string, (DateTime RequestedOn, string RequestedBy)> NamespaceApprovalInfo { get; set; } = new Dictionary<string, (DateTime, string)>();
         
-        [BindProperty(SupportsGet = true)]
-        public bool ShowWithoutNamespaceApproval { get; set; } = false;
-        
         public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager, UserProfileCache userProfileCache, IConfiguration configuration, IMemoryCache cache)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -200,11 +197,8 @@ namespace APIViewWeb.Pages.Assemblies
             ApprovedAPIRevisions = approvedAPIRevs;
             NamespaceApprovalRequestedAPIRevisions = namespaceApprovalAPIRevs;
             
-            // If user wants to see reviews without namespace approval, get them
-            if (ShowWithoutNamespaceApproval)
-            {
-                ReviewsWithoutNamespaceApproval = await GetReviewsWithoutNamespaceApproval();
-            }
+            // Always populate reviews without namespace approval for the 4th tab
+            ReviewsWithoutNamespaceApproval = await GetReviewsWithoutNamespaceApproval();
             
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 

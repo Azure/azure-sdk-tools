@@ -12,6 +12,7 @@ using APIViewWeb.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace APIViewWeb.Pages.Assemblies
 {    
@@ -21,6 +22,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IReviewManager _reviewManager;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
         public readonly UserProfileCache _userProfileCache;
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
@@ -33,13 +35,14 @@ namespace APIViewWeb.Pages.Assemblies
         
         [BindProperty(SupportsGet = true)]
         public bool ShowWithoutNamespaceApproval { get; set; } = false;        
-        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager, UserProfileCache userProfileCache, IConfiguration configuration)
+        public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager, UserProfileCache userProfileCache, IConfiguration configuration, IMemoryCache cache)
         {
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
             _pullRequestManager = pullRequestManager;
             _userProfileCache = userProfileCache;
             _configuration = configuration;
+            _cache = cache;
         }        
         public async Task<IActionResult> OnGetAsync()
         {
@@ -58,8 +61,8 @@ namespace APIViewWeb.Pages.Assemblies
                 Console.WriteLine($"*** DEBUG: Attempting to get user profile for {userId}");
                 System.Diagnostics.Debug.WriteLine($"*** DEBUG: Attempting to get user profile for {userId}");
                 
-                // Add timeout to prevent hanging on Azure AD issues
-                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                // Reduced timeout to 5 seconds to improve performance and prevent hanging on Azure AD issues
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     userProfile = await _userProfileCache.GetUserProfileAsync(userId);
                 }
@@ -70,8 +73,8 @@ namespace APIViewWeb.Pages.Assemblies
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine($"*** DEBUG: User profile retrieval timed out after 15 seconds (likely Azure AD group resolution delay)");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: User profile retrieval timed out after 15 seconds");
+                Console.WriteLine($"*** DEBUG: User profile retrieval timed out after 5 seconds (likely Azure AD group resolution delay)");
+                System.Diagnostics.Debug.WriteLine($"*** DEBUG: User profile retrieval timed out after 5 seconds");
                 // Continue with empty profile - we'll still show assigned reviews
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
@@ -99,8 +102,8 @@ namespace APIViewWeb.Pages.Assemblies
                 Console.WriteLine($"*** DEBUG: Attempting to get assigned revisions for {userId}");
                 System.Diagnostics.Debug.WriteLine($"*** DEBUG: Attempting to get assigned revisions for {userId}");
                 
-                // Add timeout to prevent hanging on Azure AD issues
-                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                // Reduced timeout to 5 seconds to improve performance and prevent hanging on Azure AD issues
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     assignedRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
                 }
@@ -110,8 +113,8 @@ namespace APIViewWeb.Pages.Assemblies
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine($"*** DEBUG: Assigned revisions retrieval timed out after 15 seconds (likely Azure AD group resolution delay)");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Assigned revisions retrieval timed out after 15 seconds");
+                Console.WriteLine($"*** DEBUG: Assigned revisions retrieval timed out after 5 seconds (likely Azure AD group resolution delay)");
+                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Assigned revisions retrieval timed out after 5 seconds");
                 assignedRevisions = new List<APIRevisionListItemModel>();
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
@@ -309,9 +312,21 @@ namespace APIViewWeb.Pages.Assemblies
         /// <summary>
         /// Get all reviews with namespace approval requested that the user can approve based on configuration
         /// Uses the same logic as "Associated API Revisions" - find via pull requests rather than package name matching
+        /// Results are cached for 10 minutes to improve performance
         /// </summary>
         private async Task<List<APIRevisionListItemModel>> GetAllNamespaceApprovalReviews()
         {
+            var userId = User.GetGitHubLogin();
+            var cacheKey = $"namespace_approvals_{userId}";
+            
+            // Check cache first - 10 minute cache for performance
+            if (_cache.TryGetValue(cacheKey, out List<APIRevisionListItemModel> cachedResults))
+            {
+                Console.WriteLine($"*** DEBUG: Returning cached namespace approval results for user {userId} ({cachedResults.Count} items)");
+                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Returning cached namespace approval results for user {userId} ({cachedResults.Count} items)");
+                return cachedResults;
+            }
+
             var namespaceApprovalReviews = new List<APIRevisionListItemModel>();
 
             try
@@ -319,7 +334,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Console.WriteLine($"*** DEBUG: Starting GetAllNamespaceApprovalReviews using pull request association logic");
                 System.Diagnostics.Debug.WriteLine($"*** DEBUG: Starting GetAllNamespaceApprovalReviews using pull request association logic");
                 
-                // Very short timeout to skip AAD delays for local testing
+                // 5 second timeout to improve performance and avoid hanging on database/AAD delays
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     // Get ALL reviews with namespace approval requested
@@ -329,7 +344,7 @@ namespace APIViewWeb.Pages.Assemblies
                         isClosed: false, // Only open reviews
                         isApproved: false, // Only unapproved reviews
                         offset: 0,
-                        limit: 1000, // Get a large number to capture all namespace approval requests
+                        limit: 100, // Reduced from 1000 to improve performance - most approvers won't have >100 pending namespace requests
                         orderBy: "created"
                     );
 
@@ -473,8 +488,8 @@ namespace APIViewWeb.Pages.Assemblies
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine($"*** DEBUG: GetAllNamespaceApprovalReviews timed out after 5 seconds - skipping for local testing");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: GetAllNamespaceApprovalReviews timed out after 5 seconds - skipping for local testing");
+                Console.WriteLine($"*** DEBUG: GetAllNamespaceApprovalReviews timed out after 5 seconds - improving performance by skipping expensive operations");
+                System.Diagnostics.Debug.WriteLine($"*** DEBUG: GetAllNamespaceApprovalReviews timed out after 5 seconds - improving performance by skipping expensive operations");
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
             {
@@ -495,6 +510,18 @@ namespace APIViewWeb.Pages.Assemblies
 
             Console.WriteLine($"*** DEBUG: Returning {namespaceApprovalReviews.Count} ASSOCIATED API revisions (C#/Java/Python/etc) for namespace approval UI");
             System.Diagnostics.Debug.WriteLine($"*** DEBUG: Returning {namespaceApprovalReviews.Count} ASSOCIATED API revisions (C#/Java/Python/etc) for namespace approval UI");
+            
+            // Cache the results for 10 minutes to improve performance
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+                SlidingExpiration = TimeSpan.FromMinutes(5), // Extend cache if accessed within 5 minutes
+                Priority = CacheItemPriority.Normal
+            };
+            _cache.Set(cacheKey, namespaceApprovalReviews, cacheOptions);
+            Console.WriteLine($"*** DEBUG: Cached namespace approval results for user {userId} for 10 minutes");
+            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Cached namespace approval results for user {userId} for 10 minutes");
+            
             return namespaceApprovalReviews;
         }
     }

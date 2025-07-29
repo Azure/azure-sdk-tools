@@ -120,9 +120,9 @@ namespace perf_semantic_kernel
         public async Task RunChatLoopAsync()
         {
             // Prompt for repo paths at startup
-            Console.Write("Enter the path to the Azure.Core src: ");
+            Console.WriteLine("Enter the absolute path to the Azure.Core src (E.g. 'C:\\<path to repo root>\\azure-sdk-for-net-sdk\\core\\Azure.Core\\src'): ");
             string? azureCorePath = Console.ReadLine();
-            Console.Write("Enter the path to the System.ClientModel src: ");
+            Console.WriteLine("Enter the absolute path to the System.ClientModel src (E.g. 'C:\\<path to repo root>\\azure-sdk-for-net-sdk\\core\\System.ClientModel\\src'): ");
             string? clientModelPath = Console.ReadLine();
 
             if (string.IsNullOrWhiteSpace(azureCorePath) || string.IsNullOrWhiteSpace(clientModelPath))

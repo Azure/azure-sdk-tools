@@ -18,6 +18,8 @@ with an addition of more plugins.
 ```
 > git clone https://github.com/Azure/azure-sdk-tools.git
 ```
+*Note: This is required for the agent to work*
+
 2. **Configure your environment:**
 - Update `appsettings.json` with your Azure OpenAI and agent details. This can be found in the openai-shared resource group, under the perf-regression-finder-agent.
 **This should be placed in the ./artifacts\bin\perf-regression-finder\Debug\net8.0 folder*

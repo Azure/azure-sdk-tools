@@ -58,6 +58,6 @@ body:
       label: "💻 CLI Command and Flags (if applicable)"
       description: If this tool will have a CLI component, how should it be called? What flags or options should it support?
       placeholder: |
-        e.g. `mcp configure-recording-env --config path/to/config.json --mode record --verbose`
+        e.g. `azsdk-cli configure-recording-env --config path/to/config.json --mode record --verbose`
     validations:
       required: false

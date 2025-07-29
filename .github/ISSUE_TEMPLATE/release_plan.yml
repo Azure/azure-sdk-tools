@@ -9,7 +9,7 @@ body:
     attributes:
       label: TypeSpec Project Path
       description: Path to the TypeSpec project in the repository
-      placeholder: e.g., sdk/service-name/typespec
+      placeholder: e.g., specification/service-name/TypeSpecProject-RootPath
     validations:
       required: true
 

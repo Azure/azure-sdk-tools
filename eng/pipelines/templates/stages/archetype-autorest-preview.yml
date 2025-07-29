@@ -334,10 +334,20 @@ stages:
   jobs:
   - job: Initialize
     steps:
-    - checkout: $(sdkRepositoryName)
     - checkout: self
       path: s/autorest
     - checkout: azure-sdk-tools
+    - pwsh: |
+        $sdkRepoName = '$(sdkRepositoryName)'
+        $branchName = '$(branchName)'
+        $sdkRepoPath = '$(sdkRepositoryPath)'
+        
+        Write-Host "Cloning SDK repository: azure-sdk/$sdkRepoName"
+        Write-Host "Branch: $branchName"
+        Write-Host "Target path: $sdkRepoPath"
+        
+        git clone --branch $branchName https://github.com/azure-sdk/$sdkRepoName.git $sdkRepoPath
+      displayName: 'Checkout SDK repository'
 
     - task: UseNode@1
       displayName: 'Install Node.js'
@@ -402,7 +412,17 @@ stages:
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
-    - checkout: $(sdkRepositoryName)
+    - pwsh: |
+        $sdkRepoName = '$(sdkRepositoryName)'
+        $branchName = '$(branchName)'
+        $sdkRepoPath = '$(sdkRepositoryPath)'
+        
+        Write-Host "Cloning SDK repository: azure-sdk/$sdkRepoName"
+        Write-Host "Branch: $branchName"
+        Write-Host "Target path: $sdkRepoPath"
+        
+        git clone --branch $branchName https://github.com/azure-sdk/$sdkRepoName.git $sdkRepoPath
+      displayName: 'Checkout SDK repository'
 
     - task: UseNode@1
       displayName: 'Install Node.js'

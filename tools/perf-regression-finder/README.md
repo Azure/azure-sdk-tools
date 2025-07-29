@@ -57,8 +57,8 @@ Welcome to the Performance Regression Finder Agent! Enter a blank line to send
 ```
 2. Enter your performance regression scenario or question:
 ```
-User > when sending a byte array to 'GetMessageContentAsync' speciically argetting OpenAi Gpt 4.1. i can see the memory usage spike by 80x the original byte arrays size. 
-propose a root cuase by searching through the azure.core and system.clientmodel repos as well as a call stack
+User > when sending a byte array to 'GetMessageContentAsync' specifically targeting OpenAi Gpt 4.1, I can see the memory usage spike by 80x the original byte arrays size. 
+propose a root cause by searching through the Azure.Core and System.Clientmodel source code as well as a call stack
 ```
 
 3. The agent will analyze the input and provide a structured response:

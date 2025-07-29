@@ -25,7 +25,13 @@ namespace perf_semantic_kernel
             var deployment = config["ModelDeployment"];
             var endpoint = config["AzureAIFoundryProjectEndpoint"];
             var agentId = config["AzureAIFoundryAgentId"];
-            PersistentAgentsClient client = AzureAIAgent.CreateAgentsClient(endpoint!, new DefaultAzureCredential());
+            
+            if (string.IsNullOrWhiteSpace(endpoint))
+            {
+                throw new InvalidOperationException("The AzureAIFoundryProjectEndpoint configuration value is missing and can't be null.");
+            }
+
+            PersistentAgentsClient client = AzureAIAgent.CreateAgentsClient(endpoint, new DefaultAzureCredential());
 
             PersistentAgent definition;
             // If the agent already exists, retrieve it

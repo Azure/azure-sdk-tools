@@ -20,7 +20,7 @@ namespace perf_semantic_kernel
             // Load configuration from appsettings.json
             config = _config;
         }
-        public async Task<AzureAIAgent> CreateAgentAsync()
+        public async Task<AzureAIAgent> CreateAgentAsync(string azureCorePath, string clientModelPath)
         {
             var deployment = config["ModelDeployment"];
             var endpoint = config["AzureAIFoundryProjectEndpoint"];
@@ -107,9 +107,9 @@ namespace perf_semantic_kernel
                 // Update the appsettings.json with the new agent ID
                 UpdateAppSettings("./bin/Debug/net8.0/appsettings.json", "AzureAIFoundryAgentId", definition.Id);
             }
-            // 2. Create plugins for the agent (Replace with your actual local paths)
-            var azureCore = new RepoAccessPlugin(@"C:\Users\t-akpoyibos\source\repos\azure-sdk-for-net\sdk\core\Azure.Core\src");
-            var clientModel = new RepoAccessPlugin(@"C:\Users\t-akpoyibos\source\repos\azure-sdk-for-net\sdk\core\System.ClientModel\src");
+            // 2. Create plugins for the agent
+            var azureCore = new RepoAccessPlugin(azureCorePath);
+            var clientModel = new RepoAccessPlugin(clientModelPath);
 
             KernelPlugin azureCorePlugin = KernelPluginFactory.CreateFromObject(azureCore, "azure_core");
             KernelPlugin clientModelPlugin = KernelPluginFactory.CreateFromObject(clientModel, "system_clientmodel");
@@ -119,7 +119,18 @@ namespace perf_semantic_kernel
 
         public async Task RunChatLoopAsync()
         {
-            AzureAIAgent agent = await CreateAgentAsync();
+            // Prompt for repo paths at startup
+            Console.Write("Enter the path to the Azure.Core src: ");
+            string? azureCorePath = Console.ReadLine();
+            Console.Write("Enter the path to the System.ClientModel src: ");
+            string? clientModelPath = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(azureCorePath) || string.IsNullOrWhiteSpace(clientModelPath))
+            {
+                Console.WriteLine("Both repository paths are required. Exiting.");
+                return;
+            }
+            AzureAIAgent agent = await CreateAgentAsync(azureCorePath, clientModelPath);
             AzureAIAgentThread agentThread = new(agent.Client);
             Console.WriteLine("Welcome to the Performance Regression Finder Agent! Enter a blank line to send");
             while (true)

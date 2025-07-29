@@ -20,12 +20,10 @@ with an addition of more plugins.
 ```
 2. **Configure your environment:**
 - Update `appsettings.json` with your Azure OpenAI and agent details. This can be found in the openai-shared resource group, under the perf-regression-finder-agent.
-*This should be placed in the ./artifacts\bin\perf-regression-finder\Debug\net8.0 folder*
-- Update the paths to the Azure SDK repositories in `SemanticAzureAi.cs` to point to your local clone of the `Azure.Core/src` and `System.ClientModel/src`.
-
+**This should be placed in the ./artifacts\bin\perf-regression-finder\Debug\net8.0 folder*
 
 3. **Build and run:**
-- Navigate to the `perf-regression-finder` directory and run:
+- Navigate to the `perf-regression-finder/src` directory and run:
 ```
 > dotnet run
 ```
@@ -34,6 +32,7 @@ with an addition of more plugins.
 ## Usage
 
 - Start the application and follow the prompts.
+- Enter the paths for Azure.Core and System.ClientModel source code.
 - Enter your performance regression scenario or question.
 - The agent will analyze and provide a detailed, structured response.
 

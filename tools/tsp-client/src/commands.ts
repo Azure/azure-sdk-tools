@@ -25,7 +25,6 @@ import {
   loadTspConfig,
   createRemoteConfigLoader,
   createLocalConfigLoader,
-  extractSpecificationPath,
 } from "./utils.js";
 import { stringify } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -63,7 +62,7 @@ export async function initCommand(argv: any) {
   } else if (await doesFileExist(tspConfig)) {
     isUrl = false;
   }
-  const { config: configYaml, rootMetadata: rootConfigPath } = isUrl
+  const { config: configYaml } = isUrl
                                                                   ? await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(tspConfig, createRemoteConfigLoader())
                                                                   : await loadTspConfig<string>(tspConfig, createLocalConfigLoader());                                                        
   if (!configYaml) {
@@ -272,7 +271,7 @@ export async function generateCommand(argv: any) {
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
-  const { config: resolvedConfig, rootMetadata: rootConfigPath } = localSpecRepo
+  const { rootMetadata: rootConfigPath } = localSpecRepo
                                                                   ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
                                                                   : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
   const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;

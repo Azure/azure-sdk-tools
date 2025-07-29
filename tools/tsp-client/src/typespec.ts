@@ -44,6 +44,33 @@ export function resolveTspConfigUrl(configUrl: string): {
   }
 }
 
+export function resolveAdditionalDirectory(Url: string): {
+  resolvedUrl: string;
+  commit: string;
+  repo: string;
+  path: string;
+} {
+  let resolvedAdditionalDirectoryUrl = Url;
+
+  const res = Url.match(
+    "^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)$",
+  );
+  if (res && res.groups) {
+    if (res.groups["urlRoot"]! === "github") {
+      resolvedAdditionalDirectoryUrl = Url.replace("github.com", "raw.githubusercontent.com");
+      resolvedAdditionalDirectoryUrl = resolvedAdditionalDirectoryUrl.replace("/blob/", "/");
+    }
+    return {
+      resolvedUrl: resolvedAdditionalDirectoryUrl,
+      commit: res.groups!["commit"]!,
+      repo: res.groups!["repo"]!,
+      path: res.groups!["path"]!,
+    };
+  } else {
+    throw new Error(`Invalid additional directory url: ${Url}`);
+  }
+}
+
 export async function discoverEntrypointFile(
   srcDir: string,
   specifiedEntrypointFile?: string,

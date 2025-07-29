@@ -151,10 +151,6 @@ export interface ConfigLoader {
 }
 
 /**
- * Single entry point for loading tspconfig with inheritance (iterative with single inheritance)
- */
-
-/**
  * Resolve additional directory path to absolute path based on config location
  */
 function resolveAdditionalDirectoryPath(dirPath: string, configMetadata: any): string {

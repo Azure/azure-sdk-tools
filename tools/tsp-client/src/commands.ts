@@ -63,8 +63,8 @@ export async function initCommand(argv: any) {
     isUrl = false;
   }
   const { config: configYaml } = isUrl
-                                                                  ? await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(tspConfig, createRemoteConfigLoader())
-                                                                  : await loadTspConfig<string>(tspConfig, createLocalConfigLoader());                                                        
+                                  ? await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(tspConfig, createRemoteConfigLoader())
+                                  : await loadTspConfig<string>(tspConfig, createLocalConfigLoader());                                                        
   if (!configYaml) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
   }
@@ -164,7 +164,7 @@ export async function syncCommand(argv: any) {
                                                                   ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
                                                                   : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
   const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;
-  // assume directory of root tspconfig.yaml is ${projectName}.xxx
+  // assume directory of root tspconfig.yaml is ${projectName}
   const dirSplit = rootConfigPathStr.split("/");
   let projectName = dirSplit[dirSplit.length - 2];
   Logger.debug(`Using project name: ${projectName}`);
@@ -185,6 +185,9 @@ export async function syncCommand(argv: any) {
       return false;
     }
     if (src.includes("tsp-output")) {
+      return false;
+    }
+    if (src.includes("tspconfig.yaml")) {
       return false;
     }
     return true;
@@ -275,7 +278,7 @@ export async function generateCommand(argv: any) {
                                                                   ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
                                                                   : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
   const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;
-  // assume directory of root tspconfig.yaml is ${projectName}.xxx
+  // assume directory of root tspconfig.yaml is ${projectName}
   const dirSplit = rootConfigPathStr.split("/");
   let projectName = dirSplit[dirSplit.length - 2];
   Logger.debug(`Using project name: ${projectName}`);

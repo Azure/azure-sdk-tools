@@ -48,19 +48,14 @@ namespace APIViewWeb.Pages.Assemblies
         {
             var userId = User.GetGitHubLogin();
             
-            // DEBUG: Check user configuration
+            // Check user configuration
             var isConfiguredApprover = IsUserConfiguredApprover(userId);
-            Console.WriteLine($"*** DEBUG: Current User: {userId}");
-            Console.WriteLine($"*** DEBUG: User {userId} is configured approver: {isConfiguredApprover}");
             
-            // DEBUG: Check user profile with error handling and timeout protection
+            // Check user profile with error handling and timeout protection
             UserProfileModel userProfile = null;
             var approvedLanguages = new string[0];
             try
             {
-                Console.WriteLine($"*** DEBUG: Attempting to get user profile for {userId}");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Attempting to get user profile for {userId}");
-                
                 // Reduced timeout to 5 seconds to improve performance and prevent hanging on Azure AD issues
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
@@ -68,70 +63,40 @@ namespace APIViewWeb.Pages.Assemblies
                 }
                 
                 approvedLanguages = userProfile?.Preferences?.ApprovedLanguages?.ToArray() ?? new string[0];
-                Console.WriteLine($"*** DEBUG: User profile retrieved successfully. Approved languages count: {approvedLanguages.Length}");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: User profile retrieved successfully. Approved languages count: {approvedLanguages.Length}");
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine($"*** DEBUG: User profile retrieval timed out after 5 seconds (likely Azure AD group resolution delay)");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: User profile retrieval timed out after 5 seconds");
                 // Continue with empty profile - we'll still show assigned reviews
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
             {
-                Console.WriteLine($"*** DEBUG: Serialization issue with user profile, continuing without profile data");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Serialization issue with user profile, continuing without profile data");
                 // Continue with empty profile - we'll still show assigned reviews
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"*** DEBUG ERROR: Failed to get user profile: {ex.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG ERROR: Failed to get user profile: {ex.GetType().Name}");
-                if (ex.Message.Contains("AAD groups are being resolved"))
-                {
-                    Console.WriteLine("*** DEBUG: Azure AD is resolving user's group memberships. This is expected for new users or after group changes.");
-                    System.Diagnostics.Debug.WriteLine("*** DEBUG: Azure AD is resolving user's group memberships.");
-                }
                 // Continue with empty profile - we'll still show assigned reviews
             }
             
-            // DEBUG: Attempt to get assigned revisions with error handling and timeout protection
+            // Attempt to get assigned revisions with error handling and timeout protection
             IEnumerable<APIRevisionListItemModel> assignedRevisions;
             try
             {
-                Console.WriteLine($"*** DEBUG: Attempting to get assigned revisions for {userId}");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Attempting to get assigned revisions for {userId}");
-                
                 // Reduced timeout to 5 seconds to improve performance and prevent hanging on Azure AD issues
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     assignedRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
                 }
-                
-                Console.WriteLine($"*** DEBUG: Successfully retrieved {assignedRevisions.Count()} assigned revisions");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Successfully retrieved {assignedRevisions.Count()} assigned revisions");
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine($"*** DEBUG: Assigned revisions retrieval timed out after 5 seconds (likely Azure AD group resolution delay)");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Assigned revisions retrieval timed out after 5 seconds");
                 assignedRevisions = new List<APIRevisionListItemModel>();
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
             {
-                Console.WriteLine($"*** DEBUG: Serialization issue with assigned revisions, continuing with empty list");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Serialization issue with assigned revisions, continuing with empty list");
                 assignedRevisions = new List<APIRevisionListItemModel>();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"*** DEBUG ERROR: Failed to get assigned revisions: {ex.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG ERROR: Failed to get assigned revisions: {ex.GetType().Name}");
-                if (ex.Message.Contains("AAD groups are being resolved"))
-                {
-                    Console.WriteLine("*** DEBUG: Azure AD is still resolving user's group memberships. This is expected for new users or after group changes.");
-                    System.Diagnostics.Debug.WriteLine("*** DEBUG: Azure AD is still resolving user's group memberships.");
-                }
                 assignedRevisions = new List<APIRevisionListItemModel>();
             }
             
@@ -155,16 +120,12 @@ namespace APIViewWeb.Pages.Assemblies
                 }
                 catch (Exception ex) when (ex.Message.Contains("AAD groups are being resolved"))
                 {
-                    Console.WriteLine($"*** DEBUG: Skipping namespace approval reviews due to AAD group resolution delay");
-                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Skipping namespace approval reviews due to AAD group resolution delay");
                     // Continue without namespace approval reviews to avoid long delays
                 }
             }
             
             // Keep track of which revisions are related to namespace approval (even if they're not the primary namespace review)
             var namespaceRelatedRevisionIds = new HashSet<string>(allNamespaceApprovalReviews.Select(r => r.Id));
-            Console.WriteLine($"*** DEBUG: Namespace-related revision IDs: {string.Join(", ", namespaceRelatedRevisionIds)}");
-            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace-related revision IDs: {string.Join(", ", namespaceRelatedRevisionIds)}");
             
             // Merge with assigned reviews
             var allReviews = APIRevisions.ToList();
@@ -222,27 +183,15 @@ namespace APIViewWeb.Pages.Assemblies
                     // Add to namespace approval list if:
                     // 1. The parent review has namespace approval requested OR
                     // 2. This revision is an associated SDK revision from our namespace approval logic
-                    bool isNamespaceRelated = parentReview.IsNamespaceReviewRequested || namespaceRelatedRevisionIds.Contains(apiRevision.Id);
+                    bool isRevisionNamespaceRelated = parentReview.IsNamespaceReviewRequested || namespaceRelatedRevisionIds.Contains(apiRevision.Id);
                     
-                    if (isNamespaceRelated && !parentReview.IsApproved)
+                    if (isRevisionNamespaceRelated && !parentReview.IsApproved)
                     {
                         bool canApproveReview = isAssignedToUser || CanUserApproveReview(parentReview);
                         if (canApproveReview)
                         {
-                            Console.WriteLine($"*** DEBUG: Adding revision {apiRevision.Id} to namespace approval list (parentNamespaceRequested: {parentReview.IsNamespaceReviewRequested}, isAssociated: {namespaceRelatedRevisionIds.Contains(apiRevision.Id)})");
-                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Adding revision {apiRevision.Id} to namespace approval list");
                             namespaceApprovalAPIRevs.Add(apiRevision);
                         }
-                        else
-                        {
-                            Console.WriteLine($"*** DEBUG: User cannot approve revision {apiRevision.Id} (not assigned and not preferred approver)");
-                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: User cannot approve revision {apiRevision.Id}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"*** DEBUG: Revision {apiRevision.Id} not namespace-related (parentNamespaceRequested: {parentReview.IsNamespaceReviewRequested}, parentApproved: {parentReview.IsApproved}, isAssociated: {namespaceRelatedRevisionIds.Contains(apiRevision.Id)})");
-                        System.Diagnostics.Debug.WriteLine($"*** DEBUG: Revision {apiRevision.Id} not namespace-related");
                     }
                     
                     // Add to reviews without namespace approval if the parent review doesn't have namespace approval
@@ -252,11 +201,6 @@ namespace APIViewWeb.Pages.Assemblies
                         reviewsWithoutNamespaceApproval.Add(apiRevision);
                     }
                 }
-                else
-                {
-                    Console.WriteLine($"*** DEBUG: No parent review found for revision {apiRevision.Id} in cached reviews");
-                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: No parent review found for revision {apiRevision.Id} in cached reviews");
-                }
             }
             
             ActiveAPIRevisions = activeAPIRevs;
@@ -264,15 +208,6 @@ namespace APIViewWeb.Pages.Assemblies
             NamespaceApprovalRequestedAPIRevisions = namespaceApprovalAPIRevs;
             ReviewsWithoutNamespaceApproval = reviewsWithoutNamespaceApproval;
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
-
-            Console.WriteLine($"*** DEBUG: Final UI model populated - NamespaceApprovalRequestedAPIRevisions count: {NamespaceApprovalRequestedAPIRevisions.Count()}");
-            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Final UI model populated - NamespaceApprovalRequestedAPIRevisions count: {NamespaceApprovalRequestedAPIRevisions.Count()}");
-            foreach (var rev in NamespaceApprovalRequestedAPIRevisions)
-            {
-                Console.WriteLine($"*** DEBUG: Namespace approval revision in UI: {rev.Id} (Review: {rev.ReviewId}, Language: '{rev.Language}', PackageName: {rev.PackageName})");
-                Console.WriteLine($"*** DEBUG: Language CSS class will be: 'icon-{PageModelHelpers.GetLanguageCssSafeName(rev.Language ?? "")}'");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace approval revision in UI: {rev.Id} (Review: {rev.ReviewId}, Language: '{rev.Language}', PackageName: {rev.PackageName})");
-            }
 
             return Page();
         }
@@ -303,8 +238,6 @@ namespace APIViewWeb.Pages.Assemblies
             catch (Exception ex) when (ex.Message.Contains("AAD groups are being resolved"))
             {
                 // For local testing, assume the user can approve TypeSpec reviews
-                Console.WriteLine($"*** DEBUG: Bypassing AAD check for local testing - assuming user can approve {review.Language} reviews");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Bypassing AAD check for local testing - assuming user can approve {review.Language} reviews");
                 return review.Language?.Equals("TypeSpec", StringComparison.OrdinalIgnoreCase) == true;
             }
         }
@@ -322,8 +255,6 @@ namespace APIViewWeb.Pages.Assemblies
             // Check cache first - 10 minute cache for performance
             if (_cache.TryGetValue(cacheKey, out List<APIRevisionListItemModel> cachedResults))
             {
-                Console.WriteLine($"*** DEBUG: Returning cached namespace approval results for user {userId} ({cachedResults.Count} items)");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Returning cached namespace approval results for user {userId} ({cachedResults.Count} items)");
                 return cachedResults;
             }
 
@@ -331,76 +262,51 @@ namespace APIViewWeb.Pages.Assemblies
 
             try
             {
-                Console.WriteLine($"*** DEBUG: Starting GetAllNamespaceApprovalReviews using pull request association logic");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Starting GetAllNamespaceApprovalReviews using pull request association logic");
-                
                 // 5 second timeout to improve performance and avoid hanging on database/AAD delays
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
-                    // Get reviews with namespace approval requested - only TypeSpec reviews can have namespace approval requests
+                    // Get reviews with namespace approval requested - only TypeSpec reviews can have namespace approval requests  
                     var (allReviews, _, _, _, _, _) = await _reviewManager.GetPagedReviewListAsync(
                         search: new string[] { }, // No search filter
                         languages: new HashSet<string> { "TypeSpec" }, // Only TypeSpec reviews have namespace approval requests
                         isClosed: false, // Only open reviews
                         isApproved: false, // Only unapproved reviews
-                        isNamespaceReviewRequested: true,
                         offset: 0,
-                        limit: 50,
+                        limit: 100,
                         orderBy: "created"
                     );
 
-                    Console.WriteLine($"*** DEBUG: Total TypeSpec reviews with namespace approval found: {allReviews.Count()}");
-                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Total TypeSpec reviews with namespace approval found: {allReviews.Count()}");
-                    
+                    // Filter for reviews that have namespace approval requested
+                    var reviewsWithNamespaceRequested = allReviews.Where(r => r.IsNamespaceReviewRequested).ToList();
+
                     // Process only reviews the user can approve
-                    var eligibleReviews = allReviews.Where(r => CanUserApproveReview(r)).ToList();
-                    Console.WriteLine($"*** DEBUG: Processing {eligibleReviews.Count} eligible reviews with namespace approval requested");
-                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Processing {eligibleReviews.Count} eligible reviews with namespace approval requested");
+                    var eligibleReviews = reviewsWithNamespaceRequested.Where(r => CanUserApproveReview(r)).ToList();
                     
                     foreach (var namespaceReview in eligibleReviews)
                     {
                         try
                         {
-                            Console.WriteLine($"*** DEBUG: Processing review {namespaceReview.Id} ({namespaceReview.Language}) - PackageName: '{namespaceReview.PackageName}'");
-                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Processing review {namespaceReview.Id} ({namespaceReview.Language}) - PackageName: '{namespaceReview.PackageName}'");
-                            
                             // Extract namespace approval request information from this review's change history
                             var namespaceRequestChange = namespaceReview.ChangeHistory?.FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.NamespaceReviewRequested);
                             var requestedOn = namespaceRequestChange?.ChangedOn ?? DateTime.MinValue;
                             var requestedBy = namespaceRequestChange?.ChangedBy ?? "Unknown";
                             
-                            Console.WriteLine($"*** DEBUG: Namespace request info - RequestedOn: {requestedOn}, RequestedBy: {requestedBy}");
-                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace request info - RequestedOn: {requestedOn}, RequestedBy: {requestedBy}");
-                            
                             // Get the latest API revision from this namespace review
                             var latestRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(namespaceReview.Id, null, APIRevisionType.All);
                             if (latestRevision != null)
                             {
-                                Console.WriteLine($"*** DEBUG: Found latest revision {latestRevision.Id} for namespace review {namespaceReview.Id}");
-                                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Found latest revision {latestRevision.Id} for namespace review {namespaceReview.Id}");
-                                
                                 // Use the SAME LOGIC as "Associated API Revisions" - find via pull requests
                                 var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(namespaceReview.Id, latestRevision.Id)).FirstOrDefault();
                                 if (creatingPR != null)
                                 {
-                                    Console.WriteLine($"*** DEBUG: Found creating PR {creatingPR.PullRequestNumber} in repo {creatingPR.RepoName} for revision {latestRevision.Id}");
-                                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Found creating PR {creatingPR.PullRequestNumber} in repo {creatingPR.RepoName} for revision {latestRevision.Id}");
-                                    
                                     // Get all pull requests associated with this PR (this gives us all the different language versions)
                                     var associatedPRs = await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);
-                                    Console.WriteLine($"*** DEBUG: Found {associatedPRs.Count()} associated PRs for PR {creatingPR.PullRequestNumber}");
-                                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Found {associatedPRs.Count()} associated PRs for PR {creatingPR.PullRequestNumber}");
                                     
                                     foreach (var associatedPR in associatedPRs)
                                     {
-                                        Console.WriteLine($"*** DEBUG: Processing associated PR - Language: {associatedPR.Language}, PackageName: {associatedPR.PackageName}, ReviewId: {associatedPR.ReviewId}");
-                                        System.Diagnostics.Debug.WriteLine($"*** DEBUG: Processing associated PR - Language: {associatedPR.Language}, PackageName: {associatedPR.PackageName}, ReviewId: {associatedPR.ReviewId}");
-                                        
                                         // Skip if this is the original namespace review (we want the associated SDK reviews)
                                         if (associatedPR.ReviewId == namespaceReview.Id)
                                         {
-                                            Console.WriteLine($"*** DEBUG: Skipping original namespace review {associatedPR.ReviewId}");
-                                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Skipping original namespace review {associatedPR.ReviewId}");
                                             continue;
                                         }
                                         
@@ -416,36 +322,19 @@ namespace APIViewWeb.Pages.Assemblies
                                             var associatedRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(associatedPR.ReviewId, null, APIRevisionType.All);
                                             if (associatedRevision != null && !associatedRevision.IsApproved)
                                             {
-                                                Console.WriteLine($"*** DEBUG: Adding associated {associatedPR.Language} API revision {associatedRevision.Id} from review {associatedPR.ReviewId} - PackageName: {associatedRevision.PackageName}");
-                                                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Adding associated {associatedPR.Language} API revision {associatedRevision.Id} from review {associatedPR.ReviewId}");
                                                 namespaceApprovalReviews.Add(associatedRevision);
                                                 
                                                 // Store namespace approval request info for this revision
                                                 if (requestedOn != DateTime.MinValue)
                                                 {
                                                     NamespaceApprovalInfo[associatedRevision.Id] = (requestedOn, requestedBy);
-                                                    Console.WriteLine($"*** DEBUG: Stored namespace approval info for revision {associatedRevision.Id}: {requestedOn} by {requestedBy}");
-                                                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Stored namespace approval info for revision {associatedRevision.Id}");
                                                 }
                                             }
-                                            else
-                                            {
-                                                Console.WriteLine($"*** DEBUG: No valid revision found for associated {associatedPR.Language} review {associatedPR.ReviewId} (may be null or already approved)");
-                                                System.Diagnostics.Debug.WriteLine($"*** DEBUG: No valid revision found for associated {associatedPR.Language} review {associatedPR.ReviewId} (may be null or already approved)");
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine($"*** DEBUG: Skipping unsupported language: {associatedPR.Language}");
-                                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Skipping unsupported language: {associatedPR.Language}");
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"*** DEBUG: No creating PR found for revision {latestRevision.Id} - this review may not be created from a pull request");
-                                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: No creating PR found for revision {latestRevision.Id} - this review may not be created from a pull request");
-                                    
                                     // If no PR association found, fall back to adding the revision itself if it's an SDK language
                                     var supportedLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                                     {
@@ -454,59 +343,37 @@ namespace APIViewWeb.Pages.Assemblies
                                     
                                     if (supportedLanguages.Contains(namespaceReview.Language ?? ""))
                                     {
-                                        Console.WriteLine($"*** DEBUG: Adding namespace review itself as it's an SDK language: {namespaceReview.Language}");
-                                        System.Diagnostics.Debug.WriteLine($"*** DEBUG: Adding namespace review itself as it's an SDK language: {namespaceReview.Language}");
                                         namespaceApprovalReviews.Add(latestRevision);
                                         
                                         // Store namespace approval request info for this revision
                                         if (requestedOn != DateTime.MinValue)
                                         {
                                             NamespaceApprovalInfo[latestRevision.Id] = (requestedOn, requestedBy);
-                                            Console.WriteLine($"*** DEBUG: Stored namespace approval info for direct revision {latestRevision.Id}: {requestedOn} by {requestedBy}");
-                                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Stored namespace approval info for direct revision {latestRevision.Id}");
                                         }
                                     }
                                 }
                             }
-                            else
-                            {
-                                Console.WriteLine($"*** DEBUG: No latest revision found for namespace review {namespaceReview.Id}");
-                                System.Diagnostics.Debug.WriteLine($"*** DEBUG: No latest revision found for namespace review {namespaceReview.Id}");
-                            }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            Console.WriteLine($"*** DEBUG ERROR: Failed to process namespace review {namespaceReview.Id}: {ex.Message}");
-                            System.Diagnostics.Debug.WriteLine($"*** DEBUG ERROR: Failed to process namespace review {namespaceReview.Id}: {ex.Message}");
                         }
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine($"*** DEBUG: GetAllNamespaceApprovalReviews timed out after 5 seconds - improving performance by skipping expensive operations");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: GetAllNamespaceApprovalReviews timed out after 5 seconds - improving performance by skipping expensive operations");
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
             {
-                Console.WriteLine($"*** DEBUG: Serialization issue in GetAllNamespaceApprovalReviews, continuing with empty list");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Serialization issue in GetAllNamespaceApprovalReviews, continuing with empty list");
             }
             catch (Exception ex)
             {
                 // Log error but don't fail the entire request
-                Console.WriteLine($"*** DEBUG ERROR: Error fetching namespace approval reviews: {ex.GetType().Name}: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG ERROR: Error fetching namespace approval reviews: {ex.GetType().Name}: {ex.Message}");
                 if (ex.Message.Contains("AAD groups are being resolved"))
                 {
-                    Console.WriteLine("*** DEBUG: Azure AD group resolution is causing namespace review fetch to fail");
-                    System.Diagnostics.Debug.WriteLine("*** DEBUG: Azure AD group resolution is causing namespace review fetch to fail");
                 }
             }
 
-            Console.WriteLine($"*** DEBUG: Returning {namespaceApprovalReviews.Count} ASSOCIATED API revisions (C#/Java/Python/etc) for namespace approval UI");
-            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Returning {namespaceApprovalReviews.Count} ASSOCIATED API revisions (C#/Java/Python/etc) for namespace approval UI");
-            
             // Cache the results for 10 minutes to improve performance
             var cacheOptions = new MemoryCacheEntryOptions
             {
@@ -515,8 +382,6 @@ namespace APIViewWeb.Pages.Assemblies
                 Priority = CacheItemPriority.Normal
             };
             _cache.Set(cacheKey, namespaceApprovalReviews, cacheOptions);
-            Console.WriteLine($"*** DEBUG: Cached namespace approval results for user {userId} for 10 minutes");
-            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Cached namespace approval results for user {userId} for 10 minutes");
             
             return namespaceApprovalReviews;
         }

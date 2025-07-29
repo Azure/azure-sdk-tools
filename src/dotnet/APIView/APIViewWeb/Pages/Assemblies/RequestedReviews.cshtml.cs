@@ -34,7 +34,8 @@ namespace APIViewWeb.Pages.Assemblies
         public Dictionary<string, (DateTime RequestedOn, string RequestedBy)> NamespaceApprovalInfo { get; set; } = new Dictionary<string, (DateTime, string)>();
         
         [BindProperty(SupportsGet = true)]
-        public bool ShowWithoutNamespaceApproval { get; set; } = false;        
+        public bool ShowWithoutNamespaceApproval { get; set; } = false;
+        
         public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager, UserProfileCache userProfileCache, IConfiguration configuration, IMemoryCache cache)
         {
             _apiRevisionsManager = apiRevisionsManager;
@@ -105,7 +106,6 @@ namespace APIViewWeb.Pages.Assemblies
             List<APIRevisionListItemModel> activeAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> namespaceApprovalAPIRevs = new List<APIRevisionListItemModel>();
-            List<APIRevisionListItemModel> reviewsWithoutNamespaceApproval = new List<APIRevisionListItemModel>();
 
             // Check if user is configured as an approver
             // var isConfiguredApprover = IsUserConfiguredApprover(userId);  // Already checked above
@@ -193,20 +193,19 @@ namespace APIViewWeb.Pages.Assemblies
                             namespaceApprovalAPIRevs.Add(apiRevision);
                         }
                     }
-                    
-                    // Add to reviews without namespace approval if the parent review doesn't have namespace approval
-                    // and the user is assigned as a reviewer and it's not an associated namespace revision
-                    if (!parentReview.IsNamespaceReviewRequested && !parentReview.IsApproved && isAssignedToUser && !namespaceRelatedRevisionIds.Contains(apiRevision.Id))
-                    {
-                        reviewsWithoutNamespaceApproval.Add(apiRevision);
-                    }
                 }
             }
             
             ActiveAPIRevisions = activeAPIRevs;
             ApprovedAPIRevisions = approvedAPIRevs;
             NamespaceApprovalRequestedAPIRevisions = namespaceApprovalAPIRevs;
-            ReviewsWithoutNamespaceApproval = reviewsWithoutNamespaceApproval;
+            
+            // If user wants to see reviews without namespace approval, get them
+            if (ShowWithoutNamespaceApproval)
+            {
+                ReviewsWithoutNamespaceApproval = await GetReviewsWithoutNamespaceApproval();
+            }
+            
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
             return Page();
@@ -384,6 +383,86 @@ namespace APIViewWeb.Pages.Assemblies
             _cache.Set(cacheKey, namespaceApprovalReviews, cacheOptions);
             
             return namespaceApprovalReviews;
+        }
+
+        /// <summary>
+        /// Get all reviews without namespace approval for proactive review
+        /// Limited to SDK languages (C#, Java, Python, Go, JavaScript) and maximum 100 results
+        /// Results are cached for 5 minutes to improve performance
+        /// </summary>
+        private async Task<List<APIRevisionListItemModel>> GetReviewsWithoutNamespaceApproval()
+        {
+            var userId = User.GetGitHubLogin();
+            var cacheKey = $"reviews_without_namespace_{userId}";
+            
+            // Check cache first - 5 minute cache for performance
+            if (_cache.TryGetValue(cacheKey, out List<APIRevisionListItemModel> cachedResults))
+            {
+                return cachedResults;
+            }
+
+            var reviewsWithoutNamespace = new List<APIRevisionListItemModel>();
+
+            try
+            {
+                // 5 second timeout to improve performance and avoid hanging on database/AAD delays
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                {
+                    // Define SDK languages that we want to show for proactive review
+                    var sdkLanguages = new HashSet<string> { "C#", "CSharp", "Java", "Python", "Go", "JavaScript", "JS" };
+                    
+                    // Get reviews for SDK languages that don't have namespace approval requested
+                    var (allReviews, _, _, _, _, _) = await _reviewManager.GetPagedReviewListAsync(
+                        search: new string[] { }, // No search filter
+                        languages: sdkLanguages, // Only SDK languages
+                        isClosed: false, // Only open reviews
+                        isApproved: false, // Only unapproved reviews
+                        offset: 0,
+                        limit: 100, // Limit to 100 as requested
+                        orderBy: "created"
+                    );
+
+                    // Filter for reviews that do NOT have namespace approval requested
+                    var reviewsWithoutNamespaceRequested = allReviews.Where(r => !r.IsNamespaceReviewRequested).ToList();
+
+                    // For each review, get the latest API revision
+                    foreach (var review in reviewsWithoutNamespaceRequested)
+                    {
+                        try
+                        {
+                            var latestRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(review.Id, null, APIRevisionType.All);
+                            if (latestRevision != null && !latestRevision.IsApproved)
+                            {
+                                reviewsWithoutNamespace.Add(latestRevision);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // Continue with next review if this one fails
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
+            {
+            }
+            catch (Exception)
+            {
+            }
+
+            // Cache the results for 5 minutes to improve performance
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                SlidingExpiration = TimeSpan.FromMinutes(2), // Extend cache if accessed within 2 minutes
+                Priority = CacheItemPriority.Normal
+            };
+            _cache.Set(cacheKey, reviewsWithoutNamespace, cacheOptions);
+            
+            return reviewsWithoutNamespace;
         }
     }
 }

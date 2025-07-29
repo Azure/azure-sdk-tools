@@ -110,7 +110,7 @@
                         else 
                         {
                             <tr class="package-data-row"> 
-                                <td colspan="6">No new reviews require approval.</td>
+                                <td colspan="6">@(Model.ShowWithoutNamespaceApproval ? "No reviews without namespace approval found." : "No new reviews require approval.")</td>
                             </tr>
                         }
                     </tbody>

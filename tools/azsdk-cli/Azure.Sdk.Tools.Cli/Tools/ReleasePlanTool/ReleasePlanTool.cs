@@ -215,7 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     userEmail = email;
                     logger.LogInformation("Using current user email to submit release plan: {userEmail}", userEmail);
                 }
-                else if(string.IsNullOrEmpty(userEmail))
+                else if (string.IsNullOrEmpty(userEmail))
                 {
                     throw new InvalidOperationException("Current user email is sdk bot, email is required to create a release plan.");
                 }

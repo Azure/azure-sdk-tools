@@ -1,6 +1,6 @@
 name: Release Plan
 description: Create a release plan for a new SDK or update
-title: "[Release Plan]: <library-name>"
+title: "[Release Plan]: <Product name>"
 labels: [release-plan]
 
 body:

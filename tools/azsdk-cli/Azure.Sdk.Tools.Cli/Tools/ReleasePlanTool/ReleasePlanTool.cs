@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private const string getReleasePlanDetailsCommandName = "get";
         private const string createReleasePlanCommandName = "create";
         private const string linkNamespaceApprovalIssueCommandName = "link-namespace-approval";
+        private const string sdkBotEmail = "azuresdk@microsoft.com";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new(["--release-plan-id",], "Release Plan ID") { IsRequired = false };
@@ -204,14 +205,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
-                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                
-                if (string.IsNullOrEmpty(userEmail))
+                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath); 
+
+                logger.LogInformation("Attempting to retrieve current user email.");
+
+                var email = await userHelper.GetUserEmail();
+                if (email != sdkBotEmail)
                 {
-                    logger.LogInformation("User email not provided. Attempting to retrieve current user email.");
-                    userEmail = await userHelper.GetUserEmail();
-                    logger.LogInformation("User email not provided. Using current user email to submit release plan: {userEmail}", userEmail);
+                    userEmail = email;
+                    logger.LogInformation("Using current user email to submit release plan: {userEmail}", userEmail);
                 }
+                else if(string.IsNullOrEmpty(userEmail))
+                {
+                    throw new InvalidOperationException("Current user email is sdk bot, email is required to create a release plan.");
+                }
+
+                logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
                 var releasePlan = new ReleasePlan
                 {

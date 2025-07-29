@@ -2,6 +2,7 @@
 @model APIViewWeb.Pages.Assemblies.RequestedReviews
 @using APIViewWeb.Helpers
 @using APIViewWeb.Models
+@using APIViewWeb.LeanModels
 @{
     ViewData["Title"] = "Requested Reviews";
     var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User) ?? new UserPreferenceModel();
@@ -58,13 +59,17 @@
                                         @if (apiRevision.Language != null)
                                         {
                                             string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
-                                            @if (!string.IsNullOrEmpty(apiRevision.Files.FirstOrDefault().LanguageVariant) && apiRevision.Files.FirstOrDefault().LanguageVariant != "default")
+                                            @* Only add language variant if it's not empty, default, or none (which don't have CSS classes) *@
+                                            var languageVariant = apiRevision.Files.FirstOrDefault().LanguageVariant;
+                                            @if (!string.IsNullOrEmpty(languageVariant) && 
+                                                 !languageVariant.Equals("default", StringComparison.OrdinalIgnoreCase) &&
+                                                 !languageVariant.Equals("none", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                iconClassName += "-" + apiRevision.Files.FirstOrDefault().LanguageVariant.ToLower();
+                                                iconClassName += "-" + languageVariant.ToLower();
                                             }
-                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @apiRevision.Files.FirstOrDefault().LanguageVariant"></span>
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @languageVariant"></span>
                                         }
-                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId" asp-route-revisionId="@apiRevision.Id">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
                                         @if (apiRevision.IsApproved == true)
                                         {
                                             <i class="fas fa-check-circle text-success ml-2"></i>
@@ -119,7 +124,7 @@
                     <thead>
                         <tr>
                             <th scope="col" class="pl-4">Name</th>
-                            <th scope="col" class="border-left pl-3">Author</th>
+                            <th scope="col" class="border-left pl-3">CreatedBy</th>
                             <th scope="col" class="border-left pl-3">Last Updated</th>
                             <th scope="col" class="border-left pl-3">Type</th>
                             <th scope="col" class="border-left pl-3">Requested on</th>
@@ -131,9 +136,18 @@
                         {
                             @foreach (var apiRevision in Model.NamespaceApprovalRequestedAPIRevisions)
                             {
-                                var assignment = apiRevision.AssignedReviewers.FirstOrDefault(ar => ar.AssingedTo == User.GetGitHubLogin());
-                                var approvalRequestedOn = assignment?.AssingedOn;
-                                var requestBy = assignment?.AssignedBy;
+                                // Get namespace approval request information from the stored data
+                                var hasNamespaceInfo = Model.NamespaceApprovalInfo.TryGetValue(apiRevision.Id, out var namespaceInfo);
+                                var approvalRequestedOn = hasNamespaceInfo ? namespaceInfo.RequestedOn : (DateTime?)null;
+                                var requestBy = hasNamespaceInfo ? namespaceInfo.RequestedBy : null;
+                                
+                                // Fallback to assignment info if namespace info not available
+                                if (!hasNamespaceInfo)
+                                {
+                                    var assignment = apiRevision.AssignedReviewers.FirstOrDefault(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                    approvalRequestedOn = assignment?.AssingedOn;
+                                    requestBy = assignment?.AssignedBy;
+                                }
 
                                 var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
                                 <tr class="package-data-row">
@@ -141,14 +155,17 @@
                                         @if (apiRevision.Language != null)
                                         {
                                             string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
-                                            @if (!string.IsNullOrEmpty(apiRevision.Files.FirstOrDefault().LanguageVariant) && apiRevision.Files.FirstOrDefault().LanguageVariant != "default")
+                                            @* Only add language variant if it's not empty, default, or none (which don't have CSS classes) *@
+                                            var languageVariant = apiRevision.Files.FirstOrDefault().LanguageVariant;
+                                            @if (!string.IsNullOrEmpty(languageVariant) && 
+                                                 !languageVariant.Equals("default", StringComparison.OrdinalIgnoreCase) &&
+                                                 !languageVariant.Equals("none", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                iconClassName += "-" + apiRevision.Files.FirstOrDefault().LanguageVariant.ToLower();
+                                                iconClassName += "-" + languageVariant.ToLower();
                                             }
-                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @apiRevision.Files.FirstOrDefault().LanguageVariant"></span>
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @languageVariant"></span>
                                         }
-                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId" asp-route-revisionId="@apiRevision.Id">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
-                                        <i class="fas fa-exclamation-triangle text-warning ml-2" title="Namespace approval requested"></i>
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
                                     </td>
                                     <td class="align-middle border-left pl-3">
                                         <a username="@apiRevision.CreatedBy">@apiRevision.CreatedBy</a>
@@ -221,11 +238,15 @@
                                         @if (apiRevision.Language != null)
                                         {
                                             string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
-                                            @if (!string.IsNullOrEmpty(apiRevision.Files.FirstOrDefault().LanguageVariant) && apiRevision.Files.FirstOrDefault().LanguageVariant != "default")
+                                            @* Only add language variant if it's not empty, default, or none (which don't have CSS classes) *@
+                                            var languageVariant = apiRevision.Files.FirstOrDefault().LanguageVariant;
+                                            @if (!string.IsNullOrEmpty(languageVariant) && 
+                                                 !languageVariant.Equals("default", StringComparison.OrdinalIgnoreCase) &&
+                                                 !languageVariant.Equals("none", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                iconClassName += "-" + apiRevision.Files.FirstOrDefault().LanguageVariant.ToLower();
+                                                iconClassName += "-" + languageVariant.ToLower();
                                             }
-                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @apiRevision.Files.FirstOrDefault().LanguageVariant"></span>
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @languageVariant"></span>
                                         }
                                         <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
                                         @if (apiRevision.IsApproved == true)

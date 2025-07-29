@@ -28,6 +28,9 @@ namespace APIViewWeb.Pages.Assemblies
         public IEnumerable<APIRevisionListItemModel> NamespaceApprovalRequestedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ReviewsWithoutNamespaceApproval { get; set; } = new List<APIRevisionListItemModel>();
         
+        // Track namespace approval request info for associated revisions
+        public Dictionary<string, (DateTime RequestedOn, string RequestedBy)> NamespaceApprovalInfo { get; set; } = new Dictionary<string, (DateTime, string)>();
+        
         [BindProperty(SupportsGet = true)]
         public bool ShowWithoutNamespaceApproval { get; set; } = false;        
         public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager, UserProfileCache userProfileCache, IConfiguration configuration)
@@ -263,8 +266,9 @@ namespace APIViewWeb.Pages.Assemblies
             System.Diagnostics.Debug.WriteLine($"*** DEBUG: Final UI model populated - NamespaceApprovalRequestedAPIRevisions count: {NamespaceApprovalRequestedAPIRevisions.Count()}");
             foreach (var rev in NamespaceApprovalRequestedAPIRevisions)
             {
-                Console.WriteLine($"*** DEBUG: Namespace approval revision in UI: {rev.Id} (Review: {rev.ReviewId}, Language: {rev.Language}, PackageName: {rev.PackageName})");
-                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace approval revision in UI: {rev.Id} (Review: {rev.ReviewId}, Language: {rev.Language}, PackageName: {rev.PackageName})");
+                Console.WriteLine($"*** DEBUG: Namespace approval revision in UI: {rev.Id} (Review: {rev.ReviewId}, Language: '{rev.Language}', PackageName: {rev.PackageName})");
+                Console.WriteLine($"*** DEBUG: Language CSS class will be: 'icon-{PageModelHelpers.GetLanguageCssSafeName(rev.Language ?? "")}'");
+                System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace approval revision in UI: {rev.Id} (Review: {rev.ReviewId}, Language: '{rev.Language}', PackageName: {rev.PackageName})");
             }
 
             return Page();
@@ -349,6 +353,14 @@ namespace APIViewWeb.Pages.Assemblies
                             Console.WriteLine($"*** DEBUG: Processing review {namespaceReview.Id} ({namespaceReview.Language}) - PackageName: '{namespaceReview.PackageName}'");
                             System.Diagnostics.Debug.WriteLine($"*** DEBUG: Processing review {namespaceReview.Id} ({namespaceReview.Language}) - PackageName: '{namespaceReview.PackageName}'");
                             
+                            // Extract namespace approval request information from this review's change history
+                            var namespaceRequestChange = namespaceReview.ChangeHistory?.FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.NamespaceReviewRequested);
+                            var requestedOn = namespaceRequestChange?.ChangedOn ?? DateTime.MinValue;
+                            var requestedBy = namespaceRequestChange?.ChangedBy ?? "Unknown";
+                            
+                            Console.WriteLine($"*** DEBUG: Namespace request info - RequestedOn: {requestedOn}, RequestedBy: {requestedBy}");
+                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Namespace request info - RequestedOn: {requestedOn}, RequestedBy: {requestedBy}");
+                            
                             // Get the latest API revision from this namespace review
                             var latestRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(namespaceReview.Id, null, APIRevisionType.All);
                             if (latestRevision != null)
@@ -393,9 +405,17 @@ namespace APIViewWeb.Pages.Assemblies
                                             var associatedRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(associatedPR.ReviewId, null, APIRevisionType.All);
                                             if (associatedRevision != null && !associatedRevision.IsApproved)
                                             {
-                                                Console.WriteLine($"*** DEBUG: Adding associated {associatedPR.Language} API revision {associatedRevision.Id} from review {associatedPR.ReviewId}");
+                                                Console.WriteLine($"*** DEBUG: Adding associated {associatedPR.Language} API revision {associatedRevision.Id} from review {associatedPR.ReviewId} - PackageName: {associatedRevision.PackageName}");
                                                 System.Diagnostics.Debug.WriteLine($"*** DEBUG: Adding associated {associatedPR.Language} API revision {associatedRevision.Id} from review {associatedPR.ReviewId}");
                                                 namespaceApprovalReviews.Add(associatedRevision);
+                                                
+                                                // Store namespace approval request info for this revision
+                                                if (requestedOn != DateTime.MinValue)
+                                                {
+                                                    NamespaceApprovalInfo[associatedRevision.Id] = (requestedOn, requestedBy);
+                                                    Console.WriteLine($"*** DEBUG: Stored namespace approval info for revision {associatedRevision.Id}: {requestedOn} by {requestedBy}");
+                                                    System.Diagnostics.Debug.WriteLine($"*** DEBUG: Stored namespace approval info for revision {associatedRevision.Id}");
+                                                }
                                             }
                                             else
                                             {
@@ -426,6 +446,14 @@ namespace APIViewWeb.Pages.Assemblies
                                         Console.WriteLine($"*** DEBUG: Adding namespace review itself as it's an SDK language: {namespaceReview.Language}");
                                         System.Diagnostics.Debug.WriteLine($"*** DEBUG: Adding namespace review itself as it's an SDK language: {namespaceReview.Language}");
                                         namespaceApprovalReviews.Add(latestRevision);
+                                        
+                                        // Store namespace approval request info for this revision
+                                        if (requestedOn != DateTime.MinValue)
+                                        {
+                                            NamespaceApprovalInfo[latestRevision.Id] = (requestedOn, requestedBy);
+                                            Console.WriteLine($"*** DEBUG: Stored namespace approval info for direct revision {latestRevision.Id}: {requestedOn} by {requestedBy}");
+                                            System.Diagnostics.Debug.WriteLine($"*** DEBUG: Stored namespace approval info for direct revision {latestRevision.Id}");
+                                        }
                                     }
                                 }
                             }

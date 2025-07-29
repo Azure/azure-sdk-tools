@@ -110,6 +110,35 @@ namespace APIViewWeb.Controllers
             });
         }
 
+        /// <summary>
+        /// Debug endpoint to test JWT token parsing - no authorization required
+        /// </summary>
+        [HttpGet("jwt-debug")]
+        public IActionResult JwtDebug()
+        {
+            // Only allow this in development mode for security
+            if (!_env.IsDevelopment())
+            {
+                return NotFound();
+            }
+
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            
+            return Ok(new
+            {
+                Message = "JWT Debug Information",
+                HasAuthorizationHeader = authHeader != null,
+                AuthorizationHeader = authHeader?.Substring(0, Math.Min(100, authHeader?.Length ?? 0)) + "...",
+                UserAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                AuthenticationType = User.Identity?.AuthenticationType ?? "None",
+                UserName = User.Identity?.Name ?? "Anonymous",
+                ClaimsCount = User.Claims?.Count() ?? 0,
+                Claims = User.Claims?.Select(c => new { c.Type, c.Value }).Take(20).ToArray() ?? new object[0],
+                IsManagedIdentity = User.Identity?.IsAuthenticated == true ? AuthenticationValidator.IsValidManagedIdentity(User) : false,
+                Environment = "Development"
+            });
+        }
+
         private string GetAuthenticationMethod()
         {
             return AuthenticationValidator.GetAuthenticationMethod(User);

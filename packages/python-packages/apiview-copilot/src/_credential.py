@@ -1,6 +1,6 @@
 import os
 
-from azure.identity import DefaultAzureCredential, AzurePipelinesCredential
+from azure.identity import DefaultAzureCredential, AzurePipelinesCredential, InteractiveBrowserCredential
 
 
 def in_ci():
@@ -20,4 +20,6 @@ def get_credential():
                 system_access_token=system_access_token,
             )
 
-    return DefaultAzureCredential()
+    return InteractiveBrowserCredential(
+        client_id="14d82eec-204b-4c2f-b7e8-296a70dab67e"
+    )

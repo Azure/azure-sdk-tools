@@ -67,7 +67,7 @@ namespace APIViewWeb.Account
 
         private static bool HasRequiredManagedIdentityClaims(ClaimsPrincipal user, ILogger logger = null)
         {
-            var oidClaim = user.FindFirst("oid");
+            var oidClaim = user.FindFirst("oid") ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier");
             var hasOid = oidClaim != null;
             
             logger?.LogInformation("Checking required managed identity claims. OID claim present: {HasOid}", hasOid);
@@ -81,7 +81,7 @@ namespace APIViewWeb.Account
 
         private static bool IsSystemAssignedManagedIdentity(ClaimsPrincipal user, ILogger logger = null)
         {
-            var appIdClaim = user.FindFirst("appid");
+            var appIdClaim = user.FindFirst("appid") ?? user.FindFirst("azp");
             var isSystemAssigned = appIdClaim == null;
             
             logger?.LogInformation("Checking for system-assigned managed identity. AppId claim present: {HasAppId}, IsSystemAssigned: {IsSystemAssigned}", 
@@ -92,7 +92,7 @@ namespace APIViewWeb.Account
 
         private static bool IsUserAssignedManagedIdentity(ClaimsPrincipal user, ILogger logger = null)
         {
-            var appIdClaim = user.FindFirst("appid");
+            var appIdClaim = user.FindFirst("appid") ?? user.FindFirst("azp");
             var isUserAssigned = appIdClaim != null;
             
             logger?.LogInformation("Checking for user-assigned managed identity. AppId claim present: {HasAppId}, IsUserAssigned: {IsUserAssigned}", 
@@ -191,7 +191,7 @@ namespace APIViewWeb.Account
         /// <returns>True if user has valid authentication through either method</returns>
         public static bool HasOrganizationOrManagedIdentityAccess(ClaimsPrincipal user, string[] requiredOrganizations, ILogger logger = null)
         {
-            logger?.LogInformation("Starting combined authentication check (Organization OR Managed Identity)");
+           // logger?.LogInformation("Starting combined authentication check (Organization OR Managed Identity)");
             
             if (!user.Identity.IsAuthenticated)
             {

@@ -671,11 +671,19 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
             }
             endpoint_root = apiview_endpoints.get(environment)
             endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
+            apiview_scopes = {
+                "production": "api://apiview/.default",
+                "staging": "api://apiviewstaging/ApiView.Read",
+            }
+            credential = get_credential()
+            token = credential.get_token(apiview_scopes.get(environment))
+            print(token)
             response = requests.get(
                 endpoint,
-                # TODO: Fix this cookie handling
-                headers={"Content-Type": "application/json", "Cookie": "TODO"},
+                headers={"Content-Type": "application/json",
+                        "Authorization": f"Bearer {token.token}"}
             )
+            
             if response.status_code != 200:
                 print(f"Error retrieving comments: {response.status_code} - {response.text}")
                 return {}

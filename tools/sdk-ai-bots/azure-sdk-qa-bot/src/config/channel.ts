@@ -22,7 +22,35 @@ export interface ChannelConfig {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const CHANNEL_CONFIG_PATH = path.resolve(__dirname, '../../config/channel.yaml');
+
+// Try multiple possible paths for the config file
+const POSSIBLE_CONFIG_PATHS = [
+  path.resolve(__dirname, '../../config/channel.yaml'), // Development path
+  path.resolve('/home/site/wwwroot/config/channel.yaml'), // Azure App Service path
+];
+
+// Find the first existing config file
+function findConfigPath(): string {
+  for (const configPath of POSSIBLE_CONFIG_PATHS) {
+    try {
+      if (fsSync.existsSync(configPath)) {
+        logger.info('Found config file at path', { path: configPath });
+        return configPath;
+      }
+    } catch (error) {
+      // Continue to next path
+    }
+  }
+
+  logger.error('Channel config file not found in any paths', {
+    searchedPaths: POSSIBLE_CONFIG_PATHS,
+    cwd: process.cwd(),
+    __dirname: __dirname,
+  });
+  throw new Error(`Channel config file not found in any of these paths: ${POSSIBLE_CONFIG_PATHS.join(', ')}`);
+}
+
+const CHANNEL_CONFIG_PATH = findConfigPath();
 
 class ChannelConfigManager {
   private config: ChannelConfig | null = null;
@@ -247,6 +275,7 @@ class ChannelConfigManager {
    */
   public stopWatching(): void {
     if (this.isWatching) {
+      // TODO: change to async
       fsSync.unwatchFile(CHANNEL_CONFIG_PATH);
       this.isWatching = false;
       logger.info('Stopped watching channel config file');

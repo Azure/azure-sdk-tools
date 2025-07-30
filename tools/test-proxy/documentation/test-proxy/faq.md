@@ -110,7 +110,7 @@ While it is very possible that local users may encounter errors due to misconfig
 
 To ensure that the appropriate dev-cert is being used:
 
-- Check validity of current certificate. The dev cert will always be located at `eng/common/testproxy/dotnet-devcert.pfx in each language repo.
+- Check validity of current certificate. The dev cert will always be located at `eng/common/testproxy/dotnet-devcert.pfx` in each language repo.
   - On `windows`: `certutil -dump eng/common/testproxy/dotnet-devcert.pfx`. Enter `password` for the password when asked.
   - On `linux/mac`, you must have `openssl` installed, then: `openssl pkcs12 -in eng/common/testproxy/dotnet-devcert.pfx -nokeys -clcerts -passin pass:password | openssl x509 -noout -enddate`
   - If the current date DOES NOT fall within the date range of the cert, **expiration is the problem**.

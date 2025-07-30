@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public static IList<LabelData> getLabelsFromCsv(string csvContent)
+        public static IList<LabelData> GetLabelsFromCsv(string csvContent)
         {
             using var reader = new StringReader(csvContent);
             using var csvReader = new CsvReader(reader, config);
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
         {
-            var records = getLabelsFromCsv(csvContent);
+            var records = GetLabelsFromCsv(csvContent);
 
             foreach (var record in records)
             {
@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             IList<LabelData> records;
 
-            records = getLabelsFromCsv(csvContent);
+            records = GetLabelsFromCsv(csvContent);
 
             var newRecords = records
                 .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })

@@ -128,16 +128,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
         }
 
-        public Task<RepositoryContentChangeSet> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
         {
             // Create a mock RepositoryContentChangeSet
             var mockContent = CreateMockRepositoryContent(System.IO.Path.GetFileName(path), path, content);
             var mockCommit = CreateMockCommit(message, sha);
-            
-            var changeSet = new RepositoryContentChangeSet(
-                content: mockContent,
-                commit: mockCommit
-            );
+
+            var changeSet = $"Updated {path} with commit message {mockCommit}";
 
             return Task.FromResult(changeSet);
         }

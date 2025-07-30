@@ -7,6 +7,12 @@ using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
+    public enum CreateBranchStatus
+    {
+        Created,
+        AlreadyExists,
+    }
+
 public class GitConnection
     {
         private GitHubClient? _gitHubClient; // Backing field for the property
@@ -80,7 +86,7 @@ public class GitConnection
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
-        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
     }
 
@@ -335,14 +341,14 @@ public class GitConnection
             }
         }
 
-        public async Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        public async Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
         {
             try
             {
                 var branchExists = await GetBranchAsync(repoOwner, repoName, branchName);
                 if (branchExists)
                 {
-                    return $"Branch '{branchName}' already exists. Compare URL: https://github.com/{repoOwner}/{repoName}/compare/main...{branchName}";
+                    return CreateBranchStatus.AlreadyExists;
                 }
 
                 // Get the base branch reference first
@@ -352,15 +358,15 @@ public class GitConnection
                 var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
                 var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
 
-                return $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
+                return CreateBranchStatus.Created;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
-                return $"Error creating branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}";
+                throw;
             }
         }
-        
+
         public async Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
         {
             try

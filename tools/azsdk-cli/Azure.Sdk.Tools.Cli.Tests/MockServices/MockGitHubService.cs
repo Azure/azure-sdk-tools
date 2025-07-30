@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 {
     public class MockGitHubService : IGitHubService
     {
-        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
         {
             throw new NotImplementedException();
         }

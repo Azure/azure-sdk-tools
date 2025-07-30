@@ -160,9 +160,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogInformation($"Branch creation result: {branchResult}");
 
                 // If branch already exists, return early with the compare URL
-                if (branchResult.Contains("already exists"))
+                if (branchResult == CreateBranchStatus.AlreadyExists)
                 {
-                    return $"Result: {branchResult}";
+                    return $"Branch 'add_service_label_{normalizedLabel}' already exists. Compare URL: https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}";
                 }
 
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");

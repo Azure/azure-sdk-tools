@@ -55,7 +55,7 @@ export class StorageService {
             const listOptions = prefix ? { prefix } : undefined;
             
             for await (const blob of containerClient.listBlobsFlat(listOptions)) {
-                // blobs.push(blob.name);
+                blobs.push(blob.name);
             }
             
             return blobs;

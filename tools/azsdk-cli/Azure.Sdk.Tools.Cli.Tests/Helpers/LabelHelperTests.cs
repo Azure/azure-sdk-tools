@@ -7,13 +7,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 internal class LabelHelperTests
 {
     private ILabelHelper labelHelper;
-    private TestLogger<LabelHelper> testLogger;
 
     [SetUp]
     public void Setup()
     {
-        testLogger = new TestLogger<LabelHelper>();
-        labelHelper = new LabelHelper(testLogger);
+        labelHelper = new LabelHelper(new TestLogger<LabelHelper>());
     }
 
     [Test]
@@ -21,7 +19,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.Exists));
+        Assert.That(actual, Is.EqualTo(LabelHelper.ServiceLabelStatus.Exists));
     }
 
     [Test]
@@ -29,7 +27,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "NonExistentService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.DoesNotExist));
+        Assert.That(actual, Is.EqualTo(LabelHelper.ServiceLabelStatus.DoesNotExist));
     }
 
     [Test]
@@ -37,7 +35,7 @@ internal class LabelHelperTests
     {
         var csvContent = "TestService,Description,123456\nAnotherService,Description2,e99695";
         var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.NotAServiceLabel));
+        Assert.That(actual, Is.EqualTo(LabelHelper.ServiceLabelStatus.NotAServiceLabel));
     }
 
     [Test]
@@ -45,7 +43,7 @@ internal class LabelHelperTests
     {
         var csvContent = "\"Service - TestService\",\"Description with commas, and stuff\\\",e99695\nAnotherService,Description2,e99695";
 
-        var records = labelHelper.getLabelsFromCsv(csvContent);
+        var records = LabelHelper.GetLabelsFromCsv(csvContent);
         Assert.That(records.Count, Is.EqualTo(2));
         Assert.That(records[0].Name, Is.EqualTo("Service - TestService"));
         Assert.That(records[0].Description, Is.EqualTo("Description with commas, and stuff\\"));

@@ -10,13 +10,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public LabelHelper.ResultType CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
         public string NormalizeLabel(string label);
+        public List<Label> getLabelsFromCsv(string csvContent);
     }
 
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        private List<Label> getLabelsFromCsv(string csvContent)
+        public List<Label> getLabelsFromCsv(string csvContent)
         {
             using var reader = new StringReader(csvContent);
             using var csvReader = new CsvReader(reader, config);
@@ -75,29 +76,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var csvWriter = new CsvWriter(writer, config);
             csvWriter.WriteRecords(newRecords);
             return writer.ToString();
-        }
-
-        // This should probably be replaced with a 3rd party CSV parser
-        // TODO: This should probably be internal or private. (Is there a way to test it if it's private?)
-        public static List<string> ParseCsvLine(string line)
-        {
-            var columns = new List<string>();
-
-            using var reader = new StringReader(line);
-            var config = new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture);
-            config.BadDataFound = null; // Ignore bad data
-            using var csv = new CsvReader(reader, config);
-
-            if (csv.Read())
-            {
-                var fieldCount = csv.Parser.Count;
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    columns.Add(csv.GetField(i) ?? string.Empty);
-                }
-            }
-
-            return columns;
         }
 
         public string NormalizeLabel(string label)

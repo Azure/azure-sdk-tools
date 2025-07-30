@@ -43,17 +43,16 @@ internal class LabelHelperTests
     [Test]
     public void TestCheckServiceLabel_WithComplexCsvFormat()
     {
-
         var csvContent = "\"Service - TestService\",\"Description with commas, and stuff\\\",e99695\nAnotherService,Description2,e99695";
 
-        var column = LabelHelper.ParseCsvLine(csvContent.Split('\n')[0]);
-        Assert.That(column.Count, Is.EqualTo(3));
-        Assert.That(column[0], Is.EqualTo("Service - TestService"));
-        Assert.That(column[1], Is.EqualTo("Description with commas, and stuff\\"));
-        Assert.That(column[2], Is.EqualTo("e99695"));
-
-        var actual = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ResultType.Exists));
+        var records = labelHelper.getLabelsFromCsv(csvContent);
+        Assert.That(records.Count, Is.EqualTo(2));
+        Assert.That(records[0].Name, Is.EqualTo("Service - TestService"));
+        Assert.That(records[0].Description, Is.EqualTo("Description with commas, and stuff\\"));
+        Assert.That(records[0].Color, Is.EqualTo("e99695"));
+        Assert.That(records[1].Name, Is.EqualTo("AnotherService"));
+        Assert.That(records[1].Description, Is.EqualTo("Description2"));
+        Assert.That(records[1].Color, Is.EqualTo("e99695"));
     }
 
     [Test]

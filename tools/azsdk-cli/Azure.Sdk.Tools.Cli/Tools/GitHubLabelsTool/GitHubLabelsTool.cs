@@ -95,6 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
+                SetFailure();
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
                 return $"Error occurred while checking service label '{serviceLabel}': {ex.Message}";
             }            
@@ -109,7 +110,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
                 if (contents == null || contents.Count == 0)
                 {
-                    // TODO: SetFailure()?
                     throw new InvalidOperationException("Could not retrieve common-labels.csv file");
                 }
 
@@ -129,6 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
+                SetFailure();
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
                 throw;
             }
@@ -213,6 +214,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
+                SetFailure();
                 logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
 
                 var errorResponse = new GenericResponse()

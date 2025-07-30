@@ -45,7 +45,7 @@ internal class LabelHelperTests
     {
         var csvContent = "\"Service - TestService\",\"Description with commas, and stuff\\\",e99695\nAnotherService,Description2,e99695";
 
-        var records = labelHelper.getLabelsFromCsv(csvContent);
+        var records = LabelHelper.getLabelsFromCsv(csvContent);
         Assert.That(records.Count, Is.EqualTo(2));
         Assert.That(records[0].Name, Is.EqualTo("Service - TestService"));
         Assert.That(records[0].Description, Is.EqualTo("Description with commas, and stuff\\"));

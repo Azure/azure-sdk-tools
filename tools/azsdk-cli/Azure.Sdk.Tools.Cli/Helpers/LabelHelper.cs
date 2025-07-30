@@ -10,14 +10,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public LabelHelper.ResultType CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
         public string NormalizeLabel(string label);
-        public List<LabelData> getLabelsFromCsv(string csvContent);
     }
 
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public List<LabelData> getLabelsFromCsv(string csvContent)
+        public static IList<LabelData> getLabelsFromCsv(string csvContent)
         {
             using var reader = new StringReader(csvContent);
             using var csvReader = new CsvReader(reader, config);
@@ -65,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            List<LabelData> records;
+            IList<LabelData> records;
 
             records = getLabelsFromCsv(csvContent);
 

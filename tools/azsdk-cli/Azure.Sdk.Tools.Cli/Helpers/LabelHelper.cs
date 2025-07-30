@@ -10,18 +10,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public LabelHelper.ResultType CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
         public string NormalizeLabel(string label);
-        public List<Label> getLabelsFromCsv(string csvContent);
+        public List<LabelData> getLabelsFromCsv(string csvContent);
     }
 
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public List<Label> getLabelsFromCsv(string csvContent)
+        public List<LabelData> getLabelsFromCsv(string csvContent)
         {
             using var reader = new StringReader(csvContent);
             using var csvReader = new CsvReader(reader, config);
-            return csvReader.GetRecords<Label>().ToList();
+            return csvReader.GetRecords<LabelData>().ToList();
         }
 
         private static CsvConfiguration config = new CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
@@ -29,12 +29,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             HasHeaderRecord = false,
             NewLine = "\n",
         };
-        
+
         public enum ResultType
         {
             Exists,
             DoesNotExist,
-            NotAServiceLabel
+            NotAServiceLabel,
+            InReview
         }
 
         public ResultType CheckServiceLabel(string csvContent, string serviceName)
@@ -64,12 +65,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            List<Label> records;
+            List<LabelData> records;
 
             records = getLabelsFromCsv(csvContent);
 
             var newRecords = records
-                .Append(new Label { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
+                .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
                 .OrderBy(label => label.Name, StringComparer.Ordinal);
 
             var writer = new StringWriter();
@@ -91,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
     }
 
-    public class Label
+    public class LabelData
     {
         public string Name { get; set; }
         public string Description { get; set; }

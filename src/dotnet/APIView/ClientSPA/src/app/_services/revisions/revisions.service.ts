@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map, take } from 'rxjs';
 
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { APIRevision } from 'src/app/_models/revision';
+import { APIRevision, APIRevisionGroupedByLanguage } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
 import { ActivatedRoute } from '@angular/router';
 import { INDEX_PAGE_NAME } from 'src/app/_helpers/router-helpers';
@@ -19,6 +19,10 @@ export class APIRevisionsService {
 
   getLatestAPIRevision(reviewId: string): Observable<APIRevision> {
     return this.http.get<APIRevision>(this.baseUrl + `/${reviewId}/latest`, { withCredentials: true });
+  }
+
+  getCrossLanguageAPIRevisions(crossLanguageId: string): Observable<APIRevisionGroupedByLanguage[]> {
+    return this.http.get<APIRevisionGroupedByLanguage[]>(this.baseUrl + `/${crossLanguageId}/crosslanguage`, { withCredentials: true });
   }
 
   getAPIRevisions(noOfItemsRead: number, pageSize: number,

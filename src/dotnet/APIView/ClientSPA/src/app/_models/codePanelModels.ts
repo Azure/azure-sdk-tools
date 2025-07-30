@@ -7,7 +7,9 @@ export enum CodePanelRowDatatype {
   CodeLine = "codeLine",
   Documentation = "documentation",
   Diagnostics = "diagnostics",
-  CommentThread = "commentThread"
+  CommentThread = "commentThread",
+  CrossLanguage = "crossLanguage",
+  Separator = "separator"
 }
 
 export class CodePanelRowData {
@@ -16,6 +18,7 @@ export class CodePanelRowData {
   rowOfTokens: StructuredToken[];
   nodeId: string;
   nodeIdHashed: string;
+  crossLanguageId: string;
   rowPositionInGroup: number; // a group of consecutive rows can have the same nodeIdHashed. With this you can index specific rows within the group
   associatedRowPositionInGroup: number;
   rowClasses: Set<string>;
@@ -25,6 +28,7 @@ export class CodePanelRowData {
   toggleCommentsClasses: string;
   diagnostics: CodeDiagnostic;
   comments: CommentItemModel[];
+  crossLanguageLines: Map<string, CrossLanguageRowDto>; // key: language
   showReplyTextBox: boolean;
   isResolvedCommentThread: boolean;
   commentThreadIsResolvedBy: string;
@@ -45,10 +49,12 @@ export class CodePanelRowData {
     toggleCommentsClasses: string = '',
     diagnostics: CodeDiagnostic = new CodeDiagnostic(),
     comments: CommentItemModel[] = [],
+    crossLanguageLines: Map<string, CrossLanguageRowDto> = new Map<string, CrossLanguageRowDto>(),
     showReplyTextBox: boolean = false,
     isResolvedCommentThread: boolean = false,
     commentThreadIsResolvedBy: string = '',
-    isHiddenAPI: boolean = false
+    isHiddenAPI: boolean = false,
+    crossLanguageId: string = '',
   ) {
     this.type = type;
     this.lineNumber = lineNumber;
@@ -64,10 +70,12 @@ export class CodePanelRowData {
     this.toggleCommentsClasses = toggleCommentsClasses;
     this.diagnostics = diagnostics;
     this.comments = comments;
+    this.crossLanguageLines = crossLanguageLines;
     this.showReplyTextBox = showReplyTextBox;
     this.isResolvedCommentThread = isResolvedCommentThread;
     this.commentThreadIsResolvedBy = commentThreadIsResolvedBy;
     this.isHiddenAPI = isHiddenAPI;
+    this.crossLanguageId = crossLanguageId;
   }
 }
 
@@ -108,4 +116,24 @@ export class CodePanelNodeMetaData {
     this.isProcessed = false;
     this.relatedNodeIdHash = '';
   }
+}
+
+export interface CrossLanguageRowDto {
+  codeLines: CodePanelRowData[]
+  apiRevisionId: string;
+  reviewId: string;
+  language: string;
+  packageVersion: string;
+  packageName: string;
+}
+
+export interface CrossLanguageContentDto {
+  // key: crossLanguageId
+  // value: CodePanelRowData
+  content: { [key: string]: CodePanelRowData[] };
+  apiRevisionId: string;
+  reviewId: string;
+  language: string;
+  packageVersion: string;
+  packageName: string;
 }

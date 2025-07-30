@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Amazon.Runtime;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -12,7 +11,6 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -56,6 +54,28 @@ namespace APIViewWeb.LeanControllers
         {
             var result = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: reviewId, apiRevisionType: apiRevisionType);
             return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Get APIRevisions with the same Cross Language Id
+        /// </summary>
+        /// <param name="crossLanguageId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        [HttpGet("{crossLanguageId}/crosslanguage", Name = "GetCrossLanguageAPIRevision")]
+        public async Task<ActionResult<APIRevisionListItemModel>> GetCrossLanguageAPIRevision(string crossLanguageId, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var results = new List<APIRevisionListItemModel>();
+            foreach (var language in LanguageServiceHelpers.SupportedLanguages)
+            {
+                results.AddRange(await _apiRevisionsManager.GetCrossLanguageAPIRevisionsAsync(crossLanguageId: crossLanguageId, language: language, apiRevisionType: apiRevisionType));
+            }
+            var groupResults = results.GroupBy(r => r.Language).Select(g => new
+            {
+               Label = g.Key,
+               Items = g.ToList()
+            });
+            return new LeanJsonResult(groupResults, StatusCodes.Status200OK);
         }
 
         /// <summary>

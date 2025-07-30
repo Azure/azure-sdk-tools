@@ -1,12 +1,12 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { filter, max, take, takeUntil } from 'rxjs/operators';
+import { filter, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, convertRowOfTokensToString, DIFF_ADDED, DIFF_REMOVED, isDiffRow } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, DIFF_ADDED, DIFF_REMOVED, getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
-import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
+import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto} from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -17,7 +17,7 @@ import { fromEvent, Observable, Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
-import { DoublyLinkedList, DoublyLinkedListNode } from 'src/app/_helpers/doubly-linkedlist';
+import { DoublyLinkedList } from 'src/app/_helpers/doubly-linkedlist';
 
 @Component({
   selector: 'app-code-panel',
@@ -26,6 +26,7 @@ import { DoublyLinkedList, DoublyLinkedListNode } from 'src/app/_helpers/doubly-
 })
 export class CodePanelComponent implements OnChanges{
   @Input() codePanelRowData: CodePanelRowData[] = [];
+  @Input() crossLanguageRowData: CrossLanguageContentDto[] = [];
   @Input() codePanelData: CodePanelData | null = null;
   @Input() isDiffView: boolean = false;
   @Input() language: string | undefined;
@@ -143,39 +144,30 @@ export class CodePanelComponent implements OnChanges{
   }
 
   getRowClassObject(row: CodePanelRowData) {
-    let classObject: { [key: string]: boolean } = {};
-    if (row.rowClasses) {
-      for (let className of Array.from(row.rowClasses)) {
-        classObject[className] = true;
-      }
-    }
+    return getCodePanelRowDataClass(row);
+  }
 
-    if (row.isHiddenAPI) {
-      classObject['hidden-api'] = true;
+  getLineNumberClassObject(row: CodePanelRowData) {
+    let classObject: { [key: string]: boolean } = {};
+    classObject['line-number'] = true;
+    if (row.crossLanguageId && this.crossLanguageRowData.some(item => row.crossLanguageId.toLowerCase() in item.content)) {
+      classObject['has-cross-language'] = true;
     }
     return classObject;
   }
 
   getTokenClassObject(token: StructuredToken) {
-    let classObject: { [key: string]: boolean } = {};
-    if (token.renderClasses) {
-      for (let className of Array.from(token.renderClasses)) {
-        classObject[className] = true;
-      }
-    }
+    return getStructuredTokenClass(token);
+  }
 
-    if (token.properties && 'NavigateToUrl' in token.properties) {
-      classObject['url-token'] = true;
+  getLineMenu(row: CodePanelRowData) {
+    if (row.crossLanguageId && this.crossLanguageRowData.some(item => row.crossLanguageId.toLowerCase() in item.content)) {
+      const menu = [...this.menuItemsLineActions];
+      menu.push({ label: 'Cross language', icon: 'bi bi-arrow-left-right', command: (event) => this.showCrossLanguageView(event, row.crossLanguageId) });
+      return menu;
+    } else {
+      return this.menuItemsLineActions;
     }
-
-    if (token.properties && 'NavigateToId' in token.properties) {
-      classObject['nav-token'] = true;
-    }
-
-    if (token.tags && new Set(token.tags).has('Deprecated')) {
-      classObject['deprecated-token'] = true;
-    }
-    return classObject;
   }
 
   getNavigationId(token: StructuredToken) {
@@ -648,6 +640,10 @@ export class CodePanelComponent implements OnChanges{
     this.navigateToCommentThread(event.direction);
   }
 
+  handleCloseCrossLanguageViewEmitter(event: any) {
+    this.removeItemsFromScroller(event[0], event[1] as CodePanelRowDatatype);
+  }
+
   navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
@@ -874,6 +870,33 @@ export class CodePanelComponent implements OnChanges{
     const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
     const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
     navigator.clipboard.writeText(codeLineText);
+  }
+
+  private showCrossLanguageView(event: MenuItemCommandEvent, crossLanguageId: string) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+
+    const crossLanguageRow = new CodePanelRowData();
+    crossLanguageRow.type = CodePanelRowDatatype.CrossLanguage;
+
+    for (const entry of this.crossLanguageRowData) {
+      const crossLangLines = entry.content[crossLanguageId.toLowerCase()];
+      const crossLangaugeLines = {
+        codeLines: crossLangLines,
+        apiRevisionId: entry.apiRevisionId,
+        reviewId: entry.reviewId,
+        language: entry.language,
+        packageName: entry.packageName,
+        packageVersion: entry.packageVersion,
+      } as CrossLanguageRowDto;
+      crossLanguageRow.crossLanguageLines.set(entry.language, crossLangaugeLines);
+    }
+
+    crossLanguageRow.nodeIdHashed = codeLine.nodeIdHashed;
+    crossLanguageRow.nodeId = codeLine.nodeId;
+    crossLanguageRow.rowClasses = new Set<string>(['cross-language-view']);
+    crossLanguageRow.associatedRowPositionInGroup = codeLine.rowPositionInGroup;
+    this.insertItemsIntoScroller([crossLanguageRow], crossLanguageRow.nodeIdHashed, codeLine.type, crossLanguageRow.associatedRowPositionInGroup);
   }
 
   private highlightActiveSearchMatch(scrollIntoView: boolean = true) {

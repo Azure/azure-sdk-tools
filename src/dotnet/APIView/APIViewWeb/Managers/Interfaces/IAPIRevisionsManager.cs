@@ -17,6 +17,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId, string packageVersion = "", APIRevisionType apiRevisionType = APIRevisionType.All);
         public Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams);
         public Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId = null, IEnumerable<APIRevisionListItemModel> apiRevisions = null, APIRevisionType apiRevisionType = APIRevisionType.All);
+        public Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, string language, APIRevisionType apiRevisionType = APIRevisionType.All);
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(ClaimsPrincipal user, string apiRevisionId);
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId);
         public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType, string reviewId = null, string packageName = null, string language = null,

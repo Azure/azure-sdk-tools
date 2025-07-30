@@ -99,3 +99,8 @@ export interface CodePanelToggleableData {
   diagnostics: CodePanelRowData[]
   comments: CodePanelRowData[]
 }
+
+export interface APIRevisionGroupedByLanguage {
+  label: string
+  items: APIRevision[]
+}

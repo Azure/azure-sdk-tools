@@ -140,6 +140,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult("Need to implement this");
         }
 
+        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null)
+        {
+            // Create mock pull requests for testing
+            var mockPullRequests = new List<PullRequest?>();
+            
+            // Add a mock pull request that matches the title search term
+            if (titleSearchTerm.Contains("Service Label") || titleSearchTerm.Contains("Test"))
+            {
+                var mockPr = CreateMockPullRequest(repoOwner, repoName, 123);
+                mockPullRequests.Add(mockPr);
+            }
+            
+            return Task.FromResult<IReadOnlyList<PullRequest?>>(mockPullRequests.AsReadOnly());
+        }
+
         private Commit CreateMockCommit(string message, string sha)
         {
             var user = CreateMockUser("testuser", 123456);

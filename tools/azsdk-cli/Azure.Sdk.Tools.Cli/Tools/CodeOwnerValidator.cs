@@ -58,24 +58,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                _logger.LogInformation("Starting validation for GitHub user: {Username}", username);
-
-                // Validate organizations (Microsoft and Azure membership)
                 var hasRequiredOrgs = await ValidateOrganizationsAsync(username, result);
 
                 // Validate write permissions on azure-sdk-for-net
                 var hasWritePermission = await ValidatePermissionsAsync(username);
                 result.HasWritePermission = hasWritePermission;
 
-                // Final validation
                 result.IsValidCodeOwner = hasRequiredOrgs && hasWritePermission;
                 result.Status = "Success";
                 result.Message = result.IsValidCodeOwner
                     ? "Valid code owner"
                     : "Not a valid code owner";
-
-                _logger.LogInformation("Validation completed for {Username}. IsValid: {IsValid}",
-                    username, result.IsValidCodeOwner);
 
                 return result;
             }

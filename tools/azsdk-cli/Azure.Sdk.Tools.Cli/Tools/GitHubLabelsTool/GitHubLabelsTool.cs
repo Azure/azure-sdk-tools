@@ -9,7 +9,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
-//using CsvHelper;
+using CsvHelper;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IOutputService output,
-        /*ILabelHelper labelHelper,*/
+        ILabelHelper labelHelper,
         IGitHubService githubService
     ) : MCPTool
     {
@@ -87,15 +87,29 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns its details if found.")]
-        public async Task<bool> CheckServiceLabel(string serviceLabel)
+        public async Task<string> CheckServiceLabel(string serviceLabel)
         {
             try
             {
-                logger.LogInformation($"Checking service label: {serviceLabel}");
+                return (await getServiceLabelInfo(serviceLabel)).ToString();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
+                return $"Error occurred while checking service label '{serviceLabel}': {ex.Message}";
+            }            
+        }
+
+        public async Task<LabelHelper.ResultType> getServiceLabelInfo(string serviceLabel)
+        {
+            try
+            {
+                
 
                 var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
                 if (contents == null || contents.Count == 0)
                 {
+                    // TODO: SetFailure()?
                     throw new InvalidOperationException("Could not retrieve common-labels.csv file");
                 }
 
@@ -106,17 +120,54 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     throw new InvalidOperationException("common-labels.csv file is empty");
                 }
 
-                return true;
+                var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
-                //var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
-
-                //logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
-                //return result;
+                if (result == LabelHelper.ResultType.Exists)
+                {
+                    return result;
+                }
+                else if (await CheckServiceLabelInReview(serviceLabel))
+                {
+                    return LabelHelper.ResultType.InReview;
+                }
+                else
+                {
+                    return result;
+                }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
-                SetFailure();
+                throw;
+            }
+        }
+
+        public async Task<bool> CheckServiceLabelInReview(string serviceLabel)
+        {
+            try
+            {
+                var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+
+                if (pullRequests == null || !pullRequests.Any())
+                {
+                    logger.LogInformation("No pull request found for service labels");
+                    return false;
+                }
+
+                foreach (var pr in pullRequests.Where(p => p != null))
+                {
+                    if (pr != null && pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                logger.LogInformation($"No pull requests found for {serviceLabel}.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error retrieving pull requests: {ex.Message}");
                 return false;
             }
         }
@@ -126,42 +177,38 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var normalizedLabel = label
-                    .Replace(" - ", "-")
-                    .Replace(" ", "-")
-                    .Replace("/", "-")          
-                    .Replace("_", "-")
-                    .Trim('-')
-                    .ToLowerInvariant();
+                var normalizedLabel = labelHelper.NormalizeLabel(label);
+
+                var checkResult = await getServiceLabelInfo(normalizedLabel);
 
                 // Create a new branch
-                if (await CheckServiceLabel(label))
+                if (checkResult == LabelHelper.ResultType.Exists)
                 {
                     logger.LogInformation($"Service label '{label}' already exists. No action taken.");
                     return $"Service label '{label}' already exists.";
                 }
-                else
+                else if (checkResult == LabelHelper.ResultType.NotAServiceLabel)
                 {
-                    var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
-                    logger.LogInformation($"Branch creation result: {branchResult}");
-                    
-                    // If branch already exists, return early with the compare URL
-                    if (branchResult.Contains("already exists"))
+                    logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
+                    return $"Label '{label}' exists but is not a service label. Try a different label.";
+                }
+
+                var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
+                logger.LogInformation($"Branch creation result: {branchResult}");
+
+                // If branch already exists, return early with the compare URL
+                if (branchResult.Contains("already exists"))
+                {
+                    var branchResponse = new GenericResponse()
                     {
-                        var branchResponse = new GenericResponse()
-                        {
-                            Details = { 
-                                $"Result: {branchResult}"
-                            }
-                        };
-                        return output.Format(branchResponse);
-                    }
+                        Details = {
+                            $"Result: {branchResult}"
+                        }
+                    };
+                    return output.Format(branchResponse);
                 }
 
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
-
-                // Prepare the CSV line to insert
-                var csvLine = $"{label},,e99695";
 
                 // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
@@ -173,32 +220,32 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var csvContentString = csvContent[0].Content;
 
-                //var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
+                var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 
-                //await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
+                await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
 
                 // Create the pull request
-                /*var result = await githubService.CreatePullRequestAsync(
+                var result = await githubService.CreatePullRequestAsync(
                     repoName: "azure-sdk-tools",
                     repoOwner: "Azure",
                     baseBranch: "main",
                     // This is not sufficiently unique (Is better to make the CreateBranch method check for uniqueness or add a way to make each branch unique?)
                     headBranch: $"add_service_label_{normalizedLabel}",
-                    title: $"Add service label: {label}",
+                    title: $"[Service Label] Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
 
                     // TODO: Before merge, make this not draft
                     draft: true
-                );*/
+                );
 
-                //logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
+                logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
 
                 var response = new GenericResponse()
                 {
                     Status = "Success",
                     Details = { $"Service label '{label}' pull request created successfully." }
                 };
-                //response.Details.AddRange(result);
+                response.Details.AddRange(result);
 
                 return output.Format(response);
             }

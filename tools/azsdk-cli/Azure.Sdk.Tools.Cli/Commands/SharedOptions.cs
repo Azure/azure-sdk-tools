@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecValidationTools),
             typeof(GitHubLabelsTool),
             typeof(TestAnalysisTool),
-            typeof(MockTool),
+            typeof(CodeownerTools),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

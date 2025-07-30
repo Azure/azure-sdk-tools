@@ -1,66 +1,81 @@
 using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
 using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ILabelHelper
     {
-        public bool CheckServiceLabel(string csvContent, string serviceName);
+        public LabelHelper.ResultType CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
+        public string NormalizeLabel(string label);
     }
+
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public bool CheckServiceLabel(string csvContent, string serviceName)
+        private List<LabelData> getLabelsFromCsv(string csvContent)
         {
-            var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            using var reader = new StringReader(csvContent);
+            using var csvReader = new CsvReader(reader, config);
+            return csvReader.GetRecords<LabelData>().ToList();
+        }
 
-            foreach (var line in lines)
+        private static CsvConfiguration config = new CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
+        {
+            HasHeaderRecord = false,
+            NewLine = "\n",
+        };
+
+        public enum ResultType
+        {
+            Exists,
+            DoesNotExist,
+            NotAServiceLabel,
+            InReview
+        }
+
+        public ResultType CheckServiceLabel(string csvContent, string serviceName)
+        {
+            var records = getLabelsFromCsv(csvContent);
+
+            foreach (var record in records)
             {
-                var columns = ParseCsvLine(line);
-
-                // CSV format: Label, Description, Color
-                if (columns.Count >= 3)
+                if (record.Name.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                 {
-                    var labelName = columns[0].Trim();
-                    var colorCode = columns[2].Trim();
-
-                    // Only consider labels with the service label color code and check if it contains the service label
-                    if (colorCode.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase)
-                        && labelName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                    if (record.Color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
                     {
-                        return true;
+                        logger.LogInformation($"Service label '{serviceName}' exists in common-labels.csv.");
+                        return ResultType.Exists;
+                    }
+                    else
+                    {
+                        logger.LogWarning($"Label '{serviceName}' exists but is not a service label.");
+                        return ResultType.NotAServiceLabel;
                     }
                 }
+
             }
-            
-            return false;
+
+            return ResultType.DoesNotExist;
         }
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            // TODO: Extract this logic, write tests
-            // Output should be the resulting CSV string with the new service
-            // label added in the right place.
-            return string.Join(
-                "\n",
-                csvContent
-                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(ParseCsvLine)
-                    .Append(new List<string> { serviceLabel, "", ServiceLabelColorCode })
-                    .OrderBy(entry => entry[0], StringComparer.OrdinalIgnoreCase)
-                    .Select(entry => {
-                        // Use CsvHelper to properly format each line
-                        using var writer = new StringWriter();
-                        using var csv = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
-                        foreach (var field in entry)
-                            csv.WriteField(field);
-                        csv.NextRecord();
-                        return writer.ToString().TrimEnd();
-                    })
-            );
+            List<LabelData> records;
+
+            records = getLabelsFromCsv(csvContent);
+
+            var newRecords = records
+                .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
+                .OrderBy(label => label.Name, StringComparer.Ordinal);
+
+            var writer = new StringWriter();
+            var csvWriter = new CsvWriter(writer, config);
+            csvWriter.WriteRecords(newRecords);
+            return writer.ToString();
         }
 
         // This should probably be replaced with a 3rd party CSV parser
@@ -85,5 +100,24 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             return columns;
         }
+
+        public string NormalizeLabel(string label)
+        {
+            var normalizedLabel = label
+                    .Replace(" - ", "-")
+                    .Replace(" ", "-")
+                    .Replace("/", "-")
+                    .Replace("_", "-")
+                    .Trim('-')
+                    .ToLowerInvariant();
+            return normalizedLabel;
+        }
+    }
+
+    public class LabelData
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Color { get; set; }
     }
 }

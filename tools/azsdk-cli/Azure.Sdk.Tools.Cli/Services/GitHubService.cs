@@ -78,6 +78,7 @@ public class GitConnection
         public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
+        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch);
@@ -123,6 +124,71 @@ public class GitConnection
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             logger.LogInformation($"Branch name: {remoteBranch}");
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        public async Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null)
+        {
+            try
+            {
+                logger.LogInformation($"Searching for pull requests with title containing '{titleSearchTerm}' in {repoOwner}/{repoName}");
+                
+                // Build the search query
+                var searchQuery = $"repo:{repoOwner}/{repoName} is:pr \"{titleSearchTerm}\" in:title";
+
+                // Add state filter
+                if (state == ItemState.Open)
+                {
+                    searchQuery += " is:open";
+                }
+                else if (state == ItemState.Closed)
+                {
+                    searchQuery += " is:closed";
+                }
+                // If neither open nor closed, search all states (don't add filter)
+
+                var searchRequest = new SearchIssuesRequest(searchQuery)
+                {
+                    Type = IssueTypeQualifier.PullRequest,
+                    PerPage = 100 // Maximum allowed by GitHub API
+                };
+
+                var searchResult = await gitHubClient.Search.SearchIssues(searchRequest);
+                
+                if (searchResult?.Items == null || !searchResult.Items.Any())
+                {
+                    logger.LogInformation($"No pull requests found with title containing '{titleSearchTerm}'");
+                    return new List<PullRequest>();
+                }
+
+                // Convert Issues to PullRequests (GitHub Search API returns Issues for PRs)
+                var pullRequests = new List<PullRequest?>();
+                foreach (var issue in searchResult.Items)
+                {
+                    if (issue.PullRequest != null)
+                    {
+                        // Get the full PR details since search only returns basic info
+                        try
+                        {
+                            var fullPr = await gitHubClient.PullRequest.Get(repoOwner, repoName, issue.Number);
+                            pullRequests.Add(fullPr);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning($"Failed to get full details for PR #{issue.Number}: {ex.Message}");
+                            // Still add the basic info if we can't get full details
+                            pullRequests.Add(null);
+                        }
+                    }
+                }
+
+                logger.LogInformation($"Found {pullRequests.Count} pull requests with title containing '{titleSearchTerm}'");
+                return pullRequests;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error searching for pull requests with title '{titleSearchTerm}' in {repoOwner}/{repoName}");
+                throw;
+            }
         }
 
         private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch)

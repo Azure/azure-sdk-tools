@@ -23,8 +23,6 @@ import {
   makeSparseSpecDir,
   getPathToDependency,
   loadTspConfig,
-  createRemoteConfigLoader,
-  createLocalConfigLoader,
 } from "./utils.js";
 import { stringify } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -62,9 +60,7 @@ export async function initCommand(argv: any) {
   } else if (await doesFileExist(tspConfig)) {
     isUrl = false;
   }
-  const { config: configYaml } = isUrl
-                                  ? await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(tspConfig, createRemoteConfigLoader())
-                                  : await loadTspConfig<string>(tspConfig, createLocalConfigLoader());                                                        
+  const { config: configYaml } = await loadTspConfig(tspConfig);                                                      
   if (!configYaml) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
   }
@@ -161,8 +157,8 @@ export async function syncCommand(argv: any) {
   const emitterPackageJsonPath = getEmitterPackageJsonPath(repoRoot, tspLocation);
 
   const { config: resolvedConfig, rootMetadata: rootConfigPath } = localSpecRepo
-                                                                  ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
-                                                                  : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
+                                                                  ? await loadTspConfig(localSpecRepo)
+                                                                  : await loadTspConfig(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`);
   const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;
   // assume directory of root tspconfig.yaml is ${projectName}
   const dirSplit = rootConfigPathStr.split("/");
@@ -275,8 +271,8 @@ export async function generateCommand(argv: any) {
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
   const { rootMetadata: rootConfigPath } = localSpecRepo
-                                                                  ? await loadTspConfig<string>(localSpecRepo, createLocalConfigLoader())
-                                                                  : await loadTspConfig<{ url: string; directory: string; commit: string; repo: string }>(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`, createRemoteConfigLoader());
+                                                                  ? await loadTspConfig(localSpecRepo)
+                                                                  : await loadTspConfig(`https://raw.githubusercontent.com/${tspLocation.repo}/${tspLocation.commit}/${tspLocation.directory}/tspconfig.yaml`);
   const rootConfigPathStr = typeof rootConfigPath === "string" ? rootConfigPath : rootConfigPath.url;
   // assume directory of root tspconfig.yaml is ${projectName}
   const dirSplit = rootConfigPathStr.split("/");
@@ -290,7 +286,7 @@ export async function generateCommand(argv: any) {
   // Before compilation, ensure the temp tspconfig.yaml is fully resolved
   const tspConfigPath = joinPaths(srcDir, "tspconfig.yaml");
   if (await doesFileExist(tspConfigPath)) {
-    const { config: resolvedConfig } = await loadTspConfig<string>(tspConfigPath, createLocalConfigLoader());
+    const { config: resolvedConfig } = await loadTspConfig(tspConfigPath);
     await writeFile(tspConfigPath, stringify(resolvedConfig));
   }
   

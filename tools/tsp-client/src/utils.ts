@@ -8,7 +8,7 @@ import { TspLocation } from "./typespec.js";
 import { normalizeDirectory } from "./fs.js";
 import { parse as parseYaml } from "yaml";
 import { resolvePath } from "@typespec/compiler";
-import { downloadFile } from "./network.js";
+import { doesFileExist, downloadFile } from "./network.js";
 import { resolveTspConfigUrl } from "./typespec.js";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
@@ -189,25 +189,25 @@ function resolveAdditionalDirectoryPath(dirPath: string, configMetadata: any): s
 /**
  * Loads and merges TypeSpec configuration with inheritance support
  */
-export async function loadTspConfig<T>(
+export async function loadTspConfig(
   initialPath: string,
-  loader: ConfigLoader
-): Promise<{ config: any; rootMetadata: T }> {
+): Promise<{ config: any; rootMetadata: any }> {
   
   const visitedPaths = new Set<string>();
   const configChain: Array<{ config: any; metadata: any }> = [];
-  let rootMetadata: T | null = null;
-  
+  let rootMetadata = null;
+  const localLoader = createLocalConfigLoader();
+  const remoteLoader = createRemoteConfigLoader();
   // Phase 1: Build the inheritance chain using iterative traversal
   let currentPath: string | null = initialPath;
   while (currentPath) {
+    const loader: ConfigLoader = await doesFileExist(currentPath) ? localLoader : remoteLoader;
     // Prevent circular references
     const normalizedPath = loader.normalizeKey(currentPath);
     if (visitedPaths.has(normalizedPath)) {
       throw new Error(`Circular inheritance detected: ${normalizedPath} is already in the inheritance chain`);
     }
     visitedPaths.add(normalizedPath);
-
     // Load current config
     const { config, metadata } = await loader.loadConfig(currentPath);
     configChain.push({ config, metadata });
@@ -222,11 +222,10 @@ export async function loadTspConfig<T>(
       currentPath = loader.resolveParentPath(currentPath, config.extends);
     } else {
       // This is a root config - store its metadata and stop
-      rootMetadata = metadata as T;
+      rootMetadata = metadata;
       currentPath = null;
     }
   }
-  
   // Phase 2: Merge configs from root (last) to child (first)
   let mergedConfig = {};
   
@@ -277,8 +276,7 @@ export function createRemoteConfigLoader(): ConfigLoader {
         directory: configInfo.path,
         commit: configInfo.commit,
         repo: configInfo.repo
-      };
-      
+      };   
       return { config, metadata };
     },
     
@@ -319,7 +317,6 @@ export function createLocalConfigLoader(): ConfigLoader {
       const configData = await readFile(path, "utf8");
       const config = parseYaml(configData);
       const absolutePath = resolvePath(path);
-      
       return { config, metadata: absolutePath };
     },
     

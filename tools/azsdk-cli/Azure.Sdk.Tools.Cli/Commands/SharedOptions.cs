@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.CheckAllTool;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
 using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
@@ -12,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
+            typeof(CheckAllTool),
             typeof(CleanupTool),
             typeof(DownloadPromptsTool),
             typeof(LogAnalysisTool),

@@ -162,13 +162,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // If branch already exists, return early with the compare URL
                 if (branchResult.Contains("already exists"))
                 {
-                    var branchResponse = new GenericResponse()
-                    {
-                        Details = {
-                            $"Result: {branchResult}"
-                        }
-                    };
-                    return output.Format(branchResponse);
+                    return $"Result: {branchResult}";
                 }
 
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
@@ -199,26 +193,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
 
-                var response = new GenericResponse()
-                {
-                    Status = "Success",
-                    Details = { $"Service label '{label}' pull request created successfully." }
-                };
-                response.Details.AddRange(result);
-
-                return output.Format(response);
+                return $"Service label '{label}' pull request created successfully.";
             }
             catch (Exception ex)
             {
                 SetFailure();
                 logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
 
-                var errorResponse = new GenericResponse()
-                {
-                    Status = "Failed",
-                    Details = { $"Failed to create pull request for service label '{label}'. Error: {ex.Message}" }
-                };
-                return output.Format(errorResponse);
+                return  $"Failed to create pull request for service label '{label}'. Error: {ex.Message}";
             }
         }
     }

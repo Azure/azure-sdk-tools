@@ -12,8 +12,7 @@ internal class LabelHelperTests
     [SetUp]
     public void Setup()
     {
-        testLogger = new TestLogger<LabelHelper>();
-        labelHelper = new LabelHelper(testLogger);
+        labelHelper = new LabelHelper(new TestLogger<LabelHelper>());
     }
 
     [Test]

@@ -71,8 +71,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
                 .OrderBy(label => label.Name, StringComparer.Ordinal);
 
-            var writer = new StringWriter();
-            var csvWriter = new CsvWriter(writer, config);
+            using var writer = new StringWriter();
+            using var csvWriter = new CsvWriter(writer, config);
             csvWriter.WriteRecords(newRecords);
             return writer.ToString();
         }

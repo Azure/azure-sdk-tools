@@ -314,7 +314,7 @@ public class GitConnection
                 throw;
             }
         }
-        
+
         /// <summary>
         /// Helper method to get contents from a GitHub repository path.
         /// </summary>
@@ -366,9 +366,7 @@ public class GitConnection
         {
             try
             {
-                var existingBranches = await gitHubClient.Repository.Branch.GetAll(repoOwner, repoName);
-                var branchExists = existingBranches.Any(b => b.Name.Equals(branchName, StringComparison.OrdinalIgnoreCase));
-
+                var branchExists = await GetBranchAsync(repoOwner, repoName, branchName);
                 if (branchExists)
                 {
                     return $"Branch '{branchName}' already exists. Compare URL: https://github.com/{repoOwner}/{repoName}/compare/main...{branchName}";
@@ -380,13 +378,31 @@ public class GitConnection
                 // Create the new branch reference
                 var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
                 var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
-                
-                return  $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
+
+                return $"Branch '{branchName}' created successfully in {repoOwner}/{repoName}. Branch URL: https://github.com/{repoOwner}/{repoName}/tree/{branchName}";
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
                 return $"Error creating branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}";
+            }
+        }
+        
+        public async Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            try
+            {
+                var branch = await gitHubClient.Repository.Branch.Get(repoOwner, repoName, branchName);
+                return branch != null;
+            }
+            catch (NotFoundException)
+            {
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error getting branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}");
+                return false;
             }
         }
     }

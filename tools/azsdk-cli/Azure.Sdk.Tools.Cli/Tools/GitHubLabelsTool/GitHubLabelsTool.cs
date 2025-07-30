@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case createServiceLabelCommandName:
                     var proposedServiceLabel = commandParser.GetValueForOption(proposedServiceLabelOpt);
                     var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
-                    var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? ""); // Should probably just return the created PR link.
+                    var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
                     output.Output($"Create service label result: {createdPRLink}");
                     return;
                 default:
@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return output.Format(branchResponse);
                 }
 
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
+                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
                 // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
@@ -192,7 +192,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoName: "azure-sdk-tools",
                     repoOwner: "Azure",
                     baseBranch: "main",
-                    // This is not sufficiently unique (Is better to make the CreateBranch method check for uniqueness or add a way to make each branch unique?)
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",

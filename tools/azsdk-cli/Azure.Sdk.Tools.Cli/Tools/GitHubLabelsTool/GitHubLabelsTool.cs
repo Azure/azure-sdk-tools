@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }            
         }
 
-        public async Task<LabelHelper.ResultType> getServiceLabelInfo(string serviceLabel)
+        public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
             try
             {
@@ -145,12 +145,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var checkResult = await getServiceLabelInfo(normalizedLabel);
 
                 // Create a new branch
-                if (checkResult == LabelHelper.ResultType.Exists)
+                if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
                 {
                     logger.LogInformation($"Service label '{label}' already exists. No action taken.");
                     return $"Service label '{label}' already exists.";
                 }
-                else if (checkResult == LabelHelper.ResultType.NotAServiceLabel)
+                else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
                 {
                     logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
                     return $"Label '{label}' exists but is not a service label. Try a different label.";

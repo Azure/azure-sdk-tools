@@ -78,29 +78,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return writer.ToString();
         }
 
-        // This should probably be replaced with a 3rd party CSV parser
-        // TODO: This should probably be internal or private. (Is there a way to test it if it's private?)
-        public static List<string> ParseCsvLine(string line)
-        {
-            var columns = new List<string>();
-
-            using var reader = new StringReader(line);
-            var config = new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture);
-            config.BadDataFound = null; // Ignore bad data
-            using var csv = new CsvReader(reader, config);
-
-            if (csv.Read())
-            {
-                var fieldCount = csv.Parser.Count;
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    columns.Add(csv.GetField(i) ?? string.Empty);
-                }
-            }
-
-            return columns;
-        }
-
         public string NormalizeLabel(string label)
         {
             var normalizedLabel = label

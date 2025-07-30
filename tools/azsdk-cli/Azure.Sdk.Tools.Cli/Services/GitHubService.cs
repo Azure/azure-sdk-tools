@@ -84,6 +84,7 @@ public class GitConnection
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch);
         public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
+        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -131,7 +132,7 @@ public class GitConnection
             try
             {
                 logger.LogInformation($"Searching for pull requests with title containing '{titleSearchTerm}' in {repoOwner}/{repoName}");
-                
+
                 // Build the search query
                 var searchQuery = $"repo:{repoOwner}/{repoName} is:pr \"{titleSearchTerm}\" in:title";
 
@@ -153,7 +154,7 @@ public class GitConnection
                 };
 
                 var searchResult = await gitHubClient.Search.SearchIssues(searchRequest);
-                
+
                 if (searchResult?.Items == null || !searchResult.Items.Any())
                 {
                     logger.LogInformation($"No pull requests found with title containing '{titleSearchTerm}'");
@@ -381,7 +382,7 @@ public class GitConnection
                 throw;
             }
         }
-        
+
         /// <summary>
         /// Helper method to get contents from a GitHub repository path.
         /// </summary>
@@ -433,9 +434,7 @@ public class GitConnection
         {
             try
             {
-                var existingBranches = await gitHubClient.Repository.Branch.GetAll(repoOwner, repoName);
-                var branchExists = existingBranches.Any(b => b.Name.Equals(branchName, StringComparison.OrdinalIgnoreCase));
-
+                var branchExists = await GetBranchAsync(repoOwner, repoName, branchName);
                 if (branchExists)
                 {
                     return $"Branch '{branchName}' already exists. Compare URL: https://github.com/{repoOwner}/{repoName}/compare/main...{branchName}";
@@ -466,6 +465,29 @@ public class GitConnection
             {
                 logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
                 return $"Error creating branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}";
+            }
+        }
+
+        public async Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            try
+            {
+                var existingBranches = await gitHubClient.Repository.Branch.GetAll(repoOwner, repoName);
+                var branchExists = existingBranches.Any(b => b.Name.Equals(branchName, StringComparison.OrdinalIgnoreCase));
+
+                if (branchExists)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error getting branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}");
+                return false;
             }
         }
     }

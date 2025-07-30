@@ -47,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> serviceLabelOption = new(["--service-label", "-sl"], "The service label");
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners", "-so"], "The service owners (space-separated)");
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)") { IsRequired = true };
+        private readonly Option<string> workingBranchOption = new(["--working-branch", "-wb"], "The existing branch to add changes to (from SDK generation)");
 
         public override Command GetCommand()
         {
@@ -59,7 +60,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     pathOption,
                     serviceLabelOption,
                     serviceOwnersOption,
-                    sourceOwnersOption
+                    sourceOwnersOption,
+                    workingBranchOption
                 },
                 new Command(addCodeownersCommandName, "Add codeowners to a repository")
                 {
@@ -67,7 +69,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     pathOption,
                     serviceLabelOption,
                     serviceOwnersOption,
-                    sourceOwnersOption
+                    sourceOwnersOption,
+                    workingBranchOption
                 },
                 new Command(getPromptContentCommandName, "Gets contents from another prompt file.")
                 {}
@@ -94,13 +97,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
                     var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
+                    var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
                     var addResult = await AddCodeownerEntry(
                         repoValue ?? "",
                         pathValue ?? "",
                         serviceLabelValue ?? "",
                         serviceOwnersValue?.ToList() ?? new List<string>(),
-                        sourceOwnersValue?.ToList() ?? new List<string>());
+                        sourceOwnersValue?.ToList() ?? new List<string>(),
+                        workingBranchValue ?? "");
                     output.Output(addResult);
                     return;
                 case addCodeownersCommandName:
@@ -109,13 +114,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceLabelValue2 = commandParser.GetValueForOption(serviceLabelOption);
                     var serviceOwnersValue2 = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue2 = commandParser.GetValueForOption(sourceOwnersOption);
+                    var workingBranchValue2 = commandParser.GetValueForOption(workingBranchOption);
 
-                    var addResult2 = await AddCodeownerEntry(
+                    var addResult2 = await AddCodeowners(
                         repoValue2 ?? "",
                         pathValue2 ?? "",
                         serviceLabelValue2 ?? "",
                         serviceOwnersValue2?.ToList() ?? new List<string>(),
-                        sourceOwnersValue2?.ToList() ?? new List<string>());
+                        sourceOwnersValue2?.ToList() ?? new List<string>(),
+                        workingBranchValue2 ?? "");
                     output.Output(addResult2);
                     return;
                 default:
@@ -267,7 +274,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string path,
             string serviceLabel,
             List<string> serviceOwners,
-            List<string> sourceOwners)
+            List<string> sourceOwners,
+            string workingBranch = null)
         {
             try
             {
@@ -363,15 +371,41 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var formattedCodeownersEntry = codeownerHelper.formatCodeownersEntry(path, serviceLabel, serviceOwners, sourceOwners);
                 var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(content, formattedCodeownersEntry, insertionIndex);
 
-                // Step 3: Create branch, update file, create PR.
-                var branchName = codeownerHelper.CreateBranchName("add-codeowner-entry", path ?? serviceLabel);
-                var createBranchInfo = await githubService.CreateBranchAsync("Azure", fullRepoName, branchName);
+                // Step 3: Use existing branch or create new one, then update file.
+                var branchName = "";
+                
+                // Check if we have a working branch from SDK generation
+                if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync("Azure", fullRepoName, workingBranch))
+                {
+                    // Reuse the existing branch from SDK generation
+                    branchName = workingBranch;
+                    var createBranchInfo = $"Using existing branch: {branchName}";
+                    resultMessages.Add(createBranchInfo);
+                }
+                else
+                {
+                    // Create a new branch only if no working branch exists
+                    branchName = codeownerHelper.CreateBranchName("add-codeowner-entry", path ?? serviceLabel);
+                    var createBranchInfo = await githubService.CreateBranchAsync("Azure", fullRepoName, branchName);
+                    resultMessages.Add(createBranchInfo);
+                }
+                
                 var updateFileInfo = await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", $"Add codeowner entry for {path ?? serviceLabel}", modifiedCodeownersContent, sha, branchName);
-                //var PRInfo = await githubService.CreatePullRequestAsync(fullRepoName, "Azure", "main", branchName, $"Add codeowner entry for {path ?? serviceLabel}", $"Add codeowner entry for {path ?? serviceLabel}", true);
-
-                resultMessages.Add(createBranchInfo);
                 resultMessages.Add(updateFileInfo);
-                // resultMessages.Add(PRInfo);
+
+                // Step 4: Handle PR creation or update existing PR
+                var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", fullRepoName, branchName);
+                if (existingPR != null)
+                {
+                    // PR already exists - the file update will automatically be added to it
+                    resultMessages.Add($"Codeowner changes added to existing PR #{existingPR.Number}: {existingPR.HtmlUrl}");
+                }
+                else
+                {
+                    // No existing PR - create a new one if needed
+                    var prInfoList = await githubService.CreatePullRequestAsync(fullRepoName, "Azure", "main", branchName, $"Add codeowner entry for {path ?? serviceLabel}", $"Add codeowner entry for {path ?? serviceLabel}", true);
+                    resultMessages.AddRange(prInfoList);
+                }
 
                 return string.Join("\n", resultMessages);
             }
@@ -388,7 +422,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string path,
             string serviceLabel,
             List<string> serviceOwners,
-            List<string> sourceOwners)
+            List<string> sourceOwners,
+            string workingBranch)
         {
             try
             {

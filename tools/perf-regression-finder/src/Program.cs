@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.SemanticKernel.Agents.AzureAI;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel;
@@ -15,9 +15,9 @@ namespace perf_semantic_kernel
                 .Build();
 
             // Initialize and run the agent provider
-            var sematicAzureAi = new SemanticAzureAi(config);
-            await sematicAzureAi.RunChatLoopAsync();
-           
+            var semanticAzureAi = new SemanticAzureAi(config);
+            await semanticAzureAi.RunChatLoopAsync();
+
 
         }
     }

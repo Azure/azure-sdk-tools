@@ -105,7 +105,8 @@ namespace perf_semantic_kernel
                     """
                 );
                 // Update the appsettings.json with the new agent ID
-                UpdateAppSettings("./bin/Debug/net8.0/appsettings.json", "AzureAIFoundryAgentId", definition.Id);
+                var appSettingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+                UpdateAppSettings(appSettingsPath, "AzureAIFoundryAgentId", definition.Id);
             }
             // 2. Create plugins for the agent
             var azureCore = new RepoAccessPlugin(azureCorePath);
@@ -120,9 +121,9 @@ namespace perf_semantic_kernel
         public async Task RunChatLoopAsync()
         {
             // Prompt for repo paths at startup
-            Console.WriteLine("Enter the absolute path to the Azure.Core src (E.g. 'C:\\<path to repo root>\\azure-sdk-for-net-sdk\\core\\Azure.Core\\src'): ");
+            Console.WriteLine("\nEnter the absolute path to the Azure.Core src (E.g. 'C:\\<path to repo root>\\azure-sdk-for-net-sdk\\core\\Azure.Core\\src'): ");
             string? azureCorePath = Console.ReadLine();
-            Console.WriteLine("Enter the absolute path to the System.ClientModel src (E.g. 'C:\\<path to repo root>\\azure-sdk-for-net-sdk\\core\\System.ClientModel\\src'): ");
+            Console.WriteLine("\nEnter the absolute path to the System.ClientModel src (E.g. 'C:\\<path to repo root>\\azure-sdk-for-net-sdk\\core\\System.ClientModel\\src'): ");
             string? clientModelPath = Console.ReadLine();
 
             if (string.IsNullOrWhiteSpace(azureCorePath) || string.IsNullOrWhiteSpace(clientModelPath))
@@ -132,7 +133,7 @@ namespace perf_semantic_kernel
             }
             AzureAIAgent agent = await CreateAgentAsync(azureCorePath, clientModelPath);
             AzureAIAgentThread agentThread = new(agent.Client);
-            Console.WriteLine("Welcome to the Performance Regression Finder Agent! Enter a blank line to send");
+            Console.WriteLine("\nWelcome to the Performance Regression Finder Agent! Enter a blank line to send");
             while (true)
             {
                 Console.Write("\nUser > ");

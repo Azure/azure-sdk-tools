@@ -194,10 +194,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     baseBranch: "main",
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"Add service label: {label}",
-                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
-
-                    // TODO: Before merge, make this not draft
-                    draft: true
+                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}"
                 );
 
                 logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");

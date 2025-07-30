@@ -309,10 +309,6 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
                 // Clone new repository
                 process.chdir(docsDir);
                 
-                // Configure git to handle problematic filenames before cloning
-                execSync('git config --global core.quotePath false', { stdio: 'pipe' });
-                execSync('git config --global core.precomposeUnicode true', { stdio: 'pipe' });
-                
                 if (repo.sparseCheckout) {
                     // Use sparse checkout for large repositories
                     execSync(`git clone --filter=blob:none --sparse ${cloneUrl} ${repo.path}`, { stdio: 'pipe' });

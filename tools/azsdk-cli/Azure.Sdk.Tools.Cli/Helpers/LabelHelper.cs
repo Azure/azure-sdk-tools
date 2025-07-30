@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ILabelHelper
     {
-        public LabelHelper.ResultType CheckServiceLabel(string csvContent, string serviceName);
+        public LabelHelper.ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
         public string NormalizeLabel(string label);
     }
@@ -29,15 +29,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             NewLine = "\n",
         };
 
-        public enum ResultType
+        public enum ServiceLabelStatus
         {
             Exists,
             DoesNotExist,
-            NotAServiceLabel,
-            InReview
+            NotAServiceLabel
         }
 
-        public ResultType CheckServiceLabel(string csvContent, string serviceName)
+        public ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
         {
             var records = getLabelsFromCsv(csvContent);
 
@@ -48,18 +47,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     if (record.Color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
                     {
                         logger.LogInformation($"Service label '{serviceName}' exists in common-labels.csv.");
-                        return ResultType.Exists;
+                        return ServiceLabelStatus.Exists;
                     }
                     else
                     {
                         logger.LogWarning($"Label '{serviceName}' exists but is not a service label.");
-                        return ResultType.NotAServiceLabel;
+                        return ServiceLabelStatus.NotAServiceLabel;
                     }
                 }
 
             }
 
-            return ResultType.DoesNotExist;
+            return ServiceLabelStatus.DoesNotExist;
         }
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)

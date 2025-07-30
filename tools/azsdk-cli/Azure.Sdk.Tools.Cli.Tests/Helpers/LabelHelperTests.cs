@@ -7,13 +7,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 internal class LabelHelperTests
 {
     private ILabelHelper labelHelper;
-    private TestLogger<LabelHelper> testLogger;
 
     [SetUp]
     public void Setup()
     {
-        testLogger = new TestLogger<LabelHelper>();
-        labelHelper = new LabelHelper(testLogger);
+        labelHelper = new LabelHelper(new TestLogger<LabelHelper>());
     }
 
     [Test]

@@ -22,17 +22,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         private readonly ILogger<CheckAllTool> logger;
         private readonly IOutputService output;
 
-        // Options for different types of checks
         private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
-        private readonly Option<bool> spellCheckOption = new(["--spell-check"], () => false, "Run spell check");
-        private readonly Option<bool> linkValidationOption = new(["--link-validation"], () => false, "Validate links are not broken");
-        private readonly Option<bool> readmeValidationOption = new(["--readme-validation"], () => false, "Verify README follows track2 standards");
-        private readonly Option<bool> dependencyCheckOption = new(["--dependency-check"], () => false, "Check for dependency conflicts");
-        private readonly Option<bool> changelogValidationOption = new(["--changelog-validation"], () => false, "Verify changelog follows correct pattern");
-        private readonly Option<bool> snippetUpdateOption = new(["--snippet-update"], () => false, "Update snippets to ensure they're current");
-        private readonly Option<bool> allChecksOption = new(["--all"], () => true, "Run all available checks (default)");
 
-        public CheckAllTool(ILogger<CheckAllTool> logger, IOutputService output) : base()
+        public CheckAllTool(
+            ILogger<CheckAllTool> logger, 
+            IOutputService output) : base()
         {
             this.logger = logger;
             this.output = output;
@@ -43,13 +37,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             Command command = new("all", "Run all validation checks for SDK projects");
             command.AddOption(projectPathOption);
-            command.AddOption(spellCheckOption);
-            command.AddOption(linkValidationOption);
-            command.AddOption(readmeValidationOption);
-            command.AddOption(dependencyCheckOption);
-            command.AddOption(changelogValidationOption);
-            command.AddOption(snippetUpdateOption);
-            command.AddOption(allChecksOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -59,23 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             try
             {
                 var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
-                var runSpellCheck = ctx.ParseResult.GetValueForOption(spellCheckOption);
-                var runLinkValidation = ctx.ParseResult.GetValueForOption(linkValidationOption);
-                var runReadmeValidation = ctx.ParseResult.GetValueForOption(readmeValidationOption);
-                var runDependencyCheck = ctx.ParseResult.GetValueForOption(dependencyCheckOption);
-                var runChangelogValidation = ctx.ParseResult.GetValueForOption(changelogValidationOption);
-                var runSnippetUpdate = ctx.ParseResult.GetValueForOption(snippetUpdateOption);
-                var runAllChecks = ctx.ParseResult.GetValueForOption(allChecksOption);
-
-                var result = await RunAllChecks(projectPath, new CheckOptions
-                {
-                    SpellCheck = runAllChecks || runSpellCheck,
-                    LinkValidation = runAllChecks || runLinkValidation,
-                    ReadmeValidation = runAllChecks || runReadmeValidation,
-                    DependencyCheck = runAllChecks || runDependencyCheck,
-                    ChangelogValidation = runAllChecks || runChangelogValidation,
-                    SnippetUpdate = runAllChecks || runSnippetUpdate
-                });
+                var result = await RunAllChecks(projectPath);
 
                 output.Output(result);
                 ctx.ExitCode = ExitCode;
@@ -93,13 +64,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "run-all-checks"), Description("Run all validation checks for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> RunAllChecks(string projectPath, CheckOptions? options = null)
+        public async Task<DefaultCommandResponse> RunAllChecks(string projectPath)
         {
             try
             {
-                logger.LogInformation($"Starting checks for project at: {projectPath}");
-                
-                options ??= new CheckOptions(); // Default to all checks enabled
+                logger.LogInformation($"Starting all checks for project at: {projectPath}");
                 
                 if (!Directory.Exists(projectPath))
                 {
@@ -113,48 +82,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var results = new List<CheckResult>();
                 var overallSuccess = true;
 
-                // Run individual checks
-                if (options.SpellCheck)
-                {
-                    var spellCheckResult = await RunSpellCheck(projectPath);
-                    results.Add(spellCheckResult);
-                    if (!spellCheckResult.Success) overallSuccess = false;
-                }
+                // Run all individual checks (placeholder implementations)
+                var spellCheckResult = await RunSpellCheck(projectPath);
+                results.Add(spellCheckResult);
+                if (!spellCheckResult.Success) overallSuccess = false;
 
-                if (options.LinkValidation)
-                {
-                    var linkValidationResult = await RunLinkValidation(projectPath);
-                    results.Add(linkValidationResult);
-                    if (!linkValidationResult.Success) overallSuccess = false;
-                }
+                var linkValidationResult = await RunLinkValidation(projectPath);
+                results.Add(linkValidationResult);
+                if (!linkValidationResult.Success) overallSuccess = false;
 
-                if (options.ReadmeValidation)
-                {
-                    var readmeValidationResult = await RunReadmeValidation(projectPath);
-                    results.Add(readmeValidationResult);
-                    if (!readmeValidationResult.Success) overallSuccess = false;
-                }
+                var readmeValidationResult = await RunReadmeValidation(projectPath);
+                results.Add(readmeValidationResult);
+                if (!readmeValidationResult.Success) overallSuccess = false;
 
-                if (options.DependencyCheck)
-                {
-                    var dependencyCheckResult = await RunDependencyCheck(projectPath);
-                    results.Add(dependencyCheckResult);
-                    if (!dependencyCheckResult.Success) overallSuccess = false;
-                }
+                var dependencyCheckResult = await RunDependencyCheck(projectPath);
+                results.Add(dependencyCheckResult);
+                if (!dependencyCheckResult.Success) overallSuccess = false;
 
-                if (options.ChangelogValidation)
-                {
-                    var changelogValidationResult = await RunChangelogValidation(projectPath);
-                    results.Add(changelogValidationResult);
-                    if (!changelogValidationResult.Success) overallSuccess = false;
-                }
+                var changelogValidationResult = await RunChangelogValidation(projectPath);
+                results.Add(changelogValidationResult);
+                if (!changelogValidationResult.Success) overallSuccess = false;
 
-                if (options.SnippetUpdate)
-                {
-                    var snippetUpdateResult = await RunSnippetUpdate(projectPath);
-                    results.Add(snippetUpdateResult);
-                    if (!snippetUpdateResult.Success) overallSuccess = false;
-                }
+                var snippetUpdateResult = await RunSnippetUpdate(projectPath);
+                results.Add(snippetUpdateResult);
+                if (!snippetUpdateResult.Success) overallSuccess = false;
 
                 if (!overallSuccess)
                 {
@@ -262,16 +213,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 Duration = 100
             };
         }
-    }
-
-    public class CheckOptions
-    {
-        public bool SpellCheck { get; set; } = true;
-        public bool LinkValidation { get; set; } = true;
-        public bool ReadmeValidation { get; set; } = true;
-        public bool DependencyCheck { get; set; } = true;
-        public bool ChangelogValidation { get; set; } = true;
-        public bool SnippetUpdate { get; set; } = true;
     }
 
     public class CheckResult

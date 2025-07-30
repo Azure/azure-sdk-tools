@@ -15,6 +15,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private Mock<ILogger<CheckAllTool>> _mockLogger;
         private Mock<IOutputService> _mockOutputService;
+        private Mock<ILogger<SpellCheckTool>> _mockSpellCheckLogger;
+        private Mock<ILogger<LinkValidationTool>> _mockLinkValidationLogger;
+        private Mock<ILogger<ReadmeValidationTool>> _mockReadmeValidationLogger;
+        private Mock<ILogger<DependencyCheckTool>> _mockDependencyCheckLogger;
+        private Mock<ILogger<ChangelogValidationTool>> _mockChangelogValidationLogger;
+        private Mock<ILogger<SnippetUpdateTool>> _mockSnippetUpdateLogger;
         private CheckAllTool _checkAllTool;
         private string _testProjectPath;
 
@@ -23,6 +29,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             _mockLogger = new Mock<ILogger<CheckAllTool>>();
             _mockOutputService = new Mock<IOutputService>();
+            _mockSpellCheckLogger = new Mock<ILogger<SpellCheckTool>>();
+            _mockLinkValidationLogger = new Mock<ILogger<LinkValidationTool>>();
+            _mockReadmeValidationLogger = new Mock<ILogger<ReadmeValidationTool>>();
+            _mockDependencyCheckLogger = new Mock<ILogger<DependencyCheckTool>>();
+            _mockChangelogValidationLogger = new Mock<ILogger<ChangelogValidationTool>>();
+            _mockSnippetUpdateLogger = new Mock<ILogger<SnippetUpdateTool>>();
+
             _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object);
             
             // Create a temporary test directory
@@ -72,32 +85,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task RunAllChecks_WithSelectiveChecks_RunsOnlySelectedChecks()
+        public async Task RunAllChecks_WithValidPath_RunsAllChecks()
         {
-            // Arrange
-            var options = new CheckOptions
-            {
-                SpellCheck = true,
-                LinkValidation = true,
-                ReadmeValidation = false,
-                DependencyCheck = false,
-                ChangelogValidation = false,
-                SnippetUpdate = false
-            };
-
             // Act
-            var result = await _checkAllTool.RunAllChecks(_testProjectPath, options);
+            var result = await _checkAllTool.RunAllChecks(_testProjectPath);
 
             // Assert
             Assert.IsNotNull(result);
             Assert.IsNull(result.ResponseError);
             
-            // Verify that only 2 checks ran (spell check and link validation)
+            // Verify that all 6 checks ran
             var checkResults = result.Result as System.Collections.Generic.List<CheckResult>;
             Assert.IsNotNull(checkResults);
-            Assert.AreEqual(2, checkResults.Count);
+            Assert.AreEqual(6, checkResults.Count);
             Assert.IsTrue(checkResults.Any(r => r.CheckType == "Spell Check"));
             Assert.IsTrue(checkResults.Any(r => r.CheckType == "Link Validation"));
+            Assert.IsTrue(checkResults.Any(r => r.CheckType == "README Validation"));
+            Assert.IsTrue(checkResults.Any(r => r.CheckType == "Dependency Check"));
+            Assert.IsTrue(checkResults.Any(r => r.CheckType == "Changelog Validation"));
+            Assert.IsTrue(checkResults.Any(r => r.CheckType == "Snippet Update"));
         }
     }
 }

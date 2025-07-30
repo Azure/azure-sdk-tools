@@ -65,9 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            List<LabelData> records;
-
-            records = getLabelsFromCsv(csvContent);
+            var records = getLabelsFromCsv(csvContent);
 
             var newRecords = records
                 .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })

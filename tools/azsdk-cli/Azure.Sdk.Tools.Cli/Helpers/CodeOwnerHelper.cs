@@ -150,21 +150,27 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var lines = new List<string>();
 
+            bool addSeperationLine = false;
+
             // Add PRLabel if serviceLabel is provided
             if (!string.IsNullOrEmpty(serviceLabel))
             {
+                addSeperationLine = true;
                 lines.Add($"# PRLabel: %{serviceLabel}");
             }
 
             // Add the path and source owners line
             if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
             {
+                addSeperationLine = true;
                 var ownersString = string.Join(" ", sourceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}"));
                 lines.Add($"{path.PadRight(25)} {ownersString}");
             }
 
-            // Add empty line for separation
-            lines.Add("");
+            if (addSeperationLine)
+            {
+                lines.Add("");
+            }
 
             // Add ServiceLabel if provided
             if (!string.IsNullOrEmpty(serviceLabel))

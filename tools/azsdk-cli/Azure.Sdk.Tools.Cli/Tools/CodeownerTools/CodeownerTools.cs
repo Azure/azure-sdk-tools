@@ -39,10 +39,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Command names
         private const string addCodeownersEntryCommandName = "add-codeowners-entry";
-        private const string addCodeownersCommandName = "add-codeowners";
         private const string checkServiceExistsCommandName = "check-service-exists";
         private const string validateCodeOwnerEntryCommandName = "validate-codeowner-entry";
-        private const string mockToolCommandName = "mock-tool";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -67,15 +65,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     sourceOwnersOption,
                     workingBranchOption
                 },
-                new Command(addCodeownersCommandName, "Add codeowners to a repository")
-                {
-                    repoOption,
-                    pathOption,
-                    serviceLabelOption,
-                    serviceOwnersOption,
-                    sourceOwnersOption,
-                    workingBranchOption
-                },
                 new Command(checkServiceExistsCommandName, "Check if a service exists in CODEOWNERS file")
                 {
                     repoOption,
@@ -88,9 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     pathOptionOptional
                 },
-                new Command(mockToolCommandName, "Mock tool for testing purposes")
-                {
-                }
             };
 
             foreach (var subCommand in subCommands)
@@ -124,23 +110,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         sourceOwnersValue?.ToList() ?? new List<string>(),
                         workingBranchValue ?? "");
                     output.Output(addResult);
-                    return;
-                case addCodeownersCommandName:
-                    var repoValue2 = commandParser.GetValueForOption(repoOption);
-                    var pathValue2 = commandParser.GetValueForOption(pathOption);
-                    var serviceLabelValue2 = commandParser.GetValueForOption(serviceLabelOption);
-                    var serviceOwnersValue2 = commandParser.GetValueForOption(serviceOwnersOption);
-                    var sourceOwnersValue2 = commandParser.GetValueForOption(sourceOwnersOption);
-                    var workingBranchValue2 = commandParser.GetValueForOption(workingBranchOption);
-
-                    var addResult2 = await AddCodeowners(
-                        repoValue2 ?? "",
-                        pathValue2 ?? "",
-                        serviceLabelValue2 ?? "",
-                        serviceOwnersValue2?.ToList() ?? new List<string>(),
-                        sourceOwnersValue2?.ToList() ?? new List<string>(),
-                        workingBranchValue2 ?? "");
-                    output.Output(addResult2);
                     return;
                 case checkServiceExistsCommandName:
                     var checkRepo = commandParser.GetValueForOption(repoOption);
@@ -311,48 +280,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return result;
         }
 
-        [McpServerTool(Name = "isValidCodeOwner"), Description("Validates if the user is a code owner given their GitHub alias. (Default is the current user)")]
-        public async Task<string> isValidCodeOwner(string githubAlias = "")
-        {
-            try
-            {
-                // Get the current user's GitHub username if not provided
-                var user = await githubService.GetGitUserDetailsAsync();
-                var userDetails = string.IsNullOrEmpty(githubAlias) ? user?.Login : githubAlias;
-
-                if (string.IsNullOrEmpty(userDetails))
-                {
-                    var errorResponse = new GenericResponse()
-                    {
-                        Status = "Failed",
-                        Details = { "Unable to determine GitHub username" }
-                    };
-                    return output.Format(errorResponse);
-                }
-
-                var validationResult = await codeOwnerValidator.ValidateCodeOwnerAsync(userDetails, verbose: false);
-
-                // Convert to the expected JSON format
-                var result = new
-                {
-                    validationResult.Organizations,
-                    validationResult.HasWritePermission,
-                    validationResult.IsValidCodeOwner
-                };
-
-                return System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new GenericResponse()
-                {
-                    Status = "Failed",
-                    Details = { $"Failed to validate GitHub code owner. Error: {ex.Message}" }
-                };
-                return output.Format(errorResponse);
-            }
-        }
-
         [McpServerTool(Name = "AddCodeownerEntry"), Description("Adds a codeowner entry for a given service label or path for a repo.")]
         public async Task<string> AddCodeownerEntry(
             string repo,
@@ -501,77 +428,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogError($"{ex}");
                 return $"Error: {ex}";
             }
-        }
-
-        [McpServerTool(Name = "AddCodeowners"), Description("Adds codeowners to a given service label or path for a repo.")]
-        public async Task<string> AddCodeowners(
-            string repo,
-            string path,
-            string serviceLabel,
-            List<string> serviceOwners,
-            List<string> sourceOwners,
-            string workingBranch)
-        {
-            try
-            {
-                azureRepositories.TryGetValue(repo, out var repoInfo);
-                var fullRepoName = repoInfo.RepoName;
-                var serviceCategory = repoInfo.ServiceCategory;
-
-                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
-                var fileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
-
-                if (fileContent == null || fileContent.Count == 0)
-                {
-                    return $"Could not retrieve CODEOWNERS file";
-                }
-
-                var content = fileContent[0].Content;
-                var lines = content.Split('\n');
-
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    var line = lines[i];
-
-                    if (!string.IsNullOrEmpty(path) && line.Contains(path))
-                    {
-
-                    }
-                }
-
-                return "";
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error in AddCodeowners");
-                return null;
-            }
-        }
-
-        /// Helper method to check if a line matches a specific service entry
-        private bool DoesLineMatchServiceEntry(string line, CodeownersEntry entry)
-        {
-            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("#"))
-                return false;
-
-            var pathPart = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-            return pathPart != null && pathPart.Equals(entry.PathExpression, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private string RemoveOwnersFromLine(string line, List<string> ownersToRemove)
-        {
-            var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-            if (parts.Count == 0)
-                return line;
-
-            var pathPart = parts[0];
-            var ownerParts = parts.Skip(1).ToList();
-
-            var normalizedOwnersToRemove = ownersToRemove.Select(o => o.TrimStart('@').ToLowerInvariant()).ToList();
-            var remainingOwners = ownerParts.Where(owner =>
-                !normalizedOwnersToRemove.Contains(owner.TrimStart('@').ToLowerInvariant())).ToList();
-
-            return $"{pathPart} {string.Join(" ", remainingOwners)}";
         }
     }
 }

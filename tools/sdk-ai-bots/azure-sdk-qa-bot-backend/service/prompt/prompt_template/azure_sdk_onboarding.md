@@ -96,7 +96,7 @@ For Azure SDK onboarding and development questions, follow this structured appro
 # Category Answer Guideline
 
 ## SDK release
-- **release(generation) date**: You should describe the release processes firstly and then given suggestions.
+- **release(generation) date**: You should describe the release processes according to user's situation firstly and then given suggestions.
 
 # KNOWLEDGE CONTEXT
 ===================================

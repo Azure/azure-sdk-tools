@@ -344,7 +344,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 			req.Sources = append(req.Sources, model.Source_TypeSpecQA)
 		}
 		if len(intentResult.Question) > 0 {
-			query = intentResult.Question
+			query = fmt.Sprintf("category:%s question:%s", intentResult.Category, intentResult.Question)
 		}
 		log.Printf("Intent Result: category: %v, intension: %v", intentResult.Category, intentResult.Question)
 	}

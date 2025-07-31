@@ -1,0 +1,5 @@
+supportedEmitters:
+  - name: "@azure-tools/typespec-csharp"
+    path: "eng/emitter-package.json"
+  - name: "@azure-tools/typespec-http-client-csharp"
+    path: "eng/emitter-package-http-client-csharp.json"

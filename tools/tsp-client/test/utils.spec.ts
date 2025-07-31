@@ -96,3 +96,14 @@ describe("Verify other utils functions", function () {
     });
   });
 });
+
+describe("Verify fs functions", function () {
+  it.only("Check parseTspClientRepoConfig", async function () {
+    const config = await parseTspClientRepoConfig(await getRepoRoot("."));
+    assert.ok(config);
+    assert.ok(config.supportedEmitters);
+    assert.equal(config.supportedEmitters.length, 2);
+    assert.equal(config.supportedEmitters[0].name, "@azure-tools/typespec-csharp");
+    assert.equal(config.supportedEmitters[0].path, "eng/emitter-package.json");
+  });
+});

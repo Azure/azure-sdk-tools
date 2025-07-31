@@ -22,6 +22,7 @@ import {
   makeSparseSpecDir,
   getPathToDependency,
   updateExistingTspLocation,
+  parseTspClientRepoConfig
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -42,11 +43,23 @@ export async function initCommand(argv: any) {
 
   const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
 
-  const emitter = await getEmitterFromRepoConfig(
-    emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
-  );
-  if (!emitter) {
-    throw new Error("Couldn't find emitter-package.json in the repo");
+  let emitter;
+
+  // Read the global tspclientconfig.yaml
+  const tspclientGlobalConfig = await parseTspClientRepoConfig(repoRoot);
+
+  if (emitterPackageOverride) {
+    emitter = await getEmitterFromRepoConfig(emitterPackageOverride);
+  } else if (tspclientGlobalConfig === undefined || tspclientGlobalConfig.supportedEmitters === undefined) {
+        // If the global config is not found or supported emitters aren't defined, fall back to the default
+        // emitter-package.json under the eng/ directory.
+        emitter = await getEmitterFromRepoConfig(
+            emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
+        );
+        if (!emitter) {
+            throw new Error("Couldn't find emitter-package.json in the repo");
+        }
+    }
   }
 
   let isUrl = true;

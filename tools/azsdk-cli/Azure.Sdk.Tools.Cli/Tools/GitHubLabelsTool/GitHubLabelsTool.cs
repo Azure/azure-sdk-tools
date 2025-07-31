@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> proposedServiceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
         private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
 
-        private readonly Argument<string> _serviceLabelArg = new Argument<string>(
+        private readonly Argument<string> serviceLabelArg = new Argument<string>(
             name: "service-label",
             description: "The service label to check in the common labels CSV"
         )

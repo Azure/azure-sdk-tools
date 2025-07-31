@@ -61,7 +61,9 @@ extends:
               os: macOS
             steps:
               - template: /tools/tsp-client/build-tsp-client.yml
-          # Validate formatting
+      - stage: Consistency
+        # Validate formatting
+        jobs: 
           - job: Format
             pool:
               name: $(LINUXPOOL)

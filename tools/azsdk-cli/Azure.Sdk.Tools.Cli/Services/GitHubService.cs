@@ -78,12 +78,12 @@ public class GitConnection
         public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
-        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null);
+        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
-        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch);
         public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
+        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -126,12 +126,12 @@ public class GitConnection
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        public async Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null)
+        public async Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open)
         {
             try
             {
                 logger.LogInformation($"Searching for pull requests with title containing '{titleSearchTerm}' in {repoOwner}/{repoName}");
-                
+
                 // Build the search query
                 var searchQuery = $"repo:{repoOwner}/{repoName} is:pr \"{titleSearchTerm}\" in:title";
 
@@ -153,7 +153,7 @@ public class GitConnection
                 };
 
                 var searchResult = await gitHubClient.Search.SearchIssues(searchRequest);
-                
+
                 if (searchResult?.Items == null || !searchResult.Items.Any())
                 {
                     logger.LogInformation($"No pull requests found with title containing '{titleSearchTerm}'");
@@ -381,33 +381,6 @@ public class GitConnection
                 throw;
             }
         }
-        
-        /// <summary>
-        /// Helper method to get contents from a GitHub repository path.
-        /// </summary>
-        /// <param name="owner">Repository owner</param>
-        /// <param name="repoName">Repository name</param>
-        /// <param name="path">Directory or file path</param>
-        /// <param name="branch">Branch reference</param>
-        /// <returns>List of repository contents or null if path doesn't exist</returns>
-        public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch)
-        {
-            try
-            {
-                var result = await gitHubClient.Repository.Content.GetAllContentsByRef(owner, repoName, path, branch);
-                return result;
-            }
-            catch (NotFoundException ex)
-            {
-                logger.LogInformation("GitHubService: Path {path} not found in {owner}/{repoName} on reference {branch}. Exception: {exception}", path, owner, repoName, branch, ex.Message);
-                return null;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "GitHubService: Error fetching contents from {owner}/{repoName}/{path} on reference {branch}", owner, repoName, path, branch);
-                throw;
-            }
-        }
 
         public async Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch = "main")
         {
@@ -433,9 +406,7 @@ public class GitConnection
         {
             try
             {
-                var existingBranches = await gitHubClient.Repository.Branch.GetAll(repoOwner, repoName);
-                var branchExists = existingBranches.Any(b => b.Name.Equals(branchName, StringComparison.OrdinalIgnoreCase));
-
+                var branchExists = await GetBranchAsync(repoOwner, repoName, branchName);
                 if (branchExists)
                 {
                     return $"Branch '{branchName}' already exists. Compare URL: https://github.com/{repoOwner}/{repoName}/compare/main...{branchName}";
@@ -466,6 +437,25 @@ public class GitConnection
             {
                 logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
                 return $"Error creating branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}";
+            }
+        }
+
+        public async Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            try
+            {
+                var branch = await gitHubClient.Repository.Branch.Get(repoOwner, repoName, branchName);
+                return branch != null;
+            }
+            catch (NotFoundException)
+            {
+                // Branch doesn't exist
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error getting branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}");
+                return false;
             }
         }
     }

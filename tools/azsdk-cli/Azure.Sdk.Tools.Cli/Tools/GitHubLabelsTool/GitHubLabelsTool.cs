@@ -121,54 +121,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
-
                 if (result == LabelHelper.ResultType.Exists)
                 {
                     return result;
                 }
-                else if (await CheckServiceLabelInReview(serviceLabel))
+
+                var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+                if (labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
                 {
                     return LabelHelper.ResultType.InReview;
                 }
-                else
-                {
-                    return result;
-                }
+                return result;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
                 throw;
-            }
-        }
-
-        public async Task<bool> CheckServiceLabelInReview(string serviceLabel)
-        {
-            try
-            {
-                var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
-
-                if (pullRequests == null || !pullRequests.Any())
-                {
-                    logger.LogInformation("No pull request found for service labels");
-                    return false;
-                }
-
-                foreach (var pr in pullRequests.Where(p => p != null))
-                {
-                    if (pr != null && pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-
-                logger.LogInformation($"No pull requests found for {serviceLabel}.");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Error retrieving pull requests: {ex.Message}");
-                return false;
             }
         }
 

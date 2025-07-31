@@ -10,6 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public LabelHelper.ResultType CheckServiceLabel(string csvContent, string serviceName);
         public string CreateServiceLabel(string csvContent, string serviceLabel);
         public string NormalizeLabel(string label);
+        public bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel);
     }
 
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
@@ -78,29 +79,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return writer.ToString();
         }
 
-        // This should probably be replaced with a 3rd party CSV parser
-        // TODO: This should probably be internal or private. (Is there a way to test it if it's private?)
-        public static List<string> ParseCsvLine(string line)
-        {
-            var columns = new List<string>();
-
-            using var reader = new StringReader(line);
-            var config = new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture);
-            config.BadDataFound = null; // Ignore bad data
-            using var csv = new CsvReader(reader, config);
-
-            if (csv.Read())
-            {
-                var fieldCount = csv.Parser.Count;
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    columns.Add(csv.GetField(i) ?? string.Empty);
-                }
-            }
-
-            return columns;
-        }
-
         public string NormalizeLabel(string label)
         {
             var normalizedLabel = label
@@ -111,6 +89,34 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     .Trim('-')
                     .ToLowerInvariant();
             return normalizedLabel;
+        }
+
+        public bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel)
+        {
+            try
+            {
+                if (pullRequests == null || !pullRequests.Any())
+                {
+                    logger.LogInformation("No pull request found for service labels");
+                    return false;
+                }
+
+                foreach (var pr in pullRequests.Where(p => p != null))
+                {
+                    if (pr != null && pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                logger.LogInformation($"No pull requests found for {serviceLabel}.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error retrieving pull requests: {ex.Message}");
+                return false;
+            }
         }
     }
 

@@ -327,25 +327,32 @@ describe.sequential("Verify commands", () => {
           "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
         ),
         "update-if-exists": true,
-        "commit": "abc",
+        commit: "abc",
       };
 
-      
       // Add a tsp-location.yaml file to the output directory for the initOrUpdate test to simulate an existing project
       const existingTspLocation: TspLocation = {
         directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         repo: "Azure/azure-rest-api-specs",
-        additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
       };
       await mkdir(
-        joinPaths(cwd(), "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest"),
-        { recursive: true }
+        joinPaths(
+          cwd(),
+          "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
+        { recursive: true },
       );
       await writeTspLocationYaml(
         existingTspLocation,
-        joinPaths(cwd(), "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest"),
+        joinPaths(
+          cwd(),
+          "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
       );
       // Now run the init command with --update-if-exists with a local spec so that we can pass in a dummy commit for testing
       const outputDir = await initCommand(args);
@@ -354,7 +361,9 @@ describe.sequential("Verify commands", () => {
         directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
         commit: "abc",
         repo: "Azure/azure-rest-api-specs",
-        additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
       });
       await rm("./test/examples/initOrUpdate/", { recursive: true });

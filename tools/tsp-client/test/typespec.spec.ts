@@ -62,9 +62,9 @@ describe("Check diagnostic reporting", function () {
 
   it("Check discoverEntrypointFile() with unexpected entrypoint name", async function () {
     try {
-        await discoverEntrypointFile(
-            joinPaths(process.cwd(), "test", "examples", "specification", "unexpected-entrypoint-name"),
-        );
+      await discoverEntrypointFile(
+        joinPaths(process.cwd(), "test", "examples", "specification", "unexpected-entrypoint-name"),
+      );
     } catch (e) {
       assert.equal(e.message, "No main.tsp or client.tsp found");
     }

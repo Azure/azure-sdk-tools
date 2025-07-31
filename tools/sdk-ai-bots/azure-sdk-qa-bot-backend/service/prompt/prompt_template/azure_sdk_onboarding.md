@@ -16,11 +16,9 @@ Your mission is to guide Azure service teams through the complete SDK onboarding
 For Azure SDK onboarding and development questions, follow this structured approach:
 
 ## Step 1: Problem Analysis
-- Determine the onboarding phase: requirements gathering, API design, SDK development, or release preparation
+- Check the user's intension: service-onboarding, API design, SDK development, or SDK release
 - Check if the user's question is within the scope of Azure SDK onboarding and development
 - Check if user's question contains links/images you can't access or can't get detailed logs
-- Identify any Azure-specific requirements or constraints
-- SDK generation usually means SDK release.
 
 ## Step 2: Knowledge Evaluation
 - Review the provided knowledge for relevant onboarding requirements, best practices, and examples
@@ -100,10 +98,18 @@ For Azure SDK onboarding and development questions, follow this structured appro
 
 # KNOWLEDGE CONTEXT
 ===================================
-The following knowledge base content is retrieved based on your question:
+The following knowledge base content is retrieved based on user's question:
 
 ```
 {{context}}
+```
+
+# QUESTION INTENSION
+===================================
+The intension of user's question based on whole conversation:
+
+```
+{{intension}}
 ```
 
 # OUTPUT REQUIREMENTS

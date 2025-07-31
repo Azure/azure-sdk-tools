@@ -100,7 +100,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 5. Build prompt
-	prompt, err := s.buildPrompt(chunks, *req.PromptTemplate)
+	prompt, err := s.buildPrompt(query, chunks, *req.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -456,7 +456,7 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	return result, nil
 }
 
-func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(query string, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
@@ -468,7 +468,10 @@ func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) 
 		}
 	}
 	promptParser := prompt.DefaultPromptParser{}
-	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, promptTemplate)
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"context": strings.Join(chunks, "-------------------------\n"),
+		"intension": query,
+		}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return "", err

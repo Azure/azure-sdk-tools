@@ -15,6 +15,7 @@ namespace Azure.Tools.ErrorAnalyzers
 
         /// <summary>
         /// A simple in‐code rename, containing Context = from, Action = to.
+        /// Currently not in use, maybe used later as the project grows
         /// </summary>
         Rename,
     }

@@ -2,52 +2,56 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Text.RegularExpressions;
 using Azure.Tools.ErrorAnalyzers;
 
 namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers
 {
     /// <summary>
-    /// Handles AZC0012: “Type name '{0}' is too generic… Consider using a more descriptive multi-word name, such as '{1}'.”
+    /// Handles AZC0012: Generic type name violations.
     /// </summary>
+    [DiscoverableAnalyzer]
     internal sealed class AZC0012RuleAnalyzer : AgentRuleAnalyzer
     {
-        private static readonly Regex ErrorMessageRegex = new Regex(
-            @"Type name\s+'(?<original>[^']+)'\s+is too generic.*?such as\s+'(?<suggest>[^']+)'",
-            RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant,
-            TimeSpan.FromSeconds(5));
-        
         public override bool CanFix(RuleError error)
         {
-            ArgumentNullException.ThrowIfNull(error);
+            if (error?.type == null) 
+                return false;
+
             return string.Equals(error.type, "AZC0012", StringComparison.OrdinalIgnoreCase);
         }
 
         public override Fix? GetFix(RuleError error)
         {
-            ArgumentNullException.ThrowIfNull(error);
-            
+            if (error?.message == null)
+                throw new ArgumentException("Error message cannot be null.", nameof(error));
             if (!CanFix(error))
             {
                 return null;
             }
 
-            Match match = ErrorMessageRegex.Match(error.message);
-            
-            if (!match.Success)
-            {
-                return null;
-            }
-            
-            string originalName = match.Groups["original"].Value;
-            string suggestedName = match.Groups["suggest"].Value;
+            // TODO: figure out a way to move the hard coded prompts and context into a configurable setup.
+            string prompt = "TASK: Fix AZC0012 Generic Type Name Violation\n\n" +
+                           "The analyzer has detected a generic type name that violates Azure SDK naming conventions.\n\n" +
+                           "INSTRUCTIONS:\n" +
+                           "1. Read the error message to identify the generic type name\n" +
+                           "2. If a suggestion is provided, use it; otherwise choose a descriptive alternative\n" +
+                           "3. Rename the type to be more specific and descriptive\n" +
+                           "4. Update all references, imports, and documentation\n" +
+                           "5. Ensure the new name follows Azure SDK naming conventions\n\n" +
+                           "NAMING EXAMPLES:\n" +
+                           "• 'Client' → 'BlobServiceClient', 'TableServiceClient', 'KeyVaultClient'\n" +
+                           "• 'Manager' → 'ResourceManager', 'ConnectionManager', 'CacheManager'\n" +
+                           "• 'Helper' → 'ValidationHelper', 'SerializationHelper', 'CryptoHelper'\n" +
+                           "• 'Service' → 'StorageService', 'AuthenticationService', 'NotificationService'\n" +
+                           "• 'Data' → 'UserData', 'ConfigurationData', 'MetricData'\n\n" +
+                           "Choose a name that clearly describes the type's purpose and responsibility.";
 
-            if (string.IsNullOrWhiteSpace(originalName) || string.IsNullOrWhiteSpace(suggestedName))
-            {
-                return null;
-            }
+            string context = $"RULE: AZC0012 - Avoid generic type names\n" +
+                           $"ORIGINAL ERROR: {error.message}\n" +
+                           $"BACKGROUND: Generic type names don't provide enough context about what the type does. " +
+                           $"Azure SDK guidelines require descriptive, multi-word names that make code self-documenting.";
 
-            return new RenameFix(originalName, suggestedName);
+            return new AgentPromptFix(prompt, context);
         }
     }
 }

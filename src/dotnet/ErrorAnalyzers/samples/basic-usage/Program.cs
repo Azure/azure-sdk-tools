@@ -9,96 +9,67 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Azure SDK Error Analyzers - Test Console");
+        Console.WriteLine("Azure SDK Error Analyzers - Simple Demo");
         Console.WriteLine("========================================");
         Console.WriteLine();
-
-        RegisterAnalyzerProviders();
         
-        TestErrorAnalysis();
-        
-        AdvancedExample.RunAdvancedExample();
-        
-        Console.WriteLine();
-        Console.WriteLine("Press any key to exit...");
-        Console.ReadKey();
-    }
-
-    static void RegisterAnalyzerProviders()
-    {
-        Console.WriteLine("Registering analyzer providers...");
-        
+        // Step 1: Register analyzers
+        Console.WriteLine("1. Registering analyzers...");
         ErrorAnalyzerService.RegisterProvider(new ClientAnalyzerProvider());
         ErrorAnalyzerService.RegisterProvider(new GeneralAnalyzerProvider());
         ErrorAnalyzerService.RegisterProvider(new ManagementAnalyzerProvider());
-        
-        Console.WriteLine("✓ All analyzer providers registered");
+        Console.WriteLine("   ✓ Done");
         Console.WriteLine();
-    }
 
-    static void TestErrorAnalysis()
-    {
-        Console.WriteLine("Testing error analysis capabilities:");
+        // Step 2: Test with sample errors
+        Console.WriteLine("2. Testing error analysis:");
         Console.WriteLine();
 
         var testErrors = new[]
         {
             new RuleError("AZC0012", "Type name 'Client' is too generic. Consider using a more descriptive multi-word name, such as 'ServiceClient'."),
-            new RuleError("UNKNOWN_ERROR", "This is an unknown error type that won't have a fix"),
+            new RuleError("UNKNOWN_ERROR", "This is an unknown error type"),
             new RuleError("AZC0012", "Type name 'Manager' is too generic. Consider using a more descriptive multi-word name, such as 'ResourceManager'.")
         };
 
         foreach (var error in testErrors)
         {
-            Console.WriteLine($"Processing error: {error.type}");
+            Console.WriteLine($"Error Type: {error.type}");
             Console.WriteLine($"Message: {error.message}");
             
-            bool canHandle = ErrorAnalyzerService.CanHandle(error.type);
-            Console.WriteLine($"Can handle: {canHandle}");
-            
-            if (canHandle)
+            var fix = ErrorAnalyzerService.GetFix(error);
+            if (fix != null)
             {
-                var fix = ErrorAnalyzerService.GetFix(error);
-                if (fix != null)
+                Console.WriteLine($"Can Fix: True");
+                
+                if (fix is AgentPromptFix promptFix)
                 {
-                    Console.WriteLine($"Fix available: {fix.Action}");
-                    if (fix is RenameFix renameFix)
-                    {
-                        Console.WriteLine($"  Rename from '{renameFix.OriginalName}' to '{renameFix.NewName}'");
-                    }
-                    else if (fix is AgentPromptFix promptFix)
-                    {
-                        Console.WriteLine($"  Suggested fix: {promptFix.Prompt}");
-                    }
+                    Console.WriteLine();
+                    Console.WriteLine("Generated Prompt:");
+                    Console.WriteLine("----------------");
+                    Console.WriteLine(promptFix.Prompt);
+                    Console.WriteLine();
+                    Console.WriteLine("Context:");
+                    Console.WriteLine("--------");
+                    Console.WriteLine(promptFix.Context);
                 }
                 else
                 {
-                    Console.WriteLine("No fix available");
+                    Console.WriteLine("No prompt generated");
                 }
+            }
+            else
+            {
+                Console.WriteLine($"Can Fix: False");
             }
             
             Console.WriteLine();
+            Console.WriteLine(new string('-', 80));
+            Console.WriteLine();
         }
 
-        TestBatchProcessing(testErrors);
-    }
-
-    static void TestBatchProcessing(RuleError[] errors)
-    {
-        Console.WriteLine("Testing batch processing:");
-        Console.WriteLine();
-
-        var fixes = ErrorAnalyzerService.GetFixes(errors).ToList();
-        Console.WriteLine($"Total fixes generated: {fixes.Count}");
-        
-        foreach (var fix in fixes)
-        {
-            Console.WriteLine($"- {fix.Action} fix available");
-        }
-        
-        Console.WriteLine();
-        
-        var availableAnalyzers = ErrorAnalyzerService.GetAllAnalyzers().ToList();
-        Console.WriteLine($"Total registered analyzers: {availableAnalyzers.Count}");
+        Console.WriteLine("Press any key to exit...");
+        Console.ReadKey();
     }
 }
+

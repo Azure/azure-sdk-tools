@@ -25,7 +25,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
             var fix = ErrorAnalyzerService.GetFix(error);
 
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix!.Action, Is.EqualTo(FixAction.Rename));
+            Assert.That(fix!.Action, Is.EqualTo(FixAction.AgentPrompt));
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
             var fixes = ErrorAnalyzerService.GetFixes(errors).ToList();
 
             Assert.That(fixes.Count, Is.EqualTo(2));
-            Assert.That(fixes.All(f => f.Action == FixAction.Rename), Is.True);
+            Assert.That(fixes.All(f => f.Action == FixAction.AgentPrompt), Is.True);
         }
 
         [Test]
@@ -69,57 +69,9 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         }
 
         [Test]
-        public void CanHandle_WithSupportedErrorType_ReturnsTrue()
-        {
-            ErrorAnalyzerService.RegisterProvider(testProvider!);
-
-            var canHandle = ErrorAnalyzerService.CanHandle("TEST001");
-
-            Assert.That(canHandle, Is.True);
-        }
-
-        [Test]
-        public void CanHandle_WithUnsupportedErrorType_ReturnsFalse()
-        {
-            ErrorAnalyzerService.RegisterProvider(testProvider!);
-
-            var canHandle = ErrorAnalyzerService.CanHandle("UNSUPPORTED");
-
-            Assert.That(canHandle, Is.False);
-        }
-
-        [Test]
-        public void CanHandle_WithNullOrEmptyErrorType_ThrowsArgumentException()
-        {
-            Assert.Throws<ArgumentNullException>(() => ErrorAnalyzerService.CanHandle(null!));
-            Assert.Throws<ArgumentException>(() => ErrorAnalyzerService.CanHandle(string.Empty));
-            Assert.Throws<ArgumentException>(() => ErrorAnalyzerService.CanHandle("   "));
-        }
-
-        [Test]
         public void RegisterProvider_WithNullProvider_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => ErrorAnalyzerService.RegisterProvider(null!));
-        }
-
-        [Test]
-        public void CanHandle_WithValidType_ReturnsTrue()
-        {
-            ErrorAnalyzerService.RegisterProvider(testProvider!);
-
-            bool canHandle = ErrorAnalyzerService.CanHandle("TEST001");
-
-            Assert.That(canHandle, Is.True);
-        }
-
-        [Test]
-        public void CanHandle_WithInvalidType_ReturnsFalse()
-        {
-            ErrorAnalyzerService.RegisterProvider(testProvider!);
-
-            bool canHandle = ErrorAnalyzerService.CanHandle("INVALID");
-
-            Assert.That(canHandle, Is.False);
         }
     }
 
@@ -137,7 +89,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
                 return null;
             }
 
-            return new RenameFix("OldName", "NewName");
+            return new AgentPromptFix("Test prompt for fixing the error", "Test context");
         }
     }
 

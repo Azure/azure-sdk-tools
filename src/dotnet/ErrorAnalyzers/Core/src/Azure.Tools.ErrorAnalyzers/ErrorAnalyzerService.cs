@@ -14,6 +14,7 @@ namespace Azure.Tools.ErrorAnalyzers
     /// </summary>
     public static class ErrorAnalyzerService
     {
+        private static readonly ConcurrentBag<IAnalyzerProvider> AnalyzerProviders = new ConcurrentBag<IAnalyzerProvider>();
 
         /// <summary>
         /// Attempts to generate fixes for multiple errors.
@@ -62,14 +63,13 @@ namespace Azure.Tools.ErrorAnalyzers
 
         private static IReadOnlyList<AgentRuleAnalyzer> CreateAllAnalyzers()
         {
-            var allAnalyzers = new List<AgentRuleAnalyzer>();
+            List<AgentRuleAnalyzer> allAnalyzers = new List<AgentRuleAnalyzer>();
 
             foreach (IAnalyzerProvider provider in AnalyzerProviders)
             {
                 try
                 {
-                    var providedAnalyzers = provider.GetAnalyzers().ToList();
-                    allAnalyzers.AddRange(providedAnalyzers);
+                    allAnalyzers.AddRange(provider.GetAnalyzers());
                 }
                 catch (Exception)
                 {
@@ -80,8 +80,6 @@ namespace Azure.Tools.ErrorAnalyzers
             return allAnalyzers.AsReadOnly();
         }
 
-        private static readonly ConcurrentBag<IAnalyzerProvider> AnalyzerProviders = new ConcurrentBag<IAnalyzerProvider>();
-
         /// <summary>
         /// Registers an analyzer provider. This should be called during application startup.
         /// This method is thread-safe and can be called from multiple threads.
@@ -90,17 +88,6 @@ namespace Azure.Tools.ErrorAnalyzers
         {
             ArgumentNullException.ThrowIfNull(provider);
             AnalyzerProviders.Add(provider);
-        }
-
-        /// <summary>
-        /// Checks if any analyzer can handle the specified error type.
-        /// </summary>
-        public static bool CanHandle(string errorType)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(errorType);
-
-            var testError = new RuleError(errorType, "test");
-            return GetAllAnalyzers().Any(analyzer => analyzer.CanFix(testError));
         }
     }
 }

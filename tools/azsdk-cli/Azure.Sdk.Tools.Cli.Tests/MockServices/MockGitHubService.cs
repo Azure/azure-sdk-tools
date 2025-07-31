@@ -107,30 +107,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
-        private Commit CreateMockCommit(string message, string sha)
-        {
-            var user = CreateMockUser("testuser", 123456);
-            var author = new Committer($"test@example.com", "testuser", DateTimeOffset.Now);
-            var repo = CreateMockRepository("testowner", "testrepo", user);
-
-            return new Commit(
-                url: $"https://api.github.com/repos/testowner/testrepo/commits/{sha}",
-                label: null,
-                @ref: null,
-                sha: sha,
-                nodeId: $"COMMIT_{sha}",
-                user: user,
-                repository: repo,
-                message: message,
-                author: author,
-                committer: author,
-                tree: new GitReference(null, null, "tree123", "TREE_123", "https://api.github.com/repos/testowner/testrepo/git/trees/tree123", user, null),
-                parents: new List<GitReference>(),
-                commentCount: 0,
-                verification: null
-            );
-        }
-
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
         {
             return new RepositoryContent(

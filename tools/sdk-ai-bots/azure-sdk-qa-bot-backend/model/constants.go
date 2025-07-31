@@ -1,6 +1,6 @@
 package model
 
-var KeywordReplaceMap = map[string]string{
+var CommonKeywordReplaceMap = map[string]string{
 	"tsp":          "typespec",
 	"oa3":          "openapi3",
 	"tcgc":         "typespec-client-generator-core",
@@ -9,6 +9,7 @@ var KeywordReplaceMap = map[string]string{
 	"arm":          "Azure Resource Manager",
 	"common types": "Common Types to Azure Resource Manager (ARM)",
 	"common-types": "Common Types to Azure Resource Manager (ARM)",
+	"swagger":      "Open API",
 }
 
 const RerankScoreLowRelevanceThreshold = 1.5

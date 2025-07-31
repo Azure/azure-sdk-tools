@@ -53,6 +53,9 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.PromptTemplate == nil {
 			req.PromptTemplate = &tenantConfig.PromptTemplate
 		}
+		if req.IntensionPromptTemplate == nil {
+			req.IntensionPromptTemplate = &tenantConfig.IntensionPromptTemplate
+		}
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
@@ -122,9 +125,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
+func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
 	promptParser := prompt.IntensionPromptParser{}
-	promptStr, err := promptParser.ParsePrompt(nil, "intension.md")
+	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
 	if err != nil {
 		log.Printf("Failed to parse intension prompt: %v", err)
 		return nil, err
@@ -327,9 +330,8 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
 	}
-	query = preprocess.NewPreprocessService().PreprocessInput(query)
 	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(messages)
+	intentResult, err := s.RecongnizeIntension(*req.IntensionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -346,6 +348,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		}
 		log.Printf("Intent Result: category: %v, intension: %v", intentResult.Category, intentResult.Question)
 	}
+	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
 	log.Printf("Searching query: %s", query)
 	return query, intentResult

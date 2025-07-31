@@ -69,7 +69,7 @@ For TypeSpec code questions, follow this structured approach:
 ## Answer Formatting Requirements
 - Wrap all code in appropriate syntax highlighting
 - Use backticks (`) for inline code elements and regex patterns
-- Start tables on new lines for proper display
+- Don't use markdown table for proper display
 - Don't use markdown headers for proper display
 
 # KNOWLEDGE BASE CATEGORIES

@@ -124,6 +124,11 @@ const parser = yargs(hideBin(process.argv))
         .option("trace", {
           type: "array",
           description: "Enable tracing during compile",
+        })
+        .option("update-if-exists", {
+            type: "boolean",
+            description: "Update the library if it exists, keeping extra tsp-location.yaml data",
+            default: false,
         });
     },
     async (argv: any) => {

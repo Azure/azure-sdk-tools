@@ -27,7 +27,7 @@ function isStringStringRecord(
 
 export function getUsedVersions(npmViewResult: Record<string, unknown>): string[] {
     const versions = npmViewResult['versions'];
-    if (!isStringStringRecord(versions)) return [];
+    if (typeof versions !== 'object' || versions === null) return [];
     return Object.keys(versions);    
 }
 

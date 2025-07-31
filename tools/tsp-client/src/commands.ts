@@ -21,6 +21,7 @@ import {
   getServiceDir,
   makeSparseSpecDir,
   getPathToDependency,
+  updateExistingTspLocation,
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -89,7 +90,7 @@ export async function initCommand(argv: any) {
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!);
     await mkdir(newPackageDir, { recursive: true });
-    const tspLocationData: TspLocation = {
+    let tspLocationData: TspLocation = {
       directory: resolvedConfigUrl.path,
       commit: resolvedConfigUrl.commit,
       repo: resolvedConfigUrl.repo,
@@ -100,6 +101,12 @@ export async function initCommand(argv: any) {
     };
     if (argv["emitter-package-json-path"]) {
       tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    }
+    if (argv["update-if-exists"]) {
+      // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
+      // and update it with the new values while maintaining previously existing data.
+      Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
+      tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
     }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
@@ -138,10 +145,10 @@ export async function initCommand(argv: any) {
       }
     }
 
-    const tspLocationData: TspLocation = {
+    let tspLocationData: TspLocation = {
       directory: directory,
-      commit: commit ?? "",
-      repo: repo ?? "",
+      commit: commit,
+      repo: repo,
       additionalDirectories:
         configYaml?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
           "additionalDirectories"
@@ -151,6 +158,12 @@ export async function initCommand(argv: any) {
     if (emitterPackageOverride) {
       // store relative path to repo root
       tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
+    }
+    if (argv["update-if-exists"]) {
+      // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
+      // and update it with the new values while maintaining previously existing data.
+      Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
+      tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
     }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     outputDir = newPackageDir;

@@ -4,11 +4,14 @@ import {
   getAdditionalDirectoryName,
   getServiceDir,
   makeSparseSpecDir,
+  updateExistingTspLocation,
 } from "../src/utils.js";
 import { removeDirectory } from "../src/fs.js";
 import { parse as parseYaml } from "yaml";
 import { assert } from "chai";
 import { readFile, stat } from "node:fs/promises";
+import { joinPaths } from "@typespec/compiler";
+import { cwd } from "node:process";
 
 describe("get the right service dir from tspconfig.yaml", function () {
   it("Get custom emitter service-dir", async function () {
@@ -49,5 +52,47 @@ describe("Verify other utils functions", function () {
     const result = formatAdditionalDirectories(["/specification/foo", "/specification/bar"]);
     const expected = "\n- /specification/foo\n- /specification/bar\n";
     assert.equal(result, expected);
+  });
+
+  it("Check updateExistingTspLocation update some properties", async function () {
+    const tspLocationData = {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+    };
+    const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");
+    const updatedTspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
+    // Verify that directory, commit, repo, and additionalDirectories are updated correctly
+    // Verify that the entrypointFile remains unchanged
+    assert.deepEqual(updatedTspLocationData, {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      entrypointFile: "foo.tsp"
+    });
+  });
+
+  it("Check updateExistingTspLocation with extra property", async function () {
+    const tspLocationData = {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      emitterPackageJsonPath: "example.json",
+    };
+    const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");
+    const updatedTspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
+    // Verify that directory, commit, repo, and additionalDirectories are updated correctly
+    // Verify that the entrypointFile remains unchanged
+    assert.deepEqual(updatedTspLocationData, {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      entrypointFile: "foo.tsp",
+      emitterPackageJsonPath: "example.json"
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { cp, stat, rm, readFile } from "node:fs/promises";
+import { cp, stat, rm, readFile, mkdir } from "node:fs/promises";
 import {
   initCommand,
   generateCommand,
@@ -313,6 +313,51 @@ describe.sequential("Verify commands", () => {
       assert.equal(tspLocation.commit, "<replace with your value>");
       assert.equal(tspLocation.repo, "<replace with your value>");
       await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with --update-if-exists", async () => {
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/initOrUpdate/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+        "update-if-exists": true,
+        "commit": "abc",
+      };
+
+      
+      // Add a tsp-location.yaml file to the output directory for the initOrUpdate test to simulate an existing project
+      const existingTspLocation: TspLocation = {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
+      };
+      await mkdir(
+        joinPaths(cwd(), "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest"),
+        { recursive: true }
+      );
+      await writeTspLocationYaml(
+        existingTspLocation,
+        joinPaths(cwd(), "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest"),
+      );
+      // Now run the init command with --update-if-exists with a local spec so that we can pass in a dummy commit for testing
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      assert.deepEqual(tspLocation, {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "abc",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: ["tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
+      });
+      await rm("./test/examples/initOrUpdate/", { recursive: true });
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

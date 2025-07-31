@@ -115,12 +115,12 @@ export async function updateExistingTspLocation(
 
     // Define the properties that can be updated
     const updatableProperties: (keyof TspLocation)[] = [
-      'repo',
-      'commit', 
-      'directory',
-      'entrypointFile',
-      'additionalDirectories',
-      'emitterPackageJsonPath'
+      "repo",
+      "commit",
+      "directory",
+      "entrypointFile",
+      "additionalDirectories",
+      "emitterPackageJsonPath",
     ];
 
     // Update each property if it has a valid value

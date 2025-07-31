@@ -323,7 +323,6 @@ export async function generateCommand(argv: any) {
     try {
       await npmCommand(srcDir, ["ls", "-a", "|", "grep", "-E", "'typespec|azure-tools'"]);
     } catch (err) {}
-
   }
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,
@@ -504,9 +503,7 @@ export async function generateConfigFilesCommand(argv: any) {
   if (existingEmitterPackageJson) {
     // Register all manually added regular dependencies and their current values
     const manualDependencies = {};
-    for (const [key, value] of Object.entries(
-      existingEmitterPackageJson["dependencies"] ?? {},
-    )) {
+    for (const [key, value] of Object.entries(existingEmitterPackageJson["dependencies"] ?? {})) {
       if (!Object.keys(emitterPackageJson["dependencies"] ?? {}).includes(key)) {
         Object.assign(manualDependencies, { [key]: value });
       }

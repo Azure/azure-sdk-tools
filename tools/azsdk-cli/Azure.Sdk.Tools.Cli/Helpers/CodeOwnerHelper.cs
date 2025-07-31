@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         List<CodeownersEntry?> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null);
         List<string> ExtractUniqueOwners(CodeownersEntry entry);
         int findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, string path = null, string serviceLabel = null);
-        public (List<CodeownersEntry> codeownersEntries, int index) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
+        public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
         string addCodeownersEntryAtIndex(string codeownersContent, string codeownersEntry, int index);
         string formatCodeownersEntry(string path, string serviceLabel, List<string> serviceOwners, List<string> sourceOwners);
         (int StartLine, int EndLine) findBlock(string currentContent, string serviceCategory);
@@ -16,8 +16,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
     public class CodeOwnerHelper : ICodeOwnerHelper
     {
-        public static int count = 0;
-
         public List<CodeownersEntry?> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null)
         {
             var codeownersEntries = new List<CodeownersEntry>();
@@ -98,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return 1;
         }
 
-        public (List<CodeownersEntry> codeownersEntries, int index) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index)
+        public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index)
         {
             if (index < codeownersEntries.Count - 1)
             {
@@ -107,7 +105,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (AreEntriesRelatedByPath(codeownersEntry, nextCodeownersEntry))
                 {
-                    count++;
                     var mergedEntry = new CodeownersEntry
                     {
                         PathExpression = !string.IsNullOrEmpty(codeownersEntry.PathExpression) ? codeownersEntry.PathExpression : nextCodeownersEntry.PathExpression,
@@ -122,8 +119,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                     codeownersEntries[index] = mergedEntry;
                     codeownersEntries.RemoveAt(index + 1);
-
-                    codeownersEntry = mergedEntry;
 
                     index--;
                 }

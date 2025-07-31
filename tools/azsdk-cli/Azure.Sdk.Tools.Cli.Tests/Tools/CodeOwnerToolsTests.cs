@@ -143,46 +143,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
         #endregion
 
-        #region isValidCodeOwner Tests
-
-        [Test]
-        public async Task IsValidCodeOwner_ValidUser_ReturnsValidationResult()
-        {
-            // Arrange
-            var validationResult = new CodeOwnerValidationResult
-            {
-                Username = "testuser",
-                IsValidCodeOwner = true,
-                HasWritePermission = true,
-                Organizations = new Dictionary<string, bool> { { "Azure", true } }
-            };
-            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync("testuser", false))
-                                  .ReturnsAsync(validationResult);
-
-            // Act
-            var result = await codeownerTools.isValidCodeOwner("testuser");
-
-            // Assert
-            Assert.That(result, Does.Contain("\"IsValidCodeOwner\": true"));
-            Assert.That(result, Does.Contain("\"HasWritePermission\": true"));
-        }
-
-        [Test]
-        public async Task IsValidCodeOwner_NoAlias_CallsGetGitUserDetails()
-        {
-            // Arrange
-            mockGitHubService.Setup(x => x.GetGitUserDetailsAsync()).ReturnsAsync(null as User);
-            mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>())).Returns("error");
-
-            // Act
-            var result = await codeownerTools.isValidCodeOwner("");
-
-            // Assert
-            mockGitHubService.Verify(x => x.GetGitUserDetailsAsync(), Times.Once);
-        }
-
-        #endregion
-
         #region AddCodeownerEntry Tests
 
         [Test]

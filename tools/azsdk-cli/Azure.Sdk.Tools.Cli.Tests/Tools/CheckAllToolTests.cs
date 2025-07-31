@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(result);
             Assert.IsFalse(string.IsNullOrEmpty(result.Message));
             Assert.IsNull(result.ResponseError);
-            Assert.AreEqual("All checks completed successfully", result.Message);
+            Assert.That(result.Message, Is.EqualTo("All checks completed successfully"));
         }
 
         [Test]
@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Verify that all 6 checks ran
             var checkResults = result.Result as System.Collections.Generic.List<CheckResult>;
             Assert.IsNotNull(checkResults);
-            Assert.AreEqual(6, checkResults.Count);
+            Assert.That(checkResults.Count, Is.EqualTo(6));
             Assert.IsTrue(checkResults.Any(r => r.CheckType == "Spell Check"));
             Assert.IsTrue(checkResults.Any(r => r.CheckType == "Link Validation"));
             Assert.IsTrue(checkResults.Any(r => r.CheckType == "README Validation"));

@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IOutputService output,
         ILogger<CodeownerTools> logger,
         ICodeOwnerHelper codeownerHelper,
-        ICodeOwnerValidator codeOwnerValidator,
+        ICodeOwnerValidatorHelper codeOwnerValidator,
         ILabelHelper labelHelper) : MCPTool
     {
         private static ConcurrentDictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new ConcurrentDictionary<string, CodeOwnerValidationResult>();
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoOption,
                     serviceLabelOption,
                     pathOptionOptional
-                },
+                }
             };
 
             foreach (var subCommand in subCommands)
@@ -404,8 +404,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     resultMessages.Add(createBranchInfo);
                 }
                 
-                var updateFileInfo = await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", $"Add codeowner entry for {path ?? serviceLabel}", modifiedCodeownersContent, sha, branchName);
-                resultMessages.Add(updateFileInfo);
+                await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", $"Add codeowner entry for {path ?? serviceLabel}", modifiedCodeownersContent, sha, branchName);
 
                 // Step 4: Handle PR creation or update existing PR
                 var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", fullRepoName, branchName);

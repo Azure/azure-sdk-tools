@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IOutputService> mockOutputService;
         private Mock<ILogger<CodeownerTools>> mockLogger;
         private Mock<ICodeOwnerHelper> mockCodeOwnerHelper;
-        private Mock<ICodeOwnerValidator> mockCodeOwnerValidator;
+        private Mock<ICodeOwnerValidatorHelper> mockCodeOwnerValidator;
         private Mock<ILabelHelper> mockLabelHelper;
 
         [SetUp]
@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockOutputService = new Mock<IOutputService>();
             mockLogger = new Mock<ILogger<CodeownerTools>>();
             mockCodeOwnerHelper = new Mock<ICodeOwnerHelper>();
-            mockCodeOwnerValidator = new Mock<ICodeOwnerValidator>();
+            mockCodeOwnerValidator = new Mock<ICodeOwnerValidatorHelper>();
             mockLabelHelper = new Mock<ILabelHelper>();
 
             codeownerTools = new CodeownerTools(

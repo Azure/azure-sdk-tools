@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILabelHelper, LabelHelper>();
             
             // Tools
-            services.AddSingleton<ICodeOwnerValidator, CodeOwnerValidator>();
+            services.AddSingleton<ICodeOwnerValidatorHelper, CodeOwnerValidatorHelper>();
         }
     }
 }

@@ -47,7 +47,8 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories listed above
+  "category": string,    // Must be one of the categories listed above,
+  "spec_type": string    // user's service specification language: TypeSpec or OpenAPI or unkown
 }
 
 ## Examples
@@ -57,4 +58,5 @@ Response:
 {
   "question": "What are the requirements and prerequisites to get my Azure service ready for SDK onboarding?",
   "category": "service-onboarding",
+  "spec_type": unknown
 }

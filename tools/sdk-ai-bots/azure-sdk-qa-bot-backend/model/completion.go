@@ -98,4 +98,5 @@ const (
 type IntensionResult struct {
 	Question string           `json:"question" jsonschema:"required,description=The question to ask the agent"`
 	Category QuestionCategory `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType string           `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
 }

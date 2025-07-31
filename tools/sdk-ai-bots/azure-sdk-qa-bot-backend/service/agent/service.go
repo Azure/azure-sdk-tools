@@ -100,7 +100,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 5. Build prompt
-	prompt, err := s.buildPrompt(query, chunks, *req.PromptTemplate)
+	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -346,7 +346,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		if len(intentResult.Question) > 0 {
 			query = fmt.Sprintf("category:%s question:%s", intentResult.Category, intentResult.Question)
 		}
-		log.Printf("Intent Result: category: %v, intension: %v", intentResult.Category, intentResult.Question)
+		log.Printf("Intent Result: %+v", intentResult)
 	}
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
@@ -456,7 +456,7 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	return result, nil
 }
 
-func (s *CompletionService) buildPrompt(query string, chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
@@ -467,11 +467,12 @@ func (s *CompletionService) buildPrompt(query string, chunks []string, promptTem
 			break
 		}
 	}
+	intensionStr, _ := json.Marshal(intension)
 	promptParser := prompt.DefaultPromptParser{}
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
-		"context": strings.Join(chunks, "-------------------------\n"),
-		"intension": query,
-		}, promptTemplate)
+		"context":   strings.Join(chunks, "-------------------------\n"),
+		"intension": string(intensionStr),
+	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return "", err

@@ -61,3 +61,11 @@ extends:
               os: macOS
             steps:
               - template: /tools/tsp-client/build-tsp-client.yml
+          # Validate formatting
+          - job: Format
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - template: /tools/tsp-client/consistency.yml

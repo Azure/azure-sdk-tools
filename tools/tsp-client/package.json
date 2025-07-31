@@ -21,7 +21,9 @@
     "test": "vitest run",
     "test:commands": "npx tsx ./test/run_commands.ts",
     "tsp-client": "node cmd/tsp-client.js",
-    "watch": "tsc -p . --watch"
+    "watch": "tsc -p . --watch",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

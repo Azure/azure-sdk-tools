@@ -71,19 +71,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Find the first entry that should come after our new entry
             for (int i = 0; i < codeownersEntries.Count; i++)
             {
-                var codeownersEntry = codeownersEntries[i];
-
-                (codeownersEntries, i) = mergeCodeownerEntries(codeownersEntries, i);
-
-                codeownersEntry = codeownersEntries[i];
-
-                int comparison = comparer.Compare(codeownersEntry, newEntry);
+                int comparison = comparer.Compare(codeownersEntries[i], newEntry);
 
                 // If the current entry should come after our new entry, insert before it
                 if (comparison > 0)
                 {
-                    return codeownersEntry.startLine;
+                    return codeownersEntries[i].startLine;
                 }
+
+                (codeownersEntries, i) = mergeCodeownerEntries(codeownersEntries, i);
             }
 
             // If we didn't find an insertion point, append at the end
@@ -120,7 +116,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     codeownersEntries[index] = mergedEntry;
                     codeownersEntries.RemoveAt(index + 1);
 
-                    index--;
+                    if (index - 1 < 0)
+                    {
+                        index = 0;
+                    }
+                    else
+                    {
+                        index--;
+                    }
                 }
             }
             return (codeownersEntries, index);

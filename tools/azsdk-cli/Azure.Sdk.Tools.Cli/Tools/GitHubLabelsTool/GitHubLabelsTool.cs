@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var command = new Command("github-labels", "GitHub service labels tools");
             var subCommands = new[]
             {
-                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { _serviceLabelArg },
+                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelArg },
                 new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { proposedServiceLabelOpt, documentationLinkOpt },
             };
 
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case checkServiceLabelCommandName:
-                    var serviceLabel = commandParser.GetValueForArgument(_serviceLabelArg);
+                    var serviceLabel = commandParser.GetValueForArgument(serviceLabelArg);
                     var result = await CheckServiceLabel(serviceLabel);
                     ctx.ExitCode = ExitCode;
                     output.Output(result);

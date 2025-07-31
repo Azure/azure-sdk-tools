@@ -1864,6 +1864,15 @@ describe("Changelog reading", () => {
 });
 
 describe("Should Be Ignored Due to Not Exposed", () => {
+    const getActualChangelogItems = (
+            map: Map<ChangelogItemCategory, string[]>,
+        ) => {
+            const items: string[] = [];
+            map.forEach((value) => items.push(...value));
+            items.sort();
+            return items;
+        };
+
     test("models ending with 'NextOptionalParams'", async () => {
         const baselineApiView = `
 \`\`\`ts
@@ -1891,19 +1900,11 @@ export interface DataProductDataProductNextOptionalParams {
                 sdkType: SDKType.ModularClient,
             },
         );
-        const getActualChangelogItems = (
-            map: Map<ChangelogItemCategory, string[]>,
-        ) => {
-            const items: string[] = [];
-            map.forEach((value) => items.push(...value));
-            items.sort();
-            return items;
-        };
-
-        // Verify no breaking changes detected
+        // Verify no feature changes detected
         const actualFeatures = getActualChangelogItems(changelogItems.features);
         expect(actualFeatures).toHaveLength(0);  
 
+        // Verify no breaking changes detected
         const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
         expect(actualBreakingChanges).toHaveLength(0);
     });
@@ -1931,11 +1932,13 @@ export interface DataProductHeaders {
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 
     test("Removed Interface ends with 'Result'", async () => {
@@ -1963,11 +1966,13 @@ export interface DataProductResult {
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 
     test("Removed function getContinuationToken", async () => {
@@ -1991,11 +1996,13 @@ export function getContinuationToken(name: string, type: DataProductType): DataP
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.FunctionRemoved,
-        );
-        expect(items).toHaveLength(0);
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 
     test("Removed Type Alias Ends with 'Response'", async () => {
@@ -2019,11 +2026,13 @@ export type DataProductResponse = "Active" | "Inactive" | "Pending";
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.TypeAliasRemoved,
-        );
-        expect(items).toHaveLength(0);
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 
     test("Interface with ignored target names - property remove", async () => {
@@ -2056,11 +2065,13 @@ export interface DataProduct {
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyRemoved,
-        );
-        expect(items).toHaveLength(0);
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 
     test("Class with ignored target names - property remove", async () => {
@@ -2093,10 +2104,12 @@ export class DataProductClient {
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ClassPropertyRemoved,
-        );
-        expect(items).toHaveLength(0);
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 });

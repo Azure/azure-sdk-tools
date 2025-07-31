@@ -1,14 +1,24 @@
-import os
-import json
-import sys
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
 
-# Add the parent directory to sys.path so imports work correctly
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+"""
+Parse the Azure SDK guidelines from markdown files into JSON format.
+This script reads markdown files from the Azure SDK repository and converts them into JSON format
+for easier consumption by tools and applications.
+"""
+
+import json
+import os
+import sys
 
 from scripts._markdown_parser import parse_markdown
 
+# Add the parent directory to sys.path so imports work correctly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 if __name__ == "__main__":
@@ -16,11 +26,11 @@ if __name__ == "__main__":
     azure_sdk_path = os.getenv("AZURE_SDK_REPO_PATH")
     rest_api_guidelines_path = os.getenv("REST_API_GUIDELINES_PATH")
     if not azure_sdk_path:
-        raise Exception("Please set the AZURE_SDK_REPO_PATH environment variable manually or in your .env file.")
+        raise ValueError("Please set the AZURE_SDK_REPO_PATH environment variable manually or in your .env file.")
     else:
         azure_sdk_path = os.path.normpath(azure_sdk_path)
     if not rest_api_guidelines_path:
-        raise Exception("Please set the REST_API_GUIDELINES_PATH environment variable manually or in your .env file.")
+        raise ValueError("Please set the REST_API_GUIDELINES_PATH environment variable manually or in your .env file.")
     else:
         rest_api_guidelines_path = os.path.normpath(rest_api_guidelines_path)
 
@@ -58,7 +68,7 @@ if __name__ == "__main__":
                     json_filename = filename + ".json"
                     json_path = os.path.join(_GUIDELINES_FOLDER, folder, json_filename)
                     os.makedirs(os.path.dirname(json_path), exist_ok=True)
-                    with open(json_path, "w") as f:
+                    with open(json_path, "w", encoding="utf-8") as f:
                         f.write(json_str)
     # Generate the REST API Guidelines JSON
     guidelines_path = os.path.join(rest_api_guidelines_path, "azure", "Guidelines.md")
@@ -66,5 +76,5 @@ if __name__ == "__main__":
     json_path = os.path.join(_GUIDELINES_FOLDER, "rest", "guidelines.json")
     json_str = json.dumps(results, indent=2)
     os.makedirs(os.path.dirname(json_path), exist_ok=True)
-    with open(json_path, "w") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         f.write(json_str)

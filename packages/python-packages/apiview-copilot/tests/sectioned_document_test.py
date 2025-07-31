@@ -1,9 +1,19 @@
-import pytest
-import re
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+# pylint: disable=missing-class-docstring,missing-function-docstring
+
+"""
+Test cases for SectionedDocument and LineData classes.
+"""
+
 from src._sectioned_document import LineData, Section, SectionedDocument
 
 
-def test_linedata_properties():
+def test_line_data_properties():
     ld = LineData(line_no=5, indent=2, line="  foo", git_status="+")
     assert ld.line_no == 5
     assert ld.indent == 2
@@ -112,9 +122,10 @@ def test_sectioned_document_oversized_section_subdivision():
     doc = SectionedDocument(lines=raw, base_indent=0, max_chunk_size=2)
     # Expect two sub-sections, each containing the root + one child
     assert len(doc) == 2
+
+    first, second = doc.sections  # pylint: disable=unbalanced-tuple-unpacking
     assert len(doc.sections[0].lines) == 2
 
-    first, second = doc.sections
     # both should start with the same root line
     assert first.lines[0].line == "root"
     assert second.lines[0].line == "root"
@@ -126,7 +137,7 @@ def test_sectioned_document_oversized_section_subdivision():
     assert children == {"child1", "child2"}
 
 
-def test_iter_and_len_dunder():
+def test_iter_and_len_methods():
     raw = ["1: x", "2:   y"]
     doc = SectionedDocument(lines=raw)
     # __len__

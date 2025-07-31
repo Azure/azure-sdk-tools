@@ -1,9 +1,21 @@
-from dotenv import load_dotenv
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Deploy the current repository to Azure App Service.
+This script zips the current repository and deploys it to an Azure App Service.
+"""
+
 import os
-import zipfile
 import subprocess
-from typing import Optional
 import sys
+import zipfile
+from typing import Optional
+
+from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
@@ -91,7 +103,7 @@ def deploy_app_to_azure(
     # After deployment, set the startup command from startup.txt
     startup_file = "startup.txt"
     if os.path.exists(startup_file):
-        with open(startup_file, "r") as f:
+        with open(startup_file, "r", encoding="utf-8") as f:
             startup_command = f.read().strip()
         print(f"Setting Azure App Service startup command to: {startup_command}")
         cmd = [

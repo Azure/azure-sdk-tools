@@ -4,12 +4,17 @@
 # license information.
 # --------------------------------------------------------------------------
 
-import dotenv
-from bs4 import BeautifulSoup
-import markdown_it
+"""
+Script to parse markdown files and extract API documentation entries.
+"""
+
 import os
 import re
 from typing import List, Optional, Tuple
+
+import dotenv
+import markdown_it
+from bs4 import BeautifulSoup
 
 dotenv.load_dotenv()
 
@@ -41,8 +46,10 @@ ICON_PATTERN = r"^:[a-z_]+: "
 ICON_REPLACE = ""
 
 
-# Parse the markdown file
 def parse_markdown(file, root_path) -> List[dict]:
+    """
+    Parse a markdown file and return a list of entries with id, category, and text.
+    """
     with open(file, "r", encoding="utf-8") as f:
         md_text = f.read()
 
@@ -59,14 +66,14 @@ def parse_markdown(file, root_path) -> List[dict]:
             continue
 
         if item.name == "p":
-            text, id = _split_tags(item, file)
+            text, guideline_id = _split_tags(item, file)
             text = _add_links(text, item)
             text = _expand_include_tags(text, root_path, os.path.dirname(file))
 
-            if id:
+            if guideline_id:
                 entries.append(
                     {
-                        "id": id,
+                        "id": guideline_id,
                         "category": category,
                         "text": text,
                     }
@@ -87,13 +94,13 @@ def parse_markdown(file, root_path) -> List[dict]:
         elif item.name in ["ol", "ul"]:
             items = item.find_all("li")
             for item in items:
-                item_text, id = _split_tags(item, file)
+                item_text, guideline_id = _split_tags(item, file)
                 item_text = _add_links(item_text, item)
                 item_text = _expand_include_tags(item_text, root_path, os.path.dirname(file))
-                if id:
+                if guideline_id:
                     entries.append(
                         {
-                            "id": id,
+                            "id": guideline_id,
                             "category": category,
                             "text": item_text,
                         }
@@ -167,7 +174,7 @@ def _convert_code_tag_to_markdown(html):
 # Split the tag from the ID
 def _split_tags(item, file) -> Tuple[str, Optional[str]]:
     text = item.text
-    id = _extract_id_from_inline(item)
+    guideline_id = _extract_id_from_inline(item)
     text = re.sub(MAY_PATTERN, MAY_REPLACE, text)
     text = re.sub(MUST_DO_PATTERN, MUST_DO_REPLACE, text)
     text = re.sub(MUST_NO_ID_PATTERN, MUST_DO_REPLACE, text)
@@ -185,18 +192,18 @@ def _split_tags(item, file) -> Tuple[str, Optional[str]]:
         segments = file.split(os.sep)
         relevant_segments = segments[segments.index("docs") + 1 :]
         prefix = "_".join(relevant_segments).replace(".md", ".html")
-        id = f"{prefix}#{id}" if id else id
+        guideline_id = f"{prefix}#{guideline_id}" if guideline_id else guideline_id
 
-    return text, id
+    return text, guideline_id
 
 
-# Extract the id from the inline text
 def _extract_id_from_inline(item):
-    id = re.search(r'id="([a-zA-Z0-9_-]+)"', item.text)
-    if id:
-        return id.group(1)
+    """Extract the ID from an inline item."""
+    guideline_id = re.search(r'id="([a-zA-Z0-9_-]+)"', item.text)
+    if guideline_id:
+        return guideline_id.group(1)
     try:
-        id = item.next_element.attrs["name"]
-    except:
-        id = None
-    return id
+        guideline_id = item.next_element.attrs["name"]
+    except Exception:
+        guideline_id = None
+    return guideline_id

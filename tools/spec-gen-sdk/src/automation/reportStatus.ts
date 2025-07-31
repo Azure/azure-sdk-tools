@@ -30,6 +30,11 @@ export const generateReport = (context: WorkflowContext) => {
   let markdownContent = '';
   let message = "";
   let isTypeSpec = false;
+  let generateFromTypeSpec = false;
+
+  if (context.specConfigPath && context.specConfigPath.endsWith('tspconfig.yaml')) {
+    generateFromTypeSpec = true;
+  }
   for (const pkg of context.handledPackages) {
     setSdkAutoStatus(context, pkg.status);
     hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
@@ -107,6 +112,7 @@ export const generateReport = (context: WorkflowContext) => {
     filteredLogPath: context.filteredLogFileName,
     stagedArtifactsFolder: context.stagedArtifactsFolder,
     sdkArtifactFolder: context.sdkArtifactFolder,
+    generateFromTypeSpec,
     ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})
   };
 

@@ -1776,6 +1776,107 @@ export function processData(data: string): string;
 
 describe("Breaking change detection from high level client to modular client", () => {});
 
+
+describe("Generic Interface Detection", () => {
+    test("should not detect breaking change for renamed generic interface with same structure", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterfaceNameChange<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+       const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+        
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelRemoved,
+            ).length,
+        ).toBe(1);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelAdded,
+            ).length,
+        ).toBe(1);
+        
+        // Verify breaking changes detected
+        const totalBreakingChanges = [...changelogItems.breakingChanges.keys()].flatMap(
+            (category) => changelogItems.breakingChanges.get(category) ?? [],
+        ).length;
+        expect(totalBreakingChanges).toBe(1);
+        
+        // Verify new features detected
+        const totalNewFeatures = [...changelogItems.features.keys()].flatMap(
+            (category) => changelogItems.features.get(category) ?? [],
+        ).length;
+        expect(totalNewFeatures).toBe(1);
+    });
+
+    test("should just ignore inner changes", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: number;
+}
+\`\`\`
+            `;
+
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyTypeChanged,
+            ).length,
+        ).toBe(0); 
+    });
+});
+
+
 describe("Changelog reading", () => {
     test("Read changelog that doesn't exist", () => {
         const content = tryReadNpmPackageChangelog(

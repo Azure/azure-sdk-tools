@@ -17,11 +17,24 @@ class EnumNode(NodeEntityBase):
         self.namespace_id = self.generate_id()
         self.apiview = parent_node.apiview
 
+    def check_handwritten(self):
+        """Check if the enum is handwritten by inheriting from parent class.
+        Enum values inherit handwritten status from their parent enum class.
+
+        :return: True if the parent enum class is handwritten, False otherwise.
+        :rtype: bool
+        """
+        try:
+            return self.parent_node.is_handwritten
+        except Exception:
+            # Default to False if errors
+            return False
+
     def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        line = review_lines.create_review_line()
+        line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         line.add_line_marker(self.namespace_id)
         line.add_text(self.name)
         line.add_punctuation("=")

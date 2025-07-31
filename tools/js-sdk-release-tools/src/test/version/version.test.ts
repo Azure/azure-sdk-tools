@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { generateTestNpmView } from "../utils/utils.js";
-import { getLatestStableVersion } from "../../utils/version.js";
+import {
+    getLatestStableVersion,
+    getUsedVersions,
+} from "../../utils/version.js";
+import { tryGetNpmView } from "../../common/npmUtils.js";
 
 interface TestCase {
     latestVersion?: string;
@@ -56,4 +60,27 @@ describe("Get latest stable version after GA but beta version before GA", () => 
             expect(version).toBe(expectedVersion);
         },
     );
+});
+
+describe("Used Versions", async () => {
+    test("Get used versions from npm view", async () => {
+        const view = {
+            versions: {
+                "3.0.0-alpha.20250619.1": {
+                    name: "@azure/arm-test",
+                    version: "3.0.0-alpha.20250619.1",
+                    keywords: ["node"],
+                    author: { name: "Microsoft Corporation" },
+                },
+                "3.0.0": {
+                    name: "@azure/arm-test",
+                    version: "3.0.0",
+                    keywords: ["node"],
+                    author: { name: "Microsoft Corporation" },
+                },
+            },
+        };
+        const versions = getUsedVersions(view!);
+        expect(versions).toEqual(["3.0.0-alpha.20250619.1", "3.0.0"]);
+    });
 });

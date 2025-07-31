@@ -32,24 +32,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private const string createServiceLabelCommandName = "create-service-label";
 
         // Command options
-        private readonly Option<string> proposedServiceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
+        private readonly Option<string> serviceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
         private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
-
-        private readonly Argument<string> serviceLabelArg = new Argument<string>(
-            name: "service-label",
-            description: "The service label to check in the common labels CSV"
-        )
-        {
-            Arity = ArgumentArity.ExactlyOne // only one service label is expected
-        };
 
         public override Command GetCommand()
         {
             var command = new Command("github-labels", "GitHub service labels tools");
             var subCommands = new[]
             {
-                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelArg },
-                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { proposedServiceLabelOpt, documentationLinkOpt },
+                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
+                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
             };
 
             foreach (var subCommand in subCommands)
@@ -68,13 +60,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case checkServiceLabelCommandName:
-                    var serviceLabel = commandParser.GetValueForArgument(serviceLabelArg);
+                    var serviceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var result = await CheckServiceLabel(serviceLabel);
                     ctx.ExitCode = ExitCode;
                     output.Output(result);
                     return;
                 case createServiceLabelCommandName:
-                    var proposedServiceLabel = commandParser.GetValueForOption(proposedServiceLabelOpt);
+                    var proposedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
                     var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
                     output.Output($"Create service label result: {createdPRLink}");

@@ -1776,7 +1776,6 @@ export function processData(data: string): string;
 
 describe("Breaking change detection from high level client to modular client", () => {});
 
-
 describe("Generic Interface Detection", () => {
     test("should not detect breaking change for renamed generic interface with same structure", async () => {
         const baselineApiView = `
@@ -1875,7 +1874,6 @@ export interface GenericInterface<T> {
         ).toBe(0); 
     });
 });
-
 
 describe("Changelog reading", () => {
     test("Read changelog that doesn't exist", () => {

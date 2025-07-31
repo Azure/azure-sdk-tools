@@ -1,8 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { generateTestNpmView } from "../utils/utils.js";
-import { getLatestStableVersion, getNextBetaVersion } from "../../utils/version.js";
+import { getLatestStableVersion, getNextBetaVersion, getUsedVersions } from "../../utils/version.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
-
 
 interface TestCase {
     latestVersion?: string;

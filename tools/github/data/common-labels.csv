@@ -254,6 +254,7 @@ auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ede
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49
 bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875
+contoso,,e99695
 customer-reported,Issues that are reported by GitHub users external to the Azure organization.,3800e0
 design-discussion,An area of design currently under discussion and open to team and community feedback.,0BABDF
 duplicate,This issue is the duplicate of another issue,e4c288

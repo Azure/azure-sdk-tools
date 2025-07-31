@@ -1891,11 +1891,21 @@ export interface DataProductDataProductNextOptionalParams {
                 sdkType: SDKType.ModularClient,
             },
         );
-        const items = getItemsByCategory(
-            changelogItems,
-            ChangelogItemCategory.ModelPropertyTypeChanged,
-        );
-        expect(items).toHaveLength(0);
+        const getActualChangelogItems = (
+            map: Map<ChangelogItemCategory, string[]>,
+        ) => {
+            const items: string[] = [];
+            map.forEach((value) => items.push(...value));
+            items.sort();
+            return items;
+        };
+
+        // Verify no breaking changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 
     test("Removed Interface ends with 'Headers'", async () => {

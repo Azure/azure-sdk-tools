@@ -104,13 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
         public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
         {
-            // Create a mock RepositoryContentChangeSet
-            var mockContent = CreateMockRepositoryContent(System.IO.Path.GetFileName(path), path, content);
-            var mockCommit = CreateMockCommit(message, sha);
-
-            var changeSet = $"Updated {path} with commit message {mockCommit}";
-
-            return Task.FromResult(changeSet);
+            throw new NotImplementedException();
         }
 
         private Commit CreateMockCommit(string message, string sha)

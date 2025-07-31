@@ -83,6 +83,7 @@ export class GithubClient {
       const title = pr.title;
       return { labels, title };
     } catch (error) {
+      // TODO: use logger instead
       console.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
       return undefined;
     }

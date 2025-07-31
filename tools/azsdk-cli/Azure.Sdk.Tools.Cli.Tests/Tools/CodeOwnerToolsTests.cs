@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                                   .ReturnsAsync(validationResult);
 
             // Act
-            var result = await codeownerTools.ValidateCodeOwners("dotnet", "Service Bus");
+            var result = await codeownerTools.ValidateCodeOwnerEntryForService("dotnet", "Service Bus");
 
             // Assert
             Assert.That(result.Message, Does.Contain("Successfully found codeowners"));
@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task ValidateCodeOwners_NoServiceLabelOrPath_ReturnsError()
         {
             // Act
-            var result = await codeownerTools.ValidateCodeOwners("dotnet");
+            var result = await codeownerTools.ValidateCodeOwnerEntryForService("dotnet");
 
             // Assert
             Assert.That(result.Message, Does.Contain("Must provide a service label or a repository path"));

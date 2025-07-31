@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
         }
 
-        public Task<string> UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
         {
             throw new NotImplementedException();
         }

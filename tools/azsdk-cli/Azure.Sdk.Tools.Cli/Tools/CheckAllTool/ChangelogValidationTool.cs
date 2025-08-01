@@ -11,6 +11,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
@@ -24,13 +25,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
     {
         private readonly ILogger<ChangelogValidationTool> logger;
         private readonly IOutputService output;
+        private readonly IGitHelper gitHelper;
 
         private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
 
-        public ChangelogValidationTool(ILogger<ChangelogValidationTool> logger, IOutputService output) : base()
+        public ChangelogValidationTool(ILogger<ChangelogValidationTool> logger, IOutputService output, IGitHelper gitHelper) : base()
         {
             this.logger = logger;
             this.output = output;
+            this.gitHelper = gitHelper;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -64,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-changelog-validation"), Description("Run changelog validation for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunChangelogValidation(string projectPath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -84,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
                 // Find the SDK repository root by looking for common repository indicators
                 // Start from the project path and work upwards to find the SDK repo root
-                var projectRepoRoot = FindRepositoryRoot(projectPath);
+                var projectRepoRoot = gitHelper.FindRepositoryRoot(projectPath);
                 if (string.IsNullOrEmpty(projectRepoRoot))
                 {
                     SetFailure(1);
@@ -156,37 +159,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     Duration = (int)stopwatch.ElapsedMilliseconds
                 };
             }
-        }
-
-        /// <summary>
-        /// Finds the repository root by looking for common repository indicators
-        /// </summary>
-        /// <param name="startPath">Path to start searching from</param>
-        /// <returns>Repository root path or null if not found</returns>
-        private string? FindRepositoryRoot(string startPath)
-        {
-            var currentDir = new DirectoryInfo(startPath);
-            
-            while (currentDir != null)
-            {
-                // Look for .git directory first as the most reliable indicator
-                if (Directory.Exists(Path.Combine(currentDir.FullName, ".git")))
-                {
-                    return currentDir.FullName;
-                }
-                
-                // Also check for common repository structure indicators
-                // Only consider it a repo root if it has both eng directory AND is likely the root
-                if (Directory.Exists(Path.Combine(currentDir.FullName, "eng")) &&
-                    Directory.Exists(Path.Combine(currentDir.FullName, "sdk")))
-                {
-                    return currentDir.FullName;
-                }
-                
-                currentDir = currentDir.Parent;
-            }
-            
-            return null;
         }
 
         /// <summary>

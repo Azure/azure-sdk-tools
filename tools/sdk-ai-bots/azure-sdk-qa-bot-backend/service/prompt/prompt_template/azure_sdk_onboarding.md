@@ -79,7 +79,6 @@ For Azure SDK onboarding and development questions, follow this structured appro
 
 ## Azure SDK Onboarding & Development Resources
 - **azure-sdk-docs-eng**: Azure SDK onbaording documentation for service partners.
-- **azure-sdk-guidelines**: The guidelines for designing and implementing Azure SDK client libraries for all languages.
 
 ## AzureTypeSpec Resources
 - **typespec_azure_docs**: Azure-specific TypeSpec documentation, patterns, and templates for management and data-plane services complying with Azure API guidelines
@@ -95,6 +94,9 @@ For Azure SDK onboarding and development questions, follow this structured appro
 
 # Category Answer Guideline
 ===================================
+
+## SDK develop
+- **sdk review**: You should guide user to create a release plan and get the SDK PR link to request the review.
 
 ## SDK release
 - **release(generation) date**: You should describe the release processes firstly and then given suggestions.

@@ -4,6 +4,7 @@ using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
+using Azure.Sdk.Tools.Cli.Tools.RunCspellTool;
 using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
 using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
 
@@ -21,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(PipelineTestsTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
+            typeof(RunCspellTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(SpecPullRequestTools),

@@ -7,6 +7,12 @@ using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
+    public enum CreateBranchStatus
+    {
+        Created,
+        AlreadyExists,
+    }
+
 public class GitConnection
     {
         private GitHubClient? _gitHubClient; // Backing field for the property
@@ -79,6 +85,9 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
+        public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
+        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -101,7 +110,7 @@ public class GitConnection
         {
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
-        }        
+        }
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)
         {
@@ -309,6 +318,69 @@ public class GitConnection
             {
                 logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
                 throw;
+            }
+        }
+
+        public async Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        {
+            try
+            {
+                var updateRequest = new UpdateFileRequest(message, content, sha, branch);
+                var result = await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
+            }
+            catch (NotFoundException ex)
+            {
+                logger.LogInformation("GitHubService: Path {path} not found in {owner}/{repoName} on reference {branch}. Exception: {exception}", path, owner, repoName, branch, ex.Message);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GitHubService: Error fetching contents from {owner}/{repoName}/{path} on reference {branch}", owner, repoName, path, branch);
+                throw;
+            }
+        }
+
+        public async Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            try
+            {
+                var branchExists = await GetBranchAsync(repoOwner, repoName, branchName);
+                if (branchExists)
+                {
+                    return CreateBranchStatus.AlreadyExists;
+                }
+
+                // Get the base branch reference first
+                var baseReference = await gitHubClient.Git.Reference.Get(repoOwner, repoName, $"heads/{baseBranchName}");
+
+                // Create the new branch reference
+                var newReference = new NewReference("refs/heads/" + branchName, baseReference.Object.Sha);
+                var createdReference = await gitHubClient.Git.Reference.Create(repoOwner, repoName, newReference);
+
+                return CreateBranchStatus.Created;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to create branch {branchName} in {repoOwner}/{repoName}");
+                throw;
+            }
+        }
+
+        public async Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            try
+            {
+                var branch = await gitHubClient.Repository.Branch.Get(repoOwner, repoName, branchName);
+                return branch != null;
+            }
+            catch (NotFoundException)
+            {
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error getting branch '{branchName}' in {repoOwner}/{repoName}: {ex.Message}");
+                return false;
             }
         }
     }

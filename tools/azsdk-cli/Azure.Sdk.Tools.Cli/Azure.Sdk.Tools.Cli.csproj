@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.0.0" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.79.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />

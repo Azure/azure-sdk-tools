@@ -9,6 +9,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 {
     public class MockGitHubService : IGitHubService
     {
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            throw new NotImplementedException();
+        }
+
+
         public Task<User> GetGitUserDetailsAsync()
         {
             // Create a simple mock user - we'll use reflection to set properties if needed
@@ -89,6 +100,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             };
 
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
+        }
+
+        public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        {
+            throw new NotImplementedException();
         }
 
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)

@@ -151,11 +151,11 @@ namespace APIViewWeb
             {
                 services.AddAuthentication(options =>
                 {
-                    options.DefaultAuthenticateScheme = "CookieFirst";
+                    options.DefaultAuthenticateScheme = "CookieOrBearerAuthentication";
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddScheme<AuthenticationSchemeOptions, CookieFirstAuthenticationHandler>("CookieFirst", options => { })
+                .AddScheme<AuthenticationSchemeOptions, CookieOrBearerAuthenticationHandler>("CookieOrBearerAuthentication", options => { })
                 .AddCookie(options =>
                 {
                     options.LoginPath = "/Login";
@@ -163,100 +163,33 @@ namespace APIViewWeb
                 })
                 .AddJwtBearer("Bearer", options =>
                 {
-                    var tenantId = Configuration["AzureAd:TenantId"];
-                    var clientId = Configuration["AzureAd:ClientId"];
+                    string tenantId = Configuration["AzureAd:TenantId"];
+                    string clientId = Configuration["AzureAd:ClientId"];
 
-                    Console.WriteLine($"JWT Configuration - TenantId: {tenantId}, ClientId: {clientId}");
-
-                    if (!string.IsNullOrEmpty(tenantId) && !string.IsNullOrEmpty(clientId))
+                    if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
                     {
-                        Console.WriteLine($"Configuring JWT Bearer authentication with Authority: https://login.microsoftonline.com/{tenantId}");
-                        
-                        options.Authority = $"https://login.microsoftonline.com/{tenantId}";
-                        options.Audience = clientId;
-                        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                        {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            ValidateIssuerSigningKey = true,
-                            ClockSkew = TimeSpan.FromMinutes(5),
-                            ValidAudiences = [
-                                clientId, 
-                                $"api://{clientId}"
-                            ],
-                            ValidIssuers = [
-                                $"https://login.microsoftonline.com/{tenantId}/v2.0",
-                                $"https://login.microsoftonline.com/{tenantId}/",
-                                $"https://sts.windows.net/{tenantId}/"
-                            ]
-                        };
-
-                        // Add comprehensive JWT authentication logging
-                        options.Events = new JwtBearerEvents
-                        {
-                            OnMessageReceived = context =>
-                            {
-                                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                                logger.LogWarning("🔍 JWT: OnMessageReceived called - Request path: {Path}", context.Request.Path);
-                                
-                                // Check Authorization header manually
-                                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                                logger.LogWarning("🔍 JWT: Authorization header: {AuthHeader}", authHeader ?? "NULL");
-                                
-                                if (!string.IsNullOrEmpty(context.Token))
-                                {
-                                    logger.LogWarning("🔍 JWT: Token present, length: {TokenLength}", context.Token.Length);
-                                    logger.LogWarning("🔍 JWT: Token starts with: {TokenStart}", context.Token.Substring(0, Math.Min(50, context.Token.Length)));
-                                    
-                                    // Check if token looks like a valid JWT (should have 3 parts separated by dots)
-                                    var parts = context.Token.Split('.');
-                                    logger.LogWarning("🔍 JWT: Token has {PartCount} parts (should be 3)", parts.Length);
-                                }
-                                else
-                                {
-                                    logger.LogWarning("🔍 JWT: No token found in context.Token");
-                                }
-                                
-                                return Task.CompletedTask;
-                            },
-                            OnTokenValidated = context =>
-                            {
-                                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                                logger.LogWarning("JWT: Token validated successfully for user: {UserName}", 
-                                    context.Principal?.Identity?.Name ?? "Anonymous");
-                                    
-                                // Log all claims
-                                var claims = context.Principal?.Claims?.Select(c => $"{c.Type}={c.Value}") ?? Enumerable.Empty<string>();
-                                logger.LogDebug("JWT: Token claims: {Claims}", string.Join(", ", claims));
-                                
-                                return Task.CompletedTask;
-                            },
-                            OnAuthenticationFailed = context =>
-                            {
-                                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                                logger.LogError("JWT: Authentication failed - {Exception}", context.Exception?.Message);
-                                logger.LogError("JWT: Exception details: {ExceptionDetails}", context.Exception?.ToString());
-                                
-                                return Task.CompletedTask;
-                            },
-                            OnChallenge = context =>
-                            {
-                                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                                logger.LogWarning("JWT: Authentication challenge triggered - {Error}: {ErrorDescription}", 
-                                    context.Error, context.ErrorDescription);
-                                    
-                                return Task.CompletedTask;
-                            }
-                        };
+                        return;
                     }
-                    else
+
+                    options.Authority = $"https://login.microsoftonline.com/{tenantId}";
+                    options.Audience = clientId;
+                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
-
-                        Console.WriteLine("All wrong");
-                        // Configuration is missing - this will be logged during startup
-                        // Logger not available in configuration context
-                    }
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ClockSkew = TimeSpan.FromMinutes(5),
+                        ValidAudiences = [
+                            clientId, 
+                            $"api://{clientId}"
+                        ],
+                        ValidIssuers = [
+                            $"https://login.microsoftonline.com/{tenantId}/v2.0",
+                            $"https://login.microsoftonline.com/{tenantId}/",
+                            $"https://sts.windows.net/{tenantId}/"
+                        ]
+                    };
                 })
                 .AddOAuth("GitHub", options =>
                 {
@@ -447,42 +380,6 @@ namespace APIViewWeb
             app.UseCors("AllowCredentials");
             app.UseCookiePolicy();
             app.UseAuthentication();
-            
-            // Add custom middleware to log authentication details
-            app.Use(async (context, next) =>
-            {
-                var logger = context.RequestServices.GetRequiredService<ILogger<Startup>>();
-                
-                logger.LogWarning("🔍 Authentication Debug - Path: {Path}, Method: {Method}", 
-                    context.Request.Path, context.Request.Method);
-                    
-                // Check if Authorization header is present BEFORE authentication
-                if (context.Request.Headers.ContainsKey("Authorization"))
-                {
-                    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                    logger.LogWarning("🔍 BEFORE Auth - Authorization header present: {AuthHeader}", 
-                        authHeader?.Substring(0, Math.Min(50, authHeader?.Length ?? 0)) + "...");
-                }
-                else
-                {
-                    logger.LogWarning("🔍 BEFORE Auth - No Authorization header found in request");
-                }
-                
-                await next();
-                
-                // Check authentication AFTER middleware processing
-                logger.LogWarning("🔍 AFTER Auth - User authenticated: {IsAuthenticated}, Identity type: {AuthType}, Name: {Name}", 
-                    context.User?.Identity?.IsAuthenticated ?? false,
-                    context.User?.Identity?.AuthenticationType ?? "None",
-                    context.User?.Identity?.Name ?? "Anonymous");
-                    
-                if (context.User?.Identity?.IsAuthenticated == true)
-                {
-                    var claims = context.User.Claims.Select(c => $"{c.Type}={c.Value}").Take(5);
-                    logger.LogWarning("🔍 AFTER Auth - User claims (first 5): {Claims}", string.Join(", ", claims));
-                }
-            });
-            
             app.UseAuthorization();
             app.UseMiddleware<SwaggerAuthMiddleware>();
             app.UseMiddleware<RequestLoggingMiddleware>();
@@ -494,67 +391,6 @@ namespace APIViewWeb
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapHub<SignalRHub>("hubs/notification");
             });
-        }
-    }
-
-    /// <summary>
-    /// Custom authentication handler that tries Cookie authentication first, then JWT Bearer as fallback
-    /// </summary>
-    public class CookieFirstAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
-    {
-        public CookieFirstAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-            ILoggerFactory logger, UrlEncoder encoder)
-            : base(options, logger, encoder)
-        {
-        }
-
-        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
-        {
-            Logger.LogWarning("🔍 CookieFirst: Starting authentication for {Path}", Request.Path);
-
-            // Try Cookie authentication first
-            Logger.LogWarning("🔍 CookieFirst: Trying Cookie authentication...");
-            var cookieResult = await Context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            
-            if (cookieResult.Succeeded)
-            {
-                Logger.LogWarning("🔍 CookieFirst: Cookie authentication succeeded");
-                return cookieResult;
-            }
-
-            Logger.LogWarning("🔍 CookieFirst: Cookie authentication failed, checking for Bearer token...");
-
-            // If Cookie failed, check for Authorization header with Bearer token
-            if (Request.Headers.ContainsKey("Authorization"))
-            {
-                var authHeader = Request.Headers["Authorization"].FirstOrDefault();
-                if (authHeader?.StartsWith("Bearer ") == true)
-                {
-                    Logger.LogWarning("🔍 CookieFirst: Bearer token found, trying JWT authentication...");
-                    var jwtResult = await Context.AuthenticateAsync("Bearer");
-                    
-                    if (jwtResult.Succeeded)
-                    {
-                        Logger.LogWarning("🔍 CookieFirst: JWT authentication succeeded");
-                        return jwtResult;
-                    }
-                    else
-                    {
-                        Logger.LogWarning("🔍 CookieFirst: JWT authentication failed: {Failure}", jwtResult.Failure?.Message);
-                    }
-                }
-                else
-                {
-                    Logger.LogWarning("🔍 CookieFirst: Authorization header present but not Bearer token");
-                }
-            }
-            else
-            {
-                Logger.LogWarning("🔍 CookieFirst: No Authorization header found");
-            }
-
-            Logger.LogWarning("🔍 CookieFirst: All authentication methods failed");
-            return AuthenticateResult.NoResult();
         }
     }
 }

@@ -82,7 +82,7 @@ namespace APIViewWeb.MiddleWare
 
             using (_logger.BeginScope(requestInfo))
             {
-                _logger.LogWarning($"Incoming Request: {requestTitle}");
+                _logger.LogInformation($"Incoming Request: {requestTitle}");
                 try
                 {
                     await _next(context);
@@ -99,7 +99,7 @@ namespace APIViewWeb.MiddleWare
                 finally
                 {
                     _telemetryClient.StopOperation(operation);
-                    _logger.LogWarning($"Response Status Code: {context.Response.StatusCode}");
+                    _logger.LogInformation($"Response Status Code: {context.Response.StatusCode}");
                 }
             }
             

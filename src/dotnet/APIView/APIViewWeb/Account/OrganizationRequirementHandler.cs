@@ -11,20 +11,20 @@ public class OrganizationRequirementHandler : IAuthorizationHandler
 {
     public Task HandleAsync(AuthorizationHandlerContext context)
     {
+        Claim orgClaim = context.User.FindFirst(ClaimConstants.Orgs);
+        if (orgClaim == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        string[] userOrganizations = orgClaim.Value.Split(",");
         foreach (IAuthorizationRequirement requirement in context.Requirements)
         {
-            if (requirement is OrganizationRequirement orgRequirement)
+            if (requirement is OrganizationRequirement orgRequirement &&
+                userOrganizations.Any(userOrg =>
+                    orgRequirement.RequiredOrganizations.Contains(userOrg, StringComparer.OrdinalIgnoreCase)))
             {
-                Claim claim = context.User.FindFirst(ClaimConstants.Orgs);
-                if (claim != null)
-                {
-                    string[] userOrganizations = claim.Value.Split(",");
-                    if (userOrganizations.Any(userOrg =>
-                            orgRequirement.RequiredOrganizations.Contains(userOrg, StringComparer.OrdinalIgnoreCase)))
-                    {
-                        context.Succeed(requirement);
-                    }
-                }
+                context.Succeed(requirement);
             }
         }
 

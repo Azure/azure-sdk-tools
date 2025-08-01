@@ -161,15 +161,19 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
             Assert.DoesNotThrow(() => factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options));
         }
 
+        // NOTE: These tests modify global environment variables and may cause issues in parallel execution
+        // Consider using dependency injection or configuration abstraction instead of direct environment variable access
         [Test]
+        [NonParallelizable] // Prevent parallel execution due to environment variable mutation
         public void CreateCredential_LocalDevelopment_RespectsEnvironmentVariables()
         {
             var factory = CreateCredentialFactory();
             string originalTenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID") ?? "";
+            string uniqueTenantId = $"test-tenant-{Guid.NewGuid():N}";
             
             try
             {
-                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", "test-tenant-id");
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", uniqueTenantId);
 
                 TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
 
@@ -183,6 +187,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
         }
 
         [Test]
+        [NonParallelizable] // Prevent parallel execution due to environment variable mutation
         public void CreateCredential_LocalDevelopment_WithoutEnvironmentVariables_StillWorks()
         {
             var factory = CreateCredentialFactory();

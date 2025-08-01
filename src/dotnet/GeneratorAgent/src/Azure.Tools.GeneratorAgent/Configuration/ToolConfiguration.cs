@@ -29,9 +29,9 @@ internal class ToolConfiguration
                 .SetMinimumLevel(LogLevel.Information));
     }
 
-    public virtual AppSettings CreateAppSettings()
+    public virtual AppSettings CreateAppSettings(ILogger<AppSettings> logger)
     {
-        return new AppSettings(_configuration);
+        return new AppSettings(_configuration, logger);
     }
 
     private IConfiguration CreateConfigurationInternal()

@@ -37,7 +37,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             endpointSection.Setup(s => s.Value).Returns(projectEndpoint);
             configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(endpointSection.Object);
 
-            return new AppSettings(configMock.Object);
+            var mockAppSettingsLogger = new Mock<ILogger<AppSettings>>();
+            return new AppSettings(configMock.Object, mockAppSettingsLogger.Object);
         }
 
         private static Mock<PersistentAgentsAdministrationClient> CreateAdminClientMock()
@@ -101,11 +102,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullAppSettings_ThrowsArgumentNullException()
         {
-            // Arrange
             var adminClient = CreateAdminClientMock().Object;
             var logger = NullLogger<ErrorFixerAgent>.Instance;
 
-            // Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(null!, logger, adminClient));
             Assert.That(ex.ParamName, Is.EqualTo("appSettings"));
         }
@@ -113,11 +112,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullLogger_ThrowsArgumentNullException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClient = CreateAdminClientMock().Object;
 
-            // Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, null!, adminClient));
             Assert.That(ex.ParamName, Is.EqualTo("logger"));
         }
@@ -125,11 +122,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullAdminClient_ThrowsArgumentNullException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var logger = NullLogger<ErrorFixerAgent>.Instance;
 
-            // Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, null!));
             Assert.That(ex.ParamName, Is.EqualTo("adminClient"));
         }
@@ -137,19 +132,16 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithValidParameters_DoesNotThrow()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var logger = NullLogger<ErrorFixerAgent>.Instance;
             var adminClient = CreateAdminClientMock().Object;
 
-            // Act & Assert
             Assert.DoesNotThrow(() => new ErrorFixerAgent(appSettings, logger, adminClient));
         }
 
         [Test]
         public async Task FixCodeAsync_FirstCall_CreatesAgent()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings("gpt-4", "TestAgent", "Fix code");
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse("agent-123", "TestAgent", "gpt-4", "Fix code");
@@ -171,10 +163,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
             await agent.FixCodeAsync(CancellationToken.None);
 
-            // Assert
             adminClientMock.Verify(
                 a => a.CreateAgent(
                     "gpt-4",
@@ -194,7 +184,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task FixCodeAsync_CreatesAgentWithExactlyOneFileSearchTool()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse();
@@ -218,10 +207,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
             await agent.FixCodeAsync(CancellationToken.None);
 
-            // Assert
             adminClientMock.Verify(
                 a => a.CreateAgent(
                     It.IsAny<string>(),
@@ -243,7 +230,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task FixCodeAsync_MultipleCallsOnSameInstance_CreatesAgentOnce()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse();
@@ -265,12 +251,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
             await agent.FixCodeAsync(CancellationToken.None);
             await agent.FixCodeAsync(CancellationToken.None);
             await agent.FixCodeAsync(CancellationToken.None);
 
-            // Assert
             adminClientMock.Verify(
                 a => a.CreateAgent(
                     It.IsAny<string>(),
@@ -290,7 +274,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void FixCodeAsync_AgentCreationFails_ThrowsInvalidOperationException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
 
@@ -311,7 +294,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act & Assert
             var ex = Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await agent.FixCodeAsync(CancellationToken.None));
             Assert.That(ex.Message, Is.EqualTo("Agent creation failed"));
@@ -320,7 +302,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void FixCodeAsync_AgentCreationReturnsNullId_ThrowsInvalidOperationException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse(""); // Empty ID
@@ -342,7 +323,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act & Assert
             var ex = Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await agent.FixCodeAsync(CancellationToken.None));
             Assert.That(ex.Message, Is.EqualTo("Failed to create AZC Fixer agent"));
@@ -351,11 +331,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void FixCodeAsync_AgentCreationReturnsNullAgent_ThrowsInvalidOperationException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             
-            // Create response with null agent
             var response = Response.FromValue<PersistentAgent>(null!, Mock.Of<Response>());
 
             adminClientMock
@@ -375,7 +353,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act & Assert
             var ex = Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await agent.FixCodeAsync(CancellationToken.None));
             Assert.That(ex.Message, Is.EqualTo("Failed to create AZC Fixer agent"));
@@ -384,7 +361,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task FixCodeAsync_LogsAgentCreation()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var loggerMock = CreateLoggerMock();
@@ -407,10 +383,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, loggerMock.Object, adminClientMock.Object);
 
-            // Act
             await agent.FixCodeAsync(CancellationToken.None);
 
-            // Assert
             loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
@@ -433,15 +407,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_WithoutAgentCreation_DoesNotDeleteAnything()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
             await agent.DisposeAsync();
 
-            // Assert
             adminClientMock.Verify(
                 a => a.GetAgentsAsync(
                     It.IsAny<int?>(),
@@ -459,7 +430,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_WithCreatedAgent_DeletesAllAgents()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse("agent-123");
@@ -495,11 +465,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
-            await agent.FixCodeAsync(CancellationToken.None); // Create agent
+            await agent.FixCodeAsync(CancellationToken.None);
             await agent.DisposeAsync();
 
-            // Assert
             adminClientMock.Verify(
                 a => a.DeleteAgentAsync("agent-123", It.IsAny<CancellationToken>()),
                 Times.Once);
@@ -508,7 +476,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_WithMultipleAgents_DeletesAllAgents()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var loggerMock = CreateLoggerMock();
@@ -543,7 +510,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<CancellationToken>()))
                 .Returns(CreateAgentPageable(agents));
 
-            // Setup successful deletions
             adminClientMock
                 .Setup(a => a.DeleteAgentAsync("agent-1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
@@ -556,16 +522,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, loggerMock.Object, adminClientMock.Object);
 
-            // Act
-            await agent.FixCodeAsync(CancellationToken.None); // Create agent
+            await agent.FixCodeAsync(CancellationToken.None);
             await agent.DisposeAsync();
 
-            // Assert
             adminClientMock.Verify(a => a.DeleteAgentAsync("agent-1", It.IsAny<CancellationToken>()), Times.Once);
             adminClientMock.Verify(a => a.DeleteAgentAsync("agent-2", It.IsAny<CancellationToken>()), Times.Once);
             adminClientMock.Verify(a => a.DeleteAgentAsync("agent-3", It.IsAny<CancellationToken>()), Times.Once);
 
-            // Verify success logging for each agent
             loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
@@ -579,7 +542,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_WithMixedDeleteResults_LogsErrorsAndSuccesses()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var loggerMock = CreateLoggerMock();
@@ -614,7 +576,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<CancellationToken>()))
                 .Returns(CreateAgentPageable(agents));
 
-            // Setup: agent-1 succeeds, agent-2 fails, agent-3 succeeds
             adminClientMock
                 .Setup(a => a.DeleteAgentAsync("agent-1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
@@ -627,12 +588,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, loggerMock.Object, adminClientMock.Object);
 
-            // Act
-            await agent.FixCodeAsync(CancellationToken.None); // Create agent
+            await agent.FixCodeAsync(CancellationToken.None);
             await agent.DisposeAsync();
 
-            // Assert
-            // Verify success logging for agent-1 and agent-3
             loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
@@ -651,7 +609,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
 
-            // Verify error logging for agent-2
             loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -665,7 +622,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_DeleteAgentFails_DoesNotThrow()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var loggerMock = CreateLoggerMock();
@@ -702,13 +658,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, loggerMock.Object, adminClientMock.Object);
 
-            // Act
-            await agent.FixCodeAsync(CancellationToken.None); // Create agent
+            await agent.FixCodeAsync(CancellationToken.None);
             
-            // Assert
             Assert.DoesNotThrowAsync(async () => await agent.DisposeAsync());
 
-            // Verify error was logged
             loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Error,
@@ -722,7 +675,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_CalledMultipleTimes_OnlyDeletesOnce()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse("agent-123");
@@ -758,13 +710,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
-            await agent.FixCodeAsync(CancellationToken.None); // Create agent
+            await agent.FixCodeAsync(CancellationToken.None);
             await agent.DisposeAsync();
-            await agent.DisposeAsync(); // Second disposal
-            await agent.DisposeAsync(); // Third disposal
+            await agent.DisposeAsync();
+            await agent.DisposeAsync();
 
-            // Assert
             adminClientMock.Verify(
                 a => a.GetAgentsAsync(
                     It.IsAny<int?>(),
@@ -778,7 +728,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task DisposeAsync_UsesCorrectCancellationToken()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var adminClientMock = CreateAdminClientMock();
             var agentResponse = CreateAgentResponse("agent-123");
@@ -805,20 +754,18 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<ListSortOrder?>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    CancellationToken.None)) // Verify CancellationToken.None is used
+                    CancellationToken.None))
                 .Returns(CreateAgentPageable(agents));
 
             adminClientMock
-                .Setup(a => a.DeleteAgentAsync("agent-123", CancellationToken.None)) // Verify CancellationToken.None is used
+                .Setup(a => a.DeleteAgentAsync("agent-123", CancellationToken.None))
                 .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
 
             var agent = CreateErrorFixerAgent(appSettings, adminClient: adminClientMock.Object);
 
-            // Act
             await agent.FixCodeAsync(CancellationToken.None);
             await agent.DisposeAsync();
 
-            // Assert
             adminClientMock.Verify(
                 a => a.GetAgentsAsync(
                     It.IsAny<int?>(),

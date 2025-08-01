@@ -181,8 +181,10 @@ namespace APIViewWeb
                             ValidateLifetime = true,
                             ValidateIssuerSigningKey = true,
                             ClockSkew = TimeSpan.FromMinutes(5),
-                            ValidAudiences = [clientId, $"api://{clientId}"],
-                            // Accept both v1.0 and v2.0 Azure AD tokens
+                            ValidAudiences = [
+                                clientId, 
+                                $"api://{clientId}"
+                            ],
                             ValidIssuers = [
                                 $"https://login.microsoftonline.com/{tenantId}/v2.0",
                                 $"https://login.microsoftonline.com/{tenantId}/",

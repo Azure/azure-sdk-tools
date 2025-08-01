@@ -31,5 +31,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Description: "Log processing commands",
             Options: []
         );
+
+        public static readonly CommandGroup Checks = new(
+            Verb: "checks",
+            Description: "Run validation and check tools",
+            Options: []
+        );
     }
 }

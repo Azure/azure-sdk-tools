@@ -75,6 +75,7 @@ public class Program
             throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
         }
 
+        builder.Services.AddSingleton<IAzureOpenAIClient>(new AzureOpenAIClientService());
 
         builder.WebHost.ConfigureKestrel(options =>
         {

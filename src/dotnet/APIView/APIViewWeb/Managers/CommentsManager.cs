@@ -243,7 +243,7 @@ namespace APIViewWeb.Managers
 
                 await AddAgentComment(comment, agentChatResponse?.Response);
                 
-                _logger.LogInformation("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+                _logger.LogWarning("Agent reply processed successfully for comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
             }
             catch (Exception ex)            
             {

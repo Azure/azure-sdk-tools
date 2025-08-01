@@ -196,20 +196,20 @@ namespace APIViewWeb
                             OnMessageReceived = context =>
                             {
                                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                                logger.LogInformation("🔍 JWT: OnMessageReceived called - Request path: {Path}", context.Request.Path);
+                                logger.LogWarning("🔍 JWT: OnMessageReceived called - Request path: {Path}", context.Request.Path);
                                 
                                 // Check Authorization header manually
                                 var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                                logger.LogInformation("🔍 JWT: Authorization header: {AuthHeader}", authHeader ?? "NULL");
+                                logger.LogWarning("🔍 JWT: Authorization header: {AuthHeader}", authHeader ?? "NULL");
                                 
                                 if (!string.IsNullOrEmpty(context.Token))
                                 {
-                                    logger.LogInformation("🔍 JWT: Token present, length: {TokenLength}", context.Token.Length);
-                                    logger.LogInformation("🔍 JWT: Token starts with: {TokenStart}", context.Token.Substring(0, Math.Min(50, context.Token.Length)));
+                                    logger.LogWarning("🔍 JWT: Token present, length: {TokenLength}", context.Token.Length);
+                                    logger.LogWarning("🔍 JWT: Token starts with: {TokenStart}", context.Token.Substring(0, Math.Min(50, context.Token.Length)));
                                     
                                     // Check if token looks like a valid JWT (should have 3 parts separated by dots)
                                     var parts = context.Token.Split('.');
-                                    logger.LogInformation("🔍 JWT: Token has {PartCount} parts (should be 3)", parts.Length);
+                                    logger.LogWarning("🔍 JWT: Token has {PartCount} parts (should be 3)", parts.Length);
                                 }
                                 else
                                 {
@@ -221,7 +221,7 @@ namespace APIViewWeb
                             OnTokenValidated = context =>
                             {
                                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                                logger.LogInformation("JWT: Token validated successfully for user: {UserName}", 
+                                logger.LogWarning("JWT: Token validated successfully for user: {UserName}", 
                                     context.Principal?.Identity?.Name ?? "Anonymous");
                                     
                                 // Log all claims
@@ -451,14 +451,14 @@ namespace APIViewWeb
             {
                 var logger = context.RequestServices.GetRequiredService<ILogger<Startup>>();
                 
-                logger.LogInformation("🔍 Authentication Debug - Path: {Path}, Method: {Method}", 
+                logger.LogWarning("🔍 Authentication Debug - Path: {Path}, Method: {Method}", 
                     context.Request.Path, context.Request.Method);
                     
                 // Check if Authorization header is present BEFORE authentication
                 if (context.Request.Headers.ContainsKey("Authorization"))
                 {
                     var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                    logger.LogInformation("🔍 BEFORE Auth - Authorization header present: {AuthHeader}", 
+                    logger.LogWarning("🔍 BEFORE Auth - Authorization header present: {AuthHeader}", 
                         authHeader?.Substring(0, Math.Min(50, authHeader?.Length ?? 0)) + "...");
                 }
                 else
@@ -469,7 +469,7 @@ namespace APIViewWeb
                 await next();
                 
                 // Check authentication AFTER middleware processing
-                logger.LogInformation("🔍 AFTER Auth - User authenticated: {IsAuthenticated}, Identity type: {AuthType}, Name: {Name}", 
+                logger.LogWarning("🔍 AFTER Auth - User authenticated: {IsAuthenticated}, Identity type: {AuthType}, Name: {Name}", 
                     context.User?.Identity?.IsAuthenticated ?? false,
                     context.User?.Identity?.AuthenticationType ?? "None",
                     context.User?.Identity?.Name ?? "Anonymous");
@@ -477,7 +477,7 @@ namespace APIViewWeb
                 if (context.User?.Identity?.IsAuthenticated == true)
                 {
                     var claims = context.User.Claims.Select(c => $"{c.Type}={c.Value}").Take(5);
-                    logger.LogInformation("🔍 AFTER Auth - User claims (first 5): {Claims}", string.Join(", ", claims));
+                    logger.LogWarning("🔍 AFTER Auth - User claims (first 5): {Claims}", string.Join(", ", claims));
                 }
             });
             
@@ -508,19 +508,19 @@ namespace APIViewWeb
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            Logger.LogInformation("🔍 CookieFirst: Starting authentication for {Path}", Request.Path);
+            logger.LogWarning("🔍 CookieFirst: Starting authentication for {Path}", Request.Path);
 
             // Try Cookie authentication first
-            Logger.LogInformation("🔍 CookieFirst: Trying Cookie authentication...");
+            logger.LogWarning("🔍 CookieFirst: Trying Cookie authentication...");
             var cookieResult = await Context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
             if (cookieResult.Succeeded)
             {
-                Logger.LogInformation("🔍 CookieFirst: Cookie authentication succeeded");
+                logger.LogWarning("🔍 CookieFirst: Cookie authentication succeeded");
                 return cookieResult;
             }
 
-            Logger.LogInformation("🔍 CookieFirst: Cookie authentication failed, checking for Bearer token...");
+            logger.LogWarning("🔍 CookieFirst: Cookie authentication failed, checking for Bearer token...");
 
             // If Cookie failed, check for Authorization header with Bearer token
             if (Request.Headers.ContainsKey("Authorization"))
@@ -528,12 +528,12 @@ namespace APIViewWeb
                 var authHeader = Request.Headers["Authorization"].FirstOrDefault();
                 if (authHeader?.StartsWith("Bearer ") == true)
                 {
-                    Logger.LogInformation("🔍 CookieFirst: Bearer token found, trying JWT authentication...");
+                    logger.LogWarning("🔍 CookieFirst: Bearer token found, trying JWT authentication...");
                     var jwtResult = await Context.AuthenticateAsync("Bearer");
                     
                     if (jwtResult.Succeeded)
                     {
-                        Logger.LogInformation("🔍 CookieFirst: JWT authentication succeeded");
+                        logger.LogWarning("🔍 CookieFirst: JWT authentication succeeded");
                         return jwtResult;
                     }
                     else
@@ -543,15 +543,15 @@ namespace APIViewWeb
                 }
                 else
                 {
-                    Logger.LogInformation("🔍 CookieFirst: Authorization header present but not Bearer token");
+                    logger.LogWarning("🔍 CookieFirst: Authorization header present but not Bearer token");
                 }
             }
             else
             {
-                Logger.LogInformation("🔍 CookieFirst: No Authorization header found");
+                logger.LogWarning("🔍 CookieFirst: No Authorization header found");
             }
 
-            Logger.LogInformation("🔍 CookieFirst: All authentication methods failed");
+            logger.LogWarning("🔍 CookieFirst: All authentication methods failed");
             return AuthenticateResult.NoResult();
         }
     }

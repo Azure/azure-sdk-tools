@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -85,28 +86,21 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 2. Build query for search
 	query, intension := s.buildQueryForSearch(req, reasoningModelMessages)
 
-	// 3. Agentic search
-	agenticSearchChunks, err := s.agenticSearch(ctx, req.Message.Content, req)
+	// 3. Run agentic search and knowledge search in parallel, then merge results
+	chunks, err := s.runParallelSearchAndMergeResults(ctx, req, query)
 	if err != nil {
-		log.Printf("Agentic search failed: %v", err)
+		log.Printf("Parallel search failed: %v", err)
 		return nil, model.NewSearchFailureError(err)
 	}
 
-	// 4. Search for related documents
-	chunks, err := s.searchRelatedKnowledge(req, query, agenticSearchChunks)
-	if err != nil {
-		log.Printf("Knowledge search failed: %v", err)
-		return nil, model.NewSearchFailureError(err)
-	}
-
-	// 5. Build prompt
+	// 4. Build prompt
 	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
 	}
 
-	// 6. Get answer from LLM
+	// 5. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
 	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
 	if err != nil {
@@ -114,7 +108,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	// 7. Process the result
+	// 6. Process the result
 	result.ID = requestID
 	if req.WithFullContext != nil && *req.WithFullContext {
 		fullContext := strings.Join(chunks, "-------------------------\n")
@@ -611,4 +605,247 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
 	return chunks, nil
+}
+
+// runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
+// then merges and processes their results
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]string, error) {
+	parallelSearchStart := time.Now()
+
+	// Use channels to collect results from parallel operations
+	type agenticResult struct {
+		chunks []model.Index
+		err    error
+	}
+
+	type knowledgeResult struct {
+		rawResults []model.Index
+		err        error
+	}
+
+	agenticCh := make(chan agenticResult, 1)
+	knowledgeCh := make(chan knowledgeResult, 1)
+
+	// Start agentic search in a goroutine
+	go func() {
+		defer close(agenticCh)
+		chunks, err := s.agenticSearch(ctx, req.Message.Content, req)
+		agenticCh <- agenticResult{chunks: chunks, err: err}
+	}()
+
+	// Start knowledge search in parallel (without agentic chunks for now)
+	go func() {
+		defer close(knowledgeCh)
+		rawResults, err := s.searchKnowledgeBase(req, query)
+		knowledgeCh <- knowledgeResult{rawResults: rawResults, err: err}
+	}()
+
+	// Wait for both searches to complete
+	agenticRes := <-agenticCh
+	knowledgeRes := <-knowledgeCh
+
+	var agenticChunks []model.Index
+	if agenticRes.err != nil {
+		log.Printf("Agentic search failed: %v", agenticRes.err)
+		agenticChunks = []model.Index{}
+	} else {
+		agenticChunks = agenticRes.chunks
+	}
+
+	if knowledgeRes.err != nil {
+		return nil, knowledgeRes.err
+	}
+
+	// Merge and process the results
+	mergedChunks := s.mergeAndProcessSearchResults(agenticChunks, knowledgeRes.rawResults)
+
+	log.Printf("Parallel search and merge took: %v", time.Since(parallelSearchStart))
+	return mergedChunks, nil
+}
+
+// searchKnowledgeBase performs the core knowledge search without dependency on agentic results
+func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string) ([]model.Index, error) {
+	searchStart := time.Now()
+	searchClient := search.NewSearchClient()
+	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search for related documents: %w", err)
+	}
+	log.Printf("Vector Search took: %v", time.Since(searchStart))
+	return results, nil
+}
+
+// mergeAndProcessSearchResults intelligently merges agentic and knowledge search results,
+// prioritizes them based on relevance and source, then processes them
+func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.Index, knowledgeResults []model.Index) []string {
+	mergeStart := time.Now()
+
+	// Create a unified list of all chunks with priority scoring
+	type prioritizedChunk struct {
+		chunk    model.Index
+		priority int
+		source   string // "agentic" or "knowledge"
+	}
+
+	allChunks := make([]prioritizedChunk, 0)
+	files := make(map[string]bool)
+	processedChunks := make(map[string]bool) // track processed chunk content to avoid duplicates
+
+	// Add agentic chunks with high priority (they were specifically found by AI reasoning)
+	for _, chunk := range agenticChunks {
+		// Skip if we've already seen this chunk content
+		chunkKey := fmt.Sprintf("%s|%s", chunk.Title, chunk.Chunk)
+		if processedChunks[chunkKey] {
+			continue
+		}
+		processedChunks[chunkKey] = true
+
+		priority := 100 // High base priority for agentic results
+		allChunks = append(allChunks, prioritizedChunk{
+			chunk:    chunk,
+			priority: priority,
+			source:   "agentic",
+		})
+	}
+
+	// Add knowledge search results with scoring based on relevance
+	for i, result := range knowledgeResults {
+		// Skip low relevance results
+		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+			continue
+		}
+
+		// Skip if we've already seen this chunk content
+		chunkKey := fmt.Sprintf("%s|%s", result.Title, result.Chunk)
+		if processedChunks[chunkKey] {
+			continue
+		}
+		processedChunks[chunkKey] = true
+
+		priority := 50 // Base priority for knowledge results
+
+		// Boost priority based on rerank score
+		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
+			priority += 30 // High relevance boost
+		} else {
+			priority += int(result.RerankScore * 20) // Proportional boost
+		}
+
+		// Special handling for Q&A and migration content
+		if result.ContextID == string(model.Source_TypeSpecQA) || result.ContextID == string(model.Source_TypeSpecMigration) {
+			priority += 20 // Q&A content is valuable
+		}
+
+		// Boost priority for first document of each source
+		if i == 0 || (knowledgeResults[i].ContextID != knowledgeResults[i-1].ContextID) {
+			priority += 15 // First document bonus
+		}
+
+		allChunks = append(allChunks, prioritizedChunk{
+			chunk:    result,
+			priority: priority,
+			source:   "knowledge",
+		})
+	}
+
+	// Sort all chunks by priority (highest first)
+	sort.Slice(allChunks, func(i, j int) bool {
+		if allChunks[i].priority == allChunks[j].priority {
+			// If priorities are equal, prefer agentic results
+			if allChunks[i].source != allChunks[j].source {
+				return allChunks[i].source == "agentic"
+			}
+			// If same source, prefer higher rerank score for knowledge results
+			if allChunks[i].source == "knowledge" {
+				return allChunks[i].chunk.RerankScore > allChunks[j].chunk.RerankScore
+			}
+		}
+		return allChunks[i].priority > allChunks[j].priority
+	})
+
+	// Separate chunks that need completion vs those that can be used as-is
+	needCompleteFiles := make([]model.Index, 0)
+	needCompleteChunks := make([]model.Index, 0)
+	readyChunks := make([]model.Index, 0)
+
+	completionLimit := 8 // Limit number of files to complete to control processing time
+	completedCount := 0
+
+	for _, pc := range allChunks {
+		chunk := pc.chunk
+
+		// Q&A and migration content can be used directly
+		if chunk.ContextID == string(model.Source_TypeSpecQA) || chunk.ContextID == string(model.Source_TypeSpecMigration) {
+			needCompleteChunks = append(needCompleteChunks, chunk)
+			continue
+		}
+
+		// High priority chunks should be completed if we haven't hit the limit
+		if pc.priority >= 80 && completedCount < completionLimit && !files[chunk.Title] {
+			files[chunk.Title] = true
+			needCompleteFiles = append(needCompleteFiles, chunk)
+			completedCount++
+			continue
+		}
+
+		// Lower priority chunks are used as chunks
+		readyChunks = append(readyChunks, chunk)
+	}
+
+	searchClient := search.NewSearchClient()
+
+	// Prepare chunks for completion
+	mergedChunks := make([]model.Index, 0)
+	for _, result := range needCompleteFiles {
+		mergedChunks = append(mergedChunks, model.Index{
+			Title:     result.Title,
+			ContextID: result.ContextID,
+			Header1:   result.Header1,
+		})
+	}
+	mergedChunks = append(mergedChunks, needCompleteChunks...)
+
+	// Complete chunks in parallel
+	var wg sync.WaitGroup
+	wg.Add(len(mergedChunks))
+	for i := range mergedChunks {
+		i := i
+		go func() {
+			defer wg.Done()
+			mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
+		}()
+	}
+	wg.Wait()
+
+	// Build final result
+	result := make([]string, 0)
+	processedTitles := make(map[string]bool)
+
+	// Add completed chunks first (avoid duplicates by chunk content)
+	for _, mergedChunk := range mergedChunks {
+		if processedTitles[mergedChunk.Title] {
+			continue
+		}
+		chunk := processDocument(mergedChunk)
+		result = append(result, chunk)
+		processedTitles[mergedChunk.Title] = true
+		log.Printf("✓ Completed document: %s/%s", mergedChunk.ContextID, mergedChunk.Title)
+	}
+
+	// Add remaining ready chunks (avoid duplicates by chunk content)
+	for _, readyChunk := range readyChunks {
+		if processedTitles[readyChunk.Title] {
+			continue
+		}
+		chunk := processChunk(readyChunk)
+		result = append(result, chunk)
+		processedTitles[readyChunk.Title] = true
+		log.Printf("• Chunk excerpt: %+v", readyChunk)
+	}
+
+	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d chunks",
+		len(agenticChunks), len(knowledgeResults), len(mergedChunks), len(readyChunks))
+	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
+	return result
 }

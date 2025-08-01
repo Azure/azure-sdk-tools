@@ -53,7 +53,7 @@ public class AzureOpenAIClientService : IAzureOpenAIClient
     {
         if (_client == null)
         {
-            throw new ArgumentNullException("AZURE_OPENAI_ENDPOINT is not set, OpenAI related commands will not be available");
+            throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set, OpenAI related commands will not be available");
         }
 
         return _client.GetChatClient(model);

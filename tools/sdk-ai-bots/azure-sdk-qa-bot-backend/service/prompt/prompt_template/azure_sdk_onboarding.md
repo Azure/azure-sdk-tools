@@ -83,6 +83,7 @@ For Azure SDK onboarding and development questions, follow this structured appro
 ===================================
 
 ## SDK develop
+- **sdk generate**: the SDK generation pipelines will not be trigger when spec mered, you should reference the knowledg.
 - **sdk(api) review**: You should guide user to create a release plan and get the SDK PR link to request the review.
 
 ## SDK release

@@ -146,7 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
                         "- Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md"
                     )
                 ),
-                new SystemChatMessage("The readme template is this: \"" + readmeText, "\" which we fill in with the user parameters, which follow:"),
+                new SystemChatMessage("The readme template is this: \"" + readmeText + "\" which we fill in with the user parameters, which follow:"),
                 new UserChatMessage($"Service URL: {serviceDocumentation}"),
                 new UserChatMessage($"Package path: {packagePath}")
             };

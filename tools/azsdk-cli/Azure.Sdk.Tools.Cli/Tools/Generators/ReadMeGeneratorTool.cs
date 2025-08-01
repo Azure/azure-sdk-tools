@@ -187,7 +187,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
                 return;
             }
 
-            output.OutputError($"[PASS] Verify_links.ps1 passed");
+            output.Output($"[PASS] Verify-Links.ps1 passed");
         }
 
         /// <summary>

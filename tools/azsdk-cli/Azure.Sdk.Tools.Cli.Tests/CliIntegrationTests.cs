@@ -4,7 +4,9 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+#if DEBUG
 using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
+#endif
 
 namespace Azure.Sdk.Tools.Cli.Tests;
 
@@ -31,6 +33,7 @@ internal class CliIntegrationTests
         return tuple;
     }
 
+#if DEBUG
     [Test]
     public async Task TestHelloWorldCLIOptions()
     {
@@ -79,4 +82,5 @@ Duration: 1ms".TrimStart();
 
         Assert.That(output, Is.EqualTo(expected));
     }
+#endif
 }

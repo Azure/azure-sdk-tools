@@ -48,7 +48,7 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories listed above
+  "category": string,    // Must be one of the categories: sdk-onboard, api-design, sdk-develop, and sdk-release
   "spec_type": string,   // user's service specification language: TypeSpec or OpenAPI or unknown
 }
 

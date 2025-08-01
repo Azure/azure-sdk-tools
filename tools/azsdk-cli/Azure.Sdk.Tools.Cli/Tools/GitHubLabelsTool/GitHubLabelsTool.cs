@@ -32,24 +32,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private const string createServiceLabelCommandName = "create-service-label";
 
         // Command options
-        private readonly Option<string> proposedServiceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
+        private readonly Option<string> serviceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
         private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
-
-        private readonly Argument<string> _serviceLabelArg = new Argument<string>(
-            name: "service-label",
-            description: "The service label to check in the common labels CSV"
-        )
-        {
-            Arity = ArgumentArity.ExactlyOne // only one service label is expected
-        };
 
         public override Command GetCommand()
         {
             var command = new Command("github-labels", "GitHub service labels tools");
             var subCommands = new[]
             {
-                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { _serviceLabelArg },
-                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { proposedServiceLabelOpt, documentationLinkOpt },
+                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
+                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
             };
 
             foreach (var subCommand in subCommands)
@@ -68,13 +60,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case checkServiceLabelCommandName:
-                    var serviceLabel = commandParser.GetValueForArgument(_serviceLabelArg);
+                    var serviceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var result = await CheckServiceLabel(serviceLabel);
                     ctx.ExitCode = ExitCode;
                     output.Output(result);
                     return;
                 case createServiceLabelCommandName:
-                    var proposedServiceLabel = commandParser.GetValueForOption(proposedServiceLabelOpt);
+                    var proposedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
                     var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? ""); // Should probably just return the created PR link.
                     output.Output($"Create service label result: {createdPRLink}");
@@ -150,12 +142,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Create a new branch
                 if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
                 {
-                    logger.LogInformation($"Service label '{label}' already exists. No action taken.");
                     return $"Service label '{label}' already exists.";
                 }
                 else if (checkResult == LabelHelper.ServiceLabelStatus.InReview)
                 {
-                    logger.LogInformation($"Service label '{label}' currently has an open PR. No action taken.");
                     return $"Service label '{label}' currently has an open PR.";
                 }
                 else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
@@ -165,15 +155,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
-                logger.LogInformation($"Branch creation result: {branchResult}");
 
                 // If branch already exists, return early with the compare URL
                 if (branchResult == CreateBranchStatus.AlreadyExists)
                 {
                     return $"Branch 'add_service_label_{normalizedLabel}' already exists. Compare URL: https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}";
                 }
-
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
                 // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
@@ -200,9 +187,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     draft: true
                 );
 
-                logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
-
-                return $"Service label '{label}' pull request created successfully.";
+                return $"Service label '{label}' pull request created successfully. PR Info: {string.Join(", ", result)}";
             }
             catch (Exception ex)
             {

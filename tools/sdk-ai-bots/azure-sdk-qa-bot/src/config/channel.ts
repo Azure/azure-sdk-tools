@@ -62,8 +62,8 @@ class ChannelConfigManager {
       const blobStorageUrl = storageUrl.replace('.table.core.windows.net', '.blob.core.windows.net');
 
       const credential =
-              process.env.IS_LOCAL === 'true' ? new DefaultAzureCredential() : new ManagedIdentityCredential(this.botId);
-      
+        process.env.IS_LOCAL === 'true' ? new DefaultAzureCredential() : new ManagedIdentityCredential(this.botId);
+
       this.blobServiceClient = new BlobServiceClient(blobStorageUrl, credential);
 
       logger.info('Blob service client initialized', { storageUrl: blobStorageUrl });
@@ -125,7 +125,10 @@ class ChannelConfigManager {
       const channelConfig = await this.getChannelConfig(channelId);
       return channelConfig.tenant;
     } catch (error) {
-      logger.error(`Failed to get RAG tenant for channel, fallback to ${FALLBACK_RAG_TENANT}`, { channelId, error: error.message });
+      logger.error(`Failed to get RAG tenant for channel, fallback to ${FALLBACK_RAG_TENANT}`, {
+        channelId,
+        error: error.message,
+      });
       return FALLBACK_RAG_TENANT;
     }
   }
@@ -138,7 +141,10 @@ class ChannelConfigManager {
       const channelConfig = await this.getChannelConfig(channelId);
       return channelConfig.endpoint;
     } catch (error) {
-      logger.error(`Failed to get RAG endpoint for channel, fallback to ${FALLBACK_RAG_ENDPOINT}`, { channelId, error: error.message });
+      logger.error(`Failed to get RAG endpoint for channel, fallback to ${FALLBACK_RAG_ENDPOINT}`, {
+        channelId,
+        error: error.message,
+      });
       return FALLBACK_RAG_ENDPOINT;
     }
   }
@@ -213,9 +219,8 @@ class ChannelConfigManager {
       const blobClient = containerClient.getBlobClient(BLOB_NAME);
 
       // Download blob content
-      let retry = 0;
       let fileContent: string | undefined;
-      while (retry++ < this.maxRetry) {
+      for (let retry = 0; retry < this.maxRetry; retry++) {
         try {
           const downloadBlockBlobResponse = await blobClient.download();
           fileContent = await this.streamToString(downloadBlockBlobResponse.readableStreamBody!);

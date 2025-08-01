@@ -53,7 +53,7 @@ const isSubmitMessage = async (ctx: TurnContext) =>
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
   const { channelId } = parseConversationId(context.activity.conversation.id);
-  const ragTanentId = await channelConfigManager.getRagTenant(channelId);
+  const ragTenantId = await channelConfigManager.getRagTenant(channelId);
   const ragEndpoint = await channelConfigManager.getRagEndpoint(channelId);
   const ragOptions: RAGOptions = {
     endpoint: ragEndpoint,
@@ -87,7 +87,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   switch (action) {
     case 'feedback-like':
       const goodFeedback: FeedbackRequestPayload = {
-        tenant_id: ragTanentId,
+        tenant_id: ragTenantId,
         messages,
         reaction: 'good',
         comment: feedbackComment,
@@ -99,7 +99,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       break;
     case 'feedback-dislike':
       const badFeedback: FeedbackRequestPayload = {
-        tenant_id: ragTanentId,
+        tenant_id: ragTenantId,
         messages,
         reaction: 'bad',
         comment: feedbackComment,

@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             throw new NotImplementedException("This tool is available only through MCP server interface");
         }
 
-        [McpServerTool(Name = "fix-readme-validation"), Description("Fix README standard violations in SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "FixReadmeValidation"), Description("Fix README standard violations in SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> FixReadmeValidation(string projectPath)
         {
             try

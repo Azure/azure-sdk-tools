@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             throw new NotImplementedException("This tool is available only through MCP server interface");
         }
 
-        [McpServerTool(Name = "fix-changelog-validation"), Description("Fix changelog format violations in SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "FixChangelogValidation"), Description("Fix changelog format violations in SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> FixChangelogValidation(string projectPath)
         {
             try

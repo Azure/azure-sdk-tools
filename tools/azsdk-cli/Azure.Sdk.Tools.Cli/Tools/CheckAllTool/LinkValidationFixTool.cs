@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             throw new NotImplementedException("This tool is available only through MCP server interface");
         }
 
-        [McpServerTool(Name = "fix-link-validation"), Description("Fix broken links in SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "FixLinkValidation"), Description("Fix broken links in SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> FixLinkValidation(string projectPath)
         {
             try

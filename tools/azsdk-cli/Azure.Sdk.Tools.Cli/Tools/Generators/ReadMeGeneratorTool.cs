@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
     //[McpServerToolType, Description("Generates a README file, using service documentation")]
     public partial class ReadMeGeneratorTool : MCPTool
     {
-        private readonly ILogger<FileValidationTool> logger;
+        private readonly ILogger<ReadMeGeneratorTool> logger;
         private readonly IOutputService output;
         private readonly IAzureOpenAIClient openAiClient;
         private Option<string> packagePathOption;

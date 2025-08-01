@@ -81,18 +81,27 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns its details if found.")]
-        public async Task<string> CheckServiceLabel(string serviceLabel)
+        public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
             {
-                return (await getServiceLabelInfo(serviceLabel)).ToString();
+                var labelStatus = (await getServiceLabelInfo(serviceLabel)).ToString();
+                return new ServiceLabelResponse
+                {
+                    Status = labelStatus,
+                    Label = serviceLabel
+                };
             }
             catch (Exception ex)
             {
                 SetFailure();
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
-                return $"Error occurred while checking service label '{serviceLabel}': {ex.Message}";
-            }            
+                return new ServiceLabelResponse
+                {
+                    Status = "Error",
+                    Label = serviceLabel
+                };
+            }
         }
 
         public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
@@ -115,9 +124,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
-
-
-                logger.LogInformation($"Service label '{serviceLabel}' found: {result}");
 
                 return result;
             }

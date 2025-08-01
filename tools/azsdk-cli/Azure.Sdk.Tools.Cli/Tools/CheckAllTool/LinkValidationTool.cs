@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-link-validation"), Description("Run link validation for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "RunLinkValidation"), Description("Run link validation for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunLinkValidation(string projectPath)
         {
             try

@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-snippet-update"), Description("Run snippet update for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "RunSnippetUpdate"), Description("Run snippet update for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunSnippetUpdate(string projectPath)
         {
             try

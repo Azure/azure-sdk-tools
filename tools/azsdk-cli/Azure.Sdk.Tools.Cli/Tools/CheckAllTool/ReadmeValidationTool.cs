@@ -28,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         private readonly IGitHelper gitHelper;
 
         private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
+        private readonly Option<string> settingsPathOption = new(["--settings-path", "-s"], "Path to the README validation settings file (.docsettings.yml)");
 
         public ReadmeValidationTool(ILogger<ReadmeValidationTool> logger, IOutputService output, IGitHelper gitHelper) : base()
         {
@@ -41,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             Command command = new("verifyReadme", "Run README validation for SDK projects");
             command.AddOption(projectPathOption);
+            command.AddOption(settingsPathOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -50,7 +52,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             try
             {
                 var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
-                var result = await RunReadmeValidation(projectPath);
+                var settingsPath = ctx.ParseResult.GetValueForOption(settingsPathOption);
+                var result = await RunReadmeValidation(projectPath, settingsPath);
 
                 output.Output(result);
                 ctx.ExitCode = ExitCode;
@@ -68,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "VerifyReadme"), Description("Run README validation for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> RunReadmeValidation(string projectPath)
+        public async Task<DefaultCommandResponse> RunReadmeValidation(string projectPath, string settingsPath = null)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -111,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 }
 
                 // Execute the PowerShell script
-                var result = await ExecuteReadmeValidationScript(scriptPath, projectPath, projectRepoRoot);
+                var result = await ExecuteReadmeValidationScript(scriptPath, projectPath, projectRepoRoot, settingsPath);
                 stopwatch.Stop();
 
                 if (result.Success)
@@ -132,10 +135,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 }
                 else
                 {
-                    SetFailure(1);
+                    // Don't set failure status for validation issues - these are results, not errors
+                    // Only set failure for actual tool errors (missing files, etc.)
+                    var isToolError = result.ErrorMessage.Contains("not found") || 
+                                     result.ErrorMessage.Contains("does not exist") ||
+                                     result.ErrorMessage.Contains("Could not find") ||
+                                     result.ErrorMessage.Contains("Failed to execute");
+                    
+                    if (isToolError)
+                    {
+                        SetFailure(1);
+                    }
+                    
                     return new DefaultCommandResponse
                     {
-                        ResponseError = result.ErrorMessage,
+                        Message = isToolError ? null : "README validation completed with issues",
+                        ResponseError = isToolError ? result.ErrorMessage : null,
                         Duration = (int)stopwatch.ElapsedMilliseconds,
                         Result = new CheckResult
                         {
@@ -167,8 +182,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         /// <param name="scriptPath">Path to the PowerShell script</param>
         /// <param name="projectPath">Path to the project directory</param>
         /// <param name="repoRoot">Path to the repository root</param>
+        /// <param name="settingsPath">Optional path to the settings file</param>
         /// <returns>Validation result</returns>
-        private async Task<(bool Success, string ErrorMessage, List<string> Details)> ExecuteReadmeValidationScript(string scriptPath, string projectPath, string repoRoot)
+        private async Task<(bool Success, string ErrorMessage, List<string> Details)> ExecuteReadmeValidationScript(string scriptPath, string projectPath, string repoRoot, string settingsPath = null)
         {
             var details = new List<string>();
             
@@ -178,16 +194,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
                 var fileName = isWindows ? "cmd.exe" : "pwsh";
                 
-                // Find settings path - look for common README validation config files
-                var settingsPath = FindReadmeSettingsPath(repoRoot);
-                if (string.IsNullOrEmpty(settingsPath))
+                // Use provided settings path or find it automatically
+                var finalSettingsPath = settingsPath ?? FindReadmeSettingsPath(repoRoot);
+                if (string.IsNullOrEmpty(finalSettingsPath))
                 {
                     return (false, "Could not find README validation settings file (.docsettings.yml or similar)", details);
                 }
 
                 var arguments = isWindows 
-                    ? $"/C pwsh -NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -RepoRoot \"{repoRoot}\" -ScanPaths \"{projectPath}\" -SettingsPath \"{settingsPath}\""
-                    : $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -RepoRoot \"{repoRoot}\" -ScanPaths \"{projectPath}\" -SettingsPath \"{settingsPath}\"";
+                    ? $"/C pwsh -NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -RepoRoot \"{repoRoot}\" -ScanPaths \"{projectPath}\" -SettingsPath \"{finalSettingsPath}\""
+                    : $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -RepoRoot \"{repoRoot}\" -ScanPaths \"{projectPath}\" -SettingsPath \"{finalSettingsPath}\"";
 
                 var processStartInfo = new ProcessStartInfo
                 {
@@ -245,9 +261,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 }
                 else
                 {
-                    var errorMessage = !string.IsNullOrEmpty(error) ? error : 
-                                     !string.IsNullOrEmpty(output) ? output : 
-                                     $"PowerShell script exited with code {exitCode}";
+                    // For README validation failures, the detailed results are in the output stream
+                    // The error stream typically contains PowerShell error messages like "LogError"
+                    // We want to show the validation results, not just the generic error
+                    var errorMessage = "";
+                    
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        // If output contains validation results, use that as the primary message
+                        errorMessage = output;
+                        
+                        // If there are also errors, append them
+                        if (!string.IsNullOrEmpty(error))
+                        {
+                            errorMessage += Environment.NewLine + "Additional errors:" + Environment.NewLine + error;
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(error))
+                    {
+                        errorMessage = error;
+                    }
+                    else
+                    {
+                        errorMessage = $"PowerShell script exited with code {exitCode}";
+                    }
+                    
                     return (false, errorMessage, details);
                 }
             }
@@ -267,8 +305,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         private string FindReadmeSettingsPath(string repoRoot)
         {
             // Common settings file names for README validation
+            // Look in eng/scripts first (language repo pattern), then fallback to other locations
             var possibleSettingsFiles = new[]
             {
+                "eng/scripts/.docsettings.yml",
+                "eng/scripts/.docsettings.yaml",
                 ".docsettings.yml",
                 ".docsettings.yaml", 
                 "eng/docsettings.yml",

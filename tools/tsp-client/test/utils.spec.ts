@@ -5,7 +5,9 @@ import {
   getServiceDir,
   makeSparseSpecDir,
   updateExistingTspLocation,
+  parseTspClientRepoConfig,
 } from "../src/utils.js";
+import { getRepoRoot } from "../src/git.js";
 import { removeDirectory } from "../src/fs.js";
 import { parse as parseYaml } from "yaml";
 import { assert } from "chai";
@@ -104,6 +106,9 @@ describe("Verify fs functions", function () {
     assert.ok(config.supportedEmitters);
     assert.equal(config.supportedEmitters.length, 2);
     assert.equal(config.supportedEmitters[0].name, "@azure-tools/typespec-csharp");
-    assert.equal(config.supportedEmitters[0].path, "eng/emitter-package.json");
+    assert.equal(
+      config.supportedEmitters[0].path,
+      "tools/tsp-client/test/utils/alternate-emitter-package.json",
+    );
   });
 });

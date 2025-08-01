@@ -33,15 +33,24 @@ import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
+// This function resolves for the correct emitter to use in a language repository based on whether
+// the user has provided an alternate dependency file path or if there are existing configuration
+// files in the repository. Supported configuration files are located at
+// <repo root>/eng/emitter-package.json or <repo root>/eng/tspclientconfig.yaml.
+// The function will return the emitter name and the path to the emitter package.json file relative
+// to repo root.
 async function getEmitter(
   repoRoot: string,
   tspConfigData: any,
   globalConfigFile?: TspClientConfig,
   emitterPackageJsonOverride?: string,
-): Promise<string> {
+): Promise<{ emitter: string; path?: string }> {
   // If an emitter-package.json override value is explicitly provided, use it to get the emitter
   if (emitterPackageJsonOverride) {
-    return await getEmitterFromRepoConfig(emitterPackageJsonOverride);
+    return {
+      emitter: await getEmitterFromRepoConfig(emitterPackageJsonOverride),
+      path: emitterPackageJsonOverride,
+    };
   }
 
   // If a global config file exists with supportedEmitters configured, use it to
@@ -51,7 +60,7 @@ async function getEmitter(
     for (const supportedEmitter of globalConfigFile.supportedEmitters) {
       for (const configEmitter of Object.keys(tspConfigData.options) ?? []) {
         if (supportedEmitter.name === configEmitter) {
-          return configEmitter;
+          return { emitter: configEmitter, path: supportedEmitter.path };
         }
       }
     }
@@ -59,9 +68,11 @@ async function getEmitter(
 
   try {
     // If no emitter is found in the global config, fall back to the default emitter-package.json
-    return await getEmitterFromRepoConfig(
-      joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
-    );
+    return {
+      emitter: await getEmitterFromRepoConfig(
+        joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
+      ),
+    };
   } catch (err) {
     throw new Error(
       `Failed to get emitter from default emitter-package.json. Please add a valid emitter-package.json file in the eng/ directory of the repository. Error: ${err}`,
@@ -115,17 +126,18 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
-    const emitter = await getEmitter(
+    const emitterData = await getEmitter(
       repoRoot,
       configYaml,
       tspclientGlobalConfig,
       emitterPackageOverride,
     );
-    const serviceDir = getServiceDir(configYaml, emitter);
-    const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
+    const serviceDir = getServiceDir(configYaml, emitterData.emitter);
+    const packageDir: string | undefined =
+      configYaml?.options?.[emitterData.emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(
-        `Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
+        `Missing package-dir in ${emitterData.emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
       );
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!);
@@ -139,8 +151,8 @@ export async function initCommand(argv: any) {
           "additionalDirectories"
         ] ?? [],
     };
-    if (emitterPackageOverride) {
-      tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
+    if (emitterData.path) {
+      tspLocationData.emitterPackageJsonPath = emitterData.path;
     }
     if (argv["update-if-exists"]) {
       // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
@@ -167,17 +179,17 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
     }
     const configYaml = parseYaml(data);
-    const emitter = await getEmitter(
+    const emitterData = await getEmitter(
       repoRoot,
       configYaml,
       tspclientGlobalConfig,
       emitterPackageOverride,
     );
-    const serviceDir = getServiceDir(configYaml, emitter);
-    const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
+    const serviceDir = getServiceDir(configYaml, emitterData.emitter);
+    const packageDir = configYaml?.options?.[emitterData.emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(
-        `Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
+        `Missing package-dir in ${emitterData.emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
       );
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
@@ -200,9 +212,9 @@ export async function initCommand(argv: any) {
           "additionalDirectories"
         ] ?? [],
     };
-    if (emitterPackageOverride) {
+    if (emitterData.path) {
       // store relative path to repo root
-      tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
+      tspLocationData.emitterPackageJsonPath = emitterData.path;
     }
     if (argv["update-if-exists"]) {
       // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
@@ -304,7 +316,7 @@ export async function syncCommand(argv: any) {
   }
 
   try {
-    let emitterLockPath = getEmitterLockPath(getEmitterPackageJsonPath(repoRoot, tspLocation));
+    let emitterLockPath = getEmitterLockPath(emitterPackageJsonPath);
 
     // Copy the emitter lock file to the temp directory and rename it to package-lock.json so that npm can use it.
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });

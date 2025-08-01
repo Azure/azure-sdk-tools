@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
 using CsvHelper;
@@ -68,8 +69,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case createServiceLabelCommandName:
                     var proposedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
-                    var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
-                    output.Output($"Create service label result: {createdPRLink}");
+                    var createdPRResult = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
+                    ctx.ExitCode = ExitCode;
+                    output.Output(createdPRResult.ToString());
                     return;
                 default:
                     SetFailure();
@@ -128,7 +130,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
-        public async Task<string> CreateServiceLabel(string label, string link)
+        public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try
             {
@@ -140,12 +142,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
                 {
                     logger.LogInformation($"Service label '{label}' already exists. No action taken.");
-                    return $"Service label '{label}' already exists.";
+                    return new ServiceLabelResponse
+                    {
+                        Status = "AlreadyExists",
+                        Label = label
+                    };
                 }
                 else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
                 {
                     logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
-                    return $"Label '{label}' exists but is not a service label. Try a different label.";
+                    return new ServiceLabelResponse
+                    {
+                        Status = "NotAServiceLabel",
+                        Label = label,
+                        ResponseError = "Label exists but is not a service label"
+                    };
                 }
 
                 var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
@@ -154,7 +165,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // If branch already exists, return early with the compare URL
                 if (branchResult == CreateBranchStatus.AlreadyExists)
                 {
-                    return $"Branch 'add_service_label_{normalizedLabel}' already exists. Compare URL: https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}";
+                    return new ServiceLabelResponse
+                    {
+                        Status = "BranchExists",
+                        Label = label,
+                        PullRequestUrl = $"https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}"
+                    };
                 }
 
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
@@ -185,15 +201,45 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
 
-                return $"Service label '{label}' pull request created successfully.";
+                // Extract the pull request URL from the result
+                var pullRequestUrl = ExtractPullRequestUrl(result);
+
+                return new ServiceLabelResponse
+                {
+                    Status = "Success",
+                    Label = label,
+                    PullRequestUrl = pullRequestUrl
+                };
             }
             catch (Exception ex)
             {
                 SetFailure();
                 logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
 
-                return  $"Failed to create pull request for service label '{label}'. Error: {ex.Message}";
+                return new ServiceLabelResponse
+                {
+                    Status = "Failed",
+                    Label = label,
+                    ResponseError = ex.Message
+                };
             }
+        }
+
+        private static string? ExtractPullRequestUrl(List<string> responses)
+        {
+            // Look for a response containing "Pull request URL:"
+            foreach (var response in responses)
+            {
+                if (response.Contains("Pull request URL:"))
+                {
+                    var urlStart = response.IndexOf("https://github.com");
+                    if (urlStart >= 0)
+                    {
+                        return response.Substring(urlStart).Trim();
+                    }
+                }
+            }
+            return null;
         }
     }
 }

@@ -138,8 +138,8 @@ public class GitConnection
             {
                 logger.LogInformation($"Searching for pull requests with title containing '{titleSearchTerm}' in {repoOwner}/{repoName}");
 
-                // Build the search query
-                var searchQuery = $"repo:{repoOwner}/{repoName} is:pr \"{titleSearchTerm}\" in:title";
+                // Build the search query - remove quotes to enable case-insensitive matching
+                var searchQuery = $"repo:{repoOwner}/{repoName} is:pr {titleSearchTerm} in:title";
 
                 // Add state filter
                 if (state == ItemState.Open)

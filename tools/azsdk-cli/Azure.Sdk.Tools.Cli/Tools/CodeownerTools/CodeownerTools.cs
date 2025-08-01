@@ -11,6 +11,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using System.Collections.Concurrent;
 using Octokit;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
+using Microsoft.TeamFoundation.Common;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -39,8 +40,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Command names
         private const string addCodeownersEntryCommandName = "add-codeowners-entry";
+        private const string addCodeownersCommandName = "add-codeowners";
         private const string checkServiceExistsCommandName = "check-service-exists";
         private const string validateCodeOwnerEntryCommandName = "validate-codeowner-entry";
+        private const string mockToolCommandName = "mock-tool";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -65,6 +68,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     sourceOwnersOption,
                     workingBranchOption
                 },
+                new Command(addCodeownersCommandName, "Add codeowners to a repository")
+                {
+                    repoOption,
+                    pathOption,
+                    serviceLabelOption,
+                    serviceOwnersOption,
+                    sourceOwnersOption,
+                    workingBranchOption
+                },
                 new Command(checkServiceExistsCommandName, "Check if a service exists in CODEOWNERS file")
                 {
                     repoOption,
@@ -76,6 +88,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoOption,
                     serviceLabelOption,
                     pathOptionOptional
+                },
+                new Command(mockToolCommandName, "Mock tool for testing purposes")
+                {
                 }
             };
 
@@ -111,6 +126,23 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         workingBranchValue ?? "");
                     output.Output(addResult);
                     return;
+                case addCodeownersCommandName:
+                    var repoValue2 = commandParser.GetValueForOption(repoOption);
+                    var pathValue2 = commandParser.GetValueForOption(pathOption);
+                    var serviceLabelValue2 = commandParser.GetValueForOption(serviceLabelOption);
+                    var serviceOwnersValue2 = commandParser.GetValueForOption(serviceOwnersOption);
+                    var sourceOwnersValue2 = commandParser.GetValueForOption(sourceOwnersOption);
+                    var workingBranchValue2 = commandParser.GetValueForOption(workingBranchOption);
+
+                    var addResult2 = await AddCodeowners(
+                        repoValue2 ?? "",
+                        pathValue2 ?? "",
+                        serviceLabelValue2 ?? "",
+                        serviceOwnersValue2?.ToList() ?? new List<string>(),
+                        sourceOwnersValue2?.ToList() ?? new List<string>(),
+                        workingBranchValue2 ?? "");
+                    output.Output(addResult2);
+                    return;
                 case checkServiceExistsCommandName:
                     var checkRepo = commandParser.GetValueForOption(repoOption);
                     var checkServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
@@ -133,6 +165,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepoPath);
                     output.Output(validateResult);
                     return;
+                // case mockToolCommandName:
+                //     await MockTool();
+                //     return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -280,6 +315,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return result;
         }
 
+        private (List<CodeOwnerValidationResult> validOwners, List<string> invalidOwners) ValidateOwnerGroup(
+            List<CodeOwnerValidationResult> validationResults, 
+            List<string> ownerGroup)
+        {
+            var ownerValidationResults = validationResults
+                .Where(result => ownerGroup.Contains(result.Username.TrimStart('@'), StringComparer.OrdinalIgnoreCase))
+                .ToList();
+
+            var validOwners = ownerValidationResults.Where(result => result.IsValidCodeOwner).ToList();
+            var invalidOwners = ownerValidationResults.Where(result => !result.IsValidCodeOwner)
+                .Select(r => r.Username).ToList();
+
+            return (validOwners, invalidOwners);
+        }
+
         [McpServerTool(Name = "AddCodeownerEntry"), Description("Adds a codeowner entry for a given service label or path for a repo.")]
         public async Task<string> AddCodeownerEntry(
             string repo,
@@ -294,58 +344,74 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var resultMessages = new List<string>();
 
                 // Step 0: Validation.
-                // Validate codeowners
                 var isValid = true;
-
-                var allOwners = new List<string>();
-                allOwners.AddRange(serviceOwners);
-                allOwners.AddRange(sourceOwners);
-                var codeownersValidationResults = await ValidateCodeOwnersConcurrently(allOwners);
-
-                // Check specifically for valid source owners
-                var sourceOwnerValidationResults = codeownersValidationResults
-                    .Where(result => sourceOwners.Contains(result.Username.TrimStart('@'), StringComparer.OrdinalIgnoreCase))
-                    .ToList();
-
-                var validSourceOwners = sourceOwnerValidationResults.Where(result => result.IsValidCodeOwner).ToList();
-                var invalidSourceOwners = sourceOwnerValidationResults.Where(result => !result.IsValidCodeOwner).ToList();
-
-                if (invalidSourceOwners.Any())
+                // Validate service label
+                if (string.IsNullOrEmpty(serviceLabel))
                 {
-                    resultMessages.Add($"Invalid source owners: {string.Join(", ", invalidSourceOwners.Select(r => r.Username))}");
-                }
-
-                if (!validSourceOwners.Any())
-                {
-                    resultMessages.Add("There must be at least one valid source owner.");
+                    resultMessages.Add($"Service label {serviceLabel} is null");
                     isValid = false;
                 }
 
-                // Validate service label
-                if (!string.IsNullOrEmpty(serviceLabel))
+                // Get CSV content from GitHub
+                var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+                if (csvContent == null || csvContent.Count == 0)
                 {
-                    // Get CSV content from GitHub
-                    var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
-                    if (csvContent != null && csvContent.Count > 0)
+                    resultMessages.Add("Could not retrieve service labels for validation.");
+                    isValid = false;
+                }
+                else
+                {
+                    var serviceLabelValidationResults = labelHelper.CheckServiceLabel(csvContent[0].Content, serviceLabel);
+                    if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
                     {
-                        var serviceLabelValidationResults = labelHelper.CheckServiceLabel(csvContent[0].Content, serviceLabel);
                         var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
 
                         if (labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
                         {
                             resultMessages.Add($"{serviceLabel} is currently in review.");
                         }
-                        else if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
+                        else
                         {
                             resultMessages.Add($"The service label {serviceLabel} does not exist.");
                             isValid = false;
                         }
                     }
-                    else
-                    {
-                        resultMessages.Add("Could not retrieve service labels for validation.");
-                        isValid = false;
-                    }
+                }
+
+                // Normalize path format - ensure it starts and ends with /
+                if (!string.IsNullOrEmpty(path))
+                {
+                    path = path.Trim('/');
+                    path = $"/{path}/";
+                }
+
+                // Validate codeowners
+                var allOwners = serviceOwners.Concat(sourceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                var codeownersValidationResults = await ValidateCodeOwnersConcurrently(allOwners);
+
+                var (validSourceOwners, invalidSourceOwners) = ValidateOwnerGroup(codeownersValidationResults, sourceOwners);
+                var (validServiceOwners, invalidServiceOwners) = ValidateOwnerGroup(codeownersValidationResults, serviceOwners);
+
+                if (invalidSourceOwners.Any())
+                {
+                    resultMessages.Add($"Invalid source owners: {string.Join(", ", invalidSourceOwners)}");
+                }
+
+                if (!string.IsNullOrEmpty(path) && validSourceOwners.Count < 2)
+                {
+                    resultMessages.Add("There must be at least two valid source owners.");
+                    isValid = false;
+                }
+
+                if (invalidServiceOwners.Any())
+                {
+                    resultMessages.Add($"Invalid service owners: {string.Join(", ", invalidServiceOwners)}");
+                }
+                
+                if (!string.IsNullOrEmpty(serviceLabel) && validServiceOwners.Count < 2)
+                {
+                    resultMessages.Add("There must be at least two valid service owners.");
+                    isValid = false;
                 }
 
                 if (!isValid)
@@ -427,6 +493,119 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogError($"{ex}");
                 return $"Error: {ex}";
             }
+        }
+
+        [McpServerTool(Name = "AddCodeowners"), Description("Adds codeowners to a given service label or path for a repo.")]
+        public async Task<string> AddCodeowners(
+            string repo,
+            string path,
+            string serviceLabel,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
+            string workingBranch)
+        {
+            try
+            {
+                return "";
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddCodeowners");
+                return null;
+            }
+        }
+
+        // [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
+        // public async Task MockTool()
+        // {
+        //     try
+        //     {
+        //         var fileContent = await githubService.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS");
+
+        //         if (fileContent == null || fileContent.Count == 0)
+        //         {
+        //             logger.LogError("Could not retrieve CODEOWNERS file");
+        //             return;
+        //         }
+
+        //         var content = fileContent[0].Content;
+        //         var (startLine, endLine) = codeownerHelper.findBlock(content, "# ######## Services ########");
+        //         logger.LogInformation($"start = {startLine}, end = {endLine}");
+
+        //         var codeownersUrl = $"https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/CODEOWNERS";
+        //         var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine : 310, endLine : 330);
+
+        //         for (int i = 0; i < codeownersEntries.Count; i++)
+        //         {
+        //             (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
+        //         }
+
+        //         // Create our custom comparer and sort the entries
+        //         var comparer = new CodeownersEntryPathComparer();
+        //         var sortedEntries = codeownersEntries.OrderBy(entry => entry, comparer).ToList();
+
+        //         // Write the sorted entries to a new file
+        //         var outputPath = "./Tools/CodeownerTools/CODEOWNER_EDITED";
+        //         var outputLines = new List<string>();
+
+        //         var lines = content.Split('\n');
+
+        //         for (int i = 0; i < startLine + 2; i++)
+        //         {
+        //             outputLines.Add(lines[i]);
+        //         }
+
+        //         foreach (var entry in sortedEntries)
+        //         {
+        //             logger.LogInformation($" owners : {entry.ServiceOwners} ");
+        //             var formattedEntry = entry.FormatCodeownersEntry();
+        //             if (!string.IsNullOrWhiteSpace(formattedEntry))
+        //             {
+        //                 outputLines.Add(formattedEntry);
+        //                 outputLines.Add("");
+        //             }
+        //         }
+
+        //         for (int i = endLine; i < lines.Length; i++)
+        //         {
+        //             outputLines.Add(lines[i]);
+        //         }
+                
+        //         // Write all lines to the file
+        //         await File.WriteAllLinesAsync(outputPath, outputLines);
+                
+        //         logger.LogInformation($"Successfully wrote {sortedEntries.Count} sorted entries to {outputPath}");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         logger.LogInformation($"Error: {ex}");
+        //     }
+        // }
+
+        /// Helper method to check if a line matches a specific service entry
+        private bool DoesLineMatchServiceEntry(string line, CodeownersEntry entry)
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("#"))
+                return false;
+
+            var pathPart = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            return pathPart != null && pathPart.Equals(entry.PathExpression, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string RemoveOwnersFromLine(string line, List<string> ownersToRemove)
+        {
+            var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            if (parts.Count == 0)
+                return line;
+
+            var pathPart = parts[0];
+            var ownerParts = parts.Skip(1).ToList();
+
+            var normalizedOwnersToRemove = ownersToRemove.Select(o => o.TrimStart('@').ToLowerInvariant()).ToList();
+            var remainingOwners = ownerParts.Where(owner =>
+                !normalizedOwnersToRemove.Contains(owner.TrimStart('@').ToLowerInvariant())).ToList();
+
+            return $"{pathPart} {string.Join(" ", remainingOwners)}";
         }
     }
 }

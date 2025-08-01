@@ -2,6 +2,7 @@ import { TurnContext } from 'botbuilder';
 
 export function getTurnContextLogMeta(context: TurnContext) {
   const { activity } = context;
+
   return {
     activityId: activity.id,
     convId: activity.conversation.id,

@@ -10,15 +10,16 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { FeedbackRequestPayload, Message, RAGOptions, sendFeedback } from '../backend/rag.js';
 import { extractSelectedReasons } from '../cards/components/feedback.js';
 import config from '../config/config.js';
-import { getRagTanent } from '../config/utils.js';
-import { ConversationHandler, ConversationMessage } from '../input/ConversationHandler.js';
+import { ChannelConfigManager } from '../config/channel.js';
+import { ConversationHandler } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 
 const conversationHandler = new ConversationHandler();
-await conversationHandler.initialize();
+const channelConfigManager = new ChannelConfigManager();
+await Promise.all([conversationHandler.initialize(), channelConfigManager.initialize()]);
 
 // Create AI components
-const model = new RAGModel(conversationHandler);
+const model = new RAGModel(conversationHandler, channelConfigManager);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,10 +52,11 @@ const isSubmitMessage = async (ctx: TurnContext) =>
   ctx.activity.type === ActivityTypes.Message && !!ctx.activity.value?.action;
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
-  const channelId = context.activity.conversation.id.split(';')[0];
-  const ragTanentId = getRagTanent(channelId);
+  const { channelId } = parseConversationId(context.activity.conversation.id);
+  const ragTenantId = await channelConfigManager.getRagTenant(channelId);
+  const ragEndpoint = await channelConfigManager.getRagEndpoint(channelId);
   const ragOptions: RAGOptions = {
-    endpoint: config.ragEndpoint,
+    endpoint: ragEndpoint,
     apiKey: config.ragApiKey,
   };
   const action = context.activity.value?.action;
@@ -85,7 +87,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   switch (action) {
     case 'feedback-like':
       const goodFeedback: FeedbackRequestPayload = {
-        tenant_id: ragTanentId,
+        tenant_id: ragTenantId,
         messages,
         reaction: 'good',
         comment: feedbackComment,
@@ -97,7 +99,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
       break;
     case 'feedback-dislike':
       const badFeedback: FeedbackRequestPayload = {
-        tenant_id: ragTanentId,
+        tenant_id: ragTenantId,
         messages,
         reaction: 'bad',
         comment: feedbackComment,

@@ -14,27 +14,6 @@
     "ragApiKey": {
       "value": "${{SECRET_RAG_API_KEY}}"
     },
-    "ragEndpoint": {
-      "value": "${{RAG_ENDPOINT}}"
-    },
-    "ragTanentId": {
-      "value": "${{RAG_TANENT_ID}}"
-    },
-    "channelIdForPython": {
-      "value": "${{CHANNEL_ID_FOR_PYTHON}}"
-    },
-    "channelIdForPythonDevInternal": {
-      "value": "${{CHANNEL_ID_FOR_PYTHON_DEV_INTERNAL}}"
-    },
-    "channelIdForSdkOnboardingDevInternal": {
-      "value": "${{CHANNEL_ID_FOR_SDK_ONBOARDING_DEV_INTERNAL}}"
-    },
-    "ragTanentIdForPython": {
-      "value": "${{RAG_TANENT_ID_FOR_PYTHON}}"
-    },
-    "ragTanentIdForSdkOnboarding": {
-      "value": "${{RAG_TANENT_ID_FOR_SDK_ONBOARDING}}"
-    },
     "webAppSKU": {
       "value": "B3"
     },

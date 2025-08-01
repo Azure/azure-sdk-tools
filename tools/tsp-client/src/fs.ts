@@ -1,8 +1,9 @@
-import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
+import { mkdir, rm, readFile, access } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { TspLocation } from "./typespec.js";
+import { doesFileExist } from "./network.js";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -96,29 +97,18 @@ export function normalizeDirectory(directory: string): string {
  */
 async function findTspLocation(outputDir: string): Promise<string | undefined> {
   let yamlPath = resolvePath(process.cwd(), "tsp-location.yaml");
-  try {
-    const fstat = await stat(yamlPath);
-    if (fstat.isFile()) {
-      Logger.debug(`Using tsp-location.yaml from current directory at ${yamlPath}`);
-      return yamlPath;
-    }
-  } catch (e) {
-    Logger.error(
-      `Unable to find tsp-location.yaml in current directory ${yamlPath}, moving to output directory: ${e}`,
-    );
+  if (await doesFileExist(yamlPath)) {
+    Logger.debug(`Found tsp-location.yaml in current directory at ${yamlPath}`);
+    return yamlPath;
   }
 
-  // If not found, check the output directory
+  // If not found, check the output directory (legacy behavior)
   yamlPath = resolvePath(outputDir, "tsp-location.yaml");
-  try {
-    const fstat = await stat(yamlPath);
-    if (fstat.isFile()) {
-      Logger.debug(`Using tsp-location.yaml from output directory at ${yamlPath}`);
-      return yamlPath;
-    }
-  } catch (e) {
-    Logger.error(`Unable to find tsp-location.yaml in output directory ${yamlPath}`);
+  if (await doesFileExist(yamlPath)) {
+    Logger.debug(`Found tsp-location.yaml in output directory at ${yamlPath}`);
+    return yamlPath;
   }
 
+  Logger.debug(`Unable to find tsp-location.yaml. Searched in ${process.cwd()} and ${outputDir}.`);
   return undefined;
 }

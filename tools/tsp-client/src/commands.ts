@@ -22,7 +22,8 @@ import {
   makeSparseSpecDir,
   getPathToDependency,
   updateExistingTspLocation,
-  parseTspClientRepoConfig
+  parseTspClientRepoConfig,
+  TspClientConfig,
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -31,6 +32,42 @@ import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
+
+async function getEmitter(
+  repoRoot: string,
+  tspConfigData: any,
+  globalConfigFile?: TspClientConfig,
+  emitterPackageJsonOverride?: string,
+): Promise<string> {
+  // If an emitter-package.json override value is explicitly provided, use it to get the emitter
+  if (emitterPackageJsonOverride) {
+    return await getEmitterFromRepoConfig(emitterPackageJsonOverride);
+  }
+
+  // If a global config file exists with supportedEmitters configured, use it to
+  // find the right emitter. The list of supported emitters will be checked in order, stopping
+  // at the first match in tspconfig.yaml.
+  if (globalConfigFile && globalConfigFile.supportedEmitters) {
+    for (const supportedEmitter of globalConfigFile.supportedEmitters) {
+      for (const configEmitter of Object.keys(tspConfigData.options) ?? []) {
+        if (supportedEmitter.name === configEmitter) {
+          return configEmitter;
+        }
+      }
+    }
+  }
+
+  try {
+    // If no emitter is found in the global config, fall back to the default emitter-package.json
+    return await getEmitterFromRepoConfig(
+      joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
+    );
+  } catch (err) {
+    throw new Error(
+      `Failed to get emitter from default emitter-package.json. Please add a valid emitter-package.json file in the eng/ directory of the repository. Error: ${err}`,
+    );
+  }
+}
 
 export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
@@ -43,24 +80,8 @@ export async function initCommand(argv: any) {
 
   const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
 
-  let emitter;
-
   // Read the global tspclientconfig.yaml
   const tspclientGlobalConfig = await parseTspClientRepoConfig(repoRoot);
-
-  if (emitterPackageOverride) {
-    emitter = await getEmitterFromRepoConfig(emitterPackageOverride);
-  } else if (tspclientGlobalConfig === undefined || tspclientGlobalConfig.supportedEmitters === undefined) {
-        // If the global config is not found or supported emitters aren't defined, fall back to the default
-        // emitter-package.json under the eng/ directory.
-        emitter = await getEmitterFromRepoConfig(
-            emitterPackageOverride ?? joinPaths(repoRoot, defaultRelativeEmitterPackageJsonPath),
-        );
-        if (!emitter) {
-            throw new Error("Couldn't find emitter-package.json in the repo");
-        }
-    }
-  }
 
   let isUrl = true;
   if (argv["local-spec-repo"]) {
@@ -94,6 +115,12 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
+    const emitter = await getEmitter(
+      repoRoot,
+      configYaml,
+      tspclientGlobalConfig,
+      emitterPackageOverride,
+    );
     const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
@@ -112,8 +139,8 @@ export async function initCommand(argv: any) {
           "additionalDirectories"
         ] ?? [],
     };
-    if (argv["emitter-package-json-path"]) {
-      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    if (emitterPackageOverride) {
+      tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);
     }
     if (argv["update-if-exists"]) {
       // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
@@ -140,6 +167,12 @@ export async function initCommand(argv: any) {
       throw new Error(`tspconfig.yaml is empty at ${tspConfig}`);
     }
     const configYaml = parseYaml(data);
+    const emitter = await getEmitter(
+      repoRoot,
+      configYaml,
+      tspclientGlobalConfig,
+      emitterPackageOverride,
+    );
     const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
@@ -167,7 +200,6 @@ export async function initCommand(argv: any) {
           "additionalDirectories"
         ] ?? [],
     };
-    const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
     if (emitterPackageOverride) {
       // store relative path to repo root
       tspLocationData.emitterPackageJsonPath = relative(repoRoot, emitterPackageOverride);

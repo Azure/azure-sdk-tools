@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
         private Option<string> serviceDocumentationOption;
         private Option<string> modelOption;
 
-        public ReadMeGeneratorTool(ILogger<FileValidationTool> logger, IOutputService output, IAzureOpenAIClient openAiClient)
+        public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputService output, IAzureOpenAIClient openAiClient)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(output);

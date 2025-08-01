@@ -19,12 +19,20 @@ export async function createTempDirectory(outputDir: string): Promise<string> {
   return tempRoot;
 }
 
-export async function readTspLocation(rootDir: string): Promise<TspLocation> {
+/**
+ * Reads the tsp-location.yaml file from the expected directory.
+ *
+ * By default, it searches in the current working directory. If not found,
+ * it searches in the provided fallback directory which is likely the output directory.
+ *
+ * @param fallbackDir Path to the fallback directory to search for tsp-location.yaml.
+ * @returns The parsed TspLocation object.
+ */
+export async function readTspLocation(fallbackDir: string): Promise<TspLocation> {
   try {
-    const yamlPath = resolvePath(rootDir, "tsp-location.yaml");
-    const fileStat = await stat(yamlPath);
-    if (fileStat.isFile()) {
-      const fileContents = await readFile(yamlPath, "utf8");
+    const tspLocationYaml = await findTspLocation(fallbackDir);
+    if (tspLocationYaml) {
+      const fileContents = await readFile(tspLocationYaml, "utf8");
       const tspLocation: TspLocation = parseYaml(fileContents);
       if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
         throw new Error("Invalid tsp-location.yaml");
@@ -78,4 +86,29 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
 export function normalizeDirectory(directory: string): string {
   const normalizedDir = normalizePath(directory);
   return normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
+}
+
+/**
+ * Searches for tsp-location.yaml in the current working directory and the fallback directory.
+ * If found, returns the path to the file; otherwise, returns undefined.
+ *
+ * @param fallbackDir Path to the fallback directory to search for tsp-location.yaml.
+ */
+async function findTspLocation(fallbackDir: string): Promise<string | undefined> {
+  let yamlPath = resolvePath(process.cwd(), "tsp-location.yaml");
+  let fstat = await stat(yamlPath);
+  if (fstat.isFile()) {
+    Logger.debug(`Found tsp-location.yaml at ${yamlPath}`);
+    return yamlPath;
+  }
+
+  // If not found, check the fallback directory
+  yamlPath = resolvePath(fallbackDir, "tsp-location.yaml");
+  fstat = await stat(yamlPath);
+  if (fstat.isFile()) {
+    Logger.debug(`Found tsp-location.yaml at ${yamlPath}`);
+    return yamlPath;
+  }
+
+  return undefined;
 }

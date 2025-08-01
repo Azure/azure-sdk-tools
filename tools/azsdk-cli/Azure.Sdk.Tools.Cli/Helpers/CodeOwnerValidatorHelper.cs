@@ -1,11 +1,10 @@
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Microsoft.Extensions.Logging;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ICodeOwnerValidatorHelper
     {

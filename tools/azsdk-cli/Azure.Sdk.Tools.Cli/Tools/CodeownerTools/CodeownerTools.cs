@@ -335,7 +335,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         {
                             resultMessages.Add($"{serviceLabel} is currently in review.");
                         }
-                        else if (serviceLabelValidationResults != LabelHelper.ResultType.Exists)
+                        else if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
                         {
                             resultMessages.Add($"The service label {serviceLabel} does not exist.");
                             isValid = false;
@@ -401,7 +401,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     // Create a new branch only if no working branch exists
                     branchName = codeownerHelper.CreateBranchName("add-codeowner-entry", path ?? serviceLabel);
                     var createBranchInfo = await githubService.CreateBranchAsync("Azure", fullRepoName, branchName);
-                    resultMessages.Add(createBranchInfo);
+                    resultMessages.Add($"{createBranchInfo}");
                 }
                 
                 await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", $"Add codeowner entry for {path ?? serviceLabel}", modifiedCodeownersContent, sha, branchName);

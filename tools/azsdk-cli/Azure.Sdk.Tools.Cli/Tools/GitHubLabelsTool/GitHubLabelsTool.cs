@@ -100,12 +100,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }            
         }
 
-        public async Task<LabelHelper.ResultType> getServiceLabelInfo(string serviceLabel)
+        public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
             try
             {
-                
-
                 var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
                 if (contents == null || contents.Count == 0)
                 {
@@ -121,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
-                if (result == LabelHelper.ResultType.Exists)
+                if (result == LabelHelper.ServiceLabelStatus.Exists)
                 {
                     return result;
                 }
@@ -129,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
                 if (labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
                 {
-                    return LabelHelper.ResultType.InReview;
+                    return LabelHelper.ServiceLabelStatus.InReview;
                 }
                 return result;
             }
@@ -150,12 +148,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var checkResult = await getServiceLabelInfo(normalizedLabel);
 
                 // Create a new branch
-                if (checkResult == LabelHelper.ResultType.Exists)
+                if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
                 {
                     logger.LogInformation($"Service label '{label}' already exists. No action taken.");
                     return $"Service label '{label}' already exists.";
                 }
-                else if (checkResult == LabelHelper.ResultType.NotAServiceLabel)
+                else if (checkResult == LabelHelper.ServiceLabelStatus.InReview)
+                {
+                    logger.LogInformation($"Service label '{label}' currently has an open PR. No action taken.");
+                    return $"Service label '{label}' currently has an open PR.";
+                }
+                else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
                 {
                     logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
                     return $"Label '{label}' exists but is not a service label. Try a different label.";
@@ -165,18 +168,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogInformation($"Branch creation result: {branchResult}");
 
                 // If branch already exists, return early with the compare URL
-                if (branchResult.Contains("already exists"))
+                if (branchResult == CreateBranchStatus.AlreadyExists)
                 {
-                    var branchResponse = new GenericResponse()
-                    {
-                        Details = {
-                            $"Result: {branchResult}"
-                        }
-                    };
-                    return output.Format(branchResponse);
+                    return $"Branch 'add_service_label_{normalizedLabel}' already exists. Compare URL: https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}";
                 }
 
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}"); // Is this documentation or branding link?
+                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
                 // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
@@ -197,36 +194,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoName: "azure-sdk-tools",
                     repoOwner: "Azure",
                     baseBranch: "main",
-                    // This is not sufficiently unique (Is better to make the CreateBranch method check for uniqueness or add a way to make each branch unique?)
                     headBranch: $"add_service_label_{normalizedLabel}",
-                    title: $"[Service Label] Add service label: {label}",
+                    title: $"Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
-
-                    // TODO: Before merge, make this not draft
                     draft: true
                 );
 
                 logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
 
-                var response = new GenericResponse()
-                {
-                    Status = "Success",
-                    Details = { $"Service label '{label}' pull request created successfully." }
-                };
-                response.Details.AddRange(result);
-
-                return output.Format(response);
+                return $"Service label '{label}' pull request created successfully.";
             }
             catch (Exception ex)
             {
+                SetFailure();
                 logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
 
-                var errorResponse = new GenericResponse()
-                {
-                    Status = "Failed",
-                    Details = { $"Failed to create pull request for service label '{label}'. Error: {ex.Message}" }
-                };
-                return output.Format(errorResponse);
+                return  $"Failed to create pull request for service label '{label}'. Error: {ex.Message}";
             }
         }
     }

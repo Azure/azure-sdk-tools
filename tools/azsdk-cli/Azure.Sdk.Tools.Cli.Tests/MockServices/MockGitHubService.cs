@@ -96,16 +96,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
         
-        public Task<string> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranch)
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
         {
-            // TODO
-            return Task.FromResult("Need to implement this");
+            throw new NotImplementedException();
         }
 
         public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
         {
-            // TODO
-            return Task.FromResult(false);
+            throw new NotImplementedException();
         }
 
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null)

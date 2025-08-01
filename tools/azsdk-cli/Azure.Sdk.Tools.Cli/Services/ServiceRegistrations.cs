@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -27,10 +26,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
-            services.AddSingleton<ICodeOwnerHelper, CodeOwnerHelper>();
             services.AddSingleton<ILabelHelper, LabelHelper>();
-            
-            // Tools
+            services.AddSingleton<ICodeOwnerHelper, CodeOwnerHelper>();
             services.AddSingleton<ICodeOwnerValidatorHelper, CodeOwnerValidatorHelper>();
         }
     }

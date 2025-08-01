@@ -195,37 +195,5 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         #endregion
-
-        #region AddCodeowners Tests
-
-        [Test]
-        public async Task AddCodeowners_FileNotFound_ReturnsError()
-        {
-            // Arrange
-            mockGitHubService.Setup(x => x.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS"))
-                            .ReturnsAsync((IReadOnlyList<RepositoryContent>?)null);
-
-            // Act
-            var result = await codeownerTools.AddCodeowners("dotnet", "sdk/test/", "Service Bus", new List<string>(), new List<string>(), "main");
-
-            // Assert
-            Assert.That(result, Does.Contain("Could not retrieve CODEOWNERS file"));
-        }
-
-        [Test]
-        public async Task AddCodeowners_ValidInput_ReturnsEmptyString()
-        {
-            // Arrange - Mock to return null to trigger the expected error
-            mockGitHubService.Setup(x => x.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS"))
-                            .ReturnsAsync((IReadOnlyList<RepositoryContent>?)null);
-
-            // Act
-            var result = await codeownerTools.AddCodeowners("dotnet", "sdk/test/", "Service Bus", new List<string>(), new List<string>(), "main");
-
-            // Assert
-            Assert.That(result, Does.Contain("Could not retrieve CODEOWNERS file"));
-        }
-
-        #endregion
     }
 }

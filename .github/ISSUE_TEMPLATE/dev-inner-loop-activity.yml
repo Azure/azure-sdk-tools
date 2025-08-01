@@ -26,6 +26,21 @@ body:
       required: true
 
   - type: textarea
+    id: champion-scenarios
+    attributes:
+      label: "🌟 Champion Scenarios"
+      description: Describe key scenarios and contexts for this activity. Include the context developers enter with and sample chat messages they might send to an agent.
+      placeholder: |
+        **Context:** Developer is working on a new feature and needs to validate API interactions
+        
+        **Sample chat messages:**
+        - "I need to record HTTP calls for my new authentication flow"
+        - "How do I start recording test interactions for the storage client?"
+        - "Can you help me validate that my recorded interactions are complete?"
+    validations:
+      required: false
+
+  - type: textarea
     id: current-workflow
     attributes:
       label: "🔧 How is this Activity Done Today?"

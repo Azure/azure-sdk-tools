@@ -22,3 +22,13 @@ channels:
     id: 19:603d15bc0fd248ff82a8326da7322a4d@thread.tacv2
     endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
     tenant: azure_sdk_onboarding
+
+  - name: wanl - python
+    id: 19:9810c64acb4746fc93350c694aaf3d2b@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot
+
+  - name: Azure SDK QA Bot - Demo - Python
+    id: 19:f876c6910f4048aa81f172300e0f7104@thread.tacv2
+    endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot

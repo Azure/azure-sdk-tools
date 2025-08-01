@@ -331,7 +331,7 @@ describe('ChannelConfigManager', () => {
 
       const result = await manager.getRagTenant('test-channel');
 
-      // Should return undefined when error occurs
+      // Should return fallback value when error occurs
       expect(result).toBe('azure_sdk_qa_bot');
     });
 
@@ -341,7 +341,7 @@ describe('ChannelConfigManager', () => {
 
       const result = await manager.getRagEndpoint('test-channel');
 
-      // Should return undefined when error occurs
+      // Should return fallback value when error occurs
       expect(result).toBe('https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net');
     });
 

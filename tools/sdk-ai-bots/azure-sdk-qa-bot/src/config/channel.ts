@@ -1,6 +1,6 @@
 import { parse } from 'yaml';
 import { BlobServiceClient } from '@azure/storage-blob';
-import { DefaultAzureCredential } from '@azure/identity';
+import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity';
 import { setTimeout } from 'timers/promises';
 import { logger } from '../logging/logger.js';
 import config from './config.js';
@@ -34,8 +34,11 @@ class ChannelConfigManager {
   private blobServiceClient: BlobServiceClient | null = null;
   private readonly maxRetry = 6;
   private readonly watchInterval: number = 5000; // 5 seconds for blob storage
+  private readonly botId: string;
 
-  constructor() {}
+  constructor() {
+    this.botId = config.MicrosoftAppId;
+  }
 
   /**
    * Initialize the blob service client
@@ -58,7 +61,10 @@ class ChannelConfigManager {
       // TODO: update env file in the future
       const blobStorageUrl = storageUrl.replace('.table.core.windows.net', '.blob.core.windows.net');
 
-      this.blobServiceClient = new BlobServiceClient(blobStorageUrl, new DefaultAzureCredential());
+      const credential =
+              process.env.IS_LOCAL === 'true' ? new DefaultAzureCredential() : new ManagedIdentityCredential(this.botId);
+      
+      this.blobServiceClient = new BlobServiceClient(blobStorageUrl, credential);
 
       logger.info('Blob service client initialized', { storageUrl: blobStorageUrl });
     } catch (error) {

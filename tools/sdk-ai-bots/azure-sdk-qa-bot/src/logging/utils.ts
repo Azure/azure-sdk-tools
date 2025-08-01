@@ -1,9 +1,7 @@
-import { TurnContext, TeamsChannelData } from 'botbuilder';
+import { TurnContext } from 'botbuilder';
 
 export function getTurnContextLogMeta(context: TurnContext) {
   const { activity } = context;
-  const channelData = activity.channelData as TeamsChannelData;
-  const channelName = channelData?.channel?.name ?? 'not-found';
 
   return {
     activityId: activity.id,
@@ -11,6 +9,5 @@ export function getTurnContextLogMeta(context: TurnContext) {
     userId: activity.from.id,
     timestamp: activity.timestamp,
     type: activity.type,
-    channelName,
   };
 }

@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "fix-snippet-update"), Description("Update and fix code snippets in SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> FixSnippetUpdate(string projectPath)
+        public async Task<DefaultCommandResponse> FixSnippetUpdateValidation(string projectPath)
         {
             try
             {

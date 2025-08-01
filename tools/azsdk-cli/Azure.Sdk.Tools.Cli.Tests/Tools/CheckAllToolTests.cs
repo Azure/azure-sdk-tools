@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var fixTool = new SpellCheckFixTool(_mockSpellCheckFixLogger.Object);
 
             // Act
-            var result = await fixTool.FixSpellCheck(_testProjectPath);
+            var result = await fixTool.FixSpellCheckValidation(_testProjectPath);
 
             // Assert
             Assert.IsNotNull(result);
@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var fixTool = new DependencyCheckFixTool(_mockDependencyCheckFixLogger.Object);
 
             // Act
-            var result = await fixTool.FixDependencyCheck(_testProjectPath);
+            var result = await fixTool.FixDependencyCheckValidation(_testProjectPath);
 
             // Assert
             Assert.IsNotNull(result);
@@ -200,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var fixTool = new SnippetUpdateFixTool(_mockSnippetUpdateFixLogger.Object);
 
             // Act
-            var result = await fixTool.FixSnippetUpdate(_testProjectPath);
+            var result = await fixTool.FixSnippetUpdateValidation(_testProjectPath);
 
             // Assert
             Assert.IsNotNull(result);
@@ -217,7 +217,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var linkValidationFixTool = new LinkValidationFixTool(_mockLinkValidationFixLogger.Object);
 
             // Act
-            var spellCheckResult = await spellCheckFixTool.FixSpellCheck(invalidPath);
+            var spellCheckResult = await spellCheckFixTool.FixSpellCheckValidation(invalidPath);
             var linkValidationResult = await linkValidationFixTool.FixLinkValidation(invalidPath);
 
             // Assert

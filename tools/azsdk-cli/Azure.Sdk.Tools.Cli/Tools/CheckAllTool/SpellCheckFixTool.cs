@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "fix-spell-check"), Description("Fix spelling issues in SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> FixSpellCheck(string projectPath)
+        public async Task<DefaultCommandResponse> FixSpellCheckValidation(string projectPath)
         {
             try
             {

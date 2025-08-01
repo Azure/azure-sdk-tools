@@ -40,10 +40,18 @@ if ($reviews -ne $null)
         if ($ParserPath -eq "")
         {
             &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "APIView token generation failed for Review ID: $($r.ReviewID), Revision ID: $($r.RevisionID)"
+                exit $LASTEXITCODE
+            }
         }
         else
         {
             &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath -ParserPath $ParserPath
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "APIView token generation failed for Review ID: $($r.ReviewID), Revision ID: $($r.RevisionID)"
+                exit $LASTEXITCODE
+            }
         }
     }
 }

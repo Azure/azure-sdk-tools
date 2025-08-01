@@ -27,10 +27,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
         public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputService output, IAzureOpenAIClient openAiClient)
         {
-            ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(output);
+            ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+            ArgumentNullException.ThrowIfNull(output, nameof(output));
 
-            ArgumentNullException.ThrowIfNull(openAiClient);
+            // This should be removed, as it won't be possible to have `null` here when the
+            // patterns for DI are fixed.
+            ArgumentNullException.ThrowIfNull(openAiClient, nameof(openAiClient));
             this.logger = logger;
             this.output = output;
             this.openAiClient = openAiClient;

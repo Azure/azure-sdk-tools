@@ -18,7 +18,7 @@ vi.mock('winston', () => ({
   }
 }));
 
-vi.mock('fs', () => ({
+vi.mock('node:fs', () => ({
   existsSync: vi.fn(),
   mkdirSync: vi.fn(),
   rmSync: vi.fn(),
@@ -68,7 +68,7 @@ vi.mock('../../src/utils/workflowUtils', () => ({
 
 import { describe, it, expect, vi, beforeEach, test } from 'vitest';
 import * as winston from 'winston';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { SdkAutoOptions } from '../../src/types/Workflow';
 import { getSdkAutoContext } from '../../src/automation/entrypoint';
 import { loggerConsoleTransport, loggerDevOpsTransport, loggerTestTransport } from '../../src/automation/logging';

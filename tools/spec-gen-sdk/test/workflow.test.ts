@@ -1,9 +1,8 @@
 import { workflowValidateSdkConfig } from '../src/automation/workflow';
 import { findSDKToGenerateFromTypeSpecProject } from '../src/utils/typespecUtils';
 import { findSwaggerToSDKConfiguration } from '../src/utils/readme';
-import * as fs from 'fs';
-import * as path from 'path';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as fs from 'node:fs';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock validator
 vi.mock('../src/types/validator', () => ({
@@ -11,7 +10,7 @@ vi.mock('../src/types/validator', () => ({
 }));
 
 // Mock dependencies
-vi.mock('fs', () => ({
+vi.mock('node:fs', () => ({
   readFileSync: vi.fn((path) => {
     // For template files, return a mock template
     if (path.includes('templates')) {

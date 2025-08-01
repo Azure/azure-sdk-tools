@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import * as runScript from '../../src/utils/runScript';
 import * as fsUtils from '../../src/utils/fsUtils';
 import { workflowCallGenerateScript, workflowDetectChangedPackages, workflowInitGetSdkSuppressionsYml } from '../../src/automation/workflowHelpers';
 import { WorkflowContext } from '../../src/types/Workflow';
 import { SDKAutomationState } from '../../src/automation/sdkAutomationState';
 
-vi.mock(import('fs'), async (importOriginal) => {
+vi.mock(import('node:fs'), async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,

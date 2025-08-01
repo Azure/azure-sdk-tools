@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import { PackageResult } from './GenerateOutput';
 import { WorkflowContext } from './Workflow';
 import { repoKeyToString } from '../utils/repo';

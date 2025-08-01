@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { parse } from 'jsonc-parser';
 
 export const requireJsonc = (path: string) => {

@@ -1,12 +1,12 @@
-vi.mock('fs', () => ({
+vi.mock('node:fs', () => ({
   existsSync: vi.fn(),
   mkdirSync: vi.fn(),
   rmSync: vi.fn(),
   readFileSync: vi.fn(() => Buffer.from('mock content')),
 }));
 
-vi.mock('path', () => ({
-  ...vi.importActual('path'),
+vi.mock('node:path', () => ({
+  ...vi.importActual('node:path'),
   join: vi.fn((...args) => args.join('/')),
   resolve: vi.fn((p) => `/resolved/${p}`),
 }));
@@ -75,8 +75,7 @@ vi.mock('../../src/types/validator', () => ({
 }));
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
 import { workflowInit, workflowMain, workflowValidateSdkConfig, workflowCallInitScript, workflowGenerateSdk } from '../../src/automation/workflow';
 import { SdkAutoContext, WorkflowContext, FailureType } from '../../src/types/Workflow';
 import { CommentCaptureTransport } from '../../src/automation/logging';

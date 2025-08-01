@@ -13,8 +13,8 @@ import {
     bumpPreviewVersion,
     getLatestStableVersion,
     getNewVersion,
+    getNextBetaVersion,
     getUsedVersions,
-    getVersion,
     isBetaVersion,
     isStableSDKReleaseType,
 } from "../../utils/version.js";
@@ -36,7 +36,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
-    const nextVersion = npmViewResult ? getVersion(npmViewResult, "next") : undefined;
+    const nextVersion = getNextBetaVersion(npmViewResult);
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);

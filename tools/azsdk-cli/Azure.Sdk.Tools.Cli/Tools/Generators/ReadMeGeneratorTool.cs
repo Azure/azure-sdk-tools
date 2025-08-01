@@ -181,7 +181,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             {
                 //var stderr = await process.StandardError.ReadToEndAsync();
                 var stdout = await process.StandardOutput.ReadToEndAsync();
-                var tabified = string.Join("\n  ", stdout.Split("\n"));
+                var tabified = stdout.Replace("\n", "\n  ");
 
                 output.OutputError($"[FAIL]: Verify-Links.ps1 check did not pass.\nStdout: {tabified}");
                 return;

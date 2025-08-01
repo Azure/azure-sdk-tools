@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             try
             {
-                logger.LogInformation($"Starting changelog validation fixes for project at: {projectPath}");
+                logger.LogInformation($"Generating changelog validation fix prompt for project at: {projectPath}");
                 
                 if (!Directory.Exists(projectPath))
                 {
@@ -53,42 +53,86 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     };
                 }
 
-                // TODO: Implement actual changelog validation fix logic
-                // This would typically:
-                // 1. Find and parse CHANGELOG.md files
-                // 2. Fix format violations (date formats, version headers, etc.)
-                // 3. Ensure proper structure with Unreleased section
-                // 4. Standardize categorization (Added, Changed, Fixed, etc.)
-                // 5. Validate release date formats and ordering
-                
-                await Task.Delay(180); // Simulate fix work
-                
-                var formatFixed = 3; // Placeholder for format fixes
-                var sectionsReorganized = 2; // Placeholder for section reorganization
-                var datesStandardized = 4; // Placeholder for date standardization
+                // Find CHANGELOG.md file
+                var changelogPath = Path.Combine(projectPath, "CHANGELOG.md");
+                if (!File.Exists(changelogPath))
+                {
+                    // Try alternative locations
+                    changelogPath = Directory.GetFiles(projectPath, "CHANGELOG.md", SearchOption.AllDirectories).FirstOrDefault();
+                    
+                    if (string.IsNullOrEmpty(changelogPath))
+                    {
+                        return new DefaultCommandResponse
+                        {
+                            ResponseError = $"No CHANGELOG.md file found in project at: {projectPath}"
+                        };
+                    }
+                }
+
+                var changelogContent = await File.ReadAllTextAsync(changelogPath);
+                var prompt = GenerateChangelogFixPrompt(changelogContent, projectPath);
 
                 return new DefaultCommandResponse
                 {
-                    Message = $"Changelog validation fixes completed. Fixed {formatFixed} format issues, reorganized {sectionsReorganized} sections, standardized {datesStandardized} dates.",
-                    Duration = 180,
+                    Message = "Changelog validation fix prompt generated successfully.",
                     Result = new
                     {
-                        FormatFixed = formatFixed,
-                        SectionsReorganized = sectionsReorganized,
-                        DatesStandardized = datesStandardized,
-                        ProjectPath = projectPath
+                        Prompt = prompt,
+                        ChangelogPath = changelogPath,
+                        ProjectPath = projectPath,
+                        Instructions = "Use this prompt with an LLM to fix changelog format violations. The LLM should return the corrected changelog content."
                     }
                 };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception while fixing changelog validation issues");
+                logger.LogError(ex, "Unhandled exception while generating changelog validation fix prompt");
                 SetFailure(1);
                 return new DefaultCommandResponse
                 {
                     ResponseError = $"Unhandled exception: {ex.Message}"
                 };
             }
+        }
+
+        private string GenerateChangelogFixPrompt(string changelogContent, string projectPath)
+        {
+            var projectName = Path.GetFileName(projectPath);
+            
+            return $@"# Changelog Validation Fix Task
+
+You are an expert at fixing Azure SDK changelog format violations. Please analyze and fix the following changelog content according to Azure SDK standards.
+
+## Project Context
+- **Project Path**: {projectPath}
+- **Project Name**: {projectName}
+
+## Azure SDK Changelog Standards
+1. **Header Format**: Use `# Release History` as the main header
+2. **Version Format**: Use `## 1.0.0 (2023-01-01)` format with proper date
+3. **Unreleased Section**: Always include `## 1.0.0-beta.1 (Unreleased)` at the top for upcoming changes
+4. **Category Headers**: Use standard categories:
+   - ### Features Added
+   - ### Breaking Changes
+   - ### Bugs Fixed
+   - ### Other Changes
+5. **Date Format**: Use ISO format YYYY-MM-DD in parentheses
+6. **Chronological Order**: Most recent version first
+7. **Proper Bullet Points**: Use `-` for list items with proper indentation
+8. **No Empty Sections**: Remove empty category sections
+9. **Consistent Formatting**: Ensure consistent spacing and formatting throughout
+
+## Instructions
+1. Analyze the current changelog for format violations
+2. Fix all identified issues while preserving the original content meaning
+3. Ensure compliance with Azure SDK changelog standards
+4. Add missing sections if needed (like Unreleased section)
+5. Standardize date formats and version headers
+6. Organize content in proper chronological order
+7. Return ONLY the corrected changelog content in markdown format
+
+## Expected Output
+Return the corrected changelog content in markdown format, ensuring it follows all Azure SDK standards. Do not include any explanations or additional text - just the corrected changelog.";
         }
     }
 }

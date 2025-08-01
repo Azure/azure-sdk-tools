@@ -67,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-readme-validation"), Description("Run README validation for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "VerifyReadme"), Description("Run README validation for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunReadmeValidation(string projectPath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();

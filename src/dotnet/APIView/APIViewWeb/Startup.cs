@@ -508,19 +508,19 @@ namespace APIViewWeb
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            logger.LogWarning("🔍 CookieFirst: Starting authentication for {Path}", Request.Path);
+            Logger.LogWarning("🔍 CookieFirst: Starting authentication for {Path}", Request.Path);
 
             // Try Cookie authentication first
-            logger.LogWarning("🔍 CookieFirst: Trying Cookie authentication...");
+            Logger.LogWarning("🔍 CookieFirst: Trying Cookie authentication...");
             var cookieResult = await Context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
             if (cookieResult.Succeeded)
             {
-                logger.LogWarning("🔍 CookieFirst: Cookie authentication succeeded");
+                Logger.LogWarning("🔍 CookieFirst: Cookie authentication succeeded");
                 return cookieResult;
             }
 
-            logger.LogWarning("🔍 CookieFirst: Cookie authentication failed, checking for Bearer token...");
+            Logger.LogWarning("🔍 CookieFirst: Cookie authentication failed, checking for Bearer token...");
 
             // If Cookie failed, check for Authorization header with Bearer token
             if (Request.Headers.ContainsKey("Authorization"))
@@ -528,12 +528,12 @@ namespace APIViewWeb
                 var authHeader = Request.Headers["Authorization"].FirstOrDefault();
                 if (authHeader?.StartsWith("Bearer ") == true)
                 {
-                    logger.LogWarning("🔍 CookieFirst: Bearer token found, trying JWT authentication...");
+                    Logger.LogWarning("🔍 CookieFirst: Bearer token found, trying JWT authentication...");
                     var jwtResult = await Context.AuthenticateAsync("Bearer");
                     
                     if (jwtResult.Succeeded)
                     {
-                        logger.LogWarning("🔍 CookieFirst: JWT authentication succeeded");
+                        Logger.LogWarning("🔍 CookieFirst: JWT authentication succeeded");
                         return jwtResult;
                     }
                     else
@@ -543,15 +543,15 @@ namespace APIViewWeb
                 }
                 else
                 {
-                    logger.LogWarning("🔍 CookieFirst: Authorization header present but not Bearer token");
+                    Logger.LogWarning("🔍 CookieFirst: Authorization header present but not Bearer token");
                 }
             }
             else
             {
-                logger.LogWarning("🔍 CookieFirst: No Authorization header found");
+                Logger.LogWarning("🔍 CookieFirst: No Authorization header found");
             }
 
-            logger.LogWarning("🔍 CookieFirst: All authentication methods failed");
+            Logger.LogWarning("🔍 CookieFirst: All authentication methods failed");
             return AuthenticateResult.NoResult();
         }
     }

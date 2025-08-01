@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(output);
 
-
+            ArgumentNullException.ThrowIfNull(openAiClient);
             this.logger = logger;
             this.output = output;
             this.openAiClient = openAiClient;

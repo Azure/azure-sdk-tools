@@ -20,6 +20,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Generators = new(
+            Verb: "generators",
+            Description: "Commands that generate files",
+            Options: []
+        );
+
         public static readonly CommandGroup Cleanup = new(
             Verb: "cleanup",
             Description: "Cleanup commands",

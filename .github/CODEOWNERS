@@ -42,6 +42,7 @@
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
 /tools/sdk-ai-bots/                     @raych1
+/tools/sdk-sample-generator             @deyaaeldeen
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp

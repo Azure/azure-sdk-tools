@@ -1,5 +1,6 @@
 import { type Sample } from "./types.ts";
-import * as fs from "node:fs/promises";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 export async function saveSamples(inputs: {
     samples: Sample[];

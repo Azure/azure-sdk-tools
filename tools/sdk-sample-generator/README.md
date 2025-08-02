@@ -1,4 +1,4 @@
-# AI Examples Generator
+# SDK Sample Generator
 
 Generate high-quality, typechecked code samples for SDKs and REST APIs in multiple languages using LLMs and automated verification.
 

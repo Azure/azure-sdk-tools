@@ -1,9 +1,11 @@
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
+using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Microsoft.Extensions.Azure;
 
 namespace Azure.Sdk.Tools.Cli;
 
@@ -75,7 +77,23 @@ public class Program
             throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
         }
 
-        builder.Services.AddSingleton<IAzureOpenAIClient>(new AzureOpenAIClientService());
+        builder.Services.AddAzureClients(clientBuilder =>
+        {
+            // Azure OpenAI client does not, for some reason, have an
+            // in-package facade for this, so register manually.
+            clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
+                (options, credential, _) =>
+                {
+                    var ep = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? "https://<need to know how to have a default>";
+
+                    if (string.IsNullOrEmpty(ep))
+                    {
+                        throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set, OpenAI related commands will not be available");
+                    }
+
+                    return new AzureOpenAIClient(new Uri(ep), credential, options);
+                });
+        });
 
         builder.WebHost.ConfigureKestrel(options =>
         {

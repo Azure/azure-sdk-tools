@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
-using OpenAI.Chat;
-using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Commands;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using Azure.AI.OpenAI;
+using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Services;
+using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Generators
 {
@@ -17,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
     {
         private readonly ILogger<ReadMeGeneratorTool> logger;
         private readonly IOutputService output;
-        private readonly IAzureOpenAIClient openAiClient;
+        private readonly AzureOpenAIClient openAiClient;
         private Option<string> packagePathOption;
         private Option<string> engPathOption;
         private Option<string> outputPathOption;
@@ -25,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
         private Option<string> serviceDocumentationOption;
         private Option<string> modelOption;
 
-        public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputService output, IAzureOpenAIClient openAiClient)
+        public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputService output, AzureOpenAIClient openAiClient)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(output, nameof(output));
@@ -123,10 +125,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
                 templatePath: templatePath,
                 serviceDocumentation: new Uri(serviceDocumentation),
                 packagePath: packagePath,
-                outputPath: outputPath);
+                outputPath: outputPath, 
+                ct: ct);
         }
 
-        async Task Generate(ChatClient chatClient, string templatePath, Uri serviceDocumentation, string packagePath, string outputPath, string engPath)
+        async Task Generate(ChatClient chatClient, string templatePath, Uri serviceDocumentation, string packagePath, string outputPath, string engPath, CancellationToken ct)
         {
             ArgumentException.ThrowIfNullOrEmpty(templatePath);
             ArgumentNullException.ThrowIfNull(serviceDocumentation);
@@ -137,18 +140,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
             var messages = new ChatMessage[]{
                 new SystemChatMessage(
-                    string.Join("\n",
-                        "We're going to create some READMEs.",
-                        "The parameters are:",
-                        "* A URL that contains service documentation, to be used when creating key concepts, an introduction blurb and any other places where conceptual docs are needed",
-                        "* A package path that we can use to generate documentation links",
-                        "Here are some more rules to follow:",
-                        "- Do not touch the following sections, or its subsections: Contributing.",
-                        "- Do not generate sample code.",
-                        "- Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md"
-                    )
+                    """
+                    We're going to create some READMEs.
+                    The parameters are:
+                    * A URL that contains service documentation, to be used when creating key concepts, an introduction blurb and any other places where conceptual docs are needed
+                    * A package path that we can use to generate documentation links
+                    Here are some more rules to follow:
+                    - Do not touch the following sections, or its subsections: Contributing.
+                    - Do not generate sample code.
+                    - Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
+                    """
                 ),
-                new SystemChatMessage("The readme template is this: \"" + readmeText + "\" which we fill in with the user parameters, which follow:"),
+                new SystemChatMessage($"The readme template is this: {readmeText} which we fill in with the user parameters, which follow:"),
                 new UserChatMessage($"Service URL: {serviceDocumentation}"),
                 new UserChatMessage($"Package path: {packagePath}")
             };
@@ -157,27 +160,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             var generatedReadmeText = Customize(response.Value.Content[0].Text);
 
             await File.WriteAllTextAsync(outputPath, generatedReadmeText);
-            await Validate(engPath: engPath, readmePath: outputPath);
+            await Validate(engPath: engPath, readmePath: outputPath, ct: ct);
 
             output.Output($"Readme written to {outputPath}");
         }
 
-        private async Task Validate(string engPath, string readmePath)
+        private async Task Validate(string engPath, string readmePath, CancellationToken ct)
         {
             output.Output($"Running {engPath}/common/scripts/Verify-Links.ps1 \"{readmePath}\"");
 
-            // TODO: I think chradek has a replacement for this.
             var process = Process.Start(new ProcessStartInfo()
             {
-                FileName = Environment.OSVersion.Platform == PlatformID.Win32NT ? "powershell.exe" : "pwsh",
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "powershell.exe" : "pwsh",
                 Arguments = $"\"{Path.Join(engPath, "common", "scripts", "Verify-Links.ps1")}\" \"{readmePath}\"",
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
             });
 
-            ArgumentNullException.ThrowIfNull(process);
-
-            await process.WaitForExitAsync();
+            await process!.WaitForExitAsync(ct);
 
             if (process.ExitCode != 0)
             {

@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
             var process = Process.Start(new ProcessStartInfo()
             {
-                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "powershell.exe" : "pwsh",
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pwsh.exe" : "pwsh",
                 Arguments = $"\"{Path.Join(engPath, "common", "scripts", "Verify-Links.ps1")}\" \"{readmePath}\"",
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
@@ -181,11 +181,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
             if (process.ExitCode != 0)
             {
-                //var stderr = await process.StandardError.ReadToEndAsync();
+                var stderr = await process.StandardError.ReadToEndAsync();
                 var stdout = await process.StandardOutput.ReadToEndAsync();
-                var tabified = stdout.Replace("\n", "\n  ");
 
-                output.OutputError($"[FAIL]: Verify-Links.ps1 check did not pass.\nStdout: {tabified}");
+                output.OutputError($"[FAIL]: Verify-Links.ps1 check did not pass.\nStdout: {stdout.Replace("\n", "\n  ")}\nStderr: {stderr.Replace("\n", "\n  ")}");
                 return;
             }
 

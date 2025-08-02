@@ -35,6 +35,8 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+package-lock.json
+*.tsbuildinfo
 
 # Unit test / coverage reports
 htmlcov/

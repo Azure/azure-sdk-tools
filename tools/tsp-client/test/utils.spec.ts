@@ -70,7 +70,7 @@ describe("Verify other utils functions", function () {
       commit: "1234567890abcdef",
       repo: "Azure/foo-repo",
       additionalDirectories: [],
-      entrypointFile: "foo.tsp"
+      entrypointFile: "foo.tsp",
     });
   });
 
@@ -92,7 +92,7 @@ describe("Verify other utils functions", function () {
       repo: "Azure/foo-repo",
       additionalDirectories: [],
       entrypointFile: "foo.tsp",
-      emitterPackageJsonPath: "example.json"
+      emitterPackageJsonPath: "example.json",
     });
   });
 });

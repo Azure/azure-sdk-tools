@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\src\Azure.Tools.ErrorAnalyzers\Azure.Tools.ErrorAnalyzers.csproj" />
+    <ProjectReference Include="..\..\Client\src\Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers\Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.csproj" />
+    <ProjectReference Include="..\..\General\src\Azure.Tools.ErrorAnalyzers.GeneralRuleAnalyzers\Azure.Tools.ErrorAnalyzers.GeneralRuleAnalyzers.csproj" />
+    <ProjectReference Include="..\..\Management\src\Azure.Tools.ErrorAnalyzers.ManagementRuleAnalyzers\Azure.Tools.ErrorAnalyzers.ManagementRuleAnalyzers.csproj" />
+  </ItemGroup>
+
+</Project>

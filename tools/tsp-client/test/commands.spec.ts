@@ -26,6 +26,7 @@ describe.sequential("Verify commands", () => {
       "./test/utils/emitter-package.json",
       joinPaths(repoRoot, "eng", "emitter-package.json"),
     );
+    await mkdir(joinPaths(cwd(), "test/examples/initGlobalConfig/"), { recursive: true });
   });
 
   afterAll(async () => {
@@ -42,6 +43,7 @@ describe.sequential("Verify commands", () => {
       { recursive: true },
     );
     await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+    await rm("./test/examples/initGlobalConfig/", { recursive: true });
   });
 
   it("Generate lock file", async () => {
@@ -367,6 +369,35 @@ describe.sequential("Verify commands", () => {
         emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
       });
       await rm("./test/examples/initOrUpdate/", { recursive: true });
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with global tspclientconfig.yaml", async () => {
+    await cp(
+      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+    );
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/initGlobalConfig/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+      };
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      assert.deepEqual(tspLocation, {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "<replace with your value>",
+        repo: "<replace with your value>",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
+      });
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

@@ -1,33 +1,30 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using APIView.Identity;
-using Microsoft.AspNetCore.Authorization;
 
-namespace APIViewWeb;
-
-public class OrganizationRequirementHandler : IAuthorizationHandler
+namespace APIViewWeb
 {
-    public Task HandleAsync(AuthorizationHandlerContext context)
+    public class OrganizationRequirementHandler : IAuthorizationHandler
     {
-        Claim orgClaim = context.User.FindFirst(ClaimConstants.Orgs);
-        if (orgClaim == null)
+        public Task HandleAsync(AuthorizationHandlerContext context)
         {
+            foreach (var requirement in context.Requirements)
+            {
+                if (requirement is OrganizationRequirement orgRequirement)
+                {
+                    var claim = context.User.FindFirst("urn:github:orgs");
+                    if (claim != null)
+                    {
+                        var userOrganizations = claim.Value.Split(",");
+                        if (userOrganizations.Any(userOrg => orgRequirement.RequiredOrganizations.Contains(userOrg, StringComparer.OrdinalIgnoreCase)))
+                        {
+                            context.Succeed(requirement);
+                        }
+                    }
+                }
+            }
             return Task.CompletedTask;
         }
-
-        string[] userOrganizations = orgClaim.Value.Split(",");
-        foreach (IAuthorizationRequirement requirement in context.Requirements)
-        {
-            if (requirement is OrganizationRequirement orgRequirement &&
-                userOrganizations.Any(userOrg =>
-                    orgRequirement.RequiredOrganizations.Contains(userOrg, StringComparer.OrdinalIgnoreCase)))
-            {
-                context.Succeed(requirement);
-            }
-        }
-
-        return Task.CompletedTask;
     }
 }

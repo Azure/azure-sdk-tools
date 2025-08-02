@@ -299,6 +299,7 @@ namespace APIViewWeb
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddHostedService<CopilotPollingBackgroundHostedService>();
+            
             services.AddSingleton<Services.IBackgroundTaskQueue, Services.BackgroundTaskQueue>();
             services.AddHostedService<QueuedHostedService>();
 

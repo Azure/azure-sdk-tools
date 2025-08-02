@@ -177,7 +177,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
                 RedirectStandardOutput = true
             });
 
-            await process!.WaitForExitAsync(ct);
+
+            using var verifyLinksCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            verifyLinksCt.CancelAfter(TimeSpan.FromSeconds(30)); // Set your time limit here
+            await process!.WaitForExitAsync(verifyLinksCt.Token);
 
             if (process.ExitCode != 0)
             {

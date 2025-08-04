@@ -77,16 +77,69 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     };
                 }
 
-                // TODO: Implement actual dependency check logic
-                await Task.Delay(100); // Simulate work
+                // Use LanguageRepoService to detect language and run appropriate dependency analysis
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                CheckResult result;
                 
-                var result = new CheckResult
+                try
                 {
-                    CheckType = "Dependency Check",
-                    Success = true,
-                    Message = "Dependency check completed successfully",
-                    Duration = 100
-                };
+                    // Create language service using factory (detects language automatically)
+                    var languageService = LanguageRepoServiceFactory.CreateService(projectPath);
+                    logger.LogInformation($"Created language service: {languageService.GetType().Name}");
+                    
+                    // Call AnalyzeDependencies method
+                    var analysisResult = await languageService.AnalyzeDependenciesAsync();
+                    stopwatch.Stop();
+                    
+                    // Process the result dictionary from LanguageRepoService
+                    bool success = false;
+                    string message = "Unknown result";
+                    
+                    if (analysisResult.ContainsKey("success") && analysisResult["success"].Equals(true))
+                    {
+                        success = true;
+                        message = analysisResult.ContainsKey("response") ? analysisResult["response"].ToString() : "Dependency analysis completed successfully";
+                    }
+                    else if (analysisResult.ContainsKey("failure") && analysisResult["failure"].Equals(true))
+                    {
+                        success = false;
+                        message = analysisResult.ContainsKey("response") ? analysisResult["response"].ToString() : "Dependency analysis failed";
+                    }
+                    else if (analysisResult.ContainsKey("cookbook"))
+                    {
+                        success = false;
+                        var cookbook = analysisResult["cookbook"].ToString();
+                        var response = analysisResult.ContainsKey("response") ? analysisResult["response"].ToString() : "";
+                        message = $"See cookbook reference: {cookbook}. {response}";
+                    }
+                    
+                    result = new CheckResult
+                    {
+                        CheckType = "Dependency Check",
+                        Success = success,
+                        Message = message,
+                        Duration = stopwatch.ElapsedMilliseconds
+                    };
+                    
+                    if (!success)
+                    {
+                        SetFailure(1);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    stopwatch.Stop();
+                    logger.LogError(ex, "Error during language-specific dependency analysis");
+                    SetFailure(1);
+                    
+                    result = new CheckResult
+                    {
+                        CheckType = "Dependency Check",
+                        Success = false,
+                        Message = $"Error during dependency analysis: {ex.Message}",
+                        Duration = stopwatch.ElapsedMilliseconds
+                    };
+                }
 
                 return new DefaultCommandResponse
                 {

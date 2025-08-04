@@ -15,7 +15,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetMergeBaseCommitSha(string path, string targetBranch);
         public string DiscoverRepoRoot(string path);
         public string GetRepoName(string path);
-        public string? FindRepositoryRoot(string startPath);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {

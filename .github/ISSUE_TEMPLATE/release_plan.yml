@@ -73,7 +73,7 @@ body:
     id: userEmail
     attributes:
       label: User Email
-      description: Email address of the person creating the release plan
+      description: Microsoft email address of the person creating the release plan
       placeholder: e.g., user@example.com
     validations:
       required: false

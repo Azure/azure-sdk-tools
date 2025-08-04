@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -24,7 +25,8 @@ public class PythonLanguageRepoService : LanguageRepoService
             
             // Run tox for dependency analysis
             var command = "tox";
-            var arguments = "run -e mindependency -c ..\\..\\..\\eng\\tox\\tox.ini --root .";
+            var toxConfigPath = Path.Join("..", "..", "..", "eng", "tox", "tox.ini");
+            var arguments = $"run -e mindependency -c {toxConfigPath} --root .";
             
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, arguments);
             
@@ -38,7 +40,8 @@ public class PythonLanguageRepoService : LanguageRepoService
             else
             {
                 _logger.LogWarning("Dependency analysis failed with exit code {ExitCode}", result.ExitCode);
-                return CreateFailureResponse($"Dependency analysis failed with exit code {result.ExitCode}.\n{result.Error}");
+                var errorMessage = result is FailureResult failure ? failure.Error : "";
+                return CreateFailureResponse($"Dependency analysis failed with exit code {result.ExitCode}.\n{errorMessage}");
             }
         }
         catch (Exception ex)
@@ -67,7 +70,8 @@ public class PythonLanguageRepoService : LanguageRepoService
             else
             {
                 _logger.LogWarning("Code formatting failed with exit code {ExitCode}", result.ExitCode);
-                return CreateFailureResponse($"Code formatting failed with exit code {result.ExitCode}.\n{result.Error}");
+                var errorMessage = result is FailureResult failure ? failure.Error : "";
+                return CreateFailureResponse($"Code formatting failed with exit code {result.ExitCode}.\n{errorMessage}");
             }
         }
         catch (Exception ex)
@@ -154,7 +158,8 @@ public class PythonLanguageRepoService : LanguageRepoService
             else
             {
                 _logger.LogWarning("Project build failed with exit code {ExitCode}", result.ExitCode);
-                return CreateFailureResponse($"Project build failed with exit code {result.ExitCode}.\n{result.Error}");
+                var errorMessage = result is FailureResult failure ? failure.Error : "";
+                return CreateFailureResponse($"Project build failed with exit code {result.ExitCode}.\n{errorMessage}");
             }
         }
         catch (Exception ex)
@@ -169,7 +174,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>
-    private async Task<(int ExitCode, string Output, string Error)> RunCommandAsync(string fileName, string arguments)
+    private async Task<IOperationResult> RunCommandAsync(string fileName, string arguments)
     {
         using var process = new Process();
         process.StartInfo.FileName = fileName;
@@ -201,6 +206,16 @@ public class PythonLanguageRepoService : LanguageRepoService
 
         await process.WaitForExitAsync();
 
-        return (process.ExitCode, outputBuilder.ToString(), errorBuilder.ToString());
+        var output = outputBuilder.ToString();
+        var error = errorBuilder.ToString();
+
+        if (process.ExitCode == 0)
+        {
+            return new SuccessResult(process.ExitCode, output);
+        }
+        else
+        {
+            return new FailureResult(process.ExitCode, output, error);
+        }
     }
 }

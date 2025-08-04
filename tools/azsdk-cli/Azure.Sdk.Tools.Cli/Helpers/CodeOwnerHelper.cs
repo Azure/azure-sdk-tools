@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 addSeperationLine = true;
                 var ownersString = string.Join(" ", sourceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}"));
-                lines.Add($"{path.PadRight(25)} {ownersString}");
+                lines.Add($"{path.PadRight(50)} {ownersString}");
             }
 
             if (addSeperationLine)

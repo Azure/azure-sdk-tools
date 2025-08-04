@@ -22,6 +22,6 @@ pr:
       - tools/sdk-sample-generator
 
 extends:
-  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
     ToolDirectory: tools/sdk-sample-generator

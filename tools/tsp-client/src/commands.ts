@@ -38,7 +38,7 @@ const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.
 // files in the repository. Supported configuration files are located at
 // <repo root>/eng/emitter-package.json or <repo root>/eng/tspclientconfig.yaml.
 // The function will return the emitter name and the path to the emitter package.json file relative
-// to repo root.
+// to repo root. If the default emitter-package.json is used, the path will be undefined.
 async function getEmitter(
   repoRoot: string,
   tspConfigData: any,

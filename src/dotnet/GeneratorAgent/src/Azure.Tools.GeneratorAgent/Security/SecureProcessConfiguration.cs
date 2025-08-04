@@ -24,13 +24,13 @@ namespace Azure.Tools.GeneratorAgent.Security
         /// Gets the NPM executable name.
         /// On Windows, use PowerShell to execute npm for reliable execution. On other platforms, use npm.
         /// </summary>
-        public static string NpmExecutable => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? PowerShellExecutable : "npm";
+        public static string NpmExecutable { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? PowerShellExecutable : "npm";
         
         /// <summary>
         /// Gets the NPX executable name.
         /// On Windows, use PowerShell to execute npx for reliable execution. On other platforms, use npx.
         /// </summary>
-        public static string NpxExecutable => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? PowerShellExecutable : "npx";
+        public static string NpxExecutable { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? PowerShellExecutable : "npx";
         
         /// <summary>
         /// Gets the .NET CLI executable name.

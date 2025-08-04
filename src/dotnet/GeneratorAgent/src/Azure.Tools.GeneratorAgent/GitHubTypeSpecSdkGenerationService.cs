@@ -71,7 +71,7 @@ namespace Azure.Tools.GeneratorAgent
                     return ExtractAzureSdkDirFallback();
                 }
 
-                string gitRoot = result.Output.Trim();
+                string? gitRoot = result.Output?.Trim();
                 
                 if (string.IsNullOrEmpty(gitRoot) || !Directory.Exists(gitRoot))
                 {

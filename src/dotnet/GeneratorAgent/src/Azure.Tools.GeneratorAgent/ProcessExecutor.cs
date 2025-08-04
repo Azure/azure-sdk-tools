@@ -78,14 +78,8 @@ namespace Azure.Tools.GeneratorAgent
 
                         try
                         {
-                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                            {
-                                process.Kill(entireProcessTree: true);
-                            }
-                            else
-                            {
-                                process.Kill();
-                            }
+                            // Kill entire process tree on Windows to ensure child processes are also terminated
+                            process.Kill(entireProcessTree: RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
                         }
                         catch (Exception killEx)
                         {

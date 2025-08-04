@@ -87,10 +87,9 @@ namespace Azure.Tools.GeneratorAgent.Security
                     
                     if (allFiles.Any(file => !TypeSpecFileRegex.IsMatch(file)))
                     {
-                        string[] nonTypeSpecFiles = allFiles
+                        string invalidFiles = string.Join(", ", allFiles
                             .Where(file => !TypeSpecFileRegex.IsMatch(file))
-                            .ToArray();
-                        string invalidFiles = string.Join(", ", nonTypeSpecFiles.Select(Path.GetFileName));
+                            .Select(Path.GetFileName));
                         return ValidationResult.Invalid($"Directory contains non-TypeSpec files: {invalidFiles}. Only .tsp and .yaml files are allowed.");
                     }
                     
@@ -182,7 +181,7 @@ namespace Azure.Tools.GeneratorAgent.Security
             }
 
             // Ensure it's a PowerShell script
-            if (!scriptPath.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(Path.GetExtension(scriptPath), ".ps1", StringComparison.OrdinalIgnoreCase))
             {
                 return ValidationResult.Invalid("PowerShell script must have .ps1 extension");
             }

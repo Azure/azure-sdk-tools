@@ -135,7 +135,7 @@ class CustomAPIViewEvaluator:
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            prompt_path = get_prompt_path("evals", "eval_judge_prompt.prompty")
+            prompt_path = get_prompt_path(folder="evals", filename="eval_judge_prompt.prompty")
             response = prompty.execute(
                 prompt_path,
                 inputs={

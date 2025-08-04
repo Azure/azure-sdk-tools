@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.Cli.Models;
 namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 {
     #if DEBUG
-    [McpServerToolType, Description("Echoes the message back to the client.")]
+    [McpServerToolType, Description("Echoes the message back to the client")]
     public class HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputService output) : MCPTool
     {
         private Argument<string> _inputArg = new Argument<string>(

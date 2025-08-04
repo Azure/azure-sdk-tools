@@ -1,0 +1,62 @@
+name: "🧩 Activity: [Activity Name]"
+description: Describe a developer activity in the inner loop and what tooling is needed to support it.
+labels: ["dev inner loop"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to describe a *developer activity* — a goal-driven task like writing tests, generating code, or validating results. These activities may span multiple tools.
+
+  - type: input
+    id: activity-name
+    attributes:
+      label: "🧩 Name of the Activity"
+      description: A short, descriptive title for this activity (e.g. “Record a test run” or “Generate client library”)
+      placeholder: e.g. Record test session
+    validations:
+      required: true
+
+  - type: textarea
+    id: activity-goal
+    attributes:
+      label: "🎯 Goal of this Activity"
+      description: What is the developer trying to accomplish? Why do they need to do this?
+      placeholder: e.g. Validate client behavior and save HTTP interactions for future playback
+    validations:
+      required: true
+
+  - type: textarea
+    id: champion-scenarios
+    attributes:
+      label: "🌟 Champion Scenarios"
+      description: Describe key scenarios and contexts for this activity. Include the context developers enter with and sample chat messages they might send to an agent.
+      placeholder: |
+        **Context:** Developer is working on a new feature and needs to validate API interactions
+        
+        **Sample chat messages:**
+        - "I need to record HTTP calls for my new authentication flow"
+        - "How do I start recording test interactions for the storage client?"
+        - "Can you help me validate that my recorded interactions are complete?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: current-workflow
+    attributes:
+      label: "🔧 How is this Activity Done Today?"
+      description: Describe any current workflows, scripts, CI steps, or manual processes.
+      placeholder: e.g. Developer runs pytest manually with a special test marker and environment variable
+    validations:
+      required: false
+
+  - type: textarea
+    id: tools-needed
+    attributes:
+      label: "🛠️ Tools Needed to Support This Activity"
+      description: What tools would be useful for completing this activity? Think about each step the user takes, including how they initiate, run, and validate the activity.
+      placeholder: |
+        - Tool to configure the environment before test recording
+        - Tool to start/stop the recording session
+        - Tool to validate the recordings are complete and correctly formatted
+    validations:
+      required: false

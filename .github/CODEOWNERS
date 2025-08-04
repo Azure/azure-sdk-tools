@@ -41,13 +41,13 @@
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
-/tools/sdk-ai-bots/                     @raych1
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
 /tools/tsp-client/                      @catalinaperalta @timotheeguerin
 /tools/typespec-bump-deps/              @weidongxu-microsoft
-/tools/content-validation/              @xiangyan99 @zedy-wj 
+/tools/content-validation/              @xiangyan99 @zedy-wj
+/tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
 
 ###########
 # Stress

@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "VerifyReadme"), Description("Run README validation for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "RunReadmeValidation"), Description("Run README validation for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunReadmeValidation(string projectPath, string settingsPath = null)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
                 // Find the SDK repository root by looking for common repository indicators
                 // Start from the project path and work upwards to find the SDK repo root
-                var projectRepoRoot = gitHelper.FindRepositoryRoot(projectPath);
+                var projectRepoRoot = gitHelper.DiscoverRepoRoot(projectPath);
                 if (string.IsNullOrEmpty(projectRepoRoot))
                 {
                     SetFailure(1);

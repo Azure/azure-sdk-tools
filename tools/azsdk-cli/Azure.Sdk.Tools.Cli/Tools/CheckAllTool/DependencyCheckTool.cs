@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-dependency-check"), Description("Run dependency check for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunDependencyCheck(string projectPath)
         {
             try

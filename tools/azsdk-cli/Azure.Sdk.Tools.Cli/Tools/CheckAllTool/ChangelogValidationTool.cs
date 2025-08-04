@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
                 // Find the SDK repository root by looking for common repository indicators
                 // Start from the project path and work upwards to find the SDK repo root
-                var projectRepoRoot = gitHelper.FindRepositoryRoot(projectPath);
+                var projectRepoRoot = gitHelper.DiscoverRepoRoot(projectPath);
                 if (string.IsNullOrEmpty(projectRepoRoot))
                 {
                     SetFailure(1);

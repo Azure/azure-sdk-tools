@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-spell-check"), Description("Run spell check validation for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "RunSpellCheck"), Description("Run spell check validation for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunSpellCheck(string projectPath)
         {
             try

@@ -22,7 +22,7 @@ import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
 import { SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
-import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
+import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog, extractNpmPackage, extractNextVersionPackage, cleanupResources } from '../utils.js';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
 import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
 import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
@@ -51,13 +51,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
         const usedVersions = getUsedVersions(npmViewResult);
         // in our rule, we always compare to stableVersion. But here wo should pay attention to the some stableVersion which contains beta, which means the package has not been GA.
         try {
-            shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
-            shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-            // TODO: consider get all npm package from github instead
-            shell.exec(`npm pack ${packageName}@${stableVersion}`, { silent: true });
-            const files = shell.ls('*.tgz');
-            shell.exec(`tar -xzf ${files[0]}`);
-            shell.cd(packageFolderPath);
+            extractNpmPackage(packageFolderPath, packageName, stableVersion);
 
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), { encoding: 'utf-8' }))['sdk-type'];
@@ -104,14 +98,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 }
                 let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, lastStableChangelog);
                 if (nextVersion) {
-                    shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-                    shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
-                    shell.cd(path.join(packageFolderPath, 'changelog-temp', 'next'));
-                    // TODO: consider get all npm package from github instead
-                    shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true });
-                    const files = shell.ls('*.tgz');
-                    shell.exec(`tar -xzf ${files[0]}`);
-                    shell.cd(packageFolderPath);
+                    extractNextVersionPackage(packageFolderPath, packageName, nextVersion);
                     logger.info("Created next folder successfully.")
 
                     const latestDate = getversionDate(npmViewResult, stableVersion);
@@ -160,9 +147,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 logger.info('Generated changelogs and setting version for migrating track1 to track2 successfully.');
             }
         } finally {
-            shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
-            shell.rm('-r', `${path.join(packageFolderPath, '~/.tmp-breaking-change-detect')}`);
-            shell.cd(jsSdkRepoPath);
+            cleanupResources(packageFolderPath, jsSdkRepoPath);
         }
     }
 }

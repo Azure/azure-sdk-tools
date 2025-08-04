@@ -100,7 +100,7 @@ describe("Verify other utils functions", function () {
 });
 
 describe("Verify fs functions", function () {
-  it.only("Check parseTspClientRepoConfig", async function () {
+  it("Check parseTspClientRepoConfig", async function () {
     const config = await parseTspClientRepoConfig(await getRepoRoot("."));
     assert.ok(config);
     assert.ok(config.supportedEmitters);

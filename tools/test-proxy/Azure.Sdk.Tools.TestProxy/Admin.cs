@@ -201,7 +201,16 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                _recordingHandler.Matcher = m;
+                await _recordingHandler.SanitizerRegistry.SessionSanitizerLock.WaitAsync();
+
+                try
+                {
+                    _recordingHandler.Matcher = m;
+                }
+                finally
+                {
+                    _recordingHandler.SanitizerRegistry.SessionSanitizerLock.Release();
+                }
             }
         }
 

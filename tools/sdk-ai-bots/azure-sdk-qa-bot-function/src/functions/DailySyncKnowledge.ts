@@ -268,7 +268,7 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
         },
         {
             name: 'Azure Resource Provider Contract',
-            url: 'git@github-microsoft:cloud-and-ai-microsoft/resource-provider-contract.git',
+            url: 'https://github.com/cloud-and-ai-microsoft/resource-provider-contract.git',
             path: 'resource-provider-contract',
             branch: 'master',
             sparseCheckout: ['v1.0'],

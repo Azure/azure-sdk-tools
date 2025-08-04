@@ -32,6 +32,7 @@ public class LanguageRepoServiceFactory
             "typescript" => new JavaScriptLanguageRepoService(repositoryPath), // TypeScript uses same tools as JS
             "csharp" => new DotNetLanguageRepoService(repositoryPath),
             "dotnet" => new DotNetLanguageRepoService(repositoryPath),
+            "go" => new GoLanguageRepoService(repositoryPath),
             _ => new LanguageRepoService(repositoryPath) // Base implementation for unsupported languages
         };
     }
@@ -141,6 +142,6 @@ public class LanguageRepoServiceFactory
     /// <returns>Array of supported language strings</returns>
     public static string[] GetSupportedLanguages()
     {
-        return new[] { "python", "javascript", "typescript", "csharp", "dotnet" };
+        return new[] { "python", "javascript", "typescript", "csharp", "dotnet", "go" };
     }
 }

@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { afterAll, beforeAll, describe, it } from "vitest";
 import {
   formatAdditionalDirectories,
   getAdditionalDirectoryName,
@@ -11,7 +11,7 @@ import { getRepoRoot } from "../src/git.js";
 import { removeDirectory } from "../src/fs.js";
 import { parse as parseYaml } from "yaml";
 import { assert } from "chai";
-import { readFile, stat } from "node:fs/promises";
+import { cp, readFile, rm, stat } from "node:fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import { cwd } from "node:process";
 
@@ -100,6 +100,17 @@ describe("Verify other utils functions", function () {
 });
 
 describe("Verify fs functions", function () {
+  beforeAll(async () => {
+    await cp(
+      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+    );
+  });
+
+  afterAll(async () => {
+    await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+  });
+
   it("Check parseTspClientRepoConfig", async function () {
     const config = await parseTspClientRepoConfig(await getRepoRoot("."));
     assert.ok(config);

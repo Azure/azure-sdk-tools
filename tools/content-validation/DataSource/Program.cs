@@ -27,12 +27,45 @@ namespace DataSource
 
             IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
 
-            string? readme = config["ReadmeName"];
             string? language = config["Language"];
             string branch = config["Branch"]!;
-            string? package = language?.ToLower() != "javascript" && language?.ToLower() != "dotnet" ? config["PackageName"] : config["CsvPackageName"];
+            string? package = config["PackageName"];
             string? cookieName = config["CookieName"];
             string? cookieValue = config["CookieValue"];
+
+            string configPath = Path.Combine(AppContext.BaseDirectory, "../../../config.json");
+            if (!File.Exists(configPath))
+            {
+                throw new FileNotFoundException($"Config file not found: {configPath}");
+            }
+            string configJson = File.ReadAllText(configPath);
+            var configRoot = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, ConfigEntry>>>(configJson);
+
+            string? readme = null;
+            if (language != null && package != null && configRoot != null)
+            {
+                var langKey = language.ToLower();
+                if (configRoot.TryGetValue(langKey, out var pkgDict) && pkgDict != null)
+                {
+                    if (pkgDict.TryGetValue(package, out var entry) && entry != null)
+                    {
+                        readme = entry.readme;
+                        if (langKey == "javascript" || langKey == "dotnet")
+                        {
+                            package = entry.csvPackage;
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"Package: {package} not found in config.json");
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(readme))
+            {
+                throw new ArgumentException($"Readme not found for package={package} in config.json");
+            }
 
             bool isRest = false;
 
@@ -580,6 +613,12 @@ namespace DataSource
         public string Package { get; set; } = string.Empty;
         public string VersionGA { get; set; } = string.Empty;
         public string VersionPreview { get; set; } = string.Empty;
+    }
+
+    public class ConfigEntry
+    {
+        public string readme { get; set; } = string.Empty;
+        public string? csvPackage { get; set; } = string.Empty;
     }
 
     public class PythonPackageMap : ClassMap<PackageCSV>

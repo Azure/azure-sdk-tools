@@ -1,0 +1,914 @@
+{
+  "python": {
+    "azure-ai-contentsafety": {
+      "readme": "ai-contentsafety-readme"
+    },
+    "azure-ai-documentintelligence": {
+      "readme": "ai-documentintelligence-readme"
+    },
+    "azure-ai-evaluation": {
+      "readme": "ai-evaluation-readme"
+    },
+    "azure-ai-formrecognizer": {
+      "readme": "ai-formrecognizer-readme"
+    },
+    "azure-ai-language-conversations": {
+      "readme": "ai-language-conversations-readme"
+    },
+    "azure-ai-language-questionanswering": {
+      "readme": "ai-language-questionanswering-readme"
+    },
+    "azure-ai-ml": {
+      "readme": "ai-ml-readme"
+    },
+    "azure-ai-textanalytics": {
+      "readme": "ai-textanalytics-readme"
+    },
+    "azure-ai-translation-document": {
+      "readme": "ai-translation-document-readme"
+    },
+    "azure-ai-translation-text": {
+      "readme": "ai-translation-text-readme"
+    },
+    "azure-ai-vision-imageanalysis": {
+      "readme": "ai-vision-imageanalysis-readme"
+    },
+    "azure-appconfiguration-provider": {
+      "readme": "appconfiguration-provider-readme"
+    },
+    "azure-appconfiguration": {
+      "readme": "appconfiguration-readme"
+    },
+    "azure-batch": {
+      "readme": "batch-readme"
+    },
+    "azure-cognitiveservices-speech": {
+      "readme": "cognitiveservices/speech"
+    },
+    "azure-communication-callautomation": {
+      "readme": "communication-callautomation-readme"
+    },
+    "azure-communication-chat": {
+      "readme": "communication-chat-readme"
+    },
+    "azure-communication-email": {
+      "readme": "communication-email-readme"
+    },
+    "azure-communication-identity": {
+      "readme": "communication-identity-readme"
+    },
+    "azure-communication-jobrouter": {
+      "readme": "communication-jobrouter-readme"
+    },
+    "azure-communication-messages": {
+      "readme": "communication-messages-readme"
+    },
+    "azure-communication-phonenumbers": {
+      "readme": "communication-phonenumbers-readme"
+    },
+    "azure-communication-rooms": {
+      "readme": "communication-rooms-readme"
+    },
+    "azure-communication-sms": {
+      "readme": "communication-sms-readme"
+    },
+    "azure-confidentialledger": {
+      "readme": "confidentialledger-readme"
+    },
+    "azure-containerregistry": {
+      "readme": "containerregistry-readme"
+    },
+    "azure-core": {
+      "readme": "core-readme"
+    },
+    "azure-cosmos": {
+      "readme": "cosmos-readme"
+    },
+    "azure-data-tables": {
+      "readme": "data-tables-readme"
+    },
+    "azure-developer-devcenter": {
+      "readme": "developer-devcenter-readme"
+    },
+    "azure-developer-loadtesting": {
+      "readme": "developer-loadtesting-readme"
+    },
+    "azure-digitaltwins-core": {
+      "readme": "digitaltwins-core-readme"
+    },
+    "azure-eventgrid": {
+      "readme": "eventgrid-readme"
+    },
+    "azure-eventhub-checkpointstoreblob-aio": {
+      "readme": "eventhub-checkpointstoreblob-aio-readme"
+    },
+    "azure-eventhub-checkpointstoreblob": {
+      "readme": "eventhub-checkpointstoreblob-readme"
+    },
+    "azure-eventhub": {
+      "readme": "eventhub-readme"
+    },
+    "azure-functions-durable": {
+      "readme": "functions/durablefunctions"
+    },
+    "azure-functions": {
+      "readme": "functions/functions"
+    },
+    "azure-healthinsights-radiologyinsights": {
+      "readme": "healthinsights-radiologyinsights-readme"
+    },
+    "azure-identity-broker": {
+      "readme": "identity-broker-readme"
+    },
+    "azure-identity": {
+      "readme": "identity-readme"
+    },
+    "azure-iot-device": {
+      "readme": "iot/iotdevice"
+    },
+    "azure-iot-deviceupdate": {
+      "readme": "iot-deviceupdate-readme"
+    },
+    "azure-iot-hub": {
+      "readme": "iot/iothub"
+    },
+    "azure-keyvault-administration": {
+      "readme": "keyvault-administration-readme"
+    },
+    "azure-keyvault-certificates": {
+      "readme": "keyvault-certificates-readme"
+    },
+    "azure-keyvault-keys": {
+      "readme": "keyvault-keys-readme"
+    },
+    "azure-keyvault-secrets": {
+      "readme": "keyvault-secrets-readme"
+    },
+    "azure-messaging-webpubsubclient": {
+      "readme": "messaging-webpubsubclient-readme"
+    },
+    "azure-messaging-webpubsubservice": {
+      "readme": "messaging-webpubsubservice-readme"
+    },
+    "azure-monitor-ingestion": {
+      "readme": "monitor-ingestion-readme"
+    },
+    "azure-monitor-opentelemetry": {
+      "readme": "monitor-opentelemetry-readme"
+    },
+    "azure-monitor-query": {
+      "readme": "monitor-query-readme"
+    },
+    "azure-schemaregistry-avroencoder": {
+      "readme": "schemaregistry-avroencoder-readme"
+    },
+    "azure-schemaregistry": {
+      "readme": "schemaregistry-readme"
+    },
+    "azure-search-documents": {
+      "readme": "search-documents-readme"
+    },
+    "azure-security-attestation": {
+      "readme": "security-attestation-readme"
+    },
+    "azure-servicebus": {
+      "readme": "servicebus-readme"
+    },
+    "azure-servicefabric": {
+      "readme": "servicefabric-readme"
+    },
+    "azure-storage-blob": {
+      "readme": "storage-blob-readme"
+    },
+    "azure-storage-file-datalake": {
+      "readme": "storage-file-datalake-readme"
+    },
+    "azure-storage-file-share": {
+      "readme": "storage-file-share-readme"
+    },
+    "azure-storage-queue": {
+      "readme": "storage-queue-readme"
+    }
+  },
+  "java": {
+    "azure-ai-contentsafety": {
+      "readme": "ai-contentsafety-readme"
+    },
+    "azure-ai-documentintelligence": {
+      "readme": "ai-documentintelligence-readme"
+    },
+    "azure-ai-formrecognizer": {
+      "readme": "ai-formrecognizer-readme"
+    },
+    "azure-ai-textanalytics": {
+      "readme": "ai-textanalytics-readme"
+    },
+    "azure-ai-translation-document": {
+      "readme": "ai-translation-document-readme"
+    },
+    "azure-ai-translation-text": {
+      "readme": "ai-translation-text-readme"
+    },
+    "azure-ai-vision-imageanalysis": {
+      "readme": "ai-vision-imageanalysis-readme"
+    },
+    "azure-batch": {
+      "readme": "batch-readme"
+    },
+    "azure-cognitiveservices-speech": {
+      "readme": "cognitiveservices/speech"
+    },
+    "azure-communication-callautomation": {
+      "readme": "communication-callautomation-readme"
+    },
+    "azure-communication-chat": {
+      "readme": "communication-chat-readme"
+    },
+    "azure-communication-common": {
+      "readme": "communication-common-readme"
+    },
+    "azure-communication-email": {
+      "readme": "communication-email-readme"
+    },
+    "azure-communication-identity": {
+      "readme": "communication-identity-readme"
+    },
+    "azure-communication-jobrouter": {
+      "readme": "communication-jobrouter-readme"
+    },
+    "azure-communication-messages": {
+      "readme": "communication-messages-readme"
+    },
+    "azure-communication-phonenumbers": {
+      "readme": "communication-phonenumbers-readme"
+    },
+    "azure-communication-rooms": {
+      "readme": "communication-rooms-readme"
+    },
+    "azure-communication-sms": {
+      "readme": "communication-sms-readme"
+    },
+    "azure-containers-containerregistry": {
+      "readme": "containers-containerregistry-readme"
+    },
+    "azure-cosmos": {
+      "readme": "cosmos-readme"
+    },
+    "azure-data-appconfiguration": {
+      "readme": "data-appconfiguration-readme"
+    },
+    "azure-data-schemaregistry-apacheavro": {
+      "readme": "data-schemaregistry-apacheavro-readme"
+    },
+    "azure-data-schemaregistry-jsonschema": {
+      "readme": "data-schemaregistry-jsonschema-readme"
+    },
+    "azure-data-schemaregistry": {
+      "readme": "data-schemaregistry-readme"
+    },
+    "azure-data-tables": {
+      "readme": "data-tables-readme"
+    },
+    "azure-developer-devcenter": {
+      "readme": "developer-devcenter-readme"
+    },
+    "azure-developer-loadtesting": {
+      "readme": "developer-loadtesting-readme"
+    },
+    "azure-digitaltwins-core": {
+      "readme": "digitaltwins-core-readme"
+    },
+    "azure-durablefunctions-javalibrary": {
+      "readme": "functions/durablefunctions-javalibrary"
+    },
+    "azure-functions-javalibrary": {
+      "readme": "functions/functions-javalibrary"
+    },
+    "azure-health-insights-radiologyinsights": {
+      "readme": "health-insights-radiologyinsights-readme"
+    },
+    "azure-identity-broker": {
+      "readme": "identity-broker-readme"
+    },
+    "azure-identity": {
+      "readme": "identity-readme"
+    },
+    "azure-iot-deviceupdate": {
+      "readme": "iot-deviceupdate-readme"
+    },
+    "azure-iot-iotdeps": {
+      "readme": "iot/iotdeps"
+    },
+    "azure-iot-iotplugandplay-deviceclient": {
+      "readme": "iot/iotplugandplay-deviceclient"
+    },
+    "azure-iot-iotserviceclient": {
+      "readme": "iot/iotserviceclient"
+    },
+    "azure-iot-provisioningdeviceclient": {
+      "readme": "iot/provisioningdeviceclient"
+    },
+    "azure-iot-provisioningserviceclient": {
+      "readme": "iot/provisioningserviceclient"
+    },
+    "azure-loganalytics-client": {
+      "readme": "loganalytics/client"
+    },
+    "azure-messaging-eventgrid-namespaces": {
+      "readme": "messaging-eventgrid-namespaces-readme"
+    },
+    "azure-messaging-eventgrid": {
+      "readme": "messaging-eventgrid-readme"
+    },
+    "azure-messaging-eventhubs-checkpointstore-blob": {
+      "readme": "messaging-eventhubs-checkpointstore-blob-readme"
+    },
+    "azure-messaging-eventhubs": {
+      "readme": "messaging-eventhubs-readme"
+    },
+    "azure-messaging-servicebus": {
+      "readme": "messaging-servicebus-readme"
+    },
+    "azure-messaging-webpubsub-client": {
+      "readme": "messaging-webpubsub-client-readme"
+    },
+    "azure-messaging-webpubsub": {
+      "readme": "messaging-webpubsub-readme"
+    },
+    "azure-mixedreality-authentication": {
+      "readme": "mixedreality-authentication-readme"
+    },
+    "azure-mixedreality-remoterendering": {
+      "readme": "mixedreality-remoterendering-readme"
+    },
+    "azure-monitor-ingestion": {
+      "readme": "monitor-ingestion-readme"
+    },
+    "azure-monitor-query": {
+      "readme": "monitor-query-readme"
+    },
+    "azure-search-documents": {
+      "readme": "search-documents-readme"
+    },
+    "azure-security-confidentialledger": {
+      "readme": "security-confidentialledger-readme"
+    },
+    "azure-security-keyvault-administration": {
+      "readme": "security-keyvault-administration-readme"
+    },
+    "azure-security-keyvault-certificates": {
+      "readme": "security-keyvault-certificates-readme"
+    },
+    "azure-security-keyvault-keys": {
+      "readme": "security-keyvault-keys-readme"
+    },
+    "azure-security-keyvault-secrets": {
+      "readme": "security-keyvault-secrets-readme"
+    },
+    "azure-sql-client": {
+      "readme": "sql/client"
+    },
+    "azure-storage-blob-batch": {
+      "readme": "storage-blob-batch-readme"
+    },
+    "azure-storage-blob-cryptography": {
+      "readme": "storage-blob-cryptography-readme"
+    },
+    "azure-storage-blob": {
+      "readme": "storage-blob-readme"
+    },
+    "azure-storage-file-datalake": {
+      "readme": "storage-file-datalake-readme"
+    },
+    "azure-storage-file-share": {
+      "readme": "storage-file-share-readme"
+    },
+    "azure-storage-queue": {
+      "readme": "storage-queue-readme"
+    }
+  },
+  "javascript": {
+    "azure-ai-language-text": {
+      "readme": "ai-language-text-readme",
+      "csvPackage": "@azure/ai-language-text"
+    },
+    "azure-app-configuration": {
+      "readme": "app-configuration-readme",
+      "csvPackage": "@azure/app-configuration"
+    },
+    "azure-attestation": {
+      "readme": "attestation-readme",
+      "csvPackage": "@azure/attestation"
+    },
+    "azure-batch": {
+      "readme": "batch/batch",
+      "csvPackage": "@azure/batch"
+    },
+    "azure-communication-call-automation": {
+      "readme": "communication-call-automation-readme",
+      "csvPackage": "@azure/communication-call-automation"
+    },
+    "azure-communication-calling-effects": {
+      "readme": "communication/@azure/communication-calling-effects",
+      "csvPackage": "@azure/communication-calling-effects"
+    },
+    "azure-communication-chat": {
+      "readme": "communication-chat-readme",
+      "csvPackage": "@azure/communication-chat"
+    },
+    "azure-communication-common": {
+      "readme": "communication-common-readme",
+      "csvPackage": "@azure/communication-common"
+    },
+    "azure-communication-email": {
+      "readme": "communication-email-readme",
+      "csvPackage": "@azure/communication-email"
+    },
+    "azure-communication-identity": {
+      "readme": "communication-identity-readme",
+      "csvPackage": "@azure/communication-identity"
+    },
+    "azure-communication-messages": {
+      "readme": "communication-messages-rest-readme",
+      "csvPackage": "azure-rest/communication-messages"
+    },
+    "azure-communication-phone-numbers": {
+      "readme": "communication-phone-numbers-readme",
+      "csvPackage": "@azure/communication-phone-numbers"
+    },
+    "azure-communication-react": {
+      "readme": "communication/@azure/communication-react",
+      "csvPackage": "@azure/communication-react"
+    },
+    "azure-communication-rooms": {
+      "readme": "communication-rooms-readme",
+      "csvPackage": "@azure/communication-rooms"
+    },
+    "azure-communication-sms": {
+      "readme": "communication-sms-readme",
+      "csvPackage": "@azure/communication-sms"
+    },
+    "azure-container-registry": {
+      "readme": "container-registry-readme",
+      "csvPackage": "@azure/container-registry"
+    },
+    "azure-cosmos": {
+      "readme": "cosmos-readme",
+      "csvPackage": "@azure/cosmos"
+    },
+    "azure-data-tables": {
+      "readme": "data-tables-readme",
+      "csvPackage": "@azure/data-tables"
+    },
+    "azure-digital-twins-core": {
+      "readme": "digital-twins-core-readme",
+      "csvPackage": "@azure/digital-twins-core"
+    },
+    "azure-event-hubs": {
+      "readme": "event-hubs-readme",
+      "csvPackage": "@azure/event-hubs"
+    },
+    "azure-eventgrid-namespaces": {
+      "readme": "eventgrid-namespaces-readme",
+      "csvPackage": "@azure/eventgrid-namespaces"
+    },
+    "azure-eventgrid": {
+      "readme": "eventgrid-readme",
+      "csvPackage": "@azure/eventgrid"
+    },
+    "azure-eventhubs-checkpointstore-blob": {
+      "readme": "eventhubs-checkpointstore-blob-readme",
+      "csvPackage": "@azure/eventhubs-checkpointstore-blob"
+    },
+    "azure-identity-broker": {
+      "readme": "identity-broker-readme",
+      "csvPackage": "@azure/identity-broker"
+    },
+    "azure-identity-cache-persistence": {
+      "readme": "identity-cache-persistence-readme",
+      "csvPackage": "@azure/identity-cache-persistence"
+    },
+    "azure-identity-vscode": {
+      "readme": "identity-vscode-readme",
+      "csvPackage": "@azure/identity-vscode"
+    },
+    "azure-identity": {
+      "readme": "identity-readme",
+      "csvPackage": "@azure/identity"
+    },
+    "azure-keyvault-administration": {
+      "readme": "keyvault-admin-readme",
+      "csvPackage": "@azure/keyvault-admin"
+    },
+    "azure-keyvault-certificates": {
+      "readme": "keyvault-certificates-readme",
+      "csvPackage": "@azure/keyvault-certificates"
+    },
+    "azure-keyvault-common": {
+      "readme": "keyvault-common-readme",
+      "csvPackage": "@azure/keyvault-common"
+    },
+    "azure-keyvault-keys": {
+      "readme": "keyvault-keys-readme",
+      "csvPackage": "@azure/keyvault-keys"
+    },
+    "azure-keyvault-secrets": {
+      "readme": "keyvault-secrets-readme",
+      "csvPackage": "@azure/keyvault-secrets"
+    },
+    "azure-monitor-ingestion": {
+      "readme": "monitor-ingestion-readme",
+      "csvPackage": "@azure/monitor-ingestion"
+    },
+    "azure-monitor-opentelemetry": {
+      "readme": "monitor-opentelemetry-readme",
+      "csvPackage": "@azure/monitor-opentelemetry"
+    },
+    "azure-monitor-query": {
+      "readme": "monitor-query-readme",
+      "csvPackage": "@azure/monitor-query"
+    },
+    "azure-notification-hubs": {
+      "readme": "notification-hubs-readme",
+      "csvPackage": "@azure/notification-hubs"
+    },
+    "azure-schema-registry-avro": {
+      "readme": "schema-registry-avro-readme",
+      "csvPackage": "@azure/schema-registry-avro"
+    },
+    "azure-schema-registry-json": {
+      "readme": "schema-registry-json-readme",
+      "csvPackage": "@azure/schema-registry-json"
+    },
+    "azure-schema-registry": {
+      "readme": "schema-registry-readme",
+      "csvPackage": "@azure/schema-registry"
+    },
+    "azure-search-documents": {
+      "readme": "search-documents-readme",
+      "csvPackage": "@azure/search-documents"
+    },
+    "azure-service-bus": {
+      "readme": "service-bus-readme",
+      "csvPackage": "@azure/service-bus"
+    },
+    "azure-servicefabric": {
+      "readme": "servicefabric/servicefabric",
+      "csvPackage": "@azure/servicefabric"
+    },
+    "azure-storage-blob": {
+      "readme": "storage-blob-readme",
+      "csvPackage": "@azure/storage-blob"
+    },
+    "azure-storage-file-datalake": {
+      "readme": "storage-file-datalake-readme",
+      "csvPackage": "@azure/storage-file-datalake"
+    },
+    "azure-storage-file-share": {
+      "readme": "storage-file-share-readme",
+      "csvPackage": "@azure/storage-file-share"
+    },
+    "azure-storage-queue": {
+      "readme": "storage-queue-readme",
+      "csvPackage": "@azure/storage-queue"
+    },
+    "azure-web-pubsub-client": {
+      "readme": "web-pubsub-client-readme",
+      "csvPackage": "@azure/web-pubsub-client"
+    },
+    "azure-web-pubsub": {
+      "readme": "web-pubsub-readme",
+      "csvPackage": "@azure/web-pubsub"
+    }
+  },
+  "dotnet": {
+    "azure-ai-agents-persistent": {
+      "readme": "ai.agents.persistent-readme",
+      "csvPackage": "Azure.Ai.Agents.Persistent"
+    },
+    "azure-ai-anomalydetector": {
+      "readme": "cognitiveservices/anomalydetector",
+      "csvPackage": "Azure.Ai.Anomalydetector"
+    },
+    "azure-ai-contentsafety": {
+      "readme": "ai.contentsafety-readme",
+      "csvPackage": "Azure.Ai.Contentsafety"
+    },
+    "azure-ai-documentintelligence": {
+      "readme": "ai.documentintelligence-readme",
+      "csvPackage": "Azure.Ai.Documentintelligence"
+    },
+    "azure-ai-formrecognizer": {
+      "readme": "ai.formrecognizer-readme",
+      "csvPackage": "Azure.Ai.Formrecognizer"
+    },
+    "azure-ai-inference": {
+      "readme": "cognitiveservices/aimodelinference",
+      "csvPackage": "Azure.Ai.Inference"
+    },
+    "azure-ai-language-conversations-authoring": {
+      "readme": "cognitiveservices/conversationsauthoring",
+      "csvPackage": "Azure.Ai.Language.Conversations.Authoring"
+    },
+    "azure-ai-language-conversations": {
+      "readme": "ai.language.conversations-readme",
+      "csvPackage": "Azure.Ai.Language.Conversations"
+    },
+    "azure-ai-language-questionanswering": {
+      "readme": "ai.language.questionanswering-readme",
+      "csvPackage": "Azure.Ai.Language.Questionanswering"
+    },
+    "azure-ai-language-text-authoring": {
+      "readme": "cognitiveservices/textauthoring",
+      "csvPackage": "Azure.Ai.Language.Text.Authoring"
+    },
+    "azure-ai-metricsadvisor": {
+      "readme": "ai.metricsadvisor-readme",
+      "csvPackage": "Azure.Ai.Metricsadvisor"
+    },
+    "azure-ai-openai-assistants": {
+      "readme": "cognitiveservices/openaiassistants",
+      "csvPackage": "Azure.Ai.Openai.Assistants"
+    },
+    "azure-ai-openai": {
+      "readme": "ai.openai-readme",
+      "csvPackage": "Azure.Ai.Openai"
+    },
+    "azure-ai-personalizer": {
+      "readme": "cognitiveservices/personalizer",
+      "csvPackage": "Azure.Ai.Personalizer"
+    },
+    "azure-ai-projects": {
+      "readme": "cognitiveservices/aifoundry",
+      "csvPackage": "Azure.Ai.Projects"
+    },
+    "azure-ai-textanalytics": {
+      "readme": "ai.textanalytics-readme",
+      "csvPackage": "Azure.Ai.Textanalytics"
+    },
+    "azure-ai-translation-document": {
+      "readme": "ai.translation.document-readme",
+      "csvPackage": "Azure.Ai.Translation.Document"
+    },
+    "azure-ai-translation-text": {
+      "readme": "ai.translation.text-readme",
+      "csvPackage": "Azure.Ai.Translation.Text"
+    },
+    "azure-ai-vision-face": {
+      "readme": "cognitiveservices/face",
+      "csvPackage": "Azure.Ai.Vision.Face"
+    },
+    "azure-ai-vision-imageanalysis": {
+      "readme": "ai.vision.imageanalysis-readme",
+      "csvPackage": "Azure.Ai.Vision.Imageanalysis"
+    },
+    "azure-analytics-purview-datamap": {
+      "readme": "purview/purviewdatamap",
+      "csvPackage": "Azure.Analytics.Purview.Datamap"
+    },
+    "azure-analytics-purview-sharing": {
+      "readme": "purview/purviewsharing",
+      "csvPackage": "Azure.Analytics.Purview.Sharing"
+    },
+    "azure-analytics-purview-workflows": {
+      "readme": "purview/purviewworkflow",
+      "csvPackage": "Azure.Analytics.Purview.Workflows"
+    },
+    "azure-communication-callautomation": {
+      "readme": "communication.callautomation-readme",
+      "csvPackage": "Azure.Communication.Callautomation"
+    },
+    "azure-communication-chat": {
+      "readme": "communication.chat-readme",
+      "csvPackage": "Azure.Communication.Chat"
+    },
+    "azure-communication-common": {
+      "readme": "communication.common-readme",
+      "csvPackage": "Azure.Communication.Common"
+    },
+    "azure-communication-email": {
+      "readme": "communication.email-readme",
+      "csvPackage": "Azure.Communication.Email"
+    },
+    "azure-communication-identity": {
+      "readme": "communication.identity-readme",
+      "csvPackage": "Azure.Communication.Identity"
+    },
+    "azure-communication-jobrouter": {
+      "readme": "communication.jobrouter-readme",
+      "csvPackage": "Azure.Communication.Jobrouter"
+    },
+    "azure-communication-messages": {
+      "readme": "communication.messages-readme",
+      "csvPackage": "Azure.Communication.Messages"
+    },
+    "azure-communication-phonenumbers": {
+      "readme": "communication.phonenumbers-readme",
+      "csvPackage": "Azure.Communication.Phonenumbers"
+    },
+    "azure-communication-programmableconnectivity": {
+      "readme": "communication/programmableconnectivity",
+      "csvPackage": "Azure.Communication.Programmableconnectivity"
+    },
+    "azure-communication-rooms": {
+      "readme": "communication.rooms-readme",
+      "csvPackage": "Azure.Communication.Rooms"
+    },
+    "azure-communication-sms": {
+      "readme": "communication.sms-readme",
+      "csvPackage": "Azure.Communication.Sms"
+    },
+    "azure-compute-batch": {
+      "readme": "batch/computebatch",
+      "csvPackage": "Azure.Compute.Batch"
+    },
+    "azure-containers-containerregistry": {
+      "readme": "containers.containerregistry-readme",
+      "csvPackage": "Azure.Containers.Containerregistry"
+    },
+    "azure-cosmos": {
+      "readme": "cosmosdb/cosmosdb",
+      "csvPackage": "Azure.Cosmos"
+    },
+    "azure-data-appconfiguration": {
+      "readme": "data.appconfiguration-readme",
+      "csvPackage": "Azure.Data.Appconfiguration"
+    },
+    "azure-data-schemaregistry": {
+      "readme": "data.schemaregistry-readme",
+      "csvPackage": "Azure.Data.Schemaregistry"
+    },
+    "azure-data-tables": {
+      "readme": "data.tables-readme",
+      "csvPackage": "Azure.Data.Tables"
+    },
+    "azure-developer-devcenter": {
+      "readme": "developer.devcenter-readme",
+      "csvPackage": "Azure.Developer.Devcenter"
+    },
+    "azure-developer-loadtesting": {
+      "readme": "developer.loadtesting-readme",
+      "csvPackage": "Azure.Developer.Loadtesting"
+    },
+    "azure-digitaltwins-core": {
+      "readme": "digitaltwins.core-readme",
+      "csvPackage": "Azure.Digitaltwins.Core"
+    },
+    "azure-health-deidentification": {
+      "readme": "health.deidentification-readme",
+      "csvPackage": "Azure.Health.Deidentification"
+    },
+    "azure-health-insights-cancerprofiling": {
+      "readme": "cognitiveservices/healthinsightscancerprofiling",
+      "csvPackage": "Azure.Health.Insights.Cancerprofiling"
+    },
+    "azure-health-insights-clinicalmatching": {
+      "readme": "cognitiveservices/healthinsightsclinicalmatching",
+      "csvPackage": "Azure.Health.Insights.Clinicalmatching"
+    },
+    "azure-health-insights-radiologyinsight": {
+      "readme": "health.insights.radiologyinsights-readme",
+      "csvPackage": "Azure.Health.Insights.Radiologyinsight"
+    },
+    "azure-iot-deviceupdate": {
+      "readme": "iot.deviceupdate-readme",
+      "csvPackage": "Azure.Iot.Deviceupdate"
+    },
+    "azure-messaging-eventgrid-namespaces": {
+      "readme": "messaging.eventgrid.namespaces-readme",
+      "csvPackage": "Azure.Messaging.Eventgrid.Namespaces"
+    },
+    "azure-messaging-eventgrid": {
+      "readme": "messaging.eventgrid-readme",
+      "csvPackage": "Azure.Messaging.Eventgrid"
+    },
+    "azure-messaging-eventhubs-processor": {
+      "readme": "messaging.eventhubs.processor-readme",
+      "csvPackage": "Azure.Messaging.Eventhubs.Processor"
+    },
+    "azure-messaging-eventhubs": {
+      "readme": "messaging.eventhubs-readme",
+      "csvPackage": "Azure.Messaging.Eventhubs"
+    },
+    "azure-messaging-servicebus": {
+      "readme": "messaging.servicebus-readme",
+      "csvPackage": "Azure.Messaging.Servicebus"
+    },
+    "azure-messaging-webpubsub-client": {
+      "readme": "messaging.webpubsub.client-readme",
+      "csvPackage": "Azure.Messaging.Webpubsub.Client"
+    },
+    "azure-messaging-webpubsub": {
+      "readme": "messaging.webpubsub-readme",
+      "csvPackage": "Azure.Messaging.Webpubsub"
+    },
+    "azure-mixedreality-authentication": {
+      "readme": "mixedreality.authentication-readme",
+      "csvPackage": "Azure.MixedReality.Authentication"
+    },
+    "azure-mixedreality-remoterendering": {
+      "readme": "mixedreality.remoterendering-readme",
+      "csvPackage": "Azure.MixedReality.Remoterendering"
+    },
+    "azure-monitor-ingestion": {
+      "readme": "monitor.ingestion-readme",
+      "csvPackage": "Azure.Monitor.Ingestion"
+    },
+    "azure-monitor-opentelemetry-aspnetcore": {
+      "readme": "monitor.opentelemetry.aspnetcore-readme",
+      "csvPackage": "Azure.Monitor.Opentelemetry.Aspnetcore"
+    },
+    "azure-monitor-opentelemetry-exporter": {
+      "readme": "monitor.opentelemetry.exporter-readme",
+      "csvPackage": "Azure.Monitor.Opentelemetry.Exporter"
+    },
+    "azure-monitor-query": {
+      "readme": "monitor.query-readme",
+      "csvPackage": "Azure.Monitor.Query"
+    },
+    "azure-provisioning-resources": {
+      "readme": "provisioning/provisioning-resources",
+      "csvPackage": "Azure.Provisioning.Resources"
+    },
+    "azure-provisioning": {
+      "readme": "provisioning-readme",
+      "csvPackage": "Azure.Provisioning"
+    },
+    "azure-resourcemanager-defendereasm": {
+      "readme": "defendereasm/defendereasm",
+      "csvPackage": "Azure.Resourcemanager.Defendereasm"
+    },
+    "azure-resourcemanager-notificationhubs": {
+      "readme": "notificationhubs/notificationhubs",
+      "csvPackage": "Azure.Resourcemanager.Notificationhubs"
+    },
+    "azure-search-documents": {
+      "readme": "search.documents-readme",
+      "csvPackage": "Azure.Search.Documents"
+    },
+    "azure-security-attestation": {
+      "readme": "security.attestation-readme",
+      "csvPackage": "Azure.Security.Attestation"
+    },
+    "azure-security-codetransparency": {
+      "readme": "confidentialledger/codetransparency",
+      "csvPackage": "Azure.Security.Codetransparency"
+    },
+    "azure-security-confidentialledger": {
+      "readme": "security.confidentialledger-readme",
+      "csvPackage": "Azure.Security.Confidentialledger"
+    },
+    "azure-security-keyvault-administration": {
+      "readme": "security.keyvault.administration-readme",
+      "csvPackage": "Azure.Security.Keyvault.Administration"
+    },
+    "azure-security-keyvault-certificates": {
+      "readme": "security.keyvault.certificates-readme",
+      "csvPackage": "Azure.Security.Keyvault.Certificates"
+    },
+    "azure-security-keyvault-keys": {
+      "readme": "security.keyvault.keys-readme",
+      "csvPackage": "Azure.Security.Keyvault.Keys"
+    },
+    "azure-security-keyvault-secrets": {
+      "readme": "security.keyvault.secrets-readme",
+      "csvPackage": "Azure.Security.Keyvault.Secrets"
+    },
+    "azure-storage-blobs-batch": {
+      "readme": "storage.blobs.batch-readme",
+      "csvPackage": "Azure.Storage.Blobs.Batch"
+    },
+    "azure-storage-blobs": {
+      "readme": "storage.blobs-readme",
+      "csvPackage": "Azure.Storage.Blobs"
+    },
+    "azure-storage-datamovement-blobs": {
+      "readme": "storage.datamovement.blobs-readme",
+      "csvPackage": "Azure.Storage.Datamovement.Blobs"
+    },
+    "azure-storage-datamovement-files-shares": {
+      "readme": "storage.datamovement.files.shares-readme",
+      "csvPackage": "Azure.Storage.Datamovement.Files.Shares"
+    },
+    "azure-storage-datamovement": {
+      "readme": "storage/datamovement",
+      "csvPackage": "Azure.Storage.Datamovement"
+    },
+    "azure-storage-files-datalake": {
+      "readme": "storage/storage-filesdatalake",
+      "csvPackage": "Azure.Storage.Files.Datalake"
+    },
+    "azure-storage-files-shares": {
+      "readme": "storage.files.shares-readme",
+      "csvPackage": "Azure.Storage.Files.Shares"
+    },
+    "azure-storage-queues": {
+      "readme": "storage.queues-readme",
+      "csvPackage": "Azure.Storage.Queues"
+    },
+    "azure-verticals-agrifood-farming": {
+      "readme": "farmbeats/farmbeats",
+      "csvPackage": "Azure.Verticals.Agrifood.Farming"
+    }
+  }
+}

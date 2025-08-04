@@ -8,42 +8,41 @@ parameters:
   type: string
   default: 'all'
 
-- name: branch
+- name: maxParallel
   displayName: |
-      You can choose the review version of the page for testing, and you need to select the corresponding branch. Example: 'nickwalk/yaml-changes'
-  type: string
-  default: 'main'
-
-- name: language
-  displayName: |
-      You can choose the language for testing. Example: Python
-  type: string
-  default: 'Python'
-  values:
-  - Python
-  - Java
-  - JavaScript
-  - DotNet
+      Maximum number of parallel jobs to run (by default, 2). Example: 10
+  type: number
+  default: 2
 
 stages:
 - stage: ContentValidationTesting
   jobs:
-  - ${{ each packageName in split(parameters.packages, ',') }}:
-    - ${{ if ne(parameters.packages, 'all') }}:
-      - template: /eng/pipelines/python/package/${{ packageName }}.yml
-        parameters:
-          GitHubPat: $(GITHUB_PAT)
-          GitHubOwner: $(GITHUB_OWNER)
-          GitHubRepo: $(GITHUB_REPO)
-          Branch: ${{ parameters.branch }}
+  - ${{ if ne(parameters.packages, 'all') }}:
+      - job: content_validation
+        displayName: Content Validation Matrix
+        strategy:
+          matrix:
+            ${{ each pkg in split(parameters.packages, ',') }}:
+              ${{ trim(pkg) }}:
+                packageName: ${{ trim(pkg) }}
+          maxParallel: ${{ parameters.maxParallel }}
+        variables:
+          PackageName: $(packageName)
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+        - template: /eng/pipelines/common/content-validation-for-python.yml
+          parameters:
+            packageName: $(PackageName)
 
   - ${{ if eq(parameters.packages, 'all') }}:
-    - template: /eng/pipelines/python/package/run-all-packages.yml
+    - template: /eng/pipelines/python/run-all-packages.yml
       parameters:
-        GitHubPat: $(GITHUB_PAT)
-        GitHubOwner: $(GITHUB_OWNER)
-        GitHubRepo: $(GITHUB_REPO)
-        Branch: ${{ parameters.branch }}
+        maxParallel: ${{ parameters.maxParallel }}
+
+    # - template: /eng/pipelines/common/content-validation-special-cases.yml
+    #   parameters:
+    #     DotNetSdkVersion: '8.0.x'
 
 ## Need to confirm, disabled for now
 # - stage: TotalIssuesSummary
@@ -96,7 +95,7 @@ stages:
 #         PackageName: ${{ parameters.packages }}
 #         PipelineRunLink: $(pipelineUrl)
 #         GitHubPat: $(GITHUB_PAT)
-#         Language: ${{ parameters.language }}
+#         Language: 'Python'
 #         GitHubOwner: $(GITHUB_OWNER)
 #         GitHubRepo: $(GITHUB_REPO)
 #       inputs:
@@ -128,4 +127,4 @@ stages:
 #           $(GITHUB_REPO)
 #           $(GIT_USER_NAME)
 #           $(GIT_USER_EMAIL)
-#           ${{ parameters.language }}
+#           'Python'

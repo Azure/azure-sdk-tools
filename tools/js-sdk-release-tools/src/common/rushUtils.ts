@@ -49,6 +49,17 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     logger.info(`Pack '${packageName}' successfully.`);
 }
 
+async function ensurePnpmInstalled() {
+  try {
+    await runCommand('pnpm', ['--version'], { stdio: 'ignore' });
+    console.log('pnpm is already installed.');
+  } catch (error) {
+    console.log('pnpm not found. Installing...');
+    await runCommand('npm', ['install', '-g', 'pnpm'], { stdio: 'inherit' });
+    console.log('pnpm installed successfully.');
+  }
+}
+
 async function addApiViewInfo(
     packageDirectory: string,
     sdkRoot: string,
@@ -118,12 +129,13 @@ export async function buildPackage(
         logger.info(`Start to build package '${name}'.`);
         await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     } else {
+        await ensurePnpmInstalled();
         logger.info(`Start to pnpm install.`);
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
+        await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);

@@ -103,8 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                     SetFailure(1);
                     return new TspToolResponse
                     {
-                        IsSuccessful = false,
-                        ErrorMessage = "Failed: pathToSwaggerReadme must be a valid Markdown file."
+                        ErrorMessage = "Failed: pathToSwaggerReadme must be a valid path to a swagger README.md file."
                     };
                 }
 
@@ -114,7 +113,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                     SetFailure(1);
                     return new TspToolResponse
                     {
-                        IsSuccessful = false,
                         ErrorMessage = $"Failed: pathToSwaggerReadme '{fullPathToSwaggerReadme}' does not exist."
                     };
                 }
@@ -126,7 +124,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                     SetFailure(1);
                     return new TspToolResponse
                     {
-                        IsSuccessful = false,
                         ErrorMessage = validationResult
                     };
                 }
@@ -140,7 +137,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 SetFailure(1);
                 return new TspToolResponse
                 {
-                    IsSuccessful = false,
                     ErrorMessage = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"
                 };
             }
@@ -204,7 +200,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 SetFailure();
                 return new TspToolResponse
                 {
-                    IsSuccessful = false,
                     ErrorMessage = $"Failed to convert swagger to TypeSpec project: {result.Output}"
                 };
             }

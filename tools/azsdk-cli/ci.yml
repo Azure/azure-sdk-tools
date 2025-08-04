@@ -18,8 +18,8 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}:
-      SkipReleaseStage: true
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli

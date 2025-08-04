@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
         private readonly IOutputService output;
         private readonly AzureOpenAIClient openAiClient;
         private Option<string> packagePathOption;
-        private Option<string> engPathOption;
         private Option<string> outputPathOption;
         private Option<string> templatePathOption;
         private Option<string> serviceDocumentationOption;
@@ -53,27 +52,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             templatePathOption.SetDefaultValue("Templates/ReadMeGenerator/README-template.go.md");
 
             serviceDocumentationOption = new Option<string>(
-                "--service-documentation")
+                "--service-url")
             {
-                Description = "URL to the service documentation",
+                Description = "URL to the service documentation (ex: https://learn.microsoft.com/en-us/azure/service-bus-messaging)",
                 IsRequired = true
             };
-
-            serviceDocumentationOption.SetDefaultValue("https://learn.microsoft.com/en-us/azure/service-bus-messaging/");
 
             packagePathOption = new Option<string>(
                 "--package-path")
             {
-                Description = "Path, underneath the 'sdk' folder (ex: devcenter/devbox)",
+                Description = "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)",
                 IsRequired = true,
             };
 
-            engPathOption = new Option<string>(
-                "--eng-path")
-            {
-                Description = "Path to an 'eng' folder within an SDK repo (ex: /home/user/src/azure-sdk-for-go/eng)",
-                IsRequired = true,
-            };
+            packagePathOption.SetDefaultValue(".");
 
             outputPathOption = new Option<string>(
                 "--output-path")
@@ -92,8 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
             modelOption.SetDefaultValue("gpt-4.1");
 
-            var command = new Command("readme", "README generator tool") {
-                engPathOption,
+            var command = new Command("readme", "README generator tool") {                
                 modelOption,
                 outputPathOption,
                 packagePathOption,
@@ -112,31 +103,55 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
             var templatePath = pr.GetValueForOption(templatePathOption);
             var serviceDocumentation = pr.GetValueForOption(serviceDocumentationOption);
-            var packagePath = pr.GetValueForOption(packagePathOption);
             var outputPath = pr.GetValueForOption(outputPathOption);
-            var engPath = pr.GetValueForOption(engPathOption);
             var model = pr.GetValueForOption(modelOption);
 
             var chatClient = openAiClient.GetChatClient(model);
 
-            await Generate(
+            var (repoPath, subPackagePath) = GetPackageInfoFromPath(pr.GetValueForOption(packagePathOption));
+
+            var validReadme = await Generate(
                 chatClient: chatClient,
-                engPath: engPath,
+                repoPath: repoPath,
                 templatePath: templatePath,
                 serviceDocumentation: new Uri(serviceDocumentation),
-                packagePath: packagePath,
-                outputPath: outputPath, 
+                packagePath: subPackagePath,
+                outputPath: outputPath,
                 ct: ct);
+
+            if (!validReadme)
+            {
+                output.OutputError("The generated readme did not pass validation checks. Please check the output for details.");
+                ctx.ExitCode = 1;
+            }
         }
 
-        async Task Generate(ChatClient chatClient, string templatePath, Uri serviceDocumentation, string packagePath, string outputPath, string engPath, CancellationToken ct)
+        /// <summary>
+        /// Generates a readme.md file.
+        /// </summary>
+        /// <summary>
+        /// Generates a README.md file using a template, service documentation, and package information.
+        /// </summary>
+        /// <param name="chatClient">The OpenAI chat client used to generate README content.</param>
+        /// <param name="templatePath">Path to the README template file.</param>
+        /// <param name="serviceDocumentation">URL to the service documentation for the package.</param>
+        /// <param name="packagePath">The package path, under 'sdk', that houses your package.</param>
+        /// <param name="outputPath">Path to write the generated README contents.</param>
+        /// <param name="repoPath">The root path of the repository containing the package.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>
+        /// True if a valid README was generated and passed validation checks; 
+        /// false if the README did not pass validation (e.g., due to dead or invalid links).
+        /// </returns>
+        /// <returns>true if a valid readme was generated, false is the readme did not pass validation checks. For instance, dead/invalid links.</returns>
+        async Task<bool> Generate(ChatClient chatClient, string templatePath, Uri serviceDocumentation, string packagePath, string outputPath, string repoPath, CancellationToken ct)
         {
             ArgumentException.ThrowIfNullOrEmpty(templatePath);
             ArgumentNullException.ThrowIfNull(serviceDocumentation);
             ArgumentException.ThrowIfNullOrEmpty(outputPath);
-            ArgumentException.ThrowIfNullOrEmpty(engPath);
+            ArgumentException.ThrowIfNullOrEmpty(repoPath);
 
-            var readmeText = await File.ReadAllTextAsync(templatePath);
+            var readmeText = await File.ReadAllTextAsync(templatePath, ct);
 
             var messages = new ChatMessage[]{
                 new SystemChatMessage(
@@ -159,39 +174,76 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             var response = await chatClient.CompleteChatAsync(messages);
             var generatedReadmeText = Customize(response.Value.Content[0].Text);
 
-            await File.WriteAllTextAsync(outputPath, generatedReadmeText);
-            await Validate(engPath: engPath, readmePath: outputPath, ct: ct);
-
+            await File.WriteAllTextAsync(outputPath, generatedReadmeText, ct);
             output.Output($"Readme written to {outputPath}");
+
+            return await IsValid(repoPath: repoPath, readmePath: outputPath, ct: ct);
         }
 
-        private async Task Validate(string engPath, string readmePath, CancellationToken ct)
+        private async Task<bool> IsValid(string repoPath, string readmePath, CancellationToken ct)
         {
-            output.Output($"Running {engPath}/common/scripts/Verify-Links.ps1 \"{readmePath}\"");
+            var valid = true;
+
+            try
+            {
+                var result = await VerifyLinks(repoPath, readmePath, ct);
+
+                if (result != null)
+                {
+                    output.OutputError($"[FAIL] Verify-Links.ps1 failed: {result}");
+                    valid = false;
+                }
+                else
+                {
+                    output.Output($"[PASS] Verify-Links.ps1 passed");
+                }
+            }
+            catch (Exception ex)
+            {
+                output.OutputError($"[ERROR] Verify-Links.ps1 threw an exception: {ex.Message}");
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        /// Run the Verify-Links.ps1 script, which checks that all links in the readme are valid.
+        /// </summary>
+        /// <param name="repoPath">Path to an azure-sdk-for-<language> repository</language></param>
+        /// <param name="readmePath">Path to README.md to verify</param>
+        /// <param name="ct">Cancellation token for method</param>
+        /// <returns>A string, if the verification did not pass, or null if it did.</returns>
+        /// <exception cref="Exception"></exception>
+        private async Task<string> VerifyLinks(string repoPath, string readmePath, CancellationToken ct)
+        {
+            var verifyLinksPs1 = Path.Join(repoPath, "eng", "common", "scripts", "Verify-Links.ps1");
+            var errors = new List<string>();
+
+            output.Output($"Running {verifyLinksPs1} {readmePath}");
 
             var process = Process.Start(new ProcessStartInfo()
             {
                 FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pwsh.exe" : "pwsh",
-                Arguments = $"\"{Path.Join(engPath, "common", "scripts", "Verify-Links.ps1")}\" \"{readmePath}\"",
+                ArgumentList = { verifyLinksPs1, readmePath },
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
             });
 
-
             using var verifyLinksCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
             verifyLinksCt.CancelAfter(TimeSpan.FromSeconds(30)); // Set your time limit here
+
             await process!.WaitForExitAsync(verifyLinksCt.Token);
 
             if (process.ExitCode != 0)
             {
-                var stderr = await process.StandardError.ReadToEndAsync();
-                var stdout = await process.StandardOutput.ReadToEndAsync();
+                var stderr = await process.StandardError.ReadToEndAsync(ct);
+                var stdout = await process.StandardOutput.ReadToEndAsync(ct);
 
-                output.OutputError($"[FAIL]: Verify-Links.ps1 check did not pass.\nStdout: {stdout.Replace("\n", "\n  ")}\nStderr: {stderr.Replace("\n", "\n  ")}");
-                return;
+                return $"Verify-Links.ps1 check did not pass.\nStdout: {stdout.Replace("\n", "\n  ")}\nStderr: {stderr.Replace("\n", "\n  ")}";
             }
 
-            output.Output($"[PASS] Verify-Links.ps1 passed");
+            return null;
         }
 
         /// <summary>
@@ -210,6 +262,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             generatedReadmeText = generatedReadmeText.Replace("/en-us/", "/");
 
             return generatedReadmeText;
+        }
+
+        private static (string RepoPath, string SubPath) GetPackageInfoFromPath(string path)
+        {
+            var origPath = Path.GetFullPath(path);
+
+            var pieces = origPath.Split($"{Path.DirectorySeparatorChar}sdk{Path.DirectorySeparatorChar}");
+
+            if (pieces.Length != 2)
+            {
+                throw new ArgumentException("Path was not under a language repo with an 'sdk' subfolder", nameof(path));
+            }
+
+            return (pieces[0], pieces[1]);
         }
 
         [GeneratedRegex(@"Template Package|<package path>", RegexOptions.IgnoreCase, "")]

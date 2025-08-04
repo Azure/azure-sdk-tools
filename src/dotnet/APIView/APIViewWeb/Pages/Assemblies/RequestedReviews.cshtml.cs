@@ -121,10 +121,7 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
             
-            // Keep track of which revisions are related to namespace approval (even if they're not the primary namespace review)
-            var namespaceRelatedRevisionIds = new HashSet<string>(allNamespaceApprovalReviews.Select(r => r.Id));
-            
-            // Merge with assigned reviews
+            // Merge namespace approval reviews with assigned reviews  
             var allReviews = APIRevisions.ToList();
             foreach (var nsReview in allNamespaceApprovalReviews)
             {
@@ -177,10 +174,12 @@ namespace APIViewWeb.Pages.Assemblies
                 // Check if the parent review has namespace approval requested using cached data
                 if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview))
                 {
-                    // Add to namespace approval list if:
+                    // Use the optimized field-based approach instead of complex PR association logic
+                    // Check if:
                     // 1. The parent review has namespace approval requested OR
-                    // 2. This revision is an associated SDK revision from our namespace approval logic
-                    bool isRevisionNamespaceRelated = parentReview.IsNamespaceReviewRequested || namespaceRelatedRevisionIds.Contains(apiRevision.Id);
+                    // 2. This specific revision is marked with a namespace approval request ID (optimized approach)
+                    bool isRevisionNamespaceRelated = parentReview.IsNamespaceReviewRequested || 
+                                                    !string.IsNullOrEmpty(apiRevision.NamespaceApprovalRequestId);
                     
                     if (isRevisionNamespaceRelated && !parentReview.IsApproved)
                     {
@@ -237,7 +236,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         /// <summary>
         /// Get all reviews with namespace approval requested that the user can approve based on configuration
-        /// Uses the same logic as "Associated API Revisions" - find via pull requests rather than package name matching
+        /// Uses the new optimized approach with direct field querying instead of complex PR association logic
         /// Results are cached for 10 minutes to improve performance
         /// </summary>
         private async Task<List<APIRevisionListItemModel>> GetAllNamespaceApprovalReviews()
@@ -258,113 +257,77 @@ namespace APIViewWeb.Pages.Assemblies
                 // 5 second timeout to improve performance and avoid hanging on database/AAD delays
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
-                    // Get reviews with namespace approval requested - only TypeSpec reviews can have namespace approval requests  
-                    var (allReviews, _, _, _, _, _) = await _reviewManager.GetPagedReviewListAsync(
-                        search: new string[] { }, // No search filter
-                        languages: new HashSet<string> { "TypeSpec" }, // Only TypeSpec reviews have namespace approval requests
-                        isClosed: false, // Only open reviews
-                        isApproved: false, // Only unapproved reviews
-                        offset: 0,
-                        limit: 100,
-                        orderBy: "created"
-                    );
-
-                    // Filter for reviews that have namespace approval requested
-                    var reviewsWithNamespaceRequested = allReviews.Where(r => r.IsNamespaceReviewRequested).ToList();
-
-                    // Process only reviews the user can approve
-                    var eligibleReviews = reviewsWithNamespaceRequested.Where(r => CanUserApproveReview(r)).ToList();
-                    
-                    foreach (var namespaceReview in eligibleReviews)
+                    // Get API revisions that have namespace approval requested using the new optimized fields
+                    // This replaces the complex PR association logic with a single direct query
+                    var filterAndSortParams = new FilterAndSortParams()
                     {
-                        try
+                        Languages = new HashSet<string> { "C#", "Java", "Python", "Go", "JavaScript" }, // Only SDK languages need approval
+                        SortField = "lastUpdatedOn",
+                        SortOrder = 1 // Descending
+                    };
+
+                    var pageParams = new PageParams()
+                    {
+                        PageSize = 100, // Reasonable limit for namespace approvals
+                        NoOfItemsRead = 0
+                    };
+
+                    // Get revisions directly where NamespaceApprovalRequestId is not null/empty
+                    // This is the new optimized approach that avoids N+1 queries
+                    var allRevisionsResult = await _apiRevisionsManager.GetAPIRevisionsAsync(User, pageParams, filterAndSortParams);
+                    var revisionsWithNamespaceApproval = allRevisionsResult.Where(r => 
+                        !string.IsNullOrEmpty(r.NamespaceApprovalRequestId) && 
+                        r.NamespaceApprovalRequestedOn.HasValue &&
+                        !string.IsNullOrEmpty(r.NamespaceApprovalRequestedBy) &&
+                        !r.IsDeleted).ToList();
+
+                    // Get all unique review IDs to check if user can approve them
+                    var reviewIds = revisionsWithNamespaceApproval.Select(r => r.ReviewId).Distinct().ToList();
+                    var reviews = new Dictionary<string, ReviewListItemModel>();
+                    
+                    // Fetch parent reviews in batch
+                    var reviewTasks = reviewIds.Select(async reviewId =>
+                    {
+                        var review = await _reviewManager.GetReviewAsync(User, reviewId);
+                        return (reviewId, review);
+                    });
+                    
+                    var reviewResults = await Task.WhenAll(reviewTasks);
+                    
+                    foreach (var (reviewId, review) in reviewResults)
+                    {
+                        if (review != null && !review.IsApproved)
                         {
-                            // Extract namespace approval request information from this review's change history
-                            var namespaceRequestChange = namespaceReview.ChangeHistory?.FirstOrDefault(ch => ch.ChangeAction == ReviewChangeAction.NamespaceReviewRequested);
-                            var requestedOn = namespaceRequestChange?.ChangedOn ?? DateTime.MinValue;
-                            var requestedBy = namespaceRequestChange?.ChangedBy ?? "Unknown";
-                            
-                            // Get the latest API revision from this namespace review
-                            var latestRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(namespaceReview.Id, null, APIRevisionType.All);
-                            if (latestRevision != null)
-                            {
-                                // Use the SAME LOGIC as "Associated API Revisions" - find via pull requests
-                                var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(namespaceReview.Id, latestRevision.Id)).FirstOrDefault();
-                                if (creatingPR != null)
-                                {
-                                    // Get all pull requests associated with this PR (this gives us all the different language versions)
-                                    var associatedPRs = await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);
-                                    
-                                    foreach (var associatedPR in associatedPRs)
-                                    {
-                                        // Skip if this is the original namespace review (we want the associated SDK reviews)
-                                        if (associatedPR.ReviewId == namespaceReview.Id)
-                                        {
-                                            continue;
-                                        }
-                                        
-                                        // Only include SDK languages (C#, Java, Python, etc.) not TypeSpec
-                                        var supportedLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                                        {
-                                            "C#", "CSharp", "Java", "Python", "Go", "JavaScript", "JS"
-                                        };
-                                        
-                                        if (supportedLanguages.Contains(associatedPR.Language ?? ""))
-                                        {
-                                            // Get the latest revision from this associated review
-                                            var associatedRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(associatedPR.ReviewId, null, APIRevisionType.All);
-                                            if (associatedRevision != null && !associatedRevision.IsApproved)
-                                            {
-                                                namespaceApprovalReviews.Add(associatedRevision);
-                                                
-                                                // Store namespace approval request info for this revision
-                                                if (requestedOn != DateTime.MinValue)
-                                                {
-                                                    NamespaceApprovalInfo[associatedRevision.Id] = (requestedOn, requestedBy);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    // If no PR association found, fall back to adding the revision itself if it's an SDK language
-                                    var supportedLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                                    {
-                                        "C#", "CSharp", "Java", "Python", "Go", "JavaScript", "JS"
-                                    };
-                                    
-                                    if (supportedLanguages.Contains(namespaceReview.Language ?? ""))
-                                    {
-                                        namespaceApprovalReviews.Add(latestRevision);
-                                        
-                                        // Store namespace approval request info for this revision
-                                        if (requestedOn != DateTime.MinValue)
-                                        {
-                                            NamespaceApprovalInfo[latestRevision.Id] = (requestedOn, requestedBy);
-                                        }
-                                    }
-                                }
-                            }
+                            reviews[reviewId] = review;
                         }
-                        catch (Exception)
+                    }
+
+                    // Filter to only include revisions for reviews the user can approve
+                    foreach (var revision in revisionsWithNamespaceApproval)
+                    {
+                        if (reviews.TryGetValue(revision.ReviewId, out var parentReview))
                         {
+                            if (CanUserApproveReview(parentReview))
+                            {
+                                namespaceApprovalReviews.Add(revision);
+                                
+                                // Store namespace approval info for the UI using the new fields
+                                NamespaceApprovalInfo[revision.Id] = (
+                                    RequestedOn: revision.NamespaceApprovalRequestedOn.Value,
+                                    RequestedBy: revision.NamespaceApprovalRequestedBy
+                                );
+                            }
                         }
                     }
                 }
             }
             catch (OperationCanceledException)
             {
+                // Timeout occurred - return empty list to avoid hanging
             }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
+            catch (Exception)
             {
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't fail the entire request
-                if (ex.Message.Contains("AAD groups are being resolved"))
-                {
-                }
+                // Error occurred - return empty list to be safe
             }
 
             // Cache the results for 10 minutes to improve performance

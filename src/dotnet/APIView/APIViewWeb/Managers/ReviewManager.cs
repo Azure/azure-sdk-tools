@@ -36,6 +36,7 @@ namespace APIViewWeb.Managers
         private readonly ICommentsManager _commentManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosCommentsRepository _commentsRepository;
+        private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
@@ -49,6 +50,7 @@ namespace APIViewWeb.Managers
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
+            ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
             TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager)
 
@@ -59,6 +61,7 @@ namespace APIViewWeb.Managers
             _commentManager = commentManager;
             _codeFileRepository = codeFileRepository;
             _commentsRepository = commentsRepository;
+            _apiRevisionsRepository = apiRevisionsRepository;
             _signalRHubContext = signalRHubContext;
             _languageServices = languageServices;
             _telemetryClient = telemetryClient;
@@ -354,6 +357,8 @@ namespace APIViewWeb.Managers
             }
 
             var userId = user.GetGitHubLogin();
+            var requestId = Guid.NewGuid().ToString();
+            var requestedOn = DateTime.UtcNow;
             
             // Mark the TypeSpec review as namespace review requested
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
@@ -366,8 +371,8 @@ namespace APIViewWeb.Managers
             // Send email notifications to preferred approvers
             await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, notes);
 
-            // Find and mark related SDK language reviews
-            await MarkRelatedSDKReviewsForNamespaceReview(typeSpecReview.PackageName, userId, notes);
+            // Find and mark related SDK language reviews with the new namespace approval fields
+            await MarkRelatedSDKReviewsForNamespaceReview(typeSpecReview.PackageName, userId, notes, requestId, requestedOn);
 
             return typeSpecReview;
         }
@@ -378,8 +383,10 @@ namespace APIViewWeb.Managers
         /// <param name="packageName"></param>
         /// <param name="userId"></param>
         /// <param name="notes"></param>
+        /// <param name="requestId">Unique ID for this namespace approval request</param>
+        /// <param name="requestedOn">When the namespace approval was requested</param>
         /// <returns></returns>
-        private async Task MarkRelatedSDKReviewsForNamespaceReview(string packageName, string userId, string notes)
+        private async Task MarkRelatedSDKReviewsForNamespaceReview(string packageName, string userId, string notes, string requestId, DateTime requestedOn)
         {
             // SDK languages to look for
             var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
@@ -399,6 +406,23 @@ namespace APIViewWeb.Managers
                         relatedReview.IsNamespaceReviewRequested = changeUpdate.ChangeStatus;
                         
                         await _reviewsRepository.UpsertReviewAsync(relatedReview);
+
+                        // Get all API revisions for this review and mark them with namespace approval fields
+                        var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(relatedReview.Id);
+                        foreach (var revision in apiRevisions.Where(r => !r.IsDeleted))
+                        {
+                            revision.NamespaceApprovalRequestId = requestId;
+                            revision.NamespaceApprovalRequestedOn = requestedOn;
+                            revision.NamespaceApprovalRequestedBy = userId;
+                            
+                            // Also add to change history
+                            var revisionChangeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<APIRevisionChangeHistoryModel, APIRevisionChangeAction>(
+                                revision.ChangeHistory, APIRevisionChangeAction.NamespaceReviewRequested, userId, 
+                                $"Namespace approval requested for TypeSpec package: {packageName}");
+                            revision.ChangeHistory = revisionChangeUpdate.ChangeHistory;
+                            
+                            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                        }
                     }
                 }
                 catch (Exception)

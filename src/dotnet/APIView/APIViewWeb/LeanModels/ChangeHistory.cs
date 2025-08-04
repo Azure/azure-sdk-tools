@@ -35,6 +35,7 @@ namespace APIViewWeb.LeanModels
         Created = 0,
         Approved,
         ApprovalReverted,
+        NamespaceReviewRequested,
         Deleted,
         UnDeleted
     }

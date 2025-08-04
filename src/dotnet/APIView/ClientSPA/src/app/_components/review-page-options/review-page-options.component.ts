@@ -567,7 +567,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.namespaceReviewBtnClass = "btn btn-outline-primary";
       this.namespaceReviewBtnLabel = "Requesting...";
       this.namespaceReviewMessage = "";
-    } else if (this.review?.isApproved) {
+    } else if (this.isNamespaceApproved()) {
       this.namespaceReviewBtnClass = "btn btn-outline-success";
       this.namespaceReviewBtnLabel = "Namespace Review Approved";
       this.namespaceReviewMessage = "";

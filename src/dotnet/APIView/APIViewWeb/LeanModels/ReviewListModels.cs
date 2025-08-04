@@ -145,6 +145,11 @@ namespace APIViewWeb.LeanModels
         public bool IsReleased { get; set; }
         public DateTime ReleasedOn { get; set; }
         public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
+        
+        // Namespace approval fields for performance optimization
+        public string NamespaceApprovalRequestId { get; set; }
+        public DateTime? NamespaceApprovalRequestedOn { get; set; }
+        public string NamespaceApprovalRequestedBy { get; set; }
     }
 
 

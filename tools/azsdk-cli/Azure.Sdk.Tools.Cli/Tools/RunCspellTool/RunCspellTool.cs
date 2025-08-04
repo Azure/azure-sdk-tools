@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.RunCspellTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     [McpServerToolType, Description("Run cspell to check for typos in code")]
     public class RunCspellTool : MCPTool

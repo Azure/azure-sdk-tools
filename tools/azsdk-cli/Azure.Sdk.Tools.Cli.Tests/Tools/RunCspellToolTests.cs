@@ -1,6 +1,6 @@
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.RunCspellTool;
+using Azure.Sdk.Tools.Cli.Tools;
 using Moq;
 using System.IO;
 using System.Threading.Tasks;

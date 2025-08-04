@@ -84,12 +84,10 @@ public class Program
             clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
                 (options, credential, _) =>
                 {
-                    var ep = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? "https://openai-shared.openai.azure.com";
-
-                    if (string.IsNullOrEmpty(ep))
-                    {
-                        throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set, OpenAI related commands will not be available");
-                    }
+                    var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+                    var ep = string.IsNullOrWhiteSpace(endpointEnvVar) ?
+                        "https://openai-shared.openai.azure.com"
+                        : endpointEnvVar;
 
                     return new AzureOpenAIClient(new Uri(ep), credential, options);
                 });

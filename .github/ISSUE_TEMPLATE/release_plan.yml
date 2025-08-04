@@ -65,7 +65,7 @@ body:
       description: Select the type of SDK release
       options:
         - beta
-        - preview
+        - stable
     validations:
       required: true
 

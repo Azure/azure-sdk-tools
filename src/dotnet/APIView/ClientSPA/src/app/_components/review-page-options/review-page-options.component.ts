@@ -361,7 +361,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     }
   }
   setReviewApprovalStatus() {
-    this.reviewIsApproved = this.review && this.review?.isApproved ? true : false;
+    this.reviewIsApproved = !!this.review?.isApproved;
     if (this.reviewIsApproved) {
       this.reviewApprover = this.review?.changeHistory.find(ch => ch.changeAction === 'approved')?.changedBy ?? 'azure-sdk';
     }
@@ -572,13 +572,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.namespaceReviewBtnLabel = "Namespace Review Approved";
       this.namespaceReviewMessage = "";
     } else if (this.isNamespaceReviewRequested) {
-      this.namespaceReviewBtnClass = "btn btn-outline-secondary";
+      this.namespaceReviewBtnClass = "btn btn-secondary disabled";
       this.namespaceReviewBtnLabel = "Namespace Review Requested";
-      this.namespaceReviewMessage = "";
+      this.namespaceReviewMessage = "Please check the review status in associated API Revisions";
     } else {
       this.namespaceReviewBtnClass = "btn btn-success";
       this.namespaceReviewBtnLabel = "Request Namespace Review";
-      this.namespaceReviewMessage = "";
+      this.namespaceReviewMessage = "Request namespace reviews for associated API revisions; corresponding reviewers will be notified.";
     }
   }
 

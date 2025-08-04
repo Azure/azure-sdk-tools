@@ -50,7 +50,6 @@
         </li>
         <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">
             <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
-                <span *ngIf="namespaceReviewMessage" class="small text-muted">{{namespaceReviewMessage}}</span>
                 <div class="d-grid gap-2">
                     <button class="{{namespaceReviewBtnClass}}" type="button"
                             (click)="handleNamespaceReviewAction()"
@@ -59,6 +58,7 @@
                         {{namespaceReviewBtnLabel}}
                     </button>
                 </div>
+                <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
             </ng-container>
             <span *ngIf="!userProfile || !preferredApprovers.includes(userProfile?.userName!)" class="small text-muted mt-1">
                 <ng-container *ngIf="isNamespaceApproved(); else notApproved">

@@ -41,7 +41,7 @@ const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.
 // to repo root. If the default emitter-package.json is used, the path will be undefined.
 async function getEmitter(
   repoRoot: string,
-  tspConfigData: any,
+  tspConfigData: any, // tspconfig.yaml data
   globalConfigFile?: TspClientConfig,
   emitterPackageJsonOverride?: string,
 ): Promise<{ emitter: string; path?: string }> {

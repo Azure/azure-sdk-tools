@@ -576,7 +576,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return $"Error: {ex}";
             }
         }
-
+        
         [McpServerTool(Name = "AddCodeowners"), Description("Adds codeowners to a given service label or path for a repo.")]
         public async Task<string> AddCodeowners(
             string repo,
@@ -589,45 +589,45 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 var resultMessages = new List<string>();
-
+ 
                 // Validate new codeowners
                 var allNewOwners = new List<string>();
                 allNewOwners.AddRange(serviceOwners ?? new List<string>());
                 allNewOwners.AddRange(sourceOwners ?? new List<string>());
-
+ 
                 var newOwnersValidationResults = await ValidateCodeOwnersConcurrently(allNewOwners);
                 var invalidNewOwners = newOwnersValidationResults.Where(result => !result.IsValidCodeOwner).ToList();
-
+ 
                 if (invalidNewOwners.Any())
                 {
                     resultMessages.Add($"Warning: Invalid new owners will be skipped: {string.Join(", ", invalidNewOwners.Select(r => r.Username))}");
                 }
-
+ 
                 var validNewOwners = newOwnersValidationResults.Where(result => result.IsValidCodeOwner).Select(r => r.Username).ToList();
                 if (!validNewOwners.Any())
                 {
                     return "No valid new owners to add. All provided owners are invalid.";
                 }
-
+ 
                 // Step 1: Get repository info and file content
                 azureRepositories.TryGetValue(repo, out var repoInfo);
                 var fullRepoName = repoInfo.RepoName;
                 var serviceCategory = repoInfo.ServiceCategory;
-
+ 
                 var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
                 var fileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
-
+ 
                 if (fileContent == null || fileContent.Count == 0)
                 {
                     return "Could not retrieve CODEOWNERS file";
                 }
-
+ 
                 var content = fileContent[0].Content;
                 var sha = fileContent[0].Sha;
-
+ 
                 // Step 2: Find the service category block
                 var (startLine, endLine) = codeownerHelper.findBlock(content, serviceCategory);
-
+ 
                 // Step 3: Parse entries within the block to find the specific entry to modify
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob", startLine, endLine);
                 for (int i = 0; i < codeownersEntries.Count; i++)
@@ -648,7 +648,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     targetEntry = codeownersEntries.FirstOrDefault(entry =>
                         entry.ServiceLabels?.Any(label => label.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
                 }
-
+ 
                 if (targetEntry == null)
                 {
                     return $"No existing codeowner entry found for service label '{serviceLabel}' or path '{path}' in {fullRepoName}.";
@@ -657,7 +657,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Step 4: Modify the content using the entry's line information
                 var lines = content.Split('\n').ToList();
                 var modifiedContent = await ModifyCodeownersEntryLines(lines, targetEntry, serviceOwners, sourceOwners, validNewOwners);
-
+ 
                 // Step 5: Validate that the are at least two service and source owners
 
                 // Step 6: Branch management and file update
@@ -673,7 +673,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var createBranchResult = await githubService.CreateBranchAsync("Azure", fullRepoName, branchName);
                     resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
                 }
-
+ 
                 // Step 7: Update file
                 await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS",
                     $"Add codeowner aliases for {targetEntry.PathExpression ?? serviceLabel}",
@@ -692,16 +692,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         $"Add codeowner aliases for {targetEntry.PathExpression ?? serviceLabel}", true);
                     resultMessages.AddRange(prInfoList);
                 }
-
+ 
                 return string.Join("\n", resultMessages);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error in AddCodeowners");
                 return $"Error: {ex.Message}";
-            }
+            }  
         }
-
+ 
         private async Task<List<string>> ModifyCodeownersEntryLines(
             List<string> lines,
             CodeownersEntry targetEntry,
@@ -714,14 +714,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             for (int i = targetEntry.startLine; i <= targetEntry.endLine; i++)
             {
                 var line = modifiedLines[i];
-
+ 
                 // Modify ServiceOwners
                 if (line.TrimStart().StartsWith("# ServiceOwners:"))
-                {
+                {   
 
-                    var newServiceOwnersToAdd = newServiceOwners?.Where(owner =>
+                    var newServiceOwnersToAdd = newServiceOwners?.Where(owner => 
                         validNewOwners?.Contains(owner.TrimStart('@'), StringComparer.OrdinalIgnoreCase) ?? true).ToList() ?? new List<string>();
-
+                    
                     if (newServiceOwnersToAdd.Any())
                     {
                         var originalLine = modifiedLines[i];
@@ -731,10 +731,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Modify SourceOwners
                 else if (ParsingUtils.IsSourcePathOwnerLine(line) && line.Contains(targetEntry.PathExpression))
                 {
-
-                    var newSourceOwnersToAdd = newSourceOwners?.Where(owner =>
+                    
+                    var newSourceOwnersToAdd = newSourceOwners?.Where(owner => 
                         validNewOwners?.Contains(owner.TrimStart('@'), StringComparer.OrdinalIgnoreCase) ?? true).ToList() ?? new List<string>();
-
+                    
                     if (newSourceOwnersToAdd.Any())
                     {
                         var originalLine = modifiedLines[i];
@@ -742,14 +742,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     }
                 }
             }
-
+ 
             return modifiedLines;
         }
 
         private string AddOwnersToLine(string line, List<string> ownersToAdd)
         {
             if (!ownersToAdd.Any()) return line;
-
+ 
             var formattedOwners = ownersToAdd.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}");
             return $"{line.TrimEnd()} {string.Join(" ", formattedOwners)}";
         }

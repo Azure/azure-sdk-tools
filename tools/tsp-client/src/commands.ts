@@ -60,6 +60,9 @@ async function getEmitter(
     for (const supportedEmitter of globalConfigFile.supportedEmitters) {
       for (const configEmitter of Object.keys(tspConfigData.options) ?? []) {
         if (supportedEmitter.name === configEmitter) {
+          Logger.debug(
+            `Using emitter: ${supportedEmitter.name} from tspconfig.yaml. There will be no further processing for other supported emitters.`,
+          );
           return { emitter: configEmitter, path: supportedEmitter.path };
         }
       }

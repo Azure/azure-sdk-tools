@@ -35,12 +35,17 @@ type PreprocessResponse struct {
 	Warnings []PreprocessWarning `json:"warnings,omitempty"`
 }
 
-func (s *PreprocessService) PreprocessInput(input string) string {
+func (s *PreprocessService) PreprocessInput(tenantID model.TenantID, input string) string {
 	// lower case
 	input = strings.ToLower(input)
 	// replace keyword
-	for k, v := range model.KeywordReplaceMap {
+	for k, v := range model.CommonKeywordReplaceMap {
 		input = strings.ReplaceAll(input, fmt.Sprintf(" %s ", k), fmt.Sprintf(" %s ", v))
+	}
+	if tenantConfig, ok := config.GetTenantConfig(tenantID); ok && tenantConfig.KeywordReplaceMap != nil {
+		for k, v := range tenantConfig.KeywordReplaceMap {
+			input = strings.ReplaceAll(input, fmt.Sprintf(" %s ", k), fmt.Sprintf(" %s ", v))
+		}
 	}
 	return input
 }

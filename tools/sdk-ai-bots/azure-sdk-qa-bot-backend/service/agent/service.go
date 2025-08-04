@@ -53,6 +53,9 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.PromptTemplate == nil {
 			req.PromptTemplate = &tenantConfig.PromptTemplate
 		}
+		if req.IntensionPromptTemplate == nil {
+			req.IntensionPromptTemplate = &tenantConfig.IntensionPromptTemplate
+		}
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
@@ -97,7 +100,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 5. Build prompt
-	prompt, err := s.buildPrompt(chunks, *req.PromptTemplate)
+	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -122,9 +125,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecongnizeIntension(messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
+func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntensionResult, error) {
 	promptParser := prompt.IntensionPromptParser{}
-	promptStr, err := promptParser.ParsePrompt(nil, "intension.md")
+	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
 	if err != nil {
 		log.Printf("Failed to parse intension prompt: %v", err)
 		return nil, err
@@ -327,9 +330,8 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
 	}
-	query = preprocess.NewPreprocessService().PreprocessInput(query)
 	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(messages)
+	intentResult, err := s.RecongnizeIntension(*req.IntensionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -342,10 +344,11 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 			req.Sources = append(req.Sources, model.Source_TypeSpecQA)
 		}
 		if len(intentResult.Question) > 0 {
-			query = intentResult.Question
+			query = fmt.Sprintf("category:%s question:%s", intentResult.Category, intentResult.Question)
 		}
-		log.Printf("Intent Result: category: %v, intension: %v", intentResult.Category, intentResult.Question)
+		log.Printf("Intent Result: %+v", intentResult)
 	}
+	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 	log.Printf("Intent recognition took: %v", time.Since(intentStart))
 	log.Printf("Searching query: %s", query)
 	return query, intentResult
@@ -453,7 +456,7 @@ func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, que
 	return result, nil
 }
 
-func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
@@ -464,8 +467,12 @@ func (s *CompletionService) buildPrompt(chunks []string, promptTemplate string) 
 			break
 		}
 	}
+	intensionStr, _ := json.Marshal(intension)
 	promptParser := prompt.DefaultPromptParser{}
-	promptStr, err := promptParser.ParsePrompt(map[string]string{"context": strings.Join(chunks, "-------------------------\n")}, promptTemplate)
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"context":   strings.Join(chunks, "-------------------------\n"),
+		"intension": string(intensionStr),
+	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return "", err

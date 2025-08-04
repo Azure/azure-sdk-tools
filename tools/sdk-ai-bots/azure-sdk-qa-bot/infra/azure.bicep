@@ -7,25 +7,6 @@ param azureTableNameForConversation string
 // RAG
 @secure()
 param ragApiKey string
-@secure()
-param ragEndpoint string
-@secure()
-param ragTanentId string
-
-// Channels
-// - python
-@secure()
-param channelIdForPython string
-@secure()
-param channelIdForPythonDevInternal string
-@secure()
-param ragTanentIdForPython string
-// - sdk onboarding
-@secure()
-param channelIdForSdkOnboardingDevInternal string
-@secure()
-param ragTanentIdForSdkOnboarding string
-
 
 // Resources
 @maxLength(20)
@@ -117,37 +98,6 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'RAG_API_KEY'
           value: ragApiKey
-        }
-        {
-          name: 'RAG_ENDPOINT'
-          value: ragEndpoint
-        }
-        {
-          name: 'RAG_TANENT_ID'
-          value: ragTanentId
-        }
-        // Channels
-        // - python
-        {
-          name: 'CHANNEL_ID_FOR_PYTHON'
-          value: channelIdForPython
-        }
-        {
-          name: 'CHANNEL_ID_FOR_PYTHON_DEV_INTERNAL'
-          value: channelIdForPythonDevInternal
-        }
-        {
-          name: 'RAG_TANENT_ID_FOR_PYTHON'
-          value: ragTanentIdForPython
-        }
-        // - sdk onboarding
-        {
-          name: 'CHANNEL_ID_FOR_SDK_ONBOARDING_DEV_INTERNAL'
-          value: channelIdForSdkOnboardingDevInternal
-        }
-        {
-          name: 'RAG_TANENT_ID_FOR_SDK_ONBOARDING'
-          value: ragTanentIdForSdkOnboarding
         }
         // Azure Table
         {

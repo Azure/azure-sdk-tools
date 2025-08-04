@@ -65,6 +65,7 @@ type AdditionalInfo struct {
 type CompletionReq struct {
 	TenantID                TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
 	PromptTemplate          *string          `json:"prompt_template" jsonschema:"omitempty,description=The prompt template to use for the agent"`
+	IntensionPromptTemplate *string          `json:"intension_prompt_template,omitempty" jsonschema:"omitempty,description=The intention prompt template to use for the agent"`
 	PromptTemplateArguments *string          `json:"prompt_template_arguments" jsonschema:"omitempty,description=The arguments to use for the prompt template"`
 	TopK                    *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
 	Sources                 []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
@@ -97,4 +98,5 @@ const (
 type IntensionResult struct {
 	Question string           `json:"question" jsonschema:"required,description=The question to ask the agent"`
 	Category QuestionCategory `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType string           `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
 }

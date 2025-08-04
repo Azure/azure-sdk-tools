@@ -1,28 +1,25 @@
 import { Memory, PromptCompletionModel, PromptFunctions, PromptTemplate, Tokenizer } from '@microsoft/teams-ai';
 import { TurnContext } from 'botbuilder';
-import {
-  AdditionalInfo,
-  CompletionRequestPayload,
-  getRAGReply,
-  Message,
-  RAGOptions,
-} from '../backend/rag.js';
+import { AdditionalInfo, CompletionRequestPayload, getRAGReply, Message, RAGOptions } from '../backend/rag.js';
 import { PromptResponse } from '@microsoft/teams-ai/lib/types/PromptResponse.js';
 import { ThinkingHandler } from '../turn/ThinkingHandler.js';
 import config from '../config/config.js';
 import { MessageWithRemoteContent, PromptGenerator } from '../input/PromptGeneratorV2.js';
 import { logger } from '../logging/logger.js';
 import { getTurnContextLogMeta } from '../logging/utils.js';
-import { getRagTanent as getRagTetant } from '../config/utils.js';
+import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
+import { parseConversationId } from '../common/shared.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
   private readonly promptGenerator: PromptGenerator;
+  private readonly channelConfigManager: ChannelConfigManager;
 
-  constructor(conversationHandler: ConversationHandler) {
+  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager) {
     this.conversationHandler = conversationHandler;
     this.promptGenerator = new PromptGenerator();
+    this.channelConfigManager = channelConfigManager;
   }
 
   public async completePrompt(
@@ -33,11 +30,14 @@ export class RAGModel implements PromptCompletionModel {
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
     const meta = getTurnContextLogMeta(context);
-    const channelId = context.activity.conversation.id.split(';')[0];
-    const ragTanentId = getRagTetant(channelId);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTanentId}`, { meta });
+    const { channelId } = parseConversationId(context.activity.conversation.id);
+    const [ ragTenantId, ragEndpoint ] = await Promise.all([
+      this.channelConfigManager.getRagTenant(channelId),
+      this.channelConfigManager.getRagEndpoint(channelId),
+    ]);
+    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}`, { meta });
     const ragOptions: RAGOptions = {
-      endpoint: config.ragEndpoint,
+      endpoint: ragEndpoint,
       apiKey: config.ragApiKey,
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
@@ -51,12 +51,17 @@ export class RAGModel implements PromptCompletionModel {
 
     const currentPrompt = this.promptGenerator.generateCurrentPrompt(context, meta);
     const fullPrompt = await this.generateFullPrompt(currentPrompt, conversationMessages, meta);
-    const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTanentId);
+    const completionPayload = this.convertFullPromptToCompletionRequestPayload(fullPrompt, ragTenantId);
 
     logger.info('prompt to RAG', { prompt: fullPrompt, meta });
     let ragReply = await getRAGReply(completionPayload, ragOptions, meta);
     if (!ragReply) {
-      ragReply = { id: 'N/A', answer: '⚠️Unable to establish a connection to the AI service at this time. Please try again later.', has_result: false, references: [] };
+      ragReply = {
+        id: 'N/A',
+        answer: '⚠️Unable to establish a connection to the AI service at this time. Please try again later.',
+        has_result: false,
+        references: [],
+      };
     }
     // TODO: try merge cancelTimer and stop into one method
     await thinkingHandler.safeCancelTimer();

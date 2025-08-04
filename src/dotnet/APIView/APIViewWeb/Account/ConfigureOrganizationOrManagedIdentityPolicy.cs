@@ -15,11 +15,6 @@ public class ConfigureOrganizationOrManagedIdentityPolicy : IConfigureOptions<Au
 
     public void Configure(AuthorizationOptions options)
     {
-        options.AddPolicy(Startup.RequireOrganizationPolicy, policy =>
-        {
-            policy.AddRequirements(new OrganizationRequirement(_options.Value.RequiredOrganization));
-        });
-
         options.AddPolicy(Startup.RequireOrganizationOrManagedIdentityPolicy, policy =>
         {
             policy.RequireAssertion(context => AuthenticationValidator.HasOrganizationOrManagedIdentityAccess(

@@ -16,24 +16,24 @@ import json
 import zipfile
 
 SDK_PARAMS = [
-    #("azure-core", "1.32.0", "core", "azure.core", "src"),
-    #("azure-core", "1.32.0", "core", "azure.core", "whl"),
-    #("azure-core", "1.32.0", "core", "azure.core", "sdist"),
-    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
-    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
-    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
+    ("azure-core", "1.32.0", "core", "azure.core", "src"),
+    ("azure-core", "1.32.0", "core", "azure.core", "whl"),
+    ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
     # Ignoring corehttp for now as version on PyPI imports AsyncContextManager from typing_extensions for azure.core.runtime.pipeline.AsyncPipeline,
     # which returns a different type for typing_extensions 4.12.2 than 4.6.0. Pinning typing-extensions==4.12.2.
     # TODO: Update corehttp to 1.0.0b6 when available on PyPI.
     #("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
     #("corehttp", "1.0.0b5", "core", "corehttp", "src"),
     #("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
-    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
-    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
-    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
-    #("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
-    #("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
-    #("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
+    ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
+    ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
+    ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
     ("azure-monitor-querymetrics", "1.0.0", "monitor", "azure.monitor.querymetrics", "whl"),
     ("azure-monitor-querymetrics", "1.0.0", "monitor", "azure.monitor.querymetrics", "src"),
     ("azure-monitor-querymetrics", "1.0.0", "monitor", "azure.monitor.querymetrics", "sdist"),
@@ -144,9 +144,8 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type, subdirectory):
         raise ValueError(f"Could not find {pkg_type} file for the specified version.")
     
     pkg_path = _download_file(temp_dir, url)
-    mapping_file = _get_mapping_file(temp_dir, subdirectory, package_name, version)
-
     # Copy apiview-properties.json to pkg_path from github repo if it exists
+    mapping_file = _get_mapping_file(temp_dir, subdirectory, package_name, version)
 
     # Linting errors like `do-not-import-asyncio` are ignored in pkg `azure.core`.
     # Since the whl file does not have a `azure/__init__.py` file, pylint does not recognize it as the `azure.core` pkg.

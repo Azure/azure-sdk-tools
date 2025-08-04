@@ -84,7 +84,7 @@ public class Program
             clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
                 (options, credential, _) =>
                 {
-                    var ep = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? "https://<need to know how to have a default>";
+                    var ep = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") ?? "https://openai-shared.openai.azure.com";
 
                     if (string.IsNullOrEmpty(ep))
                     {

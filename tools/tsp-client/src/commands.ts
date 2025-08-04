@@ -91,7 +91,7 @@ export async function initCommand(argv: any) {
 
   const emitterPackageOverride = resolveEmitterPathFromArgs(argv);
 
-  // Read the global tspclientconfig.yaml
+  // Read the global tspclientconfig.yaml if it exists, otherwise tspclientGlobalConfig will be undefined.
   const tspclientGlobalConfig = await parseTspClientRepoConfig(repoRoot);
 
   let isUrl = true;

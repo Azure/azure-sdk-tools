@@ -398,6 +398,7 @@ describe.sequential("Verify commands", () => {
         ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       });
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

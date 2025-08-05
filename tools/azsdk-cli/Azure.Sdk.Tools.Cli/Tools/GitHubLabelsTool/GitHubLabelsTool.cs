@@ -102,33 +102,24 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
-            try
+            logger.LogInformation($"Checking service label: {serviceLabel}");
+
+            var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+            if (contents == null || contents.Count == 0)
             {
-                logger.LogInformation($"Checking service label: {serviceLabel}");
-
-                var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
-                if (contents == null || contents.Count == 0)
-                {
-                    throw new InvalidOperationException("Could not retrieve common-labels.csv file");
-                }
-
-                // Get the first (and should be only) file content
-                var csvContent = contents[0].Content;
-                if (string.IsNullOrEmpty(csvContent))
-                {
-                    throw new InvalidOperationException("common-labels.csv file is empty");
-                }
-
-                var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
-
-                return result;
+                throw new InvalidOperationException("Could not retrieve common-labels.csv file");
             }
-            catch (Exception ex)
+
+            // Get the first (and should be only) file content
+            var csvContent = contents[0].Content;
+            if (string.IsNullOrEmpty(csvContent))
             {
-                SetFailure();
-                logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
-                throw;
+                throw new InvalidOperationException("common-labels.csv file is empty");
             }
+
+            var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
+
+            return result;
         }
 
         [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label")]

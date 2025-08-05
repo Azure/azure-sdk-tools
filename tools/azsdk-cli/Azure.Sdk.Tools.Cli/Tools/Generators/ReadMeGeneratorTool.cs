@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
             serviceDocumentationOption = new Option<string>(
                 "--service-url")
             {
-                Description = "URL to the service documentation (ex: https://learn.microsoft.com/en-us/azure/service-bus-messaging)",
+                Description = "URL to the service documentation (ex: https://learn.microsoft.com/azure/service-bus-messaging)",
                 IsRequired = true
             };
 

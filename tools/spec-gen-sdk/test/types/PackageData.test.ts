@@ -32,11 +32,11 @@ describe('PackageData', () => {
       expect(packageData.isDataPlane).toBe(false);
     });
 
-    it('should detect management plane for typespec projects ending with resource-manager', () => {
+    it('should detect management plane for typespec projects containing resource-manager', () => {
       const mockResult: PackageResult = {
         packageName: 'test-package',
         path: ['sdk/test'],
-        typespecProject: ['specification/test/resource-manager'],
+        typespecProject: ['specification/test/resource-manager/stable/2021-04-01'],
         readmeMd: undefined,
         version: '1.0.0',
         language: 'JavaScript',
@@ -47,7 +47,7 @@ describe('PackageData', () => {
       expect(packageData.isDataPlane).toBe(false);
     });
 
-    it('should detect data plane for typespec projects not ending with .Management or resource-manager', () => {
+    it('should detect data plane for typespec projects not ending with .Management or containing resource-manager', () => {
       const mockResult: PackageResult = {
         packageName: 'test-package',
         path: ['sdk/test'],
@@ -68,7 +68,7 @@ describe('PackageData', () => {
         path: ['sdk/test'],
         typespecProject: [
           'specification/test/.Management',
-          'specification/test2/resource-manager'
+          'specification/test2/resource-manager/stable/2022-01-01'
         ],
         readmeMd: undefined,
         version: '1.0.0',

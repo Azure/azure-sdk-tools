@@ -98,24 +98,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                     pathToSwaggerReadme, outputDirectory, isAzureResourceManagement, fullyCompatible);
 
                 // Validate pathToSwaggerReadme
-                if (string.IsNullOrWhiteSpace(pathToSwaggerReadme) || !pathToSwaggerReadme.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+                string? readmeValidationResult = ValidateSwaggerReadme(pathToSwaggerReadme);
+                if (readmeValidationResult != null)
                 {
                     SetFailure();
                     return new TspToolResponse
                     {
-                        ErrorMessage = "Failed: pathToSwaggerReadme must be a valid path to a swagger README.md file."
+                        ErrorMessage = readmeValidationResult
                     };
                 }
-
+                // fullPathToSwaggerReadme is not null or empty at this point - already validated
                 var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
-                if (!File.Exists(fullPathToSwaggerReadme))
-                {
-                    SetFailure();
-                    return new TspToolResponse
-                    {
-                        ErrorMessage = $"Failed: pathToSwaggerReadme '{fullPathToSwaggerReadme}' does not exist."
-                    };
-                }
 
                 // validate outputDirectory using the extracted method
                 var validationResult = ValidateOutputDirectory(outputDirectory);
@@ -140,6 +133,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                     ErrorMessage = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"
                 };
             }
+        }
+
+        private static string? ValidateSwaggerReadme(string pathToSwaggerReadme)
+        {
+            if (string.IsNullOrWhiteSpace(pathToSwaggerReadme) || !pathToSwaggerReadme.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"Failed: Invalid pathToSwaggerReadme '{pathToSwaggerReadme}' - must be a non-empty path to a swagger README.md file";
+            }
+
+            var fullPath = Path.GetFullPath(pathToSwaggerReadme.Trim());
+            if (!File.Exists(fullPath))
+            {
+                return $"Failed: pathToSwaggerReadme '{fullPath}' does not exist.";
+            }
+
+            var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
+            if (!File.Exists(fullPathToSwaggerReadme))
+            {
+
+                return $"Failed: pathToSwaggerReadme '{fullPathToSwaggerReadme}' does not exist.";
+            }
+
+            return null; // Validation passed
         }
 
         private static string? ValidateOutputDirectory(string outputDir)

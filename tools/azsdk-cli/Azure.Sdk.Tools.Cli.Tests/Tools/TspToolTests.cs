@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("must be a valid path to a swagger README.md file"));
+            Assert.That(result.ErrorMessage, Does.Contain("must be a non-empty path to a swagger README.md file"));
         }
 
         [Test]

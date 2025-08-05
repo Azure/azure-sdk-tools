@@ -26,8 +26,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IGitHubService githubService
     ) : MCPTool
     {
-        private const string serviceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
-
         //command names
         private const string checkServiceLabelCommandName = "check-service-label";
         private const string createServiceLabelCommandName = "create-service-label";

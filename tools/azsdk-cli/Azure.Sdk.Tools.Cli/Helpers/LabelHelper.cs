@@ -2,6 +2,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
@@ -14,7 +15,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
-        internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
         public static IList<LabelData> GetLabelsFromCsv(string csvContent)
         {
@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 if (record.Name.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (record.Color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
+                    if (record.Color.Equals(Constants.SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
                     {
                         logger.LogInformation($"Service label '{serviceName}' exists in common-labels.csv.");
                         return ServiceLabelStatus.Exists;
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             records = GetLabelsFromCsv(csvContent);
 
             var newRecords = records
-                .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
+                .Append(new LabelData { Name = serviceLabel, Description = "", Color = Constants.SERVICE_LABELS_COLOR_CODE })
                 .OrderBy(label => label.Name, StringComparer.Ordinal);
 
             using var writer = new StringWriter();

@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
@@ -47,10 +48,10 @@ internal class LabelHelperTests
         Assert.That(records.Count, Is.EqualTo(2));
         Assert.That(records[0].Name, Is.EqualTo("Service - TestService"));
         Assert.That(records[0].Description, Is.EqualTo("Description with commas, and stuff\\"));
-        Assert.That(records[0].Color, Is.EqualTo("e99695"));
+        Assert.That(records[0].Color, Is.EqualTo(Constants.SERVICE_LABELS_COLOR_CODE));
         Assert.That(records[1].Name, Is.EqualTo("AnotherService"));
         Assert.That(records[1].Description, Is.EqualTo("Description2"));
-        Assert.That(records[1].Color, Is.EqualTo("e99695"));
+        Assert.That(records[1].Color, Is.EqualTo(Constants.SERVICE_LABELS_COLOR_CODE));
     }
 
     [Test]

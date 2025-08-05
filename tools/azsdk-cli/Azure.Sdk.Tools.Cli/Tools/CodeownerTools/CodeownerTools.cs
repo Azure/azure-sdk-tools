@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Command names
         private const string addCodeownersEntryCommandName = "add-codeowners-entry";
-        private const string addCodeownersCommandName = "add-codeowners";
+        private const string updateCodeownersCommandName = "update-codeowners";
         private const string checkServiceExistsCommandName = "check-service-exists";
         private const string validateCodeOwnerEntryCommandName = "validate-codeowner-entry";
         private const string mockToolCommandName = "mock-tool";
@@ -52,6 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> serviceLabelOption = new(["--service-label", "-sl"], "The service label");
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners", "-so"], "The service owners (space-separated)");
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)") { IsRequired = true };
+        private readonly Option<bool> isAddingOption = new(["--is-adding", "-ia"], "Whether to add (true) or remove (false) owners") { IsRequired = true };
         private readonly Option<string> workingBranchOption = new(["--working-branch", "-wb"], "The existing branch to add changes to (from SDK generation)");
 
         public override Command GetCommand()
@@ -68,13 +69,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     sourceOwnersOption,
                     workingBranchOption
                 },
-                new Command(addCodeownersCommandName, "Add codeowners to a repository")
+                new Command(updateCodeownersCommandName, "Update codeowners in a repository")
                 {
                     repoOption,
                     pathOption,
                     serviceLabelOption,
                     serviceOwnersOption,
                     sourceOwnersOption,
+                    isAddingOption,
                     workingBranchOption
                 },
                 new Command(checkServiceExistsCommandName, "Check if a service exists in CODEOWNERS file")
@@ -126,20 +128,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         workingBranchValue ?? "");
                     output.Output(addResult);
                     return;
-                case addCodeownersCommandName:
+                case updateCodeownersCommandName:
                     var repoValue2 = commandParser.GetValueForOption(repoOption);
                     var pathValue2 = commandParser.GetValueForOption(pathOption);
                     var serviceLabelValue2 = commandParser.GetValueForOption(serviceLabelOption);
                     var serviceOwnersValue2 = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue2 = commandParser.GetValueForOption(sourceOwnersOption);
+                    var isAddingValue = commandParser.GetValueForOption(isAddingOption);
                     var workingBranchValue2 = commandParser.GetValueForOption(workingBranchOption);
 
-                    var addResult2 = await AddCodeowners(
+                    var addResult2 = await UpdateCodeowners(
                         repoValue2 ?? "",
                         pathValue2 ?? "",
                         serviceLabelValue2 ?? "",
                         serviceOwnersValue2?.ToList() ?? new List<string>(),
                         sourceOwnersValue2?.ToList() ?? new List<string>(),
+                        isAddingValue,
                         workingBranchValue2 ?? "");
                     output.Output(addResult2);
                     return;
@@ -571,13 +575,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "AddCodeowners"), Description("Adds codeowners to a given service label or path for a repo.")]
-        public async Task<string> AddCodeowners(
+        [McpServerTool(Name = "UpdateCodeowners"), Description("Adds or deletes codeowners for a given service label or path in a repo.")]
+        public async Task<string> UpdateCodeowners(
             string repo,
             string inputPath,
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
+            bool isAdding,
             string workingBranch = null)
         {
             try
@@ -610,7 +615,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
                 }
 
-                // Find the specific entry that matches our criteria
                 CodeownersEntry targetEntry = null;
                 if (!string.IsNullOrEmpty(response.path))
                 {
@@ -632,7 +636,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Step 4: Modify the content using the entry's line information
                 var lines = content.Split('\n').ToList();
 
-                var modifiedContent = await ModifyCodeownersEntryLines(lines, targetEntry, serviceOwners, sourceOwners, validNewOwners);
+                var modifiedContent = ModifyCodeownersEntryLines(lines, targetEntry, response.serviceOwners, response.sourceOwners, isAdding);
 
                 // Step 5: Branch management and file update
                 List<string> resultMessages = new();
@@ -678,12 +682,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<List<string>> ModifyCodeownersEntryLines(
+        private List<string> ModifyCodeownersEntryLines(
             List<string> lines,
             CodeownersEntry targetEntry,
-            List<string> newServiceOwners,
-            List<string> newSourceOwners,
-            List<string> validNewOwners)
+            List<CodeOwnerValidationResult> newServiceOwners,
+            List<CodeOwnerValidationResult> newSourceOwners,
+            bool isAdding)
         {
             var modifiedLines = new List<string>(lines);
 
@@ -694,31 +698,35 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Modify ServiceOwners
                 if (line.TrimStart().StartsWith("# ServiceOwners:"))
                 {
-
-                    var newServiceOwnersToAdd = newServiceOwners?.Where(owner =>
-                        validNewOwners?.Contains(owner.TrimStart('@'), StringComparer.OrdinalIgnoreCase) ?? true).ToList() ?? new List<string>();
-
-                    if (newServiceOwnersToAdd.Any())
+                    if (isAdding)
                     {
-                        var originalLine = modifiedLines[i];
-                        modifiedLines[i] = AddOwnersToLine(modifiedLines[i], newServiceOwnersToAdd);
+                        var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner)
+                            .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
+
+                        if (validServiceOwnersToAdd.Any())
+                        {
+                            modifiedLines[i] = AddOwnersToLine(line, validServiceOwnersToAdd);
+                        }
                     }
+                    // TODO: Add delete logic
                 }
                 // Modify SourceOwners
                 else if (ParsingUtils.IsSourcePathOwnerLine(line) && line.Contains(targetEntry.PathExpression))
                 {
-
-                    var newSourceOwnersToAdd = newSourceOwners?.Where(owner =>
-                        validNewOwners?.Contains(owner.TrimStart('@'), StringComparer.OrdinalIgnoreCase) ?? true).ToList() ?? new List<string>();
-
-                    if (newSourceOwnersToAdd.Any())
+                    if (isAdding)
                     {
-                        var originalLine = modifiedLines[i];
-                        modifiedLines[i] = AddOwnersToLine(modifiedLines[i], newSourceOwnersToAdd);
+                        var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner)
+                            .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
+
+                        if (validSourceOwnersToAdd.Any())
+                        {
+                            modifiedLines[i] = AddOwnersToLine(line, validSourceOwnersToAdd);
+                        }
                     }
+                    // TODO: Add delete logic
                 }
             }
-
+            // probably here validation if there are minimum of 2 valid service and source owners)
             return modifiedLines;
         }
 

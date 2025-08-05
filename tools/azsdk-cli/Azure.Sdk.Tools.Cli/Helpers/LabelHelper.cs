@@ -1,7 +1,5 @@
 using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
@@ -16,19 +14,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
-        public static IList<LabelData> GetLabelsFromCsv(string csvContent)
-        {
-            using var reader = new StringReader(csvContent);
-            using var csvReader = new CsvReader(reader, config);
-            return csvReader.GetRecords<LabelData>().ToList();
-        }
-
-        private static CsvConfiguration config = new CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = false,
-            NewLine = "\n",
-        };
-
         public enum ServiceLabelStatus
         {
             Exists,
@@ -38,24 +23,42 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
         {
-            var records = GetLabelsFromCsv(csvContent);
-
-            foreach (var record in records)
+            using var reader = new StringReader(csvContent);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
             {
-                if (record.Name.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                var commaIndices = new List<int>();
+                for (int i = 0; i < line.Length; i++)
                 {
-                    if (record.Color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
+                    if (line[i] == ',')
+                        commaIndices.Add(i);
+                }
+
+                if (commaIndices.Count < 2)
+                    continue; // Skip lines that don't have at least 2 commas
+
+                // Label is everything before the first comma
+                var label = line.Substring(0, commaIndices[0]).Trim();
+                
+                // Color is everything after the last comma
+                var color = line.Substring(commaIndices[commaIndices.Count - 1] + 1).Trim();
+                
+                // Check if this is the service we're looking for
+                if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Check if it's a service label by color code
+                    if (color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.LogInformation($"Service label '{serviceName}' exists in common-labels.csv.");
                         return ServiceLabelStatus.Exists;
                     }
                     else
                     {
-                        logger.LogWarning($"Label '{serviceName}' exists but is not a service label.");
                         return ServiceLabelStatus.NotAServiceLabel;
                     }
                 }
-
             }
 
             return ServiceLabelStatus.DoesNotExist;
@@ -63,18 +66,28 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            IList<LabelData> records;
+            List<string> lines = csvContent.Split("\n").ToList();
 
-            records = GetLabelsFromCsv(csvContent);
+            var newServiceLabel = $"{serviceLabel},,{ServiceLabelColorCode}";
 
-            var newRecords = records
-                .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
-                .OrderBy(label => label.Name, StringComparer.Ordinal);
+            bool inserted = false;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (string.Compare(newServiceLabel, lines[i], StringComparison.Ordinal) < 0)
+                {
+                    lines.Insert(i, newServiceLabel);
+                    inserted = true;
+                    break;
+                }
+            }
 
-            using var writer = new StringWriter();
-            using var csvWriter = new CsvWriter(writer, config);
-            csvWriter.WriteRecords(newRecords);
-            return writer.ToString();
+            // If not inserted yet, add at the end
+            if (!inserted)
+            {
+                lines.Add(newServiceLabel);
+            }
+
+            return string.Join("\n", lines);
         }
 
         public string NormalizeLabel(string label)

@@ -9,7 +9,6 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
-using CsvHelper;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 

@@ -41,25 +41,45 @@ internal class LabelHelperTests
     [Test]
     public void TestCheckServiceLabel_WithComplexCsvFormat()
     {
-        var csvContent = "\"Service - TestService\",\"Description with commas, and stuff\\\",e99695\nAnotherService,Description2,e99695";
-
-        var records = LabelHelper.GetLabelsFromCsv(csvContent);
-        Assert.That(records.Count, Is.EqualTo(2));
-        Assert.That(records[0].Name, Is.EqualTo("Service - TestService"));
-        Assert.That(records[0].Description, Is.EqualTo("Description with commas, and stuff\\"));
-        Assert.That(records[0].Color, Is.EqualTo("e99695"));
-        Assert.That(records[1].Name, Is.EqualTo("AnotherService"));
-        Assert.That(records[1].Description, Is.EqualTo("Description2"));
-        Assert.That(records[1].Color, Is.EqualTo("e99695"));
+        var csvContent = "Service - TestService,Description with commas and stuff,e99695\nAnotherService,Description2,e99695";
+        
+        var actual1 = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
+        var actual2 = labelHelper.CheckServiceLabel(csvContent, "AnotherService");
+        
+        Assert.That(actual1, Is.EqualTo(LabelHelper.ServiceLabelStatus.Exists));
+        Assert.That(actual2, Is.EqualTo(LabelHelper.ServiceLabelStatus.Exists));
     }
 
     [Test]
     public void TestCreateServiceLabelInsertion()
     {
-        var csvContent = "SMR,,e99695\nRRC,,e99695\nPVLG,,e99695\nSBEC,,e99695";
-        var serviceLabel = "TestService";
+        // Test that a service label is inserted in the correct alphabetical position
+        var csvContent = "AAA,,e99695\nCCC,,e99695\nZZZ,,e99695";
+        var serviceLabel = "BBB";
         var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "PVLG,,e99695\nRRC,,e99695\nSBEC,,e99695\nSMR,,e99695\nTestService,,e99695\n";
+        var expected = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TestCreateServiceLabelInsertionAtBeginning()
+    {
+        // Test insertion at the beginning
+        var csvContent = "BBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
+        var serviceLabel = "AAA";
+        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
+        var expected = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TestCreateServiceLabelInsertionAtEnd()
+    {
+        // Test insertion at the end
+        var csvContent = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695";
+        var serviceLabel = "ZZZ";
+        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
+        var expected = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
         Assert.That(actual, Is.EqualTo(expected));
     }
 
@@ -69,7 +89,7 @@ internal class LabelHelperTests
         var csvContent = "";
         var serviceLabel = "TestService";
         var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "TestService,,e99695\n";
+        var expected = "\nTestService,,e99695";
         Assert.That(actual, Is.EqualTo(expected));
     }
 

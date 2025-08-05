@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Services;
 using OpenAI.Chat;
 
-namespace Azure.Sdk.Tools.Cli.Tools.Generators
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     // Will add after we decide which tools are exported via the MCP.
     //[McpServerToolType, Description("Generates a README file, using service documentation")]

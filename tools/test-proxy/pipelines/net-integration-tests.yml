@@ -1,7 +1,7 @@
 parameters:
   - name: REPO
     type: string
-    default: "Azure/azure-sdk-for-js"
+    default: "Azure/azure-sdk-for-net"
   - name: CLONE_LOCATION
     type: string
     default: "$(Agent.BuildDirectory)/net_repo"

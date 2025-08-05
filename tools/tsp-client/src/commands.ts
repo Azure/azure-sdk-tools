@@ -33,12 +33,23 @@ import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
-// This function resolves for the correct emitter to use in a language repository based on whether
-// the user has provided an alternate dependency file path or if there are existing configuration
-// files in the repository. Supported configuration files are located at
-// <repo root>/eng/emitter-package.json or <repo root>/eng/tspclientconfig.yaml.
-// The function will return the emitter name and the path to the emitter package.json file relative
-// to repo root. If the default emitter-package.json is used, the path will be undefined.
+/**
+ * Resolves the correct emitter to use in a language repository based on the provided arguments and configuration files.
+ *
+ * The function determines the emitter name and the path to the emitter's package.json file relative to the repository root.
+ * It supports the following resolution order:
+ * 1. If an emitter-package.json override is provided, it is used directly and stored relative to the repository root.
+ * 2. If a global config file exists with supported emitters, it checks for a match in tspconfig.yaml options.
+ * 3. Default to the emitter-package.json in the repository's eng/ directory. If the default emitter-package.json is used,
+ * the path will be undefined.
+ *
+ * @param repoRoot - The root directory of the repository.
+ * @param tspConfigData - The parsed tspconfig.yaml data.
+ * @param globalConfigFile - Optional global tspclientconfig.yaml configuration.
+ * @param emitterPackageJsonOverride - Optional explicit override path to an emitter-package.json file.
+ * @returns An object containing the emitter name and an optional relative path to the emitter package.json file.
+ * @throws If no valid emitter can be resolved or if the default emitter-package.json is missing or invalid.
+ */
 async function getEmitter(
   repoRoot: string,
   tspConfigData: any, // tspconfig.yaml data

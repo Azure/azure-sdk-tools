@@ -43,8 +43,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
                 Description = "Path to the README template file (ie: Templates/README-template.go.md)",
             };
 
-            templatePathOption.SetDefaultValue("Templates/ReadMeGenerator/README-template.go.md");
-
             serviceDocumentationOption = new Option<string>(
                 "--service-url")
             {

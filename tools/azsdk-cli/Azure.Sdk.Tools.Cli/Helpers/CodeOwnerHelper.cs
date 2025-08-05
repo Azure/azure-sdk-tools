@@ -166,8 +166,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
             {
                 addSeperationLine = true;
-                var ownersString = string.Join(" ", sourceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}"));
-                lines.Add($"{path.PadRight(50)} {ownersString}");
+                var formattedSourceOwners = sourceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}");
+                var pathLine = $"{path}".PadRight(67) + $"{string.Join(" ", formattedSourceOwners)}";
+                lines.Add(pathLine);
             }
 
             if (addSeperationLine)
@@ -304,6 +305,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Trim('-')
                 .ToLowerInvariant();
         }
+        
     }
 
     // Data models - moved from CodeOwnerTools for better organization
@@ -323,5 +325,28 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public bool IsValidCodeOwner { get; set; }
         public bool HasWritePermission { get; set; }
         public Dictionary<string, bool> Organizations { get; set; } = new();
+
+        public override string ToString()
+        {
+            var result = new List<string>
+            {
+                $"Username: {Username}",
+                $"IsValid: {IsValidCodeOwner}",
+                $"HasWritePermission: {HasWritePermission}",
+                $"Status: {Status}",
+                $"Message: {Message ?? "None"}"
+            };
+
+            if (Organizations?.Any() == true)
+            {
+                result.Add($"Organizations:");
+                foreach (var org in Organizations)
+                {
+                    result.Add($"  - {org.Key}: {org.Value}");
+                }
+            }
+            
+            return string.Join("\n", result);
+        }
     }
 }

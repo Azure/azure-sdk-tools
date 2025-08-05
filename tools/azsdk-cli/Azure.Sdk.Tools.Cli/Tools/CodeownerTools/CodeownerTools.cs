@@ -691,14 +691,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var modifiedLines = new List<string>(lines);
 
-            for (int i = targetEntry.startLine; i <= targetEntry.endLine; i++)
+            if (isAdding)
             {
-                var line = modifiedLines[i];
-
-                // Modify ServiceOwners
-                if (line.TrimStart().StartsWith("# ServiceOwners:"))
+                // For adding, use the existing line-by-line approach
+                for (int i = targetEntry.startLine; i <= targetEntry.endLine; i++)
                 {
-                    if (isAdding)
+                    var line = modifiedLines[i];
+
+                    // Modify ServiceOwners
+                    if (line.TrimStart().StartsWith("# ServiceOwners:"))
                     {
                         var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner)
                             .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
@@ -708,12 +709,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                             modifiedLines[i] = AddOwnersToLine(line, validServiceOwnersToAdd);
                         }
                     }
-                    // TODO: Add delete logic
-                }
-                // Modify SourceOwners
-                else if (ParsingUtils.IsSourcePathOwnerLine(line) && line.Contains(targetEntry.PathExpression))
-                {
-                    if (isAdding)
+                    // Modify SourceOwners
+                    else if (ParsingUtils.IsSourcePathOwnerLine(line) && line.Contains(targetEntry.PathExpression))
                     {
                         var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner)
                             .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
@@ -723,9 +720,52 @@ namespace Azure.Sdk.Tools.Cli.Tools
                             modifiedLines[i] = AddOwnersToLine(line, validSourceOwnersToAdd);
                         }
                     }
-                    // TODO: Add delete logic
                 }
             }
+            else
+            {
+                // For removing, use the object-based approach
+                var validServiceOwnersToDelete = newServiceOwners?.Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
+                var validSourceOwnersToDelete = newSourceOwners?.Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
+
+                // Remove from the object
+                if (validServiceOwnersToDelete.Any())
+                {
+                    targetEntry.ServiceOwners.RemoveAll(owner => validServiceOwnersToDelete.Contains(owner.Username.TrimStart('@')));
+                }
+                if (validSourceOwnersToDelete.Any())
+                {
+                    targetEntry.SourceOwners.RemoveAll(owner => validSourceOwnersToDelete.Contains(owner.Username.TrimStart('@')));
+                }
+
+                // Generate the new formatted entry
+                var newEntryLines = targetEntry.FormatCodeownersEntry().Split('\n');
+
+                // Replace the entire block with the new formatted version
+                for (int i = 0; i < newEntryLines.Length; i++)
+                {
+                    if (targetEntry.startLine + i <= targetEntry.endLine)
+                    {
+                        modifiedLines[targetEntry.startLine + i] = newEntryLines[i];
+                    }
+                    else
+                    {
+                        // Insert additional lines if the new entry is longer
+                        modifiedLines.Insert(targetEntry.startLine + i, newEntryLines[i]);
+                    }
+                }
+
+                // Remove any extra lines if the new entry is shorter
+                int linesToRemove = (targetEntry.endLine - targetEntry.startLine + 1) - newEntryLines.Length;
+                for (int i = 0; i < linesToRemove; i++)
+                {
+                    if (targetEntry.startLine + newEntryLines.Length < modifiedLines.Count)
+                    {
+                        modifiedLines.RemoveAt(targetEntry.startLine + newEntryLines.Length);
+                    }
+                }
+            }
+
             // probably here validation if there are minimum of 2 valid service and source owners)
             return modifiedLines;
         }

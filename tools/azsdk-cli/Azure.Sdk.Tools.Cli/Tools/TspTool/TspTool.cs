@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 // Validate pathToSwaggerReadme
                 if (string.IsNullOrWhiteSpace(pathToSwaggerReadme) || !pathToSwaggerReadme.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
                 {
-                    SetFailure(1);
+                    SetFailure();
                     return new TspToolResponse
                     {
                         ErrorMessage = "Failed: pathToSwaggerReadme must be a valid path to a swagger README.md file."
@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
                 if (!File.Exists(fullPathToSwaggerReadme))
                 {
-                    SetFailure(1);
+                    SetFailure();
                     return new TspToolResponse
                     {
                         ErrorMessage = $"Failed: pathToSwaggerReadme '{fullPathToSwaggerReadme}' does not exist."
@@ -121,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
                 var validationResult = ValidateOutputDirectory(outputDirectory);
                 if (validationResult != null)
                 {
-                    SetFailure(1);
+                    SetFailure();
                     return new TspToolResponse
                     {
                         ErrorMessage = validationResult
@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while converting swagger to TypeSpec: {pathToSwaggerReadme}, {outputDirectory}", pathToSwaggerReadme, outputDirectory);
-                SetFailure(1);
+                SetFailure();
                 return new TspToolResponse
                 {
                     ErrorMessage = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"

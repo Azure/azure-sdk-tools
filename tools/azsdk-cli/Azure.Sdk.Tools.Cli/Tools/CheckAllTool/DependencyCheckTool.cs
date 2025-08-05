@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
                 // Use LanguageRepoService to detect language and run appropriate dependency analysis
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                CheckResult result;
+                IOperationResult result;
                 
                 try
                 {
@@ -88,42 +88,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                     
                     // Call AnalyzeDependencies method
-                    var analysisResult = await languageService.AnalyzeDependenciesAsync();
+                    result = await languageService.AnalyzeDependenciesAsync();
                     stopwatch.Stop();
                     
-                    // Process the result from LanguageRepoService
-                    bool success = false;
-                    string message = "Unknown result";
-                    
-                    switch (analysisResult)
-                    {
-                        case SuccessResult successResult:
-                            success = true;
-                            message = successResult.Output ?? "Dependency analysis completed successfully";
-                            break;
-                        case FailureResult failureResult:
-                            success = false;
-                            message = failureResult.Output ?? "Dependency analysis failed";
-                            break;
-                        case CookbookResult cookbookResult:
-                            success = false;
-                            message = $"See cookbook reference: {cookbookResult.CookbookReference}. {cookbookResult.Output}";
-                            break;
-                        default:
-                            success = false;
-                            message = analysisResult.Output ?? "Dependency analysis completed with unknown result";
-                            break;
-                    }
-                    
-                    result = new CheckResult
-                    {
-                        CheckType = "Dependency Check",
-                        Success = success,
-                        Message = message,
-                        Duration = stopwatch.ElapsedMilliseconds
-                    };
-                    
-                    if (!success)
+                    if (result.ExitCode != 0)
                     {
                         SetFailure(1);
                     }
@@ -134,19 +102,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     logger.LogError(ex, "Error during language-specific dependency analysis");
                     SetFailure(1);
                     
-                    result = new CheckResult
-                    {
-                        CheckType = "Dependency Check",
-                        Success = false,
-                        Message = $"Error during dependency analysis: {ex.Message}",
-                        Duration = stopwatch.ElapsedMilliseconds
-                    };
+                    result = new FailureResult(1, $"Error during dependency analysis: {ex.Message}");
                 }
 
                 return new DefaultCommandResponse
                 {
-                    Message = result.Message,
-                    Duration = result.Duration,
+                    Message = result.Output ?? "Dependency check completed",
+                    Duration = stopwatch.ElapsedMilliseconds,
                     Result = result
                 };
             }

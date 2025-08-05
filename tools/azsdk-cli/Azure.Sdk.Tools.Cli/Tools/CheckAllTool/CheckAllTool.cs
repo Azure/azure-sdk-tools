@@ -79,33 +79,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     };
                 }
 
-                var results = new List<CheckResult>();
+                var results = new List<IOperationResult>();
                 var overallSuccess = true;
-
-                // Run all individual checks (placeholder implementations)
-                var spellCheckResult = await RunSpellCheck(projectPath);
-                results.Add(spellCheckResult);
-                if (!spellCheckResult.Success) overallSuccess = false;
-
-                var linkValidationResult = await RunLinkValidation(projectPath);
-                results.Add(linkValidationResult);
-                if (!linkValidationResult.Success) overallSuccess = false;
-
-                var readmeValidationResult = await RunReadmeValidation(projectPath);
-                results.Add(readmeValidationResult);
-                if (!readmeValidationResult.Success) overallSuccess = false;
 
                 var dependencyCheckResult = await RunDependencyCheck(projectPath);
                 results.Add(dependencyCheckResult);
-                if (!dependencyCheckResult.Success) overallSuccess = false;
+                if (dependencyCheckResult.ExitCode != 0) overallSuccess = false;
 
                 var changelogValidationResult = await RunChangelogValidation(projectPath);
                 results.Add(changelogValidationResult);
-                if (!changelogValidationResult.Success) overallSuccess = false;
+                if (changelogValidationResult.ExitCode != 0) overallSuccess = false;
 
-                var snippetUpdateResult = await RunSnippetUpdate(projectPath);
-                results.Add(snippetUpdateResult);
-                if (!snippetUpdateResult.Success) overallSuccess = false;
 
                 if (!overallSuccess)
                 {
@@ -115,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 return new DefaultCommandResponse
                 {
                     Message = overallSuccess ? "All checks completed successfully" : "Some checks failed",
-                    Duration = results.Sum(r => r.Duration),
+                    Duration = 0, // Since IOperationResult doesn't have Duration, we'll set to 0 or calculate differently
                     Result = results
                 };
             }
@@ -130,49 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        private async Task<CheckResult> RunSpellCheck(string projectPath)
-        {
-            logger.LogInformation("Running spell check...");
-            // TODO: Implement actual spell check logic
-            await Task.Delay(100); // Simulate work
-            return new CheckResult
-            {
-                CheckType = "Spell Check",
-                Success = true,
-                Message = "Spell check completed successfully",
-                Duration = 100
-            };
-        }
-
-        private async Task<CheckResult> RunLinkValidation(string projectPath)
-        {
-            logger.LogInformation("Running link validation...");
-            // TODO: Implement actual link validation logic
-            await Task.Delay(100); // Simulate work
-            return new CheckResult
-            {
-                CheckType = "Link Validation",
-                Success = true,
-                Message = "Link validation completed successfully",
-                Duration = 100
-            };
-        }
-
-        private async Task<CheckResult> RunReadmeValidation(string projectPath)
-        {
-            logger.LogInformation("Running README validation...");
-            // TODO: Implement actual README validation logic
-            await Task.Delay(100); // Simulate work
-            return new CheckResult
-            {
-                CheckType = "README Validation",
-                Success = true,
-                Message = "README validation completed successfully",
-                Duration = 100
-            };
-        }
-
-        private async Task<CheckResult> RunDependencyCheck(string projectPath)
+        private async Task<IOperationResult> RunDependencyCheck(string projectPath)
         {
             logger.LogInformation("Running dependency check...");
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -187,88 +129,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var analysisResult = await languageService.AnalyzeDependenciesAsync();
                 stopwatch.Stop();
                 
-                // Process the result from LanguageRepoService
-                bool success = false;
-                string message = "Unknown result";
-                
-                switch (analysisResult)
-                {
-                    case SuccessResult successResult:
-                        success = true;
-                        message = successResult.Output ?? "Dependency check completed successfully";
-                        break;
-                    case FailureResult failureResult:
-                        success = false;
-                        message = failureResult.Output ?? "Dependency check failed";
-                        break;
-                    case CookbookResult cookbookResult:
-                        success = false;
-                        message = $"See cookbook reference: {cookbookResult.CookbookReference}. {cookbookResult.Output}";
-                        break;
-                    default:
-                        success = false;
-                        message = analysisResult.Output ?? "Dependency check completed with unknown result";
-                        break;
-                }
-                
-                return new CheckResult
-                {
-                    CheckType = "Dependency Check",
-                    Success = success,
-                    Message = message,
-                    Duration = stopwatch.ElapsedMilliseconds
-                };
+                // Return the result directly since it's already an IOperationResult
+                return analysisResult;
             }
             catch (Exception ex)
             {
                 stopwatch.Stop();
                 logger.LogError(ex, "Error during language-specific dependency check");
                 
-                return new CheckResult
-                {
-                    CheckType = "Dependency Check",
-                    Success = false,
-                    Message = $"Error during dependency check: {ex.Message}",
-                    Duration = stopwatch.ElapsedMilliseconds
-                };
+                return new FailureResult(1, $"Error during dependency check: {ex.Message}");
             }
         }
 
-        private async Task<CheckResult> RunChangelogValidation(string projectPath)
+        private async Task<IOperationResult> RunChangelogValidation(string projectPath)
         {
             logger.LogInformation("Running changelog validation...");
             // TODO: Implement actual changelog validation logic
             await Task.Delay(100); // Simulate work
-            return new CheckResult
-            {
-                CheckType = "Changelog Validation",
-                Success = true,
-                Message = "Changelog validation completed successfully",
-                Duration = 100
-            };
+            return new SuccessResult(0, "Changelog validation completed successfully");
         }
 
-        private async Task<CheckResult> RunSnippetUpdate(string projectPath)
-        {
-            logger.LogInformation("Running snippet update...");
-            // TODO: Implement actual snippet update logic
-            await Task.Delay(100); // Simulate work
-            return new CheckResult
-            {
-                CheckType = "Snippet Update",
-                Success = true,
-                Message = "Snippet update completed successfully",
-                Duration = 100
-            };
-        }
-    }
-
-    public class CheckResult
-    {
-        public string CheckType { get; set; } = string.Empty;
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public long Duration { get; set; }
-        public List<string> Details { get; set; } = new();
     }
 }

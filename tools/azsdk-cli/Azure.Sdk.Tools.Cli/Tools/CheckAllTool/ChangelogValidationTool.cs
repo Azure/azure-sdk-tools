@@ -120,14 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     {
                         Message = "Changelog validation completed successfully",
                         Duration = (int)stopwatch.ElapsedMilliseconds,
-                        Result = new CheckResult
-                        {
-                            CheckType = "Changelog Validation",
-                            Success = true,
-                            Message = "Changelog validation completed successfully",
-                            Duration = (int)stopwatch.ElapsedMilliseconds,
-                            Details = result.Details
-                        }
+                        Result = new SuccessResult(0, "Changelog validation completed successfully")
                     };
                 }
                 else
@@ -137,14 +130,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     {
                         ResponseError = result.ErrorMessage,
                         Duration = (int)stopwatch.ElapsedMilliseconds,
-                        Result = new CheckResult
-                        {
-                            CheckType = "Changelog Validation",
-                            Success = false,
-                            Message = result.ErrorMessage,
-                            Duration = (int)stopwatch.ElapsedMilliseconds,
-                            Details = result.Details
-                        }
+                        Result = new FailureResult(1, result.ErrorMessage)
                     };
                 }
             }
